@@ -139,38 +139,31 @@ export function TableCellNG(props: TableCellNGProps) {
   }
 
   const handleMouseEnter = () => {
-    const div = divWidthRef.current;
-    const tableCellDiv = div?.parentElement;
-    div?.style.setProperty('background', `unset`);
-
     setIsHovered(true);
-    // Always set the background color to the hover color regardless of shouldTextOverflow
-    tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
-
     if (shouldTextOverflow()) {
       // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
+      const div = divWidthRef.current;
+      const tableCellDiv = div?.parentElement;
       tableCellDiv?.style.setProperty('z-index', String(theme.zIndex.tooltip));
       tableCellDiv?.style.setProperty('white-space', 'pre-line');
       tableCellDiv?.style.setProperty('min-height', `100%`);
       tableCellDiv?.style.setProperty('height', `fit-content`);
+      tableCellDiv?.style.setProperty('background', colors.bgHoverColor || 'none');
       tableCellDiv?.style.setProperty('min-width', 'min-content');
     }
   };
 
   const handleMouseLeave = () => {
-    const div = divWidthRef.current;
-    const tableCellDiv = div?.parentElement;
-    div?.style.removeProperty('background');
-
     setIsHovered(false);
-    tableCellDiv?.style.removeProperty('background');
-
     if (shouldTextOverflow()) {
       // TODO: The table cell styles in TableNG do not update dynamically even if we change the state
+      const div = divWidthRef.current;
+      const tableCellDiv = div?.parentElement;
       tableCellDiv?.style.removeProperty('z-index');
       tableCellDiv?.style.removeProperty('white-space');
       tableCellDiv?.style.removeProperty('min-height');
       tableCellDiv?.style.removeProperty('height');
+      tableCellDiv?.style.removeProperty('background');
       tableCellDiv?.style.removeProperty('min-width');
     }
   };
@@ -243,8 +236,10 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
     height: '100%',
     alignContent: 'center',
     paddingInline: '8px',
+    // TODO: follow-up on this: change styles on hover on table row level
     background: color.bgColor || 'none',
     color: color.textColor,
+    '&:hover': { background: color.bgHoverColor },
   }),
   cellActions: css({
     display: 'flex',
