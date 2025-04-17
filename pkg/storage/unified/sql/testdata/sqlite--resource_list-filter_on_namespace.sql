@@ -2,8 +2,8 @@ SELECT
     "guid",
     "resource_version",
     "namespace",
-    "resource",
     "group",
+    "resource",
     "name",
     "folder",
     "value"
