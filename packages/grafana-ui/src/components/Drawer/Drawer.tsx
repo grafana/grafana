@@ -53,6 +53,17 @@ export interface Props {
   scrollableContent?: boolean;
   /** Callback for closing the drawer */
   onClose: () => void;
+
+  /**
+   * Drawer wrapper z-index, defaults to 1040
+   */
+  zIndex?: number;
+
+  /**
+   * Whether to contain focus inside the scope, so users cannot
+   * move focus outside, for example in a modal dialog.
+   */
+  contain?: boolean;
 }
 
 const drawerSizes = {
@@ -71,6 +82,8 @@ export function Drawer({
   width,
   size = 'md',
   tabs,
+  zIndex,
+  contain,
 }: Props) {
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
@@ -98,6 +111,7 @@ export function Drawer({
 
   return (
     <RcDrawer
+      zIndex={zIndex}
       open={true}
       onClose={onClose}
       placement="right"
@@ -125,7 +139,7 @@ export function Drawer({
         motionName: styles.maskMotion,
       }}
     >
-      <FocusScope restoreFocus contain autoFocus>
+      <FocusScope restoreFocus contain={contain} autoFocus>
         <div
           aria-label={
             typeof title === 'string'
