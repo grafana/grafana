@@ -904,6 +904,29 @@ describe('templateSrv', () => {
       expect(podVar.current.text).toEqual(['podA', 'podB']);
     });
 
+    it('Can use containsTemplate to check if a variable exists', () => {
+      window.__grafanaSceneContext = new EmbeddedScene({
+        $variables: new SceneVariableSet({
+          variables: [
+            new QueryVariable({ name: 'server', value: 'serverA', text: 'Server A', query: { refId: 'A' } }),
+            new QueryVariable({ name: 'pods', value: ['pA', 'pB'], text: ['podA', 'podB'], query: { refId: 'A' } }),
+            new DataSourceVariable({ name: 'ds', value: 'dsA', text: 'dsA', pluginId: 'prometheus' }),
+            new CustomVariable({ name: 'custom', value: 'A', text: 'A', query: 'A, B, C' }),
+            new IntervalVariable({ name: 'interval', value: '1m', intervals: ['1m', '2m'] }),
+          ],
+        }),
+        body: new SceneCanvasText({ text: 'hello' }),
+      });
+
+      window.__grafanaSceneContext.activate();
+
+      expect(_templateSrv.containsTemplate('${server}')).toBe(true);
+      expect(_templateSrv.containsTemplate('${pods}')).toBe(true);
+      expect(_templateSrv.containsTemplate('${ds}')).toBe(true);
+      expect(_templateSrv.containsTemplate('${custom}')).toBe(true);
+      expect(_templateSrv.containsTemplate('${interval}')).toBe(true);
+    });
+
     it('Should return timeRange from scenes context', () => {
       window.__grafanaSceneContext = new EmbeddedScene({
         body: new SceneCanvasText({ text: 'hello' }),
