@@ -265,10 +265,10 @@ github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAh
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 h1:IR+UNYHqaU31t8/TArJk8K/GlDwOyxMpGNkWCXeZ28g=
 github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040/go.mod h1:SPLNCARd4xdjCkue0O6hvuoveuS1dGJjDnfxYe405YQ=
-github.com/grafana/grafana-app-sdk v0.36.2 h1:gFUUF9kByLQaHRl0WBMI9649171fC3s9zE3KsZcW2DQ=
-github.com/grafana/grafana-app-sdk v0.36.2/go.mod h1:PbFX7gmqm6Ag3WYhKlUUyx1k9GuDUOVyypcAM3tKAI0=
-github.com/grafana/grafana-app-sdk/logging v0.36.1 h1:BVIN/6Xjkkabkj/s68A3Krn+u5HfvEiP2laxoohIg4U=
-github.com/grafana/grafana-app-sdk/logging v0.36.1/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
+github.com/grafana/grafana-app-sdk v0.35.1 h1:zEXubzsQrxGBOzXJJMBwhEClC/tvPi0sfK7NGmlX3RI=
+github.com/grafana/grafana-app-sdk v0.35.1/go.mod h1:Zx5MkVppYK+ElSDUAR6+fjzOVo6I/cIgk+ty+LmNOxI=
+github.com/grafana/grafana-app-sdk/logging v0.35.1 h1:taVpl+RoixTYl0JBJGhH+fPVmwA9wvdwdzJTZsv9buM=
+github.com/grafana/grafana-app-sdk/logging v0.35.1/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-plugin-sdk-go v0.277.0 h1:VDU2F4Y5NeRS//ejctdZtsAshrGaEdbtW33FsK0EQss=
 github.com/grafana/grafana-plugin-sdk-go v0.277.0/go.mod h1:mAUWg68w5+1f5TLDqagIr8sWr1RT9h7ufJl5NMcWJAU=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043 h1:wdJy5x6M7auWDjUIubqhfZuZvphUMyjD7hxB3RqV4aE=
@@ -388,8 +388,8 @@ github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10/go.mod h1
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
-github.com/prometheus/client_golang v1.22.0 h1:rb93p9lokFEsctTys46VnV1kLCDpVZ0a/Y92Vm0Zc6Q=
-github.com/prometheus/client_golang v1.22.0/go.mod h1:R7ljNsLXhuQXYZYtw6GAE9AZg8Y7vEW5scdCXrWRXC0=
+github.com/prometheus/client_golang v1.21.1 h1:DOvXXTqVzvkIewV/CDPFdejpMCGeMcbGCQ8YOmu+Ibk=
+github.com/prometheus/client_golang v1.21.1/go.mod h1:U9NM32ykUErtVBxdvD3zfi+EuFkkaBvMb09mIfe0Zgg=
 github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4/go.mod h1:xMI15A0UPsDsEKsMN9yxemIoYk6Tm2C1GtYGdfGttqA=
 github.com/prometheus/client_model v0.6.1 h1:ZKSh/rekM+n3CeS952MLRAdFwIKqeY8b62p8ais2e9E=
 github.com/prometheus/client_model v0.6.1/go.mod h1:OrxVMOVHjw3lKMa8+x6HeMGkHMQyHDk9E3jmP2AmGiY=

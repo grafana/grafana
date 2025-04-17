@@ -217,8 +217,8 @@ require (
 	github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d // indirect
 	github.com/grafana/dataplane/sdata v0.0.9 // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
-	github.com/grafana/grafana-app-sdk v0.36.2 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.36.1 // indirect
+	github.com/grafana/grafana-app-sdk v0.35.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grafana/grafana-aws-sdk v0.38.0 // indirect
 	github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0 // indirect
@@ -330,7 +330,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pressly/goose/v3 v3.24.1 // indirect
 	github.com/prometheus/alertmanager v0.27.0 // indirect
-	github.com/prometheus/client_golang v1.22.0 // indirect
+	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/common/sigv4 v0.1.0 // indirect

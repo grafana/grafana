@@ -6,7 +6,7 @@ require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
 	github.com/json-iterator/go v1.1.12
-	github.com/prometheus/client_golang v1.22.0
+	github.com/prometheus/client_golang v1.21.1
 	github.com/prometheus/common v0.63.0
 	github.com/prometheus/prometheus v0.301.0
 	github.com/stretchr/testify v1.10.0
