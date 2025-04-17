@@ -201,17 +201,15 @@ export class TemplateSrv implements BaseTemplateSrv {
       return false;
     }
 
-    const name = this.getVariableName(target);
-
     // Scenes compatability
     if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
-      if (!name) {
-        return false;
-      }
-
-      return !!sceneGraph.lookupVariable(name, window.__grafanaSceneContext);
+      // We are just checking that this is a valid variable reference, and we are not looking up the variable
+      this.regex.lastIndex = 0;
+      const match = this.regex.exec(target);
+      return !!match;
     }
 
+    const name = this.getVariableName(target);
     const variable = name && this.getVariableAtIndex(name);
     return variable !== null && variable !== undefined;
   }
