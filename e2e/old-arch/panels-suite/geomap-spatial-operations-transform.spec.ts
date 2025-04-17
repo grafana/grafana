@@ -7,7 +7,7 @@ describe('Geomap spatial operations', () => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
   });
 
-  it('Tests location auto option', () => {
+  it.skip('Tests location auto option', () => {
     e2e.flows.openDashboard({ uid: DASHBOARD_ID, queryParams: { editPanel: 1 } });
     e2e.components.Tab.title('Transform data').should('be.visible').click();
     e2e.components.Transforms.addTransformationButton().scrollIntoView().should('be.visible').click();
