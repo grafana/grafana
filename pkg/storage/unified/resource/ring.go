@@ -115,15 +115,15 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 	}
 
 	resourceRingConfig := &resourceRingConfig{
-		KVStore:          kv.Config{Store: "memberlist"},
-		HeartbeatPeriod:  15 * time.Second,
-		HeartbeatTimeout: time.Minute,
+		KVStore:                kv.Config{Store: "memberlist"},
+		HeartbeatPeriod:        15 * time.Second,
+		HeartbeatTimeout:       time.Minute,
 		InstanceInterfaceNames: netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger),
-		InstanceID:       cfg.InstanceID,
-		InstanceAddr:     cfg.MemberlistBindAddr,
-		ListenPort:       cfg.RingListenPort,
-		InstancePort:     cfg.RingListenPort,
-		NumTokens:        128,
+		InstanceID:             cfg.InstanceID,
+		InstanceAddr:           cfg.MemberlistBindAddr,
+		ListenPort:             cfg.RingListenPort,
+		InstancePort:           cfg.RingListenPort,
+		NumTokens:              128,
 	}
 
 	dnsProviderReg := prometheus.WrapRegistererWithPrefix(
