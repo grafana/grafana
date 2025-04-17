@@ -256,6 +256,7 @@ module.exports = [
     plugins: {
       unicorn: unicornPlugin,
       react: reactPlugin,
+      '@grafana': grafanaPlugin,
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -267,6 +268,18 @@ module.exports = [
       'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
       'no-nested-ternary': 'error',
+    },
+  },
+  {
+    // Sections of codebase that have all translation markup issues fixed
+    name: 'grafana/i18n-overrides',
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
+    ignores: ['**/*.{spec,test}.tsx'],
+    rules: {
+      '@grafana/no-untranslated-strings': 'error',
     },
   },
   {
