@@ -1,8 +1,8 @@
 import { OverrideProperties } from 'type-fest';
 
-import { alertingAPI } from '@grafana/alerting';
 import { config } from '@grafana/runtime';
 
+import { alertingAPI } from '../../api.gen';
 import { EnhancedListReceiverResponse } from '../types';
 
 const { namespace } = config;
