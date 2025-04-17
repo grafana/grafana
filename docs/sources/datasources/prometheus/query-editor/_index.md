@@ -61,7 +61,7 @@ The Prometheus query editor has two modes:
 
 ![Query editor mode](/media/docs/prometheus/builder-code-v11-mode.png)
 
-Both modes are synchronized, so you can switch between them. However, if there is an issue with the query while switching modes, a warning message will appear.
+Grafana synchronizes both modes, allowing you to switch between them. Grafana also displays a warning message if it detects an issue with the query while switching modes.
 
 You can configure Prometheus-specific options in the query editor by setting several options regardless of mode.
 
@@ -136,7 +136,7 @@ There is no option to add exemplars with an **Instant** query type.
 {{< figure src="/static/img/docs/prometheus/metrics-and-labels.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and label filters" >}}
 
 When you are ready to create a query, you can choose the specific metric name from the dropdown list under **Metric**.
-The data source requests the list of available metrics from the Prometheus server based on the selected time rage.
+The data source provides the list of available metrics based on the selected time range.
 You can also enter text into the selector when the dropdown is open to search and filter the list.
 
 #### Metrics Explorer
@@ -230,6 +230,6 @@ Once you are satisfied with your query, click **Run query**.
 
 Starting with Grafana v10, the Prometheus data source supports incremental querying for live dashboards. Instead of re-querying the entire time range on each refresh, Grafana can fetch only new data since the last query.
 
-This feature can be enabled or disabled in the data source configuration or provisioning file using the `incrementalQuerying` field in `jsonData`.
+You can enable or disable this feature in the data source configuration or provisioning file using the `incrementalQuerying` field in `jsonData`.
 
 You can also control the overlap between consecutive incremental queries using the `incrementalQueryOverlapWindow` field in `jsonData`. By default, this is set to `10m` (10 minutes). Increasing the `incrementalQueryOverlapWindow` value increases the time range covered by each incremental query. This can help in environments where the most recent data may be delayed or incomplete.

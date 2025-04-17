@@ -61,7 +61,7 @@ refs:
 
 # Configure the Prometheus data source
 
-This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana ships with built-in support for Prometheus, so there's no need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](ref:add-a-data-source).
+This document provides instructions for configuring the Prometheus data source and explains the available configuration options. Grafana includes built-in support for Prometheus, so you don't need to install a plugin. For general information on adding a data source to Grafana, refer to [Add a data source](ref:add-a-data-source).
 
 ## Before you begin
 
@@ -87,7 +87,7 @@ To add the Prometheus data source, complete the following steps:
 
 {{< /shared >}}
 
-You are taken to the **Settings** tab where you will set up your Prometheus configuration.
+Grafana takes you to the **Settings** tab where you will set up your Prometheus configuration.
 
 ## Configuration options
 
@@ -201,7 +201,7 @@ Click **Manage private data source connect** to be taken to your PDC connection 
 
 Once you have configured your MongDB data source options, click **Save & test** at the bottom to test out your data source connection. 
 
-You should see a confirmation dialog box that says **what's the success message**.
+You should see a confirmation dialog box that says **Successfully queried the Prometheus API**.
 
 You can also remove a connection by clicking **Delete**.
 
@@ -243,9 +243,26 @@ Once you have provisioned a data source you cannot edit it.
               url: 'http://localhost:3000/explore?orgId=1&left=%5B%22now-1h%22,%22now%22,%22Jaeger%22,%7B%22query%22:%22$${__value.raw}%22%7D%5D'
     ```
 
+## Azure authentication settings
+
+The Prometheus data source works with Azure authentication. To configure Azure authentication refer to [Configure Azure Active Directory (AD) authentication](ref:azure-active-directory).
+
+In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](ref:configure-grafana-configuration-file-location) to locate your .ini file.
+
+Add the following setting in the **[auth]** section of the .ini configuration file :
+
+```bash
+[auth]
+azure_auth_enabled = true
+```
+
+{{% admonition type="note" %}}
+If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
+{{% /admonition %}}
+
 ## Recording rules (beta)
 
-The Prometheus data source can be configured to disable recording rules under the data source configuration or provisioning file (under `disableRecordingRules` in jsonData).
+You can configure the Prometheus data source to disable recording rules in the data source configuration or provisioning file under `disableRecordingRules` in jsonData.
 
 ## Troubleshooting configuration issues
 

@@ -86,10 +86,8 @@ refs:
 # Prometheus data source
 
 Prometheus is an open-source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting. 
-<!-- 
-If you are just getting started with Prometheus, refer to [What is Prometheus?](ref:intro-to-prometheus) -->
 
-Grafana provides native support for Prometheus, so there's no need to install a plugin. 
+Grafana provides native support for Prometheus, so you don't need to install a plugin. 
 
 The following documentation will help you get started working with Prometheus and Grafana:
 
@@ -125,7 +123,7 @@ For more information on how to query other Prometheus-compatible projects from G
 
 ## View Grafana metrics with Prometheus
 
-Grafana exposes metrics for Prometheus on the `/metrics` endpoint, and comes with a bre-built dashboard to help you start visualizing your metrics right away.
+Grafana exposes metrics for Prometheus on the `/metrics` endpoint and includes a pre-built dashboard to help you start visualizing your metrics immediately.
 
 **To import the bundled dashboard:**
 
@@ -137,30 +135,11 @@ For details about these metrics, refer to [Internal Grafana metrics](ref:set-up-
 
 ## Amazon Managed Service for Prometheus
 
-The Prometheus data source with Amazon Managed Service for Prometheus is deprecated. Use the [Amazon Managed service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. Migration steps are outlined in the linked documentation.
-
-## Azure authentication settings
-
-The Prometheus data source works with Azure authentication. To configure Azure authentication refer to [Configure Azure Active Directory (AD) authentication](ref:azure-active-directory).
-
-In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](ref:configure-grafana-configuration-file-location) to locate your .ini file.
-
- <!-- Depending on your setup, the .ini file is located [here](ref:configure-grafana-configuration-file-location). -->
-
-Add the following setting in the **[auth]** section :
-
-```bash
-[auth]
-azure_auth_enabled = true
-```
-
-{{% admonition type="note" %}}
-If you are using Azure authentication, don't enable `Forward OAuth identity`. Both methods use the same HTTP authorization headers, and the OAuth token will override your Azure credentials.
-{{% /admonition %}}
+Grafana has deprecated the Prometheus data source with Amazon Managed Service for Prometheus. Use the [Amazon Managed service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
 
 ## Get the most out of the Prometheus data source
 
-After installing and configuring Prometheus you can:
+After you install and configure Prometheus you can:
 
 - Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
 - Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/variables/)

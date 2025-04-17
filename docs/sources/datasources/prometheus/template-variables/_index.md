@@ -48,7 +48,7 @@ For an introduction to templating and template variables, refer to [Templating](
 
 ## Use query variables
 
-Grafana supports several types of variables, but `Query` variables are specifically used to query Prometheus. They can return a list of metrics, labels, label values, query results, or series.
+Grafana supports several types of variables, but Query variables are specifically used to query Prometheus. They can return a list of metrics, labels, label values, query results, or series.
 
 Select a Prometheus data source query type and enter the required inputs:
 
