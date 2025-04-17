@@ -24,8 +24,8 @@
   "exports": {
     "./package.json": "./package.json",
     ".": {
-      "import": "./src/grafana/index.ts",
-      "require": "./src/grafana/index.ts"
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
     },
     "./internal": {
       "import": "./src/internal.ts",
@@ -34,18 +34,6 @@
     "./unstable": {
       "import": "./src/unstable.ts",
       "require": "./src/unstable.ts"
-    },
-    "./vanilla/alertmanager": {
-      "import": "./src/vanilla/alertmanager/index.ts",
-      "require": "./src/vanilla/alertmanager/index.ts"
-    },
-    "./vanilla/prometheus": {
-      "import": "./src/vanilla/prometheus/index.ts",
-      "require": "./src/vanilla/prometheus/index.ts"
-    },
-    "./common": {
-      "import": "./src/common/index.ts",
-      "require": "./src/common/index.ts"
     }
   },
   "publishConfig": {

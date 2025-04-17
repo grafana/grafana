@@ -1,24 +1,6 @@
-import * as PrometheusAPI from '../grafana/types/prometheus/rules/api.mocks';
-import * as PrometheusDefinition from '../grafana/types/prometheus/rules/definitions.mocks';
-
 /**
- * These annotations have special meaning / reserved usage in Grafana.
+ * Export things here that you want to be available under @grafana/alerting/internal
  */
-export type ReservedAnnotation =
-  | 'description'
-  | 'summary'
-  | 'runbook_url'
-  | '__alertId__'
-  | '__dashboardUid__'
-  | '__panelId__';
+export { alertingAPI } from './grafana/api.gen';
 
-/**
- * Mocks are currently internal to prevent changes to the mocks to propagate to 3rd party consumers.
- */
-export const mocks = {
-  prometheus: {
-    api: PrometheusAPI,
-    definitions: PrometheusDefinition,
-  },
-  grafana: {},
-};
+export default {};
