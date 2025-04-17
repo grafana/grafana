@@ -3,6 +3,8 @@ import { SceneObject } from '@grafana/scenes';
 import { DashboardScene } from '../scene/DashboardScene';
 
 const CLONE_KEY = '-clone-';
+const PANEL_KEY = 'panel';
+const GRID_ITEM_KEY = 'grid-item';
 const CLONE_SEPARATOR = '/';
 
 const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}[1-9][0-9]*$`);
@@ -99,4 +101,34 @@ export function useHasClonedParents(scene: SceneObject): boolean {
   }
 
   return useHasClonedParents(scene.parent);
+}
+
+/**
+ * Checks if a key contains the 'panel' string
+ * @param key
+ */
+export function containsPanelKey(key: string): boolean {
+  return key.includes(PANEL_KEY);
+}
+
+/**
+ * Checks if a key contains the 'grid-item' string
+ * @param key
+ */
+export function containsGridItemKey(key: string): boolean {
+  return key.includes(GRID_ITEM_KEY);
+}
+
+/**
+ * Get original panel key when panel is repeated
+ *   panel-1-clone-0 => panel-1
+ *
+ * Tricky use case is panel id in repeated row that needs to stay the same
+ *   (id example: edfeccef-1dbc-4b22-ae2f-24b9d8f7383d-clone-0/grid-item-1/panel-1)
+ *
+ * This logic will need to be adjusted if we allow repeated panels inside repeated row
+ * @param key
+ */
+export function getOriginalRepeatedPanelKey(key: string): string {
+  return containsCloneKey(key) && !containsGridItemKey(key) ? getOriginalKey(key) : key;
 }
