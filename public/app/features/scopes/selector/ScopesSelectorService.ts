@@ -145,7 +145,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     }
 
     if (!node.path) {
-      console.warn('Node cannot be selected without path:', node.scopeName);
+      console.warn('Node cannot be selected without both path and name', node);
       return;
     }
 

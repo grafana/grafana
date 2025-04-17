@@ -29,7 +29,7 @@ describe('ScopesSelectorService', () => {
   };
 
   const mockNode: Node = {
-    name: 'test-node',
+    name: 'test-scope',
     title: 'Test Node',
     reason: NodeReason.Result,
     nodeType: 'container',
@@ -51,7 +51,7 @@ describe('ScopesSelectorService', () => {
     // Create mock instances
     apiClient = {
       fetchScope: jest.fn().mockResolvedValue(mockScope),
-      fetchMultipleScopes: jest.fn().mockResolvedValue([{ scope: mockScope, path: ['', 'test-node'] }]),
+      fetchMultipleScopes: jest.fn().mockResolvedValue([{ scope: mockScope, path: ['', 'test-scope'] }]),
       fetchNode: jest.fn().mockResolvedValue(mockNodesMap),
       fetchDashboards: jest.fn().mockResolvedValue([]),
       fetchScopeNavigations: jest.fn().mockResolvedValue([]),
@@ -96,18 +96,18 @@ describe('ScopesSelectorService', () => {
       await service.updateNode([''], true, '');
 
       const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-node'] = {
+      rootNode.nodes['test-scope'] = {
         ...mockNode,
         selectable: true,
         linkId: 'test-scope',
       };
 
-      service.toggleNodeSelect({ path: ['', 'test-node'] });
+      service.toggleNodeSelect({ path: ['', 'test-scope'] });
 
       expect(service.state.treeScopes).toEqual([
         {
           scopeName: 'test-scope',
-          path: ['', 'test-node'],
+          path: ['', 'test-scope'],
           title: 'Test Node',
         },
       ]);
@@ -118,17 +118,27 @@ describe('ScopesSelectorService', () => {
       await service.updateNode([''], true, '');
 
       const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-node'] = {
+      rootNode.nodes['test-scope'] = {
         ...mockNode,
         selectable: true,
         linkId: 'test-scope',
       };
 
       // Select the node
-      service.toggleNodeSelect({ path: ['', 'test-node'] });
+      service.toggleNodeSelect({ path: ['', 'test-scope'] });
 
       // Deselect the node
-      service.toggleNodeSelect({ path: ['', 'test-node'] });
+      service.toggleNodeSelect({ path: ['', 'test-scope'] });
+
+      expect(service.state.treeScopes).toEqual([]);
+    });
+
+    it('should deselect a node by name', async () => {
+      // Make the scope selected and applied
+      await service.changeScopes(['test-scope']);
+
+      // Deselect the node
+      service.toggleNodeSelect({ scopeName: 'test-scope' });
 
       expect(service.state.treeScopes).toEqual([]);
     });
@@ -182,7 +192,7 @@ describe('ScopesSelectorService', () => {
       expect(service.state.treeScopes).toEqual([
         {
           scopeName: 'test-scope',
-          path: ['', 'test-node'],
+          path: ['', 'test-scope'],
           title: 'test-scope',
         },
       ]);
@@ -194,13 +204,13 @@ describe('ScopesSelectorService', () => {
       await service.open();
 
       const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-node'] = {
+      rootNode.nodes['test-scope'] = {
         ...mockNode,
         selectable: true,
         linkId: 'test-scope',
       };
 
-      service.toggleNodeSelect({ path: ['', 'test-node'] });
+      service.toggleNodeSelect({ path: ['', 'test-scope'] });
       await service.closeAndApply();
 
       expect(service.state.opened).toBe(false);
@@ -213,13 +223,13 @@ describe('ScopesSelectorService', () => {
       await service.open();
 
       const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-node'] = {
+      rootNode.nodes['test-scope'] = {
         ...mockNode,
         selectable: true,
         linkId: 'test-scope',
       };
 
-      service.toggleNodeSelect({ path: ['', 'test-node'] });
+      service.toggleNodeSelect({ path: ['', 'test-scope'] });
       await service.apply();
 
       expect(service.state.opened).toBe(true);
@@ -236,7 +246,7 @@ describe('ScopesSelectorService', () => {
       expect(service.state.treeScopes).toEqual([
         {
           scopeName: 'test-scope',
-          path: ['', 'test-node'],
+          path: ['', 'test-scope'],
           title: 'test-scope',
         },
       ]);
@@ -248,13 +258,13 @@ describe('ScopesSelectorService', () => {
       await service.open();
 
       const rootNode = service.state.nodes[''];
-      rootNode.nodes['test-node'] = {
+      rootNode.nodes['test-scope'] = {
         ...mockNode,
         selectable: true,
         linkId: 'test-scope',
       };
 
-      service.toggleNodeSelect({ path: ['', 'test-node'] });
+      service.toggleNodeSelect({ path: ['', 'test-scope'] });
       await service.apply();
       await service.removeAllScopes();
 
