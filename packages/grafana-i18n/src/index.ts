@@ -25,8 +25,9 @@ export {
 export {
   addResourceBundle,
   changeLanguage,
+  getLanguage,
   getResolvedLanguage,
-  initCoreTranslations,
+  initPluginTranslations,
   initTranslations,
   t,
   Trans,

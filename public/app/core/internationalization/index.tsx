@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 
 import {
   changeLanguage as changeLanguageCore,
-  initCoreTranslations,
+  initTranslations,
   t as tCore,
   Trans as TransCore,
   TransProps,
@@ -16,7 +16,7 @@ import { loadTranslations } from './loadTranslations';
 // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
 
 export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
-  return initCoreTranslations({ language, ns: NAMESPACES, module: loadTranslations });
+  return initTranslations({ language, ns: NAMESPACES, module: loadTranslations });
 }
 
 export function changeLanguage(locale: string) {

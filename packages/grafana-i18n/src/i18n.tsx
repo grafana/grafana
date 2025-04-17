@@ -1,4 +1,4 @@
-import i18n, { InitOptions, Module, Resource, TFunction } from 'i18next';
+import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import { ReactElement } from 'react';
 // eslint-disable-next-line no-restricted-imports
@@ -6,43 +6,51 @@ import { initReactI18next, Trans as I18NextTrans } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
 import { LANGUAGES } from './languages';
-import { TransProps } from './types';
+import { TransProps, TransType } from './types';
 
 let tFunc: TFunction<string[], undefined> | undefined;
-let i18nInstance: typeof i18n;
-let pluginId: string | undefined;
+let transComponent: TransType;
 
-export async function initTranslations(id: string): Promise<{ language: string | undefined }> {
-  pluginId = id;
+export async function initPluginTranslations(id: string) {
+  console.log('initPluginTranslations', id, getI18nInstance().resolvedLanguage, getI18nInstance().options?.resources);
 
-  if (i18nInstance) {
-    return { language: i18nInstance.resolvedLanguage };
+  // If the resources are not an object, we need to initialize the plugin translations
+  if (!getI18nInstance().options?.resources || typeof getI18nInstance().options.resources !== 'object') {
+    await getI18nInstance().use(initReactI18next).init({
+      resources: {},
+      returnEmptyString: false,
+      lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
+    });
   }
 
-  return initCoreTranslations({ language: DEFAULT_LANGUAGE, ns: [pluginId], from: 'external' });
+  console.log('initPluginTranslations after', id, getI18nInstance().resolvedLanguage);
+
+  tFunc = getI18nInstance().getFixedT(null, id);
+  transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
+
+  return { language: getI18nInstance().resolvedLanguage };
+}
+
+function getI18nInstance() {
+  return i18n;
+}
+
+interface Module {
+  type: 'backend';
 }
 
 interface InitializeI18nOptions {
-  language: string;
   ns?: string[];
+  language?: string;
   module?: Module;
-  from?: 'core' | 'external';
 }
 
-export async function initCoreTranslations({
-  language,
+export async function initTranslations({
   ns,
+  language = DEFAULT_LANGUAGE,
   module,
-  from = 'core',
 }: InitializeI18nOptions): Promise<{ language: string | undefined }> {
-  if (i18nInstance) {
-    return { language: i18nInstance.resolvedLanguage };
-  }
-
-  // This is a placeholder so we can put a 'comment' in the message json files.
-  // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
-  // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
-
+  console.log('initTranslations', ns, language, module, getI18nInstance().resolvedLanguage);
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
     partialBundledLanguages: true,
@@ -62,10 +70,8 @@ export async function initCoreTranslations({
     ],
   };
 
-  i18nInstance = i18n;
-
   if (language === 'detect') {
-    i18nInstance = i18nInstance.use(LanguageDetector);
+    getI18nInstance().use(LanguageDetector);
     const detection: DetectorOptions = { order: ['navigator'], caches: [] };
     options.detection = detection;
   } else {
@@ -73,14 +79,14 @@ export async function initCoreTranslations({
   }
 
   if (module) {
-    i18nInstance.use(module).use(initReactI18next); // passes i18n down to react-i18next
+    getI18nInstance().use(module).use(initReactI18next); // passes i18n down to react-i18next
   } else {
-    i18nInstance.use(initReactI18next); // passes i18n down to react-i18next
+    getI18nInstance().use(initReactI18next); // passes i18n down to react-i18next
   }
 
   if (process.env.NODE_ENV === 'development') {
     const { default: Pseudo } = await import('i18next-pseudo');
-    i18nInstance.use(
+    getI18nInstance().use(
       new Pseudo({
         languageToPseudo: PSEUDO_LOCALE,
         enabled: true,
@@ -89,36 +95,38 @@ export async function initCoreTranslations({
     );
   }
 
-  await i18nInstance.init(options);
+  await getI18nInstance().init(options);
 
-  tFunc = i18nInstance.t;
-  if (from === 'core') {
-    window.__grafanaI18nContext = {
-      t,
-      getFixedT: i18nInstance.getFixedT,
-      Trans: TransCore,
-    };
-  }
+  tFunc = getI18nInstance().t;
+  transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={ns} {...props} />;
 
   return {
-    language: i18nInstance.resolvedLanguage,
+    language: getI18nInstance().resolvedLanguage,
   };
 }
 
+export function getLanguage() {
+  return getI18nInstance()?.language || DEFAULT_LANGUAGE;
+}
+
 export function getResolvedLanguage() {
-  return i18nInstance?.resolvedLanguage || DEFAULT_LANGUAGE;
+  return getI18nInstance()?.resolvedLanguage || DEFAULT_LANGUAGE;
 }
 
 export function getNamespaces() {
-  return i18nInstance?.options.ns;
+  return getI18nInstance()?.options.ns;
 }
 
 export async function changeLanguage(language?: string) {
-  await i18nInstance.changeLanguage(language ?? DEFAULT_LANGUAGE);
+  await getI18nInstance().changeLanguage(language ?? DEFAULT_LANGUAGE);
 }
 
-export function addResourceBundle(language: string, namespace: string, resource: Resource) {
-  i18nInstance.addResourceBundle(language, namespace, resource, undefined, true);
+type ResourceKey = string;
+type ResourceLanguage = Record<string, ResourceKey>;
+type ResourceType = Record<string, ResourceLanguage>;
+
+export function addResourceBundle(language: string, namespace: string, resource: ResourceType) {
+  getI18nInstance().addResourceBundle(language, namespace, resource, undefined, true);
 }
 
 export function t(id: string, defaultMessage: string, values?: Record<string, unknown>) {
@@ -133,34 +141,17 @@ export function t(id: string, defaultMessage: string, values?: Record<string, un
       throw new Error('t() was called before i18n was initialized');
     }
 
-    tFunc = i18n.t;
+    tFunc = getI18nInstance().t;
   }
 
   return tFunc(id, defaultMessage, values);
 }
 
 export function useTranslate() {
-  if (!pluginId) {
-    return window.__grafanaI18nContext?.t ?? t;
-  }
-
-  if (window.__grafanaI18nContext?.getFixedT) {
-    return window.__grafanaI18nContext.getFixedT(null, pluginId);
-  }
-
-  return i18nInstance.getFixedT(null, pluginId);
+  return t;
 }
 
-const TransCore = (props: TransProps): ReactElement => {
-  return <I18NextTrans shouldUnescape ns={getNamespaces()} {...props} />;
-};
-
 export const Trans = (props: TransProps): ReactElement => {
-  const Component = window.__grafanaI18nContext?.Trans ?? TransCore;
-
-  if (pluginId) {
-    return <Component {...props} ns={pluginId} />;
-  }
-
+  const Component = transComponent ?? I18NextTrans;
   return <Component {...props} />;
 };
