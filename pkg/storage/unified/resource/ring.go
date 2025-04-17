@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/kv/codec"
 	"github.com/grafana/dskit/kv/memberlist"
+	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	"github.com/grafana/dskit/ring/client"
 	"github.com/prometheus/client_golang/prometheus"
@@ -117,6 +118,7 @@ func initRing(cfg ShardingConfig, logger log.Logger, registerer prometheus.Regis
 		KVStore:          kv.Config{Store: "memberlist"},
 		HeartbeatPeriod:  15 * time.Second,
 		HeartbeatTimeout: time.Minute,
+		InstanceInterfaceNames: netutil.PrivateNetworkInterfacesWithFallback([]string{"eth0", "en0"}, logger),
 		InstanceID:       cfg.InstanceID,
 		InstanceAddr:     cfg.MemberlistBindAddr,
 		ListenPort:       cfg.RingListenPort,
