@@ -443,8 +443,6 @@ func (s *server) enableSharding(cfg ShardingConfig) {
 			// mux.Handle("/kv", memberlistsvc)
 		}()
 	}
-
-	return
 }
 
 func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
