@@ -1209,7 +1209,7 @@ func TestLocalRepository_Read(t *testing.T) {
 
 				// Create a directory to read
 				dirPath := filepath.Join(tempDir, "test-dir")
-				require.NoError(t, os.Mkdir(dirPath, 0755))
+				require.NoError(t, os.Mkdir(dirPath, 0750))
 
 				repo := &localRepository{
 					config: &provisioning.Repository{
