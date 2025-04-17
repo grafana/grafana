@@ -21,6 +21,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -593,9 +594,12 @@ type listIter struct {
 	err error
 
 	// The row
+	guid      string
 	rv        int64
 	value     []byte
 	namespace string
+	resource  string
+	group     string
 	name      string
 	folder    string
 }
@@ -639,7 +643,7 @@ func (l *listIter) Value() []byte {
 func (l *listIter) Next() bool {
 	if l.rows.Next() {
 		l.offset++
-		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.folder, &l.value)
+		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.resource, &l.group, &l.name, &l.folder, &l.value)
 		return true
 	}
 	return false
