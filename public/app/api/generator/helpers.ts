@@ -41,10 +41,7 @@ export const getFilesToFormat = (groupName: string, isEnterprise = false) => {
     `${apiClientBasePath}/${groupName}/baseAPI.ts`,
     `${apiClientBasePath}/${groupName}/index.ts`,
     generateScriptPath,
-    ...(isEnterprise ? [] : [
-      `public/app/core/reducers/root.ts`,
-      `public/app/store/configureStore.ts`,
-    ]),
+    ...(isEnterprise ? [] : [`public/app/core/reducers/root.ts`, `public/app/store/configureStore.ts`]),
   ];
 };
 
