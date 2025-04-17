@@ -116,6 +116,7 @@ func (r sqlStatsRequest) Validate() error {
 
 type historyPollResponse struct {
 	Key             resource.ResourceKey
+	GUID            string
 	ResourceVersion int64
 	PreviousRV      *int64
 	Value           []byte

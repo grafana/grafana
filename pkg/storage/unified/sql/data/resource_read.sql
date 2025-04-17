@@ -1,4 +1,5 @@
 SELECT
+    {{ .Ident "guid" | .Into .Response.GUID }},
     {{ .Ident "namespace" | .Into .Response.Key.Namespace }},
     {{ .Ident "group" | .Into .Response.Key.Group }},
     {{ .Ident "resource" | .Into .Response.Key.Resource }},
