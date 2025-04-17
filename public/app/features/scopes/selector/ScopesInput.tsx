@@ -85,6 +85,7 @@ export function ScopesInput({ nodes, scopes, disabled, loading, onInputClick, on
             <IconButton
               aria-label={t('scopes.selector.input.removeAll', 'Remove all scopes')}
               name="times"
+              data-testid="scopes-selector-input-clear"
               onClick={() => onRemoveAllClick()}
             />
           ) : undefined

@@ -14,8 +14,7 @@ export interface ScopesTreeHeadlineProps {
 
 export function ScopesTreeHeadline({ anyChildExpanded, query, resultsNodes }: ScopesTreeHeadlineProps) {
   const styles = useStyles2(getStyles);
-
-  if (anyChildExpanded) {
+  if (anyChildExpanded || (resultsNodes.some((n) => n.nodeType === 'container') && !query)) {
     return null;
   }
 

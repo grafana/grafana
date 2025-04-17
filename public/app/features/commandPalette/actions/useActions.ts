@@ -5,6 +5,7 @@ import { useSelector } from 'app/types';
 import { CommandPaletteAction } from '../types';
 
 import { getRecentDashboardActions } from './dashboardActions';
+import { getRecentScopesActions } from './recentScopesActions';
 import getStaticActions from './staticActions';
 import useExtensionActions from './useExtensionActions';
 
@@ -14,6 +15,7 @@ export default function useActions(searchQuery: string) {
   const extensionActions = useExtensionActions();
 
   const navBarTree = useSelector((state) => state.navBarTree);
+  const recentScopesActions = getRecentScopesActions();
 
   // Load standard static actions
   useEffect(() => {
@@ -32,5 +34,5 @@ export default function useActions(searchQuery: string) {
     }
   }, [searchQuery]);
 
-  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions];
+  return searchQuery ? navTreeActions : [...recentDashboardActions, ...navTreeActions, ...recentScopesActions];
 }

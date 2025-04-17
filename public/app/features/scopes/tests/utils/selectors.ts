@@ -5,6 +5,7 @@ import { ScopesSelectorService } from '../../selector/ScopesSelectorService';
 
 const selectors = {
   tree: {
+    recentScopesSection: 'scopes-selector-recent-scopes-section',
     search: 'scopes-tree-search',
     headline: 'scopes-tree-headline',
     select: (nodeId: string, type: 'result' | 'persisted') => `scopes-tree-${type}-${nodeId}-checkbox`,
@@ -18,6 +19,7 @@ const selectors = {
     loading: 'scopes-selector-loading',
     apply: 'scopes-selector-apply',
     cancel: 'scopes-selector-cancel',
+    clear: 'scopes-selector-input-clear',
   },
   dashboards: {
     expand: 'scopes-dashboards-expand',
@@ -34,9 +36,15 @@ const selectors = {
 };
 
 export const getSelectorInput = () => screen.getByTestId<HTMLInputElement>(selectors.selector.input);
+export const getSelectorClear = () => screen.getByTestId(selectors.selector.clear);
 export const querySelectorApply = () => screen.queryByTestId(selectors.selector.apply);
 export const getSelectorApply = () => screen.getByTestId(selectors.selector.apply);
 export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
+
+export const getRecentScopesSection = () => screen.getByTestId(selectors.tree.recentScopesSection);
+export const queryRecentScopesSection = () => screen.queryByTestId(selectors.tree.recentScopesSection);
+export const getRecentScopeSet = (scope: string) => screen.getByRole('button', { name: scope });
+export const queryRecentScopeSet = (scope: string) => screen.queryByRole('button', { name: scope });
 
 export const getDashboardsExpand = () => screen.getByTestId(selectors.dashboards.expand);
 export const getDashboardsContainer = () => screen.getByTestId(selectors.dashboards.container);
@@ -63,6 +71,8 @@ export const getResultApplicationsGrafanaSelect = () =>
   screen.getByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'result'));
 export const queryPersistedApplicationsGrafanaSelect = () =>
   screen.queryByTestId<HTMLInputElement>(selectors.tree.select('applications-grafana', 'persisted'));
+export const getPersistedApplicationsGrafanaSelect = () =>
+  screen.getByTestId(selectors.tree.select('applications-grafana', 'persisted'));
 export const queryResultApplicationsMimirSelect = () =>
   screen.queryByTestId(selectors.tree.select('applications-mimir', 'result'));
 export const getResultApplicationsMimirSelect = () =>

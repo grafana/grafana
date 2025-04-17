@@ -7,6 +7,8 @@ import { getEmptyScopeObject } from '../utils';
 
 import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
 
+const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
+
 export interface ScopesSelectorServiceState {
   loading: boolean;
 
@@ -188,10 +190,40 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
     selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
+    if (selectedScopes.length > 0) {
+      this.addRecentScopes(selectedScopes);
+    }
     this.updateState({ selectedScopes, loading: false });
   };
 
   public removeAllScopes = () => this.setNewScopes([]);
+
+  private addRecentScopes = (scopes: SelectedScope[]) => {
+    if (scopes.length === 0) {
+      return;
+    }
+
+    const RECENT_SCOPES_MAX_LENGTH = 5;
+
+    const recentScopes = this.getRecentScopes();
+    recentScopes.unshift(scopes);
+    localStorage.setItem(RECENT_SCOPES_KEY, JSON.stringify(recentScopes.slice(0, RECENT_SCOPES_MAX_LENGTH - 1)));
+  };
+
+  public getRecentScopes = (): SelectedScope[][] => {
+    const recentScopes = JSON.parse(localStorage.getItem(RECENT_SCOPES_KEY) || '[]');
+    // TODO: Make type safe
+    // Filter out the current selection from recent scopes to avoid duplicates
+    const filteredScopes = recentScopes.filter((scopes: SelectedScope[]) => {
+      if (scopes.length !== this.state.selectedScopes.length) {
+        return true;
+      }
+      const scopeSet = new Set(scopes.map((s) => s.scope.metadata.name));
+      return !this.state.selectedScopes.every((s) => scopeSet.has(s.scope.metadata.name));
+    });
+
+    return filteredScopes.map((scopes: SelectedScope[]) => scopes);
+  };
 
   /**
    * Opens the scopes selector drawer and loads the root nodes if they are not loaded yet.
