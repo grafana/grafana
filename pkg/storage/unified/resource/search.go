@@ -87,15 +87,16 @@ const tracingPrexfixSearch = "unified_search."
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer       trace.Tracer
-	log          *slog.Logger
-	storage      StorageBackend
-	search       SearchBackend
-	indexMetrics *BleveIndexMetrics
-	access       types.AccessClient
-	builders     *builderCache
-	initWorkers  int
-	initMinSize  int
+	tracer               trace.Tracer
+	log                  *slog.Logger
+	storage              StorageBackend
+	search               SearchBackend
+	indexMetrics         *BleveIndexMetrics
+	access               types.AccessClient
+	builders             *builderCache
+	initWorkers          int
+	initMinSize          int
+	indexLatencyObserver IndexLatencyObserver
 }
 
 var (
@@ -117,14 +118,15 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	support = &searchSupport{
-		access:       access,
-		tracer:       tracer,
-		storage:      storage,
-		search:       opts.Backend,
-		log:          slog.Default().With("logger", "resource-search"),
-		initWorkers:  opts.WorkerThreads,
-		initMinSize:  opts.InitMinCount,
-		indexMetrics: indexMetrics,
+		access:               access,
+		tracer:               tracer,
+		storage:              storage,
+		search:               opts.Backend,
+		log:                  slog.Default().With("logger", "resource-search"),
+		initWorkers:          opts.WorkerThreads,
+		initMinSize:          opts.InitMinCount,
+		indexMetrics:         indexMetrics,
+		indexLatencyObserver: opts.IndexLatencyObserver,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -486,6 +488,9 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	}
 	if s.indexMetrics != nil {
 		s.indexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+	}
+	if s.indexLatencyObserver != nil {
+		s.indexLatencyObserver.Observe(evt, doc, latencySeconds)
 	}
 }
 

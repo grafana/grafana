@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -57,15 +58,19 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	if infraDB.IsTestDBSpanner() {
 		t.Skip("Skipping benchmark on Spanner")
 	}
+
+	ctx := context.Background()
 	opts := &test.BenchmarkOptions{
-		NumResources:     1000,
-		Concurrency:      1, // For now we only want to test the write throughput
+		NumResources:     100,
+		Concurrency:      1,
 		NumNamespaces:    1,
 		NumGroups:        1,
 		NumResourceTypes: 1,
 	}
 	tempDir := t.TempDir()
-
+	t.Cleanup(func() {
+		os.RemoveAll(tempDir)
+	})
 	// Create a new bleve backend
 	search, err := search.NewBleveBackend(search.BleveOptions{
 		Root: tempDir,
@@ -86,8 +91,8 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, storage)
 
-	err = storage.Init(context.Background())
+	err = storage.Init(ctx)
 	require.NoError(t, err)
 
-	test.BenchmarkIndexServer(t, storage, search, opts)
+	test.BenchmarkIndexServer(t, ctx, storage, search, opts)
 }

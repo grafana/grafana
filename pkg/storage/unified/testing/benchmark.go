@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 // BenchmarkOptions configures the benchmark parameters
@@ -307,16 +308,122 @@ func BenchmarkSearchBackend(tb testing.TB, backend resource.SearchBackend, opts 
 	tb.Logf("P99 Latency: %v", result.P99Latency)
 }
 
-func BenchmarkIndexServer(tb testing.TB, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts *BenchmarkOptions) {
+func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts *BenchmarkOptions) {
+	// Create a latency observer to track index latencies
+	latencies := make([]float64, 0, opts.NumResources)
+	latencyObserver := &testIndexLatencyObserver{
+		latencies: &latencies,
+	}
+
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 		Search: resource.SearchOptions{
-			Backend: searchBackend,
+			Backend:              searchBackend,
+			IndexLatencyObserver: latencyObserver,
+			Resources:            &testDocumentBuilderSupplier{opts: opts},
 		},
 	})
 	require.NoError(tb, err)
 	require.NotNil(tb, server)
 
-	// TODO: Implement
+	// Run the storage backend benchmark write throughput to create events
+	var result *BenchmarkResult
+	go func() {
+		result, err = runStorageBackendBenchmark(ctx, backend, opts)
+		require.NoError(tb, err)
+	}()
 
+	// Wait for all events to be processed
+	// We expect the same number of latencies as written events
+	for len(latencies) < opts.NumResources {
+		tb.Logf("Waiting for %d latencies\n", opts.NumResources-len(latencies))
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	// Calculate index latency percentiles
+	sort.Float64s(latencies)
+	var p50, p90, p99 float64
+	if len(latencies) > 0 {
+		p50 = latencies[len(latencies)*50/100]
+		p90 = latencies[len(latencies)*90/100]
+		p99 = latencies[len(latencies)*99/100]
+	}
+
+	// Report metrics if running a benchmark
+	if b, ok := tb.(*testing.B); ok {
+		b.ReportMetric(result.Throughput, "writes/sec")
+		b.ReportMetric(float64(result.P50Latency.Milliseconds()), "p50-latency-ms")
+		b.ReportMetric(float64(result.P90Latency.Milliseconds()), "p90-latency-ms")
+		b.ReportMetric(float64(result.P99Latency.Milliseconds()), "p99-latency-ms")
+		b.ReportMetric(p50, "p50-index-latency-s")
+		b.ReportMetric(p90, "p90-index-latency-s")
+		b.ReportMetric(p99, "p99-index-latency-s")
+	}
+
+	// Log results for better visibility
+	tb.Logf("Benchmark Configuration: Workers=%d, Resources=%d, Namespaces=%d, Groups=%d, Resource Types=%d",
+		opts.Concurrency, opts.NumResources, opts.NumNamespaces, opts.NumGroups, opts.NumResourceTypes)
+	tb.Logf("")
+	tb.Logf("Storage Benchmark Results:")
+	tb.Logf("Total Duration: %v", result.TotalDuration)
+	tb.Logf("Storage Write Count: %d", result.WriteCount)
+	tb.Logf("Storage Write Throughput: %.2f writes/sec", result.Throughput)
+	tb.Logf("P50 Latency: %v", result.P50Latency)
+	tb.Logf("P90 Latency: %v", result.P90Latency)
+	tb.Logf("P99 Latency: %v", result.P99Latency)
+	tb.Logf("")
+	tb.Logf("Index Latency Results:")
+	tb.Logf("P50 Index Latency: %.3fs", p50)
+	tb.Logf("P90 Index Latency: %.3fs", p90)
+	tb.Logf("P99 Index Latency: %.3fs", p99)
+}
+
+// testIndexLatencyObserver implements IndexLatencyObserver for testing
+type testIndexLatencyObserver struct {
+	latencies *[]float64
+}
+
+func (o *testIndexLatencyObserver) Observe(evt *resource.WrittenEvent, doc *resource.IndexableDocument, latency float64) {
+	*o.latencies = append(*o.latencies, latency)
+}
+
+// testDocumentBuilder implements DocumentBuilder for testing
+type testDocumentBuilder struct{}
+
+func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+	fmt.Printf("Building document for %s\n", key.Name)
+	return &resource.IndexableDocument{
+		Key:   key,
+		Title: fmt.Sprintf("Document %s", key.Name),
+		Tags:  []string{"test", "benchmark"},
+		Fields: map[string]interface{}{
+			"value": string(value),
+		},
+	}, nil
+}
+
+// testDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
+type testDocumentBuilderSupplier struct {
+	opts *BenchmarkOptions
+}
+
+func (s *testDocumentBuilderSupplier) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
+	builders := make([]resource.DocumentBuilderInfo, 0, s.opts.NumGroups*s.opts.NumResourceTypes)
+
+	// Add builders for all possible group/resource combinations
+	for g := 0; g < s.opts.NumGroups; g++ {
+		group := fmt.Sprintf("group-%d", g)
+		for r := 0; r < s.opts.NumResourceTypes; r++ {
+			resourceType := fmt.Sprintf("resource-%d", r)
+			builders = append(builders, resource.DocumentBuilderInfo{
+				GroupResource: schema.GroupResource{
+					Group:    group,
+					Resource: resourceType,
+				},
+				Builder: &testDocumentBuilder{},
+			})
+		}
+	}
+
+	return builders, nil
 }
