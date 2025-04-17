@@ -7,17 +7,17 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func TestCalculateChanges(t *testing.T) {
@@ -53,20 +53,20 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
 					},
-					Spec: v0alpha1.RepositorySpec{
-						GitHub: &v0alpha1.GitHubRepositoryConfig{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
 				})
 				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -126,20 +126,20 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
 					},
-					Spec: v0alpha1.RepositorySpec{
-						GitHub: &v0alpha1.GitHubRepositoryConfig{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
 				})
 				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -197,20 +197,20 @@ func TestCalculateChanges(t *testing.T) {
 
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
 					},
-					Spec: v0alpha1.RepositorySpec{
-						GitHub: &v0alpha1.GitHubRepositoryConfig{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
 				})
 				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -258,7 +258,7 @@ func TestCalculateChanges(t *testing.T) {
 		{
 			name: "parser factory error",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
@@ -276,7 +276,7 @@ func TestCalculateChanges(t *testing.T) {
 		{
 			name: "file read error",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
@@ -306,7 +306,7 @@ func TestCalculateChanges(t *testing.T) {
 		{
 			name: "parse error",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
@@ -343,7 +343,7 @@ func TestCalculateChanges(t *testing.T) {
 		{
 			name: "dry run error",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
@@ -375,7 +375,7 @@ func TestCalculateChanges(t *testing.T) {
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
 				parsed := &resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -441,20 +441,20 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
 					},
-					Spec: v0alpha1.RepositorySpec{
-						GitHub: &v0alpha1.GitHubRepositoryConfig{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
 				})
 				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -514,7 +514,7 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
@@ -522,7 +522,7 @@ func TestCalculateChanges(t *testing.T) {
 				})
 				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -565,7 +565,7 @@ func TestCalculateChanges(t *testing.T) {
 		{
 			name: "deleted file",
 			setupMocks: func(parser *resources.MockParser, reader *repository.MockReader, progress *jobs.MockJobProgressRecorder, renderer *MockScreenshotRenderer, parserFactory *resources.MockParserFactory) {
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
@@ -614,29 +614,29 @@ func TestCalculateChanges(t *testing.T) {
 				meta, _ := utils.MetaAccessor(obj)
 
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(true)
-				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo v0alpha1.ResourceRepositoryInfo) bool {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
 					return repo.Namespace == "x" && repo.Name == "y"
 				}), "d/the:uid/hello-world", mock.Anything).Return("", fmt.Errorf("invalid URL"))
-				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo v0alpha1.ResourceRepositoryInfo) bool {
+				renderer.On("RenderScreenshot", mock.Anything, mock.MatchedBy(func(repo provisioning.ResourceRepositoryInfo) bool {
 					return repo.Namespace == "x" && repo.Name == "y"
 				}), "admin/provisioning/y/dashboard/preview/path/to/file.json", mock.Anything).Return("", fmt.Errorf("invalid preview URL"))
 
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
 					},
-					Spec: v0alpha1.RepositorySpec{
-						GitHub: &v0alpha1.GitHubRepositoryConfig{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
 				})
 				parser.On("Parse", mock.Anything, finfo).Return(&resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -695,20 +695,20 @@ func TestCalculateChanges(t *testing.T) {
 				renderer.On("IsAvailable", mock.Anything, mock.Anything).Return(false)
 				progress.On("SetMessage", mock.Anything, "process path/to/file.json").Return()
 				reader.On("Read", mock.Anything, "path/to/file.json", "ref").Return(finfo, nil)
-				reader.On("Config").Return(&v0alpha1.Repository{
+				reader.On("Config").Return(&provisioning.Repository{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      "test-repo",
 						Namespace: "x",
 					},
-					Spec: v0alpha1.RepositorySpec{
-						GitHub: &v0alpha1.GitHubRepositoryConfig{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
 							GenerateDashboardPreviews: true,
 						},
 					},
 				})
 				parsed := &resources.ParsedResource{
 					Info: finfo,
-					Repo: v0alpha1.ResourceRepositoryInfo{
+					Repo: provisioning.ResourceRepositoryInfo{
 						Namespace: "x",
 						Name:      "y",
 					},
@@ -761,7 +761,7 @@ func TestCalculateChanges(t *testing.T) {
 				return "http://host/"
 			})
 
-			pullRequest := v0alpha1.PullRequestJobOptions{
+			pullRequest := provisioning.PullRequestJobOptions{
 				Ref: "ref",
 				PR:  123,
 				URL: "http://github.com/pr/",
