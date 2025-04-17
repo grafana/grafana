@@ -16,7 +16,7 @@ export const ExportDashboardButton = ({ dashboard }: ToolbarActionProps) => (
     menu={() => <ExportMenu dashboard={dashboard} />}
     groupTestId={newExportButtonSelector.container}
     buttonLabel={t('dashboard.toolbar.new.export.title', 'Export')}
-    buttonTooltip={t('dashboard.toolbar.new.export.tooltip', 'Export as JSON')}
+    buttonTooltip={t('dashboard.toolbar.new.export.tooltip', 'Export as file')}
     buttonTestId={newExportButtonSelector.container}
     onButtonClick={() => {
       locationService.partial({ shareView: shareDashboardType.export });

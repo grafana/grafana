@@ -41,7 +41,7 @@ export default function ExportMenu({ dashboard }: { dashboard: DashboardScene })
       shareId: shareDashboardType.export,
       testId: newExportButtonSelector.exportAsJson,
       icon: 'arrow',
-      label: t('share-dashboard.menu.export-json-title', 'Export as JSON'),
+      label: t('share-dashboard.menu.export-json-title', 'Export as file'),
       renderCondition: true,
       onClick: () => onMenuItemClick(shareDashboardType.export),
     });

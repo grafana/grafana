@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import yaml from 'yaml';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -31,20 +32,23 @@ export class ExportAsJson extends ShareExportTab {
   static Component = ExportAsJsonRenderer;
 
   public getTabLabel(): string {
-    return t('export.json.title', 'Export dashboard JSON');
+    return t('export.json.title', 'Export dashboard');
   }
 }
 
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   const styles = useStyles2(getStyles);
-  const { isSharingExternally } = model.useState();
+  const { isSharingExternally, isViewingYAML } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
+
     return json;
   }, [isSharingExternally]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
+  const stringifiedDashboardYaml = yaml.stringify(dashboardJson.value?.json);
+  const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYaml : stringifiedDashboardJson;
   const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
   const isV2Dashboard = dashboardJson.value?.json && 'elements' in dashboardJson.value.json;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
@@ -56,24 +60,38 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   };
 
   const switchExportLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
+  const switchYamlLabel = t('export.json.export-yaml', 'Export YAML');
 
   return (
     <div data-testid={selector.container} className={styles.container}>
       <p>
         <Trans i18nKey="export.json.info-text">
-          Copy or download a JSON file containing the JSON of your dashboard
+          Copy or download a file containing the definition of your dashboard
         </Trans>
       </p>
+
       <Stack gap={2} direction="column">
-        <Stack gap={1}>
-          <Switch
-            label={switchExportLabel}
-            data-testid={selector.exportExternallyToggle}
-            id="export-externally-toggle"
-            value={isSharingExternally}
-            onChange={model.onShareExternallyChange}
-          />
-          <Label>{switchExportLabel}</Label>
+        <Stack gap={1} direction="column">
+          <Stack gap={1} alignItems="start">
+            <Switch
+              label={switchExportLabel}
+              data-testid={selector.exportExternallyToggle}
+              id="export-externally-toggle"
+              value={Boolean(isSharingExternally)}
+              onChange={model.onShareExternallyChange}
+            />
+            <Label>{switchExportLabel}</Label>
+          </Stack>
+          <Stack gap={1} alignItems="start">
+            <Switch
+              label={switchYamlLabel}
+              data-testid={selector.exportExternallyToggle}
+              id="export-yaml-toggle"
+              value={Boolean(isViewingYAML)}
+              onChange={model.onViewYAML}
+            />
+            <Label>{switchYamlLabel}</Label>
+          </Stack>
         </Stack>
 
         {showV2LibPanelAlert && (
@@ -103,8 +121,8 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
             if (stringifiedDashboardJson) {
               return (
                 <CodeEditor
-                  value={stringifiedDashboardJson}
-                  language="json"
+                  value={stringifiedDashboard}
+                  language={isViewingYAML ? 'yaml' : 'json'}
                   showLineNumbers={true}
                   showMiniMap={false}
                   height={height}

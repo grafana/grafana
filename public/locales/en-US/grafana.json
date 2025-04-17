@@ -3558,7 +3558,7 @@
         "export": {
           "arrow": "Export",
           "title": "Export",
-          "tooltip": "Export as JSON"
+          "tooltip": "Export as file"
         },
         "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
@@ -4899,8 +4899,9 @@
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
-      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Export dashboard JSON"
+      "export-yaml": "Export YAML",
+      "info-text": "Copy or download a file containing the definition of your dashboard",
+      "title": "Export dashboard"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -7842,7 +7843,7 @@
   },
   "share-dashboard": {
     "menu": {
-      "export-json-title": "Export as JSON",
+      "export-json-title": "Export as file",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
       "share-snapshot-title": "Share snapshot"

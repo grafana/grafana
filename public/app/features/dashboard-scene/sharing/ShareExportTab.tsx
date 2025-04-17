@@ -1,6 +1,7 @@
 import saveAs from 'file-saver';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
+import yaml from 'yaml';
 
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
@@ -19,6 +20,7 @@ import { SceneShareTabState, ShareView } from './types';
 export interface ShareExportTabState extends SceneShareTabState {
   isSharingExternally?: boolean;
   isViewingJSON?: boolean;
+  isViewingYAML?: boolean;
 }
 
 export class ShareExportTab extends SceneObjectBase<ShareExportTabState> implements ShareView {
@@ -46,6 +48,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public onViewJSON = () => {
     this.setState({
       isViewingJSON: !this.state.isViewingJSON,
+    });
+  };
+
+  public onViewYAML = () => {
+    this.setState({
+      isViewingYAML: !this.state.isViewingYAML,
     });
   };
 
@@ -80,9 +88,9 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public onSaveAsFile = async () => {
     const dashboard = await this.getExportableDashboardJson();
     const dashboardJsonPretty = JSON.stringify(dashboard.json, null, 2);
-    const { isSharingExternally } = this.state;
+    const { isSharingExternally, isViewingYAML } = this.state;
 
-    const blob = new Blob([dashboardJsonPretty], {
+    const blob = new Blob([isViewingYAML ? yaml.stringify(dashboard.json) : dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
     });
 
@@ -91,7 +99,8 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     if ('title' in dashboard.json && dashboard.json.title) {
       title = dashboard.json.title;
     }
-    saveAs(blob, `${title}-${time}.json`);
+    const extension = isViewingYAML ? 'yaml' : 'json';
+    saveAs(blob, `${title}-${time}.${extension}`);
     DashboardInteractions.exportDownloadJsonClicked({
       externally: isSharingExternally,
     });
