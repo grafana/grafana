@@ -64,3 +64,14 @@ export class ObjectsReorderedOnCanvasEvent extends BusEventWithPayload<SceneObje
 export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneObject> {
   static type = 'conditional-rendering-changed';
 }
+
+export interface DashboardEditActionEventPayload {
+  sceneObj: SceneObject;
+  description?: string;
+  perform: () => void;
+  undo: () => void;
+}
+
+export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditActionEventPayload> {
+  static type = 'dashboard-edit-action';
+}

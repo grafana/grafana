@@ -185,6 +185,8 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     if (withChanges) {
       this._prevRepeatValues = undefined;
     }
+
+    this.performRepeat();
   }
 
   public scrollIntoView() {

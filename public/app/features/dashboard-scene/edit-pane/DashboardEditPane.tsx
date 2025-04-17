@@ -23,8 +23,11 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
 import { ElementSelection } from './ElementSelection';
+import { handleEditAction } from './handleEditAction';
 import {
   ConditionalRenderingChangedEvent,
+  DashboardEditActionEvent,
+  DashboardEditActionEventPayload,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
@@ -34,11 +37,13 @@ import { useEditableElement } from './useEditableElement';
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
   selectionContext: ElementSelectionContextState;
+  actions: DashboardEditActionEventPayload[];
 }
 
 export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   public constructor() {
     super({
+      actions: [],
       selectionContext: {
         enabled: false,
         selected: [],
@@ -74,6 +79,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     this._subs.add(
       dashboard.subscribeToEvent(ConditionalRenderingChangedEvent, ({ payload }) => {
         this.forceRender();
+      })
+    );
+
+    this._subs.add(
+      dashboard.subscribeToEvent(DashboardEditActionEvent, ({ payload }) => {
+        this.recordEditAction(payload);
       })
     );
   }
@@ -171,6 +182,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private newObjectAddedToCanvas(obj: SceneObject) {
     this.selectObject(obj, obj.state.key!);
     this.state.selection!.markAsNewElement();
+  }
+
+  private recordEditAction(payload: DashboardEditActionEventPayload) {
+    this.state.actions.push(payload);
+    handleEditAction(payload);
   }
 }
 
