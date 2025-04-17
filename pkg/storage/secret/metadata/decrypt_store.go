@@ -8,6 +8,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -32,7 +33,13 @@ func ProvideDecryptStorage(
 		return nil, fmt.Errorf("failed to get keepers: %w", err)
 	}
 
-	return &decryptStorage{keeperMetadataStorage: keeperMetadataStorage, keepers: keepers, secureValueMetadataStorage: secureValueMetadataStorage, allowList: allowList}, nil
+	return &decryptStorage{
+		keeperMetadataStorage:      keeperMetadataStorage,
+		keepers:                    keepers,
+		secureValueMetadataStorage: secureValueMetadataStorage,
+		allowList:                  allowList,
+		log:                        log.New("decrypt-storage"),
+	}, nil
 }
 
 // decryptStorage is the actual implementation of the decrypt storage.
@@ -41,6 +48,7 @@ type decryptStorage struct {
 	keepers                    map[contracts.KeeperType]contracts.Keeper
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	allowList                  contracts.DecryptAllowList
+	log                        log.Logger
 }
 
 // Decrypt decrypts a secure value from the keeper.
@@ -58,7 +66,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotFound
 	}
 
-	authorized := s.authorize(authInfo, sv.Spec.Decrypters)
+	identity, authorized := s.authorize(authInfo, sv.Spec.Decrypters)
 	if !authorized {
 		return "", contracts.ErrDecryptNotAuthorized
 	}
@@ -78,11 +86,13 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptFailed
 	}
 
+	s.log.Info("Audit log:", "operation", "decrypt_secret", "namespace", namespace, "secret_name", name, "decrypter_identity", identity)
+
 	return exposedValue, nil
 }
 
 // authorize checks whether the auth info token has the right permissions to decrypt the secure value.
-func (s *decryptStorage) authorize(authInfo claims.AuthInfo, svDecrypters []string) bool {
+func (s *decryptStorage) authorize(authInfo claims.AuthInfo, svDecrypters []string) (string, bool) {
 	tokenPermissions := authInfo.GetTokenPermissions()
 
 	tokenActors := make(map[string]struct{}, 0)
@@ -121,7 +131,7 @@ func (s *decryptStorage) authorize(authInfo claims.AuthInfo, svDecrypters []stri
 	// If we arrived here and the token actors is empty, it means the permissions either have an invalid format,
 	// or it didn't pass the allow list, meaning no allowed decryptor.
 	if len(tokenActors) == 0 {
-		return false
+		return "", false
 	}
 
 	// TEMPORARY: while we still need to mix permission and identity, we can use this
@@ -133,12 +143,14 @@ func (s *decryptStorage) authorize(authInfo claims.AuthInfo, svDecrypters []stri
 	// Check whether at least one of declared token actors matches the allowed decrypters from the SecureValue.
 	allowed := false
 
+	var identity string
 	for _, decrypter := range svDecrypters {
 		if _, exists := tokenActors[decrypter]; exists {
 			allowed = true
+			identity = decrypter
 			break
 		}
 	}
 
-	return allowed
+	return identity, allowed
 }
