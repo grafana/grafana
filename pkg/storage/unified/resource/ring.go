@@ -59,7 +59,6 @@ func (cfg *resourceRingConfig) toLifecyclerConfig(logger log.Logger) (ring.Basic
 	instancePort := ring.GetInstancePort(cfg.InstancePort, cfg.ListenPort)
 
 	return ring.BasicLifecyclerConfig{
-		ID:                  cfg.InstanceID,
 		Addr:                fmt.Sprintf("%s:%d", instanceAddr, instancePort),
 		HeartbeatPeriod:     cfg.HeartbeatPeriod,
 		HeartbeatTimeout:    cfg.HeartbeatTimeout,
