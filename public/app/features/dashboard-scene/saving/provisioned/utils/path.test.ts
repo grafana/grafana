@@ -17,7 +17,7 @@ describe('generatePath', () => {
       timestamp,
     });
 
-    expect(result).toBe('new-dashboard-2023-05-15-abcde.json');
+    expect(result).toBe('new-dashboard-2023-05-15-abcde.yaml');
   });
 
   it('should use pathFromAnnotation when provided', () => {
