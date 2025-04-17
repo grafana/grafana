@@ -13,11 +13,17 @@ XSSWL.iframe = ['src', 'width', 'height'];
 
 const sanitizeTextPanelWhitelist = new xss.FilterXSS({
   // Add sandbox attribute to iframe tags if an attribute is allowed.
-  onTagAttr: function (tag, name, value, isWhiteAttr) {
+  onTagAttr(tag, name, value, isWhiteAttr) {
     if (tag === 'iframe') {
       return isWhiteAttr
         ? ` ${name}="${xss.escapeAttrValue(sanitizeUrl(value))}" sandbox credentialless referrerpolicy=no-referrer`
         : '';
+    }
+    return;
+  },
+  onTag(tag, html, options) {
+    if (html === '<input disabled="" type="checkbox">' || html === '<input checked="" disabled="" type="checkbox">') {
+      return html;
     }
     return;
   },
