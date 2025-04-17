@@ -386,7 +386,7 @@
     },
     "alert-labels": {
       "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} common labels",
+      "common-labels-count_one": "+{{count}} common label",
       "common-labels-count_other": "+{{count}} common labels"
     },
     "alert-manager-manual-routing": {
@@ -1338,7 +1338,7 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules_one": "Loading rules from {{count}} sources",
+        "loading-rules_one": "Loading rules from {{count}} source",
         "loading-rules_other": "Loading rules from {{count}} sources"
       }
     },
@@ -2007,14 +2007,14 @@
       "unknown-rule-type": "Unknown rule type"
     },
     "rule-list-errors": {
-      "button-errors_one": "{{count}} errors",
+      "button-errors_one": "{{count}} error",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
       "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
-      "more-errors_one": "{{count}} more errors",
+      "more-errors_one": "{{count}} more error",
       "more-errors_other": "{{count}} more errors",
       "unknown-error": "Unknown error."
     },
@@ -2038,7 +2038,7 @@
       "recording-rule": "Recording rule"
     },
     "rule-stats": {
-      "error_one": "{{count}} errors",
+      "error_one": "{{count}} error",
       "error_other": "{{count}} errors",
       "firing": "{{alertingStats}} firing",
       "inactive": "{{normalStats}} normal",
