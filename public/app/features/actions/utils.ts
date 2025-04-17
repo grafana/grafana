@@ -13,7 +13,7 @@ import {
   textUtil,
   ValueLinkConfig,
 } from '@grafana/data';
-import { BackendSrvRequest, getBackendSrv } from '@grafana/runtime';
+import { BackendSrvRequest, getBackendSrv, config as grafanaConfig } from '@grafana/runtime';
 import { appEvents } from 'app/core/core';
 
 import { HttpRequestMethod } from '../../plugins/panel/canvas/panelcfg.gen';
@@ -64,7 +64,7 @@ export const getActions = (
       },
       oneClick: action.oneClick ?? false,
       style: {
-        backgroundColor: action.style?.backgroundColor,
+        backgroundColor: action.style?.backgroundColor ?? grafanaConfig.theme2.colors.secondary.main,
       },
     };
 

@@ -29,7 +29,7 @@ export interface ActionModel<T = any> {
   onClick: (event: any, origin?: any) => void;
   confirmation?: string;
   oneClick?: boolean;
-  style?: ActionButtonCssProperties;
+  style: ActionButtonCssProperties;
 }
 
 interface FetchOptions {
@@ -68,8 +68,5 @@ export const defaultActionConfig: Action = {
     body: '{}',
     queryParams: [],
     headers: [['Content-Type', 'application/json']],
-  },
-  style: {
-    backgroundColor: '',
   },
 };

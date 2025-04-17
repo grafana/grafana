@@ -45,7 +45,7 @@
     "action-editor": {
       "button": {
         "style": {
-          "background-color": "Background color"
+          "background-color": "Color"
         }
       },
       "label-headers": "Headers",
