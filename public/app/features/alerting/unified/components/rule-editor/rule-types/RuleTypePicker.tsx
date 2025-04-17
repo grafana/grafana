@@ -4,6 +4,7 @@ import { isEmpty } from 'lodash';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, useStyles2 } from '@grafana/ui';
 
+import { Trans } from '../../../../../../core/internationalization';
 import { useRulesSourcesWithRuler } from '../../../hooks/useRuleSourcesWithRuler';
 import { RuleFormType } from '../../../types/rule-form';
 
@@ -41,8 +42,10 @@ const RuleTypePicker = ({ selected, onChange, enabledTypes }: RuleTypePickerProp
       </Stack>
       {enabledTypes.includes(RuleFormType.grafana) && (
         <small className={styles.meta}>
-          Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API
-          enabled.
+          <Trans i18nKey="alerting.rule-type-picker.grafana-managed">
+            Select &ldquo;Grafana managed&rdquo; unless you have a Mimir, Loki or Cortex data source with the Ruler API
+            enabled.
+          </Trans>
         </small>
       )}
     </>
