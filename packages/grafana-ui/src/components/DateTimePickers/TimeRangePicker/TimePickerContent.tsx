@@ -15,6 +15,7 @@ import { TimePickerFooter } from './TimePickerFooter';
 import { TimePickerTitle } from './TimePickerTitle';
 import { TimeRangeContent } from './TimeRangeContent';
 import { TimeRangeList } from './TimeRangeList';
+import { ExtendTimeRange } from './ExtendTimeRange';
 import { mapOptionToTimeRange, mapRangeToTimeOption } from './mapper';
 
 interface Props {
@@ -130,7 +131,11 @@ const NarrowScreenForm = (props: FormProps) => {
   const collapsed = hideQuickRanges ? false : collapsedFlag;
 
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption, timeZone));
+    onChange(mapOptionToTimeRange(timeOption, timeZone));
+  };
+
+  const onChangeExtendRange = (option: TimeOption) => {
+    onChange(mapOptionToTimeRange(option, timeZone));
   };
 
   return (
@@ -166,6 +171,11 @@ const NarrowScreenForm = (props: FormProps) => {
               weekStart={weekStart}
             />
           </div>
+          <ExtendTimeRange 
+            title={t('time-picker.extend.title', '按班次')} 
+            onChange={onChangeExtendRange} 
+            timeZone={timeZone} 
+          />
           {showHistory && (
             <TimeRangeList
               title={t('time-picker.absolute.recent-title', 'Recently used absolute ranges')}
@@ -184,7 +194,11 @@ const FullScreenForm = (props: FormProps) => {
   const { onChange, value, timeZone, fiscalYearStartMonth, isReversed, historyOptions, onError, weekStart } = props;
   const styles = useStyles2(getFullScreenStyles, props.hideQuickRanges);
   const onChangeTimeOption = (timeOption: TimeOption) => {
-    return onChange(mapOptionToTimeRange(timeOption, timeZone));
+    onChange(mapOptionToTimeRange(timeOption, timeZone));
+  };
+
+  const onChangeExtendRange = (option: TimeOption) => {
+    onChange(mapOptionToTimeRange(option, timeZone));
   };
 
   return (
@@ -206,6 +220,11 @@ const FullScreenForm = (props: FormProps) => {
           weekStart={weekStart}
         />
       </div>
+      <ExtendTimeRange 
+        title={t('time-picker.extend.title', '按班次')} 
+        onChange={onChangeExtendRange} 
+        timeZone={timeZone} 
+      />
       {props.showHistory && (
         <div className={styles.recent}>
           <TimeRangeList

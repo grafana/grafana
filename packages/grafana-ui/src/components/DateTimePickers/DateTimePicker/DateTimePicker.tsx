@@ -57,6 +57,10 @@ export interface Props {
   clearable?: boolean;
   /** Custom timezone for the date/time display */
   timeZone?: TimeZone;
+
+  /** Date only */
+  dateOnly?: boolean;
+  
 }
 
 export const DateTimePicker = ({
@@ -71,6 +75,7 @@ export const DateTimePicker = ({
   timeZone,
   showSeconds = true,
   clearable = false,
+  dateOnly = false,
 }: Props) => {
   const [isOpen, setOpen] = useState(false);
 
@@ -142,6 +147,7 @@ export const DateTimePicker = ({
         showSeconds={showSeconds}
         clearable={clearable}
         timeZone={timeZone}
+        dateOnly={dateOnly}
       />
       {isOpen ? (
         isFullscreen ? (
@@ -162,6 +168,7 @@ export const DateTimePicker = ({
                   disabledMinutes={disabledMinutes}
                   disabledSeconds={disabledSeconds}
                   timeZone={timeZone}
+                  dateOnly={dateOnly}
                 />
               </div>
             </FocusScope>
@@ -184,6 +191,7 @@ export const DateTimePicker = ({
                     disabledMinutes={disabledMinutes}
                     disabledSeconds={disabledSeconds}
                     timeZone={timeZone}
+                    dateOnly={dateOnly}
                   />
                 </div>
               </div>
@@ -195,14 +203,15 @@ export const DateTimePicker = ({
   );
 };
 
-interface DateTimeCalendarProps extends Omit<Props, 'label' | 'clearable' | 'onChange'> {
+interface DateTimeCalendarProps extends Omit<Props, 'label' | 'clearable' | 'onChange' | 'dateOnly'> {
   onChange: (date: DateTime) => void;
   onClose: () => void;
   isFullscreen: boolean;
   style?: React.CSSProperties;
+  dateOnly?: boolean;
 }
 
-type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable' | 'timeZone'> & {
+type InputProps = Pick<Props, 'onChange' | 'label' | 'date' | 'showSeconds' | 'clearable' | 'timeZone' | 'dateOnly'> & {
   isFullscreen: boolean;
   onOpen: (event: FormEvent<HTMLElement>) => void;
 };
@@ -213,9 +222,9 @@ type InputState = {
 };
 
 const DateTimeInput = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ date, label, onChange, onOpen, timeZone, showSeconds = true, clearable = false }, ref) => {
+  ({ date, label, onChange, onOpen, timeZone, showSeconds = true, clearable = false, dateOnly = false }, ref) => {
     const styles = useStyles2(getStyles);
-    const format = showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
+    const format = dateOnly ? 'YYYY-MM-DD' : showSeconds ? 'YYYY-MM-DD HH:mm:ss' : 'YYYY-MM-DD HH:mm';
     const [internalDate, setInternalDate] = useState<InputState>(() => {
       return {
         value: date ? dateTimeFormat(date, { timeZone }) : !clearable ? dateTimeFormat(dateTime(), { timeZone }) : '',
@@ -298,6 +307,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
       disabledMinutes,
       disabledSeconds,
       timeZone,
+      dateOnly = false,
     },
     ref
   ) => {
@@ -340,6 +350,12 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
       newDate.set('month', reactCalendarDate.getMonth());
       newDate.set('year', reactCalendarDate.getFullYear());
 
+      if (dateOnly) {
+        newDate.set('hour', 0);
+        newDate.set('minute', 0);
+        newDate.set('second', 0);
+      }
+
       onChange(newDate);
     };
 
@@ -360,7 +376,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
           maxDate={maxDate}
           minDate={minDate}
         />
-        <div className={styles.time}>
+        {dateOnly ? null : <div className={styles.time}>
           <TimeOfDayPicker
             showSeconds={showSeconds}
             onChange={onChangeTime}
@@ -369,7 +385,7 @@ const DateTimeCalendar = React.forwardRef<HTMLDivElement, DateTimeCalendarProps>
             disabledMinutes={disabledMinutes}
             disabledSeconds={disabledSeconds}
           />
-        </div>
+        </div>}
         <Stack>
           <Button type="button" onClick={handleApply}>
             <Trans i18nKey="grafana-ui.date-time-picker.apply">Apply</Trans>

@@ -43,6 +43,7 @@ export interface TimeOption {
   display: string;
   invalid?: boolean;
   section?: number;
+  splitter?: boolean;
 }
 
 /** @deprecated use TimeZone from schema  */

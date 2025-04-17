@@ -47,6 +47,15 @@ const getStyles = (theme: GrafanaTheme2) => {
         top: 0,
       },
     }),
+    splitter: css({
+      width: theme.spacing(0.5),
+      height: '1px',
+      position: 'absolute',
+      display: 'block',
+      background: theme.colors.border.weak,
+      left: 0,
+      top: 0,
+    }),
   };
 };
 
@@ -67,6 +76,7 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
 
   return (
     <li className={styles.container}>
+      {value.splitter && <div className={styles.splitter} />}
       <input
         className={styles.radio}
         checked={selected}
