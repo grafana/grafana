@@ -1,1 +1,1 @@
-export * from './grafana';
+export default {};

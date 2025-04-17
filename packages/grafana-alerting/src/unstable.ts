@@ -1,2 +1,1 @@
-/* type guards */
-export { prometheusRuleDefinitionType, prometheusRuleType } from './types/guards';
+export { ContactPointSelector } from './grafana/contactPoints/components/ContactPointSelector';
