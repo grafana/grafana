@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -200,15 +198,4 @@ type Versioned interface {
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
-}
-
-func writeWithReadThenCreateOrUpdate(ctx context.Context, r ReaderWriter, path, ref string, data []byte, comment string) error {
-	_, err := r.Read(ctx, path, ref)
-	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
-		return fmt.Errorf("failed to check if file exists before writing: %w", err)
-	}
-	if err == nil {
-		return r.Update(ctx, path, ref, data, comment)
-	}
-	return r.Create(ctx, path, ref, data, comment)
 }
