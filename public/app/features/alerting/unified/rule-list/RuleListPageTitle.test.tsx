@@ -1,5 +1,4 @@
-import { render } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { reportInteraction } from '@grafana/runtime';
@@ -45,10 +44,10 @@ function renderRuleListPageTitle() {
     writable: true,
   });
 
-  const { ...renderResult } = render(<RuleListPageTitle title="Alert rules" />);
+  const view = render(<RuleListPageTitle title="Alert rules" />);
 
   return {
-    ...renderResult,
+    ...view,
     storage,
   };
 }
@@ -80,18 +79,18 @@ describe('RuleListPageTitle', () => {
     });
 
     it('should enable v2 and reload page when clicked on "Try out the new look!" button', async () => {
-      const { storage } = renderRuleListPageTitle();
+      const { user, storage } = renderRuleListPageTitle();
 
-      await userEvent.click(ui.enableV2Button.get());
+      await user.click(ui.enableV2Button.get());
 
       expect(storage.get(featureTogglesKey)).toBe(`${toggleName}=true`);
       expect(mockReload).toHaveBeenCalled();
     });
 
     it('should report interaction when enabling v2', async () => {
-      renderRuleListPageTitle();
+      const { user } = renderRuleListPageTitle();
 
-      await userEvent.click(ui.enableV2Button.get());
+      await user.click(ui.enableV2Button.get());
 
       expect(reportInteraction).toHaveBeenCalledWith('alerting.list_view.v2.enabled');
     });
@@ -108,10 +107,10 @@ describe('RuleListPageTitle', () => {
     });
 
     it('should disable v2 and reload page when clicked on "Go back to the old look" button', async () => {
-      const { storage } = renderRuleListPageTitle();
+      const { user, storage } = renderRuleListPageTitle();
       storage.set(featureTogglesKey, `${toggleName}=true`);
 
-      await userEvent.click(ui.disableV2Button.get());
+      await user.click(ui.disableV2Button.get());
 
       // When the toggle is set to undefined, it should be removed from localStorage
       expect(storage.get(featureTogglesKey)).toBe('');
@@ -119,10 +118,10 @@ describe('RuleListPageTitle', () => {
     });
 
     it('should report interaction when disabling v2', async () => {
-      const { storage } = renderRuleListPageTitle();
+      const { user, storage } = renderRuleListPageTitle();
       storage.set(featureTogglesKey, `${toggleName}=true`);
 
-      await userEvent.click(ui.disableV2Button.get());
+      await user.click(ui.disableV2Button.get());
 
       expect(reportInteraction).toHaveBeenCalledWith('alerting.list_view.v2.disabled');
     });
