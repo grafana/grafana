@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       manual_issue_number:
-        description: 'Issue number to add to project'
+        description: 'Issue/PR number to add to project'
         required: false
         type: number
   issues:
@@ -19,7 +19,6 @@ env:
   ORGANIZATION: grafana
   REPO: grafana
   PROJECT_ID: "PVT_kwDOAG3Mbc4AxfcI" # Retrieved manually from GitHub GraphQL Explorer
-  ITEM_NUMBER: ${{ github.event.number || github.event.inputs.manual_issue_number }}
 
 concurrency:
   group: skye-add-to-project-${{ github.event.number }}
@@ -41,13 +40,14 @@ jobs:
             GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
             ALLOWED_USERS=frontend_platform_skye_usernames:allowed_users
 
-      - name: "Generate token"
+      - name: Generate token
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
           app_id: ${{ env.GH_APP_ID }}
           private_key: ${{ env.GH_APP_PEM }}
 
+      # Check if the user is in the list from the secret
       - name: Check if user is allowed
         id: check_user
         run: |
@@ -64,6 +64,7 @@ jobs:
           done
           echo "user_allowed=false" >> $GITHUB_OUTPUT
 
+      # Convert the issue/PR number to a node ID for the GraphQL API
       - name: Get node ID for item
         if: steps.check_user.outputs.user_allowed == 'true'
         id: get_node_id
@@ -81,10 +82,11 @@ jobs:
           variables: |
             owner: ${{ env.ORGANIZATION }}
             repo: ${{ env.REPO }}
-            number: ${{ env.ITEM_NUMBER }}
+            number: ${{ github.event.number || github.event.inputs.manual_issue_number }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
 
+      # Finally, add the issue/PR to the project board
       - name: Add to project board
         if: steps.check_user.outputs.user_allowed == 'true'
         uses: octokit/graphql-action@v2.x
@@ -97,6 +99,6 @@ jobs:
             }
           variables: |
             projectid: ${{ env.PROJECT_ID }}
-            itemid: ${{ steps.get_node_id.outputs.data.repository.issueOrPullRequest.id }}
+            itemid: ${{ fromJSON(steps.get_node_id.outputs.data).repository.issueOrPullRequest.id }}
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
