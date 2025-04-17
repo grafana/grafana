@@ -337,10 +337,18 @@ func (r *githubRepository) Write(ctx context.Context, path string, ref string, d
 	if ref == "" {
 		ref = r.config.Spec.GitHub.Branch
 	}
+
 	ctx, _ = r.logger(ctx, ref)
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
+	_, err := r.Read(ctx, finalPath, ref)
+	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
+		return fmt.Errorf("failed to check if file exists before writing: %w", err)
+	}
+	if err == nil {
+		return r.Update(ctx, finalPath, ref, data, message)
+	}
 
-	return writeWithReadThenCreateOrUpdate(ctx, r, finalPath, ref, data, message)
+	return r.Create(ctx, finalPath, ref, data, message)
 }
 
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
