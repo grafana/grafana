@@ -2719,7 +2719,8 @@
       "folder-search-results": "Folders",
       "pages": "Pages",
       "preferences": "Preferences",
-      "recent-dashboards": "Recent dashboards"
+      "recent-dashboards": "Recent dashboards",
+      "recent-scopes": "Recent scopes"
     }
   },
   "common": {
