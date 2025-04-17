@@ -70,14 +70,14 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return apierrors.NewBadRequest("expecting github configuration")
 	}
 
-	prRepo, ok := repo.(PullRequestRepo)
-	if !ok {
-		return fmt.Errorf("repository is not a github repository")
-	}
-
 	reader, ok := repo.(repository.Reader)
 	if !ok {
 		return errors.New("pull request job submitted targeting repository that is not a Reader")
+	}
+
+	prRepo, ok := repo.(PullRequestRepo)
+	if !ok {
+		return fmt.Errorf("repository is not a pull request repository")
 	}
 
 	logger := logging.FromContext(ctx).With("pr", opts.PR)
@@ -114,20 +114,11 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 // Remove files we should not try to process
 func onlySupportedFiles(files []repository.VersionedFileChange) (ret []repository.VersionedFileChange) {
 	for _, file := range files {
-		if file.Action == repository.FileActionIgnored {
+		if file.Action == repository.FileActionIgnored || resources.IsPathSupported(file.Path) != nil {
 			continue
 		}
-
-		if err := resources.IsPathSupported(file.Path); err == nil {
-			ret = append(ret, file)
-			continue
-		}
-		if file.PreviousPath != "" {
-			if err := resources.IsPathSupported(file.PreviousPath); err != nil {
-				ret = append(ret, file)
-				continue
-			}
-		}
+		ret = append(ret, file)
 	}
+
 	return
 }

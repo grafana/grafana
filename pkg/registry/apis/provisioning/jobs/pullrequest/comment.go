@@ -37,8 +37,9 @@ func (c *commenter) Comment(ctx context.Context, prRepo PullRequestRepo, pr int,
 }
 
 func (c *commenter) generateComment(_ context.Context, info changeInfo) (string, error) {
+	// TODO: should we comment even if there are no changes?
 	if len(info.Changes) == 0 {
-		return "no changes found", nil
+		return "Grafana didn't find any changes in this pull request.", nil
 	}
 
 	var buf bytes.Buffer
@@ -105,6 +106,7 @@ const commentTemplateMissingImageRenderer = `
 NOTE: The image renderer is not configured
 `
 
+// TODO: does this have some value?
 func (f *fileChangeInfo) Kind() string {
 	if f.Parsed == nil {
 		return filepath.Ext(f.Change.Path)
@@ -116,6 +118,7 @@ func (f *fileChangeInfo) Kind() string {
 	return f.Parsed.GVK.Kind
 }
 
+// TODO: does this have some value?
 func (f *fileChangeInfo) ExistingLink() string {
 	if f.GrafanaURL != "" {
 		return fmt.Sprintf("[%s](%s)", f.Title, f.GrafanaURL)
