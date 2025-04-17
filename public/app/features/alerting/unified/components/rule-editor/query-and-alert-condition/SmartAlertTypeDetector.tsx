@@ -86,8 +86,11 @@ export function SmartAlertTypeDetector({
   const canSwitch = getCanSwitch({ queries, ruleFormType, rulesSourcesWithRuler });
 
   const options = [
-    { label: 'Grafana-managed', value: RuleFormType.grafana },
-    { label: 'Data source-managed', value: RuleFormType.cloudAlerting },
+    { label: t('alerting.smart-alert-type-detector.grafana-managed', 'Grafana-managed'), value: RuleFormType.grafana },
+    {
+      label: t('alerting.smart-alert-type-detector.data-source-managed', 'Data source-managed'),
+      value: RuleFormType.cloudAlerting,
+    },
   ];
 
   // if we can't switch to data-source managed, disable it
@@ -115,9 +118,12 @@ export function SmartAlertTypeDetector({
                   </Trans>
                 </Text>
                 <p>
-                  Grafana-managed alert rules allow you to create alerts that can act on data from any of our supported
-                  data sources, including having multiple data sources in the same rule. You can also add expressions to
-                  transform your data and set alert conditions. Using images in alert notifications is also supported.
+                  <Trans i18nKey="alerting.smart-alert-type-detector.grafanamanaged-alert-rules-description">
+                    Grafana-managed alert rules allow you to create alerts that can act on data from any of our
+                    supported data sources, including having multiple data sources in the same rule. You can also add
+                    expressions to transform your data and set alert conditions. Using images in alert notifications is
+                    also supported.
+                  </Trans>
                 </p>
                 <Text color="primary" variant="h6">
                   <Trans i18nKey="alerting.smart-alert-type-detector.data-sourcemanaged-alert-rules">
@@ -125,8 +131,11 @@ export function SmartAlertTypeDetector({
                   </Trans>
                 </Text>
                 <p>
-                  Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which have
-                  been configured to support rule creation. The use of expressions or multiple queries is not supported.
+                  <Trans i18nKey="alerting.smart-alert-type-detector.data-sourcemanaged-alert-rules-description">
+                    Data source-managed alert rules can be used for Grafana Mimir or Grafana Loki data sources which
+                    have been configured to support rule creation. The use of expressions or multiple queries is not
+                    supported.
+                  </Trans>
                 </p>
               </>
             }
@@ -146,7 +155,11 @@ export function SmartAlertTypeDetector({
       />
       {/* editing an existing rule, we just show "cannot be changed" */}
       {editingExistingRule && (
-        <Text color="secondary">The alert rule type cannot be changed for an existing rule.</Text>
+        <Text color="secondary">
+          <Trans i18nKey="alerting.smart-alert-type-detector.rule-type-cannot-be-changed">
+            The alert rule type cannot be changed for an existing rule.
+          </Trans>
+        </Text>
       )}
       {/* in regular alert creation we tell the user what options they have when using a cloud data source */}
       {!editingExistingRule && (
@@ -154,11 +167,21 @@ export function SmartAlertTypeDetector({
           {canSwitch ? (
             <Text color="secondary">
               {ruleFormType === RuleFormType.grafana
-                ? 'The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.'
-                : 'Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.'}
+                ? t(
+                    'alerting.smart-alert-type-detector.switch-to-data-source-managed',
+                    'The data source selected in your query supports alert rule management. Switch to data source-managed if you want the alert rule to be managed by the data source instead of Grafana.'
+                  )
+                : t(
+                    'alerting.smart-alert-type-detector.switch-to-grafana-managed',
+                    'Switch to Grafana-managed to use expressions, multiple queries, images in notifications and various other features.'
+                  )}
             </Text>
           ) : (
-            <Text color="secondary">Based on the selected data sources this alert rule will be Grafana-managed.</Text>
+            <Text color="secondary">
+              <Trans i18nKey="alerting.smart-alert-type-detector.rule-type-grafana-managed">
+                Based on the selected data sources this alert rule will be Grafana-managed.
+              </Trans>
+            </Text>
           )}
         </>
       )}

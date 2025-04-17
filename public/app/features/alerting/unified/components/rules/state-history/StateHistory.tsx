@@ -100,8 +100,13 @@ const StateHistory = ({ ruleUID }: Props) => {
                 <Tooltip
                   content={
                     <div>
-                      Filter each state history group either by exact match or a regular expression, ex:{' '}
-                      <code>{`region=eu-west-1`}</code> or <code>{`/region=us-.+/`}</code>
+                      <Trans i18nKey="alerting.state-history.filter-group-tooltip">
+                        Filter each state history group either by exact match or a regular expression, for example:
+                      </Trans>
+                      <div>
+                        <code>{`region=eu-west-1`}</code>
+                        <code>{`/region=us-.+/`}</code>
+                      </div>
                     </div>
                   }
                 >
