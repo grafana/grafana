@@ -18,7 +18,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
@@ -38,9 +37,9 @@ func TestLocalResolver(t *testing.T) {
 	require.Error(t, err)
 
 	// Check valid errors
-	r := NewLocal(&v0alpha1.Repository{
-		Spec: v0alpha1.RepositorySpec{
-			Local: &v0alpha1.LocalRepositoryConfig{
+	r := NewLocal(&provisioning.Repository{
+		Spec: provisioning.RepositorySpec{
+			Local: &provisioning.LocalRepositoryConfig{
 				Path: "github",
 			},
 		},
@@ -100,9 +99,9 @@ func TestLocal(t *testing.T) {
 		{"absolute path with multiple prefixes", "/devenv/test", []string{"/home/grafana", "/devenv"}, "/devenv/test/"},
 	} {
 		t.Run("valid: "+tc.Name, func(t *testing.T) {
-			r := NewLocal(&v0alpha1.Repository{
-				Spec: v0alpha1.RepositorySpec{
-					Local: &v0alpha1.LocalRepositoryConfig{
+			r := NewLocal(&provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Local: &provisioning.LocalRepositoryConfig{
 						Path: tc.Path,
 					},
 				},
@@ -126,9 +125,9 @@ func TestLocal(t *testing.T) {
 		{"unconfigured prefix", "invalid/path", []string{"devenv", "/tmp", "test"}},
 	} {
 		t.Run("invalid: "+tc.Name, func(t *testing.T) {
-			r := NewLocal(&v0alpha1.Repository{
-				Spec: v0alpha1.RepositorySpec{
-					Local: &v0alpha1.LocalRepositoryConfig{
+			r := NewLocal(&provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					Local: &provisioning.LocalRepositoryConfig{
 						Path: tc.Path,
 					},
 				},
@@ -201,7 +200,7 @@ func TestLocalRepository_Test(t *testing.T) {
 			// Setup the test directory if needed
 			testPath := filepath.Join(tempDir, tc.path)
 			if tc.pathExists {
-				err := os.MkdirAll(testPath, 0755)
+				err := os.MkdirAll(testPath, 0750)
 				require.NoError(t, err, "Failed to create test directory")
 			}
 
@@ -309,7 +308,7 @@ func TestLocalRepository_Validate(t *testing.T) {
 
 			// Create the permitted directory
 			if tc.permittedPath != "" {
-				err := os.MkdirAll(permittedPath, 0755)
+				err := os.MkdirAll(permittedPath, 0750)
 				require.NoError(t, err, "Failed to create permitted directory")
 			}
 
@@ -897,6 +896,7 @@ func TestLocalRepository_Write(t *testing.T) {
 					assert.True(t, info.IsDir(), "Path should be a directory")
 				} else {
 					// Verify file content
+					//nolint:gosec
 					content, readErr := os.ReadFile(targetPath)
 					require.NoError(t, readErr)
 					assert.Equal(t, tc.data, content, "File content should match written data")
@@ -1096,6 +1096,7 @@ func TestLocalRepository_Create(t *testing.T) {
 					assert.True(t, info.IsDir(), "Path should be a directory")
 				} else {
 					// Verify file content
+					//nolint:gosec
 					content, readErr := os.ReadFile(targetPath)
 					require.NoError(t, readErr)
 					assert.Equal(t, tc.data, content, "File content should match written data")
