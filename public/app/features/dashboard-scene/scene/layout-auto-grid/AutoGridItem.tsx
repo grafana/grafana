@@ -168,6 +168,12 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     };
   }
 
+  public editingCompleted(withChanges: boolean) {
+    if (withChanges) {
+      this._prevRepeatValues = undefined;
+    }
+  }
+
   public scrollIntoView() {
     scrollCanvasElementIntoView(this, this.containerRef);
   }
