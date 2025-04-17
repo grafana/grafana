@@ -115,7 +115,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		return fmt.Errorf("expected managed repository")
 	}
 	src, ok := obj.GetSourceProperties()
-	if !ok {
+	if !ok || src.Path == "" {
 		return fmt.Errorf("missing source properties")
 	}
 
@@ -135,8 +135,9 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		}
 		result := client.RESTClient().Delete().
 			Namespace(obj.GetNamespace()).
+			Resource("repositories").
 			Name(repo.Identity).
-			Suffix("file", src.Path).Do(ctx)
+			Suffix("files", src.Path).Do(ctx)
 		return result.Error()
 	}
 
