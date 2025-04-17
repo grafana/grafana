@@ -521,7 +521,7 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
-  /** do not pro-activly verify the payload */
+  /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
   body: {
     [key: string]: any;
@@ -537,7 +537,7 @@ export type CreateRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
-  /** do not pro-activly verify the payload */
+  /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
   body: {
     [key: string]: any;
@@ -553,7 +553,7 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
-  /** do not pro-activly verify the payload */
+  /** do not pro-actively verify the payload */
   skipDryRun?: boolean;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;

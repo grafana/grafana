@@ -1274,7 +1274,7 @@
           {
             "name": "skipDryRun",
             "in": "query",
-            "description": "do not pro-activly verify the payload",
+            "description": "do not pro-actively verify the payload",
             "schema": {
               "type": "boolean"
             }
@@ -1378,7 +1378,7 @@
           {
             "name": "skipDryRun",
             "in": "query",
-            "description": "do not pro-activly verify the payload",
+            "description": "do not pro-actively verify the payload",
             "schema": {
               "type": "boolean"
             }
@@ -1482,7 +1482,7 @@
           {
             "name": "skipDryRun",
             "in": "query",
-            "description": "do not pro-activly verify the payload",
+            "description": "do not pro-actively verify the payload",
             "schema": {
               "type": "boolean"
             }
