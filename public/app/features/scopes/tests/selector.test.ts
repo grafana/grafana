@@ -1,3 +1,5 @@
+import { screen } from '@testing-library/react';
+
 import { config, locationService } from '@grafana/runtime';
 
 import { getDashboardScenePageStateManager } from '../../dashboard-scene/pages/DashboardScenePageStateManager';
@@ -16,6 +18,8 @@ import {
   selectRecentScope,
   selectPersistedApplicationsMimir,
   selectPersistedApplicationsGrafana,
+  clearSelector,
+  searchScopes,
 } from './utils/actions';
 import {
   expectRecentScope,
@@ -52,6 +56,7 @@ describe('Selector', () => {
     scopesService = result.scopesService;
     fetchSelectedScopesSpy = jest.spyOn(result.client, 'fetchMultipleScopes');
     dashboardReloadSpy = jest.spyOn(getDashboardScenePageStateManager(), 'reloadDashboard');
+    window.localStorage.clear();
   });
 
   afterEach(async () => {
@@ -141,10 +146,7 @@ describe('Selector', () => {
       await applyScopes();
 
       // Deselect all scopes
-      await openSelector();
-      await selectPersistedApplicationsMimir();
-      await selectPersistedApplicationsGrafana();
-      await applyScopes();
+      await clearSelector();
 
       // Recent scopes should still be available
       await openSelector();
@@ -163,8 +165,10 @@ describe('Selector', () => {
 
       // Then select just Grafana
       await openSelector();
-      await selectPersistedApplicationsMimir();
+      await selectResultApplicationsMimir();
       await applyScopes();
+
+      await clearSelector();
 
       // Check recent scopes are updated
       await openSelector();

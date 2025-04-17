@@ -19,6 +19,7 @@ const selectors = {
     loading: 'scopes-selector-loading',
     apply: 'scopes-selector-apply',
     cancel: 'scopes-selector-cancel',
+    clear: 'scopes-selector-input-clear',
   },
   dashboards: {
     expand: 'scopes-dashboards-expand',
@@ -35,6 +36,7 @@ const selectors = {
 };
 
 export const getSelectorInput = () => screen.getByTestId<HTMLInputElement>(selectors.selector.input);
+export const getSelectorClear = () => screen.getByTestId(selectors.selector.clear);
 export const querySelectorApply = () => screen.queryByTestId(selectors.selector.apply);
 export const getSelectorApply = () => screen.getByTestId(selectors.selector.apply);
 export const getSelectorCancel = () => screen.getByTestId(selectors.selector.cancel);
