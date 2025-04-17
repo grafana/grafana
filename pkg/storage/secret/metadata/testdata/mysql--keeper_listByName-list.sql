@@ -1,16 +1,5 @@
 SELECT
-  `guid`,
-  `name`,
-  `namespace`,
-  `annotations`,
-  `labels`,
-  `created`,
-  `created_by`,
-  `updated`,
-  `updated_by`,
-  `title`,
-  `type`,
-  `payload`
+  `name`
 FROM
   `secret_keeper`
 WHERE 1 = 1 AND

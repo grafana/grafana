@@ -119,36 +119,31 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
-	var keeper *keeperDB
-
 	res, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
-
 	defer func() { _ = res.Close() }()
 
-	if res.Next() {
-		row := &keeperDB{}
-		err := res.Scan(&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations,
-			&row.Labels,
-			&row.Created, &row.CreatedBy,
-			&row.Updated, &row.UpdatedBy,
-			&row.Title, &row.Type, &row.Payload,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan keeper row: %w", err)
-		}
-		keeper = row
+	if !res.Next() {
+		return nil, contracts.ErrKeeperNotFound
 	}
 
+	keeper := &keeperDB{}
+	err = res.Scan(&keeper.GUID,
+		&keeper.Name, &keeper.Namespace, &keeper.Annotations,
+		&keeper.Labels,
+		&keeper.Created, &keeper.CreatedBy,
+		&keeper.Updated, &keeper.UpdatedBy,
+		&keeper.Title, &keeper.Type, &keeper.Payload,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to scan keeper row: %w", err)
+	}
 	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
-	if keeper == nil {
-		return nil, contracts.ErrKeeperNotFound
-	}
+
 	return keeper, nil
 }
 
@@ -200,14 +195,8 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperUpdate.Name(), err)
 	}
 
-	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
-		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
-			return fmt.Errorf("updating row: %w", err)
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+	if _, err = s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...); err != nil {
+		return nil, fmt.Errorf("updating row: %w", err)
 	}
 
 	// TODO We are converting the new row(before the update operation) , should we query the db again??
@@ -351,18 +340,11 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		_ = rows.Close()
 	}()
 
-	// TODO Only fetch the values we need
 	secureValueRows := make([]*secureValueDB, 0)
 	for rows.Next() {
 		row := secureValueDB{}
 		err = rows.Scan(
-			&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations, &row.Labels,
-			&row.Created, &row.CreatedBy,
-			&row.Updated, &row.UpdatedBy,
-			&row.Phase, &row.Message,
-			&row.Title, &row.Keeper,
-			&row.Decrypters, &row.Ref, &row.ExternalID,
+			&row.Name, &row.Keeper,
 		)
 		if err != nil {
 			return fmt.Errorf("error reading secret value row: %w", err)
@@ -401,10 +383,9 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	}
 
 	reqKeeper := listByNameKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   keeper.Namespace,
-		KeeperNames: keeperNames,
-		// TODO add comment Why do we do this
+		SQLTemplate:      sqltemplate.New(s.dialect),
+		Namespace:        keeper.Namespace,
+		KeeperNames:      keeperNames,
 		ExcludeSQLKeeper: string(contracts.SQLKeeperType),
 	}
 
@@ -422,17 +403,10 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		_ = keepersRows.Close()
 	}()
 
-	// TODO Only fetch the values we need?
 	thirdPartyKeepers := make([]*keeperDB, 0)
 	for rows.Next() {
 		row := keeperDB{}
-		err = keepersRows.Scan(&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations,
-			&row.Labels,
-			&row.Created, &row.CreatedBy,
-			&row.Updated, &row.UpdatedBy,
-			&row.Title, &row.Type, &row.Payload,
-		)
+		err = keepersRows.Scan(&row.Name)
 		if err != nil {
 			return fmt.Errorf("error reading keeper row: %w", err)
 		}
