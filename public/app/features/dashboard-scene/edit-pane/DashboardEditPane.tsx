@@ -17,7 +17,13 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { containsCloneKey, getOriginalKey, isInCloneChain } from '../utils/clone';
+import {
+  containsCloneKey,
+  containsGridItemKey,
+  containsPanelKey,
+  getOriginalKey,
+  isInCloneChain,
+} from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardOutline } from './DashboardOutline';
@@ -101,7 +107,10 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    const elementId = containsCloneKey(element.id) ? getOriginalKey(element.id) : element.id;
+    const elementId =
+      containsPanelKey(element.id) && containsCloneKey(element.id) && !containsGridItemKey(element.id)
+        ? getOriginalKey(element.id)
+        : element.id;
 
     const obj = sceneGraph.findByKey(this, elementId);
     if (obj) {

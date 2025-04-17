@@ -3,6 +3,8 @@ import { SceneObject } from '@grafana/scenes';
 import { DashboardScene } from '../scene/DashboardScene';
 
 const CLONE_KEY = '-clone-';
+const PANEL_KEY = 'panel';
+const GRID_ITEM_KEY = 'grid-item';
 const CLONE_SEPARATOR = '/';
 
 const CLONED_KEY_REGEX = new RegExp(`${CLONE_KEY}[1-9][0-9]*$`);
@@ -74,6 +76,22 @@ export function joinCloneKeys(...keys: string[]): string {
  */
 export function containsCloneKey(key: string): boolean {
   return key.includes(CLONE_KEY);
+}
+
+/**
+ * Checks if a key contains the 'panel' string
+ * @param key
+ */
+export function containsPanelKey(key: string): boolean {
+  return key.includes(PANEL_KEY);
+}
+
+/**
+ * Checks if a key contains the 'grid-item' string
+ * @param key
+ */
+export function containsGridItemKey(key: string): boolean {
+  return key.includes(GRID_ITEM_KEY);
 }
 
 /**

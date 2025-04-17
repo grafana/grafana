@@ -1,7 +1,8 @@
-import { isEqual } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
+import { config } from '@grafana/runtime';
 import {
   VizPanel,
   SceneObjectBase,
@@ -15,6 +16,7 @@ import {
   CustomVariable,
   VizPanelState,
   VariableValueSingle,
+  SceneObjectStateChangedEvent,
 } from '@grafana/scenes';
 import { GRID_COLUMN_COUNT } from 'app/core/constants';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -22,6 +24,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { hasRelevantKeysInUpdate } from '../layouts-shared/utils';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -57,7 +60,28 @@ export class DashboardGridItem
   public constructor(state: DashboardGridItemState) {
     super(state);
 
-    this.addActivationHandler(() => this.handleVariableName());
+    this.addActivationHandler(() => {
+      this.handleVariableName();
+      let repeatsUpdater: Unsubscribable | undefined;
+
+      if (config.featureToggles.dashboardNewLayouts && this.state.variableName) {
+        this.performRepeat(true);
+
+        const shouldRepeat = (event: SceneObjectStateChangedEvent) => {
+          if (hasRelevantKeysInUpdate(event.payload.partialUpdate)) {
+            this.performRepeat(true);
+          }
+        };
+
+        repeatsUpdater = this.state.body.subscribeToEvent(SceneObjectStateChangedEvent, debounce(shouldRepeat, 500));
+      }
+
+      return () => {
+        if (repeatsUpdater) {
+          repeatsUpdater.unsubscribe();
+        }
+      };
+    });
   }
 
   private _handleGridResize(newState: DashboardGridItemState, prevState: DashboardGridItemState) {
@@ -115,7 +139,7 @@ export class DashboardGridItem
     }
   }
 
-  public performRepeat() {
+  public performRepeat(skipVariableCheck?: boolean) {
     if (!this.state.variableName || sceneGraph.hasVariableDependencyInLoadingState(this)) {
       return;
     }
@@ -137,7 +161,7 @@ export class DashboardGridItem
 
     const { values, texts } = getMultiVariableValues(variable);
 
-    if (isEqual(this._prevRepeatValues, values)) {
+    if (!skipVariableCheck && isEqual(this._prevRepeatValues, values)) {
       return;
     }
 

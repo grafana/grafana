@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 
-import { SceneObject } from '@grafana/scenes';
+import { SceneObject, SceneObjectState } from '@grafana/scenes';
 
 import { DashboardLayoutManager, isDashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { isLayoutParent } from '../types/LayoutParent';
@@ -75,3 +75,15 @@ export function ungroupLayout(layout: DashboardLayoutManager, innerLayout: Dashb
     layoutParent.switchLayout(innerLayout);
   }
 }
+
+const VIZ_PANEL_STATE_UPDATE_KEYS = ['title', 'description', 'rawLinks', 'options', 'fieldConfig', 'query'];
+
+export const hasRelevantKeysInUpdate = (partialUpdate: Partial<SceneObjectState>) => {
+  for (const updateKey of Object.keys(partialUpdate)) {
+    if (VIZ_PANEL_STATE_UPDATE_KEYS.includes(updateKey)) {
+      return true;
+    }
+  }
+
+  return false;
+};

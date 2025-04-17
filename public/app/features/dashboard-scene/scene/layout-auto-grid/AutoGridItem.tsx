@@ -1,5 +1,6 @@
-import { isEqual } from 'lodash';
+import { debounce, isEqual } from 'lodash';
 import React from 'react';
+import { Unsubscribable } from 'rxjs';
 
 import {
   CustomVariable,
@@ -8,6 +9,7 @@ import {
   sceneGraph,
   SceneObjectBase,
   SceneObjectState,
+  SceneObjectStateChangedEvent,
   SceneVariableSet,
   VariableDependencyConfig,
   VariableValueSingle,
@@ -20,6 +22,7 @@ import { ConditionalRendering } from '../../conditional-rendering/ConditionalRen
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { hasRelevantKeysInUpdate } from '../layouts-shared/utils';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -54,13 +57,26 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
   }
 
   private _activationHandler() {
+    let repeatsUpdater: Unsubscribable | undefined;
+
     if (this.state.variableName) {
-      this.performRepeat();
+      this.performRepeat(true);
+
+      const shouldRepeat = (event: SceneObjectStateChangedEvent) => {
+        if (hasRelevantKeysInUpdate(event.payload.partialUpdate)) {
+          this.performRepeat(true);
+        }
+      };
+
+      repeatsUpdater = this.state.body.subscribeToEvent(SceneObjectStateChangedEvent, debounce(shouldRepeat, 500));
     }
 
     const deactivate = this.state.conditionalRendering?.activate();
 
     return () => {
+      if (repeatsUpdater) {
+        repeatsUpdater.unsubscribe();
+      }
       if (deactivate) {
         deactivate();
       }
@@ -75,7 +91,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
     this.setState({ body });
   }
 
-  public performRepeat() {
+  public performRepeat(skipVariableCheck?: boolean) {
     if (!this.state.variableName || sceneGraph.hasVariableDependencyInLoadingState(this)) {
       return;
     }
@@ -97,7 +113,7 @@ export class AutoGridItem extends SceneObjectBase<AutoGridItemState> implements 
 
     const { values, texts } = getMultiVariableValues(variable);
 
-    if (isEqual(this._prevRepeatValues, values)) {
+    if (!skipVariableCheck && isEqual(this._prevRepeatValues, values)) {
       return;
     }
 
