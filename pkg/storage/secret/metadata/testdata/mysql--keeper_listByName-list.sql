@@ -1,5 +1,5 @@
 SELECT
-  `name`,
+  `name`
 FROM
   `secret_keeper`
 WHERE 1 = 1 AND

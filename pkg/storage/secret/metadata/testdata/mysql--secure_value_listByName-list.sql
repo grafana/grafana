@@ -1,6 +1,6 @@
 SELECT
   `name`,
-  `keeper`,
+  `keeper`
 FROM
   `secret_secure_value`
 WHERE 1 = 1 AND
