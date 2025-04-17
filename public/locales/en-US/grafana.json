@@ -5556,6 +5556,12 @@
       "loading": "Loading",
       "no-data": "No data"
     },
+    "inspect-error-tab": {
+      "error-message-message": "Message: {{msg}}",
+      "error-status-message": "Status: {{errorStatus}}.",
+      "error-status-no-message": "Status: {{errorStatus}}",
+      "error-trace-message": "(Trace ID: {{errorTrace}})"
+    },
     "inspect-jsontab": {
       "apply": "Apply",
       "support": "Support"
@@ -6021,6 +6027,8 @@
       "aria-label-no-details": "No details"
     },
     "un-themed-log-details-row": {
+      "filter-out": "Filter out value",
+      "filter-out-query": "Filter out value in query {{query}}",
       "title-copy-value-to-clipboard": "Copy value to clipboard",
       "toggle-field-button": {
         "tooltip-field-instead-message": "Show this field instead of the message",
@@ -7884,7 +7892,7 @@
   "Run math operations on one or more queries": {
     " You reference the query by {{refExample}} ie": {
       " {{ref1}}, {{ref2}}, {{ref3}}etc": {
-        "<9></9>Example: <11>{{example}}</11>": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<9></9>Example: <11>{{example}}</11>"
+        "<10></10>Example: <12>{{example}}</12>": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<10></10>Example: <12>{{example}}</12>"
       }
     }
   },
