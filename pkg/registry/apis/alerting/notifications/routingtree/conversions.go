@@ -12,7 +12,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -81,7 +81,7 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
 		for _, key := range keys {
 			m := model.Matcher{
 				Label: key,
-				Type:  model.MatcherTypeEqualTilde,
+				Type:  model.MatcherTypeEqualRegex,
 			}
 			value, _ := r.MatchRE[key].MarshalYAML()
 			if s, ok := value.(string); ok {

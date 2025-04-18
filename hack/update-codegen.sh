@@ -35,7 +35,7 @@ grafana::codegen:run() {
 
     kube::codegen::gen_helpers \
       --boilerplate "${SCRIPT_ROOT}/hack/boilerplate.go.txt" \
-      ${generate_root}/apis/${api_pkg} 
+      ${generate_root}/apis/${api_pkg}
 
    for pkg_version in $(grafana:codegen:lsdirs ./${generate_root}/apis/${api_pkg}); do
       grafana::codegen::gen_openapi \
@@ -88,6 +88,7 @@ grafana::codegen:run pkg/apimachinery
 grafana::codegen:run pkg/aggregator
 grafana::codegen:run apps/dashboard/pkg
 grafana::codegen:run apps/folder/pkg
+grafana::codegen:run apps/alerting/notifications/pkg
 
 if [ -d "pkg/extensions/apis" ]; then
   grafana::codegen:run pkg/extensions

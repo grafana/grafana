@@ -8,10 +8,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	v0alpha1_receiver "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1"
-	v0alpha1_routingtree "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
-	v0alpha1_templategroup "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
-	v0alpha1_timeinterval "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
+	v0alpha1_receiver "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
+	v0alpha1_routingtree "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
+	v0alpha1_templategroup "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/templategroup/v0alpha1"
+	v0alpha1_timeinterval "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
 )
 
 func NewReceiverClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1_receiver.Receiver, v0alpha1_receiver.ReceiverList] {
