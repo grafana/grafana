@@ -61,11 +61,9 @@
     "@reduxjs/toolkit": "2.5.1",
     "@rollup/plugin-node-resolve": "16.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
-    "@types/d3-random": "^3.0.2",
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
-    "d3-random": "^3.0.1",
     "esbuild": "0.25.0",
     "expect-type": "^1.2.0",
     "fishery": "^2.2.3",
@@ -75,6 +73,7 @@
     "rollup": "^4.22.4",
     "rollup-plugin-dts": "^6.1.1",
     "rollup-plugin-esbuild": "6.2.0",
+    "type-fest": "^4.40.0",
     "typescript": "^5.8.2"
   },
   "peerDependencies": {
@@ -82,7 +81,6 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "lodash": "^4.17.21",
-    "type-fest": "^4.40.0"
+    "lodash": "^4.17.21"
   }
 }
