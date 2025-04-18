@@ -137,7 +137,8 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 			Namespace(obj.GetNamespace()).
 			Resource("repositories").
 			Name(repo.Identity).
-			Suffix("files", src.Path).Do(ctx)
+			Suffix("files", src.Path).
+			Do(ctx)
 		return result.Error()
 	}
 
@@ -156,7 +157,9 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		Resource("repositories").
 		Name(repo.Identity).
 		Suffix("files", src.Path).
-		Body(orig).Do(ctx)
+		Body(orig).
+		Param("skipDryRun", "true").
+		Do(ctx)
 	err = result.Error()
 	if err != nil {
 		return err
