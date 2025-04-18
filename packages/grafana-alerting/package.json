@@ -1,6 +1,6 @@
 {
   "author": "Grafana Labs",
-  "license": "Apache-2.0",
+  "license": "AGPL-3.0-only",
   "name": "@grafana/alerting",
   "version": "11.6.0-pre",
   "private": true,
@@ -22,7 +22,6 @@
   "types": "src/index.ts",
   "module": "src/index.ts",
   "exports": {
-    "./package.json": "./package.json",
     ".": {
       "import": "./src/index.ts",
       "require": "./src/index.ts"
@@ -36,43 +35,22 @@
       "require": "./src/unstable.ts"
     }
   },
-  "publishConfig": {
-    "main": "./dist/cjs/index.cjs",
-    "module": "./dist/esm/index.mjs",
-    "types": "./dist/cjs/index.d.cts",
-    "access": "public"
-  },
-  "files": [
-    "dist",
-    "./README.md",
-    "./CHANGELOG.md",
-    "LICENSE_APACHE2"
-  ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.build.json && rollup -c rollup.config.ts --configPlugin esbuild",
-    "clean": "rimraf ./dist ./compiled ./unstable ./package.tgz",
     "typecheck": "tsc --emitDeclarationOnly false --erasableSyntaxOnly --noEmit",
-    "prepack": "cp package.json package.json.bak && ALIAS_PACKAGE_NAME=unstable node ../../scripts/prepare-npm-package.js",
-    "postpack": "mv package.json.bak package.json && rimraf ./unstable",
     "codegen": "yarn run rtk-query-codegen-openapi ./scripts/codegen.ts"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
     "@reduxjs/toolkit": "2.5.1",
-    "@rollup/plugin-node-resolve": "16.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
-    "esbuild": "0.25.0",
     "expect-type": "^1.2.0",
     "fishery": "^2.2.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",
-    "rollup": "^4.22.4",
-    "rollup-plugin-dts": "^6.1.1",
-    "rollup-plugin-esbuild": "6.2.0",
     "type-fest": "^4.40.0",
     "typescript": "^5.8.2"
   },
