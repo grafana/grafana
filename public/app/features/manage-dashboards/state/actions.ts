@@ -179,9 +179,9 @@ function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
       }
     }
 
-    annotations.forEach(async (annotation) => {
+    for (const annotation of annotations) {
       await processV2DatasourceInput(annotation.spec, inputs);
-    });
+    }
 
     dispatch(setInputs(Object.values(inputs)));
   };
