@@ -1,29 +1,26 @@
-import { OverrideProperties } from 'type-fest';
+import { fetchBaseQuery, TypedUseQueryHookResult } from '@reduxjs/toolkit/query/react';
 
 import { config } from '@grafana/runtime';
 
-import { alertingAPI } from '../../api.gen';
+import { alertingAPI, ListReceiverApiArg } from '../../api.gen';
 import { EnhancedListReceiverResponse } from '../types';
 
 const { namespace } = config;
+
+// this is a workaround for the fact that the generated types are not narrow enough
+type EnhancedHookResult = TypedUseQueryHookResult<
+  EnhancedListReceiverResponse,
+  ListReceiverApiArg,
+  ReturnType<typeof fetchBaseQuery>
+>;
 
 /**
  * Enhanced hook that returns ContactPoints query result
  * with properly typed data.items as ContactPoint[]
  */
 function useListContactPoints() {
-  const result = alertingAPI.endpoints.listReceiver.useQuery({
-    namespace,
-  });
-
-  // ⚠️ dangerous type casting here, but we need to do it because the API response types is too wide and we need to narrow it down
-  return result as OverrideProperties<
-    typeof result,
-    {
-      data?: EnhancedListReceiverResponse;
-      currentData?: EnhancedListReceiverResponse;
-    }
-  >;
+  const result = alertingAPI.useListReceiverQuery<EnhancedHookResult>({ namespace });
+  return result;
 }
 
 export { useListContactPoints };
