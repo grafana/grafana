@@ -2,11 +2,9 @@ import { css, cx } from '@emotion/css';
 import { isString } from 'lodash';
 import { useState } from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 import { getCellLinks } from '../../../utils';
 import { CellActions } from '../CellActions';
-import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
+import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableCellProps } from '../types';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../utils';
@@ -43,15 +41,7 @@ export function JSONViewCell(props: TableCellProps): JSX.Element {
         onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
       >
         {shouldShowLink ? (
-          <a
-            href={links[0].href}
-            onClick={links[0].onClick}
-            target={links[0].target}
-            title={links[0].title}
-            data-testid={selectors.components.DataLinksContextMenu.singleLink}
-          >
-            {displayValue}
-          </a>
+          renderSingleLink(links[0], displayValue)
         ) : shouldShowTooltip ? (
           <DataLinksActionsTooltip
             links={links}

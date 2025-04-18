@@ -6,7 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { DataLinksActionsTooltip } from '../../DataLinksActionsTooltip';
+import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { ImageCellProps } from '../types';
 import { getCellLinks } from '../utils';
@@ -37,9 +37,7 @@ export const ImageCell = ({ cellOptions, field, height, justifyContent, value, r
       }}
     >
       {shouldShowLink ? (
-        <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
-          {img}
-        </a>
+        renderSingleLink(links[0], img)
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}

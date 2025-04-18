@@ -4,7 +4,7 @@ import { ThresholdsConfig, ThresholdsMode, VizOrientation, getFieldConfigWithMin
 import { BarGaugeDisplayMode, BarGaugeValueMode, TableCellDisplayMode } from '@grafana/schema';
 
 import { BarGauge } from '../../../BarGauge/BarGauge';
-import { DataLinksActionsTooltip } from '../../DataLinksActionsTooltip';
+import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { BarGaugeCellProps } from '../types';
 import { extractPixelValue, getCellOptions, getAlignmentFactor, getCellLinks } from '../utils';
@@ -80,9 +80,7 @@ export const BarGaugeCell = ({ value, field, theme, height, width, rowIdx, actio
       onClick={({ clientX, clientY }) => setTooltipCoords({ clientX, clientY })}
     >
       {shouldShowLink ? (
-        <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
-          {renderComponent()}
-        </a>
+        renderSingleLink(links[0], renderComponent())
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}

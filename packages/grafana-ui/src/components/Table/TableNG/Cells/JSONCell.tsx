@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../../../themes';
-import { DataLinksActionsTooltip } from '../../DataLinksActionsTooltip';
+import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { JSONCellProps } from '../types';
 import { getCellLinks } from '../utils';
@@ -46,9 +46,7 @@ export const JSONCell = ({ value, justifyContent, field, rowIdx, actions }: JSON
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
     >
       {shouldShowLink ? (
-        <a href={links[0].href} onClick={links[0].onClick} target={links[0].target} title={links[0].title}>
-          {displayValue}
-        </a>
+        renderSingleLink(links[0], displayValue)
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}

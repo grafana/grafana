@@ -2,12 +2,11 @@ import { ReactElement, useState } from 'react';
 import * as React from 'react';
 
 import { DisplayValue, formattedValueToString } from '@grafana/data';
-import { selectors } from '@grafana/e2e-selectors';
 import { TableCellDisplayMode } from '@grafana/schema';
 
 import { getCellLinks } from '../../../utils';
 import { CellActions } from '../CellActions';
-import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
+import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellInspectorMode } from '../TableCellInspector';
 import { TableStyles } from '../TableRT/styles';
 import { TableCellProps, CustomCellRendererProps, TableCellOptions } from '../types';
@@ -93,17 +92,7 @@ export const DefaultCell = (props: TableCellProps) => {
       }}
     >
       {shouldShowLink ? (
-        <a
-          href={links[0].href}
-          onClick={links[0].onClick}
-          target={links[0].target}
-          title={links[0].title}
-          style={{ overflow: 'hidden', display: 'flex' }}
-          className={getLinkStyle(tableStyles, cellOptions)}
-          data-testid={selectors.components.DataLinksContextMenu.singleLink}
-        >
-          {value}
-        </a>
+        renderSingleLink(links[0], value, getLinkStyle(tableStyles, cellOptions))
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}

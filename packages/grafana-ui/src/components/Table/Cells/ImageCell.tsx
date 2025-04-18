@@ -1,9 +1,7 @@
 import { useState } from 'react';
 
-import { selectors } from '@grafana/e2e-selectors';
-
 import { getCellLinks } from '../../../utils';
-import { DataLinksActionsTooltip } from '../DataLinksActionsTooltip';
+import { DataLinksActionsTooltip, renderSingleLink } from '../DataLinksActionsTooltip';
 import { TableCellDisplayMode, TableCellProps } from '../types';
 import { DataLinksActionsTooltipCoords, getCellOptions, getDataLinksActionsTooltipUtils } from '../utils';
 
@@ -45,15 +43,7 @@ export const ImageCell = (props: TableCellProps) => {
       {/* If there are data links/actions, we render them with image */}
       {/* Otherwise we simply render the image */}
       {shouldShowLink ? (
-        <a
-          href={links[0].href}
-          onClick={links[0].onClick}
-          target={links[0].target}
-          title={links[0].title}
-          data-testid={selectors.components.DataLinksContextMenu.singleLink}
-        >
-          {img}
-        </a>
+        renderSingleLink(links[0], img)
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}

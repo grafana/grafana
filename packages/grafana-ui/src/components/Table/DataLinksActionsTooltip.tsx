@@ -1,8 +1,10 @@
 import { css } from '@emotion/css';
 import { flip, shift, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { ReactElement, useMemo } from 'react';
+import * as React from 'react';
 
 import { ActionModel, GrafanaTheme2, LinkModel } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2 } from '../../themes';
 import { Portal } from '../Portal/Portal';
@@ -93,6 +95,25 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
         </Portal>
       )}
     </>
+  );
+};
+
+export const renderSingleLink = (
+  link: LinkModel,
+  children: string | React.JSX.Element,
+  className?: string
+): React.JSX.Element => {
+  return (
+    <a
+      href={link.href}
+      onClick={link.onClick}
+      target={link.target}
+      title={link.title}
+      data-testid={selectors.components.DataLinksContextMenu.singleLink}
+      className={className}
+    >
+      {children}
+    </a>
   );
 };
 

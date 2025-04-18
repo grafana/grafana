@@ -6,7 +6,7 @@ import { GrafanaTheme2, formattedValueToString } from '@grafana/data';
 import { TableCellDisplayMode, TableCellOptions } from '@grafana/schema';
 
 import { useStyles2 } from '../../../../themes';
-import { DataLinksActionsTooltip } from '../../DataLinksActionsTooltip';
+import { DataLinksActionsTooltip, renderSingleLink } from '../../DataLinksActionsTooltip';
 import { DataLinksActionsTooltipCoords, getDataLinksActionsTooltipUtils } from '../../utils';
 import { AutoCellProps } from '../types';
 import { getCellLinks } from '../utils';
@@ -29,16 +29,7 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
       style={{ cursor: hasMultipleLinksOrActions ? 'context-menu' : 'auto' }}
     >
       {shouldShowLink ? (
-        <a
-          href={links[0].href}
-          onClick={links[0].onClick}
-          target={links[0].target}
-          title={links[0].title}
-          style={{ overflow: 'hidden', display: 'flex' }}
-          className={getLinkStyle(styles, cellOptions)}
-        >
-          {formattedValue}
-        </a>
+        renderSingleLink(links[0], formattedValue, getLinkStyle(styles, cellOptions))
       ) : shouldShowTooltip ? (
         <DataLinksActionsTooltip
           links={links}
