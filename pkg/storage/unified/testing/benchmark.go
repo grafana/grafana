@@ -46,18 +46,20 @@ type BenchmarkResult struct {
 
 // initializeBackend sets up the backend with initial resources for each group and resource type combination
 func initializeBackend(ctx context.Context, backend resource.StorageBackend, opts *BenchmarkOptions) error {
-	namespace := "ns-init"
-	for g := 0; g < opts.NumGroups; g++ {
-		group := fmt.Sprintf("group-%d", g)
-		for r := 0; r < opts.NumResourceTypes; r++ {
-			resourceType := fmt.Sprintf("resource-%d", r)
-			_, err := writeEvent(ctx, backend, "init", resource.WatchEvent_ADDED,
-				WithNamespace(namespace),
-				WithGroup(group),
-				WithResource(resourceType),
-				WithValue([]byte("init")))
-			if err != nil {
-				return fmt.Errorf("failed to initialize backend: %w", err)
+	for ns := 0; ns < opts.NumNamespaces; ns++ {
+		namespace := fmt.Sprintf("ns-%d", ns)
+		for g := 0; g < opts.NumGroups; g++ {
+			group := fmt.Sprintf("group-%d", g)
+			for r := 0; r < opts.NumResourceTypes; r++ {
+				resourceType := fmt.Sprintf("resource-%d", r)
+				_, err := writeEvent(ctx, backend, "init", resource.WatchEvent_ADDED,
+					WithNamespace(namespace),
+					WithGroup(group),
+					WithResource(resourceType),
+					WithValue([]byte("init")))
+				if err != nil {
+					return fmt.Errorf("failed to initialize backend: %w", err)
+				}
 			}
 		}
 	}
@@ -336,10 +338,10 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	require.NoError(tb, err)
 
 	// Discard the latencies from the initial index build.
-	for len(latencies) < (opts.NumGroups * opts.NumResourceTypes) {
+	for len(latencies) < (opts.NumGroups * opts.NumResourceTypes * opts.NumNamespaces) {
 		time.Sleep(10 * time.Millisecond)
 	}
-	latencies = latencies[(opts.NumGroups * opts.NumResourceTypes):]
+	latencies = make([]float64, 0, opts.NumResources)
 
 	// Run the storage backend benchmark write throughput to create events
 	startTime := time.Now()

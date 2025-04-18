@@ -68,7 +68,7 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	}
 	tempDir := t.TempDir()
 	t.Cleanup(func() {
-		os.RemoveAll(tempDir)
+		_ = os.RemoveAll(tempDir)
 	})
 	// Create a new bleve backend
 	search, err := search.NewBleveBackend(search.BleveOptions{
