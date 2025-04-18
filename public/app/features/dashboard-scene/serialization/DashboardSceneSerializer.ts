@@ -275,7 +275,7 @@ export class V2DashboardSerializer
         const panelQueries = elementPanel.spec.data.spec.queries;
 
         for (const query of panelQueries) {
-          if (!query.spec.datasource) {
+          if (!query.spec.query.datasource?.name) {
             const elementId = this.getElementIdForPanel(elementPanel.spec.id);
             if (!this.defaultDsReferencesMap.panels.has(elementId)) {
               this.defaultDsReferencesMap.panels.set(elementId, new Set());
@@ -293,7 +293,7 @@ export class V2DashboardSerializer
     if (saveModel?.variables) {
       for (const variable of saveModel.variables) {
         // for query variables that dont have a ds defined add them to the list
-        if (variable.kind === 'QueryVariable' && !variable.spec.datasource) {
+        if (variable.kind === 'QueryVariable' && !variable.spec.query.datasource?.name) {
           this.defaultDsReferencesMap.variables.add(variable.spec.name);
         }
       }
@@ -302,7 +302,7 @@ export class V2DashboardSerializer
     // initialize annotations ds references map
     if (saveModel?.annotations) {
       for (const annotation of saveModel.annotations) {
-        if (!annotation.spec.datasource) {
+        if (!annotation.spec.query?.datasource?.name) {
           this.defaultDsReferencesMap.annotations.add(annotation.spec.name);
         }
       }

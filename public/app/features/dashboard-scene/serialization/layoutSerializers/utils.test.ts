@@ -1,4 +1,7 @@
-import { PanelQueryKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  defaultDataQueryKind,
+  PanelQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getRuntimePanelDataSource } from './utils';
 
@@ -42,12 +45,13 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: {
-          uid: 'test-ds-uid',
-          type: 'test-ds-type',
-        },
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'prometheus-uid',
+          },
           spec: {},
         },
       },
@@ -61,15 +65,16 @@ describe('getRuntimePanelDataSource', () => {
     });
   });
 
-  it('should infer datasource based on query kind when datasource is not specified', () => {
+  it('should infer datasource based on query group when datasource is not specified', () => {
     const query: PanelQueryKind = {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: undefined,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
           spec: {},
         },
       },
@@ -89,9 +94,10 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: undefined,
         query: {
-          kind: 'unknown-type',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'unknown-type',
           spec: {},
         },
       },
@@ -111,12 +117,13 @@ describe('getRuntimePanelDataSource', () => {
       spec: {
         refId: 'A',
         hidden: false,
-        datasource: {
-          uid: '',
-          type: 'test-ds-type',
-        },
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: '',
+          },
           spec: {},
         },
       },

@@ -23,6 +23,7 @@ import {
   CustomVariableKind,
   Spec as DashboardV2Spec,
   DatasourceVariableKind,
+  defaultDataQueryKind,
   GridLayoutItemSpec,
   GridLayoutSpec,
   GroupByVariableKind,
@@ -272,13 +273,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
-        datasource: {
-          type: 'graphite',
-          uid: 'datasource1',
-        },
         hidden: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'graphite',
+          datasource: {
+            name: 'datasource1',
+          },
           spec: {
             expr: 'test-query',
           },
@@ -300,13 +302,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       kind: 'PanelQuery',
       spec: {
         refId: 'A',
-        datasource: {
-          type: 'prometheus',
-          uid: 'datasource1',
-        },
         hidden: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'datasource1',
+          },
           spec: {
             expr: 'test-query',
           },
@@ -333,7 +336,12 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         refId: 'A',
         hidden: false,
         query: {
-          kind: 'prometheus',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'prometheus',
+          datasource: {
+            name: 'abc123',
+          },
           spec: {
             expr: 'test-query',
           },
@@ -715,16 +723,23 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 enable: true,
                 hide: false,
                 iconColor: 'purple',
-                datasource: {
-                  type: 'prometheus',
-                  uid: 'abc123',
-                },
-                options: {
-                  expr: 'rate(http_requests_total[5m])',
-                  queryType: 'range',
-                  legendFormat: '{{method}} {{endpoint}}',
-                  useValueAsTime: true,
-                  step: '1m',
+                query: {
+                  kind: 'DataQuery',
+                  version: defaultDataQueryKind().version,
+                  group: 'prometheus',
+                  datasource: {
+                    name: 'abc123',
+                  },
+                  spec: {
+                    // FIXME: I don't think this is correct. Where options are coming from?
+                    options: {
+                      expr: 'rate(http_requests_total[5m])',
+                      queryType: 'range',
+                      legendFormat: '{{method}} {{endpoint}}',
+                      useValueAsTime: true,
+                      step: '1m',
+                    },
+                  },
                 },
               },
             },

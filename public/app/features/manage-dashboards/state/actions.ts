@@ -164,10 +164,9 @@ function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
       }
 
       for (const query of element.spec.data.spec.queries) {
-        const datasourceRef = query.spec.datasource;
-        if (!datasourceRef) {
+        const dsType = query.spec.query.spec.group;
+        if (!dsType) {
           let dataSourceInput: DataSourceInput | undefined;
-          const dsType = query.spec.query.kind;
           const datasource = await getDatasourceSrv().get({ type: dsType });
           if (!datasource) {
             dataSourceInput = {

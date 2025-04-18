@@ -433,7 +433,7 @@ describe('transformSceneToSaveModelSchemaV2', () => {
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
     // Check annotation layer 3 without initial data source isn't updated with runtime default
-    expect(result.annotations?.[2].spec.datasource?.type).toBe(undefined);
+    expect(result.annotations?.[2].spec.query?.spec.datasource?.type).toBe(undefined);
   });
 
   it('should transform the minimum scene to save model schema v2', () => {

@@ -115,12 +115,19 @@ DashboardLink: {
 	keepTime: bool | *false
 }
 
+// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
+// This type is widely used in the codebase and changing it will have a big impact
 DataSourceRef: {
 	// The plugin type-id
 	type?: string
 
 	// Specific datasource instance
 	uid?: string
+}
+
+// New type for datasource reference
+DataSourceReference: {
+	name?: string
 }
 
 // A topic is attached to DataFrame metadata in query results.
@@ -389,8 +396,9 @@ VizConfigKind: {
 }
 
 AnnotationQuerySpec: {
-	datasource?: DataSourceRef
 	query?:      DataQueryKind
+	// TODO: remove this prop and use query.datasource instead
+	datasource?: DataSourceRef
 	enable:      bool
 	hide:        bool
 	iconColor:   string
@@ -416,15 +424,19 @@ QueryOptionsSpec: {
 }
 
 DataQueryKind: {
-	// The kind of a DataQueryKind is the datasource type
-	kind: string
+	kind: "DataQuery"
+	group: string
+	version: string | *"v0"
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string
+	}
 	spec: [string]: _
 }
 
 PanelQuerySpec: {
 	query:       DataQueryKind
-	datasource?: DataSourceRef
-
 	refId:  string
 	hidden: bool
 }
@@ -737,6 +749,7 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
+	// TODO: remove this prop and use query.datasource instead
 	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""

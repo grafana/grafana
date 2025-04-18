@@ -18,6 +18,7 @@ import {
   GroupByVariableKind,
   defaultVariableHide,
   VariableOption,
+  defaultDataQueryKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../utils/utils';
@@ -275,14 +276,26 @@ export function sceneVariablesSetToSchemaV2Variables(
       }
       const query = variable.state.query;
       let dataQuery: DataQueryKind | string;
+      const datasource = getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping);
+
       if (typeof query !== 'string') {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          datasource: {
+            name: datasource?.uid,
+          },
           spec: getDataQuerySpec(query),
         };
       } else {
         dataQuery = {
-          kind: variable.state.datasource?.type ?? getDataQueryKind(query),
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: datasource?.type ?? getDataQueryKind(query),
+          datasource: {
+            name: datasource?.uid,
+          },
           spec: {
             [LEGACY_STRING_VALUE_KEY]: query,
           },
@@ -296,7 +309,6 @@ export function sceneVariablesSetToSchemaV2Variables(
           options,
           query: dataQuery,
           definition: variable.state.definition,
-          datasource: getElementDatasource(set, variable, 'variable', undefined, dsReferencesMapping),
           sort: transformSortVariableToEnum(variable.state.sort),
           refresh: transformVariableRefreshToEnum(variable.state.refresh),
           regex: variable.state.regex,

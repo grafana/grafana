@@ -11,8 +11,9 @@ export const defaultAnnotationQueryKind = (): AnnotationQueryKind => ({
 });
 
 export interface AnnotationQuerySpec {
-	datasource?: DataSourceRef;
 	query?: DataQueryKind;
+	// TODO: remove this prop and use query.datasource instead
+	datasource?: DataSourceRef;
 	enable: boolean;
 	hide: boolean;
 	iconColor: string;
@@ -31,6 +32,27 @@ export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
 	builtIn: false,
 });
 
+export interface DataQueryKind {
+	kind: "DataQuery";
+	group: string;
+	version: string;
+	// New type for datasource reference
+	// Not creating a new type until we figure out how to handle DS refs for group by, adhoc, and every place that uses DataSourceRef in TS.
+	datasource?: {
+		name?: string;
+	};
+	spec: Record<string, any>;
+}
+
+export const defaultDataQueryKind = (): DataQueryKind => ({
+	kind: "DataQuery",
+	group: "",
+	version: "v0",
+	spec: {},
+});
+
+// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
+// This type is widely used in the codebase and changing it will have a big impact
 export interface DataSourceRef {
 	// The plugin type-id
 	type?: string;
@@ -39,17 +61,6 @@ export interface DataSourceRef {
 }
 
 export const defaultDataSourceRef = (): DataSourceRef => ({
-});
-
-export interface DataQueryKind {
-	// The kind of a DataQueryKind is the datasource type
-	kind: string;
-	spec: Record<string, any>;
-}
-
-export const defaultDataQueryKind = (): DataQueryKind => ({
-	kind: "",
-	spec: {},
 });
 
 export interface AnnotationPanelFilter {
@@ -151,7 +162,6 @@ export const defaultPanelQueryKind = (): PanelQueryKind => ({
 
 export interface PanelQuerySpec {
 	query: DataQueryKind;
-	datasource?: DataSourceRef;
 	refId: string;
 	hidden: boolean;
 }
@@ -1020,6 +1030,7 @@ export interface QueryVariableSpec {
 	refresh: VariableRefresh;
 	skipUrlSync: boolean;
 	description?: string;
+	// TODO: remove this prop and use query.datasource instead
 	datasource?: DataSourceRef;
 	query: DataQueryKind;
 	regex: string;
