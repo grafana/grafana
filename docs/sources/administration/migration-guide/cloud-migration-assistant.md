@@ -96,7 +96,7 @@ You can use the migration assistant to generate a migration token on your Grafan
 
 After connecting to the cloud stack, this is the empty state of the migration assistant. You need to create a snapshot of the self-managed Grafana instance to upload it to the cloud stack.
 
-1. Select the checkbox next to each resource you want to migrate to your cloud stack.
+1. From Grafana v12.0, select the checkbox next to each resource you want to migrate to your cloud stack.
    {{< admonition type="note" >}}
    Some resources can't be uploaded to your cloud stack alone because they rely on other resources:
    | Desired resource | Requires |
@@ -113,6 +113,7 @@ After connecting to the cloud stack, this is the empty state of the migration as
    | Contact Points | Notification Templates |
    | Mute Timings | Nothing else |
    {{< /admonition >}}
+   _In Grafana v11.2 to v11.6, you can't select specific resources to include in the snapshot, such as only dashboards. All supported resources are included by default._
 1. Click **Build snapshot**
 
    ![A list of resources selected for migration and the Build snapshot button](/media/docs/grafana/screenshot-grafana-12-select-resources.png)
@@ -125,7 +126,7 @@ After a snapshot is created, a list of resources appears with resource Type and 
 
 1. Use the assistant's real-time progress tracking to monitor the migration. The status changes to 'Uploaded to cloud' for resources successfully copied to the cloud.
 
-   You can group and sort resources during and after the migration:
+   From Grafana v12.0, you can group and sort resources during and after the migration:
 
    - Click **Name** to sort resources alphabetically.
    - Click **Type** to group and sort by resource type.
@@ -142,6 +143,10 @@ After a snapshot is created, a list of resources appears with resource Type and 
 The migration assistant currently supports a subset of all resources available in Grafana. Refer to [Supported Resources](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#supported-resources) for more details.
 
 When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
+
+[[< admonition type="note" >]]
+In Grafana v11.2 to v11.6, you can't select specific resources to include in the snapshot, such as only dashboards. All supported resources are included by default.
+[[< /admonition >]]
 
 Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#migrate-multiple-organizations) for more information and guidance.
 
