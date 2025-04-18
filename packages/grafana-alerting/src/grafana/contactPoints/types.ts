@@ -4,8 +4,8 @@
 import { MergeDeep, MergeExclusive, OverrideProperties } from 'type-fest';
 
 import {
-  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Receiver as ContactPointV0Alpha1,
-  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisResourceReceiverV0Alpha1Integration as IntegrationV0Alpha1,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisReceiverV0Alpha1Receiver as ContactPointV0Alpha1,
+  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisReceiverV0Alpha1Integration as IntegrationV0Alpha1,
   ListReceiverApiResponse,
 } from '../api.gen';
 
