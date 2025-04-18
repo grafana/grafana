@@ -36,7 +36,7 @@
     }
   },
   "scripts": {
-    "typecheck": "tsc --emitDeclarationOnly false --erasableSyntaxOnly --noEmit",
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
     "codegen": "yarn run rtk-query-codegen-openapi ./scripts/codegen.ts"
   },
   "devDependencies": {
@@ -52,7 +52,7 @@
     "react-dom": "18.3.1",
     "rimraf": "6.0.1",
     "type-fest": "^4.40.0",
-    "typescript": "^5.8.2"
+    "typescript": "5.7.3"
   },
   "peerDependencies": {
     "react": "^18.0.0",
