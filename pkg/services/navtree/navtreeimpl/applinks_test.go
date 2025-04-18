@@ -367,7 +367,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		_, _ = service.cfg.Raw.NewSection("navigation.app_sections")
 		service.readNavigationSettings()
 
-		require.Equal(t, "infrastructure", service.navigationAppConfig["grafana-k8s-app"].SectionID)
+		require.Equal(t, "observability", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 	})
 
 	t.Run("Can add additional overrides via ini system", func(t *testing.T) {
@@ -387,7 +387,7 @@ func TestReadingNavigationSettings(t *testing.T) {
 		require.Equal(t, "dashboards", service.navigationAppConfig["grafana-k8s-app"].SectionID)
 		require.Equal(t, "admin", service.navigationAppConfig["other-app"].SectionID)
 
-		require.Equal(t, int64(1), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
+		require.Equal(t, int64(4), service.navigationAppConfig["grafana-k8s-app"].SortWeight)
 		require.Equal(t, int64(12), service.navigationAppConfig["other-app"].SortWeight)
 
 		require.Equal(t, "admin", service.navigationAppPathConfig["/a/grafana-k8s-app/foo"].SectionID)
