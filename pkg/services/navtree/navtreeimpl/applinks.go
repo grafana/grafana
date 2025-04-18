@@ -231,7 +231,7 @@ func (s *ServiceImpl) addPluginToSection(c *contextmodel.ReqContext, treeRoot *n
 				Icon:       "heart-rate",
 				SortWeight: navtree.WeightObservability,
 				Children:   []*navtree.NavLink{appLink},
-				Url:        s.cfg.AppSubURL + "/monitoring",
+				Url:        s.cfg.AppSubURL + "/observability",
 			})
 		case navtree.NavIDInfrastructure:
 			treeRoot.AddSection(&navtree.NavLink{
