@@ -44,6 +44,26 @@ type BenchmarkResult struct {
 	P99Latency    time.Duration
 }
 
+// initializeBackend sets up the backend with initial resources for each group and resource type combination
+func initializeBackend(ctx context.Context, backend resource.StorageBackend, opts *BenchmarkOptions) error {
+	namespace := "ns-init"
+	for g := 0; g < opts.NumGroups; g++ {
+		group := fmt.Sprintf("group-%d", g)
+		for r := 0; r < opts.NumResourceTypes; r++ {
+			resourceType := fmt.Sprintf("resource-%d", r)
+			_, err := writeEvent(ctx, backend, "init", resource.WatchEvent_ADDED,
+				WithNamespace(namespace),
+				WithGroup(group),
+				WithResource(resourceType),
+				WithValue([]byte("init")))
+			if err != nil {
+				return fmt.Errorf("failed to initialize backend: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
 // runStorageBackendBenchmark runs a write throughput benchmark
 func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
 	if opts == nil {
@@ -63,22 +83,6 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 
 	var wg sync.WaitGroup
 
-	// Initialize each group and resource type combination in the init namespace
-	namespace := "ns-init"
-	for g := 0; g < opts.NumGroups; g++ {
-		group := fmt.Sprintf("group-%d", g)
-		for r := 0; r < opts.NumResourceTypes; r++ {
-			resourceType := fmt.Sprintf("resource-%d", r)
-			_, err := writeEvent(ctx, backend, "init", resource.WatchEvent_ADDED,
-				WithNamespace(namespace),
-				WithGroup(group),
-				WithResource(resourceType),
-				WithValue([]byte("init")))
-			if err != nil {
-				return nil, fmt.Errorf("failed to initialize backend: %w", err)
-			}
-		}
-	}
 	// Start workers
 	startTime := time.Now()
 	for workerID := 0; workerID < opts.Concurrency; workerID++ {
@@ -151,6 +155,11 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 func BenchmarkStorageBackend(b testing.TB, backend resource.StorageBackend, opts *BenchmarkOptions) {
 	ctx := context.Background()
 
+	// Initialize the backend
+	err := initializeBackend(ctx, backend, opts)
+	require.NoError(b, err)
+
+	// Run the benchmark
 	result, err := runStorageBackendBenchmark(ctx, backend, opts)
 	require.NoError(b, err)
 
@@ -322,7 +331,18 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	require.NoError(tb, err)
 	require.NotNil(tb, server)
 
+	// Initialize the backend
+	err = initializeBackend(ctx, backend, opts)
+	require.NoError(tb, err)
+
+	// Discard the latencies from the initial index build.
+	for len(latencies) < (opts.NumGroups * opts.NumResourceTypes) {
+		time.Sleep(10 * time.Millisecond)
+	}
+	latencies = latencies[(opts.NumGroups * opts.NumResourceTypes):]
+
 	// Run the storage backend benchmark write throughput to create events
+	startTime := time.Now()
 	var result *BenchmarkResult
 	go func() {
 		result, err = runStorageBackendBenchmark(ctx, backend, opts)
@@ -332,10 +352,9 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	// Wait for all events to be processed
 	// We expect the same number of latencies as written events
 	for len(latencies) < opts.NumResources {
-		tb.Logf("Waiting for %d latencies\n", opts.NumResources-len(latencies))
 		time.Sleep(10 * time.Millisecond)
 	}
-
+	totalDuration := time.Since(startTime)
 	// Calculate index latency percentiles
 	sort.Float64s(latencies)
 	var p50, p90, p99 float64
@@ -364,11 +383,12 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	tb.Logf("Total Duration: %v", result.TotalDuration)
 	tb.Logf("Storage Write Count: %d", result.WriteCount)
 	tb.Logf("Storage Write Throughput: %.2f writes/sec", result.Throughput)
-	tb.Logf("P50 Latency: %v", result.P50Latency)
-	tb.Logf("P90 Latency: %v", result.P90Latency)
-	tb.Logf("P99 Latency: %v", result.P99Latency)
+	tb.Logf("P50 Write Latency: %v", result.P50Latency)
+	tb.Logf("P90 Write Latency: %v", result.P90Latency)
+	tb.Logf("P99 Write Latency: %v", result.P99Latency)
 	tb.Logf("")
 	tb.Logf("Index Latency Results:")
+	tb.Logf("Indexing Throughput: %.2f events/sec", float64(len(latencies))/totalDuration.Seconds())
 	tb.Logf("P50 Index Latency: %.3fs", p50)
 	tb.Logf("P90 Index Latency: %.3fs", p90)
 	tb.Logf("P99 Index Latency: %.3fs", p99)
@@ -387,7 +407,6 @@ func (o *testIndexLatencyObserver) Observe(evt *resource.WrittenEvent, doc *reso
 type testDocumentBuilder struct{}
 
 func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
-	fmt.Printf("Building document for %s\n", key.Name)
 	return &resource.IndexableDocument{
 		Key:   key,
 		Title: fmt.Sprintf("Document %s", key.Name),
