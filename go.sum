@@ -1603,8 +1603,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.277.0 h1:VDU2F4Y5NeRS//ejctdZtsAshrG
 github.com/grafana/grafana-plugin-sdk-go v0.277.0/go.mod h1:mAUWg68w5+1f5TLDqagIr8sWr1RT9h7ufJl5NMcWJAU=
 github.com/grafana/grafana/apps/advisor v0.0.0-20250416173722-ec17e0e4ce03 h1:tfIgKe8h/d848VN48UyYcIkKJg/PWC3QTlJYSq1x88Y=
 github.com/grafana/grafana/apps/advisor v0.0.0-20250416173722-ec17e0e4ce03/go.mod h1:lGQU40BEFKO2MPTGAu6arCRdKXqT00PnhSeW6omvnyE=
-github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250417154727-8a39e7df554d h1:hpy9re3Gbz0DJQj/4UFin0cEvlsAVDmb64iGsfHiOvI=
-github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250417154727-8a39e7df554d/go.mod h1:rGh398L5O+fBD1Zvs1rqBy3YLNnPv9eTQkqx3EZz+D8=
+github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250418141452-c174c855c30c h1:7soNZPRPcTcZaW1ioyczlnMyIi+mLfvxavlq+G+01y8=
+github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250418141452-c174c855c30c/go.mod h1:rGh398L5O+fBD1Zvs1rqBy3YLNnPv9eTQkqx3EZz+D8=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250416173722-ec17e0e4ce03 h1:FcDY3CP8AAUQHIE6pdX3PfLIvxTP8tNtWhLokxpAt7E=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250416173722-ec17e0e4ce03/go.mod h1:yr2/8+SlXzksMuaKM+KgjzS8BSJ5igkR3UmxfqeDM+o=
 github.com/grafana/grafana/apps/folder v0.0.0-20250416173722-ec17e0e4ce03 h1:iOOt+DVLOPz/FRqdK5m+4Wd47i8Q+ZtABKYkUgaeH1w=
