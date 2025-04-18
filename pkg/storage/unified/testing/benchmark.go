@@ -175,13 +175,10 @@ func BenchmarkStorageBackend(b testing.TB, backend resource.StorageBackend, opts
 }
 
 // runSearchBackendBenchmarkWriteThroughput runs a write throughput benchmark for search backend
+// This is a simple benchmark that writes a single resource/group/namespace because indices are per-tenant/group/resource.
 func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resource.SearchBackend, opts *BenchmarkOptions) (*BenchmarkResult, error) {
 	if opts == nil {
 		opts = DefaultBenchmarkOptions()
-	}
-
-	if opts.NumResources > 0 || opts.NumGroups > 0 || opts.NumResourceTypes > 0 {
-		return nil, fmt.Errorf("NumResources, NumGroups, and NumResourceTypes must be 0 because indices are per-tenant")
 	}
 
 	// Create channels for workers
