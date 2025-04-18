@@ -217,7 +217,6 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 		go func() {
 			defer wg.Done()
 			for jobID := range jobs {
-
 				doc := &resource.IndexableDocument{
 					Key: &resource.ResourceKey{
 						Namespace: nr.Namespace,

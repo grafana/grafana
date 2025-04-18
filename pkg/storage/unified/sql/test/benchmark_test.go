@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/infra/db"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -20,7 +19,7 @@ import (
 )
 
 func newTestBackend(b testing.TB) resource.StorageBackend {
-	dbstore := infraDB.InitTestDB(b)
+	dbstore := db.InitTestDB(b)
 	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 	require.NoError(b, err)
 	require.NotNil(b, eDB)
@@ -41,11 +40,11 @@ func TestIntegrationBenchmarkSQLStorageBackend(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	if infraDB.IsTestDBSpanner() {
+	if db.IsTestDBSpanner() {
 		t.Skip("Skipping benchmark on Spanner")
 	}
 	opts := test.DefaultBenchmarkOptions()
-	if infraDB.IsTestDbSQLite() {
+	if db.IsTestDbSQLite() {
 		opts.Concurrency = 1 // to avoid SQLite database is locked error
 	}
 	test.BenchmarkStorageBackend(t, newTestBackend(t), opts)
@@ -55,7 +54,7 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test in short mode")
 	}
-	if infraDB.IsTestDBSpanner() {
+	if db.IsTestDBSpanner() {
 		t.Skip("Skipping benchmark on Spanner")
 	}
 
