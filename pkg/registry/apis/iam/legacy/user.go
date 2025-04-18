@@ -261,16 +261,17 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 		t := UserTeam{}
 
 		// regression: team_member.permission has been nulled in some instances
+		// Team memberships created before the permission column was added will have a NULL value
 		var nullablePermission *int64
 		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission)
 		if err != nil {
 			return nil, err
 		}
 
-		// ignore null permissions
 		if nullablePermission != nil {
 			t.Permission = team.PermissionType(*nullablePermission)
 		} else {
+			// treat NULL as member permission
 			t.Permission = team.PermissionType(0)
 		}
 
