@@ -313,7 +313,7 @@ func (proxy *DataSourceProxy) validateRequest() error {
 	}
 
 	// Trailing validation below this point for routes that were not matched
-	if proxy.ds.Type == datasources.DS_PROMETHEUS {
+	if proxy.ds.Type == datasources.DS_PROMETHEUS || proxy.ds.Type == datasources.DS_AMAZON_PROMETHEUS || proxy.ds.Type == datasources.DS_AZURE_PROMETHEUS {
 		if proxy.ctx.Req.Method == "DELETE" {
 			return errors.New("non allow-listed DELETEs not allowed on proxied Prometheus datasource")
 		}

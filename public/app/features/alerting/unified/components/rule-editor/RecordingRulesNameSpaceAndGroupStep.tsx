@@ -19,7 +19,10 @@ export function RecordingRulesNameSpaceAndGroupStep() {
   return (
     <RuleEditorSection
       stepNo={3}
-      title={'Add namespace and group'}
+      title={t(
+        'alerting.recording-rules-name-space-and-group-step.title-add-namespace-and-group',
+        'Add namespace and group'
+      )}
       description={t(
         'alerting.recording-rules-name-space-and-group-step.description-select-namespace-group-recording',
         'Select the Namespace and Group for your recording rule.'

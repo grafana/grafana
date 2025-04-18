@@ -216,6 +216,7 @@ func (hs *HTTPServer) getFrontendSettings(c *contextmodel.ReqContext) (*dtos.Fro
 		RudderstackIntegrationsUrl:          hs.Cfg.RudderstackIntegrationsURL,
 		AnalyticsConsoleReporting:           hs.Cfg.FrontendAnalyticsConsoleReporting,
 		DashboardPerformanceMetrics:         hs.Cfg.DashboardPerformanceMetrics,
+		PanelSeriesLimit:                    hs.Cfg.PanelSeriesLimit,
 		FeedbackLinksEnabled:                hs.Cfg.FeedbackLinksEnabled,
 		ApplicationInsightsConnectionString: hs.Cfg.ApplicationInsightsConnectionString,
 		ApplicationInsightsEndpointUrl:      hs.Cfg.ApplicationInsightsEndpointUrl,
@@ -551,7 +552,7 @@ func (hs *HTTPServer) getFSDataSources(c *contextmodel.ReqContext, availablePlug
 			dsDTO.Database = ds.Database
 		}
 
-		if ds.Type == datasources.DS_PROMETHEUS {
+		if ds.Type == datasources.DS_PROMETHEUS || ds.Type == datasources.DS_AMAZON_PROMETHEUS || ds.Type == datasources.DS_AZURE_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			ds.JsonData.Set("directUrl", ds.URL)
 		}

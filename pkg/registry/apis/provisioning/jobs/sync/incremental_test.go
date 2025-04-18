@@ -220,7 +220,7 @@ func TestIncrementalSync(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "versioned changes replicated").Return()
 
 				// Mock resource rename
-				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/new.json", "old-ref", "dashboards/new.json", "new-ref").
+				repoResources.On("RenameResourceFile", mock.Anything, "dashboards/old.json", "old-ref", "dashboards/new.json", "new-ref").
 					Return("renamed-dashboard", schema.GroupVersionKind{Kind: "Dashboard", Group: "dashboards"}, nil)
 
 				// Mock progress recording

@@ -271,18 +271,22 @@ func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo reposit
 	if err != nil {
 		res = &provisioning.TestResults{
 			Success: false,
-			Errors: []string{
-				"error running test repository",
-				err.Error(),
-			},
+			Errors: []provisioning.ErrorDetails{{
+				Detail: fmt.Sprintf("error running test repository: %s", err.Error()),
+			}},
 		}
 	}
 
 	healthStatus := provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
-		Message: res.Errors,
 	}
+	for _, err := range res.Errors {
+		if err.Detail != "" {
+			healthStatus.Message = append(healthStatus.Message, err.Detail)
+		}
+	}
+
 	logger.Info("health check completed", "status", healthStatus)
 
 	return healthStatus

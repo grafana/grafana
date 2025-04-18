@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { css, cx } from '@emotion/css';
 
-import { Dropdown, Menu, ToolbarButton } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
 import { getComponentIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
 
 export function ExtensionToolbarItem() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const styles = getStyles(useTheme2());
   const { availableComponents, dockedComponentId, setDockedComponentId, isOpen, isEnabled } =
     useExtensionSidebarContext();
 
@@ -28,9 +30,9 @@ export function ExtensionToolbarItem() {
     return (
       <>
         <ToolbarButton
-          icon="web-section"
+          icon="ai-sparkle"
           data-testid="extension-toolbar-button"
-          variant={isOpen ? 'active' : 'default'}
+          className={cx(styles.button, isOpen && styles.buttonActive)}
           tooltip={components[0].description}
           onClick={() => {
             if (isOpen) {
@@ -68,15 +70,38 @@ export function ExtensionToolbarItem() {
   );
   return (
     <>
-      <Dropdown overlay={MenuItems} onVisibleChange={setIsMenuOpen} placement="bottom-end">
+      <Dropdown overlay={MenuItems} placement="bottom-end">
         <ToolbarButton
+          className={cx(styles.button, isOpen && styles.buttonActive)}
+          icon="ai-sparkle"
           data-testid="extension-toolbar-button"
-          icon="web-section"
-          isOpen={isMenuOpen}
-          variant={isOpen ? 'active' : 'default'}
+          variant="default"
+          tooltip={t('navigation.extension-sidebar.button-tooltip', 'Open AI assistants and sidebar apps')}
         />
       </Dropdown>
       <NavToolbarSeparator />
     </>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    button: css({
+      // this is needed because with certain breakpoints the button will get `width: auto`
+      // and the icon will stretch
+      aspectRatio: '1 / 1 !important',
+      width: '28px',
+      height: '28px',
+      padding: 0,
+      justifyContent: 'center',
+      borderRadius: theme.shape.radius.circle,
+      margin: theme.spacing(0, 0.25),
+    }),
+    buttonActive: css({
+      borderRadius: theme.shape.radius.circle,
+      backgroundColor: theme.colors.primary.transparent,
+      border: `1px solid ${theme.colors.primary.borderTransparent}`,
+      color: theme.colors.text.primary,
+    }),
+  };
 }

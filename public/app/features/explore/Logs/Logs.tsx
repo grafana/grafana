@@ -16,10 +16,8 @@ import {
   RawTimeRange,
   DataQueryResponse,
   LogRowContextOptions,
-  LinkModel,
   EventBus,
   ExplorePanelsState,
-  Field,
   TimeRange,
   LogsDedupStrategy,
   LogsSortOrder,
@@ -62,6 +60,7 @@ import { LogLevelColor, dedupLogRows, filterLogLevels } from 'app/features/logs/
 import { getLogLevelFromKey, getLogLevelInfo } from 'app/features/logs/utils';
 import { LokiQueryDirection } from 'app/plugins/datasource/loki/dataquery.gen';
 import { isLokiQuery } from 'app/plugins/datasource/loki/queryUtils';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 import { getState } from 'app/store/store';
 import { ExploreItemState, useDispatch } from 'app/types';
 
@@ -119,7 +118,7 @@ interface Props extends Themeable2 {
     cacheFilters?: boolean
   ) => Promise<DataQuery | null>;
   getLogRowContextUi?: (row: LogRowModel, runContextQuery?: () => void) => React.ReactNode;
-  getFieldLinks: (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
+  getFieldLinks: GetFieldLinksFn;
   addResultsToCache: () => void;
   clearCache: () => void;
   eventBus: EventBus;
@@ -209,7 +208,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
   );
   const [isFlipping, setIsFlipping] = useState<boolean>(false);
   const [displayedFields, setDisplayedFields] = useState<string[]>([]);
-  const [forceEscape, setForceEscape] = useState<boolean>(false);
   const [contextOpen, setContextOpen] = useState<boolean>(false);
   const [contextRow, setContextRow] = useState<LogRowModel | undefined>(undefined);
   const [pinLineButtonTooltipTitle, setPinLineButtonTooltipTitle] = useState<PopoverContent>(PINNED_LOGS_MESSAGE);
@@ -496,10 +494,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
     },
     [sortOrderChanged]
   );
-
-  const onEscapeNewlines = useCallback(() => {
-    setForceEscape(!forceEscape);
-  }, [forceEscape]);
 
   const onChangeVisualisation = useCallback(
     (visualisation: LogsVisualisationType) => {
@@ -861,7 +855,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             )
           ) : null,
         ]}
-        title={'Logs'}
+        title={t('explore.unthemed-logs.title-logs', 'Logs')}
         actions={
           <>
             {config.featureToggles.logsExploreTableVisualisation && (
@@ -1000,10 +994,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
             meta={logsMeta || []}
             dedupStrategy={dedupStrategy}
             dedupCount={dedupCount}
-            hasUnescapedContent={hasUnescapedContent}
-            forceEscape={forceEscape}
             displayedFields={displayedFields}
-            onEscapeNewlines={onEscapeNewlines}
             clearDetectedFields={clearDetectedFields}
           />
         </div>
@@ -1051,7 +1042,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 showLabels={showLabels}
                 showTime={showTime}
                 enableLogDetails={true}
-                forceEscape={forceEscape}
                 wrapLogMessage={wrapLogMessage}
                 prettifyLogMessage={prettifyLogMessage}
                 timeZone={timeZone}
@@ -1075,6 +1065,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 logsMeta={logsMeta}
                 logOptionsStorageKey={SETTING_KEY_ROOT}
                 onLogOptionsChange={onLogOptionsChange}
+                hasUnescapedContent={hasUnescapedContent}
               />
             </div>
           )}
@@ -1110,7 +1101,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                       showLabels={showLabels}
                       showTime={showTime}
                       enableLogDetails={true}
-                      forceEscape={forceEscape}
                       wrapLogMessage={wrapLogMessage}
                       prettifyLogMessage={prettifyLogMessage}
                       timeZone={timeZone}
@@ -1132,6 +1122,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                       onUnpinLine={onPinToContentOutlineClick}
                       onPinLine={onPinToContentOutlineClick}
                       pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                      renderPreview
                     />
                   </InfiniteScroll>
                 </div>
@@ -1158,7 +1149,6 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   dedupStrategy={dedupStrategy}
                   displayedFields={displayedFields}
                   filterLevels={filterLevels}
-                  forceEscape={forceEscape}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
                   loadMore={loadMoreLogs}

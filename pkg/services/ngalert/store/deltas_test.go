@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"testing"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
 func TestCalculateChanges(t *testing.T) {
@@ -729,6 +731,80 @@ func TestCalculateRuleCreate(t *testing.T) {
 		assert.Empty(t, delta.Update)
 		assert.Len(t, delta.New, 1)
 		assert.Equal(t, rule, delta.New[0])
+	})
+}
+
+func TestDeltaAffectsQuery(t *testing.T) {
+	t.Run("returns false when there are no diffs", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{},
+		}
+		assert.False(t, delta.AffectsQuery())
+	})
+	t.Run("returns true when diff contains a field that affects query", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Data",
+					Left:  reflect.ValueOf("old value"),
+					Right: reflect.ValueOf("new value"),
+				},
+			},
+		}
+		assert.True(t, delta.AffectsQuery())
+	})
+	t.Run("returns false when diff contains only fields that do not affect query", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Title",
+					Left:  reflect.ValueOf("old title"),
+					Right: reflect.ValueOf("new title"),
+				},
+			},
+		}
+		assert.False(t, delta.AffectsQuery())
+	})
+	t.Run("returns true when diff contains multiple fields, including one that affects query", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Title",
+					Left:  reflect.ValueOf("old title"),
+					Right: reflect.ValueOf("new title"),
+				},
+				{
+					Path:  "IntervalSeconds",
+					Left:  reflect.ValueOf(10),
+					Right: reflect.ValueOf(20),
+				},
+			},
+		}
+		assert.True(t, delta.AffectsQuery())
+	})
+	t.Run("handles nested paths in diff", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "Data[0].Query",
+					Left:  reflect.ValueOf("old query"),
+					Right: reflect.ValueOf("new query"),
+				},
+			},
+		}
+		assert.True(t, delta.AffectsQuery())
+	})
+	t.Run("returns false for empty diff paths", func(t *testing.T) {
+		delta := RuleDelta{
+			Diff: cmputil.DiffReport{
+				{
+					Path:  "",
+					Left:  reflect.ValueOf("old value"),
+					Right: reflect.ValueOf("new value"),
+				},
+			},
+		}
+		assert.False(t, delta.AffectsQuery())
 	})
 }
 
