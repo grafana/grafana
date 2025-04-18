@@ -329,7 +329,7 @@ describe('getOptionDataSourceTypes', () => {
   it('should return all data source types when no data source types are specified', () => {
     const optionTypes = getOptionDataSourceTypes();
     expect(optionTypes).toHaveLength(1);
-    expect(optionTypes[1].label).toBe('ds1');
+    expect(optionTypes[0].label).toBe('ds1');
   });
 });
 
