@@ -180,7 +180,7 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		setupOpts.newListFunc,
 		storage.DefaultNamespaceScopedAttr,
 		make(map[string]storage.IndexerFunc, 0),
-		nil,
+		nil, nil,
 		apistore.StorageOptions{},
 	)
 	if err != nil {

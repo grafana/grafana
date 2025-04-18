@@ -1,6 +1,7 @@
 package options
 
 import (
+	"context"
 	"fmt"
 	"net"
 
@@ -10,6 +11,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/server/options"
+	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -31,6 +33,10 @@ const (
 
 	BlobThresholdDefault int = 0
 )
+
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*rest.Config, error)
+}
 
 type StorageOptions struct {
 	// The desired storage type
@@ -58,6 +64,9 @@ type StorageOptions struct {
 
 	// {resource}.{group} = 1|2|3|4
 	UnifiedStorageConfig map[string]setting.UnifiedStorageConfig
+
+	// Access to the other clients
+	ConfigProvider RestConfigProvider
 }
 
 func NewStorageOptions() *StorageOptions {
@@ -140,7 +149,7 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	if err != nil {
 		return err
 	}
-	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig)
+	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
 	return nil
 }

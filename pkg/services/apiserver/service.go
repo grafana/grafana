@@ -95,11 +95,12 @@ type service struct {
 	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
-	pluginClient    plugins.Client
-	datasources     datasource.ScopedPluginDatasourceProvider
-	contextProvider datasource.PluginContextWrapper
-	pluginStore     pluginstore.Store
-	unified         resource.ResourceClient
+	pluginClient       plugins.Client
+	datasources        datasource.ScopedPluginDatasourceProvider
+	contextProvider    datasource.PluginContextWrapper
+	pluginStore        pluginstore.Store
+	unified            resource.ResourceClient
+	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
@@ -118,6 +119,7 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 ) (*service, error) {
@@ -144,6 +146,7 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
+		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
@@ -300,7 +303,7 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
 
 		// Use unified storage client
