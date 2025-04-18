@@ -98,8 +98,6 @@ After connecting to the cloud stack, this is the empty state of the migration as
 
 1. From Grafana v12.0, select the checkbox next to each resource you want to migrate to your cloud stack.
 
-   In Grafana v11.2 to v11.6, you can't select specific resources to include in the snapshot, such as only dashboards. All supported resources are included by default.
-
    {{< admonition type="note" >}}
    Some resources can't be uploaded to your cloud stack alone because they rely on other resources:
    | Desired resource | Requires |
@@ -116,6 +114,8 @@ After connecting to the cloud stack, this is the empty state of the migration as
    | Contact Points | Notification Templates |
    | Mute Timings | Nothing else |
    {{< /admonition >}}
+
+   In Grafana v11.2 to v11.6, you can't select specific resources to include in the snapshot, such as only dashboards. All supported resources are included by default.
 
 1. Click **Build snapshot**
 
@@ -147,9 +147,9 @@ The migration assistant currently supports a subset of all resources available i
 
 When you create a snapshot, the migration assistant makes a copy of all the resources you select and saves them in the snapshot. The snapshot reflects the current state of the resources when the snapshot is built and is stored locally on your instance, ready to be uploaded in the last stage.
 
-[[< admonition type="note" >]]
+{{< admonition type="note" >}}
 In Grafana v11.2 to v11.6, you can't select specific resources to include in the snapshot, such as only dashboards. All supported resources are included by default.
-[[< /admonition >]]
+{{< /admonition >}}
 
 Resources saved in the snapshot are strictly limited to the resources stored within an organization. This is important to note if there are multiple organizations used in your Grafana instance. If you want to migrate multiple organizations, refer to [Migrate multiple organizations](https://grafana.com/docs/grafana-cloud/account-management/cloud-migration-assistant/#migrate-multiple-organizations) for more information and guidance.
 
