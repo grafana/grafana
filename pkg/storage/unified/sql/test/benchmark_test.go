@@ -85,7 +85,7 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 
 	storage, err := sql.NewBackend(sql.BackendOptions{
 		DBProvider: eDB,
-		IsHA:       true,
+		IsHA:       false,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, storage)
