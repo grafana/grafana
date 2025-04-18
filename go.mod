@@ -208,7 +208,7 @@ require (
 
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250416173722-ec17e0e4ce03 // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250417154727-8a39e7df554d // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250418141452-c174c855c30c // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250416173722-ec17e0e4ce03 // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0-20250416173722-ec17e0e4ce03 // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250416173722-ec17e0e4ce03 // @fcjack @matryer
