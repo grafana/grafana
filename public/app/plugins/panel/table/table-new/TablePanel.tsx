@@ -1,4 +1,5 @@
 import { css } from '@emotion/css';
+import { useMemo } from 'react';
 
 import {
   ActionModel,
@@ -27,7 +28,9 @@ interface Props extends PanelProps<Options> {}
 export function TablePanel(props: Props) {
   const { data, height, width, options, fieldConfig, id, timeRange, replaceVariables } = props;
 
-  cacheFieldDisplayNames(data.series);
+  useMemo(() => {
+    cacheFieldDisplayNames(data.series);
+  }, [data.series]);
 
   const theme = useTheme2();
   const panelContext = usePanelContext();
