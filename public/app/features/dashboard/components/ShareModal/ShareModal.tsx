@@ -14,6 +14,7 @@ import { AccessControlAction } from 'app/types';
 
 import { ShareEmbed } from './ShareEmbed';
 import { ShareExport } from './ShareExport';
+import { ShareImage } from './ShareImage';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
@@ -60,6 +61,14 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
       value: shareDashboardType.export,
       component: ShareExport,
     });
+
+    const imageLabel = t('share-modal.tab-title.image', 'Image');
+    tabs.push({
+      label: imageLabel,
+      value: shareDashboardType.image,
+      component: ShareImage,
+    });
+
     tabs.push(...customDashboardTabs);
 
     if (isPublicDashboardsEnabled()) {
