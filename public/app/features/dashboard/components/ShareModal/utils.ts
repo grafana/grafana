@@ -184,7 +184,18 @@ export const shareDashboardType: {
   image: 'image',
 };
 
-function calculateDashboardHeight(dashboard: any): number {
+interface DashboardPanel {
+  gridPos?: {
+    y: number;
+    h: number;
+  };
+}
+
+interface Dashboard {
+  panels: DashboardPanel[];
+}
+
+function calculateDashboardHeight(dashboard: Dashboard): number {
   // Default padding and margins
   const TOP_PADDING = 20;
   const BOTTOM_PADDING = 20;
@@ -220,7 +231,7 @@ export function buildDashboardImageUrl(
   useCurrentTimeRange: boolean,
   dashboardUid: string,
   selectedTheme?: string,
-  dashboard?: any
+  dashboard?: Dashboard
 ) {
   let baseUrl = buildSoloUrl(useCurrentTimeRange, dashboardUid, selectedTheme);
   // Replace d-solo with d for full dashboard

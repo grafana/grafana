@@ -9,7 +9,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ShareModalTabProps } from './types';
-import { buildDashboardImageUrl } from './utils';
+import { buildDashboardImageUrl, buildImageUrl } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
@@ -36,7 +36,7 @@ export class ShareImage extends PureComponent<Props, State> {
   };
 
   onExport = async () => {
-    const { dashboard } = this.props;
+    const { dashboard, panel } = this.props;
     const { format } = this.state;
 
     this.setState({ isLoading: true, error: null });
@@ -46,7 +46,10 @@ export class ShareImage extends PureComponent<Props, State> {
         throw new Error('Image renderer service is not available');
       }
 
-      const imageUrl = buildDashboardImageUrl(true, dashboard.uid, config.theme2.isDark ? 'dark' : 'light', dashboard);
+      // Use the appropriate URL building function based on whether we're sharing a dashboard or panel
+      const imageUrl = panel
+        ? buildImageUrl(true, dashboard.uid, config.theme2.isDark ? 'dark' : 'light', panel)
+        : buildDashboardImageUrl(true, dashboard.uid, config.theme2.isDark ? 'dark' : 'light', dashboard);
 
       // Fetch the image as a blob
       const response = await lastValueFrom(
@@ -75,7 +78,7 @@ export class ShareImage extends PureComponent<Props, State> {
   };
 
   onSave = () => {
-    const { dashboard } = this.props;
+    const { dashboard, panel } = this.props;
     const { imageBlob, format } = this.state;
 
     if (!imageBlob) {
@@ -83,7 +86,7 @@ export class ShareImage extends PureComponent<Props, State> {
     }
 
     const time = new Date().getTime();
-    const name = dashboard.title;
+    const name = panel ? panel.title : dashboard.title;
     saveAs(imageBlob, `${name}-${time}.${format}`);
   };
 
@@ -92,22 +95,23 @@ export class ShareImage extends PureComponent<Props, State> {
     const { format, isLoading, imageBlob, error } = this.state;
 
     const formatOptions: Array<SelectableValue<'png' | 'jpg'>> = [
-      { label: 'PNG', value: 'png' },
-      { label: 'JPG', value: 'jpg' },
+      { label: t('share-modal.image.format-png', 'PNG'), value: 'png' },
+      { label: t('share-modal.image.format-jpg', 'JPG'), value: 'jpg' },
     ];
 
     return (
       <>
         <p>
           <Trans i18nKey="share-modal.image.info-text">
-            Export the dashboard as an image file. The image will be captured at high resolution.
+            Export the {{ type: this.props.panel ? 'panel' : 'dashboard' }} as an image file. The image will be captured
+            at high resolution.
           </Trans>
         </p>
         {/* TODO: Replace this with general message from other areas */}
         {!config.rendererAvailable && (
           <Alert severity="info" title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}>
             <Trans i18nKey="share-modal.link.render-instructions">
-              To render a dashboard image, you must install the{' '}
+              To render a {{ type: this.props.panel ? 'panel' : 'dashboard' }} image, you must install the{' '}
               <a
                 href="https://grafana.com/grafana/plugins/grafana-image-renderer"
                 target="_blank"

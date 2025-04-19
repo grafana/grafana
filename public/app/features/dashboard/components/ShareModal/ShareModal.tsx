@@ -45,6 +45,13 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
     tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
   }
 
+  const imageLabel = t('share-modal.tab-title.image', 'Image');
+  tabs.push({
+    label: imageLabel,
+    value: shareDashboardType.image,
+    component: ShareImage,
+  });
+
   if (panel) {
     const embedLabel = t('share-modal.tab-title.embed', 'Embed');
     tabs.push({ label: embedLabel, value: shareDashboardType.embed, component: ShareEmbed });
@@ -61,14 +68,6 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
       value: shareDashboardType.export,
       component: ShareExport,
     });
-
-    const imageLabel = t('share-modal.tab-title.image', 'Image');
-    tabs.push({
-      label: imageLabel,
-      value: shareDashboardType.image,
-      component: ShareImage,
-    });
-
     tabs.push(...customDashboardTabs);
 
     if (isPublicDashboardsEnabled()) {
