@@ -18,10 +18,10 @@ enum ImageFormat {
   JPG = 'jpg',
 }
 
-const styles = {
+const styles: Record<string, React.CSSProperties> = {
   loadingContainer: {
     margin: '16px 0',
-    textAlign: 'center' as const,
+    textAlign: 'center',
   },
   loadingText: {
     marginTop: '16px',
@@ -29,12 +29,12 @@ const styles = {
   },
   imageContainer: {
     margin: '16px 0',
-    textAlign: 'center' as const,
+    textAlign: 'center',
   },
   image: {
     maxWidth: '100%',
     maxHeight: '400px',
-    objectFit: 'contain' as const,
+    objectFit: 'contain',
   },
 };
 
