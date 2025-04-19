@@ -40,6 +40,7 @@ export function ExtensionToolbarItem() {
   }
 
   // conditionally renders a button to open or close the sidebar
+  // not using a component to avoid passing refs with the `Dropdown` component
   const renderButton = useCallback(
     (isOpen: boolean, title?: string, onClick?: () => void) => {
       if (isOpen) {
@@ -51,13 +52,14 @@ export function ExtensionToolbarItem() {
             data-testid="extension-toolbar-button-close"
             variant="default"
             onClick={() => setDockedComponentId(undefined)}
-            tooltip={t('navigation.extension-sidebar.button-tooltip.close', 'Close', { title })}
+            tooltip={t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title })}
           />
         );
       }
+      // if a title is provided, use it in the tooltip
       let tooltip = t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
       if (title) {
-        tooltip = t('navigation.extension-sidebar.button-tooltip.open', 'Open', { title });
+        tooltip = t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title });
       }
       return (
         <ToolbarButton
