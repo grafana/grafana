@@ -200,7 +200,6 @@ function calculateDashboardHeight(dashboard: Dashboard): number {
   const TOP_PADDING = 20;
   const BOTTOM_PADDING = 20;
   const ROW_MARGIN = 20;
-  const PANEL_MARGIN = 20;
 
   // Find the bottom-most panel
   let maxY = 0;
