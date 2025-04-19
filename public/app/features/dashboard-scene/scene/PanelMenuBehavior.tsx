@@ -1,6 +1,3 @@
-import { saveAs } from 'file-saver';
-import { lastValueFrom } from 'rxjs';
-
 import {
   getTimeZone,
   InterpolateFunction,
@@ -13,23 +10,18 @@ import {
   PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
-import { config, locationService, getBackendSrv } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
-import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
+import { notifyApp } from 'app/core/reducers/appNotification';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { getCreateAlertInMenuAvailability } from 'app/features/alerting/unified/utils/access-control';
 import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils/rule-form';
-import {
-  getTrackingSource,
-  shareDashboardType,
-  buildImageUrl,
-} from 'app/features/dashboard/components/ShareModal/utils';
-import { PanelModelCompatibilityWrapper } from 'app/features/dashboard-scene/utils/PanelModelCompatibilityWrapper';
+import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
 import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
@@ -214,15 +206,6 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
         onClick: () => {
           dashboard.copyPanel(panel);
         },
-      });
-    }
-
-    // Add download image option
-    if (!isEditingPanel) {
-      moreSubMenu.push({
-        text: t('panel.header-menu.download-image', `Download image`),
-        iconClassName: 'download-alt',
-        onClick: () => onDownloadImage(panel, dashboard),
       });
     }
 
@@ -605,24 +588,4 @@ const onInspectPanel = (vizPanel: VizPanel, tab?: InspectTab) => {
     inspect: vizPanel.state.key,
     inspectTab: tab,
   });
-};
-
-const onDownloadImage = async (panel: VizPanel, dashboard: DashboardScene) => {
-  try {
-    const panelId = getPanelIdForVizPanel(panel);
-    if (isNaN(panelId)) {
-      throw new Error('Could not get panel ID');
-    }
-
-    const imageUrl = buildImageUrl(true, dashboard.state.uid || '', config.theme2.isDark ? 'dark' : 'light', {
-      id: panelId,
-      timeFrom: undefined,
-    } as any);
-
-    const response = await lastValueFrom(getBackendSrv().fetch({ url: imageUrl, method: 'GET' }));
-    const blob = new Blob([response.data as ArrayBuffer], { type: 'image/png' });
-    saveAs(blob, `${panel.state.title || 'panel'}.png`);
-  } catch (err) {
-    notifyApp(createErrorNotification('Failed to download image', String(err)));
-  }
 };
