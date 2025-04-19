@@ -938,4 +938,8 @@ const (
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
+
+	// FlagDashboardImageSharing
+	// Enables image sharing functionality for dashboards and their panels
+	FlagDashboardImageSharing = "dashboardImageSharing"
 )

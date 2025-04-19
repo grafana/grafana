@@ -45,12 +45,14 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
     tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
   }
 
-  const imageLabel = t('share-modal.tab-title.image', 'Image');
-  tabs.push({
-    label: imageLabel,
-    value: shareDashboardType.image,
-    component: ShareImage,
-  });
+  if (config.featureToggles.dashboardImageSharing) {
+    const imageLabel = t('share-modal.tab-title.image', 'Image');
+    tabs.push({
+      label: imageLabel,
+      value: shareDashboardType.image,
+      component: ShareImage,
+    });
+  }
 
   if (panel) {
     const embedLabel = t('share-modal.tab-title.embed', 'Embed');

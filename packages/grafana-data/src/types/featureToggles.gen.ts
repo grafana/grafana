@@ -1031,4 +1031,8 @@ export interface FeatureToggles {
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
+  /**
+  * Enables image sharing functionality for dashboards and their panels
+  */
+  dashboardImageSharing?: boolean;
 }

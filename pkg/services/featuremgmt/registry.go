@@ -1775,6 +1775,14 @@ var (
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
 		},
+		{
+			Name:         "dashboardImageSharing",
+			Description:  "Enables image sharing functionality for dashboards and their panels",
+			Stage:        FeatureStageExperimental,
+			Owner:        grafanaSharingSquad,
+			HideFromDocs: true,
+			FrontendOnly: true,
+		},
 	}
 )
 
