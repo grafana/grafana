@@ -13,13 +13,38 @@ import { buildDashboardImageUrl, buildImageUrl } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
+enum ImageFormat {
+  PNG = 'png',
+  JPG = 'jpg',
+}
+
+const styles = {
+  loadingContainer: {
+    margin: '16px 0',
+    textAlign: 'center' as const,
+  },
+  loadingText: {
+    marginTop: '16px',
+    color: 'var(--text-secondary)',
+  },
+  imageContainer: {
+    margin: '16px 0',
+    textAlign: 'center' as const,
+  },
+  image: {
+    maxWidth: '100%',
+    maxHeight: '400px',
+    objectFit: 'contain' as const,
+  },
+};
+
 export function ShareImage({ dashboard, panel, onDismiss }: Props) {
-  const [format, setFormat] = useState<'png' | 'jpg'>('png');
+  const [format, setFormat] = useState<ImageFormat>(ImageFormat.PNG);
   const [isLoading, setIsLoading] = useState(false);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const onFormatChange = (newFormat: 'png' | 'jpg') => {
+  const onFormatChange = (newFormat: ImageFormat) => {
     setFormat(newFormat);
   };
 
@@ -71,9 +96,9 @@ export function ShareImage({ dashboard, panel, onDismiss }: Props) {
     saveAs(imageBlob, `${name}-${time}.${format}`);
   };
 
-  const formatOptions: Array<SelectableValue<'png' | 'jpg'>> = [
-    { label: t('share-modal.image.format-png', 'PNG'), value: 'png' },
-    { label: t('share-modal.image.format-jpg', 'JPG'), value: 'jpg' },
+  const formatOptions: Array<SelectableValue<ImageFormat>> = [
+    { label: t('share-modal.image.format-png', 'PNG'), value: ImageFormat.PNG },
+    { label: t('share-modal.image.format-jpg', 'JPG'), value: ImageFormat.JPG },
   ];
 
   return (
@@ -105,9 +130,9 @@ export function ShareImage({ dashboard, panel, onDismiss }: Props) {
         <RadioButtonGroup options={formatOptions} value={format} onChange={onFormatChange} />
       </Field>
       {isLoading && (
-        <div style={{ margin: '16px 0', textAlign: 'center' }}>
+        <div style={styles.loadingContainer}>
           <Spinner size="xl" />
-          <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>
+          <p style={styles.loadingText}>
             <Trans i18nKey="share-modal.image.generating-text">Generating image...</Trans>
           </p>
         </div>
@@ -118,11 +143,11 @@ export function ShareImage({ dashboard, panel, onDismiss }: Props) {
         </Alert>
       )}
       {imageBlob && !isLoading && !error && (
-        <div style={{ margin: '16px 0', textAlign: 'center' }}>
+        <div style={styles.imageContainer}>
           <img
             src={URL.createObjectURL(imageBlob)}
             alt={t('share-modal.image.preview', 'Preview')}
-            style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }}
+            style={styles.image}
           />
         </div>
       )}
