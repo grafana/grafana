@@ -120,7 +120,7 @@ export const groupByTransformer: DataTransformerInfo<GroupByTransformerOptions> 
           }
 
           processed.push({
-            ...frame,
+            refId: frame.refId,
             fields,
             length: valuesByGroupKey.size,
           });
