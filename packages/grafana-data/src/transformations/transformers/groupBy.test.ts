@@ -460,8 +460,8 @@ describe('GroupBy transformer', () => {
 
       expect(result[0].refId).toEqual('A');
 
-      // adding a frame name can modifies field auto-name behavior if a joinBy transformer follows, which transfers
-      // the frame name to labels.name and calculateFieldDisplayName() may start treating it as a single-label field
+      // adding a frame name can modify field auto-name behavior if a joinBy transformer follows, which transfers
+      // the frame name to field.labels.name and calculateFieldDisplayName() may start treating it as a single-label field
       expect(result[0].name).toBeUndefined();
 
       expect(result[0].fields).toEqual(expected);
