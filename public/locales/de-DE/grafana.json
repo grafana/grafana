@@ -1712,7 +1712,9 @@
       "add-query": "",
       "body-queries-expressions-configured": "",
       "expressions": "",
+      "loading-data-sources": "",
       "manipulate-returned-queries-other-operations": "",
+      "no-compatible-sources": "",
       "title-deactivate-advanced-options": "",
       "title-queries-expressions-configured": ""
     },
@@ -2213,8 +2215,10 @@
       "alertCondition": "Warnbedingung"
     },
     "smart-alert-type-detector": {
+      "data-source-managed": "",
       "data-sourcemanaged-alert-rules": "",
       "data-sourcemanaged-alert-rules-description": "",
+      "grafana-managed": "",
       "grafanamanaged-alert-rules": "",
       "grafanamanaged-alert-rules-description": "",
       "rule-type": "",
@@ -2715,7 +2719,8 @@
       "folder-search-results": "Ordner",
       "pages": "Seiten",
       "preferences": "Einstellungen",
-      "recent-dashboards": "Kürzliche Dashboards"
+      "recent-dashboards": "Kürzliche Dashboards",
+      "recent-scopes": ""
     }
   },
   "common": {
@@ -6938,6 +6943,9 @@
     }
   },
   "provisioning": {
+    "banner": {
+      "message": ""
+    },
     "bootstrap-step": {
       "description-clear-repository-connection": "",
       "empty": "",

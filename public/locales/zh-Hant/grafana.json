@@ -1703,7 +1703,9 @@
       "add-query": "",
       "body-queries-expressions-configured": "",
       "expressions": "",
+      "loading-data-sources": "",
       "manipulate-returned-queries-other-operations": "",
+      "no-compatible-sources": "",
       "title-deactivate-advanced-options": "",
       "title-queries-expressions-configured": ""
     },
@@ -2200,8 +2202,10 @@
       "alertCondition": "警報條件"
     },
     "smart-alert-type-detector": {
+      "data-source-managed": "",
       "data-sourcemanaged-alert-rules": "",
       "data-sourcemanaged-alert-rules-description": "",
+      "grafana-managed": "",
       "grafanamanaged-alert-rules": "",
       "grafanamanaged-alert-rules-description": "",
       "rule-type": "",
@@ -2697,7 +2701,8 @@
       "folder-search-results": "資料夾",
       "pages": "頁面",
       "preferences": "偏好設定",
-      "recent-dashboards": "最近的儀表板"
+      "recent-dashboards": "最近的儀表板",
+      "recent-scopes": ""
     }
   },
   "common": {
@@ -6918,6 +6923,9 @@
     }
   },
   "provisioning": {
+    "banner": {
+      "message": ""
+    },
     "bootstrap-step": {
       "description-clear-repository-connection": "",
       "empty": "",
