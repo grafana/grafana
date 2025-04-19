@@ -1,5 +1,5 @@
 import { saveAs } from 'file-saver';
-import { PureComponent } from 'react';
+import { useState } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { SelectableValue } from '@grafana/data';
@@ -13,33 +13,19 @@ import { buildDashboardImageUrl, buildImageUrl } from './utils';
 
 interface Props extends ShareModalTabProps {}
 
-interface State {
-  format: 'png' | 'jpg';
-  isLoading: boolean;
-  imageBlob: Blob | null;
-  error: string | null;
-}
+export function ShareImage({ dashboard, panel, onDismiss }: Props) {
+  const [format, setFormat] = useState<'png' | 'jpg'>('png');
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageBlob, setImageBlob] = useState<Blob | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-export class ShareImage extends PureComponent<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      format: 'png',
-      isLoading: false,
-      imageBlob: null,
-      error: null,
-    };
-  }
-
-  onFormatChange = (format: 'png' | 'jpg') => {
-    this.setState({ format });
+  const onFormatChange = (newFormat: 'png' | 'jpg') => {
+    setFormat(newFormat);
   };
 
-  onExport = async () => {
-    const { dashboard, panel } = this.props;
-    const { format } = this.state;
-
-    this.setState({ isLoading: true, error: null });
+  const onExport = async () => {
+    setIsLoading(true);
+    setError(null);
 
     try {
       if (!config.rendererAvailable) {
@@ -64,23 +50,18 @@ export class ShareImage extends PureComponent<Props, State> {
       }
 
       const blob = new Blob([response.data], { type: `image/${format}` });
-      this.setState({ imageBlob: blob });
+      setImageBlob(blob);
 
       DashboardInteractions.toolbarShareClick();
     } catch (error) {
       console.error('Error exporting image:', error);
-      this.setState({
-        error: error instanceof Error ? error.message : 'Failed to generate image',
-      });
+      setError(error instanceof Error ? error.message : 'Failed to generate image');
     } finally {
-      this.setState({ isLoading: false });
+      setIsLoading(false);
     }
   };
 
-  onSave = () => {
-    const { dashboard, panel } = this.props;
-    const { imageBlob, format } = this.state;
-
+  const onSave = () => {
     if (!imageBlob) {
       return;
     }
@@ -90,84 +71,79 @@ export class ShareImage extends PureComponent<Props, State> {
     saveAs(imageBlob, `${name}-${time}.${format}`);
   };
 
-  render() {
-    const { onDismiss } = this.props;
-    const { format, isLoading, imageBlob, error } = this.state;
+  const formatOptions: Array<SelectableValue<'png' | 'jpg'>> = [
+    { label: t('share-modal.image.format-png', 'PNG'), value: 'png' },
+    { label: t('share-modal.image.format-jpg', 'JPG'), value: 'jpg' },
+  ];
 
-    const formatOptions: Array<SelectableValue<'png' | 'jpg'>> = [
-      { label: t('share-modal.image.format-png', 'PNG'), value: 'png' },
-      { label: t('share-modal.image.format-jpg', 'JPG'), value: 'jpg' },
-    ];
-
-    return (
-      <>
-        <p>
-          <Trans i18nKey="share-modal.image.info-text">
-            Export the {{ type: this.props.panel ? 'panel' : 'dashboard' }} as an image file. The image will be captured
-            at high resolution.
+  return (
+    <>
+      <p>
+        <Trans i18nKey="share-modal.image.info-text">
+          Export the {{ type: panel ? 'panel' : 'dashboard' }} as an image file. The image will be captured at high
+          resolution.
+        </Trans>
+      </p>
+      {/* TODO: Replace this with general message from other areas */}
+      {!config.rendererAvailable && (
+        <Alert severity="info" title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}>
+          <Trans i18nKey="share-modal.link.render-instructions">
+            To render a {{ type: panel ? 'panel' : 'dashboard' }} image, you must install the{' '}
+            <a
+              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="external-link"
+            >
+              Grafana image renderer plugin
+            </a>
+            . Please contact your Grafana administrator to install the plugin.
           </Trans>
-        </p>
-        {/* TODO: Replace this with general message from other areas */}
-        {!config.rendererAvailable && (
-          <Alert severity="info" title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}>
-            <Trans i18nKey="share-modal.link.render-instructions">
-              To render a {{ type: this.props.panel ? 'panel' : 'dashboard' }} image, you must install the{' '}
-              <a
-                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link"
-              >
-                Grafana image renderer plugin
-              </a>
-              . Please contact your Grafana administrator to install the plugin.
-            </Trans>
-          </Alert>
-        )}
-        <Field label={t('share-modal.image.format-label', 'Format')}>
-          <RadioButtonGroup options={formatOptions} value={format} onChange={this.onFormatChange} />
-        </Field>
-        {isLoading && (
-          <div style={{ margin: '16px 0', textAlign: 'center' }}>
-            <Spinner size="xl" />
-            <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>
-              <Trans i18nKey="share-modal.image.generating-text">Generating image...</Trans>
-            </p>
-          </div>
-        )}
-        {error && !isLoading && (
-          <Alert severity="error" title={t('share-modal.image.error-title', 'Failed to generate image')}>
-            {error}
-          </Alert>
-        )}
-        {imageBlob && !isLoading && !error && (
-          <div style={{ margin: '16px 0', textAlign: 'center' }}>
-            <img
-              src={URL.createObjectURL(imageBlob)}
-              alt={t('share-modal.image.preview', 'Preview')}
-              style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }}
-            />
-          </div>
-        )}
-        <Modal.ButtonRow>
-          <Button variant="secondary" onClick={onDismiss} fill="outline">
-            <Trans i18nKey="share-modal.image.cancel-button">Cancel</Trans>
+        </Alert>
+      )}
+      <Field label={t('share-modal.image.format-label', 'Format')}>
+        <RadioButtonGroup options={formatOptions} value={format} onChange={onFormatChange} />
+      </Field>
+      {isLoading && (
+        <div style={{ margin: '16px 0', textAlign: 'center' }}>
+          <Spinner size="xl" />
+          <p style={{ marginTop: '16px', color: 'var(--text-secondary)' }}>
+            <Trans i18nKey="share-modal.image.generating-text">Generating image...</Trans>
+          </p>
+        </div>
+      )}
+      {error && !isLoading && (
+        <Alert severity="error" title={t('share-modal.image.error-title', 'Failed to generate image')}>
+          {error}
+        </Alert>
+      )}
+      {imageBlob && !isLoading && !error && (
+        <div style={{ margin: '16px 0', textAlign: 'center' }}>
+          <img
+            src={URL.createObjectURL(imageBlob)}
+            alt={t('share-modal.image.preview', 'Preview')}
+            style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain' }}
+          />
+        </div>
+      )}
+      <Modal.ButtonRow>
+        <Button variant="secondary" onClick={onDismiss} fill="outline">
+          <Trans i18nKey="share-modal.image.cancel-button">Cancel</Trans>
+        </Button>
+        {!imageBlob ? (
+          <Button variant="primary" onClick={onExport} disabled={isLoading || !config.rendererAvailable}>
+            {isLoading ? (
+              <Trans i18nKey="share-modal.image.exporting-button">Generating...</Trans>
+            ) : (
+              <Trans i18nKey="share-modal.image.export-button">Generate</Trans>
+            )}
           </Button>
-          {!imageBlob ? (
-            <Button variant="primary" onClick={this.onExport} disabled={isLoading || !config.rendererAvailable}>
-              {isLoading ? (
-                <Trans i18nKey="share-modal.image.exporting-button">Generating...</Trans>
-              ) : (
-                <Trans i18nKey="share-modal.image.export-button">Generate</Trans>
-              )}
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={this.onSave}>
-              <Trans i18nKey="share-modal.image.save-button">Save Image</Trans>
-            </Button>
-          )}
-        </Modal.ButtonRow>
-      </>
-    );
-  }
+        ) : (
+          <Button variant="primary" onClick={onSave}>
+            <Trans i18nKey="share-modal.image.save-button">Save Image</Trans>
+          </Button>
+        )}
+      </Modal.ButtonRow>
+    </>
+  );
 }
