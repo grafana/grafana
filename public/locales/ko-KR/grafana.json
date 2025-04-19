@@ -1703,7 +1703,9 @@
       "add-query": "",
       "body-queries-expressions-configured": "",
       "expressions": "",
+      "loading-data-sources": "",
       "manipulate-returned-queries-other-operations": "",
+      "no-compatible-sources": "",
       "title-deactivate-advanced-options": "",
       "title-queries-expressions-configured": ""
     },
@@ -2200,8 +2202,10 @@
       "alertCondition": "경고 조건"
     },
     "smart-alert-type-detector": {
+      "data-source-managed": "",
       "data-sourcemanaged-alert-rules": "",
       "data-sourcemanaged-alert-rules-description": "",
+      "grafana-managed": "",
       "grafanamanaged-alert-rules": "",
       "grafanamanaged-alert-rules-description": "",
       "rule-type": "",
@@ -2697,7 +2701,8 @@
       "folder-search-results": "폴더",
       "pages": "페이지",
       "preferences": "기본 설정",
-      "recent-dashboards": "최근 대시보드"
+      "recent-dashboards": "최근 대시보드",
+      "recent-scopes": ""
     }
   },
   "common": {
@@ -6918,6 +6923,9 @@
     }
   },
   "provisioning": {
+    "banner": {
+      "message": ""
+    },
     "bootstrap-step": {
       "description-clear-repository-connection": "",
       "empty": "",
