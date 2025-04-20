@@ -14,7 +14,6 @@ import (
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	provisioningV0 "github.com/grafana/grafana/pkg/generated/clientset/versioned/typed/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -123,7 +122,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	if err != nil {
 		return err
 	}
-	client, err := provisioningV0.NewForConfig(cfg)
+	client, err := rest.RESTClientFor(cfg)
 	if err != nil {
 		return err
 	}
@@ -133,7 +132,7 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 		if err = s.Get(ctx, key, storage.GetOptions{}, rsp); err != nil { // COPY?
 			return err
 		}
-		result := client.RESTClient().Delete().
+		result := client.Delete().
 			Namespace(obj.GetNamespace()).
 			Resource("repositories").
 			Name(repo.Identity).
@@ -145,9 +144,9 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	var req *rest.Request
 	switch action {
 	case resource.WatchEvent_ADDED:
-		req = client.RESTClient().Post()
+		req = client.Post()
 	case resource.WatchEvent_MODIFIED:
-		req = client.RESTClient().Put()
+		req = client.Put()
 	default:
 		return fmt.Errorf("unsupported provisioning action: %v, %w", action, err)
 	}
