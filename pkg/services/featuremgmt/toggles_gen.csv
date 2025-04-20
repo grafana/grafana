@@ -146,7 +146,6 @@ failWrongDSUID,GA,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
-alertingApiServer,GA,@grafana/alerting-squad,false,true,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
