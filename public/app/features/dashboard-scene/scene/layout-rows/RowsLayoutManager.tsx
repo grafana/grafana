@@ -21,7 +21,6 @@ import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
-import { TabItemRepeaterBehavior } from '../layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -29,7 +28,6 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { RowItem } from './RowItem';
-import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowLayoutManagerRenderer } from './RowsLayoutManagerRenderer';
 
 interface RowsLayoutManagerState extends SceneObjectState {
@@ -135,21 +133,21 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     this.addNewRow(row);
   }
 
-  public activateRepeaters() {
-    this.state.rows.forEach((row) => {
-      if (!row.isActive) {
-        row.activate();
-      }
+  // public activateRepeaters() {
+  //   this.state.rows.forEach((row) => {
+  //     if (!row.isActive) {
+  //       row.activate();
+  //     }
 
-      const behavior = (row.state.$behaviors ?? []).find((b) => b instanceof RowItemRepeaterBehavior);
+  //     const behavior = (row.state.$behaviors ?? []).find((b) => b instanceof RowItemRepeaterBehavior);
 
-      if (!behavior?.isActive) {
-        behavior?.activate();
-      }
+  //     if (!behavior?.isActive) {
+  //       behavior?.activate();
+  //     }
 
-      row.getLayout().activateRepeaters?.();
-    });
-  }
+  //     row.getLayout().activateRepeaters?.();
+  //   });
+  // }
 
   public shouldUngroup(): boolean {
     return this.state.rows.length === 1;
@@ -203,14 +201,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
         const conditionalRendering = tab.state.conditionalRendering;
         conditionalRendering?.clearParent();
 
-        const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
-        const $behaviors = !behavior
-          ? undefined
-          : [new RowItemRepeaterBehavior({ variableName: behavior.state.variableName })];
+        // const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
+        // const $behaviors = !behavior
+        //   ? undefined
+        //   : [new RowItemRepeaterBehavior({ variableName: behavior.state.variableName })];
 
-        rows.push(
-          new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title, conditionalRendering, $behaviors })
-        );
+        rows.push(new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title, conditionalRendering }));
       }
     } else if (layout instanceof DefaultGridLayoutManager) {
       const config: Array<{
@@ -259,12 +255,12 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
           new RowItem({
             title: rowConfig.title,
             collapse: !!rowConfig.isCollapsed,
+            repeatByVariable: rowConfig.repeat,
             layout: DefaultGridLayoutManager.fromGridItems(
               rowConfig.children,
               rowConfig.isDraggable ?? layout.state.grid.state.isDraggable,
               rowConfig.isResizable ?? layout.state.grid.state.isResizable
             ),
-            $behaviors: rowConfig.repeat ? [new RowItemRepeaterBehavior({ variableName: rowConfig.repeat })] : [],
           })
       );
     } else {
