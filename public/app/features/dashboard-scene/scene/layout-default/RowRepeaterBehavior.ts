@@ -196,12 +196,17 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
 
         const cloneItemKey = joinCloneKeys(rowCloneKey, getLastKeyFromClone(sourceItem.state.key!));
         const cloneItemY = sourceItemY + (rowContentHeight + 1) * rowIndex;
+        const cloneItem =
+          rowIndex > 0
+            ? sourceItem.clone({
+                isDraggable: false,
+                isResizable: false,
+              })
+            : sourceItem;
 
-        const cloneItem = sourceItem.clone({
+        cloneItem.setState({
           key: cloneItemKey,
           y: cloneItemY,
-          isDraggable: !isSourceRow && sourceItem instanceof DashboardGridItem ? false : sourceItem.state.isDraggable,
-          isResizable: !isSourceRow && sourceItem instanceof DashboardGridItem ? false : sourceItem.state.isResizable,
         });
 
         ensureUniqueKeys(cloneItem, cloneItemKey);
