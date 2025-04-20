@@ -6529,7 +6529,11 @@
       "aria-label": ""
     },
     "extension-sidebar": {
-      "button-tooltip": ""
+      "button-tooltip": {
+        "close": "",
+        "open": "",
+        "open-all": ""
+      }
     },
     "help": {
       "aria-label": ""
