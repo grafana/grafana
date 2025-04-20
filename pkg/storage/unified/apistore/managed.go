@@ -9,7 +9,10 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apiserver/pkg/storage"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
 	authtypes "github.com/grafana/authlib/types"
@@ -121,6 +124,11 @@ func (s *Storage) handleManagedResourceRouting(ctx context.Context,
 	cfg, err := s.configProvider.GetRestConfig(ctx)
 	if err != nil {
 		return err
+	}
+	cfg.NegotiatedSerializer = serializer.WithoutConversionCodecFactory{CodecFactory: scheme.Codecs}
+	cfg.GroupVersion = &schema.GroupVersion{
+		Group:   "provisioning.grafana.app",
+		Version: "v0alpha1",
 	}
 	client, err := rest.RESTClientFor(cfg)
 	if err != nil {
