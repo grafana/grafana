@@ -136,7 +136,7 @@ func (r *jobProgressRecorder) TooManyErrors() error {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-	if r.errorCount > r.maxErrors {
+	if r.errorCount >= r.maxErrors {
 		return fmt.Errorf("too many errors: %d", r.errorCount)
 	}
 
