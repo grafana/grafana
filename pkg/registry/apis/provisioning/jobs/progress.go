@@ -38,6 +38,7 @@ type JobResourceResult struct {
 type jobProgressRecorder struct {
 	started             time.Time
 	total               int
+	maxErrors           int
 	message             string
 	finalMessage        string
 	resultCount         int
@@ -50,7 +51,8 @@ type jobProgressRecorder struct {
 
 func newJobProgressRecorder(ProgressFn ProgressFn) JobProgressRecorder {
 	return &jobProgressRecorder{
-		started: time.Now(),
+		maxErrors: 20,
+		started:   time.Now(),
 		// Have a faster notifier for messages and total
 		notifyImmediatelyFn: maybeNotifyProgress(500*time.Millisecond, ProgressFn),
 		maybeNotifyFn:       maybeNotifyProgress(5*time.Second, ProgressFn),
@@ -101,8 +103,12 @@ func (r *jobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	r.notifyImmediately(ctx)
 }
 
+func (r *jobProgressRecorder) Strict() {
+	r.maxErrors = 1
+}
+
 func (r *jobProgressRecorder) TooManyErrors() error {
-	if r.errorCount > 20 {
+	if r.errorCount > r.maxErrors {
 		return fmt.Errorf("too many errors: %d", r.errorCount)
 	}
 
