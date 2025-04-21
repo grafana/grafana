@@ -264,7 +264,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 }
                 size="lg"
               />
-              {showUniqueLabels !== undefined && (
+              {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <IconButton
                   name="tag-alt"
                   aria-pressed={showUniqueLabels}
