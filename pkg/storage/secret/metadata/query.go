@@ -32,10 +32,13 @@ var (
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
-	sqlSecureValueRead   = mustTemplate("secure_value_read.sql")
-	sqlSecureValueList   = mustTemplate("secure_value_list.sql")
-	sqlSecureValueCreate = mustTemplate("secure_value_create.sql")
-	sqlSecureValueDelete = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
+	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
+	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
+	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
+	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -177,5 +180,31 @@ type deleteSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r deleteSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// Update externalId
+type updateExternalIdSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace  string
+	Name       string
+	ExternalID string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r updateExternalIdSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// update status message
+type updateStatusSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Message   string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r updateStatusSecureValue) Validate() error {
 	return nil // TODO
 }

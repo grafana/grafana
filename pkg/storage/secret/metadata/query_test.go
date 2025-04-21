@@ -181,6 +181,28 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlSecureValueUpdateExternalId: {
+				{
+					Name: "updateExternalId",
+					Data: &updateExternalIdSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						ExternalID:  "extId",
+					},
+				},
+			},
+			sqlSecureValueUpdateStatus: {
+				{
+					Name: "updateStatus",
+					Data: &updateStatusSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						Message:     "message",
+					},
+				},
+			},
 		},
 	})
 }
