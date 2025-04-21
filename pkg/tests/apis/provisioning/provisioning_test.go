@@ -18,13 +18,13 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/tests/apis"
-	"k8s.io/apimachinery/pkg/runtime"
 )
 
 func TestIntegrationProvisioning_CreatingAndGetting(t *testing.T) {
@@ -284,6 +284,12 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{})
 	require.NoError(t, err, "should delete values")
+
+	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
+		found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+		require.NoError(t, err, "can list values")
+		require.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
+	}, time.Second*10, time.Millisecond*10, "Expected dashboards to be deleted")
 
 	t.Run("github url cleanup", func(t *testing.T) {
 		tests := []struct {
@@ -550,18 +556,14 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 	// Try writing the value directly
 	err = unstructured.SetNestedField(obj.Object, []any{"aaa", "bbb"}, "spec", "tags")
 	require.NoError(t, err, "set tags")
-	_, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
-	require.Error(t, err, "only the provisionding service should be able to update")
-	require.True(t, apierrors.IsForbidden(err))
+	obj, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+	require.NoError(t, err)
+	v, _, _ := unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyUpdatedBy)
+	require.Equal(t, "access-policy:provisioning", v)
 
 	// Should not be able to directly delete the managed resource
 	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
-	require.Error(t, err, "only the provisioning service should be able to delete")
-	require.True(t, apierrors.IsForbidden(err))
-
-	// But we can delete the repository file, and this should also remove the resource
-	err = helper.Repositories.Resource.Delete(ctx, repo, metav1.DeleteOptions{}, "files", "all-panels.json")
-	require.NoError(t, err, "should delete the resource file")
+	require.NoError(t, err, "user can delete")
 
 	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "should delete the internal resource")

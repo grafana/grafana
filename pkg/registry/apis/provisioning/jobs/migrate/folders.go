@@ -74,6 +74,7 @@ func (f *legacyFoldersMigrator) Migrate(ctx context.Context, namespace string, r
 	}
 
 	progress.SetMessage(ctx, "export folders from SQL")
+	// FIXME: we don't sign folders, not even with grafana user
 	if err := repositoryResources.EnsureFolderTreeExists(ctx, "", "", f.tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
 			Action:   repository.FileActionCreated,
@@ -87,9 +88,8 @@ func (f *legacyFoldersMigrator) Migrate(ctx context.Context, namespace string, r
 		if !created {
 			result.Action = repository.FileActionIgnored
 		}
-
 		progress.Record(ctx, result)
-		return nil
+		return err
 	}); err != nil {
 		return fmt.Errorf("export folders from SQL: %w", err)
 	}

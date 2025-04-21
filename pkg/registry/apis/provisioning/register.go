@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -546,13 +547,14 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				statusPatcher.Patch,
 				syncer,
 			)
-
+			signerFactory := signature.NewSignerFactory(b.clients)
 			legacyFolders := migrate.NewLegacyFoldersMigrator(b.legacyMigrator)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
 				b.repositoryResources,
 				b.parsers,
 				b.legacyMigrator,
 				legacyFolders,
+				signerFactory,
 			)
 			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
 			legacyMigrator := migrate.NewLegacyMigrator(
@@ -721,6 +723,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					In:          "query",
 					Description: "optional message sent with any changes",
 					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "skipDryRun",
+					In:          "query",
+					Description: "do not pro-actively verify the payload",
+					Schema:      spec.BooleanProperty(),
 					Required:    false,
 				},
 			},

@@ -4,9 +4,9 @@ go 1.24.2
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
-	github.com/grafana/grafana-plugin-sdk-go v0.275.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435
+	github.com/grafana/grafana-plugin-sdk-go v0.277.0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250418141452-c174c855c30c
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.35.0
@@ -104,12 +104,12 @@ require (
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/stoewer/go-strcase v1.3.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/ugorji/go/codec v1.2.11 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect

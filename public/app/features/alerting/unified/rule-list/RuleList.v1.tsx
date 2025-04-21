@@ -142,7 +142,9 @@ const RuleListV1 = () => {
                 variant="secondary"
                 onClick={() => setExpandAll(!expandAll)}
               >
-                {expandAll ? 'Collapse all' : 'Expand all'}
+                {expandAll
+                  ? t('alerting.rule-list-v1.collapse-all', 'Collapse all')
+                  : t('alerting.rule-list-v1.expand-all', 'Expand all')}
               </Button>
             )}
           </Stack>
