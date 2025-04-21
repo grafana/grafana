@@ -71,18 +71,18 @@ type jobDriver struct {
 }
 
 func NewJobDriver(
-	timeout, cleanupInterval, jobInterval time.Duration,
+	jobTimeout, cleanupInterval, jobInterval time.Duration,
 	store Store,
 	repoGetter RepoGetter,
 	historicJobs History,
 	workers ...Worker,
 ) (*jobDriver, error) {
-	if cleanupInterval > timeout {
-		return nil, fmt.Errorf("the job timeout must be larger than the cleanupInterval")
+	if cleanupInterval > jobTimeout {
+		return nil, fmt.Errorf("the cleanup interval must be larger than the jobTimeout")
 	}
 
 	return &jobDriver{
-		jobTimeout:       timeout,
+		jobTimeout:       jobTimeout,
 		cleanupInterval:  cleanupInterval,
 		jobCheckInterval: jobInterval,
 		store:            store,
