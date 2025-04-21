@@ -78,6 +78,20 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 			expectedErrors: 0,
 		},
 		{
+			name: "Valid configuration with .git suffix",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana.git",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 0,
+		},
+		{
 			name: "Missing GitHub config",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
@@ -118,11 +132,41 @@ func TestGitHubRepositoryValidate(t *testing.T) {
 			errorFields:    []string{"spec.github.url"},
 		},
 		{
+			name: "Fail to parse URL",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/user%",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.url"},
+		},
+		{
 			name: "URL not starting with https://github.com/",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						URL:    "https://gitlab.com/grafana/grafana",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.url"},
+		},
+		{
+			name: "Missing repo name",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana",
 						Branch: "main",
 						Token:  "valid-token",
 						Path:   "dashboards",
