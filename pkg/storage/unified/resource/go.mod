@@ -19,7 +19,7 @@ require (
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
 	github.com/grafana/grafana/apps/folder v0.0.0-20250402082028-6781612335d9
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250414114055-2b279efe15bf
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7

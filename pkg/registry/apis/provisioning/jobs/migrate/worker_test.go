@@ -61,6 +61,7 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 	}
 	progressRecorder := jobs.NewMockJobProgressRecorder(t)
 	progressRecorder.On("SetTotal", mock.Anything, 10).Return()
+	progressRecorder.On("Strict").Return()
 
 	repo := repository.NewMockReader(t)
 	err := worker.Process(context.Background(), repo, job, progressRecorder)
@@ -98,6 +99,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			isLegacyActive: true,
 			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
+				pr.On("Strict").Return()
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
 				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
@@ -113,6 +115,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			isLegacyActive: false,
 			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
+				pr.On("Strict").Return()
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(true, nil)
 				um.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			},
@@ -128,6 +131,7 @@ func TestMigrationWorker_Process(t *testing.T) {
 			isLegacyActive: true,
 			setupMocks: func(lm *MockMigrator, um *MockMigrator, ds *dualwrite.MockService, pr *jobs.MockJobProgressRecorder) {
 				pr.On("SetTotal", mock.Anything, 10).Return()
+				pr.On("Strict").Return()
 				ds.On("ReadFromUnified", mock.Anything, mock.Anything).Return(false, nil)
 				lm.On("Migrate", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.New("migration failed"))
 			},

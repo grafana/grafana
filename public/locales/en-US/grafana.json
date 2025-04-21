@@ -6489,7 +6489,11 @@
       "aria-label": "Breadcrumbs"
     },
     "extension-sidebar": {
-      "button-tooltip": "Open AI assistants and sidebar apps"
+      "button-tooltip": {
+        "close": "Close {{title}}",
+        "open": "Open {{title}}",
+        "open-all": "Open AI assistants and sidebar apps"
+      }
     },
     "help": {
       "aria-label": "Help"

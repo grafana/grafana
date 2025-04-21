@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"slices"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -95,13 +94,10 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	folder := meta.GetFolder()
 
 	// Get the absolute path of the folder
-	fid, ok := r.folders.Tree().DirPath(folder, "")
+	rootFolder := RootFolder(r.repo.Config())
+	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
 	if !ok {
-		// FIXME: Shouldn't this fail instead?
-		fid = Folder{
-			Path: "__folder_not_found/" + slugify.Slugify(folder),
-		}
-		// r.logger.Error("folder of item was not in tree of repository")
+		return "", fmt.Errorf("folder not found in tree: %s", folder)
 	}
 
 	// Clear the metadata
@@ -173,21 +169,7 @@ func (r *ResourcesManager) WriteResourceFromFile(ctx context.Context, path strin
 	parsed.Meta.SetUID("")
 	parsed.Meta.SetResourceVersion("")
 
-	// TODO: use parsed.Run() (but that has an extra GET now!!)
-	fieldValidation := "Strict"
-	if parsed.GVR == DashboardResource {
-		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
-	}
-
-	// Update or Create resource
-	parsed.Upsert, err = parsed.Client.Update(ctx, parsed.Obj, metav1.UpdateOptions{
-		FieldValidation: fieldValidation,
-	})
-	if apierrors.IsNotFound(err) {
-		parsed.Upsert, err = parsed.Client.Create(ctx, parsed.Obj, metav1.CreateOptions{
-			FieldValidation: fieldValidation,
-		})
-	}
+	err = parsed.Run(ctx)
 
 	return parsed.Obj.GetName(), parsed.GVK, err
 }
