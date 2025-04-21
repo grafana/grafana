@@ -327,36 +327,37 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		usedSecureValuesList = append(usedSecureValuesList, sv)
 	}
 
-	reqSecValue := listByNameSecureValue{
+	reqSecureValue := listByNameSecureValue{
 		SQLTemplate:      sqltemplate.New(s.dialect),
 		Namespace:        keeper.Namespace,
 		UsedSecureValues: usedSecureValuesList,
 	}
 
-	qSecValue, err := sqltemplate.Execute(sqlSecureValueListByName, reqSecValue)
+	querySecureValueList, err := sqltemplate.Execute(sqlSecureValueListByName, reqSecureValue)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueListByName.Name(), err)
 	}
 
-	rows, err := sess.Query(ctx, qSecValue, reqSecValue.GetArgs()...)
+	rows, err := sess.Query(ctx, querySecureValueList, reqSecureValue.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("executing query: %w", err)
 	}
+	defer func() { _ = rows.Close() }()
 
-	defer func() {
-		_ = rows.Close()
-	}()
+	// DTO for `sqlSecureValueListByName` query result, only what we need.
+	type listByNameResult struct {
+		Name   string
+		Keeper string
+	}
 
-	secureValueRows := make([]*secureValueDB, 0)
+	secureValueRows := make([]listByNameResult, 0)
 	for rows.Next() {
-		row := secureValueDB{}
-		err = rows.Scan(
-			&row.Name, &row.Keeper,
-		)
-		if err != nil {
+		var row listByNameResult
+		if err := rows.Scan(&row.Name, &row.Keeper); err != nil {
 			return fmt.Errorf("error reading secret value row: %w", err)
 		}
-		secureValueRows = append(secureValueRows, &row)
+
+		secureValueRows = append(secureValueRows, row)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -405,19 +406,16 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	if err != nil {
 		return fmt.Errorf("listing by name %q: %w", qKeeper, err)
 	}
+	defer func() { _ = keepersRows.Close() }()
 
-	defer func() {
-		_ = keepersRows.Close()
-	}()
-
-	thirdPartyKeepers := make([]*keeperDB, 0)
+	thirdPartyKeepers := make([]string, 0)
 	for keepersRows.Next() {
-		row := keeperDB{}
-		err = keepersRows.Scan(&row.Name)
-		if err != nil {
+		var name string
+		if err := keepersRows.Scan(&name); err != nil {
 			return fmt.Errorf("error reading keeper row: %w", err)
 		}
-		thirdPartyKeepers = append(thirdPartyKeepers, &row)
+
+		thirdPartyKeepers = append(thirdPartyKeepers, name)
 	}
 
 	if err := rows.Err(); err != nil {
@@ -428,9 +426,9 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	if len(thirdPartyKeepers) > 0 {
 		invalidSecureValues := make(map[string]string, 0)
 
-		for _, thirdPartyKeeper := range thirdPartyKeepers {
-			for _, svName := range keeperSecureValues[thirdPartyKeeper.Name] {
-				invalidSecureValues[svName] = thirdPartyKeeper.Name
+		for _, keeperName := range thirdPartyKeepers {
+			for _, svName := range keeperSecureValues[keeperName] {
+				invalidSecureValues[svName] = keeperName
 			}
 		}
 
