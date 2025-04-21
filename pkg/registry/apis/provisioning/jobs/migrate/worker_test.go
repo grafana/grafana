@@ -86,6 +86,7 @@ func TestMigrationWorker_WithHistory(t *testing.T) {
 	t.Run("fail local", func(t *testing.T) {
 		progressRecorder := jobs.NewMockJobProgressRecorder(t)
 		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
+		progressRecorder.On("Strict").Return()
 
 		repo := repository.NewLocal(&provisioning.Repository{}, nil)
 		err := worker.Process(context.Background(), repo, job, progressRecorder)
@@ -95,6 +96,7 @@ func TestMigrationWorker_WithHistory(t *testing.T) {
 	t.Run("fail unified", func(t *testing.T) {
 		progressRecorder := jobs.NewMockJobProgressRecorder(t)
 		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
+		progressRecorder.On("Strict").Return()
 
 		repo := repository.NewMockRepository(t)
 		repo.On("Config").Return(&provisioning.Repository{
