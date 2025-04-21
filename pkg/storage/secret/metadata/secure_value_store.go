@@ -111,38 +111,33 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		Name:        name,
 	}
 
-	q, err := sqltemplate.Execute(sqlSecureValueRead, req)
+	query, err := sqltemplate.Execute(sqlSecureValueRead, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueRead.Name(), err)
 	}
 
-	res, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	res, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("reading row: %w", err)
 	}
 	defer func() { _ = res.Close() }()
 
-	secureValue := &secureValueDB{}
+	var secureValue secureValueDB
 	if res.Next() {
-		row := &secureValueDB{}
-		err := res.Scan(&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations,
-			&row.Labels,
-			&row.Created, &row.CreatedBy,
-			&row.Updated, &row.UpdatedBy,
-			&row.Phase, &row.Message,
-			&row.Title, &row.Keeper, &row.Decrypters, &row.Ref, &row.ExternalID)
+		err := res.Scan(&secureValue.GUID,
+			&secureValue.Name, &secureValue.Namespace, &secureValue.Annotations,
+			&secureValue.Labels,
+			&secureValue.Created, &secureValue.CreatedBy,
+			&secureValue.Updated, &secureValue.UpdatedBy,
+			&secureValue.Phase, &secureValue.Message,
+			&secureValue.Title, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan secure value row: %w", err)
 		}
-		secureValue = row
 	}
 
 	if err := res.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
-	}
-	if secureValue == nil {
-		return nil, contracts.ErrSecureValueNotFound
 	}
 
 	secureValueKub, err := secureValue.toKubernetes()
@@ -271,7 +266,6 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	defer func() { _ = rows.Close() }()
 
 	secureValues := make([]secretv0alpha1.SecureValue, 0)
-
 	for rows.Next() {
 		row := secureValueDB{}
 
