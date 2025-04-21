@@ -276,7 +276,9 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&version, &message, &data, &apiVersion,
 	)
 	if apiVersion.String == "" {
-		apiVersion.String = "v0alpha1" // default value
+		apiVersion.String = dashboardV0.VERSION // default value
+	} else if apiVersion.String == "v1alpha1" {
+		apiVersion.String = dashboardV0.VERSION // downgrade to v0 (it may not have run migrations)
 	}
 
 	row.token = &continueToken{orgId: orgId, id: dashboard_id}
