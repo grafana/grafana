@@ -630,6 +630,13 @@ func escapeRouteExport(r *definitions.RouteExport) {
 		}
 		r.MuteTimeIntervals = &muteTimeIntervals
 	}
+	if r.ActiveTimeIntervals != nil {
+		intervals := make([]string, len(*r.ActiveTimeIntervals))
+		for i, muteTimeInterval := range *r.ActiveTimeIntervals {
+			intervals[i] = addEscapeCharactersToString(muteTimeInterval)
+		}
+		r.ActiveTimeIntervals = &intervals
+	}
 	for i := range r.Routes {
 		escapeRouteExport(r.Routes[i])
 	}

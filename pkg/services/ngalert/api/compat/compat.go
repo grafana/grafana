@@ -367,6 +367,7 @@ func RouteExportFromRoute(route *definitions.Route) *definitions.RouteExport {
 		ObjectMatchers:      route.ObjectMatchers,
 		ObjectMatchersSlice: matchers,
 		MuteTimeIntervals:   NilIfEmpty(util.Pointer(route.MuteTimeIntervals)),
+		ActiveTimeIntervals: NilIfEmpty(util.Pointer(route.ActiveTimeIntervals)),
 		Continue:            OmitDefault(util.Pointer(route.Continue)),
 		GroupWait:           toStringIfNotNil(route.GroupWait),
 		GroupInterval:       toStringIfNotNil(route.GroupInterval),
@@ -481,12 +482,13 @@ func AlertRuleNotificationSettingsExportFromNotificationSettings(ns []models.Not
 	}
 
 	return &definitions.AlertRuleNotificationSettingsExport{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         toStringIfNotNil(m.GroupWait),
-		GroupInterval:     toStringIfNotNil(m.GroupInterval),
-		RepeatInterval:    toStringIfNotNil(m.RepeatInterval),
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           toStringIfNotNil(m.GroupWait),
+		GroupInterval:       toStringIfNotNil(m.GroupInterval),
+		RepeatInterval:      toStringIfNotNil(m.RepeatInterval),
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
