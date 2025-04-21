@@ -122,7 +122,7 @@ func (d *jobDriver) Run(ctx context.Context) {
 }
 
 func (d *jobDriver) startDriving(ctx context.Context) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, 1*time.Hour) // ???? currently 28s? d.timeout)
+	timeoutCtx, cancel := context.WithTimeout(ctx, d.timeout)
 	defer cancel()
 	for timeoutCtx.Err() == nil {
 		if err := d.drive(timeoutCtx); err != nil {
