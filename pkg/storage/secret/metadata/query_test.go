@@ -71,16 +71,6 @@ func TestKeeperQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlKeeperReadForUpdate: {
-				{
-					Name: "readForUpdate",
-					Data: &readForUpdateKeeper{
-						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Name:        "name",
-						Namespace:   "ns",
-					},
-				},
-			},
 			sqlKeeperUpdate: {
 				{
 					Name: "update",
@@ -178,6 +168,16 @@ func TestSecureValueQueries(t *testing.T) {
 							Ref:         nil,
 							ExternalID:  "extId",
 						},
+					},
+				},
+			},
+			sqlSecureValueDelete: {
+				{
+					Name: "delete",
+					Data: &deleteSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
 					},
 				},
 			},

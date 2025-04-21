@@ -23,12 +23,11 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate        = mustTemplate("keeper_create.sql")
-	sqlKeeperRead          = mustTemplate("keeper_read.sql")
-	sqlKeeperReadForUpdate = mustTemplate("keeper_readForUpdate.sql")
-	sqlKeeperUpdate        = mustTemplate("keeper_update.sql")
-	sqlKeeperList          = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete        = mustTemplate("keeper_delete.sql")
+	sqlKeeperCreate = mustTemplate("keeper_create.sql")
+	sqlKeeperRead   = mustTemplate("keeper_read.sql")
+	sqlKeeperUpdate = mustTemplate("keeper_update.sql")
+	sqlKeeperList   = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
 
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
@@ -36,6 +35,7 @@ var (
 	sqlSecureValueRead   = mustTemplate("secure_value_read.sql")
 	sqlSecureValueList   = mustTemplate("secure_value_list.sql")
 	sqlSecureValueCreate = mustTemplate("secure_value_create.sql")
+	sqlSecureValueDelete = mustTemplate("secure_value_delete.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -71,18 +71,6 @@ type readKeeper struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r readKeeper) Validate() error {
-	return nil // TODO
-}
-
-// Read for update
-type readForUpdateKeeper struct {
-	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
-}
-
-// Validate is only used if we use `dbutil` from `unifiedstorage`
-func (r readForUpdateKeeper) Validate() error {
 	return nil // TODO
 }
 
@@ -177,5 +165,17 @@ type createSecureValue struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r createSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// Delete
+type deleteSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r deleteSecureValue) Validate() error {
 	return nil // TODO
 }

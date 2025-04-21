@@ -67,15 +67,16 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	}
 
 	// prepare keeper read for update query and request
-	reqKeeperRead := readForUpdateKeeper{
+	reqKeeperRead := readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   row.Namespace,
 		Name:        row.Keeper,
+		ForUpdate:   true,
 	}
 
-	queryKeeperRead, err := sqltemplate.Execute(sqlKeeperReadForUpdate, reqKeeperRead)
+	queryKeeperRead, err := sqltemplate.Execute(sqlKeeperRead, reqKeeperRead)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperReadForUpdate.Name(), err)
+		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
 	// prepare secure value query and request
