@@ -227,8 +227,7 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 		ref = r.config.Spec.GitHub.Branch
 	}
 
-	ctx, logger := r.logger(ctx, ref)
-
+	ctx, _ = r.logger(ctx, ref)
 	tree, truncated, err := r.gh.GetTree(ctx, r.owner, r.repo, r.config.Spec.GitHub.Path, ref, true)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -239,9 +238,11 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 				},
 			}
 		}
+		return nil, fmt.Errorf("get tree: %w", err)
 	}
+
 	if truncated {
-		logger.Warn("tree from github was truncated")
+		return nil, fmt.Errorf("tree truncated")
 	}
 
 	entries := make([]FileTreeEntry, 0, len(tree))

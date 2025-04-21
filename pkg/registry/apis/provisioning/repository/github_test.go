@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	field "k8s.io/apimachinery/pkg/util/validation/field"
@@ -638,13 +639,27 @@ func TestParseWebhooks(t *testing.T) {
 
 func TestReadTree(t *testing.T) {
 	tests := []struct {
-		name     string
-		path     string
-		tree     []pgh.RepositoryContent
-		expected []FileTreeEntry
+		name          string
+		path          string
+		ref           string
+		expectedRef   string
+		tree          []pgh.RepositoryContent
+		expected      []FileTreeEntry
+		getTreeErr    error
+		truncated     bool
+		expectedError error
 	}{
-		{name: "empty tree", tree: []pgh.RepositoryContent{}, expected: []FileTreeEntry{}},
-		{name: "single file", tree: func() []pgh.RepositoryContent {
+		{name: "empty ref", ref: "", expectedRef: "develop", tree: []pgh.RepositoryContent{}, expected: []FileTreeEntry{}},
+		{name: "unknown error to get tree", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, getTreeErr: errors.New("unknown error"), expectedError: errors.New("get tree: unknown error")},
+		{name: "tree not found error", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, getTreeErr: pgh.ErrResourceNotFound, expectedError: &apierrors.StatusError{
+			ErrStatus: metav1.Status{
+				Message: "tree not found; ref=develop",
+				Code:    http.StatusNotFound,
+			},
+		}},
+		{name: "tree truncated", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, truncated: true, expectedError: errors.New("tree truncated")},
+		{name: "empty tree", ref: "develop", expectedRef: "develop", tree: []pgh.RepositoryContent{}, expected: []FileTreeEntry{}},
+		{name: "single file", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
 			content := pgh.NewMockRepositoryContent(t)
 			content.EXPECT().GetPath().Return("file.txt")
 			content.EXPECT().GetSize().Return(int64(100))
@@ -654,7 +669,7 @@ func TestReadTree(t *testing.T) {
 		}(), expected: []FileTreeEntry{
 			{Path: "file.txt", Size: 100, Hash: "abc123", Blob: true},
 		}},
-		{name: "single directory", tree: func() []pgh.RepositoryContent {
+		{name: "single directory", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
 			content := pgh.NewMockRepositoryContent(t)
 			content.EXPECT().GetPath().Return("dir")
 			content.EXPECT().IsDirectory().Return(true)
@@ -665,7 +680,7 @@ func TestReadTree(t *testing.T) {
 		}(), expected: []FileTreeEntry{
 			{Path: "dir/", Blob: false},
 		}},
-		{name: "mixed content", tree: func() []pgh.RepositoryContent {
+		{name: "mixed content", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
 			file1 := pgh.NewMockRepositoryContent(t)
 			file1.EXPECT().GetPath().Return("file1.txt")
 			file1.EXPECT().GetSize().Return(int64(100))
@@ -690,7 +705,7 @@ func TestReadTree(t *testing.T) {
 			{Path: "dir/", Blob: false},
 			{Path: "file2.txt", Size: 200, Hash: "def456", Blob: true},
 		}},
-		{name: "with path prefix", path: "prefix", tree: func() []pgh.RepositoryContent {
+		{name: "with path prefix", ref: "develop", expectedRef: "develop", tree: func() []pgh.RepositoryContent {
 			file := pgh.NewMockRepositoryContent(t)
 			file.EXPECT().GetPath().Return("file.txt")
 			file.EXPECT().GetSize().Return(int64(100))
@@ -719,17 +734,23 @@ func TestReadTree(t *testing.T) {
 				config: &provisioning.Repository{
 					Spec: provisioning.RepositorySpec{
 						GitHub: &provisioning.GitHubRepositoryConfig{
-							Path: tt.path,
+							Path:   tt.path,
+							Branch: "develop",
 						},
 					},
 				},
 				gh: ghMock,
 			}
 
-			ghMock.On("GetTree", mock.Anything, "owner", "repo", tt.path, "some-ref", true).Return(tt.tree, false, nil)
-			tree, err := gh.ReadTree(context.Background(), "some-ref")
-			require.NoError(t, err)
-			require.Equal(t, tt.expected, tree)
+			ghMock.On("GetTree", mock.Anything, "owner", "repo", tt.path, tt.expectedRef, true).Return(tt.tree, tt.truncated, tt.getTreeErr)
+			tree, err := gh.ReadTree(context.Background(), tt.ref)
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, tree)
+			}
 		})
 	}
 }
