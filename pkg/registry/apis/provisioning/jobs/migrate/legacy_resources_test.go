@@ -483,7 +483,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		// Change the result file name
 		writeResourceFileFromObject.Return("bbbb.json", nil)
 		mockRepoResources.On("RemoveResourceFromFile", mock.Anything, "aaaa.json", "").
-			Return("", schema.GroupVersionKind{}, nil)
+			Return("", schema.GroupVersionKind{}, nil).Once()
 
 		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte(""))
 		require.NoError(t, err)

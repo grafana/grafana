@@ -14,7 +14,7 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8testing "k8s.io/client-go/testing"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioningV0 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -292,7 +292,7 @@ func TestExportResources(t *testing.T) {
 			repoResources := resources.NewMockRepositoryResources(t)
 			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVK)
 
-			options := v0alpha1.ExportJobOptions{
+			options := provisioningV0.ExportJobOptions{
 				Path:   "grafana",
 				Branch: "feature/branch",
 			}
