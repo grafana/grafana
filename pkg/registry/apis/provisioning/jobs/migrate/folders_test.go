@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -299,7 +300,7 @@ func TestLegacyFoldersMigrator_Migrate(t *testing.T) {
 				result.Resource == resources.FolderResource.Resource &&
 				result.Group == resources.FolderResource.Group &&
 				result.Path == "/test-folder" &&
-				result.Error == expectedError
+				assert.Equal(t, expectedError, result.Error)
 		})).Return()
 
 		err := migrator.Migrate(context.Background(), "test-namespace", mockRepositoryResources, progress)
