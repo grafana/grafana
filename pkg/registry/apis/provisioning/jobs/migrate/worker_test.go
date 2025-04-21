@@ -95,15 +95,15 @@ func TestMigrationWorker_WithHistory(t *testing.T) {
 		progressRecorder := jobs.NewMockJobProgressRecorder(t)
 		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
 
-		ctx := context.Background()
-		repo := repository.NewGitHub(ctx, &provisioning.Repository{
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
 			Spec: provisioning.RepositorySpec{
 				Type: provisioning.GitHubRepositoryType,
 				GitHub: &provisioning.GitHubRepositoryConfig{
 					URL: "empty", // not valid
 				},
 			},
-		}, nil, nil, "", nil)
+		})
 		err := worker.Process(context.Background(), repo, job, progressRecorder)
 		require.EqualError(t, err, "history is not yet supported in unified storage")
 	})
