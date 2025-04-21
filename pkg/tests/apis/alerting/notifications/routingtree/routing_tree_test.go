@@ -563,13 +563,14 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
 		assert.Equal(t, v0alpha1.Route{
-			Continue:          true,
-			Receiver:          util.Pointer(receiver),
-			GroupBy:           []string{"test-789"},
-			GroupWait:         util.Pointer("2m"),
-			GroupInterval:     util.Pointer("5m"),
-			RepeatInterval:    util.Pointer("1d6h"),
-			MuteTimeIntervals: []string{timeInterval},
+			Continue:            true,
+			Receiver:            util.Pointer(receiver),
+			GroupBy:             []string{"test-789"},
+			GroupWait:           util.Pointer("2m"),
+			GroupInterval:       util.Pointer("5m"),
+			RepeatInterval:      util.Pointer("1d6h"),
+			MuteTimeIntervals:   []string{timeInterval},
+			ActiveTimeIntervals: []string{timeInterval},
 			Matchers: []v0alpha1.Matcher{
 				{
 					Label: "m",
