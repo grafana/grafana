@@ -1,8 +1,10 @@
+import { Box, Text, TextLink } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import GettingStarted from './GettingStarted';
+
 interface Props {
   items: Repository[];
 }
@@ -20,8 +22,34 @@ export default function GettingStartedPage({ items }: Props) {
       }}
     >
       <Page.Contents>
+        <Banner />
         <GettingStarted items={items} />
       </Page.Contents>
     </Page>
+  );
+}
+
+function Banner() {
+  return (
+    <Box
+      display="flex"
+      backgroundColor={'info'}
+      borderRadius="default"
+      paddingY={2}
+      paddingX={2}
+      marginBottom={3}
+      alignItems="stretch"
+    >
+      <Text>
+        <Trans i18nKey={'provisioning.banner.message'}>
+          This feature is currently under active development. For the best experience and latest improvements, we
+          recommend using the{' '}
+          <TextLink href={'https://grafana.com/grafana/download/nightly'} external>
+            nightly build
+          </TextLink>{' '}
+          of Grafana.
+        </Trans>
+      </Text>
+    </Box>
   );
 }
