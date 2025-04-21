@@ -94,13 +94,10 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	folder := meta.GetFolder()
 
 	// Get the absolute path of the folder
-	fid, ok := r.folders.Tree().DirPath(folder, "")
+	rootFolder := RootFolder(r.repo.Config())
+	fid, ok := r.folders.Tree().DirPath(folder, rootFolder)
 	if !ok {
-		// FIXME: Shouldn't this fail instead?
-		fid = Folder{
-			Path: "__folder_not_found/" + slugify.Slugify(folder),
-		}
-		// r.logger.Error("folder of item was not in tree of repository")
+		return "", fmt.Errorf("folder not found in tree: %s", folder)
 	}
 
 	// Clear the metadata
