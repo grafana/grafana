@@ -33,6 +33,7 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.warning,
   LogLevel.error,
   LogLevel.critical,
+  LogLevel.unknown,
 ];
 
 export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props) => {
