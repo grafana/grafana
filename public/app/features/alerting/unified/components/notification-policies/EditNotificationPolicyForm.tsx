@@ -309,6 +309,30 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
           name="muteTimeIntervals"
         />
       </Field>
+      <Field
+            label={t('alerting.am-routes-expanded-form.am-active-timing-select-label-active-timings', 'Active timings')}
+            data-testid="am-active-timing-select"
+            description={t(
+                'alerting.am-routes-expanded-form.am-mute-timing-select-description-add-active-timing-to-policy',
+                'Add active timing to policy'
+            )}
+            invalid={!!errors.activeTimeIntervals}
+        >
+            <Controller
+                render={({ field: { onChange, ref, ...field } }) => (
+                    <MuteTimingsSelector
+                        alertmanager={selectedAlertmanager!}
+                        selectProps={{
+                            ...field,
+                            disabled: !canSeeMuteTimings,
+                            onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
+                        }}
+                    />
+                )}
+                control={control}
+                name="activeTimeIntervals"
+            />
+        </Field>
       {actionButtons}
     </form>
   );

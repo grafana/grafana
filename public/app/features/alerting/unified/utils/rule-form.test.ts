@@ -158,6 +158,7 @@ describe('getContactPointsFromDTO', () => {
       notification_settings: {
         receiver: 'receiver',
         mute_time_intervals: ['mute_timing'],
+        active_time_intervals: ['active_timing'],
         group_by: ['group_by'],
         group_wait: 'group_wait',
         group_interval: 'group_interval',
@@ -170,6 +171,7 @@ describe('getContactPointsFromDTO', () => {
       [GRAFANA_RULES_SOURCE_NAME]: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -188,6 +190,7 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -214,6 +217,7 @@ describe('getNotificationSettingsForDTO', () => {
       grafana: {
         selectedContactPoint: 'receiver',
         muteTimeIntervals: ['mute_timing'],
+        activeTimeIntervals: ['active_timing'],
         overrideGrouping: true,
         overrideTimings: true,
         groupBy: ['group_by'],
@@ -227,6 +231,7 @@ describe('getNotificationSettingsForDTO', () => {
     expect(result).toEqual({
       receiver: 'receiver',
       mute_time_intervals: ['mute_timing'],
+      active_time_intervals: ['active_timing'],
       group_by: ['group_by'],
       group_wait: 'group_wait',
       group_interval: 'group_interval',

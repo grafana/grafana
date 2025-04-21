@@ -23,9 +23,9 @@ const MuteTimingsSelector = ({
 
   return (
     <MultiSelect
-      aria-label={t('alerting.mute-timings-selector.aria-label-mute-timings', 'Mute timings')}
+      aria-label={t('alerting.mute-timings-selector.aria-label-mute-timings', 'Time intervals')}
       options={muteTimingOptions}
-      placeholder={t('alerting.mute-timings-selector.placeholder-select-mute-timings', 'Select mute timings...')}
+      placeholder={t('alerting.mute-timings-selector.placeholder-select-mute-timings', 'Select time intervals...')}
       {...selectProps}
     />
   );
