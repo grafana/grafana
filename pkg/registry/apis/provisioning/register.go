@@ -585,7 +585,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 
 			driver, err := jobs.NewJobDriver(
 				time.Minute*20, // Max time for each job
-				time.Second*25, // Cleanup any checked out jobs
+				time.Minute*25, // Cleanup any checked out jobs
 				time.Second*30, // Periodically look for new jobs
 				b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
