@@ -259,13 +259,24 @@ func (s *legacySQLStore) ListUserTeams(ctx context.Context, ns claims.NamespaceI
 	var lastID int64
 	for rows.Next() {
 		t := UserTeam{}
-		err := rows.Scan(&t.ID, &t.UID, &t.Name, &t.Permission)
+
+		// regression: team_member.permission has been nulled in some instances
+		// Team memberships created before the permission column was added will have a NULL value
+		var nullablePermission *int64
+		err := rows.Scan(&t.ID, &t.UID, &t.Name, &nullablePermission)
 		if err != nil {
 			return nil, err
 		}
 
-		lastID = t.ID
+		if nullablePermission != nil {
+			t.Permission = team.PermissionType(*nullablePermission)
+		} else {
+			// treat NULL as member permission
+			t.Permission = team.PermissionType(0)
+		}
+
 		res.Items = append(res.Items, t)
+		lastID = t.ID
 		if len(res.Items) > int(query.Pagination.Limit)-1 {
 			res.Continue = lastID
 			res.Items = res.Items[0 : len(res.Items)-1]
