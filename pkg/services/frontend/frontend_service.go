@@ -102,5 +102,8 @@ func (s *frontendService) handleRequest(writer http.ResponseWriter, request *htt
 </html>`
 
 	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	writer.Write([]byte(htmlContent))
+	_, err := writer.Write([]byte(htmlContent))
+	if err != nil {
+		s.log.Error("could not write to response", "err", err)
+	}
 }
