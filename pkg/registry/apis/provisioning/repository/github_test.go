@@ -56,6 +56,200 @@ func TestIsValidGitBranchName(t *testing.T) {
 		})
 	}
 }
+func TestGitHubRepositoryValidate(t *testing.T) {
+	tests := []struct {
+		name           string
+		config         *provisioning.Repository
+		expectedErrors int
+		errorFields    []string
+	}{
+		{
+			name: "Valid configuration",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 0,
+		},
+		{
+			name: "Missing GitHub config",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: nil,
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github"},
+		},
+		{
+			name: "Missing URL",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.url"},
+		},
+		{
+			name: "Invalid URL format",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "invalid-url",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.url"},
+		},
+		{
+			name: "URL not starting with https://github.com/",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://gitlab.com/grafana/grafana",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.url"},
+		},
+		{
+			name: "Missing branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.branch"},
+		},
+		{
+			name: "Invalid branch name",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "feature//invalid",
+						Token:  "valid-token",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.branch"},
+		},
+		{
+			name: "Missing token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Token:  "",
+						Path:   "dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.token"},
+		},
+		{
+			name: "Unsafe path",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "../dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.prefix"},
+		},
+		{
+			name: "Absolute path",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+						Token:  "valid-token",
+						Path:   "/dashboards",
+					},
+				},
+			},
+			expectedErrors: 1,
+			errorFields:    []string{"spec.github.prefix"},
+		},
+		{
+			name: "Multiple errors",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "",
+						Branch: "",
+						Token:  "",
+						Path:   "/dashboards",
+					},
+				},
+			},
+			expectedErrors: 4,
+			errorFields:    []string{"spec.github.url", "spec.github.branch", "spec.github.token", "spec.github.prefix"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a GitHub repository with the test config
+			repo := &githubRepository{
+				config: tt.config,
+			}
+
+			// Validate the configuration
+			errors := repo.Validate()
+
+			// Check the number of errors
+			assert.Equal(t, tt.expectedErrors, len(errors), "Expected %d errors, got %d, errors: %v", tt.expectedErrors, len(errors), errors)
+
+			// If we expect errors, check that they are for the right fields
+			if tt.expectedErrors > 0 {
+				errorFields := make([]string, 0, len(errors))
+				for _, err := range errors {
+					errorFields = append(errorFields, err.Field)
+				}
+				for _, expectedField := range tt.errorFields {
+					assert.Contains(t, errorFields, expectedField, "Expected error for field %s", expectedField)
+				}
+			}
+		})
+	}
+}
 
 func TestParseWebhooks(t *testing.T) {
 	tests := []struct {

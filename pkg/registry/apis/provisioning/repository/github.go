@@ -99,8 +99,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "branch"), "a github branch is required"))
-	}
-	if !isValidGitBranchName(gh.Branch) {
+	} else if !isValidGitBranchName(gh.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
 	// TODO: Use two fields for token
