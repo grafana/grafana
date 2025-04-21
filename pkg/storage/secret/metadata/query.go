@@ -23,11 +23,12 @@ var (
 	sqlTemplates = template.Must(template.New("sql").ParseFS(sqlTemplatesFS, `data/*.sql`))
 
 	// The SQL Commands
-	sqlKeeperCreate = mustTemplate("keeper_create.sql")
-	sqlKeeperRead   = mustTemplate("keeper_read.sql")
-	sqlKeeperUpdate = mustTemplate("keeper_update.sql")
-	sqlKeeperList   = mustTemplate("keeper_list.sql")
-	sqlKeeperDelete = mustTemplate("keeper_delete.sql")
+	sqlKeeperCreate        = mustTemplate("keeper_create.sql")
+	sqlKeeperRead          = mustTemplate("keeper_read.sql")
+	sqlKeeperReadForUpdate = mustTemplate("keeper_readForUpdate.sql")
+	sqlKeeperUpdate        = mustTemplate("keeper_update.sql")
+	sqlKeeperList          = mustTemplate("keeper_list.sql")
+	sqlKeeperDelete        = mustTemplate("keeper_delete.sql")
 
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
@@ -70,6 +71,18 @@ type readKeeper struct {
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r readKeeper) Validate() error {
+	return nil // TODO
+}
+
+// Read for update
+type readForUpdateKeeper struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r readForUpdateKeeper) Validate() error {
 	return nil // TODO
 }
 

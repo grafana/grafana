@@ -71,6 +71,16 @@ func TestKeeperQueries(t *testing.T) {
 					},
 				},
 			},
+			sqlKeeperReadForUpdate: {
+				{
+					Name: "readForUpdate",
+					Data: &readForUpdateKeeper{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+			},
 			sqlKeeperUpdate: {
 				{
 					Name: "update",
