@@ -4,7 +4,7 @@ go 1.24.2
 
 require (
 	github.com/grafana/grafana-app-sdk v0.35.1
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250414114055-2b279efe15bf
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
 	k8s.io/apimachinery v0.32.3
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
 )
@@ -35,10 +35,13 @@ require (
 	github.com/oasdiff/yaml v0.0.0-20250309154309-f31be36b4037 // indirect
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/otel v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect

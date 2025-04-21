@@ -21,15 +21,15 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
-var scheme = runtime.NewScheme()
-var codecs = serializer.NewCodecFactory(scheme)
+var rtscheme = runtime.NewScheme()
+var rtcodecs = serializer.NewCodecFactory(rtscheme)
 
 func TestPrepareObjectForStorage(t *testing.T) {
-	_ = dashv1.AddToScheme(scheme)
+	_ = dashv1.AddToScheme(rtscheme)
 	node, err := snowflake.NewNode(rand.Int63n(1024))
 	require.NoError(t, err)
 	s := &Storage{
-		codec:     apitesting.TestCodec(codecs, dashv1.DashboardResourceInfo.GroupVersion()),
+		codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 		snowflake: node,
 		opts: StorageOptions{
 			EnableFolderSupport: true,
@@ -320,7 +320,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 }
 
 func TestPrepareLargeObjectForStorage(t *testing.T) {
-	_ = dashv1.AddToScheme(scheme)
+	_ = dashv1.AddToScheme(rtscheme)
 	node, err := snowflake.NewNode(rand.Int63n(1024))
 	require.NoError(t, err)
 
@@ -334,7 +334,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 		}
 
 		f := &Storage{
-			codec:     apitesting.TestCodec(codecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 			snowflake: node,
 			opts: StorageOptions{
 				LargeObjectSupport: &los,
@@ -352,7 +352,7 @@ func TestPrepareLargeObjectForStorage(t *testing.T) {
 		}
 
 		f := &Storage{
-			codec:     apitesting.TestCodec(codecs, dashv1.DashboardResourceInfo.GroupVersion()),
+			codec:     apitesting.TestCodec(rtcodecs, dashv1.DashboardResourceInfo.GroupVersion()),
 			snowflake: node,
 			opts: StorageOptions{
 				LargeObjectSupport: &los,
