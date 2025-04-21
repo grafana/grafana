@@ -241,7 +241,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	return secureValue, nil
 }
 
-// TODO LND Implement this
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 
 	// Delete from the keeper.
@@ -250,14 +249,27 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	_ = s.deleteFromKeeper(ctx, namespace, name)
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+	req := deleteSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	query, err := sqltemplate.Execute(sqlSecureValueDelete, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueDelete.Name(), err)
+	}
+
+	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
-		if _, err := sess.Delete(row); err != nil {
-			return fmt.Errorf("delete row: %w", err)
+		res, err := sess.Exec(ctx, query, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("deleting secure value row: %w", err)
 		}
 
+		if rowsAffected, err := res.RowsAffected(); err != nil || rowsAffected != 1 {
+			return fmt.Errorf("deleting secure value rowsAffected=%d error=%w", rowsAffected, err)
+		}
 		return nil
 	})
 	if err != nil {
