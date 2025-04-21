@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -55,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 		k8sclient: client.NewK8sHandler(
 			dual,
 			request.GetNamespaceMapper(cfg),
-			dashv1.DashboardResourceInfo.GroupVersionResource(),
+			dashv0.DashboardResourceInfo.GroupVersionResource(),
 			restConfigProvider.GetRestConfig,
 			dashboardStore,
 			userService,
