@@ -13,7 +13,7 @@ labels:
     - oss
 menuTitle: Amazon SNS
 title: Configure Amazon SNS for Alerting
-weight: 100
+weight: 102
 refs:
   notification-templates:
     - pattern: /docs/grafana/
