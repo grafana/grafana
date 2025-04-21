@@ -13,8 +13,8 @@ SELECT
   "status_message",
   "title",
   "keeper",
-  "decrypters"
-  "ref"
+  "decrypters",
+  "ref",
   "external_id"
 FROM
   "secret_secure_value"

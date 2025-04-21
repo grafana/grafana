@@ -14,8 +14,8 @@ SELECT
   {{ .Ident "status_message" }},
   {{ .Ident "title" }},
   {{ .Ident "keeper" }},
-  {{ .Ident "decrypters" }}
-  {{ .Ident "ref" }}
+  {{ .Ident "decrypters" }},
+  {{ .Ident "ref" }},
   {{ .Ident "external_id" }}
 FROM
   {{ .Ident "secret_secure_value" }}

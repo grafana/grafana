@@ -3,6 +3,7 @@ package metadata
 import (
 	"context"
 	"fmt"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -65,37 +66,54 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
-		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			if row.Keeper != nil {
-				// Validate before inserting that the chosen `keeper` exists.
-				keeperRow := &keeperDB{Name: *row.Keeper, Namespace: row.Namespace}
+	// prepare keeper read for update query and request
+	reqKeeperRead := readForUpdateKeeper{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   row.Namespace,
+		Name:        row.Keeper,
+	}
 
-				// TODO LND Why do we do FOR UPDATE, if we are just checking that the keeper exists
-				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
-				if err != nil {
-					return fmt.Errorf("checking keeper existence: %w", err)
-				}
+	queryKeeperRead, err := sqltemplate.Execute(sqlKeeperReadForUpdate, reqKeeperRead)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperReadForUpdate.Name(), err)
+	}
 
-				if !keeperExists {
-					return contracts.ErrKeeperNotFound
-				}
+	// prepare secure value query and request
+	reqSecValueCreate := createSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Row:         row,
+	}
+
+	querySecValueCreate, err := sqltemplate.Execute(sqlSecureValueCreate, reqSecValueCreate)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
+	}
+
+	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
+		if row.Keeper != nil {
+			// Validate before inserting that the chosen `keeper` exists, and lock to ensure the next
+			res, err := s.db.GetSqlxSession().Query(ctx, queryKeeperRead, reqKeeperRead.GetArgs()...)
+			if err != nil {
+				return fmt.Errorf("getting row: %w", err)
 			}
+			defer func() { _ = res.Close() }()
 
-			if _, err := sess.Insert(row); err != nil {
-				if s.db.GetDialect().IsUniqueConstraintViolation(err) {
-					return fmt.Errorf("namespace=%s name=%s %w", row.Namespace, row.Name, contracts.ErrSecureValueAlreadyExists)
-				}
-				return fmt.Errorf("inserting row: %w", err)
+			if !res.Next() {
+				return contracts.ErrKeeperNotFound
 			}
+		}
 
-			return nil
-		})
+		// insert the secure value
+		if _, err := sess.Exec(ctx, querySecValueCreate, reqSecValueCreate.GetArgs()...); err != nil {
+			return fmt.Errorf("inserting secret value row: %w", err)
+		}
+		return nil
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
+	// TODO LND Check if we need to retrieve the row again or read the response of the create query
 	createdSecureValue, err := row.toKubernetes()
 	if err != nil {
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
