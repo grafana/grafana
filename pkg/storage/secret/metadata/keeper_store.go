@@ -97,28 +97,17 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 }
 
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	k, err := s.read(ctx, s.db.GetSqlxSession(), namespace.String(), name)
+	keeperDB, err := s.read(ctx, s.db.GetSqlxSession(), namespace.String(), name)
 	if err != nil {
 		return nil, err
 	}
 
-	var keeper *secretv0alpha1.Keeper
-
-	keeper, err = k.toKubernetes()
+	keeper, err := keeperDB.toKubernetes()
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
 	}
 
-	if keeper != nil {
-		return keeper, nil
-	}
-
-	return nil, contracts.ErrKeeperNotFound
+	return keeper, nil
 }
 
 type dbQuerier interface {
