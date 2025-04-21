@@ -122,7 +122,7 @@ func NewLegacyResourceMigrator(
 	signer signature.Signer,
 ) *legacyResourceResourceMigrator {
 	var history map[string]string
-	if false { //resources.IsVersioned() {
+	if options.History {
 		history = make(map[string]string)
 	}
 	return &legacyResourceResourceMigrator{

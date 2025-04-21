@@ -59,21 +59,24 @@ func NewGitHub(
 ) *githubRepository {
 	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
 	token := config.Spec.GitHub.Token
-	if token == "" {
+	if token == "" && secrets != nil {
 		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
 		if err == nil {
 			token = string(decrypted)
 		}
 	}
-	return &githubRepository{
+	gh := &githubRepository{
 		config:     config,
-		gh:         factory.New(ctx, token), // TODO, baseURL from config
 		secrets:    secrets,
 		webhookURL: webhookURL,
 		owner:      owner,
 		repo:       repo,
 		cloneFn:    cloneFn,
 	}
+	if factory != nil {
+		gh.gh = factory.New(ctx, token) // TODO, baseURL from config
+	}
+	return gh
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
