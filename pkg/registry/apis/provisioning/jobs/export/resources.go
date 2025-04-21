@@ -5,12 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
+
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/client-go/dynamic"
 )
 
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
@@ -37,7 +38,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 func exportResource(ctx context.Context, options provisioning.ExportJobOptions, client dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-		fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
+		fileName, err := repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 			Path: options.Path,
 			Ref:  options.Branch,
 		})

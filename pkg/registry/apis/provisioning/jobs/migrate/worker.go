@@ -50,8 +50,18 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("migration job submitted targeting repository that is not a ReaderWriter")
 	}
 
+	if options.History {
+		if repo.Config().Spec.Type != provisioning.GitHubRepositoryType {
+			return errors.New("history is only supported for github repositories")
+		}
+	}
+
 	if dualwrite.IsReadingLegacyDashboardsAndFolders(ctx, w.storageStatus) {
 		return w.legacyMigrator.Migrate(ctx, rw, *options, progress)
+	}
+
+	if options.History {
+		return errors.New("history is not yet supported in unified storage")
 	}
 
 	return w.unifiedMigrator.Migrate(ctx, rw, *options, progress)

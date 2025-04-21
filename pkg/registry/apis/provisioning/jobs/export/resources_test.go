@@ -5,10 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,6 +13,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8testing "k8s.io/client-go/testing"
+
+	provisioningV0 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func TestExportResources(t *testing.T) {
@@ -78,11 +79,11 @@ func TestExportResources(t *testing.T) {
 					Ref:  "feature/branch",
 				}
 
-				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 					return obj.GetName() == "dashboard-1"
 				}), options).Return("dashboard-1.json", nil)
 
-				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 					return obj.GetName() == "dashboard-2"
 				}), options).Return("dashboard-2.json", nil)
 			},
@@ -165,11 +166,11 @@ func TestExportResources(t *testing.T) {
 					Ref:  "feature/branch",
 				}
 
-				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 					return obj.GetName() == "dashboard-1"
 				}), options).Return("", fmt.Errorf("failed to export dashboard"))
 
-				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 					return obj.GetName() == "dashboard-2"
 				}), options).Return("dashboard-2.json", nil)
 			},
@@ -211,7 +212,7 @@ func TestExportResources(t *testing.T) {
 					Ref:  "feature/branch",
 				}
 
-				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 					return obj.GetName() == "dashboard-1"
 				}), options).Return("", fmt.Errorf("failed to export dashboard"))
 			},
@@ -254,7 +255,7 @@ func TestExportResources(t *testing.T) {
 				}
 
 				// Return true to indicate the file already exists, and provide the updated path
-				repoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 					return obj.GetName() == "existing-dashboard"
 				}), options).Return("", resources.ErrAlreadyInRepository)
 			},
@@ -291,7 +292,7 @@ func TestExportResources(t *testing.T) {
 			repoResources := resources.NewMockRepositoryResources(t)
 			tt.setupResources(repoResources, resourceClients, fakeDynamicClient, listGVK)
 
-			options := v0alpha1.ExportJobOptions{
+			options := provisioningV0.ExportJobOptions{
 				Path:   "grafana",
 				Branch: "feature/branch",
 			}
