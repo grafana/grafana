@@ -583,8 +583,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
-			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
+			driver, err := jobs.NewJobDriver(
+				time.Minute*20, // Max time for each job
+				time.Second*25, // Cleanup any checked out jobs
+				time.Second*30, // Periodically look for new jobs
+				b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+			if err != nil {
+				return err
+			}
 			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(

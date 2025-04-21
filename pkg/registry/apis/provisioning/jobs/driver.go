@@ -2,7 +2,7 @@ package jobs
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
 
 	"k8s.io/apiserver/pkg/endpoints/request"
@@ -48,12 +48,14 @@ var _ Store = (*persistentStore)(nil)
 // There may be multiple jobDrivers running in parallel.
 // The jobDriver deals with cleaning up upon death and ensuring that jobs remain claimable.
 type jobDriver struct {
-	// Timeout for processing a job. This should be the same or less than a claim expiry.
-	timeout time.Duration
+	// Timeout for processing a job. This must be less than a claim expiry.
+	jobTimeout time.Duration
+
 	// CleanupInterval is the time between cleanup runs.
 	cleanupInterval time.Duration
+
 	// JobInterval is the time between job ticks. This should be relatively low.
-	jobInterval time.Duration
+	jobCheckInterval time.Duration
 
 	// Store is the job storage backend.
 	store Store
@@ -74,16 +76,20 @@ func NewJobDriver(
 	repoGetter RepoGetter,
 	historicJobs History,
 	workers ...Worker,
-) *jobDriver {
-	return &jobDriver{
-		timeout:         timeout,
-		cleanupInterval: cleanupInterval,
-		jobInterval:     jobInterval,
-		store:           store,
-		repoGetter:      repoGetter,
-		historicJobs:    historicJobs,
-		workers:         workers,
+) (*jobDriver, error) {
+	if cleanupInterval > timeout {
+		return nil, fmt.Errorf("the job timeout must be larger than the cleanupInterval")
 	}
+
+	return &jobDriver{
+		jobTimeout:       timeout,
+		cleanupInterval:  cleanupInterval,
+		jobCheckInterval: jobInterval,
+		store:            store,
+		repoGetter:       repoGetter,
+		historicJobs:     historicJobs,
+		workers:          workers,
+	}, nil
 }
 
 // Run drives jobs to completion. This is a blocking function.
@@ -93,7 +99,7 @@ func (d *jobDriver) Run(ctx context.Context) {
 	cleanupTicker := time.NewTicker(d.cleanupInterval)
 	defer cleanupTicker.Stop()
 
-	jobTicker := time.NewTicker(d.jobInterval)
+	jobTicker := time.NewTicker(d.jobCheckInterval)
 	defer jobTicker.Stop()
 
 	logger := logging.FromContext(ctx).With("logger", "job-driver")
@@ -105,7 +111,7 @@ func (d *jobDriver) Run(ctx context.Context) {
 	}
 
 	// Drive without waiting on startup.
-	d.startDriving(ctx)
+	d.drive(ctx)
 
 	for {
 		select {
@@ -114,22 +120,9 @@ func (d *jobDriver) Run(ctx context.Context) {
 				logger.Error("failed to cleanup jobs", "error", err)
 			}
 		case <-jobTicker.C:
-			d.startDriving(ctx)
+			d.drive(ctx)
 		case <-d.store.InsertNotifications():
-			d.startDriving(ctx)
-		}
-	}
-}
-
-func (d *jobDriver) startDriving(ctx context.Context) {
-	timeoutCtx, cancel := context.WithTimeout(ctx, d.timeout)
-	defer cancel()
-	for timeoutCtx.Err() == nil {
-		if err := d.drive(timeoutCtx); err != nil {
-			if !errors.Is(err, context.Canceled) && !errors.Is(err, ErrNoJobs) {
-				logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
-			}
-			break
+			d.drive(ctx)
 		}
 	}
 }
@@ -158,12 +151,20 @@ func (d *jobDriver) drive(ctx context.Context) error {
 		return apifmt.Errorf("failed to grant provisioning identity: %w", err)
 	}
 
+	jobctx, cancel := context.WithTimeout(ctx, d.jobTimeout)
+	defer cancel() // Ensure resources are released when the function returns
+
 	// Process the job.
 	start := time.Now()
 	job.Status.Started = start.UnixMilli()
-	err = d.processJob(ctx, job) // NOTE: We pass in a pointer here such that the job status can be kept in Complete without re-fetching.
+	err = d.processJob(jobctx, job) // NOTE: We pass in a pointer here such that the job status can be kept in Complete without re-fetching.
 	end := time.Now()
 	logger.Debug("job processed", "duration", end.Sub(start), "error", err)
+
+	// Capture job timeout
+	if jobctx.Err() != nil && err == nil {
+		err = jobctx.Err()
+	}
 
 	// Mark the job as failed and remove from queue
 	if err != nil {
