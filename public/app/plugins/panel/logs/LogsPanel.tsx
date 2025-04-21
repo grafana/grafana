@@ -556,8 +556,8 @@ export const LogsPanel = ({
               getFieldLinks={getFieldLinks}
               logsSortOrder={sortOrder}
               displayedFields={displayedFields}
-              onClickShowField={showField}
-              onClickHideField={hideField}
+              onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
+              onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
               app={isCoreApp(app) ? app : CoreApp.Dashboard}
               onLogRowHover={onLogRowHover}
               onOpenContext={onOpenContext}
