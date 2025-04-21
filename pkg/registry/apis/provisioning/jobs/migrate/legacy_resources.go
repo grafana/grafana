@@ -181,7 +181,7 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		name := parsed.Meta.GetName()
 		previous := r.history[name]
 		if previous != "" {
-			r.resources.RemoveResourceFromFile(ctx, previous, "")
+			_, _, err = r.resources.RemoveResourceFromFile(ctx, previous, "")
 		}
 		r.history[name] = fileName
 	}
