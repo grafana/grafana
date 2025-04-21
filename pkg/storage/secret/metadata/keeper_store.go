@@ -56,7 +56,8 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Row:         row,
 	}
-	q, err := sqltemplate.Execute(sqlKeeperCreate, req)
+
+	query, err := sqltemplate.Execute(sqlKeeperCreate, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperCreate.Name(), err)
 	}
@@ -67,9 +68,20 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 			return err
 		}
 
-		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
+		result, err := sess.Exec(ctx, query, req.GetArgs()...)
+		if err != nil {
 			return fmt.Errorf("inserting row: %w", err)
 		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("getting rows affected: %w", err)
+		}
+
+		if rowsAffected != 1 {
+			return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, keeper.Name, keeper.Namespace)
+		}
+
 		return nil
 	})
 	if err != nil {
