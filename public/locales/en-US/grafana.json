@@ -2327,7 +2327,7 @@
     },
     "threshold-expression-viewer": {
       "input": "Input",
-      "stop-alerting-when": "Stop alerting when "
+      "stop-alerting-when": "Stop alerting (or pending state) when "
     },
     "timeseries-row": {
       "time-series-data": "Time series data",
