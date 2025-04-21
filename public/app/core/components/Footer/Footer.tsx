@@ -85,7 +85,7 @@ export interface Props {
   hideEdition?: boolean;
 }
 
-export const Footer = React.memo(({ customLinks, hideEdition }: Props) => {
+export const Footer = memo(({ customLinks, hideEdition }: Props) => {
   const links = (customLinks || getFooterLinks());
   const styles = useStyles2(getStyles);
 

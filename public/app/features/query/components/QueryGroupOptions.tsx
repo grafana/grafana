@@ -413,7 +413,7 @@ function getStyles(theme: GrafanaTheme2) {
       justifySelf: 'left',
     }),
     operator: css({
-      color: theme.v1.palette.orange,
+      color: 'rgb(0, 155, 101)', // NI fork: use green color for operator
     }),
   };
 }

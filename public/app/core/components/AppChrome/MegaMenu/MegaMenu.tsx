@@ -37,9 +37,9 @@ export const MegaMenu = memo(
     const [patchPreferences] = usePatchUserPreferencesMutation();
     const pinnedItems = usePinnedItems();
 
-    // Remove profile + help from tree
+    // Remove profile + help from tree (NI fork: additionally remove Home, Explore and Connections)
     const navItems = navTree
-      .filter((item) => item.id !== 'profile' && item.id !== 'help')
+      .filter((item) => item.id !== 'profile' && item.id !== 'help' && item.id !== 'home' && item.id !== 'explore' && item.id !== 'connections')
       .map((item) => enrichWithInteractionTracking(item, state.megaMenuDocked));
 
     if (config.featureToggles.pinNavItems) {

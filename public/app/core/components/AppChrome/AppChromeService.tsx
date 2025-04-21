@@ -40,10 +40,11 @@ export class AppChromeService {
   private currentRoute?: RouteDescriptor;
   private routeChangeHandled = true;
 
-  private megaMenuDocked = Boolean(
+  // NI fork: we never want the mega menu to be docked
+  private megaMenuDocked = false; /* Boolean(
     window.innerWidth >= config.theme2.breakpoints.values.xl &&
       store.getBool(DOCKED_LOCAL_STORAGE_KEY, Boolean(window.innerWidth >= config.theme2.breakpoints.values.xxl))
-  );
+  );*/
 
   private sessionStorageData = window.sessionStorage.getItem('returnToPrevious');
   private returnToPreviousData = this.sessionStorageData ? JSON.parse(this.sessionStorageData) : undefined;
@@ -63,10 +64,8 @@ export class AppChromeService {
       map(({ actions, chromeless, kioskMode }) => {
         if (kioskMode || chromeless) {
           return 0;
-        } else if (actions) {
-          return TOP_BAR_LEVEL_HEIGHT * 2;
         } else {
-          return TOP_BAR_LEVEL_HEIGHT;
+          return actions ? TOP_BAR_LEVEL_HEIGHT : 0; // NI fork: adjusted height to account for removed navigation bar
         }
       })
     )
@@ -204,13 +203,14 @@ export class AppChromeService {
     });
   };
 
-  public setMegaMenuDocked = (newDockedState: boolean, updatePersistedState = true) => {
+  // NI fork: disable docked menu
+  public setMegaMenuDocked = (_newDockedState: boolean, updatePersistedState = true) => {
     if (updatePersistedState) {
-      store.set(DOCKED_LOCAL_STORAGE_KEY, newDockedState);
+      store.set(DOCKED_LOCAL_STORAGE_KEY, false);
     }
-    reportInteraction('grafana_mega_menu_docked', { state: newDockedState });
+    reportInteraction('grafana_mega_menu_docked', { state: false });
     this.update({
-      megaMenuDocked: newDockedState,
+      megaMenuDocked: false,
     });
   };
 

@@ -43,7 +43,7 @@ export const EmptyState = ({
   children,
   image,
   message,
-  hideImage = false,
+  hideImage = true,
   variant,
   role,
 }: React.PropsWithChildren<Props>) => {

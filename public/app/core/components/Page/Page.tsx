@@ -110,6 +110,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     pageInner: css({
       label: 'page-inner',
       padding: theme.spacing(2),
+      paddingTop: theme.spacing.x8, // NI fork: provides more space for the header
       borderBottom: 'none',
       background: theme.colors.background.primary,
       display: 'flex',
@@ -119,6 +120,7 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       [theme.breakpoints.up('md')]: {
         padding: theme.spacing(4),
+        paddingTop: theme.spacing.x8, // NI fork: provides more space for the header
       },
     }),
     canvasContent: css({

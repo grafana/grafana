@@ -3,7 +3,6 @@ import { map } from 'rxjs/operators';
 
 import { DataFrame } from '../../types/dataFrame';
 import { SynchronousDataTransformerInfo } from '../../types/transformations';
-import { ArrayVector } from '../../vector/ArrayVector';
 import { fieldMatchers } from '../matchers';
 import { FieldMatcherID } from '../matchers/ids';
 
@@ -24,7 +23,7 @@ export const splitByTransformer: SynchronousDataTransformerInfo<SplitByTransform
     field: '',
   },
 
-  operator: (options, ctx) => (source) => 
+  operator: (options, ctx) => (source) =>
     source.pipe(map((data) => splitByTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: SplitByTransformerOptions) => (data: DataFrame[]) => {
@@ -57,7 +56,7 @@ export const splitByTransformer: SynchronousDataTransformerInfo<SplitByTransform
         name: field.name,
         type: field.type,
         config: { ...field.config },
-        values: new ArrayVector(groups[group].map(ix => field.values.get(ix)))
+        values: groups[group].map(ix => field.values[ix])
       }))
     }));
 

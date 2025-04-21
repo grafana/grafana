@@ -134,13 +134,11 @@ const BrowseDashboardsPage = memo(() => {
             </LinkButton>
           )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
-          {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton
               parentFolder={folderDTO}
-              canCreateDashboard={canCreateDashboards}
-              canCreateFolder={canCreateFolders}
+              canCreateDashboard={true}
+              canCreateFolder={folder === rootFolderDTO}
             />
-          )}
         </>
       }
     >

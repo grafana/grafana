@@ -71,7 +71,9 @@ export default function CreateNewButton({ parentFolder, canCreateDashboard, canC
           url={buildUrl('/dashboard/new', parentFolder?.uid)}
         />
       )}
-      {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />}
+      {/* NI fork: Folders are directly mapped from the workspaces, and thus can not be created in the UI. 
+        {canCreateFolder && <MenuItem onClick={() => setShowNewFolderDrawer(true)} label={getNewFolderPhrase()} />} 
+      */}
       {canCreateDashboard && (
         <MenuItem
           label={getImportPhrase()}

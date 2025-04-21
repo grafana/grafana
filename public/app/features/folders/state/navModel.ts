@@ -47,15 +47,16 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
     url: `${folder.url}/library-panels`,
   });
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
-    model.children!.push({
-      active: false,
-      icon: 'bell',
-      id: getAlertingTabID(folder.uid),
-      text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
-      url: `${folder.url}/alerting`,
-    });
-  }
+  // NI fork: hide Alert Rules tab in folders view
+  // if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
+  //   model.children!.push({
+  //     active: false,
+  //     icon: 'bell',
+  //     id: getAlertingTabID(folder.uid),
+  //     text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
+  //     url: `${folder.url}/alerting`,
+  //   });
+  // }
 
   return model;
 }

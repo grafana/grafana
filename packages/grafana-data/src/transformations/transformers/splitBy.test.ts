@@ -1,9 +1,8 @@
 import { DataTransformerConfig } from '@grafana/data';
 
 import { toDataFrame } from '../../dataframe/processDataFrame';
-import { FieldType } from '../../types';
+import { FieldType } from '../../types/dataFrame';
 import { mockTransformationsRegistry } from '../../utils/tests/mockTransformationsRegistry';
-import { ArrayVector } from '../../vector';
 import { transformDataFrame } from '../transformDataFrame';
 
 import { DataTransformerID } from './ids';
@@ -96,13 +95,13 @@ describe('SplitBy transformer', () => {
               {
                 name: 'time',
                 type: FieldType.time,
-                values: new ArrayVector([3000]),
+                values: [3000],
                 config: {},
               },
               {
                 name: 'values',
                 type: FieldType.number,
-                values: new ArrayVector([1]),
+                values: [1],
                 config: { unit: 'm' },
               },
             ],
@@ -114,13 +113,13 @@ describe('SplitBy transformer', () => {
               {
                 name: 'time',
                 type: FieldType.time,
-                values: new ArrayVector([4000, 5000]),
+                values: [4000, 5000],
                 config: {},
               },
               {
                 name: 'values',
                 type: FieldType.number,
-                values: new ArrayVector([2, 2]),
+                values: [2, 2],
                 config: { unit: 'm' },
               },
             ],
@@ -132,13 +131,13 @@ describe('SplitBy transformer', () => {
               {
                 name: 'time',
                 type: FieldType.time,
-                values: new ArrayVector([6000, 7000, 8000]),
+                values: [6000, 7000, 8000],
                 config: {},
               },
               {
                 name: 'values',
                 type: FieldType.number,
-                values: new ArrayVector([3, 3, 3]),
+                values: [3, 3, 3],
                 config: { unit: 'm' },
               },
             ],
