@@ -455,12 +455,13 @@ func AlertRuleNotificationSettingsFromNotificationSettings(ns []models.Notificat
 	}
 	m := ns[0]
 	return &definitions.AlertRuleNotificationSettings{
-		Receiver:          m.Receiver,
-		GroupBy:           m.GroupBy,
-		GroupWait:         m.GroupWait,
-		GroupInterval:     m.GroupInterval,
-		RepeatInterval:    m.RepeatInterval,
-		MuteTimeIntervals: m.MuteTimeIntervals,
+		Receiver:            m.Receiver,
+		GroupBy:             m.GroupBy,
+		GroupWait:           m.GroupWait,
+		GroupInterval:       m.GroupInterval,
+		RepeatInterval:      m.RepeatInterval,
+		MuteTimeIntervals:   m.MuteTimeIntervals,
+		ActiveTimeIntervals: m.ActiveTimeIntervals,
 	}
 }
 
@@ -496,12 +497,13 @@ func NotificationSettingsFromAlertRuleNotificationSettings(ns *definitions.Alert
 	}
 	return []models.NotificationSettings{
 		{
-			Receiver:          ns.Receiver,
-			GroupBy:           ns.GroupBy,
-			GroupWait:         ns.GroupWait,
-			GroupInterval:     ns.GroupInterval,
-			RepeatInterval:    ns.RepeatInterval,
-			MuteTimeIntervals: ns.MuteTimeIntervals,
+			Receiver:            ns.Receiver,
+			GroupBy:             ns.GroupBy,
+			GroupWait:           ns.GroupWait,
+			GroupInterval:       ns.GroupInterval,
+			RepeatInterval:      ns.RepeatInterval,
+			MuteTimeIntervals:   ns.MuteTimeIntervals,
+			ActiveTimeIntervals: ns.ActiveTimeIntervals,
 		},
 	}
 }
