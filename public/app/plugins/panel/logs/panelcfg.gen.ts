@@ -28,6 +28,7 @@ export interface Options {
   onClickFilterString?: unknown;
   onClickHideField?: unknown;
   onClickShowField?: unknown;
+  onLogOptionsChange?: unknown;
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;

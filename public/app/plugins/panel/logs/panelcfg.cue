@@ -46,6 +46,7 @@ composableKinds: PanelCfg: {
 					onClickFilterOutString?: _
 					onClickShowField?:       _
 					onClickHideField?:       _
+					onLogOptionsChange?:     _
 					logRowMenuIconsBefore?:  _
 					logRowMenuIconsAfter?:   _
 					onNewLogsReceived?:      _
