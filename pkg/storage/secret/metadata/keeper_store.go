@@ -217,25 +217,20 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 }
 
 func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-
 	req := deleteKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
 	}
 
-	q, err := sqltemplate.Execute(sqlKeeperDelete, req)
+	query, err := sqltemplate.Execute(sqlKeeperDelete, req)
 	if err != nil {
 		return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
 	}
 
 	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// should we check the result?
-		if _, err := sess.Exec(ctx, q, req.GetArgs()...); err != nil {
+		if _, err := sess.Exec(ctx, query, req.GetArgs()...); err != nil {
 			return fmt.Errorf("deleting row: %w", err)
 		}
 
