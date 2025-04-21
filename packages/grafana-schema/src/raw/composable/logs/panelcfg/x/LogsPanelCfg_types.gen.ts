@@ -13,6 +13,7 @@ import * as common from '@grafana/schema';
 export const pluginVersion = "12.0.0-pre";
 
 export interface Options {
+  controlsStorageKey?: string;
   dedupStrategy: common.LogsDedupStrategy;
   displayedFields?: Array<string>;
   enableInfiniteScrolling?: boolean;

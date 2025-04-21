@@ -31,6 +31,7 @@ composableKinds: PanelCfg: {
 					showTime:                 bool
 					showLogContextToggle:     bool
 					showControls?:            bool
+					controlsStorageKey?:      string
 					wrapLogMessage:           bool
 					prettifyLogMessage:       bool
 					enableLogDetails:         bool
