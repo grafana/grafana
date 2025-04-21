@@ -30,7 +30,7 @@ composableKinds: PanelCfg: {
 					showCommonLabels:         bool
 					showTime:                 bool
 					showLogContextToggle:     bool
-					showControls:             bool
+					showControls?:            bool
 					wrapLogMessage:           bool
 					prettifyLogMessage:       bool
 					enableLogDetails:         bool

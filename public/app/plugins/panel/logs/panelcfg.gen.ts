@@ -30,7 +30,7 @@ export interface Options {
   onNewLogsReceived?: unknown;
   prettifyLogMessage: boolean;
   showCommonLabels: boolean;
-  showControls: boolean;
+  showControls?: boolean;
   showLabels: boolean;
   showLogContextToggle: boolean;
   showTime: boolean;
