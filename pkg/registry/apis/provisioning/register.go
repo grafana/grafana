@@ -726,6 +726,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					Required:    false,
 				},
 			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "skipDryRun",
+					In:          "query",
+					Description: "do not pro-actively verify the payload",
+					Schema:      spec.BooleanProperty(),
+					Required:    false,
+				},
+			},
 		}
 		sub.Delete.Parameters = comment
 		sub.Post.Parameters = comment
