@@ -2,11 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { IconButton, Stack, ToolbarButton, useTheme2 } from '@grafana/ui';
+import { IconButton, Stack, useTheme2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 
-import { Branding } from '../../Branding/Branding';
-import { OrganizationSwitcher } from '../OrganizationSwitcher/OrganizationSwitcher';
 import { getChromeHeaderLevelHeight } from '../TopBar/useChromeHeaderHeight';
 
 export interface Props {
@@ -20,25 +18,34 @@ export const MEGA_MENU_HEADER_TOGGLE_ID = 'mega-menu-header-toggle';
 
 export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Props) {
   const theme = useTheme2();
+  const styles = getStyles(theme);
   const { chrome } = useGrafana();
   const state = chrome.useState();
-
-  const styles = getStyles(theme);
 
   return (
     <div className={styles.header}>
       <Stack alignItems="center" minWidth={0} gap={0.25}>
-        <ToolbarButton
-          narrow
-          id={MEGA_MENU_HEADER_TOGGLE_ID}
-          onClick={handleMegaMenu}
-          tooltip={t('navigation.megamenu.close', 'Close menu')}
-        >
-          <Branding.MenuLogo className={styles.img} />
-        </ToolbarButton>
-        <OrganizationSwitcher />
+        { // NI fork: Simple icon button is preferred over ToolbarButton, and removes bran
+          <IconButton
+            onClick={state.megaMenuDocked ? undefined : onClose}
+            tooltip={t('navigation.megamenu.close', 'Close menu')}
+            name='arrow-from-right'
+            style={{ transform: 'rotate(180deg)' }}
+          >
+          </IconButton>
+          /* <ToolbarButton
+            narrow
+            id={MEGA_MENU_HEADER_TOGGLE_ID}
+            onClick={handleMegaMenu}
+            tooltip={t('navigation.megamenu.close', 'Close menu')}
+          >
+            <Branding.MenuLogo className={styles.img} />
+          </ToolbarButton>
+          <OrganizationSwitcher /> */
+        }
       </Stack>
-      <IconButton
+      <div className={styles.flexGrow} />
+      {/* <IconButton
         id={DOCK_MENU_BUTTON_ID}
         className={styles.dockMenuButton}
         tooltip={
@@ -57,7 +64,9 @@ export function MegaMenuHeader({ handleMegaMenu, handleDockedMenu, onClose }: Pr
         onClick={onClose}
         size="xl"
         variant="secondary"
-      />
+      /> */
+        // end NI fork changes
+      }
     </div>
   );
 }
@@ -92,4 +101,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
       display: 'none',
     },
   }),
+  flexGrow: css({ flexGrow: 1 }),
 });

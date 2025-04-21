@@ -23,7 +23,7 @@ export const splitByTransformer: SynchronousDataTransformerInfo<SplitByTransform
     field: '',
   },
 
-  operator: (options, ctx) => (source) => 
+  operator: (options, ctx) => (source) =>
     source.pipe(map((data) => splitByTransformer.transformer(options, ctx)(data))),
 
   transformer: (options: SplitByTransformerOptions) => (data: DataFrame[]) => {

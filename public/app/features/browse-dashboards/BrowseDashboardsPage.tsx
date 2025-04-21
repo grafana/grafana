@@ -99,8 +99,8 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
     canDeleteFolders,
     canDeleteDashboards,
     canEditDashboards,
-    canCreateDashboards,
-    canCreateFolders,
+    // canCreateDashboards,
+    // canCreateFolders,
   } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
   const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
@@ -163,15 +163,13 @@ const BrowseDashboardsPage = memo(({ queryParams }: { queryParams: Record<string
             </LinkButton>
           )}
           {folderDTO && <FolderActionsButton folder={folderDTO} repoType={repoType} isReadOnlyRepo={isReadOnlyRepo} />}
-          {(canCreateDashboards || canCreateFolders) && (
-            <CreateNewButton
-              parentFolder={folderDTO}
-              canCreateDashboard={canCreateDashboards}
-              canCreateFolder={canCreateFolders}
-              repoType={repoType}
-              isReadOnlyRepo={isReadOnlyRepo}
-            />
-          )}
+          <CreateNewButton
+            parentFolder={folderDTO}
+            canCreateDashboard={true}
+            canCreateFolder={folder === rootFolderDTO}
+            repoType={repoType}
+            isReadOnlyRepo={isReadOnlyRepo}
+          />
         </>
       }
     >

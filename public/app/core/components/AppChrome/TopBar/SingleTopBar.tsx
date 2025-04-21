@@ -5,16 +5,16 @@ import { GrafanaTheme2, NavModelItem } from '@grafana/data';
 import { Components } from '@grafana/e2e-selectors';
 import { t } from '@grafana/i18n';
 import { ScopesContextValue } from '@grafana/runtime';
-import { Icon, Stack, ToolbarButton, useStyles2 } from '@grafana/ui';
+import { IconButton, Stack, useStyles2 } from '@grafana/ui';
 import { config } from 'app/core/config';
 import { MEGA_MENU_TOGGLE_ID } from 'app/core/constants';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { contextSrv } from 'app/core/core';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { HOME_NAV_ID } from 'app/core/reducers/navModel';
+// import { ScopesSelector } from 'app/features/scopes/selector/ScopesSelector';
 import { useSelector } from 'app/types/store';
 
-import { Branding } from '../../Branding/Branding';
 import { Breadcrumbs } from '../../Breadcrumbs/Breadcrumbs';
 import { buildBreadcrumbs } from '../../Breadcrumbs/utils';
 import { ExtensionToolbarItem } from '../ExtensionSidebar/ExtensionToolbarItem';
@@ -60,29 +60,42 @@ export const SingleTopBar = memo(function SingleTopBar({
   const breadcrumbs = buildBreadcrumbs(sectionNav, pageNav, homeNav);
   const unifiedHistoryEnabled = config.featureToggles.unifiedHistory;
   const isSmallScreen = !useMediaQueryMinWidth('sm');
+  // const isLargeScreen = useMediaQueryMinWidth('lg');
+  // const topLevelScopes = !showToolbarLevel && isLargeScreen && scopes?.state.enabled;
+  // NI fork: hide the top bar when not in root view
+  const lastBreadcrumb = breadcrumbs[breadcrumbs.length - 1].href;
+  const niHideBarStyle: React.CSSProperties = lastBreadcrumb.split('/dashboards')[1] !== '' ? { display: 'none' } : {};
 
   return (
     <>
-      <div className={styles.layout}>
+      <div className={styles.layout} style={niHideBarStyle}>
         <Stack minWidth={0} gap={0.5} alignItems="center" flex={{ xs: 2, lg: 1 }}>
           {!menuDockedAndOpen && (
-            <ToolbarButton
-              narrow
+            // NI fork: Simple icon button is preferred over ToolbarButton, and removes branding logo
+            <IconButton
               id={MEGA_MENU_TOGGLE_ID}
               onClick={onToggleMegaMenu}
               tooltip={t('navigation.megamenu.open', 'Open menu')}
+              name='arrow-from-right'
             >
-              <Stack gap={0} alignItems="center">
-                <Branding.MenuLogo className={styles.img} />
-                <Icon size="sm" name="angle-down" />
-              </Stack>
-            </ToolbarButton>
+            </IconButton>
+            // <ToolbarButton
+            //     narrow
+            //     id={MEGA_MENU_TOGGLE_ID}
+            //     onClick={onToggleMegaMenu}
+            //     tooltip={t('navigation.megamenu.open', 'Open menu')}
+            //   >
+            //     <Stack gap={0} alignItems="center">
+            //       <Branding.MenuLogo className={styles.img} />
+            //       <Icon size="sm" name="angle-down" />
+            //     </Stack>
+            //   </ToolbarButton>
+            // end NI fork changes
           )}
           <Breadcrumbs breadcrumbs={breadcrumbs} className={styles.breadcrumbsWrapper} />
-          {!showToolbarLevel && breadcrumbActions}
         </Stack>
 
-        <Stack
+        {false && <Stack
           gap={0.5}
           alignItems="center"
           justifyContent={'flex-end'}
@@ -100,7 +113,7 @@ export const SingleTopBar = memo(function SingleTopBar({
           {!contextSrv.user.isSignedIn && <SignInLink />}
           <InviteUserButton />
           {profileNode && <ProfileButton profileNode={profileNode} onToggleKioskMode={onToggleKioskMode} />}
-        </Stack>
+        </Stack>}
       </div>
       {showToolbarLevel && (
         <SingleTopBarActions scopes={scopes} actions={actions} breadcrumbActions={breadcrumbActions} />

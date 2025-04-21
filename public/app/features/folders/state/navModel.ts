@@ -1,10 +1,10 @@
 import { NavModel, NavModelItem } from '@grafana/data';
 import { t } from '@grafana/i18n';
-import { config } from '@grafana/runtime';
-import { contextSrv } from 'app/core/services/context_srv';
+// import { config } from '@grafana/runtime';
+// import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
 import { ManagerKind } from 'app/features/apiserver/types';
-import { AccessControlAction } from 'app/types/accessControl';
+// import { AccessControlAction } from 'app/types/accessControl';
 import { FolderDTO, FolderParent } from 'app/types/folders';
 
 export const FOLDER_ID = 'manage-folder';
@@ -52,15 +52,20 @@ export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: Fol
     });
   }
 
-  if (contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) && config.unifiedAlertingEnabled) {
-    model.children!.push({
-      active: false,
-      icon: 'bell',
-      id: getAlertingTabID(folder.uid),
-      text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
-      url: `${folder.url}/alerting`,
-    });
-  }
+  // NI fork: hide Alert Rules tab in folders view
+  // if (
+  //  !isProvisioned &&
+  //  contextSrv.hasPermission(AccessControlAction.AlertingRuleRead) &&
+  //  config.unifiedAlertingEnabled
+  // ) {
+  //   model.children!.push({
+  //     active: false,
+  //     icon: 'bell',
+  //     id: getAlertingTabID(folder.uid),
+  //     text: t('browse-dashboards.manage-folder-nav.alert-rules', 'Alert rules'),
+  //     url: `${folder.url}/alerting`,
+  //   });
+  // }
 
   return model;
 }
