@@ -17,7 +17,7 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
-import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
+import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { defaultFilters, SearchProps } from '../../../useSearch';
@@ -141,7 +141,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
       <Collapse label={collapseLabel} collapsible={true} isOpen={showSpanFilters} onToggle={setShowSpanFilters}>
         <InlineFieldRow className={styles.flexContainer}>
           <InlineField label={t('explore.span-filters.label-service-name', 'Service name')} labelWidth={16}>
-            <HorizontalGroup spacing={'xs'}>
+            <Stack gap={3}>
               <Select
                 aria-label={t(
                   'explore.span-filters.aria-label-select-service-name-operator',
@@ -161,7 +161,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 value={search.serviceName || null}
                 defaultValue={search.serviceName || null}
               />
-            </HorizontalGroup>
+            </Stack>
           </InlineField>
           <SearchBarInput
             onChange={(v) => {
@@ -172,7 +172,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label={t('explore.span-filters.label-span-name', 'Span name')} labelWidth={16}>
-            <HorizontalGroup spacing={'xs'}>
+            <Stack gap={3}>
               <Select
                 aria-label={t('explore.span-filters.aria-label-select-span-name-operator', 'Select span name operator')}
                 onChange={(v) => setSpanFiltersSearch({ ...search, spanNameOperator: v.value! })}
@@ -188,7 +188,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 placeholder={t('explore.span-filters.placeholder-all-span-names', 'All span names')}
                 value={search.spanName || null}
               />
-            </HorizontalGroup>
+            </Stack>
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow>
@@ -199,7 +199,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
               units: 'ns, us, ms, s, m, h',
             })}
           >
-            <HorizontalGroup spacing="xs" align="flex-start">
+            <Stack alignItems={'flex-start'} gap={3}>
               <Select
                 aria-label={t('explore.span-filters.aria-label-select-min-span-operator', 'Select min span operator')}
                 onChange={(v) => setSpanFiltersSearch({ ...search, fromOperator: v.value! })}
@@ -234,7 +234,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
                 value={search.to || ''}
                 validationRegex={durationRegex}
               />
-            </HorizontalGroup>
+            </Stack>
           </InlineField>
         </InlineFieldRow>
         <InlineFieldRow className={styles.tagsRow}>
