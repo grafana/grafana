@@ -192,6 +192,7 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
+			// FIXME: shouldn't we return ErrFileNotFound here?
 			return nil, &apierrors.StatusError{
 				ErrStatus: metav1.Status{
 					Message: fmt.Sprintf("file not found; path=%s ref=%s", finalPath, ref),

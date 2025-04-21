@@ -733,3 +733,194 @@ func TestReadTree(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHubRepository_Read(t *testing.T) {
+	tests := []struct {
+		name           string
+		config         *provisioning.Repository
+		filePath       string
+		ref            string
+		mockSetup      func(t *testing.T, client *pgh.MockClient)
+		expectedResult *FileInfo
+		expectedError  string
+	}{
+		{
+			name: "File found successfully",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "configs",
+						Branch: "main",
+					},
+				},
+			},
+			filePath: "dashboard.json",
+			ref:      "main",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().GetFileContent().Return("file content", nil)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "main").
+					Return(fileContent, nil, nil)
+			},
+			expectedResult: &FileInfo{
+				Path: "dashboard.json",
+				Ref:  "main",
+				Data: []byte("file content"),
+				Hash: "abc123",
+			},
+			expectedError: "",
+		},
+		{
+			name: "Directory found successfully",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "configs",
+						Branch: "main",
+					},
+				},
+			},
+			filePath: "dashboards",
+			ref:      "main",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				dirContent := []pgh.RepositoryContent{
+					// Directory contents not used in this test
+				}
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboards", "main").
+					Return(nil, dirContent, nil)
+			},
+			expectedResult: &FileInfo{
+				Path: "dashboards",
+				Ref:  "main",
+			},
+			expectedError: "",
+		},
+		{
+			name: "File not found",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "configs",
+						Branch: "main",
+					},
+				},
+			},
+			filePath: "nonexistent.json",
+			ref:      "main",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/nonexistent.json", "main").
+					Return(nil, nil, pgh.ErrResourceNotFound)
+			},
+			expectedResult: nil,
+			expectedError:  "file not found; path=configs/nonexistent.json ref=main",
+		},
+		{
+			name: "Error getting file content",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "configs",
+						Branch: "main",
+					},
+				},
+			},
+			filePath: "dashboard.json",
+			ref:      "main",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().GetFileContent().Return("", errors.New("failed to decode content"))
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "main").
+					Return(fileContent, nil, nil)
+			},
+			expectedResult: nil,
+			expectedError:  "get content: failed to decode content",
+		},
+		{
+			name: "GitHub API error",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "configs",
+						Branch: "main",
+					},
+				},
+			},
+			filePath: "dashboard.json",
+			ref:      "main",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "main").
+					Return(nil, nil, errors.New("API rate limit exceeded"))
+			},
+			expectedResult: nil,
+			expectedError:  "get contents: API rate limit exceeded",
+		},
+		{
+			name: "Use default branch when ref is empty",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "configs",
+						Branch: "develop",
+					},
+				},
+			},
+			filePath: "dashboard.json",
+			ref:      "", // Empty ref should use default branch
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().GetFileContent().Return("file content", nil)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "configs/dashboard.json", "develop").
+					Return(fileContent, nil, nil)
+			},
+			expectedResult: &FileInfo{
+				Path: "dashboard.json",
+				Ref:  "develop",
+				Data: []byte("file content"),
+				Hash: "abc123",
+			},
+			expectedError: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock GitHub client
+			mockClient := pgh.NewMockClient(t)
+
+			// Set up the mock expectations
+			if tt.mockSetup != nil {
+				tt.mockSetup(t, mockClient)
+			}
+
+			// Create a GitHub repository with the test config and mock client
+			repo := &githubRepository{
+				config: tt.config,
+				gh:     mockClient,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			// Call the Read method
+			result, err := repo.Read(context.Background(), tt.filePath, tt.ref)
+
+			// Check the error
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// Check the result
+			if tt.expectedResult != nil {
+				assert.Equal(t, tt.expectedResult.Path, result.Path)
+				assert.Equal(t, tt.expectedResult.Ref, result.Ref)
+				assert.Equal(t, tt.expectedResult.Data, result.Data)
+			} else {
+				assert.Nil(t, result)
+			}
+		})
+	}
+}
