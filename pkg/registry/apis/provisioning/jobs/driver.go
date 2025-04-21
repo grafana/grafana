@@ -78,10 +78,10 @@ func NewJobDriver(
 	historicJobs History,
 	workers ...Worker,
 ) (*jobDriver, error) {
-	if cleanupInterval > jobTimeout {
-		return nil, fmt.Errorf("the cleanup interval must be larger than the jobTimeout")
+	if cleanupInterval < jobTimeout {
+		return nil, fmt.Errorf("the cleanup interval must be larger than the jobTimeout (cleanup:%s < job:%s)",
+			cleanupInterval.String(), jobTimeout.String())
 	}
-
 	return &jobDriver{
 		jobTimeout:       jobTimeout,
 		cleanupInterval:  cleanupInterval,
@@ -111,6 +111,11 @@ func (d *jobDriver) Run(ctx context.Context) {
 		panic("unreachable?: failed to grant provisioning identity: " + err.Error())
 	}
 
+	// Remove old jobs
+	if err = d.store.Cleanup(ctx); err != nil {
+		logger.Error("failed to cleanup", "error", err)
+	}
+
 	// Drive without waiting on startup.
 	d.drive(ctx)
 
@@ -129,13 +134,14 @@ func (d *jobDriver) Run(ctx context.Context) {
 }
 
 func (d *jobDriver) drive(ctx context.Context) {
-	err := d.claimAndProcessOneJob(ctx)
-
-	if err != nil {
-		if errors.Is(err, context.Canceled) || !errors.Is(err, ErrNoJobs) {
+	for {
+		err := d.claimAndProcessOneJob(ctx)
+		if err != nil {
+			if !errors.Is(err, ErrNoJobs) {
+				logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
+			}
 			return
 		}
-		logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
 	}
 }
 

@@ -204,6 +204,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			}
 
 			// Rollback the claim.
+			refetchedJob = refetchedJob.DeepCopy()
 			delete(refetchedJob.Labels, LabelJobClaim)
 			refetchedJob.Status.State = provisioning.JobStatePending
 
