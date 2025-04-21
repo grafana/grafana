@@ -100,7 +100,11 @@ To view more alert rule details, complete the following steps.
 
    **Query and conditions**
 
-   View the details of the query that is used for the alert rule, including the expressions and intermediate values for each step of the expression pipeline. A graph view is included for range queries and data sources that return time series-like data frames.
+   View the details of the query that is used for the alert rule, including the expressions and intermediate values for each step of the expression pipeline.
+
+   A graph view is included for range queries and data sources that return time series-like data frames.
+
+   The time range used for this query differs from the time range defined in the alert rule query. It's calculated as the alert rule query's time range plus twice its pending period: `time range + (2 × pending period)`. This extended range allows you to observe potential alert state changes.
 
    **Instances**
 
