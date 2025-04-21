@@ -108,6 +108,7 @@ type legacyResourceResourceMigrator struct {
 	options   provisioning.MigrateJobOptions
 	resources resources.RepositoryResources
 	signer    signature.Signer
+	history   map[string]string // UID >> file path
 }
 
 func NewLegacyResourceMigrator(
@@ -120,6 +121,10 @@ func NewLegacyResourceMigrator(
 	kind schema.GroupResource,
 	signer signature.Signer,
 ) *legacyResourceResourceMigrator {
+	var history map[string]string
+	if false { //resources.IsVersioned() {
+		history = make(map[string]string)
+	}
 	return &legacyResourceResourceMigrator{
 		legacy:    legacy,
 		parser:    parser,
@@ -129,6 +134,7 @@ func NewLegacyResourceMigrator(
 		kind:      kind,
 		resources: resources,
 		signer:    signer,
+		history:   history,
 	}
 }
 
@@ -165,10 +171,17 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 
 	// TODO: this seems to be same logic as the export job
 	// TODO: we should use a kind safe manager here
-	fileName, err := r.resources.CreateResourceFileFromObject(ctx, parsed.Obj, resources.WriteOptions{
-		Path: "",
-		Ref:  "",
-	})
+	fileName, err := r.resources.CreateResourceFileFromObject(ctx, parsed.Obj, resources.WriteOptions{})
+
+	// For versioned
+	if r.history != nil {
+		name := parsed.Meta.GetName()
+		previous := r.history[name]
+		if previous != "" {
+			r.resources.RemoveResourceFromFile(ctx, previous, "")
+		}
+		r.history[name] = fileName
+	}
 
 	result := jobs.JobResourceResult{
 		Name:     parsed.Meta.GetName(),
