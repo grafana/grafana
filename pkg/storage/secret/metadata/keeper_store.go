@@ -3,7 +3,6 @@ package metadata
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
@@ -157,21 +156,50 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	var oldKeeperRow *keeperDB
-	err := s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
-		// Validate before updating that any `secureValues` referenced exist and do not reference other third-party keepers.\
+	var newRow *keeperDB
 
+	err := s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
+		// Validate before updating that any `secureValues` referenced exists and does not reference other third-party keepers.
 		if err := s.validateSecureValueReferences(ctx, sess, newKeeper); err != nil {
 			return err
 		}
 
-		var err error
-		oldKeeperRow, err = s.read(ctx, sess, newKeeper.Namespace, newKeeper.Name)
+		// Read old value first.
+		oldKeeperRow, err := s.read(ctx, sess, newKeeper.Namespace, newKeeper.Name)
 		if err != nil {
-			if errors.Is(err, contracts.ErrKeeperNotFound) {
-				return err
-			}
 			return fmt.Errorf("failed to get row: %w", err)
+		}
+
+		// Generate an update row model.
+		var updateErr error
+		newRow, updateErr = toKeeperUpdateRow(oldKeeperRow, newKeeper, authInfo.GetUID())
+		if updateErr != nil {
+			return fmt.Errorf("failed to map into update row: %w", updateErr)
+		}
+
+		// Update query with new model.
+		req := &updateKeeper{
+			SQLTemplate: sqltemplate.New(s.dialect),
+			Row:         newRow,
+		}
+
+		query, err := sqltemplate.Execute(sqlKeeperUpdate, req)
+		if err != nil {
+			return fmt.Errorf("execute template %q: %w", sqlKeeperUpdate.Name(), err)
+		}
+
+		result, err := sess.Exec(ctx, query, req.GetArgs()...)
+		if err != nil {
+			return fmt.Errorf("updating row: %w", err)
+		}
+
+		rowsAffected, err := result.RowsAffected()
+		if err != nil {
+			return fmt.Errorf("getting rows affected: %w", err)
+		}
+
+		if rowsAffected != 1 {
+			return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, newKeeper.Name, newKeeper.Namespace)
 		}
 
 		return nil
@@ -180,29 +208,11 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	newRow, err := toKeeperUpdateRow(oldKeeperRow, newKeeper, authInfo.GetUID())
-	if err != nil {
-		return nil, fmt.Errorf("failed to map into update row: %w", err)
-	}
-
-	req := &updateKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Row:         newRow,
-	}
-	q, err := sqltemplate.Execute(sqlKeeperUpdate, req)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperUpdate.Name(), err)
-	}
-
-	if _, err = s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...); err != nil {
-		return nil, fmt.Errorf("updating row: %w", err)
-	}
-
-	// TODO We are converting the new row(before the update operation) , should we query the db again??
 	keeper, err := newRow.toKubernetes()
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
 	}
+
 	return keeper, nil
 }
 
