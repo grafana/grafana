@@ -43,6 +43,7 @@ func (w *MigrationWorker) Process(ctx context.Context, repo repository.Repositor
 		return errors.New("missing migrate settings")
 	}
 
+	progress.Strict()
 	progress.SetTotal(ctx, 10) // will show a progress bar
 	rw, ok := repo.(repository.ReaderWriter)
 	if !ok {

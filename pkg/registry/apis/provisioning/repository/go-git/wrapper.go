@@ -371,7 +371,9 @@ func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
 	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
 	stat, err := g.tree.Filesystem.Lstat(readPath)
-	if err != nil {
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, repository.ErrFileNotFound
+	} else if err != nil {
 		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
 	}
 	info := &repository.FileInfo{
