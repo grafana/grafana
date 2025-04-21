@@ -290,8 +290,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 	t.Run("records error when create resource file fails", func(t *testing.T) {
 		mockParser := resources.NewMockParser(t)
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test",
 				},
 			},
@@ -340,8 +340,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 	t.Run("should fail when signer fails", func(t *testing.T) {
 		mockParser := resources.NewMockParser(t)
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test",
 				},
 			},
@@ -383,8 +383,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 	t.Run("should successfully add author signature", func(t *testing.T) {
 		mockParser := resources.NewMockParser(t)
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test",
 				},
 			},
@@ -439,11 +439,66 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		progress.AssertExpectations(t)
 	})
 
+	t.Run("should maintain history", func(t *testing.T) {
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("Record", mock.Anything, mock.Anything).Return()
+		progress.On("TooManyErrors").Return(nil)
+
+		mockParser := resources.NewMockParser(t)
+		obj := &unstructured.Unstructured{
+			Object: map[string]any{
+				"metadata": map[string]any{
+					"name": "test",
+				},
+			},
+		}
+		meta, _ := utils.MetaAccessor(obj)
+		mockParser.On("Parse", mock.Anything, mock.Anything).
+			Return(&resources.ParsedResource{
+				Meta: meta,
+				Obj:  obj,
+			}, nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		writeResourceFileFromObject := mockRepoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
+
+		migrator := NewLegacyResourceMigrator(
+			nil,
+			mockParser,
+			mockRepoResources,
+			progress,
+			provisioning.MigrateJobOptions{
+				History: true,
+			},
+			"test-namespace",
+			schema.GroupResource{Group: "test.grafana.app", Resource: "tests"},
+			signature.NewGrafanaSigner(),
+		)
+
+		writeResourceFileFromObject.Return("aaaa.json", nil)
+		err := migrator.Write(context.Background(), &resource.ResourceKey{}, []byte(""))
+		require.NoError(t, err)
+		require.Equal(t, "aaaa.json", migrator.history["test"], "kept track of the old files")
+
+		// Change the result file name
+		writeResourceFileFromObject.Return("bbbb.json", nil)
+		mockRepoResources.On("RemoveResourceFromFile", mock.Anything, "aaaa.json", "").
+			Return("", schema.GroupVersionKind{}, nil)
+
+		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte(""))
+		require.NoError(t, err)
+		require.Equal(t, "bbbb.json", migrator.history["test"], "kept track of the old files")
+
+		mockParser.AssertExpectations(t)
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+
 	t.Run("should successfully write resource", func(t *testing.T) {
 		mockParser := resources.NewMockParser(t)
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test",
 				},
 			},
@@ -524,8 +579,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 	t.Run("should fail when too many errors", func(t *testing.T) {
 		mockParser := resources.NewMockParser(t)
 		obj := &unstructured.Unstructured{
-			Object: map[string]interface{}{
-				"metadata": map[string]interface{}{
+			Object: map[string]any{
+				"metadata": map[string]any{
 					"name": "test",
 				},
 			},
