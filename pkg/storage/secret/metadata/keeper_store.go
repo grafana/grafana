@@ -120,12 +120,13 @@ func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, n
 		Namespace:   namespace,
 		Name:        name,
 	}
-	q, err := sqltemplate.Execute(sqlKeeperRead, req)
+
+	query, err := sqltemplate.Execute(sqlKeeperRead, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
-	res, err := dbQuerier.Query(ctx, q, req.GetArgs()...)
+	res, err := dbQuerier.Query(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
@@ -135,13 +136,10 @@ func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, n
 		return nil, contracts.ErrKeeperNotFound
 	}
 
-	keeper := &keeperDB{}
-	err = res.Scan(&keeper.GUID,
-		&keeper.Name, &keeper.Namespace, &keeper.Annotations,
-		&keeper.Labels,
-		&keeper.Created, &keeper.CreatedBy,
-		&keeper.Updated, &keeper.UpdatedBy,
-		&keeper.Title, &keeper.Type, &keeper.Payload,
+	var keeper keeperDB
+	err = res.Scan(
+		&keeper.GUID, &keeper.Name, &keeper.Namespace, &keeper.Annotations, &keeper.Labels, &keeper.Created,
+		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Title, &keeper.Type, &keeper.Payload,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan keeper row: %w", err)
@@ -150,7 +148,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, n
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
-	return keeper, nil
+	return &keeper, nil
 }
 
 func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
