@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
 
-import { DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
+import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
 
 export type { Options } from './panelcfg.gen';
 
@@ -54,4 +54,17 @@ export function isOnNewLogsReceivedType(callback: unknown): callback is onNewLog
 
 export function isReactNodeArray(node: unknown): node is ReactNode[] {
   return Array.isArray(node) && node.every(React.isValidElement);
+}
+
+export function isCoreApp(app: unknown): app is CoreApp {
+  return (
+    app === CoreApp.CloudAlerting ||
+    app === CoreApp.Correlations ||
+    app === CoreApp.Dashboard ||
+    app === CoreApp.Explore ||
+    app === CoreApp.PanelEditor ||
+    app === CoreApp.PanelViewer ||
+    app === CoreApp.UnifiedAlerting ||
+    app === CoreApp.Unknown
+  );
 }

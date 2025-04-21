@@ -35,12 +35,12 @@ export interface ControlledLogRowsProps extends Omit<Props, 'scrollElement'> {
 
   /** Props added for Table **/
   visualisationType: LogsVisualisationType;
-  splitOpen: SplitOpen;
-  panelState: ExploreLogsPanelState | undefined;
-  updatePanelState: (panelState: Partial<ExploreLogsPanelState>) => void;
+  splitOpen?: SplitOpen;
+  panelState?: ExploreLogsPanelState;
+  updatePanelState?: (panelState: Partial<ExploreLogsPanelState>) => void;
   datasourceType?: string;
-  width: number;
-  logsTableFrames: DataFrame[] | undefined;
+  width?: number;
+  logsTableFrames?: DataFrame[];
 }
 
 export type LogRowsComponentProps = Omit<
@@ -80,7 +80,9 @@ export const ControlledLogRows = ({
       wrapLogMessage={wrapLogMessage}
     >
       {rest.visualisationType === 'logs' && <LogRowsComponent {...rest} deduplicatedRows={deduplicatedRows} />}
-      {rest.visualisationType === 'table' && <ControlledLogsTable {...rest} />}
+      {rest.visualisationType === 'table' && rest.panelState && rest.updatePanelState && (
+        <ControlledLogsTable {...rest} />
+      )}
     </LogListContextProvider>
   );
 };
