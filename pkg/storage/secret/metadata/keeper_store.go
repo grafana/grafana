@@ -253,7 +253,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		Group:     secretv0alpha1.GROUP,
 		Resource:  secretv0alpha1.KeeperResourceInfo.GetName(),
 		Namespace: namespace.String(),
-		Verb:      utils.VerbGet, // Why not VerbList?
+		Verb:      utils.VerbGet,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to compile checker: %w", err)
@@ -269,27 +269,23 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		Namespace:   namespace.String(),
 	}
 
-	q, err := sqltemplate.Execute(sqlKeeperList, req)
+	query, err := sqltemplate.Execute(sqlKeeperList, req)
 	if err != nil {
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperList.Name(), err)
 	}
 
-	rows, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("listing keepers %q: %w", q, err)
+		return nil, fmt.Errorf("listing keepers %q: %w", sqlKeeperList.Name(), err)
 	}
 
 	keepers := make([]secretv0alpha1.Keeper, 0)
 
 	for rows.Next() {
-		row := keeperDB{}
-
-		err = rows.Scan(&row.GUID,
-			&row.Name, &row.Namespace, &row.Annotations,
-			&row.Labels,
-			&row.Created, &row.CreatedBy,
-			&row.Updated, &row.UpdatedBy,
-			&row.Title, &row.Type, &row.Payload,
+		var row keeperDB
+		err = rows.Scan(
+			&row.GUID, &row.Name, &row.Namespace, &row.Annotations, &row.Labels, &row.Created,
+			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Title, &row.Type, &row.Payload,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error reading keeper row: %w", err)
