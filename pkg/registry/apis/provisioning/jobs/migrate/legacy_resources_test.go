@@ -306,7 +306,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			}, nil)
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
-		mockRepoResources.On("CreateResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
+		mockRepoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything).
 			Return("", errors.New("create file error"))
 
 		progress := jobs.NewMockJobProgressRecorder(t)
@@ -407,7 +407,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			Return(signedCtx, nil)
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
-		mockRepoResources.On("CreateResourceFileFromObject", signedCtx, mock.Anything, mock.Anything).
+		mockRepoResources.On("WriteResourceFileFromObject", signedCtx, mock.Anything, mock.Anything).
 			Return("test/path", nil)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
@@ -471,7 +471,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			}, nil)
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
-		mockRepoResources.On("CreateResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+		mockRepoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 			if obj == nil {
 				return false
 			}
@@ -540,7 +540,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			}, nil)
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
-		mockRepoResources.On("CreateResourceFileFromObject", mock.Anything, mock.Anything, resources.WriteOptions{}).
+		mockRepoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, resources.WriteOptions{}).
 			Return("test/path", nil)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
