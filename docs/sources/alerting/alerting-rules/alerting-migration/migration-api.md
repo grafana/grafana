@@ -45,10 +45,14 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
   ```
   If this value is set explicitly in a rule group, that value takes precedence over the configuration setting.
 - The `missing_series_evals_to_resolve` is set to 1 for the new rules.
+- The imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior.
+  Sequential evaluation applies only to rules imported with the migration UI or API and only while they remain read‑only in the UI (displayed as "Provisioned").
+  If you import rules with the `X-Disable-Provenance: true` header or via the regular provisioning API, they behave like regular Grafana
+  alert rules and are evaluated in parallel.
 - The newly created rules are given unique UIDs.  
   If you don't want the UID to be automatically generated, you can specify a specific UID with the `__grafana_alert_rule_uid__` label.
 
-## Import alert rules with Mimirtool or coretextool
+## Import alert rules with Mimirtool or cortextool
 
 You can use either [Mimirtool](/docs/mimir/latest/manage/tools/mimirtool/) or [`cortextool`](https://github.com/grafana/cortex-tools) (version `0.11.3` or later) to import your alert rules. For more information about Mimirtool commands, see the [Mimirtool documentation](/docs/mimir/latest/manage/tools/mimirtool/#rules).
 
@@ -58,13 +62,13 @@ To convert your alert rules, use the following command prompt substituting the y
 MIMIR_ADDRESS=https://<Grafana URL>.grafana-dev.net/api/convert/ MIMIR_AUTH_TOKEN=<your token ID> MIMIR_TENANT_ID=1
 ```
 
-For coretextool, you need to set `--backend=loki` to import Loki alert rules. For example:
+For cortextool, you need to set `--backend=loki` to import Loki alert rules. For example:
 
 ```bash
 CORTEX_ADDRESS=<grafana url>/api/convert/ CORTEX_AUTH_TOKEN=<your token> CORTEX_TENANT_ID=1 cortextool rules --backend=loki list
 ```
 
-Headers can be passed to the `mimirtool` or `coretextool` via `--extra-headers`.
+Headers can be passed to the `mimirtool` or `cortextool` via `--extra-headers`.
 
 For more information about the Rule API points and examples of Mimirtool commands, see the [Mimir HTTP API documentation](/docs/mimir/latest/references/http-api/#ruler-rules:~:text=config/v1/rules-,Get%20rule%20groups%20by%20namespace,DELETE%20%3Cprometheus%2Dhttp%2Dprefix%3E/config/v1/rules/%7Bnamespace%7D,-Delete%20tenant%20configuration) for more information about the Rule API points and examples of Mimirtool commands.
 

@@ -38,6 +38,10 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
 - All rules are given `rule_query_offset` offset value of 1m.
 - The `missing_series_evals_to_resolve` is set to 1 for the new rules.
 - The newly created rules are given unique UIDs.
+- The imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior.
+  Sequential evaluation applies only to rules imported with the migration UI or API and only while they remain read‑only in the UI (displayed as "Provisioned").
+  If you import rules with the `X-Disable-Provenance: true` header or via the regular provisioning API, they behave like regular Grafana
+  alert rules and are evaluated in parallel.
 
 {{< admonition type="note" >}}
 Plugin rules that have the label `__grafana_origin` are not included on alert rule imports.
@@ -57,7 +61,7 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
 1. In Additional settings, select a target folder or designate a new folder to import the rules into.
 
-   If you import the rules into an existing folder, don't chose a folder with existing alert rules, as they could get overwritten.
+   If you import the rules into an existing folder, don't choose a folder with existing alert rules, as they could get overwritten.
 
 1. (Optional) Select a Namespace and/or Group to determine which rules are imported.
 
