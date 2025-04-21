@@ -196,6 +196,19 @@ func (r updateExternalIdSecureValue) Validate() error {
 	return nil // TODO
 }
 
+// Update externalId
+type updateSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Row       *secureValueDB
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r updateSecureValue) Validate() error {
+	return nil // TODO
+}
+
 // update status message
 type updateStatusSecureValue struct {
 	sqltemplate.SQLTemplate
