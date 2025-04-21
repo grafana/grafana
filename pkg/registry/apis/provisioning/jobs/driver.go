@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -127,7 +128,18 @@ func (d *jobDriver) Run(ctx context.Context) {
 	}
 }
 
-func (d *jobDriver) drive(ctx context.Context) error {
+func (d *jobDriver) drive(ctx context.Context) {
+	err := d.claimAndProcessOneJob(ctx)
+
+	if err != nil {
+		if errors.Is(err, context.Canceled) || !errors.Is(err, ErrNoJobs) {
+			return
+		}
+		logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
+	}
+}
+
+func (d *jobDriver) claimAndProcessOneJob(ctx context.Context) error {
 	logger := logging.FromContext(ctx)
 
 	// Claim a job to work on.
