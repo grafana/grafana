@@ -642,7 +642,7 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		err = validateAlertRuleFields(alertRule)
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, err)
 	}
 
 	if alertRule.For < 0 {
@@ -682,7 +682,7 @@ func validateAlertRuleFields(rule *AlertRule) error {
 	}
 
 	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve <= 0 {
-		return fmt.Errorf("%w: field `missing_series_evals_to_resolve` must be greater than 0", ErrAlertRuleFailedValidation)
+		return errors.New("field `missing_series_evals_to_resolve` must be greater than 0")
 	}
 
 	return nil
@@ -691,10 +691,10 @@ func validateAlertRuleFields(rule *AlertRule) error {
 func validateRecordingRuleFields(rule *AlertRule) error {
 	metricName := prommodels.LabelValue(rule.Record.Metric)
 	if !metricName.IsValid() {
-		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+		return errors.New("metric name for recording rule must be a valid utf8 string")
 	}
 	if !prommodels.IsValidMetricName(metricName) {
-		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
+		return errors.New("metric name for recording rule must be a valid Prometheus metric name")
 	}
 
 	ClearRecordingRuleIgnoredFields(rule)
