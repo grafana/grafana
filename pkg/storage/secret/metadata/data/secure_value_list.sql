@@ -1,5 +1,3 @@
-{{/* TODO LND Done!*/}}}
-
 SELECT
   {{ .Ident "guid" }},
   {{ .Ident "name" }},
