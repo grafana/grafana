@@ -345,7 +345,7 @@ func TestIntegrationPreserveSchemaVersion(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	testPreserveSchemaVersion(t, []string{}) // featuremgmt.FlagKubernetesClientDashboardsFolders is enabled by default
+	testPreserveSchemaVersion(t, []string{featuremgmt.FlagKubernetesClientDashboardsFolders})
 }
 
 func testCreate(t *testing.T, featureToggles []string) {
