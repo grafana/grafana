@@ -54,16 +54,24 @@ export function TemplatesPicker({ onSelect, option, valueInForm }: TemplatesPick
     <>
       <Button
         icon="edit"
-        tooltip={`Edit ${option.label.toLowerCase()} using existing notification templates.`}
+        tooltip={t('alerting.templates-picker.tooltip-edit', 'Edit {{name}} using existing notification templates.', {
+          name: option.label.toLowerCase(),
+        })}
         onClick={onClick}
         variant="secondary"
         size="sm"
       >
-        {`Edit ${option.label}`}
+        <Trans i18nKey="alerting.templates-picker.button-edit" values={{ name: option.label }}>
+          Edit {'{{name}}'}
+        </Trans>
       </Button>
 
       {showTemplates && (
-        <Drawer title={`Edit ${option.label}`} size="md" onClose={handleClose}>
+        <Drawer
+          title={t('alerting.templates-picker.title-drawer', 'Edit {{name}}', { name: option.label })}
+          size="md"
+          onClose={handleClose}
+        >
           <TemplateSelector onSelect={onSelect} onClose={handleClose} option={option} valueInForm={valueInForm} />
         </Drawer>
       )}
@@ -219,7 +227,10 @@ function TemplateSelector({ onSelect, onClose, option, valueInForm }: TemplateSe
                 defaultValue={defaultTemplateValue}
               />
               <IconButton
-                tooltip="Copy selected notification template to clipboard. You can use it in the custom tab."
+                tooltip={t(
+                  'alerting.template-selector.tooltip-copy',
+                  'Copy selected notification template to clipboard. You can use it in the custom tab.'
+                )}
                 onClick={() => copyToClipboard(template?.value?.content ?? defaultTemplateValue?.value?.content ?? '')}
                 name="copy"
               />

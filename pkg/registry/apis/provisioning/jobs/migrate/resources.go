@@ -12,13 +12,93 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/storage/unified/parquet"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
 var _ resource.BulkResourceWriter = (*legacyResourceResourceMigrator)(nil)
 
-// TODO: can we use the same migrator for folders?
+//go:generate mockery --name LegacyResourcesMigrator --structname MockLegacyResourcesMigrator --inpackage --filename mock_legacy_resources_migrator.go --with-expecter
+type LegacyResourcesMigrator interface {
+	Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error
+}
+
+type legacyResourcesMigrator struct {
+	repositoryResources resources.RepositoryResourcesFactory
+	parsers             resources.ParserFactory
+	legacyMigrator      legacy.LegacyMigrator
+	folderMigrator      LegacyFoldersMigrator
+	signerFactory       signature.SignerFactory
+}
+
+func NewLegacyResourcesMigrator(
+	repositoryResources resources.RepositoryResourcesFactory,
+	parsers resources.ParserFactory,
+	legacyMigrator legacy.LegacyMigrator,
+	folderMigrator LegacyFoldersMigrator,
+	signerFactory signature.SignerFactory,
+) LegacyResourcesMigrator {
+	return &legacyResourcesMigrator{
+		repositoryResources: repositoryResources,
+		parsers:             parsers,
+		legacyMigrator:      legacyMigrator,
+		folderMigrator:      folderMigrator,
+		signerFactory:       signerFactory,
+	}
+}
+
+func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, namespace string, opts provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
+	parser, err := m.parsers.GetParser(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("get parser: %w", err)
+	}
+
+	repositoryResources, err := m.repositoryResources.Client(ctx, rw)
+	if err != nil {
+		return fmt.Errorf("get repository resources: %w", err)
+	}
+
+	// FIXME: signature is only relevant for repositories which support signature
+	// Not all repositories support history
+	signer, err := m.signerFactory.New(ctx, signature.SignOptions{
+		Namespace: namespace,
+		History:   opts.History,
+	})
+	if err != nil {
+		return fmt.Errorf("get signer: %w", err)
+	}
+
+	progress.SetMessage(ctx, "migrate folders from SQL")
+	if err := m.folderMigrator.Migrate(ctx, namespace, repositoryResources, progress); err != nil {
+		return fmt.Errorf("migrate folders from SQL: %w", err)
+	}
+
+	progress.SetMessage(ctx, "migrate resources from SQL")
+	for _, kind := range resources.SupportedProvisioningResources {
+		if kind == resources.FolderResource {
+			continue
+		}
+
+		reader := NewLegacyResourceMigrator(
+			m.legacyMigrator,
+			parser,
+			repositoryResources,
+			progress,
+			opts,
+			namespace,
+			kind.GroupResource(),
+			signer,
+		)
+
+		if err := reader.Migrate(ctx); err != nil {
+			return fmt.Errorf("migrate resource %s: %w", kind, err)
+		}
+	}
+
+	return nil
+}
+
 type legacyResourceResourceMigrator struct {
 	legacy    legacy.LegacyMigrator
 	parser    resources.Parser
@@ -26,10 +106,20 @@ type legacyResourceResourceMigrator struct {
 	namespace string
 	kind      schema.GroupResource
 	options   provisioning.MigrateJobOptions
-	resources *resources.ResourcesManager
+	resources resources.RepositoryResources
+	signer    signature.Signer
 }
 
-func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Parser, resources *resources.ResourcesManager, progress jobs.JobProgressRecorder, options provisioning.MigrateJobOptions, namespace string, kind schema.GroupResource) *legacyResourceResourceMigrator {
+func NewLegacyResourceMigrator(
+	legacy legacy.LegacyMigrator,
+	parser resources.Parser,
+	resources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+	options provisioning.MigrateJobOptions,
+	namespace string,
+	kind schema.GroupResource,
+	signer signature.Signer,
+) *legacyResourceResourceMigrator {
 	return &legacyResourceResourceMigrator{
 		legacy:    legacy,
 		parser:    parser,
@@ -38,6 +128,7 @@ func NewLegacyResourceMigrator(legacy legacy.LegacyMigrator, parser resources.Pa
 		namespace: namespace,
 		kind:      kind,
 		resources: resources,
+		signer:    signer,
 	}
 }
 
@@ -59,12 +150,18 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		Data: value,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to unmarshal unstructured: %w", err)
+		return fmt.Errorf("unmarshal unstructured: %w", err)
 	}
 
 	// clear anything so it will get written
 	parsed.Meta.SetManagerProperties(utils.ManagerProperties{})
 	parsed.Meta.SetSourceProperties(utils.SourceProperties{})
+
+	// Add author signature to the context
+	ctx, err = r.signer.Sign(ctx, parsed.Meta)
+	if err != nil {
+		return fmt.Errorf("add author signature: %w", err)
+	}
 
 	// TODO: this seems to be same logic as the export job
 	// TODO: we should use a kind safe manager here
@@ -117,7 +214,7 @@ func (r *legacyResourceResourceMigrator) Migrate(ctx context.Context) error {
 	opts.OnlyCount = false // this time actually write
 	_, err = r.legacy.Migrate(ctx, opts)
 	if err != nil {
-		return fmt.Errorf("error running legacy migrate (%s) %w", r.kind.Resource, err)
+		return fmt.Errorf("migrate legacy %s: %w", r.kind.Resource, err)
 	}
 
 	return nil

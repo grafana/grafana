@@ -62,7 +62,7 @@
       "metadata": {
         "name": "alertRuleRestore",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-05T14:15:26Z"
       },
       "spec": {
         "description": "Enables the alert rule restore feature",
@@ -76,7 +76,7 @@
         "name": "alertStateHistoryLokiOnly",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-03-30T18:53:21Z",
-        "deletionTimestamp": "2025-04-07T14:33:12Z"
+        "deletionTimestamp": "2025-04-08T13:50:27Z"
       },
       "spec": {
         "description": "Disable Grafana alerts from emitting annotations when a remote Loki instance is available.",
@@ -89,7 +89,7 @@
         "name": "alertStateHistoryLokiPrimary",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-03-30T18:53:21Z",
-        "deletionTimestamp": "2025-04-07T14:33:12Z"
+        "deletionTimestamp": "2025-04-08T13:50:27Z"
       },
       "spec": {
         "description": "Enable a remote Loki instance as the primary source for state history reads.",
@@ -102,7 +102,7 @@
         "name": "alertStateHistoryLokiSecondary",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-03-30T18:53:21Z",
-        "deletionTimestamp": "2025-04-07T14:33:12Z"
+        "deletionTimestamp": "2025-04-08T13:50:27Z"
       },
       "spec": {
         "description": "Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.",
@@ -114,7 +114,8 @@
       "metadata": {
         "name": "alertingApiServer",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-06-20T20:52:03Z"
+        "creationTimestamp": "2024-06-20T20:52:03Z",
+        "deletionTimestamp": "2025-04-16T17:44:22Z"
       },
       "spec": {
         "description": "Register Alerting APIs with the K8s API server",
@@ -153,8 +154,8 @@
       "metadata": {
         "name": "alertingConversionAPI",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z",
-        "deletionTimestamp": "2025-04-04T13:25:42Z"
+        "creationTimestamp": "2025-02-12T07:13:21Z",
+        "deletionTimestamp": "2025-04-05T08:27:02Z"
       },
       "spec": {
         "description": "Enable the alerting conversion API",
@@ -210,7 +211,7 @@
       "metadata": {
         "name": "alertingJiraIntegration",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-02-14T12:22:04Z"
       },
       "spec": {
         "description": "Enables the new Jira integration for contact points in cloud alert managers.",
@@ -237,7 +238,7 @@
       "metadata": {
         "name": "alertingMigrationUI",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-14T16:40:05Z"
       },
       "spec": {
         "description": "Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules",
@@ -306,7 +307,7 @@
       "metadata": {
         "name": "alertingRulePermanentlyDelete",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-04-03T11:18:25Z"
       },
       "spec": {
         "description": "Enables UI functionality to permanently delete alert rules",
@@ -322,7 +323,7 @@
       "metadata": {
         "name": "alertingRuleRecoverDeleted",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-27T14:39:26Z"
       },
       "spec": {
         "description": "Enables the UI functionality to recover and view deleted alert rules",
@@ -338,7 +339,7 @@
       "metadata": {
         "name": "alertingRuleVersionHistoryRestore",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-02-17T12:25:32Z"
       },
       "spec": {
         "description": "Enables the alert rule version history restore feature",
@@ -354,7 +355,7 @@
       "metadata": {
         "name": "alertingSaveStateCompressed",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-01-27T17:47:33Z"
       },
       "spec": {
         "description": "Enables the compressed protobuf-based alert state storage",
@@ -483,7 +484,7 @@
       "metadata": {
         "name": "assetSriChecks",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-04T10:56:35Z"
       },
       "spec": {
         "description": "Enables SRI checks for Grafana JavaScript assets",
@@ -561,7 +562,7 @@
       "metadata": {
         "name": "azureMonitorLogsBuilderEditor",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-04-02T14:15:25Z"
       },
       "spec": {
         "description": "Enables the logs builder mode for the Azure Monitor data source",
@@ -735,7 +736,7 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV1",
         "resourceVersion": "1744303023863",
-        "creationTimestamp": "2025-04-10T16:37:03Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v1",
@@ -747,7 +748,7 @@
       "metadata": {
         "name": "dashboardDisableSchemaValidationV2",
         "resourceVersion": "1744303023863",
-        "creationTimestamp": "2025-04-10T16:37:03Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z"
       },
       "spec": {
         "description": "Disable schema validation for dashboards/v2",
@@ -814,7 +815,7 @@
       "metadata": {
         "name": "dashboardSchemaValidationLogging",
         "resourceVersion": "1744303223631",
-        "creationTimestamp": "2025-04-10T16:40:23Z"
+        "creationTimestamp": "2025-04-11T16:52:46Z"
       },
       "spec": {
         "description": "Log schema validation errors so they can be analyzed later",
@@ -1116,7 +1117,7 @@
         "name": "exploreMetrics",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-04-09T18:15:18Z",
-        "deletionTimestamp": "2025-04-11T01:41:57Z"
+        "deletionTimestamp": "2025-04-11T20:45:14Z"
       },
       "spec": {
         "description": "Enables the new Grafana Metrics Drilldown core app",
@@ -1143,8 +1144,8 @@
       "metadata": {
         "name": "exploreMetricsUseExternalAppPlugin",
         "resourceVersion": "1744146547481",
-        "creationTimestamp": "2025-04-03T15:18:37Z",
-        "deletionTimestamp": "2025-04-11T01:41:57Z",
+        "creationTimestamp": "2025-02-03T20:46:54Z",
+        "deletionTimestamp": "2025-04-11T20:45:14Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-08 21:09:07.481769 +0000 UTC"
         }
@@ -1174,7 +1175,7 @@
       "metadata": {
         "name": "extensionSidebar",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-04-03T10:16:35Z"
       },
       "spec": {
         "description": "Enables the extension sidebar",
@@ -1306,7 +1307,7 @@
       "metadata": {
         "name": "fetchRulesUsingPost",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-01-29T12:17:44Z"
       },
       "spec": {
         "description": "Use a POST request to list rules by passing down the namespaces user has access to",
@@ -1360,7 +1361,8 @@
       "metadata": {
         "name": "frontendSandboxMonitorOnly",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-07-05T11:48:25Z"
+        "creationTimestamp": "2023-07-05T11:48:25Z",
+        "deletionTimestamp": "2025-04-14T13:27:59Z"
       },
       "spec": {
         "description": "Enables monitor only in the plugin frontend sandbox (if enabled)",
@@ -1427,7 +1429,7 @@
       "metadata": {
         "name": "grafanaManagedRecordingRulesDatasources",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-07T13:30:40Z"
       },
       "spec": {
         "description": "Enables writing to data sources for Grafana-managed recording rules.",
@@ -1441,7 +1443,7 @@
       "metadata": {
         "name": "grafanaconThemes",
         "resourceVersion": "1744293476104",
-        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "creationTimestamp": "2025-02-06T11:08:04Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-10 13:57:56.104154 +0000 UTC"
         }
@@ -1565,7 +1567,7 @@
       "metadata": {
         "name": "infinityRunQueriesInParallel",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-14T12:54:04Z"
       },
       "spec": {
         "description": "Enables running Infinity queries in parallel",
@@ -1629,7 +1631,7 @@
       "metadata": {
         "name": "inviteUserExperimental",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-07T19:09:59Z"
       },
       "spec": {
         "description": "Renders invite user button along the app",
@@ -1709,7 +1711,7 @@
       "metadata": {
         "name": "kubernetesClientDashboardsFolders",
         "resourceVersion": "1744337414536",
-        "creationTimestamp": "2025-02-18T21:15:35Z",
+        "creationTimestamp": "2025-02-18T23:11:26Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-11 02:10:14.536012 +0000 UTC"
         }
@@ -1794,7 +1796,7 @@
         "name": "live-service-web-worker",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2022-01-26T17:44:20Z",
-        "deletionTimestamp": "2025-04-07T09:56:17Z"
+        "deletionTimestamp": "2025-04-07T14:47:35Z"
       },
       "spec": {
         "description": "This will use a webworker thread to processes events rather than the main thread",
@@ -1807,7 +1809,7 @@
       "metadata": {
         "name": "localeFormatPreference",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-31T13:59:07Z"
       },
       "spec": {
         "description": "Specifies the locale so the correct format for numbers and dates can be shown",
@@ -1819,7 +1821,7 @@
       "metadata": {
         "name": "localizationForPlugins",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-31T04:38:38Z"
       },
       "spec": {
         "description": "Enables localization for plugins",
@@ -1928,7 +1930,7 @@
       "metadata": {
         "name": "logsPanelControls",
         "resourceVersion": "1744209818391",
-        "creationTimestamp": "2025-04-04T13:11:29Z",
+        "creationTimestamp": "2025-04-07T14:38:55Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-09 14:43:38.391331 +0000 UTC"
         }
@@ -2087,7 +2089,7 @@
       "metadata": {
         "name": "managedDualWriter",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-02-19T14:50:39Z"
       },
       "spec": {
         "description": "Pick the dual write mode from database configs",
@@ -2101,7 +2103,7 @@
       "metadata": {
         "name": "metricsFromProfiles",
         "resourceVersion": "1743767250962",
-        "creationTimestamp": "2025-04-04T11:45:44Z",
+        "creationTimestamp": "2025-04-09T10:55:28Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-04 11:47:30.962546 +0000 UTC"
         }
@@ -2129,7 +2131,7 @@
       "metadata": {
         "name": "multiTenantTempCredentials",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-04-02T20:25:50Z"
       },
       "spec": {
         "description": "use multi-tenant path for awsTempCredentials",
@@ -2221,7 +2223,7 @@
       "metadata": {
         "name": "newLogsPanel",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-02-04T17:40:17Z"
       },
       "spec": {
         "description": "Enables the new logs panel in Explore",
@@ -2247,7 +2249,7 @@
       "metadata": {
         "name": "newShareReportDrawer",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-02-17T19:05:46Z"
       },
       "spec": {
         "description": "Enables the report creation drawer in a dashboard",
@@ -2261,8 +2263,8 @@
       "metadata": {
         "name": "noBackdropBlur",
         "resourceVersion": "1744057771109",
-        "creationTimestamp": "2025-04-03T15:18:37Z",
-        "deletionTimestamp": "2025-04-08T09:27:30Z",
+        "creationTimestamp": "2025-03-14T15:21:35Z",
+        "deletionTimestamp": "2025-04-08T10:58:19Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-07 20:29:31.109804663 +0000 UTC"
         }
@@ -2280,7 +2282,7 @@
         "name": "nodeGraphDotLayout",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-01-31T16:26:12Z",
-        "deletionTimestamp": "2025-04-07T10:13:50Z"
+        "deletionTimestamp": "2025-04-08T14:37:17Z"
       },
       "spec": {
         "description": "Changed the layout algorithm for the node graph",
@@ -2450,9 +2452,21 @@
     },
     {
       "metadata": {
+        "name": "pluginsAutoUpdate",
+        "resourceVersion": "1744729584489",
+        "creationTimestamp": "2025-04-15T15:06:24Z"
+      },
+      "spec": {
+        "description": "Enables auto-updating of users installed plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
+      }
+    },
+    {
+      "metadata": {
         "name": "pluginsCDNSyncLoader",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-02-07T10:07:08Z"
       },
       "spec": {
         "description": "Loads plugins from CDN synchronously",
@@ -2585,7 +2599,7 @@
         "name": "prometheusRunQueriesInParallel",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-08-12T12:31:39Z",
-        "deletionTimestamp": "2025-04-10T18:16:18Z"
+        "deletionTimestamp": "2025-04-11T22:11:19Z"
       },
       "spec": {
         "description": "Enables running Prometheus queries in parallel",
@@ -2679,7 +2693,7 @@
         "name": "queryOverLive",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2022-01-26T17:44:20Z",
-        "deletionTimestamp": "2025-04-07T09:56:17Z"
+        "deletionTimestamp": "2025-04-07T14:47:35Z"
       },
       "spec": {
         "description": "Use Grafana Live WebSocket to execute backend queries",
@@ -2705,7 +2719,7 @@
       "metadata": {
         "name": "queryServiceFromExplore",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-04-02T10:00:33Z"
       },
       "spec": {
         "description": "Routes explore requests to the new query service",
@@ -2824,7 +2838,7 @@
       "metadata": {
         "name": "rendererDisableAppPluginsPreload",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-02-24T14:43:06Z"
       },
       "spec": {
         "description": "Disable pre-loading app plugins when the request is coming from the renderer",
@@ -2905,7 +2919,7 @@
       "metadata": {
         "name": "scopeSearchAllLevels",
         "resourceVersion": "1744370973814",
-        "creationTimestamp": "2025-04-10T12:49:09Z",
+        "creationTimestamp": "2025-04-14T07:42:16Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-11 11:29:33.814419 +0000 UTC"
         }
@@ -2922,7 +2936,7 @@
       "metadata": {
         "name": "secretsManagementAppPlatform",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-19T09:25:14Z"
       },
       "spec": {
         "description": "Enable the secrets management API and services under app platform",
@@ -3044,7 +3058,7 @@
       "metadata": {
         "name": "tableNextGen",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-26T03:57:57Z"
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",
@@ -3082,7 +3096,7 @@
       "metadata": {
         "name": "templateVariablesUsesCombobox",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-01-31T09:53:13Z"
       },
       "spec": {
         "description": "Use new **Combobox** component for template variables",
@@ -3121,7 +3135,7 @@
         "name": "traceQLStreaming",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-07-26T13:33:16Z",
-        "deletionTimestamp": "2025-04-08T12:39:36Z"
+        "deletionTimestamp": "2025-04-09T12:57:07Z"
       },
       "spec": {
         "description": "Enables response streaming of TraceQL queries of the Tempo data source",
@@ -3163,7 +3177,7 @@
       "metadata": {
         "name": "unifiedNavbars",
         "resourceVersion": "1744174965165",
-        "creationTimestamp": "2025-04-05T06:53:21Z",
+        "creationTimestamp": "2025-04-09T12:51:22Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-09 05:02:45.165634 +0000 UTC"
         }
@@ -3206,7 +3220,7 @@
       "metadata": {
         "name": "unifiedStorageGrpcConnectionPool",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-21T13:24:54Z"
       },
       "spec": {
         "description": "Enables the unified storage grpc connection pool",
@@ -3220,7 +3234,7 @@
       "metadata": {
         "name": "unifiedStorageHistoryPruner",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-03-17T10:36:38Z"
       },
       "spec": {
         "description": "Enables the unified storage history pruner",
@@ -3291,7 +3305,7 @@
       "metadata": {
         "name": "useScopesNavigationEndpoint",
         "resourceVersion": "1744289349951",
-        "creationTimestamp": "2025-04-03T15:18:37Z",
+        "creationTimestamp": "2025-03-31T15:20:00Z",
         "annotations": {
           "grafana.app/updatedTimestamp": "2025-04-10 12:49:09.951013 +0000 UTC"
         }
@@ -3334,7 +3348,7 @@
       "metadata": {
         "name": "xrayApplicationSignals",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-04-03T15:18:37Z"
+        "creationTimestamp": "2025-04-01T14:42:02Z"
       },
       "spec": {
         "description": "Support Application Signals queries in the X-Ray datasource",
