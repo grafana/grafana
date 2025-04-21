@@ -12,8 +12,8 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ .Ident "status_message" }},
   {{ .Ident "title" }},
   {{ .Ident "keeper" }},
-  {{ .Ident "decrypters" }}
-  {{ .Ident "ref" }}
+  {{ .Ident "decrypters" }},
+  {{ .Ident "ref" }},
   {{ .Ident "external_id" }}
 ) VALUES (
   {{ .Arg .Row.GUID }},
@@ -31,5 +31,5 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ .Arg .Row.Keeper }},
   {{ .Arg .Row.Decrypters }},
   {{ .Arg .Row.Ref }},
-  {{ .Arg .Row.ExternalID }},
+  {{ .Arg .Row.ExternalID }}
 );

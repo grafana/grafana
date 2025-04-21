@@ -12,8 +12,8 @@ INSERT INTO `secret_secure_value` (
   `status_message`,
   `title`,
   `keeper`,
-  `decrypters`
-  `ref`
+  `decrypters`,
+  `ref`,
   `external_id`
 ) VALUES (
   'abc',
@@ -31,5 +31,5 @@ INSERT INTO `secret_secure_value` (
   'keeper',
   '<nil>',
   '<nil>',
-  'extId',
+  'extId'
 );
