@@ -28,9 +28,11 @@ export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options
 }
 
 /** @deprecated Use Combobox component instead */
-export const AsyncSelect = forwardRef<HTMLDivElement, AsyncSelectProps<any>>((props, ref) => {
-  return <SelectBase {...props} ref={ref} />;
-}) as <T, Rest = {}>(props: AsyncSelectProps<T> & Rest) => JSX.Element;
+export const AsyncSelect = forwardRef(
+  <T, Rest = {}>(props: AsyncSelectProps<T> & Rest, ref: React.Ref<HTMLElement>) => (
+    <SelectBase<T, Rest> ref={ref} {...props} />
+  )
+) as <T, Rest = {}>(props: AsyncSelectProps<T> & Rest & { ref?: React.Ref<HTMLElement> }) => JSX.Element;
 
 /** @deprecated Use Combobox component instead - it's virtualised by default! */
 export function VirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectProps<T> & Rest) {
