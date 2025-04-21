@@ -1,5 +1,5 @@
 import { isArray, negate } from 'lodash';
-import { ComponentProps, useCallback, useEffect, useRef, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import * as React from 'react';
 import {
   default as ReactSelect,
@@ -88,72 +88,74 @@ function determineToggleAllState(selectedValue: SelectableValue[], options: Sele
   }
 }
 
-export function SelectBase<T, Rest = {}>({
-  allowCustomValue = false,
-  allowCreateWhileLoading = false,
-  'aria-label': ariaLabel,
-  'data-testid': dataTestid,
-  autoFocus = false,
-  backspaceRemovesValue = true,
-  blurInputOnSelect,
-  cacheOptions,
-  className,
-  closeMenuOnSelect = true,
-  components,
-  createOptionPosition = 'last',
-  defaultOptions,
-  defaultValue,
-  disabled = false,
-  filterOption,
-  formatCreateLabel,
-  getOptionLabel,
-  getOptionValue,
-  inputValue,
-  invalid,
-  isClearable = false,
-  id,
-  isLoading = false,
-  isMulti = false,
-  inputId,
-  isOpen,
-  isOptionDisabled,
-  isSearchable = true,
-  loadOptions,
-  loadingMessage = 'Loading options...',
-  maxMenuHeight = 300,
-  minMenuHeight,
-  maxVisibleValues,
-  menuPlacement = 'auto',
-  menuPosition,
-  menuShouldPortal = true,
-  noOptionsMessage = t('grafana-ui.select.no-options-label', 'No options found'),
-  onBlur,
-  onChange,
-  onCloseMenu,
-  onCreateOption,
-  onInputChange,
-  onKeyDown,
-  onMenuScrollToBottom,
-  onMenuScrollToTop,
-  onOpenMenu,
-  onFocus,
-  toggleAllOptions,
-  openMenuOnFocus = false,
-  options = [],
-  placeholder = t('grafana-ui.select.placeholder', 'Choose'),
-  prefix,
-  renderControl,
-  showAllSelectedWhenOpen = true,
-  tabSelectsValue = true,
-  value,
-  virtualized = false,
-  noMultiValueWrap,
-  width,
-  isValidNewOption,
-  formatOptionLabel,
-  hideSelectedOptions,
-  ...rest
-}: SelectBaseProps<T> & Rest) {
+export const SelectBase = forwardRef<any, SelectBaseProps<any> & any>((props, ref) => {
+  const {
+    allowCustomValue = false,
+    allowCreateWhileLoading = false,
+    'aria-label': ariaLabel,
+    'data-testid': dataTestid,
+    autoFocus = false,
+    backspaceRemovesValue = true,
+    blurInputOnSelect,
+    cacheOptions,
+    className,
+    closeMenuOnSelect = true,
+    components,
+    createOptionPosition = 'last',
+    defaultOptions,
+    defaultValue,
+    disabled = false,
+    filterOption,
+    formatCreateLabel,
+    getOptionLabel,
+    getOptionValue,
+    inputValue,
+    invalid,
+    isClearable = false,
+    id,
+    isLoading = false,
+    isMulti = false,
+    inputId,
+    isOpen,
+    isOptionDisabled,
+    isSearchable = true,
+    loadOptions,
+    loadingMessage = 'Loading options...',
+    maxMenuHeight = 300,
+    minMenuHeight,
+    maxVisibleValues,
+    menuPlacement = 'auto',
+    menuPosition,
+    menuShouldPortal = true,
+    noOptionsMessage = t('grafana-ui.select.no-options-label', 'No options found'),
+    onBlur,
+    onChange,
+    onCloseMenu,
+    onCreateOption,
+    onInputChange,
+    onKeyDown,
+    onMenuScrollToBottom,
+    onMenuScrollToTop,
+    onOpenMenu,
+    onFocus,
+    toggleAllOptions,
+    openMenuOnFocus = false,
+    options = [],
+    placeholder = t('grafana-ui.select.placeholder', 'Choose'),
+    prefix,
+    renderControl,
+    showAllSelectedWhenOpen = true,
+    tabSelectsValue = true,
+    value,
+    virtualized = false,
+    noMultiValueWrap,
+    width,
+    isValidNewOption,
+    formatOptionLabel,
+    hideSelectedOptions,
+    ...rest
+  } = props;
+
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
 
@@ -161,6 +163,8 @@ export function SelectBase<T, Rest = {}>({
   const [closeToBottom, setCloseToBottom] = useState<boolean>(false);
   const selectStyles = useCustomSelectStyles(theme, width);
   const [hasInputValue, setHasInputValue] = useState<boolean>(!!inputValue);
+
+  useImperativeHandle(ref, () => reactSelectRef.current, []);
 
   // Infer the menu position for asynchronously loaded options. menuPlacement="auto" doesn't work when the menu is
   // automatically opened when the component is created (it happens in SegmentSelect by setting menuIsOpen={true}).
@@ -402,7 +406,7 @@ export function SelectBase<T, Rest = {}>({
       />
     </>
   );
-}
+});
 
 function defaultFormatCreateLabel(input: string) {
   return (

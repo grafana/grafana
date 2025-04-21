@@ -1,3 +1,5 @@
+import { forwardRef } from 'react';
+
 import { SelectableValue } from '@grafana/data';
 
 import { SelectBase } from './SelectBase';
@@ -26,9 +28,9 @@ export interface AsyncSelectProps<T> extends Omit<SelectCommonProps<T>, 'options
 }
 
 /** @deprecated Use Combobox component instead */
-export function AsyncSelect<T, Rest = {}>(props: AsyncSelectProps<T> & Rest) {
-  return <SelectBase {...props} />;
-}
+export const AsyncSelect = forwardRef<HTMLDivElement, AsyncSelectProps<any>>((props, ref) => {
+  return <SelectBase {...props} ref={ref} />;
+}) as <T, Rest = {}>(props: AsyncSelectProps<T> & Rest) => JSX.Element;
 
 /** @deprecated Use Combobox component instead - it's virtualised by default! */
 export function VirtualizedSelect<T, Rest = {}>(props: VirtualizedSelectProps<T> & Rest) {
