@@ -68,7 +68,13 @@ func newMapper() mapper {
 			"keepers":      newResourceTranslation("secret.keepers", "uid", false),
 		},
 		"query.grafana.app": {
-			"query": newDataSourceResourceTranslation("datasources", "uid", false),
+			"query": translation{
+				resource:  "query",
+				attribute: "uid",
+				verbMapping: map[string]string{
+					utils.VerbCreate: "datasources:query",
+				},
+			},
 		},
 	}
 }
@@ -85,20 +91,4 @@ func (m mapper) translation(group, resource string) (translation, bool) {
 	}
 
 	return t, true
-}
-
-// data sources
-func newDataSourceResourceTranslation(resource string, attribute string, folderSupport bool) translation {
-	defaultMapping := func(r string) map[string]string {
-		return map[string]string{
-			utils.VerbCreate: fmt.Sprintf("%s:query", r),
-		}
-	}
-
-	return translation{
-		resource:      resource,
-		attribute:     attribute,
-		verbMapping:   defaultMapping(resource),
-		folderSupport: folderSupport,
-	}
 }
