@@ -176,11 +176,12 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 		Ref:  "",
 	})
 
-	// For versioned
+	// When replaying history, the path to the file may change over time
+	// This happens when the title or folder change
 	if r.history != nil {
 		name := parsed.Meta.GetName()
 		previous := r.history[name]
-		if previous != "" {
+		if previous != "" && previous != fileName {
 			_, _, err = r.resources.RemoveResourceFromFile(ctx, previous, "")
 		}
 		r.history[name] = fileName
