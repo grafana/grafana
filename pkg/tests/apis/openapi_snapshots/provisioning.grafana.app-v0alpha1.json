@@ -1270,6 +1270,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1366,6 +1374,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1461,6 +1477,14 @@
             "description": "optional message sent with any changes",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],

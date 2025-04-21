@@ -26,6 +26,14 @@ type DualReadWriter struct {
 	access  authlib.AccessChecker
 }
 
+type DualWriteOptions struct {
+	Path       string
+	Ref        string
+	Message    string
+	Data       []byte
+	SkipDryRun bool
+}
+
 func NewDualReadWriter(repo repository.ReaderWriter, parser Parser, folders *FolderManager, access authlib.AccessChecker) *DualReadWriter {
 	return &DualReadWriter{repo: repo, parser: parser, folders: folders, access: access}
 }
@@ -63,17 +71,17 @@ func (r *DualReadWriter) Read(ctx context.Context, path string, ref string) (*Pa
 	return parsed, nil
 }
 
-func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, message string) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
+func (r *DualReadWriter) Delete(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
+	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
 		return nil, err
 	}
 
 	// TODO: implement this
-	if safepath.IsDir(path) {
+	if safepath.IsDir(opts.Path) {
 		return nil, fmt.Errorf("folder delete not supported")
 	}
 
-	file, err := r.repo.Read(ctx, path, ref)
+	file, err := r.repo.Read(ctx, opts.Path, opts.Ref)
 	if err != nil {
 		return nil, fmt.Errorf("read file: %w", err)
 	}
@@ -90,13 +98,13 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 	}
 
 	parsed.Action = provisioning.ResourceActionDelete
-	err = r.repo.Delete(ctx, path, ref, message)
+	err = r.repo.Delete(ctx, opts.Path, opts.Ref, opts.Message)
 	if err != nil {
 		return nil, fmt.Errorf("delete file from repository: %w", err)
 	}
 
 	// Delete the file in the grafana database
-	if ref == "" {
+	if opts.Ref == "" {
 		ctx, _, err := identity.WithProvisioningIdentity(ctx, parsed.Obj.GetNamespace())
 		if err != nil {
 			return parsed, err
@@ -119,28 +127,28 @@ func (r *DualReadWriter) Delete(ctx context.Context, path string, ref string, me
 
 // CreateFolder creates a new folder in the repository
 // FIXME: fix signature to return ParsedResource
-func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref string, message string) (*provisioning.ResourceWrapper, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
+func (r *DualReadWriter) CreateFolder(ctx context.Context, opts DualWriteOptions) (*provisioning.ResourceWrapper, error) {
+	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
 		return nil, err
 	}
 
-	if !safepath.IsDir(path) {
+	if !safepath.IsDir(opts.Path) {
 		return nil, fmt.Errorf("not a folder path")
 	}
 
-	if err := r.authorizeCreateFolder(ctx, path); err != nil {
+	if err := r.authorizeCreateFolder(ctx, opts.Path); err != nil {
 		return nil, err
 	}
 
 	// Now actually create the folder
-	if err := r.repo.Create(ctx, path, ref, nil, message); err != nil {
+	if err := r.repo.Create(ctx, opts.Path, opts.Ref, nil, opts.Message); err != nil {
 		return nil, fmt.Errorf("failed to create folder: %w", err)
 	}
 
 	cfg := r.repo.Config()
 	wrap := &provisioning.ResourceWrapper{
-		Path: path,
-		Ref:  ref,
+		Path: opts.Path,
+		Ref:  opts.Ref,
 		Repository: provisioning.ResourceRepositoryInfo{
 			Type:      cfg.Spec.Type,
 			Namespace: cfg.Namespace,
@@ -152,8 +160,8 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 		},
 	}
 
-	if ref == "" {
-		folderName, err := r.folders.EnsureFolderPathExist(ctx, path)
+	if opts.Ref == "" {
+		folderName, err := r.folders.EnsureFolderPathExist(ctx, opts.Path)
 		if err != nil {
 			return nil, err
 		}
@@ -171,25 +179,25 @@ func (r *DualReadWriter) CreateFolder(ctx context.Context, path string, ref stri
 }
 
 // CreateResource creates a new resource in the repository
-func (r *DualReadWriter) CreateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
-	return r.createOrUpdate(ctx, true, path, ref, message, data)
+func (r *DualReadWriter) CreateResource(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
+	return r.createOrUpdate(ctx, true, opts)
 }
 
 // UpdateResource updates a resource in the repository
-func (r *DualReadWriter) UpdateResource(ctx context.Context, path string, ref string, message string, data []byte) (*ParsedResource, error) {
-	return r.createOrUpdate(ctx, false, path, ref, message, data)
+func (r *DualReadWriter) UpdateResource(ctx context.Context, opts DualWriteOptions) (*ParsedResource, error) {
+	return r.createOrUpdate(ctx, false, opts)
 }
 
 // Create or updates a resource in the repository
-func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path string, ref string, message string, data []byte) (*ParsedResource, error) {
-	if err := repository.IsWriteAllowed(r.repo.Config(), ref); err != nil {
+func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, opts DualWriteOptions) (*ParsedResource, error) {
+	if err := repository.IsWriteAllowed(r.repo.Config(), opts.Ref); err != nil {
 		return nil, err
 	}
 
 	info := &repository.FileInfo{
-		Data: data,
-		Path: path,
-		Ref:  ref,
+		Data: opts.Data,
+		Path: opts.Path,
+		Ref:  opts.Ref,
 	}
 
 	parsed, err := r.parser.Parse(ctx, info)
@@ -198,12 +206,14 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 	}
 
 	// Make sure the value is valid
-	if err := parsed.DryRun(ctx); err != nil {
-		logger := logging.FromContext(ctx).With("path", path, "name", parsed.Obj.GetName(), "ref", ref)
-		logger.Warn("failed to dry run resource on create", "error", err)
+	if !opts.SkipDryRun {
+		if err := parsed.DryRun(ctx); err != nil {
+			logger := logging.FromContext(ctx).With("path", opts.Path, "name", parsed.Obj.GetName(), "ref", opts.Ref)
+			logger.Warn("failed to dry run resource on create", "error", err)
 
-		// TODO: return this as a 400 rather than 500
-		return nil, fmt.Errorf("error running dryRun %w", err)
+			// TODO: return this as a 400 rather than 500
+			return nil, fmt.Errorf("error running dryRun %w", err)
+		}
 	}
 
 	if len(parsed.Errors) > 0 {
@@ -220,7 +230,7 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 		return nil, err
 	}
 
-	data, err = parsed.ToSaveBytes()
+	data, err := parsed.ToSaveBytes()
 	if err != nil {
 		return nil, err
 	}
@@ -233,9 +243,9 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 
 	// Create or update
 	if create {
-		err = r.repo.Create(ctx, path, ref, data, message)
+		err = r.repo.Create(ctx, opts.Path, opts.Ref, data, opts.Message)
 	} else {
-		err = r.repo.Update(ctx, path, ref, data, message)
+		err = r.repo.Update(ctx, opts.Path, opts.Ref, data, opts.Message)
 	}
 	if err != nil {
 		return nil, err // raw error is useful
@@ -245,8 +255,8 @@ func (r *DualReadWriter) createOrUpdate(ctx context.Context, create bool, path s
 	// Behaves the same running sync after writing
 	// FIXME: to make sure if behaves in the same way as in sync, we should
 	// we should refactor the code to use the same function.
-	if ref == "" && parsed.Client != nil {
-		if _, err := r.folders.EnsureFolderPathExist(ctx, path); err != nil {
+	if opts.Ref == "" && parsed.Client != nil {
+		if _, err := r.folders.EnsureFolderPathExist(ctx, opts.Path); err != nil {
 			return nil, fmt.Errorf("ensure folder path exists: %w", err)
 		}
 
