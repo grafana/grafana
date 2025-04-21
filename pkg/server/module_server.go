@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -152,7 +153,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return NewFrontendServer(s.cfg, s.promGatherer)
+		return frontend.ProvideFrontendService(s.cfg, s.promGatherer)
 	})
 
 	m.RegisterModule(modules.All, nil)

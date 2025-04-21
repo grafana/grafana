@@ -1,4 +1,4 @@
-package server
+package frontend
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type frontendServer struct {
+type frontendService struct {
 	*services.BasicService
 	cfg          *setting.Cfg
 	httpServ     *http.Server
@@ -22,8 +22,8 @@ type frontendServer struct {
 	promGatherer prometheus.Gatherer
 }
 
-func NewFrontendServer(cfg *setting.Cfg, promGatherer prometheus.Gatherer) (*frontendServer, error) {
-	s := &frontendServer{
+func ProvideFrontendService(cfg *setting.Cfg, promGatherer prometheus.Gatherer) (*frontendService, error) {
+	s := &frontendService{
 		cfg:          cfg,
 		log:          log.New("frontend-server"),
 		promGatherer: promGatherer,
@@ -32,7 +32,7 @@ func NewFrontendServer(cfg *setting.Cfg, promGatherer prometheus.Gatherer) (*fro
 	return s, nil
 }
 
-func (s *frontendServer) start(ctx context.Context) error {
+func (s *frontendService) start(ctx context.Context) error {
 	s.httpServ = s.newFrontendServer(ctx)
 	s.errChan = make(chan error)
 	go func() {
@@ -41,7 +41,7 @@ func (s *frontendServer) start(ctx context.Context) error {
 	return nil
 }
 
-func (s *frontendServer) running(ctx context.Context) error {
+func (s *frontendService) running(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		return nil
@@ -50,7 +50,7 @@ func (s *frontendServer) running(ctx context.Context) error {
 	}
 }
 
-func (s *frontendServer) stop(failureReason error) error {
+func (s *frontendService) stop(failureReason error) error {
 	s.log.Info("stopping frontend server", "reason", failureReason)
 	if err := s.httpServ.Shutdown(context.Background()); err != nil {
 		s.log.Error("failed to shutdown frontend server", "error", err)
@@ -59,7 +59,7 @@ func (s *frontendServer) stop(failureReason error) error {
 	return nil
 }
 
-func (s *frontendServer) newFrontendServer(ctx context.Context) *http.Server {
+func (s *frontendService) newFrontendServer(ctx context.Context) *http.Server {
 	s.log.Info("starting frontend server", "addr", ":"+s.cfg.HTTPPort)
 
 	router := http.NewServeMux()
@@ -77,7 +77,7 @@ func (s *frontendServer) newFrontendServer(ctx context.Context) *http.Server {
 	return server
 }
 
-func (s *frontendServer) handleRequest(writer http.ResponseWriter, request *http.Request) {
+func (s *frontendService) handleRequest(writer http.ResponseWriter, request *http.Request) {
 	// This should:
 	// - call http://slug/api/bootdata
 	// - render index.html with the bootdata
