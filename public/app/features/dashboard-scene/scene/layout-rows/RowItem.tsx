@@ -200,7 +200,7 @@ export class RowItem
   }
 
   public onChangeRepeat(repeat: string | undefined) {
-    this.setState({ repeatByVariable: repeat });
+    this.setState({ repeatByVariable: repeat, repeatedRows: repeat ? this.state.repeatedRows : undefined });
   }
 
   public onCollapseToggle() {
