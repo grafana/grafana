@@ -2,6 +2,7 @@ package metadata
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 
@@ -89,7 +90,7 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	k, err := s.read(ctx, namespace.String(), name)
+	k, err := s.read(ctx, s.db.GetSqlxSession(), namespace.String(), name)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +109,11 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	return nil, contracts.ErrKeeperNotFound
 }
 
-func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name string) (*keeperDB, error) {
+type dbQuerier interface {
+	Query(ctx context.Context, query string, args ...any) (*sql.Rows, error)
+}
+
+func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, namespace string, name string) (*keeperDB, error) {
 	req := &readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
@@ -119,7 +124,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace string, name
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
-	res, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	res, err := dbQuerier.Query(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
@@ -153,7 +158,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	var oldKeeper *secretv0alpha1.Keeper
+	var oldKeeperRow *keeperDB
 	err := s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
 		// Validate before updating that any `secureValues` referenced exist and do not reference other third-party keepers.\
 
@@ -162,7 +167,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		}
 
 		var err error
-		oldKeeper, err = s.Read(ctx, xkube.Namespace(newKeeper.Namespace), newKeeper.Name)
+		oldKeeperRow, err = s.read(ctx, sess, newKeeper.Namespace, newKeeper.Name)
 		if err != nil {
 			if errors.Is(err, contracts.ErrKeeperNotFound) {
 				return err
@@ -174,11 +179,6 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
-	}
-
-	oldKeeperRow, err := toKeeperRow(oldKeeper)
-	if err != nil {
-		return nil, fmt.Errorf("failed to map to row: %w", err)
 	}
 
 	newRow, err := toKeeperUpdateRow(oldKeeperRow, newKeeper, authInfo.GetUID())
@@ -440,7 +440,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := s.read(ctx, namespace, name)
+	kp, err := s.read(ctx, s.db.GetSqlxSession(), namespace, name)
 	if err != nil {
 		return "", nil, err
 	}
