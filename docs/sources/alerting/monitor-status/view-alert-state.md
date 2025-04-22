@@ -61,7 +61,7 @@ refs:
 
 An alert rule and its corresponding alert instances can transition through distinct states during the alert rule evaluation.
 
-{{< figure src="/media/docs/alerting/alert-instance-states-v3.png" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
+{{< figure src="/media/docs/alerting/alert-state-diagram2.png" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
 There are three key components that helps us understand the behavior of our alerts:
 
