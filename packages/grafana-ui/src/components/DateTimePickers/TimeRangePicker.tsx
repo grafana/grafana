@@ -243,7 +243,7 @@ const ZoomOutTooltip = () => (
   </>
 );
 
-const isLocaleFormatEnable = config.featureToggles.localeFormatPreference;
+const isLocaleFormatEnabled = config.featureToggles.localeFormatPreference;
 const localeOptions: Intl.DateTimeFormatOptions = {
   day: '2-digit',
   month: '2-digit',
