@@ -163,7 +163,7 @@ function handleScrollToEvent(event: ScrollToLogsEvent, scrollElement: HTMLDivEle
 
 const styles = {
   scrollableLogRows: css({
-    overflowY: 'scroll',
+    overflowY: 'auto',
     width: '100%',
     maxHeight: '75vh',
   }),
