@@ -73,9 +73,6 @@ type FetchPermissionsParams struct {
 	RestrictedActions []string
 	// AllowedActions will be added to the identity permissions
 	AllowedActions []string
-	// Note: Kept for backwards compatibility, use AllowedActions instead
-	// Roles permissions will be directly added to the identity permissions
-	Roles []string
 }
 
 type (

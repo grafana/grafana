@@ -62,9 +62,6 @@ func TestService_Authenticate(t *testing.T) {
 									"datasources:read",
 									"datasources:query",
 								},
-								Roles: []string{
-									"fixed:datasources:reader",
-								},
 							},
 						},
 					},
@@ -78,9 +75,6 @@ func TestService_Authenticate(t *testing.T) {
 						RestrictedActions: []string{
 							"datasources:read",
 							"datasources:query",
-						},
-						Roles: []string{
-							"fixed:datasources:reader",
 						},
 					},
 				},
@@ -103,9 +97,6 @@ func TestService_Authenticate(t *testing.T) {
 								AllowedActions: []string{
 									"datasources:write",
 								},
-								Roles: []string{
-									"fixed:datasources:writer",
-								},
 							},
 						},
 					},
@@ -122,9 +113,6 @@ func TestService_Authenticate(t *testing.T) {
 						},
 						AllowedActions: []string{
 							"datasources:write",
-						},
-						Roles: []string{
-							"fixed:datasources:writer",
 						},
 					},
 				},
@@ -237,10 +225,6 @@ func TestService_Authenticate(t *testing.T) {
 					case "identity.ClientParams.FetchPermissionsParams.AllowedActions":
 						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
 							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.AllowedActions, attr.Value.AsStringSlice())
-						}
-					case "identity.ClientParams.FetchPermissionsParams.Roles":
-						if len(tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles) > 0 {
-							assert.Equal(t, tt.expectedIdentity.ClientParams.FetchPermissionsParams.Roles, attr.Value.AsStringSlice())
 						}
 					}
 				}

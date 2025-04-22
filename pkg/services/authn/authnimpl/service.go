@@ -167,10 +167,6 @@ func (s *Service) authenticate(ctx context.Context, c authn.Client, r *authn.Req
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.RestrictedActions", identity.ClientParams.FetchPermissionsParams.RestrictedActions))
 	}
 
-	if len(identity.ClientParams.FetchPermissionsParams.Roles) > 0 {
-		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.Roles", identity.ClientParams.FetchPermissionsParams.Roles))
-	}
-
 	if len(identity.ClientParams.FetchPermissionsParams.AllowedActions) > 0 {
 		span.SetAttributes(attribute.StringSlice("identity.ClientParams.FetchPermissionsParams.AllowedActions", identity.ClientParams.FetchPermissionsParams.AllowedActions))
 	}
