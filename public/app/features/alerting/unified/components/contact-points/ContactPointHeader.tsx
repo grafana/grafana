@@ -216,7 +216,14 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
         <Spacer />
         <LinkButton
           tooltipPlacement="top"
-          tooltip={provisioned ? 'Provisioned contact points cannot be edited in the UI' : undefined}
+          tooltip={
+            provisioned
+              ? t(
+                  'alerting.contact-point-header.tooltip-provisioned-contact-points',
+                  'Provisioned contact points cannot be edited in the UI'
+                )
+              : undefined
+          }
           variant="secondary"
           size="sm"
           icon={canEdit ? 'pen' : 'eye'}
@@ -224,7 +231,9 @@ export const ContactPointHeader = ({ contactPoint, onDelete }: ContactPointHeade
           data-testid={`${canEdit ? 'edit' : 'view'}-action`}
           href={`/alerting/notifications/receivers/${encodeURIComponent(urlId)}/edit`}
         >
-          {canEdit ? 'Edit' : 'View'}
+          {canEdit
+            ? t('alerting.contact-point-header.button-edit', 'Edit')
+            : t('alerting.contact-point-header.button-view', 'View')}
         </LinkButton>
         {menuActions.length > 0 && (
           <Dropdown overlay={<Menu>{menuActions}</Menu>}>

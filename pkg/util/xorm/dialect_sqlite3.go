@@ -11,8 +11,8 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	sqlite "github.com/mattn/go-sqlite3"
-	"xorm.io/core"
 )
 
 var (

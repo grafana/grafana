@@ -634,6 +634,27 @@ describe('buildVisualQueryFromString', () => {
     );
   });
 
+  it('parses metrics query with vector aggregation with variable', () => {
+    expect(
+      buildVisualQueryFromString('topk($variable, sum by(unit) (count_over_time({app="frontend"}[$__auto])))')
+    ).toEqual(
+      noErrors({
+        labels: [
+          {
+            op: '=',
+            value: 'frontend',
+            label: 'app',
+          },
+        ],
+        operations: [
+          { id: LokiOperationId.CountOverTime, params: ['$__auto'] },
+          { id: LokiOperationId.SumBy, params: ['unit'] },
+          { id: LokiOperationId.TopK, params: ['$variable'] },
+        ],
+      })
+    );
+  });
+
   it('parses template variables in strings', () => {
     expect(buildVisualQueryFromString('{instance="$label_variable"}')).toEqual(
       noErrors({
