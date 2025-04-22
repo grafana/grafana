@@ -309,6 +309,8 @@ func (r *githubClient) Commits(ctx context.Context, owner, repository, path, bra
 
 	ret := make([]Commit, 0, len(commits))
 	for _, c := range commits {
+		// FIXME: This code is a mess. I am pretty sure that we have issue in
+		// some situations
 		var createdAt time.Time
 		var author *CommitAuthor
 		if c.GetCommit().GetAuthor() != nil {
