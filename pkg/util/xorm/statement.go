@@ -274,10 +274,6 @@ func (statement *Statement) buildUpdates(bean any,
 			continue
 		}
 
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		if statement.incrColumns.isColExist(col.Name) {
 			continue
 		} else if statement.decrColumns.isColExist(col.Name) {
@@ -820,10 +816,6 @@ func (statement *Statement) genColumnStr() string {
 		}
 
 		if len(statement.columnMap) > 0 && !statement.columnMap.contain(col.Name) {
-			continue
-		}
-
-		if col.MapType == core.ONLYTODB {
 			continue
 		}
 
