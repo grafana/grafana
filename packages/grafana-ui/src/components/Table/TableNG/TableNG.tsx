@@ -55,6 +55,7 @@ import {
   getTextAlign,
   handleSort,
   MapFrameToGridOptions,
+  processNestedTableRows,
   shouldTextOverflow,
 } from './utils';
 
@@ -298,50 +299,23 @@ export function TableNG(props: TableNGProps) {
 
     // For nested tables, only filter parent rows and keep their children
     if (isNestedTable) {
-      // Array for parentRows: enables sorting and maintains order for iteration
-      // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
-      const parentRows: TableRow[] = [];
-      const childRows: Map<number, TableRow> = new Map();
-
-      // Separate parent and child rows
-      rows.forEach((row) => {
-        if (Number(row.__depth) === 0) {
-          parentRows.push(row);
-        } else {
-          // Store child rows by parent index
-          // Child rows have same __index as their parent
-          childRows.set(Number(row.__index), row);
-        }
-      });
-
-      // Filter only parent rows
-      const filteredParents = parentRows.filter((row) => {
-        for (const [key, value] of filterValues) {
-          const displayedValue = getDisplayedValue(row, key);
-          if (!value.filteredSet.has(displayedValue)) {
-            return false;
+      return processNestedTableRows(rows, (parents) =>
+        parents.filter((row) => {
+          for (const [key, value] of filterValues) {
+            const displayedValue = getDisplayedValue(row, key);
+            if (!value.filteredSet.has(displayedValue)) {
+              return false;
+            }
+            // collect rows for crossFilter
+            if (!crossFilterRows.current[key]) {
+              crossFilterRows.current[key] = [row];
+            } else {
+              crossFilterRows.current[key].push(row);
+            }
           }
-          // collect rows for crossFilter
-          if (!crossFilterRows.current[key]) {
-            crossFilterRows.current[key] = [row];
-          } else {
-            crossFilterRows.current[key].push(row);
-          }
-        }
-        return true;
-      });
-
-      // Reconstruct array with filtered parents and their children
-      const result: TableRow[] = [];
-      filteredParents.forEach((row) => {
-        result.push(row);
-        const childRow = childRows.get(Number(row.__index));
-        if (childRow) {
-          result.push(childRow);
-        }
-      });
-
-      return result;
+          return true;
+        })
+      );
     }
 
     // Regular filtering for non-nested tables
@@ -386,39 +360,7 @@ export function TableNG(props: TableNGProps) {
 
     // Handle nested tables
     if (isNestedTable) {
-      // Array for parentRows: enables sorting and maintains order for iteration
-      // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
-      const parentRows: TableRow[] = [];
-      const childRows: Map<number, TableRow> = new Map();
-
-      // Separate parent and child rows
-      filteredRows.forEach((row) => {
-        if (Number(row.__depth) === 0) {
-          parentRows.push(row);
-        } else {
-          // Store child rows by parent index
-          // Child rows have same __index as their parent
-          childRows.set(Number(row.__index), row);
-        }
-      });
-
-      // Sort only parent rows
-      const sortedParents = [...parentRows].sort(compareRows);
-
-      // Reconstruct array with sorted parents and their children
-      const result: TableRow[] = [];
-      sortedParents.forEach((row) => {
-        // Add parent row
-        result.push(row);
-
-        // Add child row if exists
-        const childRow = childRows.get(Number(row.__index));
-        if (childRow) {
-          result.push(childRow);
-        }
-      });
-
-      return result;
+      return processNestedTableRows(filteredRows, (parents) => [...parents].sort(compareRows));
     }
 
     // Regular sort for tables without nesting
