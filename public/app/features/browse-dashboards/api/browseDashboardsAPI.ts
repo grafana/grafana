@@ -293,6 +293,7 @@ export const browseDashboardsAPI = createApi({
 
           // handling success alerts for these feature toggles
           // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
+          // eslint-disable-next-line no-constant-condition
           if (false) {
             // TODO: change this to a feature flag when dashboard restore is reworked
             const name = response?.title;
