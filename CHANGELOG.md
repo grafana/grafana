@@ -6,6 +6,7 @@
 
 - **Security:** Fix CVE-2025-3454
 - **Security:** Fix CVE-2025-2703
+- **Security:** Fix CVE-2025-3260
 
 <!-- 11.6.0+security-01 END -->
 <!-- 11.4.3+security-01 START -->
