@@ -420,6 +420,9 @@ func (wrapper *secureValueMetadataStorageWrapper) SetExternalID(ctx context.Cont
 	}
 	return nil
 }
+func (wrapper *secureValueMetadataStorageWrapper) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
+	return wrapper.impl.ReadForDecrypt(ctx, namespace, name)
+}
 
 type keeperWrapper struct {
 	rng    *rand.Rand
