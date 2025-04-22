@@ -1,7 +1,5 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
-  "{{pageStart}} - {{pageEnd}} of {{numPages}}": "{{pageStart}} - {{pageEnd}} of {{numPages}}",
-  "{{url}} or {{target}} or {{path}}": "{{url}} or {{target}} or {{path}}",
   "access-control": {
     "add-permission": {
       "built-in-aria-label": "Built-in role picker",
@@ -970,7 +968,8 @@
     "expression-result": {
       "aria-label-nextpage": "next-page",
       "aria-label-previouspage": "previous-page",
-      "no-data": "No data"
+      "no-data": "No data",
+      "page-counter": "{{pageStart}} - {{pageEnd}} of {{numPages}}"
     },
     "federated-rule-warning": {
       "experimental": "Federated rule groups are currently an experimental feature.",
@@ -5001,7 +5000,8 @@
       "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
     },
     "trace-page-header": {
-      "text-partial-trace": "Partial trace"
+      "text-partial-trace": "Partial trace",
+      "tooltip-url": "{{url}} or {{target}} or {{path}}"
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Clear filters button",
@@ -5079,6 +5079,7 @@
     },
     "math": {
       "available-math-functions": "Available math functions",
+      "run-math-operations": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<10></10>Example: <12>{{example}}</12>",
       "tooltip-footer": "See our additional documentation on <2>Math expressions</2>.",
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
@@ -7895,13 +7896,6 @@
     "reload-button": "Reload",
     "title": "Unable to find application file"
   },
-  "Run math operations on one or more queries": {
-    " You reference the query by {{refExample}} ie": {
-      " {{ref1}}, {{ref2}}, {{ref3}}etc": {
-        "<10></10>Example: <12>{{example}}</12>": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<10></10>Example: <12>{{example}}</12>"
-      }
-    }
-  },
   "sandbox": {
     "test-stuff-page": {
       "application-notifications-toasts-testing": "Application notifications (toasts) testing",
@@ -8889,6 +8883,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
+      "auto-revoked": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account.",
       "resume-message": "<0>To resume your session, sign in again.</0>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"
@@ -9019,6 +9014,5 @@
     "data-hover-view": {
       "link": "Link"
     }
-  },
-  "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account."
+  }
 }
