@@ -83,6 +83,7 @@ type persistentStore struct {
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
+
 	// expiry is the time after which a job is considered abandoned.
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
@@ -93,7 +94,7 @@ type persistentStore struct {
 	notifications chan struct{}
 }
 
-func NewStore(
+func NewJobStore(
 	jobStore jobStorage,
 	expiry time.Duration,
 ) (*persistentStore, error) {
@@ -204,6 +205,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			}
 
 			// Rollback the claim.
+			refetchedJob = refetchedJob.DeepCopy()
 			delete(refetchedJob.Labels, LabelJobClaim)
 			refetchedJob.Status.State = provisioning.JobStatePending
 
