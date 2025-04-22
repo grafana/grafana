@@ -17,7 +17,7 @@ import {
 import { selectors } from '@grafana/e2e-selectors';
 
 import { config } from '../../../../../public/app/core/config';
-import {formatDate, formatRange} from '../../../../../public/app/core/internationalization/dates';
+import { formatDate, formatRange } from '../../../../../public/app/core/internationalization/dates';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
@@ -244,7 +244,7 @@ const ZoomOutTooltip = () => (
 );
 
 const isLocaleFormatEnable = config.featureToggles.localeFormatPreference;
-const localeOptions: Intl.DateTimeFormatOptions = { 
+const localeOptions: Intl.DateTimeFormatOptions = {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
@@ -257,10 +257,9 @@ export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRang
 
   const from = dateTimeFormat(timeRange.from, { timeZone });
   const to = dateTimeFormat(timeRange.to, { timeZone });
-  
-  const currentFrom = isLocaleFormatEnable ? formatDate(from,localeOptions) : from;
-  const currentTo = isLocaleFormatEnable ? formatDate(to, localeOptions) : to;
 
+  const currentFrom = isLocaleFormatEnable ? formatDate(from, localeOptions) : from;
+  const currentTo = isLocaleFormatEnable ? formatDate(to, localeOptions) : to;
 
   return (
     <>

@@ -42,8 +42,7 @@ export const formatDuration = deepMemoize(
   }
 );
 
-
-export const formatRange = ( range: string, options: Intl.DurationFormatOptions = {}): string => {
+export const formatRange = (range: string, options: Intl.DurationFormatOptions = {}): string => {
   // Split the date using regex to get the "to" word, even translated, to get the "from" and "to" values
   const regex = /([a-zA-Z]+)/g;
   const timeRangeSplit = range.split(regex);
@@ -57,4 +56,4 @@ export const formatRange = ( range: string, options: Intl.DurationFormatOptions 
     range = `${fromLocalised} ${separator} ${toLocalised}`;
   }
   return range;
-}
+};
