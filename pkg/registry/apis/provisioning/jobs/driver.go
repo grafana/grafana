@@ -56,7 +56,7 @@ type jobDriver struct {
 	cleanupInterval time.Duration
 
 	// JobInterval is the time between job ticks. This should be relatively low.
-	jobCheckInterval time.Duration
+	jobInterval time.Duration
 
 	// Store is the job storage backend.
 	store Store
@@ -83,13 +83,13 @@ func NewJobDriver(
 			cleanupInterval.String(), jobTimeout.String())
 	}
 	return &jobDriver{
-		jobTimeout:       jobTimeout,
-		cleanupInterval:  cleanupInterval,
-		jobCheckInterval: jobInterval,
-		store:            store,
-		repoGetter:       repoGetter,
-		historicJobs:     historicJobs,
-		workers:          workers,
+		jobTimeout:      jobTimeout,
+		cleanupInterval: cleanupInterval,
+		jobInterval:     jobInterval,
+		store:           store,
+		repoGetter:      repoGetter,
+		historicJobs:    historicJobs,
+		workers:         workers,
 	}, nil
 }
 
@@ -100,7 +100,7 @@ func (d *jobDriver) Run(ctx context.Context) {
 	cleanupTicker := time.NewTicker(d.cleanupInterval)
 	defer cleanupTicker.Stop()
 
-	jobTicker := time.NewTicker(d.jobCheckInterval)
+	jobTicker := time.NewTicker(d.jobInterval)
 	defer jobTicker.Stop()
 
 	logger := logging.FromContext(ctx).With("logger", "job-driver")
@@ -133,13 +133,26 @@ func (d *jobDriver) Run(ctx context.Context) {
 	}
 }
 
+// The timing logic here is a bit odd
+// A new thread will be started:
+//   - anytime a new job is added
+//   - periodically jobInterval (eg 30s)
+//
+// Each thread (drive) runs until there are no jobs or has a system error
 func (d *jobDriver) drive(ctx context.Context) {
+	start := time.Now()
 	for {
 		err := d.claimAndProcessOneJob(ctx)
 		if err != nil {
 			if !errors.Is(err, ErrNoJobs) {
 				logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
 			}
+			return
+		}
+
+		// A new thread will start at this interval,
+		// so lets avoid having too many threads running
+		if time.Since(start) > (d.jobInterval * 2) {
 			return
 		}
 	}
