@@ -34,7 +34,9 @@ import {
   getString,
   makeBinOp,
   makeError,
+  replaceBuiltInVariable,
   replaceVariables,
+  returnBuiltInVariable,
 } from './parsingUtils';
 import { QueryBuilderLabelFilter, QueryBuilderOperation } from './shared/types';
 import { PromVisualQuery, PromVisualQueryBinary } from './types';
@@ -42,12 +44,11 @@ import { PromVisualQuery, PromVisualQueryBinary } from './types';
 /**
  * Parses a PromQL query into a visual query model.
  *
- * It traverses the tree and uses sort of state machine to update the query model. The query model is modified
- * during the traversal and sent to each handler as context.
- *
- * @param expr
+ * It traverses the tree and uses sort of state machine to update the query model.
+ * The query model is modified during the traversal and sent to each handler as context.
  */
 export function buildVisualQueryFromString(expr: string): Context {
+  expr = replaceBuiltInVariable(expr);
   const replacedExpr = replaceVariables(expr);
   const tree = parser.parse(replacedExpr);
   const node = tree.topNode;
@@ -80,11 +81,6 @@ export function buildVisualQueryFromString(expr: string): Context {
     context.errors = [];
   }
 
-  // We don't want parsing errors related to Grafana global variables
-  if (isValidPromQLMinusGrafanaGlobalVariables(expr)) {
-    context.errors = [];
-  }
-
   return context;
 }
 
@@ -98,36 +94,6 @@ interface ParsingError {
 interface Context {
   query: PromVisualQuery;
   errors: ParsingError[];
-}
-
-// TODO find a better approach for grafana global variables
-function isValidPromQLMinusGrafanaGlobalVariables(expr: string) {
-  const context: Context = {
-    query: {
-      metric: '',
-      labels: [],
-      operations: [],
-    },
-    errors: [],
-  };
-
-  expr = expr.replace(/\$__interval/g, '1s');
-  expr = expr.replace(/\$__interval_ms/g, '1000');
-  expr = expr.replace(/\$__rate_interval/g, '1s');
-  expr = expr.replace(/\$__range_ms/g, '1000');
-  expr = expr.replace(/\$__range_s/g, '1');
-  expr = expr.replace(/\$__range/g, '1s');
-
-  const tree = parser.parse(expr);
-  const node = tree.topNode;
-
-  try {
-    handleExpression(expr, node, context);
-  } catch (err) {
-    return false;
-  }
-
-  return context.errors.length === 0;
 }
 
 /**
@@ -277,7 +243,9 @@ function handleFunction(expr: string, node: SyntaxNode, context: Context) {
     let match = getString(expr, node).match(/\[(.+)\]/);
     if (match?.[1]) {
       interval = match[1];
-      params.push(match[1]);
+      // We were replaced the builtin variables to prevent errors
+      // Here we return those back
+      params.push(returnBuiltInVariable(match[1]));
     }
   }
 
