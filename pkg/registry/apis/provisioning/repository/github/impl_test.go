@@ -1897,6 +1897,299 @@ func TestGetBranch(t *testing.T) {
 	}
 }
 
+func TestGithubClient_CreateBranch(t *testing.T) {
+	tests := []struct {
+		name         string
+		mockHandler  *http.Client
+		owner        string
+		repository   string
+		sourceBranch string
+		branchName   string
+		wantErr      error
+	}{
+		{
+			name: "successful branch creation",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// First call checks if branch exists (should return 404)
+						if strings.Contains(r.URL.Path, "/new-branch") {
+							w.WriteHeader(http.StatusNotFound)
+							return
+						}
+
+						// Second call gets the source branch
+						if strings.Contains(r.URL.Path, "/main") {
+							branch := &github.Branch{
+								Name: github.Ptr("main"),
+								Commit: &github.RepositoryCommit{
+									SHA: github.Ptr("abc123"),
+								},
+							}
+							w.WriteHeader(http.StatusOK)
+							require.NoError(t, json.NewEncoder(w).Encode(branch))
+						}
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposGitRefsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify the request body contains the correct reference
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+						ref := struct {
+							Ref string `json:"ref"`
+							SHA string `json:"sha"`
+						}{}
+						require.NoError(t, json.Unmarshal(body, &ref))
+						assert.Equal(t, "refs/heads/new-branch", ref.Ref)
+						assert.Equal(t, "abc123", ref.SHA)
+
+						w.WriteHeader(http.StatusCreated)
+						require.NoError(t, json.NewEncoder(w).Encode(&github.Reference{
+							Ref: github.Ptr("refs/heads/new-branch"),
+							Object: &github.GitObject{
+								SHA: github.Ptr("abc123"),
+							},
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			sourceBranch: "main",
+			branchName:   "new-branch",
+			wantErr:      nil,
+		},
+		{
+			name: "branch already exists",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Branch exists check returns success
+						branch := &github.Branch{
+							Name: github.Ptr("existing-branch"),
+							Commit: &github.RepositoryCommit{
+								SHA: github.Ptr("abc123"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(branch))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			sourceBranch: "main",
+			branchName:   "existing-branch",
+			wantErr:      ErrResourceAlreadyExists,
+		},
+		{
+			name: "source branch not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// First call checks if branch exists (should return 404)
+						if strings.Contains(r.URL.Path, "/new-branch") {
+							w.WriteHeader(http.StatusNotFound)
+							return
+						}
+
+						// Second call gets the source branch (not found)
+						if strings.Contains(r.URL.Path, "/nonexistent") {
+							w.WriteHeader(http.StatusNotFound)
+							require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+								Response: &http.Response{
+									StatusCode: http.StatusNotFound,
+								},
+								Message: "Branch not found",
+							}))
+						}
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			sourceBranch: "nonexistent",
+			branchName:   "new-branch",
+			wantErr:      errors.New("get base branch"),
+		},
+		{
+			name: "error creating branch ref",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// First call checks if branch exists (should return 404)
+						if strings.Contains(r.URL.Path, "/new-branch") {
+							w.WriteHeader(http.StatusNotFound)
+							return
+						}
+
+						// Second call gets the source branch
+						if strings.Contains(r.URL.Path, "/main") {
+							branch := &github.Branch{
+								Name: github.Ptr("main"),
+								Commit: &github.RepositoryCommit{
+									SHA: github.Ptr("abc123"),
+								},
+							}
+							w.WriteHeader(http.StatusOK)
+							require.NoError(t, json.NewEncoder(w).Encode(branch))
+						}
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposGitRefsByOwnerByRepo,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:        "test-owner",
+			repository:   "test-repo",
+			sourceBranch: "main",
+			branchName:   "new-branch",
+			wantErr:      errors.New("create branch ref"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			err := client.CreateBranch(context.Background(), tt.owner, tt.repository, tt.sourceBranch, tt.branchName)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestGithubClient_BranchExists(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		branchName  string
+		want        bool
+		wantErr     bool
+	}{
+		{
+			name: "branch exists",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						branch := &github.Branch{
+							Name: github.String("existing-branch"),
+							Commit: &github.RepositoryCommit{
+								SHA: github.String("abc123"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(branch))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branchName: "existing-branch",
+			want:       true,
+			wantErr:    false,
+		},
+		{
+			name: "branch does not exist",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Branch not found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branchName: "non-existent-branch",
+			want:       false,
+			wantErr:    false,
+		},
+		{
+			name: "error response",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposBranchesByOwnerByRepoByBranch,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			branchName: "some-branch",
+			want:       false,
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			got, err := client.BranchExists(context.Background(), tt.owner, tt.repository, tt.branchName)
+
+			// Check the error
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// Check the result
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestPaginatedList(t *testing.T) {
 	tests := []struct {
 		name      string
