@@ -174,7 +174,7 @@ export function References(props: ReferenceItemProps) {
                 highContrast
                 interactive={interactive}
                 isOpen={openedItems ? openedItems.has(reference) : false}
-                label={'attributes'}
+                label={t('explore.references.label-attributes', 'attributes')}
                 onToggle={interactive && onItemToggle ? () => onItemToggle(reference) : null}
               />
             </div>
