@@ -191,7 +191,7 @@ No resources found in default namespace.
 
 To create a folder, create a file `folder-generate.yaml`:
 ```yaml
-apiVersion: folder.grafana.app/v1
+apiVersion: folder.grafana.app/v1beta1
 kind: Folder
 metadata:
   generateName: x # anything is ok here... except yes or true -- they become boolean!

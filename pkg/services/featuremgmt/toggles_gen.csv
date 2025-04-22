@@ -36,7 +36,6 @@ enableDatagridEditing,preview,@grafana/dataviz-squad,false,false,true
 extraThemes,experimental,@grafana/grafana-frontend-platform,false,false,true
 lokiPredefinedOperations,experimental,@grafana/observability-logs,false,false,true
 pluginsFrontendSandbox,privatePreview,@grafana/plugins-platform-backend,false,false,false
-frontendSandboxMonitorOnly,privatePreview,@grafana/plugins-platform-backend,false,false,true
 pluginsDetailsRightPanel,GA,@grafana/plugins-platform-backend,false,false,true
 sqlDatasourceDatabaseSelection,preview,@grafana/oss-big-tent,false,false,true
 recordedQueriesMulti,GA,@grafana/observability-metrics,false,false,false
@@ -62,13 +61,11 @@ lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,
 wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false
 alertingInsights,GA,@grafana/alerting-squad,false,false,true
 externalCorePlugins,GA,@grafana/plugins-platform-backend,false,false,false
-pluginsAPIMetrics,experimental,@grafana/plugins-platform-backend,false,false,true
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 formatString,GA,@grafana/dataviz-squad,false,false,true
-kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
 kubernetesClientDashboardsFolders,GA,@grafana/grafana-app-platform-squad,false,false,false
@@ -135,7 +132,7 @@ grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,fa
 queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
-alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
+alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
@@ -148,7 +145,6 @@ failWrongDSUID,GA,@grafana/plugins-platform-backend,false,false,false
 zanzana,experimental,@grafana/identity-access-team,false,false,false
 reloadDashboardsOnParamsChange,experimental,@grafana/dashboards-squad,false,false,false
 enableScopesInMetricsExplore,experimental,@grafana/dashboards-squad,false,false,false
-alertingApiServer,GA,@grafana/alerting-squad,false,true,false
 cloudWatchRoundUpEndTime,GA,@grafana/aws-datasources,false,false,false
 prometheusAzureOverrideAudience,deprecated,@grafana/partner-datasources,false,false,false
 alertingFilterV2,experimental,@grafana/alerting-squad,false,false,false
@@ -234,3 +230,6 @@ localizationForPlugins,experimental,@grafana/plugins-platform-backend,false,fals
 unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
+pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
+alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
+alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
