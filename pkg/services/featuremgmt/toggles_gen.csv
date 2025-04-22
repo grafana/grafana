@@ -66,7 +66,6 @@ panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
 enableNativeHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 disableClassicHTTPHistogram,experimental,@grafana/grafana-backend-services-squad,false,true,false
 formatString,GA,@grafana/dataviz-squad,false,false,true
-kubernetesPlaylists,GA,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesSnapshots,experimental,@grafana/grafana-app-platform-squad,false,true,false
 kubernetesDashboards,experimental,@grafana/grafana-app-platform-squad,false,false,true
 kubernetesClientDashboardsFolders,GA,@grafana/grafana-app-platform-squad,false,false,false
@@ -133,7 +132,7 @@ grafanaManagedRecordingRules,experimental,@grafana/alerting-squad,false,false,fa
 queryLibrary,experimental,@grafana/grafana-frontend-platform,false,false,false
 logsExploreTableDefaultVisualization,experimental,@grafana/observability-logs,false,false,true
 newDashboardSharingComponent,GA,@grafana/sharing-squad,false,false,true
-alertingListViewV2,experimental,@grafana/alerting-squad,false,false,true
+alertingListViewV2,privatePreview,@grafana/alerting-squad,false,false,true
 alertingDisableSendAlertsExternal,experimental,@grafana/alerting-squad,false,false,false
 preserveDashboardStateWhenNavigating,experimental,@grafana/dashboards-squad,false,false,false
 alertingCentralAlertHistory,experimental,@grafana/alerting-squad,false,false,true
@@ -232,3 +231,4 @@ unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
+alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true

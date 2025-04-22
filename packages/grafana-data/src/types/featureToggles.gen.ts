@@ -309,11 +309,6 @@ export interface FeatureToggles {
   */
   formatString?: boolean;
   /**
-  * Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-  * @default true
-  */
-  kubernetesPlaylists?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
@@ -1031,4 +1026,8 @@ export interface FeatureToggles {
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
+  /**
+  * Enables the alerting list view v2 preview toggle
+  */
+  alertingListViewV2PreviewToggle?: boolean;
 }
