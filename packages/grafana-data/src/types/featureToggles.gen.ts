@@ -659,11 +659,6 @@ export interface FeatureToggles {
   */
   enableScopesInMetricsExplore?: boolean;
   /**
-  * Register Alerting APIs with the K8s API server
-  * @default true
-  */
-  alertingApiServer?: boolean;
-  /**
   * Round up end time for metric queries to the next minute to avoid missing data
   * @default true
   */

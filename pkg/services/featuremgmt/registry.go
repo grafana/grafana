@@ -1137,14 +1137,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "alertingApiServer",
-			Description:     "Register Alerting APIs with the K8s API server",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-		},
-		{
 			Name:        "cloudWatchRoundUpEndTime",
 			Description: "Round up end time for metric queries to the next minute to avoid missing data",
 			Stage:       FeatureStageGeneralAvailability,
