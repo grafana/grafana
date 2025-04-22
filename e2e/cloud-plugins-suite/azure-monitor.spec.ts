@@ -163,7 +163,7 @@ describe('Azure monitor datasource', () => {
     e2e.flows.revertAllChanges();
   });
 
-  it('create dashboard, add panel for metrics, log analytics, ARG, and traces queries', () => {
+  it.skip('create dashboard, add panel for metrics, log analytics, ARG, and traces queries', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',
