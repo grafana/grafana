@@ -312,6 +312,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 }
 
 // validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
+// It is used by other methods inside a transaction.
 func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, sess *session.SessionTx, keeper *secretv0alpha1.Keeper) error {
 	usedSecureValues := extractSecureValues(keeper)
 
@@ -320,10 +321,16 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return nil
 	}
 
+	// SQL templates do not support maps.
+	usedSecureValuesList := make([]string, 0, len(usedSecureValues))
+	for sv := range usedSecureValues {
+		usedSecureValuesList = append(usedSecureValuesList, sv)
+	}
+
 	reqSecValue := listByNameSecureValue{
 		SQLTemplate:      sqltemplate.New(s.dialect),
 		Namespace:        keeper.Namespace,
-		UsedSecureValues: usedSecureValues,
+		UsedSecureValues: usedSecureValuesList,
 	}
 
 	qSecValue, err := sqltemplate.Execute(sqlSecureValueListByName, reqSecValue)
@@ -361,7 +368,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		// We are guaranteed that the returned `secureValueRows` are a subset of `usedSecureValues`,
 		// so we don't need to check the other way around.
 		missing := make(map[string]struct{}, len(usedSecureValues))
-		for _, sv := range usedSecureValues {
+		for sv := range usedSecureValues {
 			missing[sv] = struct{}{}
 		}
 
@@ -404,7 +411,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	}()
 
 	thirdPartyKeepers := make([]*keeperDB, 0)
-	for rows.Next() {
+	for keepersRows.Next() {
 		row := keeperDB{}
 		err = keepersRows.Scan(&row.Name)
 		if err != nil {
