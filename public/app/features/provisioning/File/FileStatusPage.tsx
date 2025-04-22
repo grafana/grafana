@@ -161,7 +161,9 @@ function ResourceView({ wrap, repo, repoRef, tab }: Props) {
                 });
               }}
             >
-              {replaceFileStatus.isLoading ? 'Saving' : 'Save'}
+              {replaceFileStatus.isLoading
+                ? t('provisioning.file-status-page.saving', 'Saving')
+                : t('provisioning.file-status-page.save', 'Save')}
             </Button>
             <DeleteButton
               size="md"

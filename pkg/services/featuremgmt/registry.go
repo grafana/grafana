@@ -1774,6 +1774,13 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaAlertingSquad,
 		},
+		{
+			Name:        "alertRuleUseFiredAtForStartsAt",
+			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
+		},
 	}
 )
 
