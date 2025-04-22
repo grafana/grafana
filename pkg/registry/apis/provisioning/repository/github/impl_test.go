@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/google/go-github/v70/github"
@@ -221,13 +222,13 @@ func TestGithubClient_GetContents(t *testing.T) {
 					mockhub.GetReposContentsByOwnerByRepoByPath,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						fileContent := &github.RepositoryContent{
-							Type:     github.String("file"),
-							Name:     github.String("test.txt"),
-							Path:     github.String("test.txt"),
-							Content:  github.String("dGVzdCBjb250ZW50"), // base64 encoded "test content"
-							Encoding: github.String("base64"),
-							Size:     github.Int(12),
-							SHA:      github.String("abc123"),
+							Type:     github.Ptr("file"),
+							Name:     github.Ptr("test.txt"),
+							Path:     github.Ptr("test.txt"),
+							Content:  github.Ptr("dGVzdCBjb250ZW50"), // base64 encoded "test content"
+							Encoding: github.Ptr("base64"),
+							Size:     github.Ptr(12),
+							SHA:      github.Ptr("abc123"),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(fileContent))
@@ -250,16 +251,16 @@ func TestGithubClient_GetContents(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						dirContents := []*github.RepositoryContent{
 							{
-								Type: github.String("file"),
-								Name: github.String("file1.txt"),
-								Path: github.String("dir/file1.txt"),
-								Size: github.Int(100),
-								SHA:  github.String("abc123"),
+								Type: github.Ptr("file"),
+								Name: github.Ptr("file1.txt"),
+								Path: github.Ptr("dir/file1.txt"),
+								Size: github.Ptr(100),
+								SHA:  github.Ptr("abc123"),
 							},
 							{
-								Type: github.String("dir"),
-								Name: github.String("subdir"),
-								Path: github.String("dir/subdir"),
+								Type: github.Ptr("dir"),
+								Name: github.Ptr("subdir"),
+								Path: github.Ptr("dir/subdir"),
 							},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -320,13 +321,13 @@ func TestGithubClient_GetContents(t *testing.T) {
 					mockhub.GetReposContentsByOwnerByRepoByPath,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						fileContent := &github.RepositoryContent{
-							Type:     github.String("file"),
-							Name:     github.String("large.txt"),
-							Path:     github.String("large.txt"),
-							Content:  github.String(""),
-							Encoding: github.String("base64"),
-							Size:     github.Int(maxFileSize + 1), // Exceeds max file size
-							SHA:      github.String("abc123"),
+							Type:     github.Ptr("file"),
+							Name:     github.Ptr("large.txt"),
+							Path:     github.Ptr("large.txt"),
+							Content:  github.Ptr(""),
+							Encoding: github.Ptr("base64"),
+							Size:     github.Ptr(maxFileSize + 1), // Exceeds max file size
+							SHA:      github.Ptr("abc123"),
 						}
 						w.WriteHeader(http.StatusOK)
 						require.NoError(t, json.NewEncoder(w).Encode(fileContent))
@@ -445,6 +446,275 @@ func TestGithubClient_GetContents(t *testing.T) {
 				assert.Nil(t, fileContent)
 				assert.NotNil(t, dirContents)
 				assert.Greater(t, len(dirContents), 0)
+			}
+		})
+	}
+}
+
+func TestGithubClient_GetTree(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		basePath    string
+		ref         string
+		recursive   bool
+		wantItems   int
+		wantTrunc   bool
+		wantErr     error
+	}{
+		{
+			name: "get tree successfully",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						tree := &github.Tree{
+							SHA: github.Ptr("abc123"),
+							Entries: []*github.TreeEntry{
+								{
+									Path: github.Ptr("file1.txt"),
+									Mode: github.Ptr("100644"),
+									Type: github.Ptr("blob"),
+									Size: github.Ptr(12),
+									SHA:  github.Ptr("file1sha"),
+								},
+								{
+									Path: github.Ptr("file2.txt"),
+									Mode: github.Ptr("100644"),
+									Type: github.Ptr("blob"),
+									Size: github.Ptr(14),
+									SHA:  github.Ptr("file2sha"),
+								},
+								{
+									Path: github.Ptr("dir"),
+									Mode: github.Ptr("040000"),
+									Type: github.Ptr("tree"),
+									SHA:  github.Ptr("dirsha"),
+								},
+							},
+							Truncated: github.Ptr(false),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(tree))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  3,
+			wantTrunc:  false,
+			wantErr:    nil,
+		},
+		{
+			name: "get tree with subpath",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// First request for the root tree
+						tree := &github.Tree{
+							SHA: github.Ptr("rootsha"),
+							Entries: []*github.TreeEntry{
+								{
+									Path: github.Ptr("subdir"),
+									Mode: github.Ptr("040000"),
+									Type: github.Ptr("tree"),
+									SHA:  github.Ptr("subdirsha"),
+								},
+							},
+							Truncated: github.Ptr(false),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(tree))
+					}),
+				),
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Second request for the subdir tree
+						if strings.Contains(r.URL.Path, "subdirsha") {
+							tree := &github.Tree{
+								SHA: github.Ptr("subdirsha"),
+								Entries: []*github.TreeEntry{
+									{
+										Path: github.Ptr("file3.txt"),
+										Mode: github.Ptr("100644"),
+										Type: github.Ptr("blob"),
+										Size: github.Ptr(16),
+										SHA:  github.Ptr("file3sha"),
+									},
+								},
+								Truncated: github.Ptr(false),
+							}
+							w.WriteHeader(http.StatusOK)
+							require.NoError(t, json.NewEncoder(w).Encode(tree))
+						}
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "subdir",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  1,
+			wantTrunc:  false,
+			wantErr:    nil,
+		},
+		{
+			name: "tree is truncated with recursive mode",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						tree := &github.Tree{
+							SHA: github.Ptr("abc123"),
+							Entries: []*github.TreeEntry{
+								{
+									Path: github.Ptr("file1.txt"),
+									Mode: github.Ptr("100644"),
+									Type: github.Ptr("blob"),
+									Size: github.Ptr(12),
+									SHA:  github.Ptr("file1sha"),
+								},
+							},
+							Truncated: github.Ptr(true),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(tree))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  true,
+			wantItems:  0,
+			wantTrunc:  true,
+			wantErr:    fmt.Errorf("tree is too large to fetch recursively (more than 10000 items)"),
+		},
+		{
+			name: "repository not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "non-existent-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    ErrResourceNotFound,
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    ErrServiceUnavailable,
+		},
+		{
+			name: "too many items in tree",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// Create a tree with more than maxTreeItems entries
+						entries := make([]*github.TreeEntry, maxTreeItems+1)
+						for i := 0; i < maxTreeItems+1; i++ {
+							entries[i] = &github.TreeEntry{
+								Path: github.Ptr(fmt.Sprintf("file%d.txt", i)),
+								Mode: github.Ptr("100644"),
+								Type: github.Ptr("blob"),
+								Size: github.Ptr(12),
+								SHA:  github.Ptr(fmt.Sprintf("sha%d", i)),
+							}
+						}
+						tree := &github.Tree{
+							SHA:       github.Ptr("abc123"),
+							Entries:   entries,
+							Truncated: github.Ptr(false),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(tree))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    fmt.Errorf("tree contains too many items (more than 10000)"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			contents, truncated, err := client.GetTree(context.Background(), tt.owner, tt.repository, tt.basePath, tt.ref, tt.recursive)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.Equal(t, tt.wantErr.Error(), err.Error())
+				assert.Nil(t, contents)
+				return
+			}
+			assert.NoError(t, err)
+
+			// Check truncated flag
+			assert.Equal(t, tt.wantTrunc, truncated)
+
+			// Check the result
+			if tt.wantItems > 0 {
+				assert.NotNil(t, contents)
+				assert.Equal(t, tt.wantItems, len(contents))
+			} else {
+				assert.Empty(t, contents)
 			}
 		})
 	}
