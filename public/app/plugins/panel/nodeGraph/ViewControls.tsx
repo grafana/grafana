@@ -35,7 +35,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="column" gap={2}>
+      <Stack direction="column" gap={1}>
         <Stack gap={3}>
           <Button
             icon={'plus-circle'}
