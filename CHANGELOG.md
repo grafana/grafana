@@ -1,3 +1,20 @@
+<!-- 10.4.18 START -->
+
+# 10.4.18 (2025-04-22)
+
+### Features and enhancements
+
+- **Chore:** Bump golang-jwt/jwt/v4 and golang-jwt/jwt/v5 to address security issues [#102762](https://github.com/grafana/grafana/pull/102762), [@macabu](https://github.com/macabu)
+- **Go:** Bump to 1.24.2 [#103531](https://github.com/grafana/grafana/pull/103531), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+### Bug fixes
+
+- **Auth:** Fix SAML user IsExternallySynced not being set correctly (#98487) [#103177](https://github.com/grafana/grafana/pull/103177), [@volcanonoodle](https://github.com/volcanonoodle)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102981](https://github.com/grafana/grafana/pull/102981), [@kalleep](https://github.com/kalleep)
+- **Security:** Fix CVE-2025-3454
+
+<!-- 10.4.18 END -->
 <!-- 11.6.0+security-01 START -->
 
 # 11.6.0+security-01 (2025-04-22)
