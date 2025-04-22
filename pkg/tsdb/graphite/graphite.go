@@ -218,16 +218,6 @@ func (s *Service) processQuery(logger log.Logger, query backend.DataQuery) (stri
 	}
 	target := fixIntervalFormat(currTarget)
 
-	// This is a somewhat inglorious way to ensure we can associate results with the right query
-	// By using aliasSub, we can get back a resolved series Target name (accounting for other aliases)
-	// And the original refId. Since there are no restrictions on refId, we need to format it to make it
-	// easy to find in the response
-	// formattedRefId := strings.ReplaceAll(query.RefID, " ", "_")
-	// origRefIds[formattedRefId] = query.RefID
-	// This will set the alias to `<resolvedSeriesName> <formattedRefId>`
-	// e.g. aliasSub(alias(myquery, "foo"), "(^.*$)", "\1 A") will return "foo A"
-	// target = fmt.Sprintf("aliasSub(%s,\"(^.*$)\",\"\\1 %s\")", target, formattedRefId)
-
 	return target, nil, nil
 }
 
