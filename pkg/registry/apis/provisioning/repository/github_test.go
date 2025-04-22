@@ -19,7 +19,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
@@ -331,7 +330,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 				Code:    http.StatusBadRequest,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
-					Type:   v1.CauseTypeFieldValueInvalid,
+					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  "spec.github.token",
 					Detail: "authentication failed",
 				}},
@@ -356,7 +355,7 @@ func TestGitHubRepository_Test(t *testing.T) {
 				Code:    http.StatusBadRequest,
 				Success: false,
 				Errors: []provisioning.ErrorDetails{{
-					Type:   v1.CauseTypeFieldValueInvalid,
+					Type:   metav1.CauseTypeFieldValueInvalid,
 					Field:  "spec.github.url",
 					Detail: "unable to parse repo+owner from url",
 				}},
@@ -601,7 +600,7 @@ func TestParseWebhooks(t *testing.T) {
 
 	gh := &githubRepository{
 		config: &provisioning.Repository{
-			ObjectMeta: v1.ObjectMeta{
+			ObjectMeta: metav1.ObjectMeta{
 				Name: "unit-test-repo",
 			},
 			Spec: provisioning.RepositorySpec{
@@ -1945,7 +1944,6 @@ func TestGitHubRepository_Delete(t *testing.T) {
 
 				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard2.json", "main",
 					"Delete dashboards directory", "subfile2-sha").Return(errors.New("permission denied"))
-
 			},
 			expectedError: errors.New("delete directory recursively: delete file: permission denied"),
 		},
@@ -2739,7 +2737,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		{
 			name: "pull request event - opened",
 			config: &provisioning.Repository{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
@@ -2806,7 +2804,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		{
 			name: "pull request event - synchronize",
 			config: &provisioning.Repository{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-repo",
 				},
 				Spec: provisioning.RepositorySpec{
