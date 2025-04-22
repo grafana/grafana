@@ -543,12 +543,12 @@ func (r *githubRepository) parseWebhook(messageType string, payload []byte) (*pr
 			Code:    http.StatusOK,
 			Message: "ping received",
 		}, nil
+	default:
+		return &provisioning.WebhookResponse{
+			Code:    http.StatusNotImplemented,
+			Message: fmt.Sprintf("unsupported messageType: %s", messageType),
+		}, nil
 	}
-
-	return &provisioning.WebhookResponse{
-		Code:    http.StatusNotImplemented,
-		Message: fmt.Sprintf("unsupported messageType: %s", messageType),
-	}, nil
 }
 
 func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisioning.WebhookResponse, error) {
