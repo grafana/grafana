@@ -349,8 +349,8 @@ export function getVariableUsageInfo(
   replaceFn(getStringsFromObject(query), scopedVars, undefined, variables);
   const uniqVariables = uniqBy(variables, 'variableName');
   return {
-    variables: variables,
-    uniqVariables: uniqVariables,
+    variables,
+    uniqVariables,
     allVariablesDefined: uniqVariables
       // We filter out builtin variables as they should be always defined but sometimes only later, like
       // __range_interval which is defined in prometheus at query time.
