@@ -71,7 +71,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   row.Namespace,
 		Name:        row.Keeper,
-		ForUpdate:   true,
+		IsForUpdate: true,
 	}
 
 	queryKeeperRead, err := sqltemplate.Execute(sqlKeeperRead, reqKeeperRead)
