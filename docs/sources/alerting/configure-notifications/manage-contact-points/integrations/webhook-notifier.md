@@ -254,6 +254,12 @@ The Alert object represents an alert included in the notification group, as prov
 
 ## Custom Payload
 
+{{< admonition type="note" >}}
+
+Custom Payload is not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
+
+{{< /admonition >}}
+
 The `Custom Payload` option allows you to completely customize the webhook payload using templates. This gives you full control over the structure and content of the webhook request.
 
 | Option            | Description                                                                                               |
