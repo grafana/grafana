@@ -763,7 +763,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 		ref            string
 		mockSetup      func(t *testing.T, client *pgh.MockClient)
 		expectedResult *FileInfo
-		expectedError  string
+		expectedError  error
 	}{
 		{
 			name: "File found successfully",
@@ -790,7 +790,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 				Data: []byte("file content"),
 				Hash: "abc123",
 			},
-			expectedError: "",
+			expectedError: nil,
 		},
 		{
 			name: "Directory found successfully",
@@ -815,7 +815,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 				Path: "dashboards",
 				Ref:  "main",
 			},
-			expectedError: "",
+			expectedError: nil,
 		},
 		{
 			name: "File not found",
@@ -834,7 +834,12 @@ func TestGitHubRepository_Read(t *testing.T) {
 					Return(nil, nil, pgh.ErrResourceNotFound)
 			},
 			expectedResult: nil,
-			expectedError:  "file not found; path=configs/nonexistent.json ref=main",
+			expectedError: &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: "file not found; path=configs/nonexistent.json ref=main",
+					Code:    http.StatusNotFound,
+				},
+			},
 		},
 		{
 			name: "Error getting file content",
@@ -855,7 +860,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 					Return(fileContent, nil, nil)
 			},
 			expectedResult: nil,
-			expectedError:  "get content: failed to decode content",
+			expectedError:  fmt.Errorf("get content: %w", errors.New("failed to decode content")),
 		},
 		{
 			name: "GitHub API error",
@@ -874,7 +879,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 					Return(nil, nil, errors.New("API rate limit exceeded"))
 			},
 			expectedResult: nil,
-			expectedError:  "get contents: API rate limit exceeded",
+			expectedError:  fmt.Errorf("get contents: %w", errors.New("API rate limit exceeded")),
 		},
 		{
 			name: "Use default branch when ref is empty",
@@ -901,7 +906,7 @@ func TestGitHubRepository_Read(t *testing.T) {
 				Data: []byte("file content"),
 				Hash: "abc123",
 			},
-			expectedError: "",
+			expectedError: nil,
 		},
 	}
 
@@ -927,21 +932,34 @@ func TestGitHubRepository_Read(t *testing.T) {
 			result, err := repo.Read(context.Background(), tt.filePath, tt.ref)
 
 			// Check the error
-			if tt.expectedError != "" {
-				assert.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
+					// For StatusError, check if the actual error is also a StatusError and compare specific fields
+					actualStatusErr, ok := err.(*apierrors.StatusError)
+					require.True(t, ok, "Expected StatusError but got different error type")
+					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
+					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
+				} else {
+					// For other errors, compare error messages
+					require.Equal(t, tt.expectedError.Error(), err.Error())
+				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			// Check the result
 			if tt.expectedResult != nil {
-				assert.Equal(t, tt.expectedResult.Path, result.Path)
-				assert.Equal(t, tt.expectedResult.Ref, result.Ref)
-				assert.Equal(t, tt.expectedResult.Data, result.Data)
+				require.Equal(t, tt.expectedResult.Path, result.Path)
+				require.Equal(t, tt.expectedResult.Ref, result.Ref)
+				require.Equal(t, tt.expectedResult.Data, result.Data)
+				require.Equal(t, tt.expectedResult.Hash, result.Hash)
 			} else {
-				assert.Nil(t, result)
+				require.Nil(t, result)
 			}
+
+			// Verify all mock expectations were met
+			mockClient.AssertExpectations(t)
 		})
 	}
 }
@@ -955,7 +973,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 		data          []byte
 		comment       string
 		mockSetup     func(t *testing.T, mockClient *pgh.MockClient)
-		expectedError string
+		expectedError error
 	}{
 		{
 			name: "successful file creation",
@@ -975,7 +993,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "feature-branch", "Add new dashboard", []byte("dashboard content")).Return(nil)
 			},
-			expectedError: "",
+			expectedError: nil,
 		},
 		{
 			name: "create with default branch",
@@ -995,7 +1013,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main", "Add new dashboard", []byte("dashboard content")).Return(nil)
 			},
-			expectedError: "",
+			expectedError: nil,
 		},
 		{
 			name: "branch does not exist",
@@ -1015,7 +1033,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
 				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(fmt.Errorf("failed to create branch"))
 			},
-			expectedError: "create branch on create",
+			expectedError: fmt.Errorf("create branch on create: create branch: %w", fmt.Errorf("failed to create branch")),
 		},
 		{
 			name: "invalid branch name",
@@ -1034,7 +1052,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
 				// No mock expectations needed as validation should fail before any GitHub API calls
 			},
-			expectedError: "invalid branch name",
+			expectedError: fmt.Errorf("create branch on create: %w", fmt.Errorf("invalid branch name")),
 		},
 		{
 			name: "branch exists check fails",
@@ -1053,7 +1071,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, fmt.Errorf("failed to check branch"))
 			},
-			expectedError: "check branch exists",
+			expectedError: fmt.Errorf("create branch on create: %w", fmt.Errorf("check branch exists: %w", fmt.Errorf("failed to check branch"))),
 		},
 		{
 			name: "file already exists",
@@ -1073,7 +1091,12 @@ func TestGitHubRepository_Create(t *testing.T) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main", "Add new dashboard", []byte("dashboard content")).Return(pgh.ErrResourceAlreadyExists)
 			},
-			expectedError: "file already exists",
+			expectedError: &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: "file already exists",
+					Code:    http.StatusConflict,
+				},
+			},
 		},
 		{
 			name: "create directory with .keep file",
@@ -1093,7 +1116,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/.keep", "main", "Add dashboards directory", []byte{}).Return(nil)
 			},
-			expectedError: "",
+			expectedError: nil,
 		},
 		{
 			name: "error when providing data for directory",
@@ -1112,7 +1135,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
 			},
-			expectedError: "data cannot be provided for a directory",
+			expectedError: apierrors.NewBadRequest("data cannot be provided for a directory"),
 		},
 	}
 
@@ -1138,12 +1161,24 @@ func TestGitHubRepository_Create(t *testing.T) {
 			err := repo.Create(context.Background(), tt.path, tt.ref, tt.data, tt.comment)
 
 			// Check the error
-			if tt.expectedError != "" {
+			if tt.expectedError != nil {
 				require.Error(t, err)
-				assert.Contains(t, err.Error(), tt.expectedError)
+				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
+					// For StatusError, check if the actual error is also a StatusError and compare specific fields
+					actualStatusErr, ok := err.(*apierrors.StatusError)
+					require.True(t, ok, "Expected StatusError but got different error type")
+					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
+					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
+				} else {
+					// For other errors, compare error messages
+					require.Equal(t, tt.expectedError.Error(), err.Error())
+				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
+
+			// Verify all mock expectations were met
+			mockClient.AssertExpectations(t)
 		})
 	}
 }
