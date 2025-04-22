@@ -165,10 +165,22 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 			if errors.As(err, &k8sErr) {
 				// we do not need to log 4xx errors as they are expected
 				if k8sErr.ErrStatus.Code >= 500 {
-					b.log.Error("hit unexpected k8s error while executing query", "err", err, "status", k8sErr.Status())
+					if errorsK8s.IsServerTimeout(k8sErr) {
+						b.log.Debug("hit a timeout error while executing query, not returning a response to the client as it has already disconnected", "err", err, "status", k8sErr.Status())
+						// No need to send a response to the client, as the client has already disconnected, doing so will cause an error
+						ctx.Done()
+						return
+					} else {
+						// error source = plugin errors can happen here (expected) but also unexpected errors
+						// maybe a problem worth investigating, may be nothing we need to worry too much about as the query service
+						b.log.Error("hit 5xx k8s error while executing query", "err", err, "status", k8sErr.Status())
+					}
+				} else {
+					// expected errors like 404s
+					b.log.Debug("sending a non-5xx k8s error to the client", "err", err, "status", k8sErr.Status())
 				}
-				b.log.Debug("sending a known k8s error to the client", "err", err, "status", k8sErr.Status())
 			} else {
+				// unexpected errors, do something about these!
 				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
 			}
 
