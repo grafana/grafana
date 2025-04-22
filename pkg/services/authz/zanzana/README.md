@@ -27,7 +27,9 @@ And then run grafana server target:
 ./bin/darwin-arm64/grafana server target
 ```
 
-Using OpenFGA CLI
+### Using OpenFGA CLI
+
+useful info on how to setup and use https://openfga.dev/docs/getting-started/cli
 Once the server is running, you can interact with it using the OpenFGA CLI:
 
 ```bash
