@@ -16,6 +16,7 @@ var _ Dialect = MySQL
 
 type mysql struct {
 	backtickIdent
+	standardDerefString
 	rowLockingClauseMap
 	argPlaceholderFunc
 	name

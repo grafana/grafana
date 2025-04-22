@@ -21,6 +21,7 @@ var (
 
 type postgresql struct {
 	standardIdent
+	standardDerefString
 	rowLockingClauseMap
 	argPlaceholderFunc
 	name

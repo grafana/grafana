@@ -12,6 +12,7 @@ type sqlite struct {
 	// See:
 	//	https://www.sqlite.org/lang_keywords.html
 	standardIdent
+	standardDerefString
 	rowLockingClauseMap
 	argPlaceholderFunc
 	name

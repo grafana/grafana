@@ -5,7 +5,9 @@ var Spanner = spanner{}
 
 var _ Dialect = Spanner
 
-type spanner struct{}
+type spanner struct {
+	standardDerefString
+}
 
 func (s spanner) DialectName() string {
 	return "spanner"

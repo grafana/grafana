@@ -143,6 +143,27 @@ func TestStandardIdent_Ident(t *testing.T) {
 	}
 }
 
+func TestStandardDerefString_DerefString(t *testing.T) {
+	t.Parallel()
+
+	input1 := "some input"
+
+	testCases := []struct {
+		input  *string
+		output string
+	}{
+		{input: nil, output: "NULL"},
+		{input: &input1, output: "some input"},
+	}
+
+	for i, tc := range testCases {
+		gotOutput := standardDerefString{}.DerefString(tc.input)
+		if gotOutput != tc.output {
+			t.Fatalf("unexpected output \"%v\" in test case %d", gotOutput, i)
+		}
+	}
+}
+
 func TestArgPlaceholderFunc(t *testing.T) {
 	t.Parallel()
 

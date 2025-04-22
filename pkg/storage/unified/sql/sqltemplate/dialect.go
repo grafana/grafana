@@ -67,6 +67,10 @@ type Dialect interface {
 
 	// CurrentEpoch returns the current epoch value for the database in microseconds.
 	CurrentEpoch() string
+
+	// DerefString dereferences a pointer to a string, returning the string NULL for nil pointers, or the string value
+	// otherwise. This does not handle comparisons yet (like "col is NULL"), only handles the string
+	DerefString(s *string) string
 }
 
 // RowLockingClause represents a row-locking clause in a SELECT statement.
@@ -183,4 +187,16 @@ type name string
 
 func (n name) DialectName() string {
 	return string(n)
+}
+
+// standardDerefString provides standard SQL of handling pointers to strings from go, dereferencing them if they have
+// a value, or returning NULL if not.
+// NOTE: This implementation doesn't work for comparison because this is done via "IS NULL", should be implemented separately
+type standardDerefString struct{}
+
+func (standardDerefString) DerefString(s *string) string {
+	if s == nil {
+		return "NULL"
+	}
+	return *s
 }
