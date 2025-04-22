@@ -121,3 +121,7 @@ func (s *fakeSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context,
 func (s *fakeSecureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
 	panic("unimplemented: fakeSecureValueMetadataStorage.SetExternalID")
 }
+
+func (s *fakeSecureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
+	panic("unimplemented: fakeSecureValueMetadataStorage.ReadForDecrypt")
+}

@@ -9,6 +9,13 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
+type DecryptSecureValue struct {
+	Keeper     string
+	Ref        string
+	ExternalID string
+	Decrypters []string
+}
+
 var (
 	ErrSecureValueNotFound      = errors.New("secure value not found")
 	ErrSecureValueAlreadyExists = errors.New("secure value already exists")
@@ -23,4 +30,5 @@ type SecureValueMetadataStorage interface {
 	List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error)
 	SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID ExternalID) error
+	ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*DecryptSecureValue, error)
 }
