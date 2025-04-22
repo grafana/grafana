@@ -3224,6 +3224,118 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 	}
 }
 
+func TestCreatePullRequestComment(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		number      int
+		body        string
+		wantErr     error
+	}{
+		{
+			name: "successful comment creation",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify the request body contains the correct comment
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						comment := &github.IssueComment{}
+						require.NoError(t, json.Unmarshal(body, comment))
+						assert.Equal(t, "Test comment", comment.GetBody())
+
+						// Return the created comment
+						createdComment := &github.IssueComment{
+							ID:   github.Ptr(int64(123)),
+							Body: github.Ptr("Test comment"),
+						}
+
+						w.WriteHeader(http.StatusCreated)
+						require.NoError(t, json.NewEncoder(w).Encode(createdComment))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			body:       "Test comment",
+			wantErr:    nil,
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			body:       "Test comment",
+			wantErr:    ErrServiceUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PostReposIssuesCommentsByOwnerByRepoByIssueNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			body:       "Test comment",
+			wantErr:    errors.New("Internal server error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			err := client.CreatePullRequestComment(context.Background(), tt.owner, tt.repository, tt.number, tt.body)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func TestPaginatedList(t *testing.T) {
 	tests := []struct {
 		name      string
