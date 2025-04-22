@@ -328,6 +328,19 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			colNames = append(colNames, table.Snowflake)
 			args = append(args, id)
 			log.Println("found", id, args, colNames)
+			// Set snowflakeID back to the bean.
+			col := table.GetColumn(table.Snowflake)
+			if col == nil {
+				return 0, fmt.Errorf("column %s not found in table %s", table.Snowflake, table.Name)
+			}
+			idValue, err := col.ValueOf(bean)
+			if err != nil {
+				session.engine.logger.Error(err)
+			}
+			if idValue == nil || !idValue.IsValid() || !idValue.CanSet() {
+				return 0, fmt.Errorf("failed to set snowflake ID to bean: %v", err)
+			}
+			idValue.Set(int64ToIntValue(id, idValue.Type()))
 		}
 	}
 
