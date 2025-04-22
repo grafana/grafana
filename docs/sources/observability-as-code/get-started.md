@@ -1,17 +1,17 @@
 ---
 description: Get started with Observability as Code by exploring the documentation, libraries, and tools available for as-code practices.
 keywords:
- - configuration
- - as code
- - as-code
- - dashboards
- - Git Sync
- - Git
+  - configuration
+  - as code
+  - as-code
+  - dashboards
+  - Git Sync
+  - Git
 labels:
- products:
-   - cloud
-   - enterprise
-   - oss
+  products:
+    - cloud
+    - enterprise
+    - oss
 title: Get started with Observability as Code
 weight: 100
 ---
@@ -28,44 +28,45 @@ To begin, explore the following topics:
 
 1. [**Understand the Dashboard Schemas**](./json-models/_index.md)
 
-    - Learn about the Dashboard JSON models, which introduces clearer separation of properties, improved layouts, and metadata management.
-    - Review examples of JSON definitions for dashboards to get familiar with the structure and fields.
+   - Learn about the Dashboard JSON models, which introduces clearer separation of properties, improved layouts, and metadata management.
+   - Review examples of JSON definitions for dashboards to get familiar with the structure and fields.
 
 1. [**Understand the Foundation SDK**](./foundation-sdk.md)
 
-    - Learn about a toolkit for programmatically creating and managing Grafana dashboards and resources with reusable components and streamlined workflows.
+   - Learn about a toolkit for programmatically creating and managing Grafana dashboards and resources with reusable components and streamlined workflows.
 
 1. [**Set up Git Sync**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/)
 
-    - Configure Git repositories to store your dashboard JSON files.
-    - Understand best practices for version control, including collaboration through pull requests and rollbacks.
-    - Edit your JSON files in GitHub and then sync with Grafana.
+   - Configure Git repositories to store your dashboard JSON files.
+   - Understand best practices for version control, including collaboration through pull requests and rollbacks.
+   - Edit your JSON files in GitHub and then sync with Grafana.
 
 1. [**Manage dashboard deployments from GitHub**](./git-sync/use-git-sync.md)
 
-    - Integrate dashboards into CI/CD pipelines using tools like GitHub Actions.
-    - Leverage provisioning features in Grafana to automate updates and deployment of dashboards.
+   - Integrate dashboards into CI/CD pipelines using tools like GitHub Actions.
+   - Leverage provisioning features in Grafana to automate updates and deployment of dashboards.
 
 1. **Explore additional tools and libraries for working with Observability as Code**
 
-    - [**Grafanactl**](grafanactl.md)
-        - Use a command-line tool for simplifying the management of Grafana resources.
+   - [**Grafanactl**](grafanactl.md)
 
-    - [**Terraform**](./infrastructure-as-code/terraform/_index.md)
+     - Use a command-line tool for simplifying the management of Grafana resources.
 
-        - Use the Grafana Terraform provider to declaratively manage dashboards, alerts, and more.
-        - Understand how to define and deploy resources using HCL/JSON configurations.
+   - [**Terraform**](./infrastructure-as-code/terraform/_index.md)
 
-    - [**Ansible**](./infrastructure-as-code/ansible/_index.md)
+     - Use the Grafana Terraform provider to declaratively manage dashboards, alerts, and more.
+     - Understand how to define and deploy resources using HCL/JSON configurations.
 
-        - Learn to use the Grafana Ansible collection to manage Grafana Cloud resources, including folders and cloud stacks.
-        - Write playbooks to automate resource provisioning through the Grafana API.
+   - [**Ansible**](./infrastructure-as-code/ansible/_index.md)
 
-    - [**Grafana Operator**](./infrastructure-as-code/grafana-operator/_index.md)
+     - Learn to use the Grafana Ansible collection to manage Grafana Cloud resources, including folders and cloud stacks.
+     - Write playbooks to automate resource provisioning through the Grafana API.
 
-        - Utilize Kubernetes-native management with the Grafana Operator.
-        - Manage dashboards, folders, and data sources via Kubernetes Custom Resources.
-        - Integrate with GitOps workflows for seamless version control and deployment.
+   - [**Grafana Operator**](./infrastructure-as-code/grafana-operator/_index.md)
+
+     - Utilize Kubernetes-native management with the Grafana Operator.
+     - Manage dashboards, folders, and data sources via Kubernetes Custom Resources.
+     - Integrate with GitOps workflows for seamless version control and deployment.
 
 ## Explore additional Observability as Code tools
 

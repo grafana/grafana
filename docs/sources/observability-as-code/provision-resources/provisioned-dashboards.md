@@ -1,14 +1,14 @@
 ---
 description: Update, save, and modify provisioned resources in Grafana using Git Sync.
 keywords:
- - dashboards
- - provisioned files
- - git sync
- - github
+  - dashboards
+  - provisioned files
+  - git sync
+  - github
 labels:
- products:
-   - enterprise
-   - oss
+  products:
+    - enterprise
+    - oss
 title: Work with provisioned dashboards
 weight: 300
 ---
@@ -53,9 +53,9 @@ Using Git Sync, you can manage your dashboards in the UI and synchronize them wi
 
 Git Sync changes the behavior in Grafana for dashboards that are saved in Git Sync:
 
-* Dashboards saved in your repository or local folder configured with Git Sync appear in a provisioned folder in Grafana.
-* Any dashboard folders saved with Git Sync have a **Provisioned** label in the UI.
-* Any changes to a provisioned resources have to be saved to the repository by opening a pull request or committing directly to the `main` branch.
+- Dashboards saved in your repository or local folder configured with Git Sync appear in a provisioned folder in Grafana.
+- Any dashboard folders saved with Git Sync have a **Provisioned** label in the UI.
+- Any changes to a provisioned resources have to be saved to the repository by opening a pull request or committing directly to the `main` branch.
 
 You can set a single folder, or multiple folders to a different repository, with up to 10 connections.
 
@@ -81,7 +81,7 @@ After you create the dashboard, the steps are similar to [Save dashboard changes
 1. Select the provisioned folder from the **Folder** drop-down list.
 1. In **Path**, provide the path for your repository, ending in a JSON or YAML file.
 1. For **Workflow**, select **Push to main** to make a Git commit directly to the repository or **Push to a new branch** to create a pull request.
-    - **Branch**: Specify the branch name in GitHub (for example, main). This option only appears if you select **Push to a new branch**.
+   - **Branch**: Specify the branch name in GitHub (for example, main). This option only appears if you select **Push to a new branch**.
 1. Select **Save**.
 
 ### Save dashboard changes to GitHub
@@ -94,12 +94,13 @@ Saving changes requires opening a pull request in your GitHub repository.
 1. Click **Save dashboard**.
 
 1. On the **Provisioned dashboard** panel, choose the options you want to use:
-    - **Update default refresh value**: Check this box to make the current refresh the new default.
-    - **Update default variable values**: Check this box to make the current values the new default.
-    - **Path**: Provide the path for your repository, ending in a JSON or YAML file.
-    - **Workflow:** Select **Push to main** to make a Git commit directly to the repository or **Push to a new branch** to create a pull request.
-    - **Branch**: Specify the branch name in GitHub (for example, main). This option only appears if you select **Push to a new branch**.
-    - **Comment**: Add a comment describing your changes.
+
+   - **Update default refresh value**: Check this box to make the current refresh the new default.
+   - **Update default variable values**: Check this box to make the current values the new default.
+   - **Path**: Provide the path for your repository, ending in a JSON or YAML file.
+   - **Workflow:** Select **Push to main** to make a Git commit directly to the repository or **Push to a new branch** to create a pull request.
+   - **Branch**: Specify the branch name in GitHub (for example, main). This option only appears if you select **Push to a new branch**.
+   - **Comment**: Add a comment describing your changes.
 
 1. Optional: Select the **Changes** tab to view the differences between the updates you made and the original resource.
 

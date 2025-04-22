@@ -1,16 +1,16 @@
 ---
 description: Instructions for working with Git Sync to perform common tasks, such as saving dashboards to GitHub and synchronizing changes with Grafana.
 keywords:
- - as code
- - as-code
- - dashboards
- - git integration
- - git sync
- - github
+  - as code
+  - as-code
+  - dashboards
+  - git integration
+  - git sync
+  - github
 labels:
- products:
-   - enterprise
-   - oss
+  products:
+    - enterprise
+    - oss
 title: Manage provisioned repositories with Git Sync
 menuTitle: Manage repositories
 weight: 400
@@ -28,7 +28,7 @@ Use the detailed information accessed in **View** to help troubleshoot and under
 
 To view the current status, follow these steps.
 
-1. Log in to your Grafana server with an account that has the Grafana Admin  or Editor flag set.
+1. Log in to your Grafana server with an account that has the Grafana Admin or Editor flag set.
 1. Select **Administration** in the left-side menu and then **Provisioning**.
 1. Locate the repository you are interested in.
 1. If you see a green `Up-to-date` label next to the repository name, then everything is synching as expected.
@@ -57,6 +57,7 @@ To delete a repository, follow these steps.
 ## Troubleshoot synchronization
 
 Monitor the **View** status page for synchronization issues and status updates. Common events include:
+
 - Sync started
 - Sync completed
 - Sync failed (with error details)

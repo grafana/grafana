@@ -1,14 +1,14 @@
 ---
 description: Instructions for setting up file provisioning with a local path.
 keywords:
- - as code
- - as-code
- - file provisioning
- - local path
+  - as code
+  - as-code
+  - file provisioning
+  - local path
 labels:
- products:
-   - enterprise
-   - oss
+  products:
+    - enterprise
+    - oss
 title: Set up file provisioning
 weight: 200
 ---
@@ -44,8 +44,8 @@ Refer to [Provision Grafana](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 
 ### Limitations
 
-* A provisioned dashboard can't be deleted from within Grafana UI. The dashboard has to be deleted at the local file system and those changes synced to Grafana.
-* Changes from the local file system are one way: you can't save changes from
+- A provisioned dashboard can't be deleted from within Grafana UI. The dashboard has to be deleted at the local file system and those changes synced to Grafana.
+- Changes from the local file system are one way: you can't save changes from
 
 ## Before you begin
 
@@ -125,9 +125,9 @@ The set up process verifies the path and provides an error message if a problem 
 In this section, you determine the actions taken with the storage you selected.
 
 1. Select how resources should be handled in Grafana.
-  - Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. You can only have one provisioned connection with this selection.
-  - Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders.
-    - Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
+
+- Choose **Sync all resources with external storage** if you want to sync and manage your entire Grafana instance through external storage. You can only have one provisioned connection with this selection.
+- Choose **Sync external storage to new Grafana folder** to sync external resources into a new folder without affecting the rest of your instance. You can repeat this process for up to 10 folders. - Enter a **Display name** for the repository connection. Resources stored in this connection appear under the chosen display name in the Grafana UI.
 <!--  - Select **Migrate instance to repository** to migrate the Grafana instance to the repository. This option is not available during the first time you set up remote provisioning. -->
 
 1. Select **Synchronize** to continue.
@@ -151,4 +151,3 @@ Select **Finish**.
 ## Verify your dashboards in Grafana
 
 To verify that your dashboards are available at the location that you specified, click **Dashboards**. The name of the dashboard is listed in the **Name** column.
-
