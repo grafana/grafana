@@ -710,7 +710,7 @@ VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
 // Determine the origin of the adhoc variable filter
 // Accepted values are `dashboard` (filter originated from dashboard), or `scopes` (filter originated from scopes).
-FilterOrigin: *null | "dashboard" | "scopes"
+FilterOrigin: *null | "dashboards" | "scopes"
 
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {

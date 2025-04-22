@@ -1688,8 +1688,8 @@ func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
 type DashboardFilterOrigin string
 
 const (
-	DashboardFilterOriginDashboard DashboardFilterOrigin = "dashboard"
-	DashboardFilterOriginScopes    DashboardFilterOrigin = "scopes"
+	DashboardFilterOriginDashboards DashboardFilterOrigin = "dashboards"
+	DashboardFilterOriginScopes     DashboardFilterOrigin = "scopes"
 )
 
 // Define the MetricFindValue type
