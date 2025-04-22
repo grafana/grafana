@@ -1577,3 +1577,332 @@ func TestGithubClient_GetCommits(t *testing.T) {
 		})
 	}
 }
+
+func TestPaginatedList(t *testing.T) {
+	tests := []struct {
+		name      string
+		mockSetup func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions)
+		want      []string
+		wantErr   error
+	}{
+		{
+			name: "single page",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				items := []string{"item1", "item2", "item3"}
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return items, &github.Response{
+						NextPage: 0,
+					}, nil
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    []string{"item1", "item2", "item3"},
+			wantErr: nil,
+		},
+		{
+			name: "multiple pages",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				page1 := []string{"item1", "item2"}
+				page2 := []string{"item3", "item4"}
+				page3 := []string{"item5"}
+
+				var callCount int
+				listFn := func(_ context.Context, opts *github.ListOptions) ([]string, *github.Response, error) {
+					callCount++
+					switch callCount {
+					case 1:
+						return page1, &github.Response{
+							NextPage: 2,
+						}, nil
+					case 2:
+						assert.Equal(t, 2, opts.Page)
+						return page2, &github.Response{
+							NextPage: 3,
+						}, nil
+					case 3:
+						assert.Equal(t, 3, opts.Page)
+						return page3, &github.Response{
+							NextPage: 0,
+						}, nil
+					default:
+						return nil, nil, errors.New("unexpected call")
+					}
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    []string{"item1", "item2", "item3", "item4", "item5"},
+			wantErr: nil,
+		},
+		{
+			name: "error on first page",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return nil, &github.Response{}, errors.New("API error")
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    nil,
+			wantErr: errors.New("API error"),
+		},
+		{
+			name: "service unavailable error",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return nil, &github.Response{}, &github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusServiceUnavailable,
+						},
+					}
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    nil,
+			wantErr: ErrServiceUnavailable,
+		},
+		{
+			name: "resource not found error",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					return nil, &github.Response{}, &github.ErrorResponse{
+						Response: &http.Response{
+							StatusCode: http.StatusNotFound,
+						},
+					}
+				}
+				return listFn, defaultListOptions(100)
+			},
+			want:    nil,
+			wantErr: ErrResourceNotFound,
+		},
+		{
+			name: "too many items error",
+			mockSetup: func() (func(context.Context, *github.ListOptions) ([]string, *github.Response, error), listOptions) {
+				listFn := func(_ context.Context, _ *github.ListOptions) ([]string, *github.Response, error) {
+					// Return more items than the max allowed
+					items := make([]string, 10)
+					for i := range items {
+						items[i] = fmt.Sprintf("item%d", i+1)
+					}
+					return items, &github.Response{
+						NextPage: 2,
+					}, nil
+				}
+				return listFn, listOptions{
+					ListOptions: github.ListOptions{
+						Page:    1,
+						PerPage: 100,
+					},
+					MaxItems: 5, // Set max items to less than what we'll return
+				}
+			},
+			want:    nil,
+			wantErr: ErrTooManyItems,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			listFn, opts := tt.mockSetup()
+
+			got, err := paginatedList(context.Background(), listFn, opts)
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+				assert.Nil(t, got)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestDefaultListOptions(t *testing.T) {
+	tests := []struct {
+		name     string
+		maxItems int
+		want     listOptions
+	}{
+		{
+			name:     "with zero max items",
+			maxItems: 0,
+			want: listOptions{
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 100,
+				},
+				MaxItems: 0,
+			},
+		},
+		{
+			name:     "with positive max items",
+			maxItems: 50,
+			want: listOptions{
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 100,
+				},
+				MaxItems: 50,
+			},
+		},
+		{
+			name:     "with large max items",
+			maxItems: 1000,
+			want: listOptions{
+				ListOptions: github.ListOptions{
+					Page:    1,
+					PerPage: 100,
+				},
+				MaxItems: 1000,
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := defaultListOptions(tt.maxItems)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRealRepositoryContent(t *testing.T) {
+	t.Run("IsDirectory", func(t *testing.T) {
+		tests := []struct {
+			name     string
+			repoType string
+			want     bool
+		}{
+			{
+				name:     "directory type",
+				repoType: "dir",
+				want:     true,
+			},
+			{
+				name:     "file type",
+				repoType: "file",
+				want:     false,
+			},
+			{
+				name:     "empty type",
+				repoType: "",
+				want:     false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				repoType := tt.repoType
+				content := realRepositoryContent{
+					real: &github.RepositoryContent{
+						Type: &repoType,
+					},
+				}
+				got := content.IsDirectory()
+				assert.Equal(t, tt.want, got)
+			})
+		}
+	})
+
+	t.Run("GetFileContent", func(t *testing.T) {
+		fileContent := "test content"
+		content := realRepositoryContent{
+			real: &github.RepositoryContent{
+				Content: &fileContent,
+			},
+		}
+		got, err := content.GetFileContent()
+		assert.NoError(t, err)
+		assert.Equal(t, fileContent, got)
+	})
+
+	t.Run("IsSymlink", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			target *string
+			want   bool
+		}{
+			{
+				name:   "is symlink",
+				target: github.String("target"),
+				want:   true,
+			},
+			{
+				name:   "not symlink",
+				target: nil,
+				want:   false,
+			},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				content := realRepositoryContent{
+					real: &github.RepositoryContent{
+						Target: tt.target,
+					},
+				}
+				got := content.IsSymlink()
+				assert.Equal(t, tt.want, got)
+			})
+		}
+	})
+
+	t.Run("GetPath", func(t *testing.T) {
+		path := "path/to/file"
+		content := realRepositoryContent{
+			real: &github.RepositoryContent{
+				Path: &path,
+			},
+		}
+		got := content.GetPath()
+		assert.Equal(t, path, got)
+	})
+
+	t.Run("GetSHA", func(t *testing.T) {
+		sha := "abc123"
+		content := realRepositoryContent{
+			real: &github.RepositoryContent{
+				SHA: &sha,
+			},
+		}
+		got := content.GetSHA()
+		assert.Equal(t, sha, got)
+	})
+
+	t.Run("GetSize", func(t *testing.T) {
+		t.Run("with size field", func(t *testing.T) {
+			size := 42
+			content := realRepositoryContent{
+				real: &github.RepositoryContent{
+					Size: &size,
+				},
+			}
+			got := content.GetSize()
+			assert.Equal(t, int64(size), got)
+		})
+
+		t.Run("with content field", func(t *testing.T) {
+			fileContent := "test content"
+			content := realRepositoryContent{
+				real: &github.RepositoryContent{
+					Content: &fileContent,
+				},
+			}
+			got := content.GetSize()
+			assert.Equal(t, int64(len(fileContent)), got)
+		})
+
+		t.Run("with no size or content", func(t *testing.T) {
+			content := realRepositoryContent{
+				real: &github.RepositoryContent{},
+			}
+			got := content.GetSize()
+			assert.Equal(t, int64(0), got)
+		})
+	})
+}
