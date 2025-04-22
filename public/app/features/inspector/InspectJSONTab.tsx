@@ -26,30 +26,6 @@ enum ShowContent {
   DataFrames = 'frames',
 }
 
-const options: Array<SelectableValue<ShowContent>> = [
-  {
-    label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
-    description: t(
-      'dashboard.inspect-json.panel-json-description',
-      'The model saved in the dashboard JSON that configures how everything works.'
-    ),
-    value: ShowContent.PanelJSON,
-  },
-  {
-    label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
-    description: t('dashboard.inspect-json.panel-data-description', 'The raw model passed to the panel visualization'),
-    value: ShowContent.PanelData,
-  },
-  {
-    label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
-    description: t(
-      'dashboard.inspect-json.dataframe-description',
-      'Raw data without transformations and field config applied. '
-    ),
-    value: ShowContent.DataFrames,
-  },
-];
-
 interface Props {
   onClose: () => void;
   dashboard?: DashboardModel;
@@ -58,6 +34,35 @@ interface Props {
 }
 
 export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
+  const options: Array<SelectableValue<ShowContent>> = useMemo(
+    () => [
+      {
+        label: t('dashboard.inspect-json.panel-json-label', 'Panel JSON'),
+        description: t(
+          'dashboard.inspect-json.panel-json-description',
+          'The model saved in the dashboard JSON that configures how everything works.'
+        ),
+        value: ShowContent.PanelJSON,
+      },
+      {
+        label: t('dashboard.inspect-json.panel-data-label', 'Panel data'),
+        description: t(
+          'dashboard.inspect-json.panel-data-description',
+          'The raw model passed to the panel visualization'
+        ),
+        value: ShowContent.PanelData,
+      },
+      {
+        label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
+        description: t(
+          'dashboard.inspect-json.dataframe-description',
+          'Raw data without transformations and field config applied. '
+        ),
+        value: ShowContent.DataFrames,
+      },
+    ],
+    []
+  );
   const styles = useStyles2(getPanelInspectorStyles2);
   const jsonOptions = useMemo(() => {
     if (panel) {
@@ -67,7 +72,7 @@ export function InspectJSONTab({ panel, dashboard, data, onClose }: Props) {
       return options;
     }
     return options.slice(1, options.length);
-  }, [panel]);
+  }, [options, panel]);
   const [show, setShow] = useState(panel ? ShowContent.PanelJSON : ShowContent.DataFrames);
   const [text, setText] = useState('');
 

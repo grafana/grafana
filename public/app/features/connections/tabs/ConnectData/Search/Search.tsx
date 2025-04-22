@@ -19,8 +19,6 @@ const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   }),
 });
 
-const placeholder = t('connections.search.placeholder', 'Search all');
-
 export interface Props {
   onChange: (e: React.FormEvent<HTMLInputElement>) => void;
   value: string | undefined;
@@ -29,6 +27,7 @@ export interface Props {
 export const Search = ({ onChange, value }: Props) => {
   const chromeHeaderHeight = useChromeHeaderHeight();
   const styles = useStyles2(getStyles, chromeHeaderHeight ?? 0);
+  const placeholder = t('connections.search.placeholder', 'Search all');
 
   return (
     <div className={styles.searchContainer}>
