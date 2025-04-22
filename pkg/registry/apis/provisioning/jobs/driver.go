@@ -117,7 +117,7 @@ func (d *jobDriver) Run(ctx context.Context) {
 	}
 
 	// Drive without waiting on startup.
-	d.drive(ctx)
+	d.processJobsUntilDoneOrError(ctx)
 
 	for {
 		select {
@@ -125,34 +125,24 @@ func (d *jobDriver) Run(ctx context.Context) {
 			if err := d.store.Cleanup(ctx); err != nil {
 				logger.Error("failed to cleanup jobs", "error", err)
 			}
+
+		// These events do not queue if the worker is already running
 		case <-jobTicker.C:
-			d.drive(ctx)
+			d.processJobsUntilDoneOrError(ctx)
 		case <-d.store.InsertNotifications():
-			d.drive(ctx)
+			d.processJobsUntilDoneOrError(ctx)
 		}
 	}
 }
 
-// The timing logic here is a bit odd
-// A new thread will be started:
-//   - anytime a new job is added
-//   - periodically jobInterval (eg 30s)
-//
-// Each thread (drive) runs until there are no jobs or has a system error
-func (d *jobDriver) drive(ctx context.Context) {
-	start := time.Now()
+// This will keep processing jobs until there are none left (or we hit an error)
+func (d *jobDriver) processJobsUntilDoneOrError(ctx context.Context) {
 	for {
 		err := d.claimAndProcessOneJob(ctx)
 		if err != nil {
 			if !errors.Is(err, ErrNoJobs) {
 				logging.FromContext(ctx).Error("failed to drive jobs", "error", err)
 			}
-			return
-		}
-
-		// A new thread will start at this interval,
-		// so lets avoid having too many threads running
-		if time.Since(start) > (d.jobInterval * 2) {
 			return
 		}
 	}
