@@ -72,7 +72,7 @@ module.exports = (env = {}) => {
         //  local version of @grafana/scenes
         'react-router-dom': path.resolve('./node_modules/react-router-dom'),
         '@grafana/scenes': scenesModule(),
-      }
+      },
     },
 
     module: {
