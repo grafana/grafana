@@ -1,6 +1,11 @@
 import { DataSourceInstanceSettings } from '@grafana/data';
 import { getBackendSrv, getDataSourceSrv, isFetchError } from '@grafana/runtime';
-import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import {
+  Spec as DashboardV2Spec,
+  QueryVariableKind,
+  PanelQueryKind,
+  AnnotationQueryKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { browseDashboardsAPI, ImportInputs } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
@@ -62,7 +67,7 @@ export function importDashboardJson(dashboard: any): ThunkResult<void> {
 export function importDashboardV2Json(dashboard: DashboardV2Spec): ThunkResult<void> {
   return async (dispatch) => {
     dispatch(setJsonDashboard(dashboard));
-    dispatch(processV2Elements(dashboard));
+    dispatch(processV2Datasources(dashboard));
   };
 }
 
@@ -152,9 +157,9 @@ function processElements(dashboardJson?: { __elements?: Record<string, LibraryEl
   };
 }
 
-function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
+export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
   return async function (dispatch) {
-    const elements = dashboard.elements;
+    const { elements, variables, annotations } = dashboard;
     // get elements from dashboard
     // each element can only be a panel
     const inputs: Record<string, DataSourceInput> = {};
@@ -162,39 +167,23 @@ function processV2Elements(dashboard: DashboardV2Spec): ThunkResult<void> {
       if (element.kind !== 'Panel') {
         throw new Error('Only panels are currenlty supported in v2 dashboards');
       }
-
-      for (const query of element.spec.data.spec.queries) {
-        const datasourceRef = query.spec.datasource;
-        if (!datasourceRef) {
-          let dataSourceInput: DataSourceInput | undefined;
-          const dsType = query.spec.query.kind;
-          const datasource = await getDatasourceSrv().get({ type: dsType });
-          if (!datasource) {
-            dataSourceInput = {
-              name: dsType,
-              label: dsType,
-              info: `No data sources of type ${dsType} found`,
-              value: '',
-              type: InputType.DataSource,
-              pluginId: dsType,
-            };
-
-            inputs[dsType] = dataSourceInput;
-          } else {
-            dataSourceInput = {
-              name: datasource.name,
-              label: datasource.name,
-              info: `Select a ${datasource.name} data source`,
-              value: datasource.uid,
-              type: InputType.DataSource,
-              pluginId: datasource.meta?.id,
-            };
-
-            inputs[datasource.meta?.id] = dataSourceInput;
-          }
+      if (element.spec.data.spec.queries.length > 0) {
+        for (const query of element.spec.data.spec.queries) {
+          await processV2DatasourceInput(query.spec, inputs);
         }
       }
     }
+
+    for (const variable of variables) {
+      if (variable.kind === 'QueryVariable') {
+        await processV2DatasourceInput(variable.spec, inputs);
+      }
+    }
+
+    for (const annotation of annotations) {
+      await processV2DatasourceInput(annotation.spec, inputs);
+    }
+
     dispatch(setInputs(Object.values(inputs)));
   };
 }
@@ -339,4 +328,39 @@ export async function searchFolders(
 
 export function getFolderByUid(uid: string): Promise<{ uid: string; title: string }> {
   return getBackendSrv().get(`/api/folders/${uid}`);
+}
+
+export async function processV2DatasourceInput(
+  obj: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
+  inputs: Record<string, DataSourceInput> = {}
+) {
+  const datasourceRef = obj?.datasource;
+  if (!datasourceRef && obj?.query) {
+    const dsType = obj.query.kind;
+    const datasource = await getDatasourceSrv().get({ type: dsType });
+    let dataSourceInput: DataSourceInput | undefined;
+    if (datasource) {
+      dataSourceInput = {
+        name: datasource.name,
+        label: datasource.name,
+        info: `Select a ${datasource.name} data source`,
+        value: datasource.uid,
+        type: InputType.DataSource,
+        pluginId: datasource.meta?.id,
+      };
+
+      inputs[datasource.meta?.id] = dataSourceInput;
+    } else {
+      dataSourceInput = {
+        name: dsType,
+        label: dsType,
+        info: `No data sources of type ${dsType} found`,
+        value: '',
+        type: InputType.DataSource,
+        pluginId: dsType,
+      };
+
+      inputs[dsType] = dataSourceInput;
+    }
+  }
 }
