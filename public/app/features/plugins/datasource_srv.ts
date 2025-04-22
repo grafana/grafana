@@ -259,8 +259,14 @@ export class DatasourceSrv implements DataSourceService {
       if (filters.filter && !filters.filter(x)) {
         return false;
       }
-      if (filters.type && (Array.isArray(filters.type) ? !filters.type.includes(x.type) : filters.type !== x.type)) {
-        return false;
+      if (filters.type) {
+        if (Array.isArray(filters.type)) {
+          if (!filters.type.includes(x.type)) {
+            return false;
+          }
+        } else if (!(x.type === filters.type || x.meta.aliasIDs?.includes(filters.type!))) {
+          return false;
+        }
       }
       if (
         !filters.all &&
