@@ -151,14 +151,14 @@ function processInputs(): ThunkResult<void> {
 }
 
 function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
-  return async function(dispatch) {
+  return async function (dispatch) {
     const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
 }
 
 export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
-  return async function(dispatch) {
+  return async function (dispatch) {
     const { elements, variables, annotations } = dashboard;
     // get elements from dashboard
     // each element can only be a panel
