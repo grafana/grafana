@@ -627,60 +627,6 @@ func (r *githubClient) CreatePullRequestComment(ctx context.Context, owner, repo
 	return nil
 }
 
-func (r *githubClient) CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error {
-	commentRequest := &github.PullRequestComment{
-		Body:     &comment.Content,
-		CommitID: &comment.Ref,
-		Path:     &comment.Path,
-		Position: &comment.Position,
-	}
-
-	if _, _, err := r.gh.PullRequests.CreateComment(ctx, owner, repository, number, commentRequest); err != nil {
-		var ghErr *github.ErrorResponse
-		if errors.As(err, &ghErr) && ghErr.Response.StatusCode == http.StatusServiceUnavailable {
-			return ErrServiceUnavailable
-		}
-
-		return err
-	}
-
-	return nil
-}
-
-func (r *githubClient) ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error {
-	listFn := func(ctx context.Context, opts *github.ListOptions) ([]*github.PullRequestComment, *github.Response, error) {
-		return r.gh.PullRequests.ListComments(ctx, owner, repository, number, &github.PullRequestListCommentsOptions{
-			ListOptions: *opts,
-		})
-	}
-
-	comments, err := paginatedList(ctx, listFn, defaultListOptions(maxPullRequestsFileComments))
-	if errors.Is(err, ErrTooManyItems) {
-		return fmt.Errorf("too many comments to process (more than %d)", maxPullRequestsFileComments)
-	}
-	if err != nil {
-		return err
-	}
-
-	userLogin, _, err := r.gh.Users.Get(ctx, "")
-	if err != nil {
-		return fmt.Errorf("get user: %w", err)
-	}
-
-	for _, c := range comments {
-		// skip if comments were not created by us
-		if c.User.GetLogin() != userLogin.GetLogin() {
-			continue
-		}
-
-		if _, err := r.gh.PullRequests.DeleteComment(ctx, owner, repository, c.GetID()); err != nil {
-			return fmt.Errorf("delete comment: %w", err)
-		}
-	}
-
-	return nil
-}
-
 type realRepositoryContent struct {
 	real *github.RepositoryContent
 }

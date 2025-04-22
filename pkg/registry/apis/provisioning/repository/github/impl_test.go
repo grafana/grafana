@@ -3042,6 +3042,188 @@ func TestGithubClient_EditWebhook(t *testing.T) {
 	}
 }
 
+func TestGithubClient_ListPullRequestFiles(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		number      int
+		wantFiles   []CommitFile
+		wantErr     error
+	}{
+		{
+			name: "successful pull request files listing",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						files := []*github.CommitFile{
+							{
+								Filename:  github.String("file1.txt"),
+								Additions: github.Int(10),
+								Deletions: github.Int(5),
+								Changes:   github.Int(15),
+								Status:    github.String("modified"),
+								Patch:     github.String("@@ -1,5 +1,10 @@"),
+							},
+							{
+								Filename:  github.String("file2.txt"),
+								Additions: github.Int(20),
+								Deletions: github.Int(0),
+								Changes:   github.Int(20),
+								Status:    github.String("added"),
+								Patch:     github.String("@@ -0,0 +1,20 @@"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(files))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     123,
+			wantFiles: []CommitFile{
+				&github.CommitFile{
+					Filename:  github.String("file1.txt"),
+					Additions: github.Int(10),
+					Deletions: github.Int(5),
+					Changes:   github.Int(15),
+					Status:    github.String("modified"),
+					Patch:     github.String("@@ -1,5 +1,10 @@"),
+				},
+				&github.CommitFile{
+					Filename:  github.String("file2.txt"),
+					Additions: github.Int(20),
+					Deletions: github.Int(0),
+					Changes:   github.Int(20),
+					Status:    github.String("added"),
+					Patch:     github.String("@@ -0,0 +1,20 @@"),
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "empty files list",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						files := []*github.CommitFile{}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(files))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     456,
+			wantFiles:  []CommitFile{},
+			wantErr:    nil,
+		},
+		{
+			name: "too many files",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// Create more files than the maxPRFiles limit
+						files := make([]*github.CommitFile, maxPRFiles+1)
+						for i := 0; i < maxPRFiles+1; i++ {
+							files[i] = &github.CommitFile{
+								Filename:  github.String(fmt.Sprintf("file%d.txt", i+1)),
+								Additions: github.Int(i + 1),
+								Deletions: github.Int(0),
+								Changes:   github.Int(i + 1),
+								Status:    github.String("added"),
+							}
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(files))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     789,
+			wantFiles:  nil,
+			wantErr:    fmt.Errorf("pull request contains too many files (more than %d)", maxPRFiles),
+		},
+		{
+			name: "service unavailable error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     101,
+			wantFiles:  nil,
+			wantErr:    ErrServiceUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposPullsFilesByOwnerByRepoByPullNumber,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusInternalServerError,
+							},
+							Message: "Internal server error",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			number:     202,
+			wantFiles:  nil,
+			wantErr:    errors.New("Internal server error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			files, err := client.ListPullRequestFiles(context.Background(), tt.owner, tt.repository, tt.number)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+
+			// Check the result
+			assert.Equal(t, tt.wantFiles, files)
+		})
+	}
+}
+
 func TestPaginatedList(t *testing.T) {
 	tests := []struct {
 		name      string
