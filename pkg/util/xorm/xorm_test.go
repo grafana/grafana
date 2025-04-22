@@ -50,23 +50,41 @@ type TestStruct struct {
 }
 
 func TestSnowflakeID(t *testing.T) {
-	type StructWithSnowflake struct {
-		ID      int64 `xorm:"'id' snowflake"`
+	type SnowflakeRecord struct {
+		ID      int64 `xorm:"'id' pk snowflake"`
 		Comment string
 	}
+
 	eng, err := NewEngine("sqlite3", ":memory:")
 	require.NoError(t, err)
-	require.NotNil(t, eng)
+	require.NoError(t, eng.Sync(new(SnowflakeRecord)))
 
-	_, err = eng.Exec("CREATE TABLE struct_with_snowflake(id int primary key, comment text)")
-	require.NoError(t, err)
+	// Test sequence of different snowflake values
+	testCases := []struct {
+		name    string
+		id      int64
+		comment string
+	}{
+		{"first insert", 42, "first comment"},
+		{"second insert", 123, "second comment"},
+		{"third insert", 1337, "third comment"},
+	}
 
-	sess := eng.NewSession()
-	defer sess.Close()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			eng.snowflake = func() int64 { return tc.id }
 
-	obj := &StructWithSnowflake{Comment: "test comment"}
-	_, err = sess.Insert(obj)
-	require.NoError(t, err)
-	t.Fatal(obj.ID)
-	require.Equal(t, int64(1), obj.ID)
+			obj := &SnowflakeRecord{Comment: tc.comment}
+			_, err := eng.Insert(obj)
+			require.NoError(t, err)
+			require.Equal(t, tc.id, obj.ID, "ID should match current snowflake value")
+
+			// Verify database entry
+			var retrieved SnowflakeRecord
+			has, err := eng.ID(tc.id).Get(&retrieved)
+			require.NoError(t, err)
+			require.True(t, has)
+			require.Equal(t, tc.comment, retrieved.Comment)
+		})
+	}
 }

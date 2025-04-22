@@ -7,7 +7,6 @@ package xorm
 import (
 	"errors"
 	"fmt"
-	"log"
 	"reflect"
 	"slices"
 	"sort"
@@ -321,13 +320,11 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			args = append(args, seq)
 		}
 	} else if len(table.Snowflake) > 0 {
-		found := slices.Contains(colNames, table.AutoIncrement)
-		log.Println("found", found)
+		found := slices.Contains(colNames, table.Snowflake)
 		if !found {
-			id := session.engine.snowflake.Generate()
+			id := session.engine.snowflake()
 			colNames = append(colNames, table.Snowflake)
 			args = append(args, id)
-			log.Println("found", id, args, colNames)
 			// Set snowflakeID back to the bean.
 			col := table.GetColumn(table.Snowflake)
 			if col == nil {
@@ -607,7 +604,7 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 		}
 		fieldValue := *fieldValuePtr
 
-		if col.IsAutoIncrement {
+		if col.IsAutoIncrement || col.IsSnowflakeID {
 			switch fieldValue.Type().Kind() {
 			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
 				if fieldValue.Int() == 0 {
