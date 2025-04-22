@@ -20,93 +20,6 @@ import (
 	"time"
 )
 
-const (
-	// CacheExpired is default cache expired time
-	CacheExpired = 60 * time.Minute
-	// CacheMaxMemory is not use now
-	CacheMaxMemory = 256
-	// CacheGcInterval represents interval time to clear all expired nodes
-	CacheGcInterval = 10 * time.Minute
-	// CacheGcMaxRemoved represents max nodes removed when gc
-	CacheGcMaxRemoved = 20
-)
-
-// list all the errors
-var (
-	ErrCacheMiss = errors.New("xorm/cache: key not found")
-	ErrNotStored = errors.New("xorm/cache: not stored")
-)
-
-// CacheStore is a interface to store cache
-type CacheStore interface {
-	// key is primary key or composite primary key
-	// value is struct's pointer
-	// key format : <tablename>-p-<pk1>-<pk2>...
-	Put(key string, value interface{}) error
-	Get(key string) (interface{}, error)
-	Del(key string) error
-}
-
-// Cacher is an interface to provide cache
-// id format : u-<pk1>-<pk2>...
-type Cacher interface {
-	GetIds(tableName, sql string) interface{}
-	GetBean(tableName string, id string) interface{}
-	PutIds(tableName, sql string, ids interface{})
-	PutBean(tableName string, id string, obj interface{})
-	DelIds(tableName, sql string)
-	DelBean(tableName string, id string)
-	ClearIds(tableName string)
-	ClearBeans(tableName string)
-}
-
-func encodeIds(ids []PK) (string, error) {
-	buf := new(bytes.Buffer)
-	enc := gob.NewEncoder(buf)
-	err := enc.Encode(ids)
-
-	return buf.String(), err
-}
-
-func decodeIds(s string) ([]PK, error) {
-	pks := make([]PK, 0)
-
-	dec := gob.NewDecoder(strings.NewReader(s))
-	err := dec.Decode(&pks)
-
-	return pks, err
-}
-
-// GetCacheSql returns cacher PKs via SQL
-func GetCacheSql(m Cacher, tableName, sql string, args interface{}) ([]PK, error) {
-	bytes := m.GetIds(tableName, GenSqlKey(sql, args))
-	if bytes == nil {
-		return nil, errors.New("Not Exist")
-	}
-	return decodeIds(bytes.(string))
-}
-
-// PutCacheSql puts cacher SQL and PKs
-func PutCacheSql(m Cacher, ids []PK, tableName, sql string, args interface{}) error {
-	bytes, err := encodeIds(ids)
-	if err != nil {
-		return err
-	}
-	m.PutIds(tableName, GenSqlKey(sql, args), bytes)
-	return nil
-}
-
-// GenSqlKey generates cache key
-func GenSqlKey(sql string, args interface{}) string {
-	return fmt.Sprintf("%v-%v", sql, args)
-}
-
-const (
-	TWOSIDES = iota + 1
-	ONLYTODB
-	ONLYFROMDB
-)
-
 // Column defines database column
 type Column struct {
 	Name            string
@@ -121,7 +34,6 @@ type Column struct {
 	Indexes         map[string]int
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
-	MapType         int
 	IsCreated       bool
 	IsUpdated       bool
 	IsDeleted       bool
@@ -149,7 +61,6 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		Indexes:         make(map[string]int),
 		IsPrimaryKey:    false,
 		IsAutoIncrement: false,
-		MapType:         TWOSIDES,
 		IsCreated:       false,
 		IsUpdated:       false,
 		IsDeleted:       false,
@@ -1052,19 +963,6 @@ func (m *CacheMapper) Table2Obj(t string) string {
 	return o
 }
 
-// SameMapper implements IMapper and provides same name between struct and
-// database table
-type SameMapper struct {
-}
-
-func (m SameMapper) Obj2Table(o string) string {
-	return o
-}
-
-func (m SameMapper) Table2Obj(t string) string {
-	return t
-}
-
 // SnakeMapper implements IMapper and provides name transaltion between
 // struct and database table
 type SnakeMapper struct {
@@ -1115,139 +1013,6 @@ func titleCasedName(name string) string {
 
 func (mapper SnakeMapper) Table2Obj(name string) string {
 	return titleCasedName(name)
-}
-
-// GonicMapper implements IMapper. It will consider initialisms when mapping names.
-// E.g. id -> ID, user -> User and to table names: UserID -> user_id, MyUID -> my_uid
-type GonicMapper map[string]bool
-
-func isASCIIUpper(r rune) bool {
-	return 'A' <= r && r <= 'Z'
-}
-
-func toASCIIUpper(r rune) rune {
-	if 'a' <= r && r <= 'z' {
-		r -= ('a' - 'A')
-	}
-	return r
-}
-
-func gonicCasedName(name string) string {
-	newstr := make([]rune, 0, len(name)+3)
-	for idx, chr := range name {
-		if isASCIIUpper(chr) && idx > 0 {
-			if !isASCIIUpper(newstr[len(newstr)-1]) {
-				newstr = append(newstr, '_')
-			}
-		}
-
-		if !isASCIIUpper(chr) && idx > 1 {
-			l := len(newstr)
-			if isASCIIUpper(newstr[l-1]) && isASCIIUpper(newstr[l-2]) {
-				newstr = append(newstr, newstr[l-1])
-				newstr[l-1] = '_'
-			}
-		}
-
-		newstr = append(newstr, chr)
-	}
-	return strings.ToLower(string(newstr))
-}
-
-func (mapper GonicMapper) Obj2Table(name string) string {
-	return gonicCasedName(name)
-}
-
-func (mapper GonicMapper) Table2Obj(name string) string {
-	newstr := make([]rune, 0)
-
-	name = strings.ToLower(name)
-	parts := strings.Split(name, "_")
-
-	for _, p := range parts {
-		_, isInitialism := mapper[strings.ToUpper(p)]
-		for i, r := range p {
-			if i == 0 || isInitialism {
-				r = toASCIIUpper(r)
-			}
-			newstr = append(newstr, r)
-		}
-	}
-
-	return string(newstr)
-}
-
-// LintGonicMapper is A GonicMapper that contains a list of common initialisms taken from golang/lint
-var LintGonicMapper = GonicMapper{
-	"API":   true,
-	"ASCII": true,
-	"CPU":   true,
-	"CSS":   true,
-	"DNS":   true,
-	"EOF":   true,
-	"GUID":  true,
-	"HTML":  true,
-	"HTTP":  true,
-	"HTTPS": true,
-	"ID":    true,
-	"IP":    true,
-	"JSON":  true,
-	"LHS":   true,
-	"QPS":   true,
-	"RAM":   true,
-	"RHS":   true,
-	"RPC":   true,
-	"SLA":   true,
-	"SMTP":  true,
-	"SSH":   true,
-	"TLS":   true,
-	"TTL":   true,
-	"UI":    true,
-	"UID":   true,
-	"UUID":  true,
-	"URI":   true,
-	"URL":   true,
-	"UTF8":  true,
-	"VM":    true,
-	"XML":   true,
-	"XSRF":  true,
-	"XSS":   true,
-}
-
-// PrefixMapper provides prefix table name support
-type PrefixMapper struct {
-	Mapper IMapper
-	Prefix string
-}
-
-func (mapper PrefixMapper) Obj2Table(name string) string {
-	return mapper.Prefix + mapper.Mapper.Obj2Table(name)
-}
-
-func (mapper PrefixMapper) Table2Obj(name string) string {
-	return mapper.Mapper.Table2Obj(name[len(mapper.Prefix):])
-}
-
-func NewPrefixMapper(mapper IMapper, prefix string) PrefixMapper {
-	return PrefixMapper{mapper, prefix}
-}
-
-// SuffixMapper provides suffix table name support
-type SuffixMapper struct {
-	Mapper IMapper
-	Suffix string
-}
-
-func (mapper SuffixMapper) Obj2Table(name string) string {
-	return mapper.Mapper.Obj2Table(name) + mapper.Suffix
-}
-
-func (mapper SuffixMapper) Table2Obj(name string) string {
-	return mapper.Mapper.Table2Obj(name[:len(name)-len(mapper.Suffix)])
-}
-
-func NewSuffixMapper(mapper IMapper, suffix string) SuffixMapper {
-	return SuffixMapper{mapper, suffix}
 }
 
 type PK []interface{}
@@ -1819,7 +1584,6 @@ type Table struct {
 	Updated       string
 	Deleted       string
 	Version       string
-	Cacher        Cacher
 	StoreEngine   string
 	Charset       string
 	Comment       string
