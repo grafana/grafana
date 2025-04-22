@@ -11,6 +11,7 @@ const WebpackAssetsManifest = require('webpack-assets-manifest');
 const LiveReloadPlugin = require('webpack-livereload-plugin');
 const { merge } = require('webpack-merge');
 const WebpackBar = require('webpackbar');
+const fs = require('fs');
 
 const getEnvConfig = require('./env-util.js');
 const common = require('./webpack.common.js');
@@ -23,8 +24,6 @@ const esbuildOptions = {
   jsx: 'automatic',
 };
 
-const fs = require('fs');
-
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
 function getDecoupledPlugins() {
   const { packages } = getPackagesSync(process.cwd());
@@ -33,11 +32,10 @@ function getDecoupledPlugins() {
 
 // When linking scenes for development, resolve the path to the src directory for sourcemaps
 function scenesModule() {
-  const relativeScenesPath = './node_modules/@grafana/scenes'
-  const scenesPath = path.resolve(relativeScenesPath);
+  const scenesPath = path.resolve('./node_modules/@grafana/scenes');
   try {
-    const stats = fs.lstatSync(scenesPath);
-    if (stats.isSymbolicLink()) {
+    const status = fs.lstatSync(scenesPath);
+    if (status.isSymbolicLink()) {
       console.log(`scenes is linked to local scenes repo`);
       return path.resolve(scenesPath + '/src');
     }
