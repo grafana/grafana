@@ -1,9 +1,9 @@
 package repository
 
 import (
-	context "context"
+	"context"
 	"crypto/hmac"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -2464,7 +2464,7 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			webhookSecret: "webhook-secret",
 			setupRequest: func() *http.Request {
 				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader("invalid payload"))
-				req.Header.Set("X-Hub-Signature", "invalid")
+				req.Header.Set("X-Hub-Signature-256", "invalid")
 				req.Header.Set("Content-Type", "application/json")
 				return req
 			},
@@ -2496,10 +2496,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2542,10 +2542,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2590,10 +2590,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2636,10 +2636,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2676,10 +2676,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2719,10 +2719,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2775,10 +2775,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2842,10 +2842,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2906,10 +2906,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -2960,10 +2960,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -3011,10 +3011,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -3060,10 +3060,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -3111,10 +3111,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -3151,10 +3151,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
@@ -3186,10 +3186,10 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				req.Header.Set("Content-Type", "application/json")
 
 				// Create a valid signature
-				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac := hmac.New(sha256.New, []byte("webhook-secret"))
 				mac.Write([]byte(payload))
 				signature := hex.EncodeToString(mac.Sum(nil))
-				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+				req.Header.Set("X-Hub-Signature-256", "sha256="+signature)
 
 				return req
 			},
