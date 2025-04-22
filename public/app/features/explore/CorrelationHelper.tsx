@@ -158,8 +158,13 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
         />
       )}
       <Alert title={t('explore.correlation-helper.title-correlation-details', 'Correlation details')} severity="info">
-        The correlation link will appear by the <code>{correlations.resultField}</code> field. You can use the following
-        variables to set up your correlations:
+        <Trans
+          i18nKey="explore.correlation-helper.body-correlation-details"
+          values={{ resultField: correlations.resultField }}
+        >
+          The correlation link will appear by the <code>{'{{resultField}}'}</code> field. You can use the following
+          variables to set up your correlations:
+        </Trans>
         <pre>
           {Object.entries(correlations.vars).map((entry) => {
             return `\$\{${entry[0]}\} = ${entry[1]}\n`;
@@ -173,7 +178,7 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           }}
           label={
             <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
-              Label / Description
+              <Trans i18nKey="explore.correlation-helper.label-description-header">Label / Description</Trans>
               {!isLabelDescOpen && !loadingLabel && (
                 <span className={styles.labelCollapseDetails}>{`Label: ${getValues('label') || defaultLabel}`}</span>
               )}
@@ -203,8 +208,13 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
           }}
           label={
             <Stack gap={1} direction="row" wrap="wrap" alignItems="center">
-              Transformations
-              <Tooltip content="A transformation extracts one or more variables out of a single field.">
+              <Trans i18nKey="explore.correlation-helper.transformations">Transformations</Trans>
+              <Tooltip
+                content={t(
+                  'explore.correlation-helper.tooltip-transformations',
+                  'A transformation extracts one or more variables out of a single field.'
+                )}
+              >
                 <Icon name="info-circle" size="sm" />
               </Tooltip>
             </Stack>
@@ -225,9 +235,9 @@ export const CorrelationHelper = ({ exploreId, correlations }: Props) => {
             const detailsString = [
               (mapValue ?? '').length > 0 ? `Variable name: ${mapValue}` : undefined,
               (expression ?? '').length > 0 ? (
-                <>
-                  Expression: <code>{expression}</code>
-                </>
+                <Trans i18nKey="explore.correlation-helper.expression" values={{ expression }}>
+                  Expression: <code>{'{{expression}}'}</code>
+                </Trans>
               ) : undefined,
             ].filter((val) => val);
             return (

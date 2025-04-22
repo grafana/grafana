@@ -3,7 +3,7 @@ import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 type LiveTailButtonProps = {
   splitted: boolean;
@@ -43,7 +43,9 @@ export function LiveTailButton(props: LiveTailButtonProps) {
           icon={!isLive || isPaused ? 'play' : 'pause'}
           onClick={onClickMain}
         >
-          {isLive && isPaused ? 'Paused' : 'Live'}
+          {isLive && isPaused
+            ? t('explore.live-tail-button.paused', 'Paused')
+            : t('explore.live-tail-button.live', 'Live')}
         </ToolbarButton>
       </Tooltip>
 

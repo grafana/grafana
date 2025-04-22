@@ -108,7 +108,7 @@ const EnumMappingRow = ({
             // TODO fix accessibility issue here
             // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
             <td onClick={onEnumValueClick} className={styles.clickableTableCell}>
-              {value && value !== '' ? value : 'Click to edit'}
+              {value && value !== '' ? value : t('transformers.enum-mapping-row.click-to-edit', 'Click to edit')}
             </td>
           )}
           <td className={styles.textAlignCenter}>

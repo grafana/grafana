@@ -37,9 +37,11 @@ export const NewOrgPage = ({ createOrganization }: Props) => {
     <Page navId="global-orgs" pageNav={pageNav}>
       <Page.Contents>
         <p className="muted">
-          Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
-          shared between organizations. While users might belong to more than one organization, multiple organizations
-          are most frequently used in multi-tenant deployments.
+          <Trans i18nKey="org.new-org-page.description">
+            Each organization contains their own dashboards, data sources, and configuration, which cannot be shared
+            shared between organizations. While users might belong to more than one organization, multiple organizations
+            are most frequently used in multi-tenant deployments.
+          </Trans>
         </p>
 
         <Form<CreateOrgFormDTO> onSubmit={createOrg}>

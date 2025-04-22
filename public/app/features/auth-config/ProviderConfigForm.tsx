@@ -215,7 +215,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             </Button>
 
             <Button type={'submit'} disabled={isSaving} variant={'secondary'} onClick={() => onSaveAttempt(false)}>
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving
+                ? t('auth-config.provider-config-form.saving', 'Saving...')
+                : t('auth-config.provider-config-form.save', 'Save')}
             </Button>
             <LinkButton href={'/admin/authentication'} variant={'secondary'}>
               <Trans i18nKey="auth-config.provider-config-form.discard">Discard</Trans>

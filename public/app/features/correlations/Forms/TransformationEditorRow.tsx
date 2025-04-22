@@ -138,7 +138,8 @@ const TransformationEditorRow = (props: Props) => {
             <Label htmlFor={`config.transformations.${defaultValue.id}.expression`}>
               <Trans i18nKey="correlations.transform-row.expression-label">Expression</Trans>
               {getSupportedTransTypeDetails(watch(`config.transformations.${index}.type`)).expressionDetails.required
-                ? ' *'
+                ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                  ' *'
                 : ''}
             </Label>
             <Tooltip

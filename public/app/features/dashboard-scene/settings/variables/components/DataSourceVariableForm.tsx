@@ -65,10 +65,18 @@ export function DataSourceVariableForm({
         onBlur={onRegExBlur}
         description={
           <div>
-            Regex filter for which data source instances to choose from in the variable value list. Leave empty for all.
+            <Trans i18nKey="dashboard-scene.data-source-variable-form.description-instance-name-filter">
+              Regex filter for which data source instances to choose from in the variable value list. Leave empty for
+              all.
+            </Trans>
             <br />
             <br />
-            Example: <code>/^prod/</code>
+            <Trans
+              i18nKey="dashboard-scene.data-source-variable-form.example-instance-name-filter"
+              components={{ codeExample: <code>/^prod/</code> }}
+            >
+              Example: {'<codeExample />'}
+            </Trans>
           </div>
         }
       />

@@ -91,7 +91,11 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
       variant={overwrite ? 'destructive' : 'primary'}
       data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
-      {isLoading ? 'Saving...' : overwrite ? 'Save and overwrite' : 'Save'}
+      {isLoading
+        ? t('dashboard-scene.save-button.saving', 'Saving...')
+        : overwrite
+          ? t('dashboard-scene.save-button.save-and-overwrite', 'Save and overwrite')
+          : t('dashboard-scene.save-button.save', 'Save')}
     </Button>
   );
 }

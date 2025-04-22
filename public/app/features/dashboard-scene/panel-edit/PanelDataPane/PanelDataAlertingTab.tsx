@@ -72,7 +72,14 @@ export function PanelDataAlertingTabRendered({ model }: SceneComponentProps<Pane
       severity="error"
     >
       {errors.map((error, index) => (
-        <div key={index}>Failed to load Grafana rules state: {stringifyErrorLike(error)}</div>
+        <div key={index}>
+          <Trans
+            i18nKey="dashboard-scene.panel-data-alerting-tab-rendered.error-failed-to-load"
+            values={{ errorToDisplay: stringifyErrorLike(error) }}
+          >
+            Failed to load Grafana rules state: {'{{errorToDisplay}}'}
+          </Trans>
+        </div>
       ))}
     </Alert>
   ) : null;

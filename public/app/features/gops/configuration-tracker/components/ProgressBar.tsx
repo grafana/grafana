@@ -3,6 +3,8 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Text, useStyles2 } from '@grafana/ui';
 
+import { Trans } from '../../../../core/internationalization';
+
 export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   const styles = useStyles2(getStyles);
   if (totalStepsToDo === 0) {
@@ -17,7 +19,9 @@ export function ProgressBar({ stepsDone, totalStepsToDo }: { stepsDone: number; 
 export function StepsStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
     <span>
-      <Text color="success">{stepsDone}</Text> of {totalStepsToDo}
+      <Trans i18nKey="gops.progress-bar.steps-status" values={{ stepsDone }}>
+        <Text color="success">{'{{stepsDone}}'}</Text> of {{ totalStepsToDo }}
+      </Trans>
     </span>
   );
 }

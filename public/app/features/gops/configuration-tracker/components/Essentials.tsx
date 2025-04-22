@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';
@@ -184,7 +184,7 @@ function StepButton({
 function ProgressStatus({ stepsDone, totalStepsToDo }: { stepsDone: number; totalStepsToDo: number }) {
   return (
     <Stack direction={'row'} gap={1} alignItems="center">
-      Your progress
+      <Trans i18nKey="gops.progress-status.your-progress">Your progress</Trans>
       <ProgressBar stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
       <StepsStatus stepsDone={stepsDone} totalStepsToDo={totalStepsToDo} />
     </Stack>

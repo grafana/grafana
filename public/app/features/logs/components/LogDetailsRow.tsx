@@ -338,7 +338,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   />
                   <IconButton
                     name="search-minus"
-                    tooltip={`Filter out value${refIdTooltip}`}
+                    tooltip={
+                      app === CoreApp.Explore && row.dataFrame?.refId
+                        ? t('logs.un-themed-log-details-row.filter-out-query', 'Filter out value in query {{query}}', {
+                            query: row.dataFrame?.refId,
+                          })
+                        : t('logs.un-themed-log-details-row.filter-out', 'Filter out value')
+                    }
                     onClick={this.filterOutLabel}
                   />
                 </>

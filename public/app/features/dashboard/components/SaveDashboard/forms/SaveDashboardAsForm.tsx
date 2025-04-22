@@ -204,7 +204,9 @@ export const SaveDashboardAsForm = ({
                 'Save dashboard button'
               )}
             >
-              {isLoading ? 'Saving...' : 'Save'}
+              {isLoading
+                ? t('dashboard.save-dashboard-as-form.saving', 'Saving...')
+                : t('dashboard.save-dashboard-as-form.save', 'Save')}
             </Button>
           </Stack>
         </>

@@ -10,8 +10,8 @@ import {
   PluginState,
 } from '@grafana/data';
 import { FormatTimeTransformerOptions } from '@grafana/data/internal';
-import { Select, InlineFieldRow, InlineField, Input } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Select, InlineFieldRow, InlineField, Input, TextLink } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getTimezoneOptions } from '../utils';
@@ -90,13 +90,13 @@ export function FormatTimeTransfomerEditor({
           label={t('transformers.format-time-transfomer-editor.label-format', 'Format')}
           labelWidth={10}
           tooltip={
-            <>
+            <Trans i18nKey="transformers.format-time-transfomer-editor.tooltip-format">
               The output format for the field specified as a{' '}
-              <a href="https://momentjs.com/docs/#/displaying/" target="_blank" rel="noopener noreferrer">
+              <TextLink href="https://momentjs.com/docs/#/displaying/" external>
                 Moment.js format string
-              </a>
+              </TextLink>
               .
-            </>
+            </Trans>
           }
           interactive={true}
         >

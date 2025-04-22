@@ -127,6 +127,7 @@ export const ResourceDimensionEditor = (
             labelWidth={labelWidth}
             grow={true}
           >
+            {/* eslint-disable-next-line @grafana/no-untranslated-strings*/}
             <div>TODO mappings editor!</div>
           </InlineField>
         </InlineFieldRow>

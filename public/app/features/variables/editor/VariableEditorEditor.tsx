@@ -229,7 +229,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 disabled={loading}
                 variant="secondary"
               >
-                Run query
+                <Trans i18nKey="variables.variable-editor-editor-un-connected.run-query">Run query</Trans>
                 {loading && (
                   <Icon
                     className={styles.spin}
