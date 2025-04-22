@@ -85,7 +85,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
   };
   const onUrlChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onOptionsChange({ ...options, url: event.currentTarget.value });
-    setProduct(({ name: '', language: ''}))
+    setProduct({ name: '', language: '' });
   };
 
   return (
@@ -238,8 +238,11 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
                   )}
                   {/* {!advancedHttpSettingsIsOpen && <Space v={3} />} */}
                   <Box display="flex" alignItems="center">
-                  <InlineField label={<div className={cx(styles.label)}>Auth and TLS/SSL Settings</div>} labelWidth={35}>
-                  <InlineSwitch
+                    <InlineField
+                      label={<div className={cx(styles.label)}>Auth and TLS/SSL Settings</div>}
+                      labelWidth={35}
+                    >
+                      <InlineSwitch
                         value={authenticationSettingsIsOpen}
                         onChange={() => setAuthenticationSettingsIsOpen(!authenticationSettingsIsOpen)}
                       />
@@ -495,7 +498,7 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
                 label={<Text element="h3">2. {CONFIG_SECTION_HEADERS[1].label}</Text>}
                 isOpen={CONFIG_SECTION_HEADERS[1].isOpen}
               >
-              {/* <Box display="flex" justifyContent="space-between" alignItems="center">
+                {/* <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Text element="h2">{CONFIG_SECTION_HEADERS[1].label}</Text>
                 <div style={{ display: 'flex' }}>
                   <Label style={{ marginRight: '10px' }}>Advanced Settings</Label>
@@ -505,29 +508,29 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
                   />
                 </div>
               </Box> */}
-              {product.language === InfluxVersion.InfluxQL && (
+                {product.language === InfluxVersion.InfluxQL && (
+                  <>
+                    <Alert severity="info" title="Database Access">
+                      <p>
+                        Setting the database for this datasource does not deny access to other databases. The InfluxDB
+                        query syntax allows switching the database in the query. For example:
+                        <code>SHOW MEASUREMENTS ON _internal</code> or
+                        <code>SELECT * FROM &quot;_internal&quot;..&quot;database&quot; LIMIT 10</code>
+                        <br />
+                        <br />
+                        To support data isolation and security, make sure appropriate permissions are configured in
+                        InfluxDB.
+                      </p>
+                    </Alert>
+                  </>
+                )}
+                <Text>
+                  Provide the necessary database connection details based on your selected InfluxDB product and query
+                  language.
+                </Text>
                 <>
-                  <Alert severity="info" title="Database Access">
-                    <p>
-                      Setting the database for this datasource does not deny access to other databases. The InfluxDB query syntax
-                      allows switching the database in the query. For example:
-                      <code>SHOW MEASUREMENTS ON _internal</code> or
-                      <code>SELECT * FROM &quot;_internal&quot;..&quot;database&quot; LIMIT 10</code>
-                      <br />
-                      <br />
-                      To support data isolation and security, make sure appropriate permissions are configured in InfluxDB.
-                    </p>
-                  </Alert>
-                </>
-              )}
-              <Text>
-                Provide the necessary database connection details based on your selected InfluxDB product and query
-                language.
-              </Text>
-              <>
-                <Space v={2} />
-                {(product.language === InfluxVersion.SQL ||
-                  product.language === InfluxVersion.InfluxQL) && (
+                  <Space v={2} />
+                  {(product.language === InfluxVersion.SQL || product.language === InfluxVersion.InfluxQL) && (
                     <>
                       <InlineFieldRow>
                         <InlineField label="Database" labelWidth={30} grow>
@@ -547,61 +550,60 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
                       </InlineFieldRow>
                     </>
                   )}
-                {product.language === InfluxVersion.InfluxQL && (
-                  <>
-                    <InlineFieldRow>
-                      <InlineField label="User" labelWidth={30} grow>
-                        <Input
-                          value={options.user || ''}
-                          onChange={(e) => onOptionsChange({ ...options, user: e.currentTarget.value })}
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                    <InlineFieldRow>
-                      <InlineField label="Password" labelWidth={30} grow>
-                        <SecretInput
-                          isConfigured={Boolean(options.secureJsonFields && options.secureJsonFields.password)}
-                          value={''}
-                          onReset={() => {}}
-                          onChange={() => {}}
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                  </>
-                )}
-                {product.language === InfluxVersion.Flux && (
-                  <>
-                    <InlineFieldRow>
-                      <InlineField label="Organization" labelWidth={30} grow>
-                        <Input
-                          value={options.jsonData.organization || ''}
-                          onChange={(e) =>
-                            onOptionsChange({
-                              ...options,
-                              jsonData: { ...options.jsonData, organization: e.currentTarget.value },
-                            })
-                          }
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                    <InlineFieldRow>
-                      <InlineField labelWidth={30} label="Default Bucket" grow>
-                        <Input
-                          placeholder="default bucket"
-                          value={options.jsonData.defaultBucket || ''}
-                          onChange={(e) =>
-                            onOptionsChange({
-                              ...options,
-                              jsonData: { ...options.jsonData, defaultBucket: e.currentTarget.value },
-                            })
-                          }
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                  </>
-                )}
-                {(product.language === InfluxVersion.Flux ||
-                  product.language === InfluxVersion.SQL) && (
+                  {product.language === InfluxVersion.InfluxQL && (
+                    <>
+                      <InlineFieldRow>
+                        <InlineField label="User" labelWidth={30} grow>
+                          <Input
+                            value={options.user || ''}
+                            onChange={(e) => onOptionsChange({ ...options, user: e.currentTarget.value })}
+                          />
+                        </InlineField>
+                      </InlineFieldRow>
+                      <InlineFieldRow>
+                        <InlineField label="Password" labelWidth={30} grow>
+                          <SecretInput
+                            isConfigured={Boolean(options.secureJsonFields && options.secureJsonFields.password)}
+                            value={''}
+                            onReset={() => {}}
+                            onChange={() => {}}
+                          />
+                        </InlineField>
+                      </InlineFieldRow>
+                    </>
+                  )}
+                  {product.language === InfluxVersion.Flux && (
+                    <>
+                      <InlineFieldRow>
+                        <InlineField label="Organization" labelWidth={30} grow>
+                          <Input
+                            value={options.jsonData.organization || ''}
+                            onChange={(e) =>
+                              onOptionsChange({
+                                ...options,
+                                jsonData: { ...options.jsonData, organization: e.currentTarget.value },
+                              })
+                            }
+                          />
+                        </InlineField>
+                      </InlineFieldRow>
+                      <InlineFieldRow>
+                        <InlineField labelWidth={30} label="Default Bucket" grow>
+                          <Input
+                            placeholder="default bucket"
+                            value={options.jsonData.defaultBucket || ''}
+                            onChange={(e) =>
+                              onOptionsChange({
+                                ...options,
+                                jsonData: { ...options.jsonData, defaultBucket: e.currentTarget.value },
+                              })
+                            }
+                          />
+                        </InlineField>
+                      </InlineFieldRow>
+                    </>
+                  )}
+                  {(product.language === InfluxVersion.Flux || product.language === InfluxVersion.SQL) && (
                     <>
                       <InlineFieldRow>
                         <InlineField labelWidth={30} label="Token">
@@ -644,81 +646,84 @@ export const ConfigEditor: React.FC<Props> = ({ onOptionsChange, options }: Prop
                     </>
                   )}
                   <Space v={2} />
-                  <InlineField label={<div className={cx(styles.label)}>Advanced Database Settings</div>} labelWidth={40}>
-                      <InlineSwitch
-                        value={advancedDbConnectionSettingsIsOpen}
-                        onChange={() => setAdvancedDbConnectionSettingsIsOpen(!advancedDbConnectionSettingsIsOpen)}
-                      />
-                    </InlineField>
+                  <InlineField
+                    label={<div className={cx(styles.label)}>Advanced Database Settings</div>}
+                    labelWidth={40}
+                  >
+                    <InlineSwitch
+                      value={advancedDbConnectionSettingsIsOpen}
+                      onChange={() => setAdvancedDbConnectionSettingsIsOpen(!advancedDbConnectionSettingsIsOpen)}
+                    />
+                  </InlineField>
                   {advancedDbConnectionSettingsIsOpen && <Space v={2} />}
                   {product.language === InfluxVersion.InfluxQL && advancedDbConnectionSettingsIsOpen && (
-                  <>
-                    <InlineFieldRow>
-                      <InlineField
-                        label="HTTP Method"
-                        labelWidth={30}
-                        tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
-                      method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
-                      will restrict you and return an error if the query is too large."
-                      >
-                        <Combobox
-                          width={30}
-                          value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
-                          options={httpModes}
-                          onChange={(e) =>
-                            onOptionsChange({ ...options, jsonData: { ...options.jsonData, httpMode: e.label } })
-                          }
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                  </>
-                )}
-                {product.language === InfluxVersion.SQL && advancedDbConnectionSettingsIsOpen && (
-                  <>
-                    <InlineFieldRow>
-                      <InlineField label="Insecure Connection" labelWidth={30}>
-                        <InlineSwitch
-                          className="width-15"
-                          value={options.jsonData.insecureGrpc ?? false}
-                          onChange={(event) => {
-                            onOptionsChange({
-                              ...options,
-                              jsonData: {
-                                ...options.jsonData,
-                                insecureGrpc: event.currentTarget.checked,
-                              },
-                            });
-                          }}
-                        />
-                      </InlineField>
-                    </InlineFieldRow>
-                  </>
-                )}
-                {(product.language === InfluxVersion.InfluxQL || product.language === InfluxVersion.Flux) &&
-                  advancedDbConnectionSettingsIsOpen && (
                     <>
                       <InlineFieldRow>
                         <InlineField
-                          label="Min time interval"
+                          label="HTTP Method"
                           labelWidth={30}
-                          tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
+                          tooltip="You can use either GET or POST HTTP method to query your InfluxDB database. The POST
+                      method allows you to perform heavy requests (with a lots of WHERE clause) while the GET method
+                      will restrict you and return an error if the query is too large."
                         >
-                          <Input
-                            className="width-15"
-                            placeholder="10s"
-                            value={options.jsonData.timeInterval || ''}
+                          <Combobox
+                            width={30}
+                            value={httpModes.find((httpMode) => httpMode.value === options.jsonData.httpMode)}
+                            options={httpModes}
                             onChange={(e) =>
-                              onOptionsChange({
-                                ...options,
-                                jsonData: { ...options.jsonData, timeInterval: e.currentTarget.value },
-                              })
+                              onOptionsChange({ ...options, jsonData: { ...options.jsonData, httpMode: e.label } })
                             }
                           />
                         </InlineField>
                       </InlineFieldRow>
                     </>
                   )}
-              </>
+                  {product.language === InfluxVersion.SQL && advancedDbConnectionSettingsIsOpen && (
+                    <>
+                      <InlineFieldRow>
+                        <InlineField label="Insecure Connection" labelWidth={30}>
+                          <InlineSwitch
+                            className="width-15"
+                            value={options.jsonData.insecureGrpc ?? false}
+                            onChange={(event) => {
+                              onOptionsChange({
+                                ...options,
+                                jsonData: {
+                                  ...options.jsonData,
+                                  insecureGrpc: event.currentTarget.checked,
+                                },
+                              });
+                            }}
+                          />
+                        </InlineField>
+                      </InlineFieldRow>
+                    </>
+                  )}
+                  {(product.language === InfluxVersion.InfluxQL || product.language === InfluxVersion.Flux) &&
+                    advancedDbConnectionSettingsIsOpen && (
+                      <>
+                        <InlineFieldRow>
+                          <InlineField
+                            label="Min time interval"
+                            labelWidth={30}
+                            tooltip="A lower limit for the auto group by time interval. Recommended to be set to write frequency, for example 1m if your data is written every minute."
+                          >
+                            <Input
+                              className="width-15"
+                              placeholder="10s"
+                              value={options.jsonData.timeInterval || ''}
+                              onChange={(e) =>
+                                onOptionsChange({
+                                  ...options,
+                                  jsonData: { ...options.jsonData, timeInterval: e.currentTarget.value },
+                                })
+                              }
+                            />
+                          </InlineField>
+                        </InlineFieldRow>
+                      </>
+                    )}
+                </>
               </CollapsableSection>
             </Box>
           </Stack>
@@ -747,5 +752,5 @@ export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, 
       width: '240px',
       color: theme.colors.text.primary,
     }),
-  }
+  };
 };
