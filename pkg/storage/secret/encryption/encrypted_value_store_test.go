@@ -49,14 +49,14 @@ func TestEncryptedValueStoreImpl(t *testing.T) {
 		obtainedEV, err := store.Get(ctx, "other-test-namespace", createdEV.UID)
 
 		require.Error(t, err)
-		require.Equal(t, "db failure: encrypted value not found", err.Error())
+		require.Equal(t, "encrypted value not found", err.Error())
 		require.Nil(t, obtainedEV)
 	})
 
 	t.Run("get a non existent encrypted value returns error", func(t *testing.T) {
 		obtainedEV, err := store.Get(ctx, "test-namespace", "test-uid")
 		require.Error(t, err)
-		require.Equal(t, "db failure: encrypted value not found", err.Error())
+		require.Equal(t, "encrypted value not found", err.Error())
 		require.Nil(t, obtainedEV)
 	})
 
