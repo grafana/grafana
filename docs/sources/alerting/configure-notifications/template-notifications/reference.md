@@ -271,7 +271,7 @@ You can then use `tz` to change the timezone from UTC to local time, such as `Eu
 
 {{< admonition type="note" >}}
 
-Namespaced Functions is not [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) by default in Grafana Cloud.
+Namespaced Functions are not [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) by default in Grafana Cloud.
 
 {{< /admonition >}}
 
