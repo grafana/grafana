@@ -90,7 +90,7 @@ export const ZipkinQueryField = ({ query, onChange, onRunQuery, datasource }: Pr
       </Modal>
       <InlineFieldRow>
         <InlineField label="Query type" grow={true}>
-          <Stack gap={3} alignItems={'center'} justifyContent={'space-between'}>
+          <Stack gap={1} alignItems="center" justifyContent="space-between">
             <RadioButtonGroup<ZipkinQueryType>
               options={[{ value: 'traceID', label: 'TraceID' }]}
               value={query.queryType || 'traceID'}
