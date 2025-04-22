@@ -151,14 +151,14 @@ function processInputs(): ThunkResult<void> {
 }
 
 function processElements(dashboardJson?: { __elements?: Record<string, LibraryElementExport> }): ThunkResult<void> {
-  return async function (dispatch) {
+  return async function(dispatch) {
     const libraryPanelInputs = await getLibraryPanelInputs(dashboardJson);
     dispatch(setLibraryPanelInputs(libraryPanelInputs));
   };
 }
 
-function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
-  return async function (dispatch) {
+export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
+  return async function(dispatch) {
     const { elements, variables, annotations } = dashboard;
     // get elements from dashboard
     // each element can only be a panel
@@ -167,9 +167,10 @@ function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<void> {
       if (element.kind !== 'Panel') {
         throw new Error('Only panels are currenlty supported in v2 dashboards');
       }
-
-      for (const query of element.spec.data.spec.queries) {
-        await processV2DatasourceInput(query.spec, inputs);
+      if (element.spec.data.spec.queries.length > 0) {
+        for (const query of element.spec.data.spec.queries) {
+          await processV2DatasourceInput(query.spec, inputs);
+        }
       }
     }
 
@@ -329,12 +330,12 @@ export function getFolderByUid(uid: string): Promise<{ uid: string; title: strin
   return getBackendSrv().get(`/api/folders/${uid}`);
 }
 
-async function processV2DatasourceInput(
+export async function processV2DatasourceInput(
   obj: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
   inputs: Record<string, DataSourceInput> = {}
 ) {
-  const datasourceRef = obj.datasource;
-  if (!datasourceRef && obj.query) {
+  const datasourceRef = obj?.datasource;
+  if (!datasourceRef && obj?.query) {
     const dsType = obj.query.kind;
     const datasource = await getDatasourceSrv().get({ type: dsType });
     let dataSourceInput: DataSourceInput | undefined;
