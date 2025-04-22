@@ -269,7 +269,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			nil,
 			mockParser,
 			nil,
@@ -318,7 +319,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			nil,
 			mockParser,
 			mockRepoResources,
@@ -360,7 +362,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 			Return(nil, errors.New("signing error"))
 
 		progress := jobs.NewMockJobProgressRecorder(t)
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			nil,
 			mockParser,
 			nil,
@@ -419,7 +422,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			nil,
 			mockParser,
 			mockRepoResources,
@@ -459,10 +463,13 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 				Obj:  obj,
 			}, nil)
 
+		mockRepo := repository.NewMockRepository(t)
+
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		writeResourceFileFromObject := mockRepoResources.On("WriteResourceFileFromObject", mock.Anything, mock.Anything, mock.Anything)
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			mockRepo,
 			nil,
 			mockParser,
 			mockRepoResources,
@@ -482,8 +489,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 
 		// Change the result file name
 		writeResourceFileFromObject.Return("bbbb.json", nil)
-		mockRepoResources.On("RemoveResourceFromFile", mock.Anything, "aaaa.json", "").
-			Return("", schema.GroupVersionKind{}, nil).Once()
+		mockRepoResources.On("Delete", mock.Anything, "aaaa.json", mock.Anything).
+			Return(nil).Once()
 
 		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte(""))
 		require.NoError(t, err)
@@ -557,7 +564,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		})).Return()
 		progress.On("TooManyErrors").Return(nil)
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			nil,
 			mockParser,
 			mockRepoResources,
@@ -602,7 +610,8 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 		progress.On("Record", mock.Anything, mock.Anything).Return()
 		progress.On("TooManyErrors").Return(errors.New("too many errors"))
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			nil,
 			mockParser,
 			mockRepoResources,
@@ -632,7 +641,8 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			mockLegacyMigrator,
 			nil,
 			nil,
@@ -663,7 +673,8 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			mockLegacyMigrator,
 			nil,
 			nil,
@@ -694,7 +705,8 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			mockLegacyMigrator,
 			nil,
 			nil,
@@ -733,7 +745,8 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 		progress.On("SetTotal", mock.Anything, 100).Return()
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			mockLegacyMigrator,
 			nil,
 			nil,
@@ -773,7 +786,8 @@ func TestLegacyResourceResourceMigrator_Migrate(t *testing.T) {
 		progress.On("SetTotal", mock.Anything, 200).Return()
 		signer := signature.NewMockSigner(t)
 
-		migrator := NewLegacyResourceMigrator(
+		migrator := newLegacyResourceMigrator(
+			nil,
 			mockLegacyMigrator,
 			nil,
 			nil,

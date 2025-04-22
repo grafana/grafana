@@ -80,7 +80,8 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 			continue
 		}
 
-		reader := NewLegacyResourceMigrator(
+		reader := newLegacyResourceMigrator(
+			rw,
 			m.legacyMigrator,
 			parser,
 			repositoryResources,
@@ -100,6 +101,7 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 }
 
 type legacyResourceResourceMigrator struct {
+	repo      repository.ReaderWriter
 	legacy    legacy.LegacyMigrator
 	parser    resources.Parser
 	progress  jobs.JobProgressRecorder
@@ -111,7 +113,8 @@ type legacyResourceResourceMigrator struct {
 	history   map[string]string // UID >> file path
 }
 
-func NewLegacyResourceMigrator(
+func newLegacyResourceMigrator(
+	repo repository.ReaderWriter,
 	legacy legacy.LegacyMigrator,
 	parser resources.Parser,
 	resources resources.RepositoryResources,
@@ -126,6 +129,7 @@ func NewLegacyResourceMigrator(
 		history = make(map[string]string)
 	}
 	return &legacyResourceResourceMigrator{
+		repo:      repo,
 		legacy:    legacy,
 		parser:    parser,
 		progress:  progress,
@@ -178,11 +182,11 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 
 	// When replaying history, the path to the file may change over time
 	// This happens when the title or folder change
-	if r.history != nil {
+	if r.history != nil && err == nil {
 		name := parsed.Meta.GetName()
 		previous := r.history[name]
 		if previous != "" && previous != fileName {
-			_, _, err = r.resources.RemoveResourceFromFile(ctx, previous, "")
+			err = r.repo.Delete(ctx, previous, "", fmt.Sprintf("moved to: %s", fileName))
 		}
 		r.history[name] = fileName
 	}
