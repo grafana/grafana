@@ -207,9 +207,9 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 
 		var cnnstr string
 		if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
-			cnnstr, err = s.generateConnectionString(dsInfo)
-		} else {
 			cnnstr, err = generateConnectionConfigPGX(dsInfo)
+		} else {
+			cnnstr, err = s.generateConnectionString(dsInfo)
 		}
 		if err != nil {
 			return nil, err
@@ -242,52 +242,83 @@ func escape(input string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(input, `\`, `\\`), "'", `\'`)
 }
 
-func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
-	logger := s.logger
-	var host string
-	var port int
+type connectionParams struct {
+	host     string
+	port     int
+	user     string
+	password string
+	database string
+}
+
+func parseConnectionParams(dsInfo sqleng.DataSourceInfo) (connectionParams, error) {
+	var params connectionParams
+	var err error
+
 	if strings.HasPrefix(dsInfo.URL, "/") {
-		host = dsInfo.URL
-		logger.Debug("Generating connection string with Unix socket specifier", "socket", host)
+		params.host = dsInfo.URL
 	} else {
-		index := strings.LastIndex(dsInfo.URL, ":")
-		v6Index := strings.Index(dsInfo.URL, "]")
-		sp := strings.SplitN(dsInfo.URL, ":", 2)
-		host = sp[0]
-		if v6Index == -1 {
-			if len(sp) > 1 {
-				var err error
-				port, err = strconv.Atoi(sp[1])
-				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
-				}
-
-				logger.Debug("Generating connection string with network host/port pair", "host", host, "port", port)
-			} else {
-				logger.Debug("Generating connection string with network host", "host", host)
-			}
-		} else {
-			if index == v6Index+1 {
-				host = dsInfo.URL[1 : index-1]
-				var err error
-				port, err = strconv.Atoi(dsInfo.URL[index+1:])
-				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
-				}
-
-				logger.Debug("Generating ipv6 connection string with network host/port pair", "host", host, "port", port)
-			} else {
-				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
-				logger.Debug("Generating ipv6 connection string with network host", "host", host)
-			}
+		params.host, params.port, err = parseNetworkAddress(dsInfo.URL)
+		if err != nil {
+			return connectionParams{}, err
 		}
 	}
 
-	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
-		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
-	if port > 0 {
-		connStr += fmt.Sprintf(" port=%d", port)
+	params.user = dsInfo.User
+	params.password = dsInfo.DecryptedSecureJSONData["password"]
+	params.database = dsInfo.Database
+
+	return params, nil
+}
+
+func parseNetworkAddress(url string) (string, int, error) {
+	index := strings.LastIndex(url, ":")
+	v6Index := strings.Index(url, "]")
+	sp := strings.SplitN(url, ":", 2)
+	host := sp[0]
+	port := 0
+
+	if v6Index == -1 {
+		if len(sp) > 1 {
+			var err error
+			port, err = strconv.Atoi(sp[1])
+			if err != nil {
+				return "", 0, fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
+			}
+		}
+	} else {
+		if index == v6Index+1 {
+			host = url[1 : index-1]
+			var err error
+			port, err = strconv.Atoi(url[index+1:])
+			if err != nil {
+				return "", 0, fmt.Errorf("invalid port in host specifier %q: %w", url[index+1:], err)
+			}
+		} else {
+			host = url[1 : len(url)-1]
+		}
 	}
+
+	return host, port, nil
+}
+
+func buildBaseConnectionString(params connectionParams) string {
+	connStr := fmt.Sprintf("user='%s' password='%s' host='%s' dbname='%s'",
+		escape(params.user), escape(params.password), escape(params.host), escape(params.database))
+	if params.port > 0 {
+		connStr += fmt.Sprintf(" port=%d", params.port)
+	}
+	return connStr
+}
+
+func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string, error) {
+	logger := s.logger
+
+	params, err := parseConnectionParams(dsInfo)
+	if err != nil {
+		return "", err
+	}
+
+	connStr := buildBaseConnectionString(params)
 
 	tlsSettings, err := s.tlsManager.getTLSSettings(dsInfo)
 	if err != nil {
@@ -323,50 +354,22 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 }
 
 func generateConnectionConfigPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
-	var host string
-	var port int
-	if strings.HasPrefix(dsInfo.URL, "/") {
-		host = dsInfo.URL
-	} else {
-		index := strings.LastIndex(dsInfo.URL, ":")
-		v6Index := strings.Index(dsInfo.URL, "]")
-		sp := strings.SplitN(dsInfo.URL, ":", 2)
-		host = sp[0]
-		if v6Index == -1 {
-			if len(sp) > 1 {
-				var err error
-				port, err = strconv.Atoi(sp[1])
-				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", sp[1], err)
-				}
-			}
-		} else {
-			if index == v6Index+1 {
-				host = dsInfo.URL[1 : index-1]
-				var err error
-				port, err = strconv.Atoi(dsInfo.URL[index+1:])
-				if err != nil {
-					return "", fmt.Errorf("invalid port in host specifier %q: %w", dsInfo.URL[index+1:], err)
-				}
-			} else {
-				host = dsInfo.URL[1 : len(dsInfo.URL)-1]
-			}
-		}
+	params, err := parseConnectionParams(dsInfo)
+	if err != nil {
+		return "", err
 	}
 
+	connStr := buildBaseConnectionString(params)
+
 	// NOTE: we always set sslmode=disable in the connection string, we handle TLS manually later
-	connStr := fmt.Sprintf("sslmode=disable user='%s' password='%s' host='%s' dbname='%s'",
-		escape(dsInfo.User), escape(dsInfo.DecryptedSecureJSONData["password"]), escape(host), escape(dsInfo.Database))
-	if port > 0 {
-		connStr += fmt.Sprintf(" port=%d", port)
-	}
+	connStr += fmt.Sprintf(" sslmode=disable")
 
 	conf, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return "", err
 	}
 
-	tlsConf, err := tls.GetTLSConfig(dsInfo, os.ReadFile, host)
+	tlsConf, err := tls.GetTLSConfig(dsInfo, os.ReadFile, params.host)
 	if err != nil {
 		return "", err
 	}
@@ -380,7 +383,7 @@ func generateConnectionConfigPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
 
 	// by default pgx resolves hostnames to ip addresses. we must avoid this.
 	// (certain socks-proxy related functionality relies on the hostname being preserved)
-	conf.ConnConfig.LookupFunc = func(ctx context.Context, host string) ([]string, error) {
+	conf.ConnConfig.LookupFunc = func(_ context.Context, host string) ([]string, error) {
 		return []string{host}, nil
 	}
 
