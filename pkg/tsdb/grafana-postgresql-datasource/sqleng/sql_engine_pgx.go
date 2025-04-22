@@ -46,7 +46,9 @@ func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Pool, conf
 func (e *DataSourceHandler) DisposePGX(ctx context.Context) {
 	e.log.Debug("Disposing DB...")
 
-	e.p.Close()
+	if e.p != nil {
+		e.p.Close()
+	}
 
 	e.log.Debug("DB disposed")
 }
