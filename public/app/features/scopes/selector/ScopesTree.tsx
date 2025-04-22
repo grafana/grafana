@@ -1,12 +1,12 @@
 import { Dictionary, groupBy } from 'lodash';
 import { useMemo } from 'react';
 
+import { RecentScopes } from './RecentScopes';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { ScopesTreeLoading } from './ScopesTreeLoading';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
-import { Node, NodeReason, NodesMap, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';
-
+import { Node, NodeReason, NodesMap, OnNodeSelectToggle, OnNodeUpdate, TreeScope, SelectedScope } from './types';
 export interface ScopesTreeProps {
   nodes: NodesMap;
   nodePath: string[];
@@ -14,6 +14,10 @@ export interface ScopesTreeProps {
   scopes: TreeScope[];
   onNodeUpdate: OnNodeUpdate;
   onNodeSelectToggle: OnNodeSelectToggle;
+
+  // Recent scopes are only shown at the root node
+  recentScopes?: SelectedScope[][];
+  onRecentScopesSelect?: (recentScopeSet: SelectedScope[]) => void;
 }
 
 export function ScopesTree({
@@ -21,6 +25,8 @@ export function ScopesTree({
   nodePath,
   loadingNodeName,
   scopes,
+  recentScopes,
+  onRecentScopesSelect,
   onNodeUpdate,
   onNodeSelectToggle,
 }: ScopesTreeProps) {
@@ -41,6 +47,13 @@ export function ScopesTree({
         query={node.query}
         onNodeUpdate={onNodeUpdate}
       />
+      {nodePath.length === 1 &&
+        nodePath[0] === '' &&
+        !anyChildExpanded &&
+        recentScopes &&
+        recentScopes.length > 0 &&
+        onRecentScopesSelect &&
+        !node.query && <RecentScopes recentScopes={recentScopes} onSelect={onRecentScopesSelect} />}
 
       <ScopesTreeLoading nodeLoading={nodeLoading}>
         <ScopesTreeItem

@@ -176,7 +176,9 @@ export function InstallControlsButton({
       <Stack alignItems="flex-start" width="auto" height="auto">
         {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
           <Button disabled={disableUpdate} onClick={onUpdate}>
-            {isInstalling ? 'Updating' : 'Update'}
+            {isInstalling
+              ? t('plugins.install-controls.updating', 'Updating')
+              : t('plugins.install-controls.update', 'Update')}
           </Button>
         )}
         {uninstallControls}
@@ -188,7 +190,9 @@ export function InstallControlsButton({
 
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
-      {isInstalling ? 'Installing' : 'Install'}
+      {isInstalling
+        ? t('plugins.install-controls.installing', 'Installing')
+        : t('plugins.install-controls.install', 'Install')}
     </Button>
   );
 }
