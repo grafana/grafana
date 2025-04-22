@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -245,6 +246,66 @@ func TestLegacyFoldersMigrator_Migrate(t *testing.T) {
 
 		err := migrator.Migrate(context.Background(), "test-namespace", mockRepositoryResources, progress)
 		require.NoError(t, err)
+		progress.AssertExpectations(t)
+	})
+	t.Run("should fail when folder creation fails", func(t *testing.T) {
+		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
+		mockLegacyMigrator.On("Migrate", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			opts := args.Get(1).(legacy.MigrateOptions)
+			folder := &unstructured.Unstructured{
+				Object: map[string]interface{}{
+					"apiVersion": "folder.grafana.app/v1alpha1",
+					"kind":       "Folder",
+					"metadata": map[string]interface{}{
+						"name": "test-folder",
+						"annotations": map[string]interface{}{
+							"folder.grafana.app/uid": "test-folder-uid",
+						},
+					},
+				},
+			}
+			folder.SetKind("Folder")
+			folder.SetAPIVersion("folder.grafana.app/v1alpha1")
+
+			data, err := folder.MarshalJSON()
+			require.NoError(t, err)
+			client, err := opts.Store.BulkProcess(context.Background())
+			require.NoError(t, err)
+			require.NoError(t, client.Send(&resource.BulkRequest{
+				Key:   &resource.ResourceKey{Namespace: "test-namespace", Name: "test-folder"},
+				Value: data,
+			}))
+		}).Return(&resource.BulkResponse{}, nil)
+
+		mockRepositoryResources := resources.NewMockRepositoryResources(t)
+		expectedError := errors.New("folder creation failed")
+		mockRepositoryResources.On("EnsureFolderTreeExists", mock.Anything, "", "", mock.Anything, mock.Anything).
+			Run(func(args mock.Arguments) {
+				callback := args.Get(4).(func(folder resources.Folder, created bool, err error) error)
+				// Call the callback with an error and return its result
+				err := callback(resources.Folder{
+					ID:   "test-folder-uid",
+					Path: "/test-folder",
+				}, true, expectedError)
+				require.Equal(t, expectedError, err)
+			}).Return(expectedError)
+
+		migrator := NewLegacyFoldersMigrator(mockLegacyMigrator)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, "read folders from SQL").Return()
+		progress.On("SetMessage", mock.Anything, "export folders from SQL").Return()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action == repository.FileActionCreated &&
+				result.Name == "test-folder-uid" &&
+				result.Resource == resources.FolderResource.Resource &&
+				result.Group == resources.FolderResource.Group &&
+				result.Path == "/test-folder" &&
+				assert.Equal(t, expectedError, result.Error)
+		})).Return()
+
+		err := migrator.Migrate(context.Background(), "test-namespace", mockRepositoryResources, progress)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "export folders from SQL: folder creation failed")
 		progress.AssertExpectations(t)
 	})
 }
