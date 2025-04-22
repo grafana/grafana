@@ -532,6 +532,8 @@ func (r *githubClient) GetWebhook(ctx context.Context, owner, repository string,
 
 	contentType := hook.GetConfig().GetContentType()
 	if contentType == "" {
+		// FIXME: Not sure about the value of the contentType
+		// we default to form in the other ones but to JSON here
 		contentType = "json"
 	}
 
