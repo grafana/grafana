@@ -17,6 +17,7 @@ import { AccessControlAction } from 'app/types';
 
 import { AlertmanagerConfigBuilder, setupMswServer } from '../../../mockApi';
 import { grantUserPermissions } from '../../../mocks';
+import { alertingFactory } from '../../../mocks/server/db';
 import { captureRequests } from '../../../mocks/server/events';
 
 import { GrafanaReceiverForm } from './GrafanaReceiverForm';
@@ -36,6 +37,7 @@ const renderWithProvider = (
 setupMswServer();
 
 const ui = {
+  type: byRole('combobox', { name: /Integration/ }),
   loadingIndicator: byText('Loading notifiers...'),
   integrationType: byLabelText('Integration'),
   onCallIntegrationType: byRole('radiogroup'),
@@ -47,9 +49,29 @@ const ui = {
   },
   newOnCallIntegrationName: byRole('textbox', { name: /Integration name/ }),
   existingOnCallIntegrationSelect: (index: number) => byTestId(`items.${index}.settings.url`),
+  slack: {
+    recipient: byRole('textbox', { name: /^Recipient/ }),
+    token: byRole('textbox', { name: /^Token/ }),
+    webhookUrl: byRole('textbox', { name: /^Webhook URL/ }),
+  },
 };
 
 describe('GrafanaReceiverForm', () => {
+  beforeAll(() => {
+    const mockGetBoundingClientRect = jest.fn(() => ({
+      width: 120,
+      height: 120,
+      top: 0,
+      left: 0,
+      bottom: 0,
+      right: 0,
+    }));
+
+    Object.defineProperty(Element.prototype, 'getBoundingClientRect', {
+      value: mockGetBoundingClientRect,
+    });
+  });
+
   beforeEach(() => {
     grantUserPermissions([
       AccessControlAction.AlertingNotificationsRead,
@@ -67,7 +89,9 @@ describe('GrafanaReceiverForm', () => {
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
     // Select MQTT receiver and fill out basic required fields for contact point
-    await clickSelectOption(await byTestId('items.0.type').find(), 'MQTT');
+    await type(await ui.type.find(), 'MQTT');
+    await click(await screen.findByRole('option', { name: 'MQTT' }));
+
     await type(screen.getByLabelText(/^name/i), 'mqtt contact point');
     await type(screen.getByLabelText(/broker url/i), 'broker url');
     await type(screen.getByLabelText(/topic/i), 'topic');
@@ -91,6 +115,121 @@ describe('GrafanaReceiverForm', () => {
     });
 
     expect(postRequestbody).toMatchSnapshot();
+  });
+
+  describe('Slack contact point', () => {
+    it('should disable webhook url field if the user typed the token', async () => {
+      const { user } = renderWithProvider(<GrafanaReceiverForm />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Select Slack receiver
+      await clickSelectOption(byTestId('items.0.type').get(), 'Slack');
+
+      // Enter a value in the recipient field (required)
+      await user.type(ui.slack.recipient.get(), 'my-channel');
+
+      // Webhook URL field should be initially enabled
+      const webhookUrlField = ui.slack.webhookUrl.get();
+      expect(webhookUrlField).toBeEnabled();
+
+      // Enter a token value
+      const tokenField = ui.slack.token.get();
+      await user.type(tokenField, 'xoxb-my-token');
+
+      // Now the webhook URL field should be readonly
+      expect(webhookUrlField).toHaveAttribute('readonly');
+    });
+
+    it('should disable token field if the user typed the webhook URL', async () => {
+      const { user } = renderWithProvider(<GrafanaReceiverForm />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Select Slack receiver
+      await clickSelectOption(byTestId('items.0.type').get(), 'Slack');
+
+      // Token field should be initially enabled
+      const tokenField = ui.slack.token.get();
+      expect(tokenField).toBeEnabled();
+
+      // Enter a webhook URL value
+      const webhookUrlField = ui.slack.webhookUrl.get();
+      await user.type(webhookUrlField, 'https://hooks.slack.com/services/T123456/B123456/abcdef123456');
+
+      // Now the token field should be readonly
+      expect(tokenField).toHaveAttribute('readonly');
+    });
+
+    it('should display token field as readonly with a Reset button when editing contact point with configured token', async () => {
+      // Create mock config for a Slack contact point using token
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [integrationFactory.slack({ token: 'xoxb-my-token' }).build()])
+        .build();
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      const tokenField = ui.slack.token.get();
+      const webhookUrlField = ui.slack.webhookUrl.get();
+
+      expect(tokenField).toHaveValue('configured');
+      expect(tokenField).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+
+      expect(webhookUrlField).toHaveValue('');
+      expect(webhookUrlField).toHaveAttribute('readonly');
+    });
+
+    it('should display webhook URL field as readonly with a Reset button when editing existing contact point with configured webhook URL', async () => {
+      // Create mock config for a Slack contact point using webhook
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory.slack({ url: 'https://slack.example.com' }).build(),
+        ])
+        .build();
+
+      renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      const webhookField = ui.slack.webhookUrl.get();
+      const tokenField = ui.slack.token.get();
+
+      expect(webhookField).toHaveValue('configured');
+      expect(webhookField).toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+
+      expect(tokenField).toHaveValue('');
+      expect(tokenField).toHaveAttribute('readonly');
+    });
+
+    it('clicking the Reset button when editing a Slack contact point with webhook should make token field editable again', async () => {
+      // Create mock config for a Slack contact point using webhook URL
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory.slack({ url: 'https://slack.example.com' }).build(),
+        ])
+        .build();
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Initially, the token field should be readonly
+      expect(ui.slack.token.get()).toHaveAttribute('readonly');
+
+      // Find and click the Reset button
+      const resetButton = screen.getByRole('button', { name: 'Reset' });
+      await user.click(resetButton);
+
+      // After resetting the webhook URL, the token field should be editable
+      expect(ui.slack.token.get()).not.toHaveAttribute('readonly');
+
+      // And we should be able to enter a token value
+      await user.type(ui.slack.token.get(), 'xoxb-new-token');
+    });
   });
 
   describe('OnCall contact point', () => {
