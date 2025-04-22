@@ -207,7 +207,9 @@ export class RowRepeaterBehavior extends SceneObjectBase<RowRepeaterBehaviorStat
           y: cloneItemY,
         });
 
-        ensureUniqueKeys(cloneItem, cloneItemKey);
+        if (rowIndex > 0) {
+          ensureUniqueKeys(cloneItem, cloneItemKey);
+        }
 
         children.push(cloneItem);
 
