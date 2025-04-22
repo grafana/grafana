@@ -429,7 +429,6 @@ func (engine *Engine) mapType(v reflect.Value) (*core.Table, error) {
 				Nullable:        true,
 				IsPrimaryKey:    false,
 				IsAutoIncrement: false,
-				MapType:         core.TWOSIDES,
 				Indexes:         make(map[string]int),
 				DefaultIsEmpty:  true,
 			}

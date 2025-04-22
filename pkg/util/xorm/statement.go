@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/builder"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/builder"
 )
 
 // Statement save all the sql info for executing SQL
@@ -271,10 +271,6 @@ func (statement *Statement) buildUpdates(bean any,
 			continue
 		}
 		if len(columnMap) > 0 && !columnMap.contain(col.Name) {
-			continue
-		}
-
-		if col.MapType == core.ONLYFROMDB {
 			continue
 		}
 
@@ -820,10 +816,6 @@ func (statement *Statement) genColumnStr() string {
 		}
 
 		if len(statement.columnMap) > 0 && !statement.columnMap.contain(col.Name) {
-			continue
-		}
-
-		if col.MapType == core.ONLYTODB {
 			continue
 		}
 

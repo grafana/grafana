@@ -20,25 +20,6 @@ import (
 	"time"
 )
 
-// Cacher is an interface to provide cache
-// id format : u-<pk1>-<pk2>...
-type Cacher interface {
-	GetIds(tableName, sql string) interface{}
-	GetBean(tableName string, id string) interface{}
-	PutIds(tableName, sql string, ids interface{})
-	PutBean(tableName string, id string, obj interface{})
-	DelIds(tableName, sql string)
-	DelBean(tableName string, id string)
-	ClearIds(tableName string)
-	ClearBeans(tableName string)
-}
-
-const (
-	TWOSIDES = iota + 1
-	ONLYTODB
-	ONLYFROMDB
-)
-
 // Column defines database column
 type Column struct {
 	Name            string
@@ -53,7 +34,6 @@ type Column struct {
 	Indexes         map[string]int
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
-	MapType         int
 	IsCreated       bool
 	IsUpdated       bool
 	IsDeleted       bool
@@ -81,7 +61,6 @@ func NewColumn(name, fieldName string, sqlType SQLType, len1, len2 int, nullable
 		Indexes:         make(map[string]int),
 		IsPrimaryKey:    false,
 		IsAutoIncrement: false,
-		MapType:         TWOSIDES,
 		IsCreated:       false,
 		IsUpdated:       false,
 		IsDeleted:       false,
@@ -1751,7 +1730,6 @@ type Table struct {
 	Updated       string
 	Deleted       string
 	Version       string
-	Cacher        Cacher
 	StoreEngine   string
 	Charset       string
 	Comment       string
