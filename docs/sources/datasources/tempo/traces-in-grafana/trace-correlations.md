@@ -28,9 +28,9 @@ Trace correlations allow you to define rules that inject context-sensitive links
 
 ## Before you begin
 
-* Grafana 12 or later
-* A Tempo tracing data source configured in Grafana
-* Admin access to Grafana’s configuration settings or provisioning files
+- Grafana 12 or later
+- A Tempo tracing data source configured in Grafana
+- Admin access to Grafana’s configuration settings or provisioning files
 
 ## Set up a trace correlation
 
@@ -44,41 +44,39 @@ Trace correlations allow you to define rules that inject context-sensitive links
 
 1. On step 2, configure the correlation **target**.
 
-    * Select the target type: **query** to link to another data source, or **external** for a custom URL.
+   - Select the target type: **query** to link to another data source, or **external** for a custom URL.
 
-    * For a query target, select the **target data source** and define the target query.
+   - For a query target, select the **target data source** and define the target query.
 
-    * For an external target, enter the **external URL**.
+   - For an external target, enter the **external URL**.
 
-    * For both query and external targets, you can use the following variables based on trace data. Object variables must be parsed into a value variable with a regular expression transformation.
+   - For both query and external targets, you can use the following variables based on trace data. Object variables must be parsed into a value variable with a regular expression transformation.
 
-    |Variable|Type|Description|
-    |---|---|---|
-    |`traceId`|String|Trace identifier|
-    |`spanID`|String|Span identifier|
-    |`parentSpanID`|String|Parent span identifier|
-    |`serviceName`|String|Service name|
-    |`serviceTags`|Object|Resource attributes|
-    |`tags`|Object|Span attributes|
-    |`logs`|Object|Trace events|
-    |`references`|Object|Trace links|
+   | Variable       | Type   | Description            |
+   | -------------- | ------ | ---------------------- |
+   | `traceId`      | String | Trace identifier       |
+   | `spanID`       | String | Span identifier        |
+   | `parentSpanID` | String | Parent span identifier |
+   | `serviceName`  | String | Service name           |
+   | `serviceTags`  | Object | Resource attributes    |
+   | `tags`         | Object | Span attributes        |
+   | `logs`         | Object | Trace events           |
+   | `references`   | Object | Trace links            |
 
-    {{< figure src="/static/img/docs/tempo/screenshot-grafana-trace-correlations-loki-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki target using trace variables" >}}
+   {{< figure src="/static/img/docs/tempo/screenshot-grafana-trace-correlations-loki-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki target using trace variables" >}}
 
 1. On step 3, configure the correlation **data source**:
 
-    * Select your Tempo data source as **source**.
+   - Select your Tempo data source as **source**.
 
-    * Enter the trace data variable you use for the correlation in the **Result field**.
+   - Enter the trace data variable you use for the correlation in the **Result field**.
 
-    * Optionally, add one or more **transformations** to parse the trace data into additional variables. You can use these variables to configure the correlation **target**.
+   - Optionally, add one or more **transformations** to parse the trace data into additional variables. You can use these variables to configure the correlation **target**.
 
-    {{< figure src="/static/img/docs/tempo/screenshot-grafana-trace-correlations-loki-step-3.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki data source" >}}
+   {{< figure src="/static/img/docs/tempo/screenshot-grafana-trace-correlations-loki-step-3.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki data source" >}}
 
 1. Select **Save** to save the correlation.
 
 The correlation link will now show when viewing a trace span, both in the span links menu and the span details.
 
 {{< figure src="/static/img/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
-
-
