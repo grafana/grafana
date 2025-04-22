@@ -26,6 +26,7 @@ export function ScopesRow({ treeScopes, isDirty, apply, toggleNode }: Props) {
         {treeScopes?.map((scope) => {
           return (
             <FilterPill
+              key={scope.scopeName}
               selected={true}
               icon={'times'}
               label={scope.title}

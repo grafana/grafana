@@ -1,7 +1,9 @@
 import { useRegisterActions } from 'kbar';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useObservable } from 'react-use';
 import { Observable } from 'rxjs';
+
+import { config } from '@grafana/runtime';
 
 import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
@@ -58,12 +60,16 @@ export function useRegisterRecentScopesActions() {
  * @param onApply
  * @param parentId
  */
-export function useRegisterScopesActions(searchQuery: string, onApply: () => void, parentId?: string | null) {
+export function useRegisterScopesActions(
+  searchQuery: string,
+  onApply: () => void,
+  parentId?: string | null
+): { scopesRow?: ReactNode } {
   const services = useScopesServices();
 
-  // Conditional hooks, but this should only change if feature toggles changes.
-  if (!services) {
-    return { applyChanges: undefined };
+  // Conditional hooks, but this should only change if feature toggles changes so not in runtime.
+  if (!(config.featureToggles.scopeFilters && services)) {
+    return { scopesRow: undefined };
   }
 
   const { updateNode, toggleNodeSelect, apply, resetSelection } = services.scopesSelectorService;
@@ -76,6 +82,7 @@ export function useRegisterScopesActions(searchQuery: string, onApply: () => voi
     };
   }, [updateNode, resetSelection]);
 
+  // Load next level of scopes when the parentId changes.
   useEffect(() => {
     updateNode(getScopePathFromActionId(parentId), true, searchQuery);
   }, [updateNode, searchQuery, parentId]);
@@ -93,7 +100,6 @@ export function useRegisterScopesActions(searchQuery: string, onApply: () => voi
   // approximation of when the actions really change.
   useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, treeScopes]);
 
-  // TODO would probably make sense to have this on the selectorService itself
   const isDirty =
     treeScopes
       .map((t) => t.scopeName)

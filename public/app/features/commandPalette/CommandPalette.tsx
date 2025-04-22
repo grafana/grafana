@@ -70,7 +70,6 @@ function CommandPaletteContents() {
     reportInteraction('command_palette_opened');
   }, []);
 
-  console.log('rerender');
   return (
     <KBarPositioner className={styles.positioner}>
       <KBarAnimator className={styles.animator}>
