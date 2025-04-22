@@ -275,9 +275,10 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		&updated, &updatedBy, &updatedByID,
 		&version, &message, &data, &apiVersion,
 	)
-	if apiVersion.String == "" {
+	switch apiVersion.String {
+	case "":
 		apiVersion.String = dashboardV0.VERSION // default value
-	} else if apiVersion.String == "v1alpha1" {
+	case "v1alpha1":
 		apiVersion.String = dashboardV0.VERSION // downgrade to v0 (it may not have run migrations)
 	}
 
