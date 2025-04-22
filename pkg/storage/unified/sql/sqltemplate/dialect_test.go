@@ -138,7 +138,7 @@ func TestStandardIdent_Ident(t *testing.T) {
 			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
 		}
 		if gotOutput != tc.output {
-			t.Fatalf("unexpected error %v in test case %d", gotErr, i)
+			t.Fatalf("unexpected output %v in test case %d", gotOutput, i)
 		}
 	}
 }
