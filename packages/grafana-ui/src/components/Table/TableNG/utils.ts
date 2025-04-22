@@ -515,7 +515,9 @@ export interface MapFrameToGridOptions extends TableNGProps {
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
-const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+// The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
+// within strings and sorts numerically instead of lexicographically.
+const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     case FieldType.time:

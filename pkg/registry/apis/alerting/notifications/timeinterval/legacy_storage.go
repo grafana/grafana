@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/timeinterval/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -67,7 +67,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 		return nil, err
 	}
 
-	return convertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
+	return ConvertToK8sResources(orgId, res, s.namespacer, opts.FieldSelector)
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
@@ -83,7 +83,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 
 	for _, mt := range timings {
 		if mt.UID == uid {
-			return convertToK8sResource(info.OrgID, mt, s.namespacer)
+			return ConvertToK8sResource(info.OrgID, mt, s.namespacer)
 		}
 	}
 	return nil, errors.NewNotFound(ResourceInfo.GroupResource(), uid)
@@ -118,7 +118,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, s.namespacer)
+	return ConvertToK8sResource(info.OrgID, out, s.namespacer)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -165,7 +165,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, s.namespacer)
+	r, err := ConvertToK8sResource(info.OrgID, updated, s.namespacer)
 	return r, false, err
 }
 

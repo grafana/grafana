@@ -23,7 +23,11 @@ export function CloudAlertPreview({ preview }: CloudAlertPreviewProps) {
         <div>
           <Trans i18nKey="alerting.cloud-alert-preview.alerts-preview">Alerts preview</Trans>
         </div>
-        <span>Preview based on the result of running the query for this moment.</span>
+        <span>
+          <Trans i18nKey="alerting.cloud-alert-preview.running-query-preview">
+            Preview based on the result of running the query for this moment.
+          </Trans>
+        </span>
       </caption>
       <thead>
         <tr>

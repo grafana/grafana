@@ -132,11 +132,6 @@ export interface FeatureToggles {
   */
   influxdbRunQueriesInParallel?: boolean;
   /**
-  * Enables running Prometheus queries in parallel
-  * @default true
-  */
-  prometheusRunQueriesInParallel?: boolean;
-  /**
   * Changes logs responses from Loki to be compliant with the dataplane specification.
   */
   lokiLogsDataplane?: boolean;
@@ -182,10 +177,6 @@ export interface FeatureToggles {
   * Enables the plugins frontend sandbox
   */
   pluginsFrontendSandbox?: boolean;
-  /**
-  * Enables monitor only in the plugin frontend sandbox (if enabled)
-  */
-  frontendSandboxMonitorOnly?: boolean;
   /**
   * Enables right panel for the plugins details page
   * @default true
@@ -296,10 +287,6 @@ export interface FeatureToggles {
   */
   externalCorePlugins?: boolean;
   /**
-  * Sends metrics of public grafana packages usage by plugins
-  */
-  pluginsAPIMetrics?: boolean;
-  /**
   * Automatic service account and token setup for plugins
   */
   externalServiceAccounts?: boolean;
@@ -322,11 +309,6 @@ export interface FeatureToggles {
   */
   formatString?: boolean;
   /**
-  * Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-  * @default true
-  */
-  kubernetesPlaylists?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
@@ -336,8 +318,21 @@ export interface FeatureToggles {
   kubernetesDashboards?: boolean;
   /**
   * Route the folder and dashboard service requests to k8s
+  * @default true
   */
   kubernetesClientDashboardsFolders?: boolean;
+  /**
+  * Disable schema validation for dashboards/v1
+  */
+  dashboardDisableSchemaValidationV1?: boolean;
+  /**
+  * Disable schema validation for dashboards/v2
+  */
+  dashboardDisableSchemaValidationV2?: boolean;
+  /**
+  * Log schema validation errors so they can be analyzed later
+  */
+  dashboardSchemaValidationLogging?: boolean;
   /**
   * Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
   */
@@ -447,11 +442,6 @@ export interface FeatureToggles {
   * @default true
   */
   logsInfiniteScrolling?: boolean;
-  /**
-  * Enables the new Grafana Metrics Drilldown core app
-  * @default true
-  */
-  exploreMetrics?: boolean;
   /**
   * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
   * @default true
@@ -663,11 +653,6 @@ export interface FeatureToggles {
   * Enables the scopes usage in Metrics Explore
   */
   enableScopesInMetricsExplore?: boolean;
-  /**
-  * Register Alerting APIs with the K8s API server
-  * @default true
-  */
-  alertingApiServer?: boolean;
   /**
   * Round up end time for metric queries to the next minute to avoid missing data
   * @default true
@@ -910,11 +895,6 @@ export interface FeatureToggles {
   */
   elasticsearchImprovedParsing?: boolean;
   /**
-  * Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-  * @default true
-  */
-  exploreMetricsUseExternalAppPlugin?: boolean;
-  /**
   * Shows defined connections for a data source in the plugins detail page
   */
   datasourceConnectionsTab?: boolean;
@@ -943,6 +923,10 @@ export interface FeatureToggles {
   * Use the scopes navigation endpoint instead of the dashboardbindings endpoint
   */
   useScopesNavigationEndpoint?: boolean;
+  /**
+  * Enable scope search to include all levels of the scope node tree
+  */
+  scopeSearchAllLevels?: boolean;
   /**
   * Enables the alert rule version history restore feature
   * @default true
@@ -1038,4 +1022,17 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables auto-updating of users installed plugins
+  */
+  pluginsAutoUpdate?: boolean;
+  /**
+  * Enables the alerting list view v2 preview toggle
+  */
+  alertingListViewV2PreviewToggle?: boolean;
+  /**
+  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
+  * @default false
+  */
+  alertRuleUseFiredAtForStartsAt?: boolean;
 }

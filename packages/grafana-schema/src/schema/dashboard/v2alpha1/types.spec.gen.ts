@@ -67,7 +67,7 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-export type DashboardCursorSync = "Off" | "Crosshair" | "Tooltip";
+export type DashboardCursorSync = "Crosshair" | "Tooltip" | "Off";
 
 export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
 
@@ -872,10 +872,21 @@ export interface TabsLayoutTabSpec {
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
 	conditionalRendering?: ConditionalRenderingGroupKind;
+	repeat?: TabRepeatOptions;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface TabRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 // Links with references to other dashboards or external resources
@@ -1356,7 +1367,6 @@ export const defaultMetricFindValue = (): MetricFindValue => ({
 });
 
 export interface Spec {
-	// Title of dashboard.
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).

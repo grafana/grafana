@@ -16,6 +16,7 @@ import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
+import { Trans } from '../../../../../core/internationalization';
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { prometheusRuleType } from '../../utils/rules';
@@ -47,10 +48,17 @@ function ShowMoreInstances({ stats, onClick, href }: ShowMoreInstancesProps) {
   return (
     <div className={styles.footerRow}>
       <div>
-        Showing {stats.visibleItemsCount} out of {stats.totalItemsCount} instances
+        <Trans
+          i18nKey="alerting.rule-details-matching-instances.showing-count"
+          values={{ visibleItems: stats.visibleItemsCount, totalItems: stats.totalItemsCount }}
+        >
+          Showing {'{{visibleItems}}'} out of {'{{totalItems}}'} instances
+        </Trans>
       </div>
       <LinkButton size="sm" variant="secondary" data-testid="show-all" onClick={onClick} href={href}>
-        Show all {stats.totalItemsCount} alert instances
+        <Trans i18nKey="alerting.rule-details-matching-instances.button-show-all" count={stats.totalItemsCount}>
+          Show all {'{{totalItems}}'} alert instances
+        </Trans>
       </LinkButton>
     </div>
   );

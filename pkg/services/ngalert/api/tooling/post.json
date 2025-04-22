@@ -5696,38 +5696,6 @@
     "tags": [
      "alertmanager"
     ]
-   },
-   "post": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RoutePostGrafanaAlertingConfig",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/PostableUserConfig"
-      }
-     }
-    ],
-    "responses": {
-     "201": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "sets an Alerting config",
-    "tags": [
-     "alertmanager"
-    ]
    }
   },
   "/alertmanager/grafana/config/api/v1/receivers": {
