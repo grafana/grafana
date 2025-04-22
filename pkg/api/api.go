@@ -85,6 +85,9 @@ func (hs *HTTPServer) registerRoutes() {
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
 
+	// The bootdata required to render a static index
+	r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
+
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
 	r.Get("/profile/", reqSignedInNoAnonymous, hs.Index)
