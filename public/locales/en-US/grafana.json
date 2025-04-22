@@ -2004,6 +2004,10 @@
         "title": "Alert rules"
       },
       "rulerrule-loading-error": "Failed to load the rule",
+      "toggle": {
+        "go-back-to-old-look": "Go back to the old look",
+        "try-out-the-new-look": "Try out the new look!"
+      },
       "unknown-rule-type": "Unknown rule type"
     },
     "rule-list-errors": {

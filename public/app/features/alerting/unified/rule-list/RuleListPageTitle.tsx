@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ButtonProps, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { setLocalStorageFeatureToggle, shouldUseAlertingListViewV2 } from '../featureToggles';
 
@@ -21,17 +22,17 @@ export function RuleListPageTitle({ title }: { title: string }) {
     window.location.reload();
   };
 
-  const buttonConfig: ButtonProps & { text: string; 'data-testid': string } = listViewV2Enabled
+  const { text, ...configToUse }: ButtonProps & { text: string; 'data-testid': string } = listViewV2Enabled
     ? {
         variant: 'secondary',
         icon: undefined,
-        text: 'Go back to the old look',
+        text: t('alerting.rule-list.toggle.go-back-to-old-look', 'Go back to the old look'),
         'data-testid': 'alerting-list-view-toggle-v1',
       }
     : {
         variant: 'primary',
         icon: 'rocket',
-        text: 'Try out the new look!',
+        text: t('alerting.rule-list.toggle.try-out-the-new-look', 'Try out the new look!'),
         'data-testid': 'alerting-list-view-toggle-v2',
       };
 
@@ -40,8 +41,8 @@ export function RuleListPageTitle({ title }: { title: string }) {
       <h1>{title}</h1>
       {shouldShowV2Toggle && (
         <div>
-          <Button size="sm" fill="outline" {...buttonConfig} onClick={toggleListView} className="fs-unmask">
-            {buttonConfig.text}
+          <Button size="sm" fill="outline" {...configToUse} onClick={toggleListView} className="fs-unmask">
+            {text}
           </Button>
         </div>
       )}
