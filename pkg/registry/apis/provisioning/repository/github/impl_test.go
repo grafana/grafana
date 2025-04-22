@@ -834,6 +834,31 @@ func TestGithubClient_GetTree(t *testing.T) {
 			wantTrunc:  false,
 			wantErr:    nil,
 		},
+		{
+			name: "non-standard error is passed through",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusForbidden)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusForbidden,
+							},
+							Message: "Forbidden access",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    errors.New("Forbidden access"),
+		},
 	}
 
 	for _, tt := range tests {
@@ -849,7 +874,7 @@ func TestGithubClient_GetTree(t *testing.T) {
 			// Check the error
 			if tt.wantErr != nil {
 				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr.Error(), err.Error())
+				assert.Contains(t, err.Error(), tt.wantErr.Error())
 				assert.Nil(t, contents)
 				return
 			}
