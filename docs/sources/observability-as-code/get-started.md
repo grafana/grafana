@@ -34,42 +34,45 @@ Observability as Code lets you manage dashboards, resources, and configurations 
 
    - Learn about a toolkit for programmatically creating and managing Grafana dashboards and resources with reusable components and streamlined workflows.
 -->
-1. [**Set up Git Sync**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/)
 
-   - Configure Git repositories to store your dashboard JSON files.
-   - Understand best practices for version control, including collaboration through pull requests and rollbacks.
-   - Edit your JSON files in GitHub and then sync with Grafana.
+1.  [**Set up Git Sync**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/)
 
-1. [**Manage dashboard deployments from GitHub**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/)
+    - Configure Git repositories to store your dashboard JSON files.
+    - Understand best practices for version control, including collaboration through pull requests and rollbacks.
+    - Edit your JSON files in GitHub and then sync with Grafana.
 
-   - Integrate dashboards into CI/CD pipelines using tools like GitHub Actions.
-   - Leverage provisioning features in Grafana to automate updates and deployment of dashboards.
-<!--
-1. **Explore additional tools and libraries for working with Observability as Code**
+1.  [**Manage dashboard deployments from GitHub**](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/)
 
-   - [**Grafanactl**](grafanactl)
+    - Integrate dashboards into CI/CD pipelines using tools like GitHub Actions.
+    - Leverage provisioning features in Grafana to automate updates and deployment of dashboards.
+    <!--
 
-     - Use a command-line tool for simplifying the management of Grafana resources.
+1.  **Explore additional tools and libraries for working with Observability as Code**
 
-   - [**Terraform**](infrastructure-as-code/terraform/)
+    - [**Grafanactl**](grafanactl)
 
-     - Use the Grafana Terraform provider to manage dashboards, alerts, and more.
-     - Understand how to define and deploy resources using HCL/JSON configurations.
+      - Use a command-line tool for simplifying the management of Grafana resources.
 
-   - [**Ansible**](infrastructure-as-code/ansible/)
+    - [**Terraform**](infrastructure-as-code/terraform/)
 
-     - Learn to use the Grafana Ansible collection to manage Grafana Cloud resources, including folders and cloud stacks.
-     - Write playbooks to automate resource provisioning through the Grafana API.
+      - Use the Grafana Terraform provider to manage dashboards, alerts, and more.
+      - Understand how to define and deploy resources using HCL/JSON configurations.
 
-   - [**Grafana Operator**](./infrastructure-as-code/grafana-operator/_index.md)
+    - [**Ansible**](infrastructure-as-code/ansible/)
 
-     - Utilize Kubernetes-native management with the Grafana Operator.
-     - Manage dashboards, folders, and data sources via Kubernetes Custom Resources.
-     - Integrate with GitOps workflows for seamless version control and deployment.
--->
+      - Learn to use the Grafana Ansible collection to manage Grafana Cloud resources, including folders and cloud stacks.
+      - Write playbooks to automate resource provisioning through the Grafana API.
+
+    - [**Grafana Operator**](./infrastructure-as-code/grafana-operator/_index.md)
+
+           - Utilize Kubernetes-native management with the Grafana Operator.
+           - Manage dashboards, folders, and data sources via Kubernetes Custom Resources.
+           - Integrate with GitOps workflows for seamless version control and deployment.
+
+      -->
+
 ## Explore additional Observability as Code tools
 
 - [**Crossplane:**](https://github.com/grafana/crossplane-provider-grafana) Manage Grafana resources using Kubernetes manifests with the Grafana Crossplane provider.
 - [**Grafonnet:**](https://github.com/grafana/grafonnet) Grafonnet is a Jsonnet library for generating Grafana dashboard JSON definitions programmatically. It is currently in the process of being deprecated.
 - [**Grizzly:**](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/grizzly/dashboards-folders-datasources/) Grizzly is a command-line tool that simplifies managing Grafana resources using Kubernetes-inspired YAML syntax. It is currently in the process of being deprecated.
-
