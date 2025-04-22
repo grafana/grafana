@@ -3,7 +3,7 @@ module github.com/grafana/grafana/pkg/apis/secret
 go 1.24.2
 
 require (
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250314071911-14e2784e6979
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.71.1
 	google.golang.org/protobuf v1.36.6
@@ -58,9 +58,9 @@ require (
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/spf13/cobra v1.9.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.etcd.io/bbolt v1.4.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.5.16 // indirect
