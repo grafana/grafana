@@ -68,14 +68,23 @@ export function ChannelOptions<R extends ChannelValues>({
 
         if (secureFields && secureFields[option.propertyName]) {
           return (
-            <Field key={key} label={option.label} description={option.description}>
-              <SecretInput onReset={() => onResetSecureField(option.propertyName)} isConfigured />
+            <Field
+              key={key}
+              label={option.label}
+              description={option.description}
+              htmlFor={`${settingsPath}${option.propertyName}`}
+            >
+              <SecretInput
+                id={`${settingsPath}${option.propertyName}`}
+                onReset={() => onResetSecureField(option.propertyName)}
+                isConfigured
+              />
             </Field>
           );
         }
 
         const error: FieldError | DeepMap<any, FieldError> | undefined = (
-          (option.secure ? errors?.secureSettings : errors?.settings) as DeepMap<any, FieldError> | undefined
+          (option.secure ? errors?.secureFields : errors?.settings) as DeepMap<any, FieldError> | undefined
         )?.[option.propertyName];
 
         const defaultValue = defaultValues?.settings?.[option.propertyName];

@@ -4,8 +4,8 @@ import * as React from 'react';
 import { useEffect, useMemo } from 'react';
 import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Button, Combobox, ComboboxOption, Field, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
@@ -31,8 +31,6 @@ interface Props<R extends ChannelValues> {
   onDuplicate: () => void;
   onTest?: () => void;
   commonSettingsComponent: CommonSettingsComponentType;
-
-  secureFields?: Record<string, boolean>;
   errors?: FieldErrors<R>;
   onDelete?: () => void;
   isEditable?: boolean;
@@ -51,23 +49,12 @@ export function ChannelSubForm<R extends ChannelValues>({
   onTest,
   notifiers,
   errors,
-  secureFields,
   commonSettingsComponent: CommonSettingsComponent,
   isEditable = true,
   isTestable,
   customValidators = {},
 }: Props<R>): JSX.Element {
   const styles = useStyles2(getStyles);
-
-  // const fieldName = useCallback(
-  //   (
-  //     fieldName: keyof CloudChannelValues | keyof GrafanaChannelValues
-  //   ): FieldPath<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>> => {
-  //     return `items.${integrationIndex}.${fieldName}`;
-  //   },
-  //   [integrationIndex]
-  // );
-
   const { control, watch, register, trigger, formState, setValue, getValues } =
     useFormContext<ReceiverFormValues<CloudChannelValues | GrafanaChannelValues>>();
 
@@ -75,7 +62,7 @@ export function ChannelSubForm<R extends ChannelValues>({
   const typeFieldPath = `${channelFieldPath}.type` as const;
   const settingsFieldPath = `${channelFieldPath}.settings` as const;
 
-  const selectedType = watch(typeFieldPath) ?? defaultValues.type; // nope, setting "default" does not work at all.
+  const selectedType = watch(typeFieldPath) ?? defaultValues.type;
   const parse_mode = watch(`${settingsFieldPath}.parse_mode`);
   const { loading: testingReceiver } = useUnifiedAlertingSelector((state) => state.testReceivers);
 
@@ -132,21 +119,15 @@ export function ChannelSubForm<R extends ChannelValues>({
   };
 
   const typeOptions = useMemo(
-    (): SelectableValue[] =>
-      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name])
-        // .notifiers.sort((a, b) => a.dto.name.localeCompare(b.dto.name))
-        .map<SelectableValue>(({ dto: { name, type }, meta }) => ({
-          // @ts-expect-error ReactNode is supported
-          label: (
-            <Stack alignItems="center" gap={1}>
-              {name}
-              {meta?.badge}
-            </Stack>
-          ),
+    (): Array<ComboboxOption<string>> =>
+      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<ComboboxOption<string>>(
+        ({ dto: { name, type }, meta }) => ({
+          label: name,
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
-        })),
+        })
+      ),
     [notifiers]
   );
 
@@ -182,19 +163,20 @@ export function ChannelSubForm<R extends ChannelValues>({
           >
             <Controller
               name={typeFieldPath}
+              control={control}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
-                <Select
-                  disabled={!isEditable}
-                  inputId={contactPointTypeInputId}
+                <Combobox
                   {...field}
-                  width={37}
+                  id={contactPointTypeInputId}
                   options={typeOptions}
-                  onChange={(value) => onChange(value?.value)}
+                  onChange={(option) => onChange(option?.value)}
+                  isClearable={false}
+                  placeholder={t('receivers.form.select-type', 'Select type')}
+                  disabled={!isEditable}
+                  width={48}
                 />
               )}
-              control={control}
-              rules={{ required: true }}
             />
           </Field>
         </div>
