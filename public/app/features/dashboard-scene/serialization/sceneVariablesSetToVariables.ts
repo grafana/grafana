@@ -283,9 +283,11 @@ export function sceneVariablesSetToSchemaV2Variables(
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: datasource?.type ?? getDataQueryKind(query),
-          datasource: {
-            name: datasource?.uid,
-          },
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: getDataQuerySpec(query),
         };
       } else {
@@ -293,9 +295,11 @@ export function sceneVariablesSetToSchemaV2Variables(
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: datasource?.type ?? getDataQueryKind(query),
-          datasource: {
-            name: datasource?.uid,
-          },
+          ...(datasource?.uid && {
+            datasource: {
+              name: datasource.uid,
+            },
+          }),
           spec: {
             [LEGACY_STRING_VALUE_KEY]: query,
           },
