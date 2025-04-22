@@ -24,15 +24,13 @@ func NewDashboardAnnotationQueryKind() *DashboardAnnotationQueryKind {
 
 // +k8s:openapi-gen=true
 type DashboardAnnotationQuerySpec struct {
-	Query *DashboardDataQueryKind `json:"query,omitempty"`
-	// TODO: remove this prop and use query.datasource instead
-	Datasource *DashboardDataSourceRef         `json:"datasource,omitempty"`
-	Enable     bool                            `json:"enable"`
-	Hide       bool                            `json:"hide"`
-	IconColor  string                          `json:"iconColor"`
-	Name       string                          `json:"name"`
-	BuiltIn    *bool                           `json:"builtIn,omitempty"`
-	Filter     *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
+	Query     *DashboardDataQueryKind         `json:"query,omitempty"`
+	Enable    bool                            `json:"enable"`
+	Hide      bool                            `json:"hide"`
+	IconColor string                          `json:"iconColor"`
+	Name      string                          `json:"name"`
+	BuiltIn   *bool                           `json:"builtIn,omitempty"`
+	Filter    *DashboardAnnotationPanelFilter `json:"filter,omitempty"`
 	// Catch-all field for datasource-specific properties
 	Options map[string]interface{} `json:"options,omitempty"`
 }
@@ -61,21 +59,6 @@ func NewDashboardDataQueryKind() *DashboardDataQueryKind {
 		Kind:    "DataQuery",
 		Version: "v0",
 	}
-}
-
-// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
-// This type is widely used in the codebase and changing it will have a big impact
-// +k8s:openapi-gen=true
-type DashboardDataSourceRef struct {
-	// The plugin type-id
-	Type *string `json:"type,omitempty"`
-	// Specific datasource instance
-	Uid *string `json:"uid,omitempty"`
-}
-
-// NewDashboardDataSourceRef creates a new DashboardDataSourceRef object.
-func NewDashboardDataSourceRef() *DashboardDataSourceRef {
-	return &DashboardDataSourceRef{}
 }
 
 // +k8s:openapi-gen=true
@@ -1232,15 +1215,13 @@ func NewDashboardQueryVariableKind() *DashboardQueryVariableKind {
 // Query variable specification
 // +k8s:openapi-gen=true
 type DashboardQueryVariableSpec struct {
-	Name        string                   `json:"name"`
-	Current     DashboardVariableOption  `json:"current"`
-	Label       *string                  `json:"label,omitempty"`
-	Hide        DashboardVariableHide    `json:"hide"`
-	Refresh     DashboardVariableRefresh `json:"refresh"`
-	SkipUrlSync bool                     `json:"skipUrlSync"`
-	Description *string                  `json:"description,omitempty"`
-	// TODO: remove this prop and use query.datasource instead
-	Datasource  *DashboardDataSourceRef   `json:"datasource,omitempty"`
+	Name        string                    `json:"name"`
+	Current     DashboardVariableOption   `json:"current"`
+	Label       *string                   `json:"label,omitempty"`
+	Hide        DashboardVariableHide     `json:"hide"`
+	Refresh     DashboardVariableRefresh  `json:"refresh"`
+	SkipUrlSync bool                      `json:"skipUrlSync"`
+	Description *string                   `json:"description,omitempty"`
 	Query       DashboardDataQueryKind    `json:"query"`
 	Regex       string                    `json:"regex"`
 	Sort        DashboardVariableSort     `json:"sort"`
@@ -1632,6 +1613,21 @@ func NewDashboardGroupByVariableSpec() *DashboardGroupByVariableSpec {
 		Hide:        DashboardVariableHideDontHide,
 		SkipUrlSync: false,
 	}
+}
+
+// Keeping this for backwards compatibility for GroupByVariableSpec and AdhocVariableSpec
+// This type is widely used in the codebase and changing it will have a big impact
+// +k8s:openapi-gen=true
+type DashboardDataSourceRef struct {
+	// The plugin type-id
+	Type *string `json:"type,omitempty"`
+	// Specific datasource instance
+	Uid *string `json:"uid,omitempty"`
+}
+
+// NewDashboardDataSourceRef creates a new DashboardDataSourceRef object.
+func NewDashboardDataSourceRef() *DashboardDataSourceRef {
+	return &DashboardDataSourceRef{}
 }
 
 // Adhoc variable kind

@@ -125,11 +125,6 @@ DataSourceRef: {
 	uid?: string
 }
 
-// New type for datasource reference
-DataSourceReference: {
-	name?: string
-}
-
 // A topic is attached to DataFrame metadata in query results.
 // This specifies where the data should be used.
 DataTopic: "series" | "annotations" | "alertStates" @cog(kind="enum",memberNames="Series|Annotations|AlertStates")
@@ -397,8 +392,6 @@ VizConfigKind: {
 
 AnnotationQuerySpec: {
 	query?:      DataQueryKind
-	// TODO: remove this prop and use query.datasource instead
-	datasource?: DataSourceRef
 	enable:      bool
 	hide:        bool
 	iconColor:   string
@@ -749,8 +742,6 @@ QueryVariableSpec: {
 	refresh:      VariableRefresh
 	skipUrlSync:  bool | *false
 	description?: string
-	// TODO: remove this prop and use query.datasource instead
-	datasource?:  DataSourceRef
 	query:        DataQueryKind
 	regex:        string | *""
 	sort:         VariableSort
