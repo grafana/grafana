@@ -58,15 +58,16 @@ export const handyTestingSchema: Spec = {
       kind: 'AnnotationQuery',
       spec: {
         builtIn: false,
-        datasource: {
-          type: 'grafana-testdata-datasource',
-          uid: 'uid',
-        },
         enable: true,
         iconColor: 'red',
         name: 'Enabled',
         query: {
-          kind: 'grafana-testdata-datasource',
+          kind: 'DataQuery',
+          version: defaultDataQueryKind().version,
+          group: 'grafana-testdata-datasource',
+          datasource: {
+            name: 'uid',
+          },
           spec: {
             lines: 4,
             refId: 'Anno',
@@ -80,10 +81,6 @@ export const handyTestingSchema: Spec = {
       kind: 'AnnotationQuery',
       spec: {
         builtIn: false,
-        datasource: {
-          type: 'grafana-testdata-datasource',
-          uid: 'uid',
-        },
         enable: false,
         iconColor: 'yellow',
         name: 'Disabled',
@@ -91,6 +88,9 @@ export const handyTestingSchema: Spec = {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: 'grafana-testdata-datasource',
+          datasource: {
+            name: 'uid',
+          },
           spec: { lines: 5, refId: 'Anno', scenarioId: 'annotations' },
         },
         hide: false,
@@ -100,10 +100,6 @@ export const handyTestingSchema: Spec = {
       kind: 'AnnotationQuery',
       spec: {
         builtIn: false,
-        datasource: {
-          type: 'grafana-testdata-datasource',
-          uid: 'uid',
-        },
         enable: true,
         hide: true,
         iconColor: 'dark-purple',
@@ -112,6 +108,9 @@ export const handyTestingSchema: Spec = {
           kind: 'DataQuery',
           version: defaultDataQueryKind().version,
           group: 'grafana-testdata-datasource',
+          datasource: {
+            name: 'uid',
+          },
           spec: {
             lines: 6,
             refId: 'Anno',

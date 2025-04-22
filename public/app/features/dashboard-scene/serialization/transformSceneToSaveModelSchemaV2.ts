@@ -420,14 +420,16 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
         enable: Boolean(layer.state.isEnabled),
         hide: Boolean(layer.state.isHidden),
         iconColor: layer.state.query.iconColor,
-        ...(datasource && {
+        ...(datasource?.type && {
           query: {
             kind: 'DataQuery',
             version: defaultDataQueryKind().version,
             group: datasource.type,
-            datasource: {
-              name: datasource.uid,
-            },
+            ...(datasource.uid && {
+              datasource: {
+                name: datasource.uid,
+              },
+            }),
             spec: {},
           },
         }),
