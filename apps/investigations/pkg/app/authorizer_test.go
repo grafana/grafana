@@ -40,7 +40,15 @@ func TestGetAuthorizer(t *testing.T) {
 			ctx:              identity.WithRequester(context.TODO(), &mockUser{}),
 			attr:             &mockAttributes{resourceRequest: true},
 			expectedDecision: authorizer.DecisionDeny,
-			expectedReason:   "forbidden",
+			expectedReason:   "no permissions",
+			expectedErr:      nil,
+		},
+		{
+			name:             "user does not have datasources:explore permission",
+			ctx:              identity.WithRequester(context.TODO(), &mockUser{permissions: map[string][]string{"foo": {}}}),
+			attr:             &mockAttributes{resourceRequest: true},
+			expectedDecision: authorizer.DecisionNoOpinion,
+			expectedReason:   "",
 			expectedErr:      nil,
 		},
 	}
