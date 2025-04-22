@@ -99,6 +99,7 @@ func testIntegrationValidationForServer(t *testing.T, helper *apis.K8sTestHelper
 		t.Run("Dashboard quota tests", func(t *testing.T) {
 			runQuotaTests(t, org1Ctx)
 		})
+
 		t.Run("Authorization tests for all identity types", func(t *testing.T) {
 			runAuthorizationTests(t, org1Ctx)
 		})
