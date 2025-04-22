@@ -2,6 +2,12 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
 import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
+import {
+  DashboardV2Spec,
+  defaultDashboardV2Spec,
+  defaultPanelSpec,
+  defaultQueryVariableSpec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { getLibraryPanel } from 'app/features/library-panels/state/api';
 
@@ -10,13 +16,50 @@ import { LibraryElementDTO } from '../../library-panels/types';
 import { DashboardJson } from '../types';
 import { validateDashboardJson } from '../utils/validation';
 
-import { getLibraryPanelInputs, importDashboard, processDashboard } from './actions';
+import { getLibraryPanelInputs, importDashboard, processDashboard, processV2Datasources } from './actions';
 import { DataSourceInput, ImportDashboardDTO, initialImportDashboardState, InputType } from './reducers';
 
 jest.mock('app/features/library-panels/state/api');
 const mocks = {
   getLibraryPanel: jest.mocked(getLibraryPanel),
 };
+
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    ...jest.requireActual('@grafana/runtime').getDataSourceSrv(),
+    get: jest.fn().mockImplementation((dsType: { type: string }) => {
+      const dsList: {
+        [key: string]: {
+          uid: string;
+          name: string;
+          type: string;
+          meta: { id: string };
+        };
+      } = {
+        prometheus: {
+          uid: 'prom-uid',
+          name: 'prometheus',
+          type: 'prometheus',
+          meta: { id: 'prometheus' },
+        },
+        loki: {
+          uid: 'loki-uid',
+          name: 'Loki',
+          type: 'loki',
+          meta: { id: 'loki' },
+        },
+        grafana: {
+          uid: 'grafana-uid',
+          name: 'Grafana',
+          type: 'grafana',
+          meta: { id: 'grafana' },
+        },
+      };
+      return dsList[dsType.type];
+    }),
+  }),
+}));
 
 describe('importDashboard', () => {
   it('Should send data source uid', async () => {
@@ -753,5 +796,166 @@ describe('processDashboard', () => {
     const dsInputsForLibPanels = processedDashboard.__inputs!.filter((input) => !!input.usage?.libraryPanels);
     expect(processedDashboard.__inputs).toHaveLength(1);
     expect(dsInputsForLibPanels).toHaveLength(0);
+  });
+});
+
+describe('processV2Datasources', () => {
+  let panels: DashboardV2Spec['elements'];
+  let v2DashboardJson: DashboardV2Spec;
+
+  beforeEach(() => {
+    panels = {
+      'element-panel-a': {
+        kind: 'Panel',
+        spec: {
+          ...defaultPanelSpec(),
+          id: 1,
+          title: 'Panel A',
+          data: {
+            kind: 'QueryGroup',
+            spec: {
+              transformations: [],
+              queryOptions: {},
+              queries: [
+                {
+                  kind: 'PanelQuery',
+                  spec: {
+                    refId: 'A',
+                    hidden: false,
+                    query: {
+                      kind: 'prometheus',
+                      spec: {
+                        expr: 'access_evaluation_duration_count',
+                        range: true,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        },
+      },
+    };
+    v2DashboardJson = {
+      ...defaultDashboardV2Spec(),
+      elements: {
+        ...panels,
+      },
+      variables: [
+        {
+          kind: 'QueryVariable',
+          spec: {
+            ...defaultQueryVariableSpec(),
+            name: 'var1',
+            query: {
+              kind: 'loki',
+              spec: {
+                expr: 'access_evaluation_duration_count',
+                range: true,
+              },
+            },
+          },
+        },
+      ],
+      annotations: [
+        {
+          kind: 'AnnotationQuery',
+          spec: {
+            name: 'annotation1',
+            enable: true,
+            hide: false,
+            iconColor: 'red',
+            query: {
+              kind: 'loki',
+              spec: {
+                expr: 'access_evaluation_duration_count',
+                range: true,
+              },
+            },
+          },
+        },
+      ],
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: [
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: {
+                  kind: 'ElementReference',
+                  name: 'element-panel-a',
+                },
+              },
+            },
+            {
+              kind: 'GridLayoutItem',
+              spec: {
+                x: 0,
+                y: 0,
+                width: 12,
+                height: 8,
+                element: {
+                  kind: 'ElementReference',
+                  name: 'element-panel-b',
+                },
+              },
+            },
+          ],
+        },
+      },
+    };
+  });
+  // should set the correct inputs for panels
+  it('Should extract datasource inputs from panel queries, variables and annotations', async () => {
+    // Execute the test using thunkTester
+    const dispatchedActions = await thunkTester({
+      thunk: processV2Datasources,
+      initialState: {
+        inputs: [
+          // for panels
+          {
+            name: 'Prometheus',
+            pluginId: 'prometheus',
+            type: InputType.DataSource,
+          },
+          // for variables and annotations
+          {
+            name: 'Loki',
+            pluginId: 'loki',
+            type: InputType.DataSource,
+          },
+        ],
+      },
+    })
+      .givenThunk(processV2Datasources)
+      .whenThunkIsDispatched(v2DashboardJson);
+
+    // Find the setInputs action in the dispatched actions
+    const setInputsAction = dispatchedActions.find((action) => action.type === 'manageDashboards/setInputs');
+    //
+    // Verify the action was dispatched
+    expect(setInputsAction).toBeDefined();
+
+    // Verify the datasource inputs were correctly extracted
+    expect(setInputsAction?.payload).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'prometheus',
+          pluginId: 'prometheus',
+          type: InputType.DataSource,
+        }),
+        expect.objectContaining({
+          name: 'Loki',
+          pluginId: 'loki',
+          type: InputType.DataSource,
+        }),
+      ])
+    );
   });
 });
