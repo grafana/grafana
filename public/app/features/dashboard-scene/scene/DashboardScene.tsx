@@ -669,7 +669,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
 
   public switchLayout(layout: DashboardLayoutManager) {
     this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
-    this.state.body.activateRepeaters?.();
   }
 
   public getLayout(): DashboardLayoutManager {
