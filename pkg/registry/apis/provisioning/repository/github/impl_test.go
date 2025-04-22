@@ -1043,3 +1043,193 @@ func TestUpdateFile(t *testing.T) {
 		})
 	}
 }
+
+func TestGithubClient_DeleteFile(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		path        string
+		branch      string
+		message     string
+		hash        string
+		wantErr     error
+	}{
+		{
+			name: "delete file successfully",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						response := &github.RepositoryContentResponse{
+							Content: nil,
+							Commit: github.Commit{
+								SHA: github.Ptr("def456"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Delete test.txt",
+			hash:       "abc123",
+			wantErr:    nil,
+		},
+		{
+			name: "file not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusNotFound,
+							},
+							Message: "Not Found",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "nonexistent.txt",
+			branch:     "main",
+			message:    "Delete nonexistent.txt",
+			hash:       "abc123",
+			wantErr:    ErrResourceNotFound,
+		},
+		{
+			name: "mismatched hash",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusConflict)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusConflict,
+							},
+							Message: "Conflict",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Delete test.txt",
+			hash:       "wrong-hash",
+			wantErr:    ErrMismatchedHash,
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Delete test.txt",
+			hash:       "abc123",
+			wantErr:    ErrServiceUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"message": "Internal server error"}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Delete with server error",
+			hash:       "abc123",
+			wantErr:    errors.New("Internal server error"),
+		},
+		{
+			name: "default commit message",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.DeleteReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Decode the request to verify the message
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						var reqData struct {
+							Message string `json:"message"`
+						}
+						require.NoError(t, json.Unmarshal(body, &reqData))
+						assert.Equal(t, "Delete test.txt", reqData.Message)
+
+						response := &github.RepositoryContentResponse{
+							Content: nil,
+							Commit: github.Commit{
+								SHA: github.Ptr("def456"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "",
+			hash:       "abc123",
+			wantErr:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			err := client.DeleteFile(context.Background(), tt.owner, tt.repository, tt.path, tt.branch, tt.message, tt.hash)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
