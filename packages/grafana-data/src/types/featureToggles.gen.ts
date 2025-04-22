@@ -762,11 +762,6 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Use new **Combobox** component for Prometheus query editor
-  * @default true
-  */
-  prometheusUsesCombobox?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */

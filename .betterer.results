@@ -428,9 +428,6 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/components/MetricSelect.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-prometheus/src/querybuilder/components/PromQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

@@ -1305,13 +1305,6 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:        "prometheusUsesCombobox",
-			Description: "Use new **Combobox** component for Prometheus query editor",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
