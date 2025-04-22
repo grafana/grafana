@@ -6,7 +6,7 @@ import { useToggle, useWindowSize } from 'react-use';
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
@@ -87,7 +87,12 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
-      <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
+      <span className={styles.warningText}>
+        {' '}
+        <Trans i18nKey="explore.unconnected-node-graph-container.count-warning" values={{ numNodes: nodes[0].length }}>
+          ({'{{numNodes}}'} nodes, can be slow to load)
+        </Trans>
+      </span>
     ) : null;
 
   return (
