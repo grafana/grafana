@@ -356,8 +356,12 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		return err
 	}
 
-	// FIXME: we need integration tests to validate if GetContents returns the relative or absolute path
+	// TODO: should add some protection against deleting the root directory?
+
+	// Inside deleteRecursively, all paths are relative to the root of the repository
+	// so we need to prepend the prefix there but only here.
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
+
 	return r.deleteRecursively(ctx, finalPath, ref, comment)
 }
 
@@ -379,7 +383,7 @@ func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, com
 		p := c.GetPath()
 		if c.IsDirectory() {
 			if err := r.deleteRecursively(ctx, p, ref, comment); err != nil {
-				return fmt.Errorf("delete file recursively: %w", err)
+				return fmt.Errorf("delete directory recursively: %w", err)
 			}
 			continue
 		}

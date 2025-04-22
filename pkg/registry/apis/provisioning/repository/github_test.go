@@ -1871,6 +1871,79 @@ func TestGitHubRepository_Delete(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name: "delete directory recursively fails in the middle",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboards",
+			ref:     "main",
+			comment: "Delete dashboards directory",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				dirContent := pgh.NewMockRepositoryContent(t)
+				dirContent.EXPECT().IsDirectory().Return(true)
+
+				// Directory contents
+				file1Content := pgh.NewMockRepositoryContent(t)
+				file1Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard1.json")
+				file1Content.EXPECT().IsDirectory().Return(false)
+				file1Content.EXPECT().GetSHA().Return("file1-sha")
+
+				file2Content := pgh.NewMockRepositoryContent(t)
+				file2Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard2.json")
+				file2Content.EXPECT().IsDirectory().Return(false)
+				file2Content.EXPECT().GetSHA().Return("file2-sha")
+
+				subDirContent := pgh.NewMockRepositoryContent(t)
+				subDirContent.EXPECT().IsDirectory().Return(true)
+				subDirContent.EXPECT().GetPath().Return("grafana/dashboards/subfolder")
+
+				// Subfolder contents
+				subFile1Content := pgh.NewMockRepositoryContent(t)
+				subFile1Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard.json")
+				subFile1Content.EXPECT().IsDirectory().Return(false)
+				subFile1Content.EXPECT().GetSHA().Return("subfile-sha")
+
+				subFile2Content := pgh.NewMockRepositoryContent(t)
+				subFile2Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard2.json")
+				subFile2Content.EXPECT().IsDirectory().Return(false)
+				subFile2Content.EXPECT().GetSHA().Return("subfile2-sha")
+
+				subFile3Content := pgh.NewMockRepositoryContent(t)
+
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+
+				// Get main directory
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards", "main").
+					Return(dirContent, []pgh.RepositoryContent{file1Content, file2Content, subDirContent}, nil)
+
+				// Get subfolder contents
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder", "main").
+					Return(subDirContent, []pgh.RepositoryContent{subFile1Content, subFile2Content, subFile3Content}, nil)
+
+				// Delete first file successfully
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard1.json", "main",
+					"Delete dashboards directory", "file1-sha").Return(nil)
+
+				// Second file deletion fails
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard2.json", "main",
+					"Delete dashboards directory", "file2-sha").Return(nil)
+
+				// Delete subfolder files
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard.json", "main",
+					"Delete dashboards directory", "subfile-sha").Return(nil)
+
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard2.json", "main",
+					"Delete dashboards directory", "subfile2-sha").Return(errors.New("permission denied"))
+
+			},
+			expectedError: errors.New("delete directory recursively: delete file: permission denied"),
+		},
+		{
 			name: "file not found",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
