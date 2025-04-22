@@ -30,9 +30,6 @@ type ScheduleService interface {
 	Run(context.Context) error
 }
 
-// retryDelay represents how long to wait between each failed rule evaluation.
-const retryDelay = 1 * time.Second
-
 // AlertsSender is an interface for a service that is responsible for sending notifications to the end-user.
 //
 //go:generate mockery --name AlertsSender --structname AlertsSenderMock --inpackage --filename alerts_sender_mock.go --with-expecter
@@ -66,7 +63,9 @@ type schedule struct {
 	// each rule gets its own channel and routine
 	registry ruleRegistry
 
-	maxAttempts int64
+	maxAttempts       int64
+	initialRetryDelay time.Duration
+	maxRetryDelay     time.Duration
 
 	clock clock.Clock
 
@@ -114,6 +113,8 @@ type schedule struct {
 // SchedulerCfg is the scheduler configuration.
 type SchedulerCfg struct {
 	MaxAttempts            int64
+	InitialRetryDelay      time.Duration
+	MaxRetryDelay          time.Duration
 	BaseInterval           time.Duration
 	C                      clock.Clock
 	MinRuleInterval        time.Duration
@@ -142,6 +143,8 @@ func NewScheduler(cfg SchedulerCfg, stateManager *state.Manager) *schedule {
 	sch := schedule{
 		registry:               newRuleRegistry(),
 		maxAttempts:            cfg.MaxAttempts,
+		initialRetryDelay:      cfg.InitialRetryDelay,
+		maxRetryDelay:          cfg.MaxRetryDelay,
 		clock:                  cfg.C,
 		baseInterval:           cfg.BaseInterval,
 		log:                    cfg.Log,
@@ -293,10 +296,13 @@ func (sch *schedule) processTick(ctx context.Context, dispatcherGroup *errgroup.
 	updatedRules := make([]ngmodels.AlertRuleKeyWithVersion, 0, len(updated)) // this is needed for tests only
 	restartedRules := make([]Rule, 0)
 	missingFolder := make(map[string][]string)
+
 	ruleFactory := newRuleFactory(
 		sch.appURL,
 		sch.disableGrafanaFolder,
 		sch.maxAttempts,
+		sch.initialRetryDelay,
+		sch.maxRetryDelay,
 		sch.alertsSender,
 		sch.stateManager,
 		sch.evaluatorFactory,
