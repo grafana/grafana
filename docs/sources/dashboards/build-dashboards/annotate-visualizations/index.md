@@ -35,8 +35,6 @@ Annotations provide a way to mark points on a visualization with rich events. Th
 
 {{< figure src="/static/img/docs/v46/annotations.png" max-width="800px" alt="Annotated visualization with annotation context menu open" >}}
 
-{{< docs/play title="Annotations" url="https://play.grafana.org/d/000000010/" >}}
-
 You can annotate visualizations in three ways:
 
 - Directly in the panel, using the [built-in annotations query](#built-in-query)
