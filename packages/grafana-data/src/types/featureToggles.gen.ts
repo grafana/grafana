@@ -1030,4 +1030,9 @@ export interface FeatureToggles {
   * Enables the alerting list view v2 preview toggle
   */
   alertingListViewV2PreviewToggle?: boolean;
+  /**
+  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
+  * @default false
+  */
+  alertRuleUseFiredAtForStartsAt?: boolean;
 }
