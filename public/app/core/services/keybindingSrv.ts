@@ -87,10 +87,6 @@ export class KeybindingSrv {
     this.exit();
   }
 
-  private closeSearch() {
-    this.locationService.partial({ search: null });
-  }
-
   private openAlerting() {
     this.locationService.push('/alerting');
   }
@@ -141,10 +137,6 @@ export class KeybindingSrv {
     const { kioskMode } = this.chromeService.state.getValue();
     if (kioskMode) {
       this.chromeService.exitKioskMode();
-    }
-
-    if (search.search) {
-      this.closeSearch();
     }
   }
 

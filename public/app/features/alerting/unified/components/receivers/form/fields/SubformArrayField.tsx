@@ -39,6 +39,7 @@ export const SubformArrayField = ({
     <div className={styles.wrapper}>
       <CollapsibleSection
         className={styles.collapsibleSection}
+        // eslint-disable-next-line @grafana/no-untranslated-strings
         label={`${option.label} (${fields.length})`}
         description={option.description}
       >

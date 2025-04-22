@@ -85,7 +85,10 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
       </Field>
       <Field
         label={t('alerting.am-root-route-form.am-group-select-label-group-by', 'Group by')}
-        description="Combine multiple alerts into a single notification by grouping them by the same label values."
+        description={t(
+          'alerting.am-root-route-form.am-group-select-description-group-by',
+          'Combine multiple alerts into a single notification by grouping them by the same label values.'
+        )}
         data-testid="am-group-select"
       >
         <Controller
@@ -117,7 +120,10 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
         <div className={styles.timingFormContainer}>
           <Field
             label={t('alerting.am-root-route-form.am-group-wait-label-group-wait', 'Group wait')}
-            description="The waiting time before sending the first notification for a new group of alerts. Default 30 seconds."
+            description={t(
+              'alerting.am-root-route-form.am-group-description-label',
+              'The waiting time before sending the first notification for a new group of alerts. Default 30 seconds.'
+            )}
             invalid={!!errors.groupWaitValue}
             error={errors.groupWaitValue?.message}
             data-testid="am-group-wait"
@@ -131,7 +137,10 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
           </Field>
           <Field
             label={t('alerting.am-root-route-form.am-group-interval-label-group-interval', 'Group interval')}
-            description="The wait time before sending a notification about changes in the alert group after the first notification has been sent. Default is 5 minutes."
+            description={t(
+              'alerting.am-root-route-form.am-group-interval-description',
+              'The wait time before sending a notification about changes in the alert group after the first notification has been sent. Default is 5 minutes.'
+            )}
             invalid={!!errors.groupIntervalValue}
             error={errors.groupIntervalValue?.message}
             data-testid="am-group-interval"
@@ -145,7 +154,10 @@ export const AmRootRouteForm = ({ actionButtons, alertManagerSourceName, onSubmi
           </Field>
           <Field
             label={t('alerting.am-root-route-form.am-repeat-interval-label-repeat-interval', 'Repeat interval')}
-            description="The wait time before resending a notification that has already been sent successfully. Default is 4 hours. Should be a multiple of Group interval."
+            description={t(
+              'alerting.am-root-route-form.am-repeat-interval-description',
+              'The wait time before resending a notification that has already been sent successfully. Default is 4 hours. Should be a multiple of Group interval.'
+            )}
             invalid={!!errors.repeatIntervalValue}
             error={errors.repeatIntervalValue?.message}
             data-testid="am-repeat-interval"
