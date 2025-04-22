@@ -1344,6 +1344,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
+	origin?: string;
 	// @deprecated
 	condition?: string;
 }
