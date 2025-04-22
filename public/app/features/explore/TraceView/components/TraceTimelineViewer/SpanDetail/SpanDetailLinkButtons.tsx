@@ -8,7 +8,6 @@ import { DataLinkButton, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
-import { SpanLinkFunc } from '../../types';
 import { SpanLinkDef, SpanLinkType } from '../../types/links';
 import { TraceSpan } from '../../types/trace';
 
@@ -26,7 +25,7 @@ export type Props = {
   traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
   timeRange: TimeRange;
-  createSpanLink?: SpanLinkFunc;
+  spanLinks: SpanLinkDef[];
   app: CoreApp;
 };
 
@@ -49,12 +48,12 @@ const LINKS_ORDER = [
 const MAX_LINKS = 3;
 
 export const getSpanDetailLinkButtons = (props: Props) => {
-  const { span, createSpanLink, traceToProfilesOptions, timeRange, datasourceType, app } = props;
+  const { span, spanLinks, traceToProfilesOptions, timeRange, datasourceType, app } = props;
 
   let linkToProfiles: SpanLinkDef | undefined;
 
-  if (createSpanLink) {
-    const links = (createSpanLink(span) || [])
+  if (spanLinks.length > 0) {
+    const links = spanLinks
       // Linked spans are shown in a separate section
       .filter((link) => link.type !== SpanLinkType.Traces)
       .map((link) => {
