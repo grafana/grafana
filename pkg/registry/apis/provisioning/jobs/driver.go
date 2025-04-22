@@ -113,7 +113,7 @@ func (d *jobDriver) Run(ctx context.Context) {
 
 	// Remove old jobs
 	if err = d.store.Cleanup(ctx); err != nil {
-		logger.Error("failed to cleanup", "error", err)
+		logger.Error("failed to clean up old jobs at start", "error", err)
 	}
 
 	// Drive without waiting on startup.
