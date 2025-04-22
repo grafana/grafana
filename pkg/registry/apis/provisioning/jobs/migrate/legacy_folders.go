@@ -88,9 +88,8 @@ func (f *legacyFoldersMigrator) Migrate(ctx context.Context, namespace string, r
 		if !created {
 			result.Action = repository.FileActionIgnored
 		}
-
 		progress.Record(ctx, result)
-		return nil
+		return err
 	}); err != nil {
 		return fmt.Errorf("export folders from SQL: %w", err)
 	}
