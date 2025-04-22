@@ -7,8 +7,8 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -38,7 +38,6 @@ func ProvideDecryptStorage(
 		keepers:                    keepers,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		allowList:                  allowList,
-		log:                        log.New("decrypt-storage"),
 	}, nil
 }
 
@@ -48,7 +47,6 @@ type decryptStorage struct {
 	keepers                    map[contracts.KeeperType]contracts.Keeper
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	allowList                  contracts.DecryptAllowList
-	log                        log.Logger
 }
 
 // Decrypt decrypts a secure value from the keeper.
@@ -87,7 +85,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	}
 
 	// TEMPORARY: While we evaluate all of our auditing needs, provide one for decrypt operations.
-	s.log.Info("Audit log:", "operation", "decrypt_secret", "namespace", namespace, "secret_name", name, "decrypter_identity", identity)
+	logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret", "namespace", namespace, "secret_name", name, "decrypter_identity", identity)
 
 	return exposedValue, nil
 }
