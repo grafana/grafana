@@ -425,11 +425,9 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
             kind: 'DataQuery',
             version: defaultDataQueryKind().version,
             group: datasource.type,
-            ...(datasource.uid && {
-              datasource: {
-                name: datasource.uid,
-              },
-            }),
+            datasource: {
+              name: datasource.uid,
+            },
             spec: {},
           },
         }),
@@ -470,10 +468,8 @@ function getAnnotations(state: DashboardSceneState, dsReferencesMapping?: DSRefe
       result.spec.query = {
         kind: 'DataQuery',
         version: defaultDataQueryKind().version,
-        group: getAnnotationQueryKind(layer.state.query),
-        datasource: {
-          name: layer.state.query.query.spec.datasource.uid,
-        },
+        group: layer.state.query.query.group || getAnnotationQueryKind(layer.state.query),
+        datasource: layer.state.query.query.datasource,
         spec: {
           ...layer.state.query.query.spec,
         },

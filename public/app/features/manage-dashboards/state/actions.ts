@@ -333,7 +333,7 @@ export async function processV2DatasourceInput(
   spec: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
   inputs: Record<string, DataSourceInput> = {}
 ) {
-  const dsType = spec.query?.spec.group;
+  const dsType = spec.query?.group || 'undefined';
   const datasource = await getDatasourceSrv().get({ type: dsType });
   let dataSourceInput: DataSourceInput | undefined;
 
