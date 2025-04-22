@@ -508,7 +508,7 @@ export interface MapFrameToGridOptions extends TableNGProps {
   setIsInspecting: (isInspecting: boolean) => void;
   setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;
   sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>;
-  styles: { cell: string; cellWrapped: string };
+  styles: { cell: string; cellWrapped: string; dataGrid: string };
   textWraps: Record<string, boolean>;
   theme: GrafanaTheme2;
   showTypeIcons?: boolean;
