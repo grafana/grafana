@@ -10,7 +10,6 @@ menuTitle: Create a next gen dashboard
 title: Create a next generation dashboard
 description: Create and edit a next generation dashboard
 weight: 900
-draft: true
 refs:
   built-in-special-data-sources:
     - pattern: /docs/grafana/
@@ -153,12 +152,6 @@ Dashboards and panels allow you to show your data in visual form. Each panel nee
 
    Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
 
-## Configure panel Show / hide rules
-
-TBA
-
-Only shows up when in autogrid mode
-
 ## Move or resize a panel
 
 You can place a panel on a dashboard in any location.
@@ -176,17 +169,47 @@ Do one of the following
 
 ## Group panels
 
+You can group panels into rows or tabs, and you can nest tabs and rows within each other.
+The following sections describe the configuration options for adding tabs and rows.
+While grouping is meant for multiple panels, you can start grouping with even just one panel.
+
+1. On the dashboard, toggle on the edit mode switch.
+1. At the bottom-left corner of the dashboard, click **Group panels**.
+1. Select **Group into row** or **Group into tab**.
+
+A dotted line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
+
+1. Set the [grouping configuration options](#grouping-configuration-options).
+1. When you're finished, click **Save** at the top-right corner of the dashboard.
+1.Click **Save**.
+
+### Grouping configuration options
+
+The following table describes the options you can set for a row.
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Title                    | Title of the row or tab. |
+| Fill screen              | Toggle the switch on to make the row fill the screen. Only applies to rows. |
+| Hide row header          | Toggle the switch on to hide the header. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Only applies to rows. |
+| Group layout             | Select the grouping option, between **Rows** and **Tabs**. Only available when a grouping contains another grouping for use on the nested grouping.  |
+| Panel layout             | Select the way panels are sized and positioned between **Custom** and **Auto grid**. Only available when a grouping contains panels. |
+| Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add rows or tabs based on the value of a variable. |
+| Show / hide rules > [Row/Tab visibility](#configure-show--hide-rules) | Control whether or not rows or tabs are displayed based on variables or a time range. |
+
+<!-- prettier-ignore-end -->
+
+## Edit dashboard or panel details
+
 TBA
 
-### Configure rows
+## Configure repeat options
 
-TBA
+<!-- check for instances of "Configure repeating rows" -->
 
-#### Configure repeating rows
-
-<!--i think this is different now because -->
-
-You can configure Grafana to dynamically add panels or rows to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels](ref:configure-repeating-panels).
+You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of a variable. Variables dynamically change your queries across all rows in a dashboard. For more information about repeating panels, refer to [Configure repeating panels](ref:configure-repeating-panels).
 
 To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows). The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
 
@@ -208,7 +231,7 @@ To see an example of repeating rows, refer to [Dashboard with repeating rows](ht
 
 To provide context to dashboard users, add the variable to the row title.
 
-##### Repeating rows and the Dashboard special data source
+### Repeating rows and the Dashboard special data source
 
 If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
@@ -219,13 +242,12 @@ For example, in a dashboard:
 - Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
 - `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
-### Configure tabs
+## Configure Show / hide rules
 
 TBA
 
-## Edit dashboard or panel details
+Only shows up when in autogrid mode
 
-TBA
 
 ## Navigate using the dashboard outline
 
