@@ -2,6 +2,7 @@ import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } fro
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   Spec as DashboardV2Spec,
+  defaultDataQueryKind,
   GridLayoutItemKind,
   GridLayoutItemSpec,
   GridLayoutKind,
@@ -536,10 +537,14 @@ describe('ResponseTransformers', () => {
                 {
                   kind: 'PanelQuery',
                   spec: {
-                    datasource: 'datasource1',
                     hidden: false,
                     query: {
-                      kind: 'prometheus',
+                      kind: 'DataQuery',
+                      version: defaultDataQueryKind().version,
+                      group: 'prometheus',
+                      datasource: {
+                        name: 'datasource1',
+                      },
                       spec: {
                         expr: 'test-query',
                       },
@@ -960,19 +965,22 @@ describe('ResponseTransformers', () => {
     };
 
     expect(v2Common).toEqual(v1Common);
-
     if (v2.kind === 'QueryVariable') {
-      expect(v2.spec.query.spec.group).toEqual(v1.datasource?.type);
-      expect(v2.spec.query.spec.datasource.name).toEqual(v1.datasource?.uid);
-
+      expect(v2.spec.query).toMatchObject({
+        kind: 'DataQuery',
+        version: defaultDataQueryKind().version,
+        group: v1.datasource?.type,
+        datasource: {
+          name: v1.datasource?.uid,
+        },
+      });
       if (typeof v1.query === 'string') {
-        expect(v2.spec.query.spec[LEGACY_STRING_VALUE_KEY]).toEqual(v1.query);
+        expect(v2.spec.query.spec).toEqual({
+          [LEGACY_STRING_VALUE_KEY]: v1.query,
+        });
       } else {
-        expect(v2.spec.query).toEqual({
-          kind: v1.datasource?.type,
-          spec: {
-            ...(typeof v1.query === 'object' ? v1.query : {}),
-          },
+        expect(v2.spec.query.spec).toEqual({
+          ...(typeof v1.query === 'object' ? v1.query : {}),
         });
       }
     }

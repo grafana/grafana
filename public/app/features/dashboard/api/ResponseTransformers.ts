@@ -708,7 +708,7 @@ function getVariablesV1(vars: DashboardV2Spec['variables']): VariableModel[] {
               : v.spec.query.spec,
           datasource: {
             type: v.spec.query?.spec.group,
-            uid: v.spec.query?.spec.datasource.name,
+            uid: v.spec.query?.spec.datasource?.name,
           },
           sort: transformSortVariableToEnumV1(v.spec.sort),
           refresh: transformVariableRefreshToEnumV1(v.spec.refresh),
@@ -833,7 +833,7 @@ function getAnnotationsV1(annotations: DashboardV2Spec['annotations']): Annotati
       name: a.spec.name,
       datasource: {
         type: a.spec.query?.spec.group,
-        uid: a.spec.query?.spec.datasource.name,
+        uid: a.spec.query?.spec.datasource?.name,
       },
       enable: a.spec.enable,
       hide: a.spec.hide,
@@ -941,7 +941,7 @@ function transformV2PanelToV1Panel(
           refId: q.spec.refId,
           hide: q.spec.hidden,
           datasource: {
-            uid: q.spec.query.spec.datasource.uid,
+            uid: q.spec.query.spec.datasource?.uid,
             type: q.spec.query.spec.group,
           },
           ...q.spec.query.spec,

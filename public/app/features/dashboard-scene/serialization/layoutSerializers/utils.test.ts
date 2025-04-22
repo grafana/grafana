@@ -60,8 +60,8 @@ describe('getRuntimePanelDataSource', () => {
     const result = getRuntimePanelDataSource(query);
 
     expect(result).toEqual({
-      uid: 'test-ds-uid',
-      type: 'test-ds-type',
+      uid: 'prometheus-uid',
+      type: 'prometheus',
     });
   });
 
