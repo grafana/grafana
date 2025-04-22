@@ -152,7 +152,8 @@ export function References(props: ReferenceItemProps) {
                   </span>
                 ) : (
                   <span className={cx('span-svc-name', styles.title)}>
-                    View Linked Span <Icon name="external-link-alt" />
+                    <Trans i18nKey="explore.accordian-references.view-linked-span">View Linked Span</Trans>{' '}
+                    <Icon name="external-link-alt" />
                   </span>
                 )}
                 <small className={styles.debugInfo}>
