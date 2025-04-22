@@ -124,6 +124,7 @@ func RegisterAPIService(
 		dashboardPermissions:         dashboardPermissions,
 		features:                     features,
 		accessControl:                accessControl,
+		accessClient:                 accessClient,
 		unified:                      unified,
 		dashboardProvisioningService: provisioningDashboardService,
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
