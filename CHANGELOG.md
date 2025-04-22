@@ -13,6 +13,10 @@
 - **Alerting:** Fix token-based Slack image upload to work with channel names [#101488](https://github.com/grafana/grafana/pull/101488), [@moustafab](https://github.com/moustafab)
 - **Service Accounts:** Do not show error pop-ups for Service Account and Renderer UI flows [#101791](https://github.com/grafana/grafana/pull/101791), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+- **Security:** Fix CVE-2025-3260
+
 <!-- 11.3.5+security-01 END -->
 <!-- 10.4.17+security-01 START -->
 
