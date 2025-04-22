@@ -6,10 +6,6 @@ import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { ScopesSelectorService } from './ScopesSelectorService';
 import { Node, NodeReason, NodesMap } from './types';
 
-// Mock dependencies
-jest.mock('../ScopesApiClient');
-jest.mock('../dashboards/ScopesDashboardsService');
-
 describe('ScopesSelectorService', () => {
   let service: ScopesSelectorService;
   let apiClient: jest.Mocked<ScopesApiClient>;
@@ -45,10 +41,6 @@ describe('ScopesSelectorService', () => {
   };
 
   beforeEach(() => {
-    // Clear all mocks
-    jest.clearAllMocks();
-
-    // Create mock instances
     apiClient = {
       fetchScope: jest.fn().mockResolvedValue(mockScope),
       fetchMultipleScopes: jest.fn().mockResolvedValue([{ scope: mockScope, path: ['', 'test-scope'] }]),
@@ -61,7 +53,6 @@ describe('ScopesSelectorService', () => {
       fetchDashboards: jest.fn(),
     } as unknown as jest.Mocked<ScopesDashboardsService>;
 
-    // Create service instance
     service = new ScopesSelectorService(apiClient, dashboardsService);
   });
 
