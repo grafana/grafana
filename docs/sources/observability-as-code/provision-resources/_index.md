@@ -4,14 +4,11 @@ keywords:
   - observability
   - configuration
   - as code
-  - as-code
-  - dashboards
   - git integration
   - git sync
   - github
 labels:
   products:
-    - cloud
     - enterprise
     - oss
 title: Provision resources and sync dashboards
@@ -24,7 +21,11 @@ weight: 100
 Provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. This feature isn't available in Grafana Cloud.
 {{< /admonition >}}
 
-Using Provisioning, you can configure how to store your dashboard JSON files in either GitHub repositories using Git Sync or a local file path.
+{{< section depth="5" >}}
+
+<hr />
+
+Using Provisioning, you can configure how to store your dashboard JSON files in either GitHub repositories using Git Sync or a local path.
 
 Of the two experimental options, Git Sync is the recommended method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards to your configured GitHub repository.
 If you push a change in the repository, those changes are mirrored in your Grafana instance.
@@ -34,7 +35,7 @@ Refer to [Set up file provisioning](https://grafana.com/docs/grafana/<GRAFANA_VE
 
 ## Provisioned folders and connections
 
-Dashboards and folders saved to the local file path are referred to as "provisioned" resources and are labeled as such in the Grafana UI.
+Dashboards and folders saved to the local path are referred to as "provisioned" resources and are labeled as such in the Grafana UI.
 
 Dashboards saved in your GitHub repository or local folder configured appear in a provisioned folder in Grafana.
 
@@ -73,4 +74,4 @@ The Grafana UI reads the database and updates the UI to reflect these changes.
 
 ## Explore provisioning
 
-{{< section withDescriptions="true" >}}
+{{< section withDescriptions="true" depth="5" >}}

@@ -16,16 +16,19 @@ weight: 200
 # Set up file provisioning
 
 {{< admonition type="note" >}}
-Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. This feature is not available in Grafana Cloud.
+Local file provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana to use this feature. This feature isn't available in Grafana Cloud.
 {{< /admonition >}}
+
+{{< section depth="5" >}}
+<hr />
 
 File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
 
 This page explains how to set up local file provisioning.
 
-The local file path mount is referred to as a repository.
+The local path mount is referred to as a repository.
 
-Using the local file path lets you also use it with a tool like `fuse`, allowing you to mount S3 buckets as local file paths. You can also use tools like `restic` to automatically back up your dashboards to your preferred backup storage solution.
+Using the local path lets you also use it with a tool like `fuse`, allowing you to mount S3 buckets as local paths. You can also use tools like `restic` to automatically back up your dashboards to your preferred backup storage solution.
 
 To set up file sync with local with local files, you need to:
 

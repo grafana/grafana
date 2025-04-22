@@ -18,6 +18,10 @@ weight: 400
 
 # Manage provisioned repositories with Git Sync
 
+{{< section depth="5" >}}
+
+<hr />
+
 Once you have set up Git Sync, you can synchronize dashboards and changes to existing dashboards to your configured GitHub repository.
 If you push a change in the repository, those changes are mirrored in your Grafana instance.
 
