@@ -265,12 +265,6 @@ export function TableNG(props: TableNGProps) {
     [textWraps, columnTypes, getColumnWidths, headersLength, fieldDisplayType]
   );
 
-  const getDisplayedValue = (row: TableRow, key: string) => {
-    const field = props.data.fields.find((field) => field.name === key)!;
-    const displayedValue = formattedValueToString(field.display!(row[key]));
-    return displayedValue;
-  };
-
   // Filter rows
   const filteredRows = useMemo(() => {
     const filterValues = Object.entries(filter);
@@ -279,6 +273,13 @@ export function TableNG(props: TableNGProps) {
       crossFilterOrder.current = [];
       return rows;
     }
+
+    // Helper function to get displayed value
+    const getDisplayedValue = (row: TableRow, key: string) => {
+      const field = props.data.fields.find((field) => field.name === key)!;
+      const displayedValue = formattedValueToString(field.display!(row[key]));
+      return displayedValue;
+    };
 
     // Update crossFilterOrder
     const filterKeys = new Set(filterValues.map(([key]) => key));
@@ -295,6 +296,55 @@ export function TableNG(props: TableNGProps) {
     // reset crossFilterRows
     crossFilterRows.current = {};
 
+    // For nested tables, only filter parent rows and keep their children
+    if (isNestedTable) {
+      // Array for parentRows: enables sorting and maintains order for iteration
+      // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
+      const parentRows: TableRow[] = [];
+      const childRows: Map<number, TableRow> = new Map();
+
+      // Separate parent and child rows
+      rows.forEach((row) => {
+        if (Number(row.__depth) === 0) {
+          parentRows.push(row);
+        } else {
+          // Store child rows by parent index
+          // Child rows have same __index as their parent
+          childRows.set(Number(row.__index), row);
+        }
+      });
+
+      // Filter only parent rows
+      const filteredParents = parentRows.filter((row) => {
+        for (const [key, value] of filterValues) {
+          const displayedValue = getDisplayedValue(row, key);
+          if (!value.filteredSet.has(displayedValue)) {
+            return false;
+          }
+          // collect rows for crossFilter
+          if (!crossFilterRows.current[key]) {
+            crossFilterRows.current[key] = [row];
+          } else {
+            crossFilterRows.current[key].push(row);
+          }
+        }
+        return true;
+      });
+
+      // Reconstruct array with filtered parents and their children
+      const result: TableRow[] = [];
+      filteredParents.forEach((row) => {
+        result.push(row);
+        const childRow = childRows.get(Number(row.__index));
+        if (childRow) {
+          result.push(childRow);
+        }
+      });
+
+      return result;
+    }
+
+    // Regular filtering for non-nested tables
     return rows.filter((row) => {
       for (const [key, value] of filterValues) {
         const displayedValue = getDisplayedValue(row, key);
@@ -310,35 +360,70 @@ export function TableNG(props: TableNGProps) {
       }
       return true;
     });
-  }, [rows, filter, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rows, filter, isNestedTable, props.data.fields]);
 
   // Sort rows
   const sortedRows = useMemo(() => {
-    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
-    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
-
     if (sortColumns.length === 0) {
       return filteredRows;
     }
 
-    return filteredRows.slice().sort((a, b) => {
+    // Common sort comparator function
+    const compareRows = (a: TableRow, b: TableRow): number => {
       let result = 0;
-      let sortIndex = 0;
+      for (let i = 0; i < sortColumns.length; i++) {
+        const { columnKey, direction } = sortColumns[i];
+        const compare = getComparator(columnTypes[columnKey]);
+        const sortDir = direction === 'ASC' ? 1 : -1;
 
-      for (const { columnKey } of sortColumns) {
-        const compare = comparators[sortIndex];
-        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
-
+        result = sortDir * compare(a[columnKey], b[columnKey]);
         if (result !== 0) {
           break;
         }
-
-        sortIndex += 1;
       }
+      return result;
+    };
+
+    // Handle nested tables
+    if (isNestedTable) {
+      // Array for parentRows: enables sorting and maintains order for iteration
+      // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
+      const parentRows: TableRow[] = [];
+      const childRows: Map<number, TableRow> = new Map();
+
+      // Separate parent and child rows
+      filteredRows.forEach((row) => {
+        if (Number(row.__depth) === 0) {
+          parentRows.push(row);
+        } else {
+          // Store child rows by parent index
+          // Child rows have same __index as their parent
+          childRows.set(Number(row.__index), row);
+        }
+      });
+
+      // Sort only parent rows
+      const sortedParents = [...parentRows].sort(compareRows);
+
+      // Reconstruct array with sorted parents and their children
+      const result: TableRow[] = [];
+      sortedParents.forEach((row) => {
+        // Add parent row
+        result.push(row);
+
+        // Add child row if exists
+        const childRow = childRows.get(Number(row.__index));
+        if (childRow) {
+          result.push(childRow);
+        }
+      });
 
       return result;
-    });
-  }, [filteredRows, sortColumns, columnTypes]);
+    }
+
+    // Regular sort for tables without nesting
+    return filteredRows.slice().sort((a, b) => compareRows(a, b));
+  }, [filteredRows, sortColumns, columnTypes, isNestedTable]);
 
   // Paginated rows
   // TODO consolidate calculations into pagination wrapper component and only use when needed
@@ -794,7 +879,9 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={sortedRows[rowIdx].__index}
+            rowIdx={
+              sortedRows[rowIdx] && sortedRows[rowIdx].__index !== undefined ? sortedRows[rowIdx].__index : rowIdx
+            }
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
