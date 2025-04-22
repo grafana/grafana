@@ -8,6 +8,14 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
+// For if the query is optionally `FOR UPDATE`.
+type sqlForUpdate bool
+
+const (
+	yesForUpdate sqlForUpdate = true
+	notForUpdate sqlForUpdate = false
+)
+
 var (
 	//go:embed data/*.sql
 	sqlTemplatesFS embed.FS
@@ -46,8 +54,9 @@ func (r createKeeper) Validate() error {
 // Read
 type readKeeper struct {
 	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
+	Namespace   string
+	Name        string
+	IsForUpdate bool
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`

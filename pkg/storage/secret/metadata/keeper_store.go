@@ -96,7 +96,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 }
 
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
-	keeperDB, err := s.read(ctx, s.db.GetSqlxSession(), namespace.String(), name)
+	keeperDB, err := s.read(ctx, s.db.GetSqlxSession(), namespace.String(), name, notForUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -113,11 +113,12 @@ type dbQuerier interface {
 	Query(ctx context.Context, query string, args ...any) (*sql.Rows, error)
 }
 
-func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, namespace string, name string) (*keeperDB, error) {
+func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, namespace, name string, forUpdate sqlForUpdate) (*keeperDB, error) {
 	req := &readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
 		Name:        name,
+		IsForUpdate: bool(forUpdate),
 	}
 
 	query, err := sqltemplate.Execute(sqlKeeperRead, req)
@@ -165,7 +166,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		}
 
 		// Read old value first.
-		oldKeeperRow, err := s.read(ctx, sess, newKeeper.Namespace, newKeeper.Name)
+		oldKeeperRow, err := s.read(ctx, sess, newKeeper.Namespace, newKeeper.Name, yesForUpdate)
 		if err != nil {
 			return fmt.Errorf("failed to get row: %w", err)
 		}
@@ -445,7 +446,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := s.read(ctx, s.db.GetSqlxSession(), namespace, name)
+	kp, err := s.read(ctx, s.db.GetSqlxSession(), namespace, name, notForUpdate)
 	if err != nil {
 		return "", nil, err
 	}
