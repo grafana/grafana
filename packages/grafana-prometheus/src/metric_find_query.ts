@@ -86,8 +86,9 @@ export class PrometheusMetricFindQuery {
       escapedLabel = escapeForUtf8Support(label);
     }
 
+    const url = `/api/v1/label/${escapedLabel}/values`;
+
     if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
-      const url = `/api/v1/label/${escapedLabel}/values`;
 
       return this.datasource.metadataRequest(url, params).then((result) => {
         return _map(result.data.data, (value) => {
@@ -95,14 +96,8 @@ export class PrometheusMetricFindQuery {
         });
       });
     } else {
-      const url = `/api/v1/series`;
-
       return this.datasource.metadataRequest(url, params).then((result) => {
-        const _labels = _map(result.data.data, (metric) => {
-          return metric[label] || '';
-        }).filter((label) => {
-          return label !== '';
-        });
+        const _labels = _map(result.data.data, (metric) => metric);
 
         return uniq(_labels).map((metric) => {
           return {
