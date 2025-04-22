@@ -2657,7 +2657,8 @@
       "metadata": {
         "name": "prometheusUsesCombobox",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-10-23T11:18:33Z"
+        "creationTimestamp": "2024-10-23T11:18:33Z",
+        "deletionTimestamp": "2025-04-11T19:25:28Z"
       },
       "spec": {
         "description": "Use new **Combobox** component for Prometheus query editor",
