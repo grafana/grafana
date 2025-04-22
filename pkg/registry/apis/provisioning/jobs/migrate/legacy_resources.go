@@ -10,6 +10,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
@@ -28,23 +29,23 @@ type legacyResourcesMigrator struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	parsers             resources.ParserFactory
 	legacyMigrator      legacy.LegacyMigrator
-	folderMigrator      LegacyFoldersMigrator
 	signerFactory       signature.SignerFactory
+	clients             resources.ClientFactory
 }
 
 func NewLegacyResourcesMigrator(
 	repositoryResources resources.RepositoryResourcesFactory,
 	parsers resources.ParserFactory,
 	legacyMigrator legacy.LegacyMigrator,
-	folderMigrator LegacyFoldersMigrator,
 	signerFactory signature.SignerFactory,
+	clients resources.ClientFactory,
 ) LegacyResourcesMigrator {
 	return &legacyResourcesMigrator{
 		repositoryResources: repositoryResources,
 		parsers:             parsers,
 		legacyMigrator:      legacyMigrator,
-		folderMigrator:      folderMigrator,
 		signerFactory:       signerFactory,
+		clients:             clients,
 	}
 }
 
@@ -70,14 +71,25 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 	}
 
 	progress.SetMessage(ctx, "migrate folders from SQL")
-	if err := m.folderMigrator.Migrate(ctx, namespace, repositoryResources, progress); err != nil {
-		return fmt.Errorf("migrate folders from SQL: %w", err)
+	if m.clients != nil {
+		clients, err := m.clients.Clients(ctx, namespace)
+		if err != nil {
+			return err
+		}
+		folderClient, err := clients.Folder()
+		if err != nil {
+			return err
+		}
+		err = export.ExportFolders(ctx, rw.Config().Name, provisioning.ExportJobOptions{}, folderClient, repositoryResources, progress)
+		if err != nil {
+			return fmt.Errorf("migrate folders from SQL: %w", err)
+		}
 	}
 
 	progress.SetMessage(ctx, "migrate resources from SQL")
 	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
-			continue
+			continue // folders have special handling
 		}
 
 		reader := newLegacyResourceMigrator(

@@ -336,7 +336,10 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 	if err != nil {
 		return err
 	}
+	return g.maybeCommit(ctx, message)
+}
 
+func (g *GoGitRepo) maybeCommit(ctx context.Context, message string) error {
 	// Skip commit for each file
 	if !g.opts.PushOnWrites {
 		return nil
@@ -351,7 +354,7 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 			When:  sig.When,
 		}
 	}
-	_, err = g.tree.Commit(message, opts)
+	_, err := g.tree.Commit(message, opts)
 	if errors.Is(err, git.ErrEmptyCommit) {
 		return nil // empty commit is fine -- no change
 	}
@@ -359,31 +362,37 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 }
 
 // Delete implements repository.Repository.
-func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message string) error {
-	if _, err := g.tree.Remove(safepath.Join(g.config.Spec.GitHub.Path, path)); err != nil {
+func (g *GoGitRepo) Delete(ctx context.Context, fpath string, ref string, message string) error {
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
+	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
-
-	return nil
+	if _, err := g.tree.Remove(fpath); err != nil {
+		return err
+	}
+	return g.maybeCommit(ctx, message)
 }
 
 // Read implements repository.Repository.
-func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
-	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
-	stat, err := g.tree.Filesystem.Lstat(readPath)
+func (g *GoGitRepo) Read(ctx context.Context, fpath string, ref string) (*repository.FileInfo, error) {
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
+	if err := verifyPathWithoutRef(fpath, ref); err != nil {
+		return nil, err
+	}
+	stat, err := g.tree.Filesystem.Lstat(fpath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, repository.ErrFileNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
+		return nil, fmt.Errorf("failed to stat path '%s': %w", fpath, err)
 	}
 	info := &repository.FileInfo{
-		Path: path,
+		Path: fpath,
 		Modified: &metav1.Time{
 			Time: stat.ModTime(),
 		},
 	}
 	if !stat.IsDir() {
-		f, err := g.tree.Filesystem.Open(readPath)
+		f, err := g.tree.Filesystem.Open(fpath)
 		if err != nil {
 			return nil, err
 		}

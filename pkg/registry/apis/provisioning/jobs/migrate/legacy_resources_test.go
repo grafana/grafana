@@ -34,8 +34,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			nil,
 			mockParserFactory,
 			nil,
-			nil,
 			signerFactory,
+			nil,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
@@ -59,8 +59,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			nil,
-			nil,
 			signerFactory,
+			nil,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
@@ -69,46 +69,6 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
-	})
-
-	t.Run("should fail when folder migrator fails", func(t *testing.T) {
-		mockParserFactory := resources.NewMockParserFactory(t)
-		mockParserFactory.On("GetParser", mock.Anything, mock.Anything).
-			Return(resources.NewMockParser(t), nil)
-
-		mockRepoResources := resources.NewMockRepositoryResources(t)
-		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
-			Return(mockRepoResources, nil)
-
-		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
-		mockFolderMigrator.On("Migrate", mock.Anything, "test-namespace", mockRepoResources, mock.Anything).
-			Return(errors.New("folder migrator error"))
-
-		progress := jobs.NewMockJobProgressRecorder(t)
-		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
-
-		signer := signature.NewMockSigner(t)
-		signerFactory := signature.NewMockSignerFactory(t)
-		signerFactory.On("New", mock.Anything, mock.Anything).
-			Return(signer, nil)
-
-		migrator := NewLegacyResourcesMigrator(
-			mockRepoResourcesFactory,
-			mockParserFactory,
-			nil,
-			mockFolderMigrator,
-			signerFactory,
-		)
-
-		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, progress)
-		require.Error(t, err)
-		require.Contains(t, err.Error(), "migrate folders from SQL")
-
-		mockParserFactory.AssertExpectations(t)
-		mockRepoResourcesFactory.AssertExpectations(t)
-		mockFolderMigrator.AssertExpectations(t)
-		progress.AssertExpectations(t)
 	})
 
 	t.Run("should fail when resource migration fails", func(t *testing.T) {
@@ -120,10 +80,6 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
 			Return(mockRepoResources, nil)
-
-		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
-		mockFolderMigrator.On("Migrate", mock.Anything, "test-namespace", mockRepoResources, mock.Anything).
-			Return(nil)
 
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
 		mockLegacyMigrator.On("Migrate", mock.Anything, mock.MatchedBy(func(opts legacy.MigrateOptions) bool {
@@ -142,8 +98,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			mockLegacyMigrator,
-			mockFolderMigrator,
 			signerFactory,
+			nil,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, progress)
@@ -152,7 +108,6 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
-		mockFolderMigrator.AssertExpectations(t)
 		mockLegacyMigrator.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
@@ -167,7 +122,6 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
 			Return(mockRepoResources, nil)
 
-		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
 		mockSignerFactory := signature.NewMockSignerFactory(t)
 		mockSignerFactory.On("New", mock.Anything, signature.SignOptions{
 			Namespace: "test-namespace",
@@ -179,8 +133,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			nil,
-			mockFolderMigrator,
 			mockSignerFactory,
+			nil,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
@@ -191,7 +145,6 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
-		mockFolderMigrator.AssertExpectations(t)
 		mockSignerFactory.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
@@ -206,10 +159,6 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
 		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
 			Return(mockRepoResources, nil)
-
-		mockFolderMigrator := NewMockLegacyFoldersMigrator(t)
-		mockFolderMigrator.On("Migrate", mock.Anything, "test-namespace", mockRepoResources, mock.Anything).
-			Return(nil)
 
 		mockSigner := signature.NewMockSigner(t)
 		mockSignerFactory := signature.NewMockSignerFactory(t)
@@ -244,8 +193,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			mockLegacyMigrator,
-			mockFolderMigrator,
 			mockSignerFactory,
+			nil,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
@@ -255,7 +204,6 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
-		mockFolderMigrator.AssertExpectations(t)
 		mockLegacyMigrator.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
@@ -489,7 +437,7 @@ func TestLegacyResourceResourceMigrator_Write(t *testing.T) {
 
 		// Change the result file name
 		writeResourceFileFromObject.Return("bbbb.json", nil)
-		mockRepoResources.On("Delete", mock.Anything, "aaaa.json", mock.Anything).
+		mockRepo.On("Delete", mock.Anything, "aaaa.json", "", "moved to: bbbb.json").
 			Return(nil).Once()
 
 		err = migrator.Write(context.Background(), &resource.ResourceKey{}, []byte(""))
