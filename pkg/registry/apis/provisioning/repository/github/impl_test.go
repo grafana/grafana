@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"testing"
@@ -715,6 +716,170 @@ func TestGithubClient_GetTree(t *testing.T) {
 				assert.Equal(t, tt.wantItems, len(contents))
 			} else {
 				assert.Empty(t, contents)
+			}
+		})
+	}
+}
+
+func TestGithubClient_CreateFile(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		path        string
+		branch      string
+		message     string
+		content     []byte
+		wantErr     error
+	}{
+		{
+			name: "create file successfully",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						response := &github.RepositoryContentResponse{
+							Content: &github.RepositoryContent{
+								Name: github.Ptr("test.txt"),
+								Path: github.Ptr("test.txt"),
+								SHA:  github.Ptr("abc123"),
+							},
+						}
+						w.WriteHeader(http.StatusCreated)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Add test.txt",
+			content:    []byte("test content"),
+			wantErr:    nil,
+		},
+		{
+			name: "file already exists",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusUnprocessableEntity)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusUnprocessableEntity,
+							},
+							Message: "File already exists",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "existing.txt",
+			branch:     "main",
+			message:    "Add existing.txt",
+			content:    []byte("test content"),
+			wantErr:    ErrResourceAlreadyExists,
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Add test.txt",
+			content:    []byte("test content"),
+			wantErr:    errors.New("Service unavailable"),
+		},
+		{
+			name: "not a github error response",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						w.Write([]byte("not a github error"))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Add test.txt",
+			content:    []byte("test content"),
+			wantErr:    errors.New("500"),
+		},
+		{
+			name: "default commit message",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Decode the request to verify the message
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						var reqData struct {
+							Message string `json:"message"`
+						}
+						require.NoError(t, json.Unmarshal(body, &reqData))
+						assert.Equal(t, "Create test.txt", reqData.Message)
+
+						response := &github.RepositoryContentResponse{
+							Content: &github.RepositoryContent{
+								Name: github.Ptr("test.txt"),
+								Path: github.Ptr("test.txt"),
+								SHA:  github.Ptr("abc123"),
+							},
+						}
+						w.WriteHeader(http.StatusCreated)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "", // Empty message should use default
+			content:    []byte("test content"),
+			wantErr:    nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			err := client.CreateFile(context.Background(), tt.owner, tt.repository, tt.path, tt.branch, tt.message, tt.content)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr.Error())
+			} else {
+				assert.NoError(t, err)
 			}
 		})
 	}
