@@ -50,7 +50,7 @@ const FormatAsField = ({
         value={resultFormat}
         onChange={handleChange}
         options={options}
-        width={38}
+        width={20}
       />
     </Field>
   );

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"hash/fnv"
 	"maps"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -241,10 +242,10 @@ func NewAlertRuleGroupWithFolderFullpathFromRulesGroup(groupKey AlertRuleGroupKe
 // SortAlertRuleGroupWithFolderTitle sorts AlertRuleGroupWithFolderTitle by folder UID and group name
 func SortAlertRuleGroupWithFolderTitle(g []AlertRuleGroupWithFolderFullpath) {
 	sort.SliceStable(g, func(i, j int) bool {
-		if g[i].AlertRuleGroup.FolderUID == g[j].AlertRuleGroup.FolderUID {
-			return g[i].AlertRuleGroup.Title < g[j].AlertRuleGroup.Title
+		if g[i].FolderUID == g[j].FolderUID {
+			return g[i].Title < g[j].Title
 		}
-		return g[i].AlertRuleGroup.FolderUID < g[j].AlertRuleGroup.FolderUID
+		return g[i].FolderUID < g[j].FolderUID
 	})
 }
 
@@ -641,7 +642,7 @@ func (alertRule *AlertRule) ValidateAlertRule(cfg setting.UnifiedAlertingSetting
 		err = validateAlertRuleFields(alertRule)
 	}
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, err)
 	}
 
 	if alertRule.For < 0 {
@@ -681,7 +682,7 @@ func validateAlertRuleFields(rule *AlertRule) error {
 	}
 
 	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve <= 0 {
-		return fmt.Errorf("%w: field `missing_series_evals_to_resolve` must be greater than 0", ErrAlertRuleFailedValidation)
+		return errors.New("field `missing_series_evals_to_resolve` must be greater than 0")
 	}
 
 	return nil
@@ -690,10 +691,10 @@ func validateAlertRuleFields(rule *AlertRule) error {
 func validateRecordingRuleFields(rule *AlertRule) error {
 	metricName := prommodels.LabelValue(rule.Record.Metric)
 	if !metricName.IsValid() {
-		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid utf8 string")
+		return errors.New("metric name for recording rule must be a valid utf8 string")
 	}
 	if !prommodels.IsValidMetricName(metricName) {
-		return fmt.Errorf("%w: %s", ErrAlertRuleFailedValidation, "metric name for recording rule must be a valid Prometheus metric name")
+		return errors.New("metric name for recording rule must be a valid Prometheus metric name")
 	}
 
 	ClearRecordingRuleIgnoredFields(rule)
@@ -993,13 +994,22 @@ func ValidateRuleGroupInterval(intervalSeconds, baseIntervalSeconds int64) error
 
 type RulesGroup []*AlertRule
 
+func RulesGroupComparer(a, b *AlertRule) int {
+	if a.RuleGroupIndex < b.RuleGroupIndex {
+		return -1
+	} else if a.RuleGroupIndex > b.RuleGroupIndex {
+		return 1
+	}
+	if a.ID < b.ID {
+		return -1
+	} else if a.ID > b.ID {
+		return 1
+	}
+	return 0
+}
+
 func (g RulesGroup) SortByGroupIndex() {
-	sort.Slice(g, func(i, j int) bool {
-		if g[i].RuleGroupIndex == g[j].RuleGroupIndex {
-			return g[i].ID < g[j].ID
-		}
-		return g[i].RuleGroupIndex < g[j].RuleGroupIndex
-	})
+	slices.SortFunc(g, RulesGroupComparer)
 }
 
 func SortAlertRulesByGroupIndex(rules []AlertRule) {

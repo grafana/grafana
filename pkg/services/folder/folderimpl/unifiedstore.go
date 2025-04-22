@@ -15,9 +15,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -51,7 +50,8 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
-	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
+	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
+		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {
 		return nil, err
 	}
@@ -106,7 +106,9 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 		meta.SetFolder(*cmd.NewParentUID)
 	}
 
-	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID)
+	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
+		FieldValidation: v1.FieldValidationIgnore,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +240,7 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 		}
 
 		f := &folder.FolderReference{
-			ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 			UID:       item.Name,
 			Title:     item.Title,
 			ParentUID: item.Folder,
@@ -452,7 +454,7 @@ func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (
 }
 
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	ds, err := v0alpha1.UnstructuredToDescendantCounts(u)
+	ds, err := folderv1.UnstructuredToDescendantCounts(u)
 	if err != nil {
 		return nil, err
 	}

@@ -60,7 +60,7 @@ func GetPodAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a pod")
 	}
-	return labels.Set(pod.ObjectMeta.Labels), PodToSelectableFields(pod), nil
+	return labels.Set(pod.Labels), PodToSelectableFields(pod), nil
 }
 
 // PodToSelectableFields returns a field set that represents the object
@@ -178,6 +178,7 @@ func TestGRPCtoHTTPStatusMapping(t *testing.T) {
 		s, _, err := apistore.NewStorage(
 			&storagebackend.ConfigForResource{},
 			resourceClientMock{},
+			nil,
 			nil,
 			nil,
 			nil,

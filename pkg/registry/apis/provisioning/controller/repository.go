@@ -58,7 +58,7 @@ type RepositoryController struct {
 	resourceLister resources.ResourceLister
 	repoLister     listers.RepositoryLister
 	repoSynced     cache.InformerSynced
-	parsers        *resources.ParserFactory
+	parsers        resources.ParserFactory
 	logger         logging.Logger
 	secrets        secrets.Service
 	dualwrite      dualwrite.Service
@@ -83,7 +83,8 @@ func NewRepositoryController(
 	repoInformer informer.RepositoryInformer,
 	repoGetter RepoGetter,
 	resourceLister resources.ResourceLister,
-	parsers *resources.ParserFactory,
+	parsers resources.ParserFactory,
+	clients resources.ClientFactory,
 	tester RepositoryTester,
 	jobs jobs.Queue,
 	secrets secrets.Service,
@@ -104,7 +105,7 @@ func NewRepositoryController(
 		parsers:    parsers,
 		finalizer: &finalizer{
 			lister:        resourceLister,
-			clientFactory: parsers.ClientFactory,
+			clientFactory: clients,
 		},
 		tester:    tester,
 		jobs:      jobs,
@@ -270,18 +271,22 @@ func (rc *RepositoryController) runHealthCheck(ctx context.Context, repo reposit
 	if err != nil {
 		res = &provisioning.TestResults{
 			Success: false,
-			Errors: []string{
-				"error running test repository",
-				err.Error(),
-			},
+			Errors: []provisioning.ErrorDetails{{
+				Detail: fmt.Sprintf("error running test repository: %s", err.Error()),
+			}},
 		}
 	}
 
 	healthStatus := provisioning.HealthStatus{
 		Healthy: res.Success,
 		Checked: time.Now().UnixMilli(),
-		Message: res.Errors,
 	}
+	for _, err := range res.Errors {
+		if err.Detail != "" {
+			healthStatus.Message = append(healthStatus.Message, err.Detail)
+		}
+	}
+
 	logger.Info("health check completed", "status", healthStatus)
 
 	return healthStatus

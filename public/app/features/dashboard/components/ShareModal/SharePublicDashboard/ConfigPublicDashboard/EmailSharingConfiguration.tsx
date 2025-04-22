@@ -190,7 +190,8 @@ export const EmailSharingConfiguration = ({ dashboard }: { dashboard: DashboardM
               <div className={styles.emailContainer}>
                 <Input
                   className={styles.emailInput}
-                  placeholder="email"
+                  // eslint-disable-next-line @grafana/no-untranslated-strings
+                  placeholder="me@example.com"
                   autoCapitalize="none"
                   {...register('email', {
                     required: t('public-dashboard.email-sharing.input-required-email-text', 'Email is required'),

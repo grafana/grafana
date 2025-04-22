@@ -142,7 +142,11 @@ const ServiceAccountListItemComponent = memo(
                   name="trash-alt"
                   size="md"
                   onClick={() => onRemoveButtonClick(serviceAccount)}
-                  tooltip={`Delete service account ${serviceAccount.name}`}
+                  tooltip={t(
+                    'serviceaccounts.service-account-list-item.tooltip-delete-button',
+                    'Delete service account {{serviceAccountName}}',
+                    { serviceAccountName: serviceAccount.name }
+                  )}
                 />
               )}
             </Stack>
@@ -153,7 +157,10 @@ const ServiceAccountListItemComponent = memo(
                 disabled={true}
                 name="lock"
                 size="md"
-                tooltip={`This is a managed service account and cannot be modified.`}
+                tooltip={t(
+                  'serviceaccounts.service-account-list-item.tooltip-managed-service-account-cannot-modified',
+                  'This is a managed service account and cannot be modified'
+                )}
               />
             </Stack>
           )}

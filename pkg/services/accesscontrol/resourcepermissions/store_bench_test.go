@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlestest"
+	"github.com/grafana/grafana/pkg/services/team"
 	"github.com/grafana/grafana/pkg/services/team/teamimpl"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/userimpl"
@@ -155,9 +156,12 @@ func generateTeamsAndUsers(b *testing.B, store db.DB, cfg *setting.Cfg, users in
 	teamIds := make([]int64, 0)
 	for i := 0; i < numberOfTeams; i++ {
 		// Create team
-		teamName := fmt.Sprintf("%s%v", "team", i)
-		teamEmail := fmt.Sprintf("%s@example.org", teamName)
-		team, err := teamSvc.CreateTeam(context.Background(), teamName, teamEmail, 1)
+		teamCmd := team.CreateTeamCommand{
+			Name:  fmt.Sprintf("%s%v", "team", i),
+			Email: fmt.Sprintf("%s%v@example.org", "team", i),
+			OrgID: 1,
+		}
+		team, err := teamSvc.CreateTeam(context.Background(), &teamCmd)
 		require.NoError(b, err)
 		teamId := team.ID
 		teamIds = append(teamIds, teamId)

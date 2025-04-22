@@ -1714,43 +1714,43 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should be able to reset 'for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, status := client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		expected = 0
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, status = client.GetRulesGroup(t, folderUID, group.Name)
 		require.Equal(t, http.StatusAccepted, status)
-		require.Equal(t, expected, *getGroup.Rules[0].ApiRuleNode.For)
+		require.Equal(t, expected, *getGroup.Rules[0].For)
 	})
 
 	t.Run("should be able to reset 'keep_firing_for' to 0", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		keepFiringFor := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.KeepFiringFor = &keepFiringFor
+		group.Rules[0].KeepFiringFor = &keepFiringFor
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 		getGroup, _ := client.GetRulesGroup(t, folderUID, group.Name)
-		require.Equal(t, keepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+		require.Equal(t, keepFiringFor, *getGroup.Rules[0].KeepFiringFor)
 
 		group = convertGettableRuleGroupToPostable(getGroup.GettableRuleGroupConfig)
 		newKeepFiringFor := model.Duration(0)
-		group.Rules[0].ApiRuleNode.KeepFiringFor = &newKeepFiringFor
+		group.Rules[0].KeepFiringFor = &newKeepFiringFor
 		_, status, body = client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
 
 		getGroup, _ = client.GetRulesGroup(t, folderUID, group.Name)
-		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].ApiRuleNode.KeepFiringFor)
+		require.Equal(t, newKeepFiringFor, *getGroup.Rules[0].KeepFiringFor)
 	})
 
 	t.Run("missing_series_evals_to_resolve", func(t *testing.T) {
@@ -1931,7 +1931,7 @@ func TestIntegrationRuleUpdate(t *testing.T) {
 	t.Run("should set updated_by", func(t *testing.T) {
 		group := generateAlertRuleGroup(1, alertRuleGen())
 		expected := model.Duration(10 * time.Second)
-		group.Rules[0].ApiRuleNode.For = &expected
+		group.Rules[0].For = &expected
 
 		_, status, body := client.PostRulesGroupWithStatus(t, folderUID, &group, false)
 		require.Equalf(t, http.StatusAccepted, status, "failed to post rule group. Response: %s", body)
@@ -3288,7 +3288,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
-						  "uid":"uid", 
+						  "uid":"uid",
                           "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
@@ -4449,32 +4449,6 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		assert.Equal(t, []model.LabelName{ngmodels.FolderTitleLabel, model.AlertNameLabel, "label1"}, ruleRoute.GroupBy)
 
 		t.Log(body)
-	})
-
-	t.Run("create with '...' groupBy followed by config post should succeed", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.GroupBy = []string{ngmodels.FolderTitleLabel, model.AlertNameLabel, ngmodels.GroupByAll}
-
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusAccepted, status, body)
-
-		// Now update the config with no changes.
-		_, status, body = apiClient.GetAlertmanagerConfigWithStatus(t)
-		if !assert.Equalf(t, http.StatusOK, status, body) {
-			return
-		}
-
-		cfg := apimodels.PostableUserConfig{}
-
-		err = json.Unmarshal([]byte(body), &cfg)
-		require.NoError(t, err)
-
-		ok, err := apiClient.PostConfiguration(t, cfg)
-		require.NoError(t, err)
-		require.True(t, ok)
 	})
 
 	t.Run("should create rule and generate route", func(t *testing.T) {

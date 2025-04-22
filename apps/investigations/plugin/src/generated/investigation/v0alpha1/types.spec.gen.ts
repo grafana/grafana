@@ -24,13 +24,14 @@ export interface Collectable {
 	origin: string;
 	type: string;
 	// +listType=atomic
-	queries: Query[];
+	queries: string[];
 	timeRange: TimeRange;
 	datasource: DatasourceRef;
 	url: string;
 	logoPath?: string;
 	note: string;
 	noteUpdatedAt: string;
+	fieldConfig: string;
 }
 
 export const defaultCollectable = (): Collectable => ({
@@ -45,25 +46,7 @@ export const defaultCollectable = (): Collectable => ({
 	url: "",
 	note: "",
 	noteUpdatedAt: "",
-});
-
-// Query represents a data query
-export interface Query {
-	refId: string;
-	queryType: string;
-	editorMode: string;
-	supportingQueryType: string;
-	legendFormat: string;
-	expr: string;
-}
-
-export const defaultQuery = (): Query => ({
-	refId: "",
-	queryType: "",
-	editorMode: "",
-	supportingQueryType: "",
-	legendFormat: "",
-	expr: "",
+	fieldConfig: "",
 });
 
 // TimeRange represents a time range with both absolute and relative values

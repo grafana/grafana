@@ -1,3 +1,4 @@
+import { Trans } from '../../../../../../core/internationalization';
 import { RuleFormType } from '../../../types/rule-form';
 
 import { DisabledTooltip } from './DisabledTooltip';
@@ -14,9 +15,11 @@ const MimirFlavoredType = ({ selected = false, disabled = false, onClick }: Prop
         name="Mimir or Loki alert"
         description={
           <span>
-            Use a Mimir, Loki or Cortex datasource.
-            <br />
-            Expressions are not supported.
+            <Trans i18nKey="alerting.mimir-flavored-type.description">
+              Use a Mimir, Loki or Cortex datasource.
+              <br />
+              Expressions are not supported.
+            </Trans>
           </span>
         }
         image="public/img/alerting/mimir_logo.svg"

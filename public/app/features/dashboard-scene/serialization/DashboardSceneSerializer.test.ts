@@ -8,13 +8,13 @@ import {
 } from '@grafana/scenes';
 import { Dashboard, VariableModel } from '@grafana/schema';
 import {
-  DashboardV2Spec,
-  defaultDashboardV2Spec,
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultTimeSettingsSpec,
   GridLayoutKind,
   PanelSpec,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
@@ -1076,6 +1076,51 @@ describe('DashboardSceneSerializer', () => {
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
 
         serializer.initializeDSReferencesMapping({ elements: {} } as DashboardV2Spec);
+        expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
+      });
+
+      it('should initialize datasource references mapping when annotations dont have datasources', () => {
+        const saveModel: DashboardV2Spec = {
+          ...defaultDashboardV2Spec(),
+          title: 'Dashboard with annotations without datasource',
+          annotations: [
+            {
+              kind: 'AnnotationQuery',
+              spec: {
+                name: 'Annotation 1',
+                query: { kind: 'prometheus', spec: {} },
+                enable: true,
+                hide: false,
+                iconColor: 'red',
+              },
+            },
+          ],
+        };
+
+        serializer.initializeDSReferencesMapping(saveModel);
+
+        const dsReferencesMap = serializer.getDSReferencesMapping();
+
+        // Annotation 1 should have no datasource
+        expect(dsReferencesMap.annotations.has('Annotation 1')).toBe(true);
+      });
+
+      it('should return early if the saveModel is not a V2 dashboard', () => {
+        const v1SaveModel: Dashboard = {
+          title: 'Test Dashboard',
+          uid: 'my-uid',
+          schemaVersion: 30,
+          panels: [
+            { id: 1, title: 'Panel 1', type: 'text' },
+            { id: 2, title: 'Panel 2', type: 'text' },
+          ],
+        };
+        serializer.initializeDSReferencesMapping(v1SaveModel as unknown as DashboardV2Spec);
+        expect(serializer.getDSReferencesMapping()).toEqual({
+          panels: new Map(),
+          variables: new Set(),
+          annotations: new Set(),
+        });
         expect(serializer.getDSReferencesMapping().panels.size).toBe(0);
       });
     });

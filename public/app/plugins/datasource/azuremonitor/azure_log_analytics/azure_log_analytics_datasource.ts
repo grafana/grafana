@@ -8,9 +8,9 @@ import ResponseParser from '../azure_monitor/response_parser';
 import { getCredentials } from '../credentials';
 import {
   AzureAPIResponse,
+  AzureLogsVariable,
   AzureMonitorDataSourceInstanceSettings,
   AzureMonitorDataSourceJsonData,
-  AzureLogsVariable,
   AzureMonitorQuery,
   AzureQueryType,
   DatasourceValidationResult,
@@ -125,6 +125,7 @@ export default class AzureLogAnalyticsDatasource extends DataSourceWithBackend<
         queryType: target.queryType || AzureQueryType.LogAnalytics,
 
         azureLogAnalytics: {
+          builderQuery: item.builderQuery,
           resultFormat: item.resultFormat,
           query,
           resources,

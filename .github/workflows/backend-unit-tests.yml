@@ -15,7 +15,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
 permissions:
   contents: read
@@ -36,34 +36,10 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Restore GOCACHE
-        uses: actions/cache/restore@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}
-          restore-keys: |
-            go-test-cache-${{ github.base_ref }}
-            go-test-cache-main
-          path: /home/runner/.cache/go-build
       - name: Generate Go code
         run: make gen-go
       - name: Run unit tests
         run: make test-go-unit
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - name: Clear GOCACHE
-        run: gh cache delete go-test-cache-${{ github.ref_name }}
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-      - name: Save GOCACHE
-        uses: actions/cache/save@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}
-          path: /home/runner/.cache/go-build
 
   grafana-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
@@ -77,14 +53,6 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
-      - name: Restore GOCACHE
-        uses: actions/cache/restore@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-enterprise
-          restore-keys: |
-            go-test-cache-${{ github.base_ref }}-enterprise
-            go-test-cache-main-enterprise
-          path: /home/runner/.cache/go-build
       - name: Setup Enterprise
         uses: ./.github/actions/setup-enterprise
         with:
@@ -93,19 +61,3 @@ jobs:
         run: make gen-go
       - name: Run unit tests
         run: make test-go-unit
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - name: Clear GOCACHE
-        run: gh cache delete go-test-cache-${{ github.ref_name }}-enterprise
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
-      - name: Save GOCACHE
-        uses: actions/cache/save@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-enterprise
-          path: /home/runner/.cache/go-build

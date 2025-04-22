@@ -17,7 +17,7 @@ import * as React from 'react';
 
 import { Field, GrafanaTheme2, LinkModel } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { autoColor } from '../../Theme';
 import { TraceSpanReference } from '../../types/trace';

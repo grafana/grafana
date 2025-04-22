@@ -68,6 +68,12 @@ func Clone(
 		return nil, fmt.Errorf("missing root config")
 	}
 
+	if opts.BeforeFn != nil {
+		if err := opts.BeforeFn(); err != nil {
+			return nil, err
+		}
+	}
+
 	// add a timeout to the operation
 	timeout := maxOperationTimeout
 	if opts.Timeout > 0 {
@@ -193,6 +199,12 @@ func (g *GoGitRepo) Push(ctx context.Context, opts repository.PushOptions) error
 	progress := opts.Progress
 	if progress == nil {
 		progress = io.Discard
+	}
+
+	if opts.BeforeFn != nil {
+		if err := opts.BeforeFn(); err != nil {
+			return err
+		}
 	}
 
 	ctx, cancel := context.WithTimeout(ctx, timeout)
@@ -359,7 +371,9 @@ func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
 	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
 	stat, err := g.tree.Filesystem.Lstat(readPath)
-	if err != nil {
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, repository.ErrFileNotFound
+	} else if err != nil {
 		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
 	}
 	info := &repository.FileInfo{

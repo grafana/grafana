@@ -29,9 +29,10 @@ func extractPluginSettings(sections []*ini.Section) PluginSettings {
 var (
 	defaultPreinstallPlugins = map[string]InstallPlugin{
 		// Default preinstalled plugins
-		"grafana-lokiexplore-app":   {"grafana-lokiexplore-app", "", ""},
-		"grafana-pyroscope-app":     {"grafana-pyroscope-app", "", ""},
-		"grafana-exploretraces-app": {"grafana-exploretraces-app", "", ""},
+		"grafana-lokiexplore-app":      {"grafana-lokiexplore-app", "", ""},
+		"grafana-pyroscope-app":        {"grafana-pyroscope-app", "", ""},
+		"grafana-exploretraces-app":    {"grafana-exploretraces-app", "", ""},
+		"grafana-metricsdrilldown-app": {"grafana-metricsdrilldown-app", "", ""},
 	}
 )
 
@@ -58,9 +59,6 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
-		}
-		if cfg.IsFeatureToggleEnabled("exploreMetricsUseExternalAppPlugin") { // Use literal string to avoid circular dependency
-			preinstallPlugins["grafana-metricsdrilldown-app"] = InstallPlugin{"grafana-metricsdrilldown-app", "", ""}
 		}
 		// Add the plugins defined in the configuration
 		for _, plugin := range rawInstallPlugins {

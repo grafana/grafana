@@ -1,8 +1,8 @@
-import { PropsWithChildren, useMemo, useState } from 'react';
+import { PropsWithChildren, useMemo } from 'react';
 
 import { VariableRefresh } from '@grafana/data';
-import { Field, RadioButtonGroup, useTheme2 } from '@grafana/ui';
-import { useMediaQueryChange } from 'app/core/hooks/useMediaQueryChange';
+import { Field, RadioButtonGroup } from '@grafana/ui';
+import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { t } from 'app/core/internationalization';
 
 interface Props {
@@ -17,15 +17,7 @@ const REFRESH_OPTIONS = [
 ];
 
 export function QueryVariableRefreshSelect({ onChange, refresh, testId }: PropsWithChildren<Props>) {
-  const theme = useTheme2();
-
-  const [isSmallScreen, setIsSmallScreen] = useState(false);
-  useMediaQueryChange({
-    breakpoint: theme.breakpoints.values.sm,
-    onChange: (e) => {
-      setIsSmallScreen(!e.matches);
-    },
-  });
+  const isSmallScreen = !useMediaQueryMinWidth('sm');
 
   const value = useMemo(
     () => REFRESH_OPTIONS.find((o) => o.value === refresh)?.value ?? REFRESH_OPTIONS[0].value,
