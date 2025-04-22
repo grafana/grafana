@@ -959,6 +959,3 @@ describe('processV2Datasources', () => {
     );
   });
 });
-function defaultAnnotationSpec(): import('@grafana/schema/dist/esm/schema/dashboard/v2alpha0').AnnotationQuerySpec {
-  throw new Error('Function not implemented.');
-}
