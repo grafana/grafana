@@ -76,7 +76,7 @@ export function QueryEditor({ datasource, query, onChange, onRunQuery }: Props) 
       <div className={styles.container}>
         <InlineFieldRow>
           <InlineField label="Query type" grow={true}>
-            <Stack gap={3} alignItems={'center'} justifyContent={'space-between'}>
+            <Stack gap={1} alignItems="center" justifyContent="space-between">
               <RadioButtonGroup<JaegerQueryType>
                 options={[
                   { value: 'search', label: 'Search' },
