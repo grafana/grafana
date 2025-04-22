@@ -45,7 +45,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                         | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                              | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                    | Yes                |
-| `kubernetesPlaylists`                  | Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s                                       | Yes                |
 | `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                              | Yes                |
 | `recoveryThreshold`                    | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                                            | Yes                |
 | `lokiStructuredMetadata`               | Enables the loki data source to request structured metadata from the Loki server                                                    | Yes                |

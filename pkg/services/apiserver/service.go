@@ -271,14 +271,6 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
-	// This will check that required feature toggles are enabled for more advanced storage modes
-	// Any required preconditions should be hardcoded here
-	if o.StorageOptions != nil {
-		if err := o.StorageOptions.EnforceFeatureToggleAfterMode1(s.features); err != nil {
-			return err
-		}
-	}
-
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err

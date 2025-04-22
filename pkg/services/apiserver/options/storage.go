@@ -14,7 +14,6 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -151,24 +150,5 @@ func (o *StorageOptions) ApplyTo(serverConfig *genericapiserver.RecommendedConfi
 	}
 	getter := apistore.NewRESTOptionsGetterForClient(unified, etcdOptions.StorageConfig, o.ConfigProvider)
 	serverConfig.RESTOptionsGetter = getter
-	return nil
-}
-
-// EnforceFeatureToggleAfterMode1 makes sure there is a feature toggle set for resources with DualWriterMode > 1.
-// This is needed to ensure that we use the K8s client before enabling dual writing.
-func (o *StorageOptions) EnforceFeatureToggleAfterMode1(features featuremgmt.FeatureToggles) error {
-	// nolint:staticcheck
-	if o.StorageType != StorageTypeLegacy {
-		for rg, s := range o.UnifiedStorageConfig {
-			if s.DualWriterMode > 1 {
-				switch rg {
-				case "playlists.playlist.grafana.app":
-					if !features.IsEnabledGlobally(featuremgmt.FlagKubernetesPlaylists) {
-						return fmt.Errorf("feature toggle FlagKubernetesPlaylists to be set")
-					}
-				}
-			}
-		}
-	}
 	return nil
 }
