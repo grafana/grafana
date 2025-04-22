@@ -53,6 +53,7 @@ func (c *cache) RegisterMetrics(r prometheus.Registerer) {
 	r.MustRegister(newAlertCountByState(eval.Error))
 	r.MustRegister(newAlertCountByState(eval.NoData))
 	r.MustRegister(newAlertCountByState(eval.Recovering))
+	r.MustRegister(newAlertsMetricCollector(c))
 }
 
 func (c *cache) countAlertsBy(state eval.State) float64 {
