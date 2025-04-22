@@ -52,7 +52,7 @@ Git Sync is an experimental feature and is under continuous development.
 
 We recommend evaluating the performance impact, if any, in a non-production environment.
 
-When Git Sync is enabled, the database load might increase, especially for instances with a lot of folders and subfolders.
+When Git Sync is enabled, the database load might increase, especially for instances with a lot of folders and nested folders.
 Reporting any issues you encounter can help us improve Git Sync.
 
 ## Before you begin
@@ -201,7 +201,7 @@ Webhooks are automatically available for Grafana Cloud users.
 Set up webhooks with whichever service or tooling you prefer.
 For example, you can use Cloudflare Tunnels with a Cloudflare-managed domain, port-forwarding and DNS options, or a tool such as `ngrok`.
 
-Once you have the public URL, you can add it to your Grafana configuration file:
+After you have the public URL, you can add it to your Grafana configuration file:
 
 ```yaml
 [server]
@@ -212,7 +212,7 @@ You can check the configured webhooks in the **View** link for your GitHub repos
 
 #### Necessary paths
 
-If your security setup does not permit publicly exposing the Grafana instance, you can either choose to allowlist GitHub's IP addresses, or expose only the necessary paths.
+If your security setup does not permit publicly exposing the Grafana instance, you can either choose to allowlist the GitHub IP addresses, or expose only the necessary paths.
 
 The necessary paths required to be exposed are (RegExp):
 

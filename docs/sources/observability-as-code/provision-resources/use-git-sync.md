@@ -27,7 +27,7 @@ weight: 400
 
 <hr />
 
-Once you have set up Git Sync, you can synchronize dashboards and changes to existing dashboards to your configured GitHub repository.
+After you have set up Git Sync, you can synchronize dashboards and changes to existing dashboards to your configured GitHub repository.
 If you push a change in the repository, those changes are mirrored in your Grafana instance.
 
 ## View current status of synchronization
@@ -40,7 +40,7 @@ To view the current status, follow these steps.
 1. Log in to your Grafana server with an account that has the Grafana Admin or Editor flag set.
 1. Select **Administration** in the left-side menu and then **Provisioning**.
 1. Locate the repository you are interested in.
-1. If you see a green `Up-to-date` label next to the repository name, then everything is synching as expected.
+1. If you see a green `Up-to-date` label next to the repository name, then everything is syncing as expected.
 1. Select **View** to access detailed dashboards and reports about the synchronization history of your repository.
 
 ## Synchronize changes
