@@ -144,7 +144,7 @@ const SearchField = ({
 
   return (
     <>
-      <Stack gap={3} width={'auto'}>
+      <Stack gap={0} width="auto">
         {!hideScope && (
           <Select
             className={styles.dropdown}
