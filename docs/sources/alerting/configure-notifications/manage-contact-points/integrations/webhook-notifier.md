@@ -256,7 +256,7 @@ The Alert object represents an alert included in the notification group, as prov
 
 {{< admonition type="note" >}}
 
-Custom Payload is not [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) by default in Grafana Cloud.
+Custom Payload is not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
 
 {{< /admonition >}}
 
