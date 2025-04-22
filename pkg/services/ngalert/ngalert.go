@@ -396,6 +396,7 @@ func (ng *AlertNG) init() error {
 		Tracer:               ng.tracer,
 		Log:                  log.New("ngalert.scheduler"),
 		RecordingWriter:      ng.RecordingWriter,
+		FeatureToggles:       ng.FeatureToggles,
 	}
 
 	history, err := configureHistorianBackend(initCtx, ng.Cfg.UnifiedAlerting.StateHistory, ng.annotationsRepo, ng.dashboardService, ng.store, ng.Metrics.GetHistorianMetrics(), ng.Log, ng.tracer, ac.NewRuleService(ng.accesscontrol))

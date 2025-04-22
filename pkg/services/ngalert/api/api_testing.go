@@ -119,7 +119,7 @@ func (srv TestingApiSrv) RouteTestGrafanaRuleConfig(c *contextmodel.ReqContext, 
 
 	alerts := make([]*amv2.PostableAlert, 0, len(transitions))
 	for _, alertState := range transitions {
-		alerts = append(alerts, state.StateToPostableAlert(alertState, srv.appUrl))
+		alerts = append(alerts, state.StateToPostableAlert(alertState, srv.appUrl, srv.featureManager))
 	}
 
 	return response.JSON(http.StatusOK, alerts)

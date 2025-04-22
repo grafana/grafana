@@ -73,6 +73,19 @@
     },
     {
       "metadata": {
+        "name": "alertRuleUseFiredAtForStartsAt",
+        "resourceVersion": "1744728881642",
+        "creationTimestamp": "2025-04-15T14:54:41Z"
+      },
+      "spec": {
+        "description": "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
+        "stage": "experimental",
+        "codeowner": "@grafana/alerting-squad",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertStateHistoryLokiOnly",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2023-03-30T18:53:21Z",

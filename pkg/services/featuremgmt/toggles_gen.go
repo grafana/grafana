@@ -938,4 +938,8 @@ const (
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
 	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
+
+	// FlagAlertRuleUseFiredAtForStartsAt
+	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
+	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
 )

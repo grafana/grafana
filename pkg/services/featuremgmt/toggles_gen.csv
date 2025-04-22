@@ -232,3 +232,4 @@ logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
+alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
