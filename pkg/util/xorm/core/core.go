@@ -34,6 +34,7 @@ type Column struct {
 	Indexes         map[string]int
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
+	IsSnowflakeID   bool
 	IsCreated       bool
 	IsUpdated       bool
 	IsDeleted       bool

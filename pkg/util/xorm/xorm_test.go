@@ -48,3 +48,25 @@ type TestStruct struct {
 	Comment string
 	Json    json.RawMessage
 }
+
+func TestSnowflakeID(t *testing.T) {
+	type StructWithSnowflake struct {
+		ID      int64 `xorm:"'id' snowflake"`
+		Comment string
+	}
+	eng, err := NewEngine("sqlite3", ":memory:")
+	require.NoError(t, err)
+	require.NotNil(t, eng)
+
+	_, err = eng.Exec("CREATE TABLE struct_with_snowflake(id int primary key, comment text)")
+	require.NoError(t, err)
+
+	sess := eng.NewSession()
+	defer sess.Close()
+
+	obj := &StructWithSnowflake{Comment: "test comment"}
+	_, err = sess.Insert(obj)
+	require.NoError(t, err)
+	t.Fatal(obj.ID)
+	require.Equal(t, int64(1), obj.ID)
+}
