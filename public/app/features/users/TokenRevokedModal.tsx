@@ -33,7 +33,10 @@ export const TokenRevokedModal = (props: Props) => {
         >
           <div className={styles.text}>
             <p>
-              <Trans i18nKey="" values={{ numSessions: showMaxConcurrentSessions ? props.maxConcurrentSessions : '' }}>
+              <Trans
+                i18nKey="users.token-revoked-modal.auto-revoked"
+                values={{ numSessions: showMaxConcurrentSessions ? props.maxConcurrentSessions : '' }}
+              >
                 Your session token was automatically revoked because you have reached{' '}
                 <strong>the maximum number of {'{{numSessions}}'} concurrent sessions</strong> for your account.
               </Trans>
