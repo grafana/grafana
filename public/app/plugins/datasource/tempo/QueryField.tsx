@@ -116,7 +116,7 @@ class TempoQueryFieldComponent extends PureComponent<Props, State> {
         </Modal>
         <InlineFieldRow>
           <InlineField label="Query type" grow={true}>
-            <Stack gap={3} alignItems={'center'} justifyContent={'space-between'}>
+            <Stack gap={1} alignItems="center" justifyContent="space-between">
               <RadioButtonGroup<TempoQueryType>
                 options={queryTypeOptions}
                 value={query.queryType}
