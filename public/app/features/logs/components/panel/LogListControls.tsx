@@ -389,6 +389,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingTop: theme.spacing(0.75),
       paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
+      overflow: 'hidden',
     }),
     scrollToTopButton: css({
       margin: 0,
