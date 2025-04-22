@@ -884,3 +884,162 @@ func TestGithubClient_CreateFile(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateFile(t *testing.T) {
+	tests := []struct {
+		name        string
+		mockHandler *http.Client
+		owner       string
+		repository  string
+		path        string
+		branch      string
+		message     string
+		hash        string
+		content     []byte
+		wantErr     error
+	}{
+		{
+			name: "successful update",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify request body
+						body, err := io.ReadAll(r.Body)
+						require.NoError(t, err)
+
+						var reqData struct {
+							Message string `json:"message"`
+							SHA     string `json:"sha"`
+						}
+						require.NoError(t, json.Unmarshal(body, &reqData))
+						assert.Equal(t, "Update test.txt", reqData.Message)
+						assert.Equal(t, "abc123", reqData.SHA)
+
+						response := &github.RepositoryContentResponse{
+							Content: &github.RepositoryContent{
+								Name: github.Ptr("test.txt"),
+								Path: github.Ptr("test.txt"),
+								SHA:  github.Ptr("def456"),
+							},
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(response))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "", // Empty message should use default
+			hash:       "abc123",
+			content:    []byte("updated content"),
+			wantErr:    nil,
+		},
+		{
+			name: "file not found",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusNotFound)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"message": "Not Found"}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "nonexistent.txt",
+			branch:     "main",
+			message:    "Update nonexistent file",
+			hash:       "abc123",
+			content:    []byte("content"),
+			wantErr:    ErrResourceNotFound,
+		},
+		{
+			name: "mismatched hash",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusConflict)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"message": "SHA mismatch"}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Update with wrong hash",
+			hash:       "wrong-hash",
+			content:    []byte("content"),
+			wantErr:    ErrMismatchedHash,
+		},
+		{
+			name: "service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"message": "Service unavailable"}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Update during outage",
+			hash:       "abc123",
+			content:    []byte("content"),
+			wantErr:    ErrServiceUnavailable,
+		},
+		{
+			name: "other error",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.PutReposContentsByOwnerByRepoByPath,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusInternalServerError)
+						require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"message": "Internal server error"}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			path:       "test.txt",
+			branch:     "main",
+			message:    "Update with server error",
+			hash:       "abc123",
+			content:    []byte("content"),
+			wantErr:    errors.New("Internal server error"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock client
+			factory := ProvideFactory()
+			factory.Client = tt.mockHandler
+			client := factory.New(context.Background(), "")
+
+			// Call the method being tested
+			err := client.UpdateFile(context.Background(), tt.owner, tt.repository, tt.path, tt.branch, tt.message, tt.hash, tt.content)
+
+			// Check the error
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				if errors.Is(err, tt.wantErr) {
+					assert.Equal(t, tt.wantErr, err)
+				} else {
+					assert.Contains(t, err.Error(), tt.wantErr.Error())
+				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
