@@ -23,10 +23,30 @@ const esbuildOptions = {
   jsx: 'automatic',
 };
 
+const fs = require('fs');
+const { get } = require('jquery');
+const { isConstructorDeclaration } = require('typescript');
+
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
 function getDecoupledPlugins() {
   const { packages } = getPackagesSync(process.cwd());
   return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
+}
+
+// When linking scenes for development, resolve the path to the src directory for sourcemaps
+function scenesModule() {
+  const relativeScenesPath = './node_modules/@grafana/scenes'
+  const scenesPath = path.resolve(relativeScenesPath);
+  try {
+    const stats = fs.lstatSync(scenesPath);
+    if (stats.isSymbolicLink()) {
+      console.log(`scenes is linked to local scenes repo`);
+      return path.resolve(scenesPath + '/src');
+    }
+  } catch (error) {
+    console.error(`Error checking scenes path: ${error.message}`);
+  }
+  return scenesPath;
 }
 
 const envConfig = getEnvConfig();
@@ -55,7 +75,8 @@ module.exports = (env = {}) => {
         // This is required to correctly resolve react-router-dom when linking with
         //  local version of @grafana/scenes
         'react-router-dom': path.resolve('./node_modules/react-router-dom'),
-      },
+        '@grafana/scenes': scenesModule(),
+      }
     },
 
     module: {
