@@ -30,28 +30,37 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("when query is empty, sort documents by title instead of search score", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "name1",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "name1",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "bbb",
+					},
+				},
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name2",
+						Key: &resource.ResourceKey{
+							Name:      "name2",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "aaa",
+					},
+				},
 			},
-			Title: "bbb",
-		})
-		require.NoError(t, err)
-		err = index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name2",
-			Key: &resource.ResourceKey{
-				Name:      "name2",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-			Title: "aaa",
 		})
 		require.NoError(t, err)
 
@@ -65,28 +74,37 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("will boost phrase match query over match query results", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "name1",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "name1",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "I want to say a hello",
+					},
+				},
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name2",
+						Key: &resource.ResourceKey{
+							Name:      "name2",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "we want hello",
+					},
+				},
 			},
-			Title: "I want to say a hello",
-		})
-		require.NoError(t, err)
-		err = index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name2",
-			Key: &resource.ResourceKey{
-				Name:      "name2",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-			Title: "we want hello",
 		})
 		require.NoError(t, err)
 
@@ -100,28 +118,37 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("will prioritize matches", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "name1",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "name1",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "Asserts Dashboards",
+					},
+				},
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name2",
+						Key: &resource.ResourceKey{
+							Name:      "name2",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "New dashboard 10",
+					},
+				},
 			},
-			Title: "Asserts Dashboards",
-		})
-		require.NoError(t, err)
-		err = index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name2",
-			Key: &resource.ResourceKey{
-				Name:      "name2",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-			Title: "New dashboard 10",
 		})
 		require.NoError(t, err)
 
@@ -134,28 +161,37 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("will boost exact match query over match phrase query results", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "name1",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "name1",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "we want hello pls",
+					},
+				},
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name2",
+						Key: &resource.ResourceKey{
+							Name:      "name2",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "we want hello",
+					},
+				},
 			},
-			Title: "we want hello pls",
-		})
-		require.NoError(t, err)
-		err = index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name2",
-			Key: &resource.ResourceKey{
-				Name:      "name2",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-			Title: "we want hello",
 		})
 		require.NoError(t, err)
 
@@ -169,16 +205,23 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title with numbers will match document", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "aaa",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "aaa",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "A123456",
+					},
+				},
 			},
-			Title: "A123456",
 		})
 		require.NoError(t, err)
 
@@ -203,29 +246,37 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title will match escaped characters", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "aaa",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "aaa",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "what\"s up",
+					},
+				},
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   2,
+						Name: "name2",
+						Key: &resource.ResourceKey{
+							Name:      "name2",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "what\"s that",
+					},
+				},
 			},
-			Title: "what\"s up",
-		})
-		require.NoError(t, err)
-
-		err = index.Write(&resource.IndexableDocument{
-			RV:   2,
-			Name: "name2",
-			Key: &resource.ResourceKey{
-				Name:      "name2",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-			Title: "what\"s that",
 		})
 		require.NoError(t, err)
 
@@ -242,16 +293,23 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title search will match document", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "aaa",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "aaa",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "I want to say a wonderfully Hello to the WORLD! Hello-world",
+					},
+				},
 			},
-			Title: "I want to say a wonderfully Hello to the WORLD! Hello-world",
 		})
 		require.NoError(t, err)
 
@@ -300,40 +358,51 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title search will NOT match documents", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "name1",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "name1",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
+					},
+				},
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name2",
+						Key: &resource.ResourceKey{
+							Name:      "name2",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "A0456",
+					},
+				},
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name3",
+						Key: &resource.ResourceKey{
+							Name:      "name3",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "mash-A02382-10",
+					},
+				},
 			},
-			Title: "I want to say a wonderful Hello to the WORLD! Hello-world",
-		})
-		require.NoError(t, err)
-		err = index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name2",
-			Key: &resource.ResourceKey{
-				Name:      "name2",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-			Title: "A0456",
-		})
-		require.NoError(t, err)
-		err = index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name3",
-			Key: &resource.ResourceKey{
-				Name:      "name3",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
-			},
-			Title: "mash-A02382-10",
 		})
 		require.NoError(t, err)
 
@@ -358,35 +427,47 @@ func TestCanSearchByTitle(t *testing.T) {
 
 	t.Run("title search with character will match one document", func(t *testing.T) {
 		index, _ := newTestDashboardsIndex(t, threshold, 2, 2, noop)
-		err := index.Write(&resource.IndexableDocument{
-			RV:   1,
-			Name: "name1",
-			Key: &resource.ResourceKey{
-				Name:      "aaa",
-				Namespace: key.Namespace,
-				Group:     key.Group,
-				Resource:  key.Resource,
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						RV:   1,
+						Name: "name1",
+						Key: &resource.ResourceKey{
+							Name:      "aaa",
+							Namespace: key.Namespace,
+							Group:     key.Group,
+							Resource:  key.Resource,
+						},
+						Title: "foo",
+					},
+				},
 			},
-			Title: "foo",
 		})
 		require.NoError(t, err)
 
 		for i, v := range search.TermCharacters {
-			err = index.Write(&resource.IndexableDocument{
-				RV:   int64(i),
-				Name: fmt.Sprintf("name%d", i),
-				Key: &resource.ResourceKey{
-					Name:      fmt.Sprintf("name%d", i),
-					Namespace: key.Namespace,
-					Group:     key.Group,
-					Resource:  key.Resource,
+			err = index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.BulkActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV:   int64(i),
+							Name: fmt.Sprintf("name%d", i),
+							Key: &resource.ResourceKey{
+								Name:      fmt.Sprintf("name%d", i),
+								Namespace: key.Namespace,
+								Group:     key.Group,
+								Resource:  key.Resource,
+							},
+							Title: fmt.Sprintf(`test foo%d%sbar`, i, v),
+						},
+					},
 				},
-				Title: fmt.Sprintf(`test foo%d%sbar`, i, v),
 			})
 			require.NoError(t, err)
-		}
 
-		for i, v := range search.TermCharacters {
 			title := fmt.Sprintf(`test foo%d%sbar`, i, v)
 			query := newQueryByTitle(title)
 			res, err := index.Search(context.Background(), nil, query, nil)

@@ -60,8 +60,8 @@ func TestIntegrationBenchmarkResourceServer(t *testing.T) {
 
 	ctx := context.Background()
 	opts := &test.BenchmarkOptions{
-		NumResources:     100,
-		Concurrency:      1,
+		NumResources:     1000,
+		Concurrency:      10,
 		NumNamespaces:    1,
 		NumGroups:        1,
 		NumResourceTypes: 1,

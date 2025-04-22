@@ -32,15 +32,28 @@ func (s *NamespacedResource) Valid() bool {
 	return s.Namespace != "" && s.Group != "" && s.Resource != ""
 }
 
+type BulkAction int
+
+const (
+	BulkActionIndex BulkAction = iota
+	BulkActionDelete
+)
+
+type BulkIndexItem struct {
+	Action BulkAction
+	Key    *ResourceKey       // Only used for delete actions
+	Doc    *IndexableDocument // Only used for index actions
+}
+
+type BulkIndexRequest struct {
+	Items           []*BulkIndexItem
+	ResourceVersion int64
+}
+
 type ResourceIndex interface {
-	// Add a document to the index.  Note it may not be searchable until after flush is called
-	Write(doc *IndexableDocument) error
-
-	// Mark a resource as deleted.  Note it may not be searchable until after flush is called
-	Delete(key *ResourceKey) error
-
-	// Make sure any changes to the index are flushed and available in the next search/origin calls
-	Flush() error
+	// BulkIndex allows for multiple index actions to be performed in a single call.
+	// The order of the items is guaranteed to be the same as the input
+	BulkIndex(req *BulkIndexRequest) error
 
 	// Search within a namespaced resource
 	// When working with federated queries, the additional indexes will be passed in explicitly
@@ -97,6 +110,10 @@ type searchSupport struct {
 	initWorkers          int
 	initMinSize          int
 	indexLatencyObserver IndexLatencyObserver
+	// IndexQueueProcessors is a map of index name to index queue processor
+	// Each processor is responsible to ingest events for a single index
+	indexQueueProcessors      map[string]*IndexQueueProcessor
+	indexQueueProcessorsMutex sync.Mutex
 }
 
 var (
@@ -127,6 +144,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		initMinSize:          opts.InitMinCount,
 		indexMetrics:         indexMetrics,
 		indexLatencyObserver: opts.IndexLatencyObserver,
+		indexQueueProcessors: make(map[string]*IndexQueueProcessor),
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -396,7 +414,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 				continue
 			}
 
-			s.handleEvent(watchctx, v)
+			s.dispatchEvent(watchctx, v)
 		}
 	}()
 
@@ -409,9 +427,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 	return nil
 }
 
-// Async event
-func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"HandleEvent")
+// Async event dispatching
+// This is called from the watch event loop
+// It will dispatch the event to the appropriate index queue processor
+func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"dispatchEvent")
 	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
 		s.log.Info("ignoring watch event", "type", evt.Type)
 		return
@@ -430,54 +450,18 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		Group:     evt.Key.Group,
 		Resource:  evt.Key.Resource,
 	}
-
 	index, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
 		s.log.Warn("error getting index for watch event", "error", err)
 		return
 	}
-
-	builder, err := s.builders.get(ctx, nsr)
+	// Get or create index queue processor for this index
+	indexQueueProcessor, err := s.getOrCreateIndexQueueProcessor(index, nsr)
 	if err != nil {
-		s.log.Warn("error getting builder for watch event", "error", err)
+		s.log.Error("error getting index queue processor for watch event", "error", err)
 		return
 	}
-
-	_, buildDocSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildDocument")
-	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
-	if err != nil {
-		s.log.Warn("error building document watch event", "error", err)
-		return
-	}
-	buildDocSpan.End()
-
-	switch evt.Type {
-	case WatchEvent_ADDED, WatchEvent_MODIFIED:
-		_, writeSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"WriteDocument")
-		err = index.Write(doc)
-		writeSpan.End()
-		if err != nil {
-			s.log.Warn("error writing document watch event", "error", err)
-			return
-		}
-		if evt.Type == WatchEvent_ADDED && s.indexMetrics != nil {
-			s.indexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
-		}
-	case WatchEvent_DELETED:
-		_, deleteSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"DeleteDocument")
-		err = index.Delete(evt.Key)
-		deleteSpan.End()
-		if err != nil {
-			s.log.Warn("error deleting document watch event", "error", err)
-			return
-		}
-		if s.indexMetrics != nil {
-			s.indexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
-		}
-	default:
-		// do nothing
-		s.log.Warn("unknown watch event", "type", evt.Type)
-	}
+	indexQueueProcessor.Add(evt)
 
 	// record latency from when event was created to when it was indexed
 	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
@@ -488,9 +472,6 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 	}
 	if s.indexMetrics != nil {
 		s.indexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
-	}
-	if s.indexLatencyObserver != nil {
-		s.indexLatencyObserver.Observe(evt, doc, latencySeconds)
 	}
 }
 
@@ -546,13 +527,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				Key: key,
 			},
 		}, func(iter ListIterator) error {
+			// Collect all documents in a single bulk request
+			// TODO: update to either use the index queue processor or use multiple smaller bulk requests
+			items := make([]*BulkIndexItem, 0)
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
 					return err
 				}
 
 				// Update the key name
-				// Or should we read it from the body?
 				key.Name = iter.Name()
 
 				// Convert it to an indexable document
@@ -562,8 +545,18 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					continue
 				}
 
-				// And finally write it to the index
-				if err = index.Write(doc); err != nil {
+				// Add to bulk items
+				items = append(items, &BulkIndexItem{
+					Action: BulkActionIndex,
+					Doc:    doc,
+				})
+			}
+
+			// Perform single bulk index operation
+			if len(items) > 0 {
+				if err = index.BulkIndex(&BulkIndexRequest{
+					Items: items,
+				}); err != nil {
 					return err
 				}
 			}
@@ -583,10 +576,6 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 	if s.indexMetrics != nil {
 		s.indexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
-	}
-
-	if err == nil {
-		err = index.Flush()
 	}
 
 	// rv is the last RV we read.  when watching, we must add all events since that time
@@ -707,4 +696,159 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 	}
 
 	return nil, fmt.Errorf("unknown resource type")
+}
+
+// IndexQueueProcessor manages queue-based operations for a specific index
+// It is responsible for ingesting events for a single index
+// It will batch events and send them to the index in a single bulk request
+type IndexQueueProcessor struct {
+	index     ResourceIndex
+	nsr       NamespacedResource
+	queue     chan *WrittenEvent
+	batchSize int
+	ctx       context.Context
+	cancel    context.CancelFunc
+	builder   DocumentBuilder
+	observer  IndexLatencyObserver
+	log       *slog.Logger
+}
+
+// NewIndexQueueProcessor creates a new IndexQueueProcessor for the given index
+func NewIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource, batchSize int, builder DocumentBuilder, observer IndexLatencyObserver, log *slog.Logger) *IndexQueueProcessor {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &IndexQueueProcessor{
+		index:     index,
+		nsr:       nsr,
+		queue:     make(chan *WrittenEvent, 1000), // Buffer size of 1000 events
+		batchSize: batchSize,
+		ctx:       ctx,
+		cancel:    cancel,
+		builder:   builder,
+		observer:  observer,
+		log:       log,
+	}
+}
+
+// Start begins processing events from the queue
+func (b *IndexQueueProcessor) Start() {
+	go func() {
+		for {
+			batch := make([]*WrittenEvent, 0, b.batchSize)
+			select {
+			case <-b.ctx.Done():
+				return
+			case evt := <-b.queue:
+				batch = append(batch, evt)
+			}
+			// append more events if the queue is not empty and we have space
+		prepare:
+			for len(batch) < b.batchSize {
+				select {
+				case <-b.ctx.Done():
+					return
+				case evt := <-b.queue:
+					batch = append(batch, evt)
+				default:
+					break prepare
+				}
+			}
+			b.process(batch)
+		}
+	}()
+}
+
+// Stop stops the index queue processor
+func (b *IndexQueueProcessor) Stop() {
+	b.cancel()
+}
+
+// Add adds an event to the queue
+func (b *IndexQueueProcessor) Add(evt *WrittenEvent) {
+	b.queue <- evt
+}
+
+// process handles a batch of events
+func (b *IndexQueueProcessor) process(batch []*WrittenEvent) {
+	if len(batch) == 0 {
+		return
+	}
+
+	// Create bulk request
+	req := &BulkIndexRequest{
+		Items: make([]*BulkIndexItem, 0, len(batch)),
+	}
+
+	for _, evt := range batch {
+		item := &BulkIndexItem{}
+		if evt.Type == WatchEvent_DELETED {
+			item.Action = BulkActionDelete
+			item.Key = evt.Key
+		} else {
+			item.Action = BulkActionIndex
+			doc, err := b.builder.BuildDocument(context.Background(), evt.Key, evt.ResourceVersion, evt.Value)
+			if err != nil {
+				// Log error but continue with other events
+				b.log.Error("error building document", "error", err)
+				continue
+			}
+			item.Doc = doc
+		}
+		req.Items = append(req.Items, item)
+	}
+
+	if len(req.Items) > 0 {
+		err := b.index.BulkIndex(req)
+		if err != nil {
+			b.log.Error("error bulk indexing", "error", err)
+			// TODO: handle error
+		}
+
+		// Calculate and record latency for each event in the batch
+		now := time.Now().UnixMicro()
+		for _, evt := range batch {
+			latencySeconds := float64(now-evt.ResourceVersion) / 1e6
+			if b.observer != nil {
+				b.observer.Observe(evt, nil, latencySeconds)
+			}
+
+			// Add logging using the struct's logger
+			b.log.Debug("indexed new object",
+				"resource", evt.Key.Resource,
+				"latency_seconds", latencySeconds,
+				"name", evt.Key.Name,
+				"namespace", evt.Key.Namespace,
+				"rv", evt.ResourceVersion)
+
+			if latencySeconds > 1 {
+				b.log.Warn("high index latency object details",
+					"resource", evt.Key.Resource,
+					"latency_seconds", latencySeconds,
+					"name", evt.Key.Name,
+					"namespace", evt.Key.Namespace,
+					"rv", evt.ResourceVersion)
+			}
+		}
+	}
+}
+
+// getOrCreateIndexQueueProcessor returns an IndexQueueProcessor for the given index
+func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource) (*IndexQueueProcessor, error) {
+	s.indexQueueProcessorsMutex.Lock()
+	defer s.indexQueueProcessorsMutex.Unlock()
+
+	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
+	if indexQueueProcessor, ok := s.indexQueueProcessors[key]; ok {
+		return indexQueueProcessor, nil
+	}
+
+	builder, err := s.builders.get(context.Background(), nsr)
+	if err != nil {
+		s.log.Error("error getting document builder", "error", err)
+		return nil, err
+	}
+
+	indexQueueProcessor := NewIndexQueueProcessor(index, nsr, 200, builder, s.indexLatencyObserver, s.log) // Batch size of 100
+	indexQueueProcessor.Start()
+	s.indexQueueProcessors[key] = indexQueueProcessor
+	return indexQueueProcessor, nil
 }

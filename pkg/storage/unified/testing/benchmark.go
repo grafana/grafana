@@ -227,6 +227,8 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
+			batch := make([]*resource.BulkIndexItem, 0, 1000)
+
 			for jobID := range jobs {
 				doc := &resource.IndexableDocument{
 					Key: &resource.ResourceKey{
@@ -243,14 +245,31 @@ func runSearchBackendBenchmarkWriteThroughput(ctx context.Context, backend resou
 					},
 				}
 
-				writeStart := time.Now()
-				err := index.Write(doc)
-				if err != nil {
-					errors <- err
-					return
-				}
+				batch = append(batch, &resource.BulkIndexItem{
+					Action: resource.BulkActionIndex,
+					Doc:    doc,
+				})
 
-				results <- time.Since(writeStart)
+				// If we've collected 100 items or this is the last job, process the batch
+				if len(batch) == 100 || jobID == opts.NumResources-1 {
+					writeStart := time.Now()
+					err := index.BulkIndex(&resource.BulkIndexRequest{
+						Items: batch,
+					})
+					if err != nil {
+						errors <- err
+						return
+					}
+
+					// Record the latency for each document in the batch
+					latency := time.Since(writeStart)
+					for i := 0; i < len(batch); i++ {
+						results <- latency
+					}
+
+					// Reset the batch
+					batch = batch[:0]
+				}
 			}
 		}()
 	}
@@ -317,10 +336,7 @@ func BenchmarkSearchBackend(tb testing.TB, backend resource.SearchBackend, opts 
 
 func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts *BenchmarkOptions) {
 	// Create a latency observer to track index latencies
-	latencies := make([]float64, 0, opts.NumResources)
-	latencyObserver := &testIndexLatencyObserver{
-		latencies: &latencies,
-	}
+	latencyObserver := NewTestIndexLatencyObserver(opts.NumResources)
 
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
@@ -338,10 +354,10 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 	require.NoError(tb, err)
 
 	// Discard the latencies from the initial index build.
-	for len(latencies) < (opts.NumGroups * opts.NumResourceTypes * opts.NumNamespaces) {
+	for latencyObserver.Len() < (opts.NumGroups * opts.NumResourceTypes * opts.NumNamespaces) {
 		time.Sleep(10 * time.Millisecond)
 	}
-	latencies = make([]float64, 0, opts.NumResources)
+	latencyObserver.Reset()
 
 	// Run the storage backend benchmark write throughput to create events
 	startTime := time.Now()
@@ -353,11 +369,12 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 
 	// Wait for all events to be processed
 	// We expect the same number of latencies as written events
-	for len(latencies) < opts.NumResources {
+	for latencyObserver.Len() < opts.NumResources {
 		time.Sleep(10 * time.Millisecond)
 	}
 	totalDuration := time.Since(startTime)
 	// Calculate index latency percentiles
+	latencies := latencyObserver.Latencies()
 	sort.Float64s(latencies)
 	var p50, p90, p99 float64
 	if len(latencies) > 0 {
@@ -398,11 +415,40 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 
 // testIndexLatencyObserver implements IndexLatencyObserver for testing
 type testIndexLatencyObserver struct {
-	latencies *[]float64
+	mu        sync.Mutex
+	latencies []float64
+	size      int
+}
+
+func NewTestIndexLatencyObserver(size int) *testIndexLatencyObserver {
+	return &testIndexLatencyObserver{
+		latencies: make([]float64, 0, size),
+		size:      size,
+	}
+}
+
+func (o *testIndexLatencyObserver) Reset() {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.latencies = make([]float64, 0, o.size)
+}
+
+func (o *testIndexLatencyObserver) Latencies() []float64 {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return o.latencies
+}
+
+func (o *testIndexLatencyObserver) Len() int {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	return len(o.latencies)
 }
 
 func (o *testIndexLatencyObserver) Observe(evt *resource.WrittenEvent, doc *resource.IndexableDocument, latency float64) {
-	*o.latencies = append(*o.latencies, latency)
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.latencies = append(o.latencies, latency)
 }
 
 // testDocumentBuilder implements DocumentBuilder for testing

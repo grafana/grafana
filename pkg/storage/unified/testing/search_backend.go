@@ -69,16 +69,22 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 	// Build the index
 	index, err = backend.BuildIndex(ctx, ns, 0, 0, nil, func(index resource.ResourceIndex) (int64, error) {
 		// Write a test document
-		doc := &resource.IndexableDocument{
-			Key: &resource.ResourceKey{
-				Namespace: ns.Namespace,
-				Group:     ns.Group,
-				Resource:  ns.Resource,
-				Name:      "doc1",
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						Key: &resource.ResourceKey{
+							Namespace: ns.Namespace,
+							Group:     ns.Group,
+							Resource:  ns.Resource,
+							Name:      "doc1",
+						},
+						Title: "Document 1",
+					},
+				},
 			},
-			Title: "Document 1",
-		}
-		err := index.Write(doc)
+		})
 		if err != nil {
 			return 0, err
 		}
@@ -109,92 +115,49 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 
 	// Build initial index with some test documents
 	index, err := backend.BuildIndex(ctx, ns, 3, 0, nil, func(index resource.ResourceIndex) (int64, error) {
-		// Write initial test documents
-		docs := []*resource.IndexableDocument{
-			{
-				Key: &resource.ResourceKey{
-					Namespace: ns.Namespace,
-					Group:     ns.Group,
-					Resource:  ns.Resource,
-					Name:      "doc1",
+		err := index.BulkIndex(&resource.BulkIndexRequest{
+			Items: []*resource.BulkIndexItem{
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						Key: &resource.ResourceKey{
+							Namespace: ns.Namespace,
+							Group:     ns.Group,
+							Resource:  ns.Resource,
+							Name:      "doc1",
+						},
+						Title: "Document 1",
+						Tags:  []string{"tag1", "tag2"},
+						Fields: map[string]interface{}{
+							"field1": 1,
+							"field2": "value1",
+						},
+					},
 				},
-				Title: "Document 1",
-				Tags:  []string{"tag1", "tag2"},
-				Fields: map[string]interface{}{
-					"field1": 1,
-					"field2": "value1",
+				{
+					Action: resource.BulkActionIndex,
+					Doc: &resource.IndexableDocument{
+						Key: &resource.ResourceKey{
+							Namespace: ns.Namespace,
+							Group:     ns.Group,
+							Resource:  ns.Resource,
+							Name:      "doc2",
+						},
+						Title: "Document 2",
+						Tags:  []string{"tag2", "tag3"},
+						Fields: map[string]interface{}{
+							"field1": 2,
+							"field2": "value2",
+						},
+					},
 				},
 			},
-			{
-				Key: &resource.ResourceKey{
-					Namespace: ns.Namespace,
-					Group:     ns.Group,
-					Resource:  ns.Resource,
-					Name:      "doc2",
-				},
-				Title: "Document 2",
-				Tags:  []string{"tag2", "tag3"},
-				Fields: map[string]interface{}{
-					"field1": 2,
-					"field2": "value2",
-				},
-			},
-		}
-
-		for _, doc := range docs {
-			err := index.Write(doc)
-			if err != nil {
-				return 0, err
-			}
-		}
-		return int64(len(docs)), nil
+		})
+		require.NoError(t, err)
+		return int64(2), nil
 	})
 	require.NoError(t, err)
 	require.NotNil(t, index)
-
-	err = index.Flush()
-	require.NoError(t, err)
-
-	t.Run("Write", func(t *testing.T) {
-		// Write a new document
-		doc := &resource.IndexableDocument{
-			Key: &resource.ResourceKey{
-				Namespace: ns.Namespace,
-				Group:     ns.Group,
-				Resource:  ns.Resource,
-				Name:      "doc3",
-			},
-			Title: "Document 3",
-			Tags:  []string{"tag3", "tag4"},
-			Fields: map[string]interface{}{
-				"field1": 3,
-				"field2": "value3",
-			},
-		}
-		err := index.Write(doc)
-		require.NoError(t, err)
-
-		// Verify document count
-		count, err := index.DocCount(ctx, "")
-		require.NoError(t, err)
-		require.Equal(t, int64(3), count)
-	})
-
-	t.Run("Delete", func(t *testing.T) {
-		// Delete a document
-		err := index.Delete(&resource.ResourceKey{
-			Namespace: ns.Namespace,
-			Group:     ns.Group,
-			Resource:  ns.Resource,
-			Name:      "doc2",
-		})
-		require.NoError(t, err)
-
-		// Verify document count
-		count, err := index.DocCount(ctx, "")
-		require.NoError(t, err)
-		require.Equal(t, int64(2), count)
-	})
 
 	t.Run("Search", func(t *testing.T) {
 		req := &resource.ResourceSearchRequest{

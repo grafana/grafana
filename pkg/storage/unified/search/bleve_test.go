@@ -65,91 +65,107 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) {
-			_ = index.Write(&resource.IndexableDocument{
-				RV:   1,
-				Name: "aaa",
-				Key: &resource.ResourceKey{
-					Name:      "aaa",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Title:  "aaa (dash)",
-				Folder: "xxx",
-				Fields: map[string]any{
-					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
-					DASHBOARD_ERRORS_TODAY:      25,
-					DASHBOARD_VIEWS_LAST_1_DAYS: 50,
-				},
-				Labels: map[string]string{
-					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
-				},
-				Tags: []string{"aa", "bb"},
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo-1",
-				},
-				Source: &utils.SourceProperties{
-					Path:            "path/to/aaa.json",
-					Checksum:        "xyz",
-					TimestampMillis: 1609462800000, // 2021
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.BulkActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV:   1,
+							Name: "aaa",
+							Key: &resource.ResourceKey{
+								Name:      "aaa",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Title:  "aaa (dash)",
+							Folder: "xxx",
+							Fields: map[string]any{
+								DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
+								DASHBOARD_ERRORS_TODAY:      25,
+								DASHBOARD_VIEWS_LAST_1_DAYS: 50,
+							},
+							Labels: map[string]string{
+								utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
+							},
+							Tags: []string{"aa", "bb"},
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/aaa.json",
+								Checksum:        "xyz",
+								TimestampMillis: 1609462800000, // 2021
+							},
+						},
+					},
+					{
+						Action: resource.BulkActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV:   2,
+							Name: "bbb",
+							Key: &resource.ResourceKey{
+								Name:      "bbb",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Title:  "bbb (dash)",
+							Folder: "xxx",
+							Fields: map[string]any{
+								DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
+								DASHBOARD_ERRORS_TODAY:      40,
+								DASHBOARD_VIEWS_LAST_1_DAYS: 100,
+							},
+							Tags: []string{"aa"},
+							Labels: map[string]string{
+								"region":                           "east",
+								utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
+							},
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/bbb.json",
+								Checksum:        "hijk",
+								TimestampMillis: 1640998800000, // 2022
+							},
+						},
+					},
+					{
+						Action: resource.BulkActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 3,
+							Key: &resource.ResourceKey{
+								Name:      "ccc",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Name:   "ccc",
+							Title:  "ccc (dash)",
+							Folder: "zzz",
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo2",
+							},
+							Source: &utils.SourceProperties{
+								Path: "path/in/repo2.yaml",
+							},
+							Fields: map[string]any{},
+							Tags:   []string{"aa"},
+							Labels: map[string]string{
+								"region": "west",
+							},
+						},
+					},
 				},
 			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV:   2,
-				Name: "bbb",
-				Key: &resource.ResourceKey{
-					Name:      "bbb",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Title:  "bbb (dash)",
-				Folder: "xxx",
-				Fields: map[string]any{
-					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
-					DASHBOARD_ERRORS_TODAY:      40,
-					DASHBOARD_VIEWS_LAST_1_DAYS: 100,
-				},
-				Tags: []string{"aa"},
-				Labels: map[string]string{
-					"region":                           "east",
-					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
-				},
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo-1",
-				},
-				Source: &utils.SourceProperties{
-					Path:            "path/to/bbb.json",
-					Checksum:        "hijk",
-					TimestampMillis: 1640998800000, // 2022
-				},
-			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 3,
-				Key: &resource.ResourceKey{
-					Name:      "ccc",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Name:   "ccc",
-				Title:  "ccc (dash)",
-				Folder: "zzz",
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo2",
-				},
-				Source: &utils.SourceProperties{
-					Path: "path/in/repo2.yaml",
-				},
-				Fields: map[string]any{},
-				Tags:   []string{"aa"},
-				Labels: map[string]string{
-					"region": "west",
-				},
-			})
+			if err != nil {
+				return 0, err
+			}
 			return rv, nil
 		})
 		require.NoError(t, err)
@@ -330,42 +346,55 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, fields, func(index resource.ResourceIndex) (int64, error) {
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 1,
-				Key: &resource.ResourceKey{
-					Name:      "zzz",
-					Namespace: "ns",
-					Group:     "folder.grafana.app",
-					Resource:  "folders",
-				},
-				Title: "zzz (folder)",
-				Manager: &utils.ManagerProperties{
-					Kind:     utils.ManagerKindRepo,
-					Identity: "repo-1",
-				},
-				Source: &utils.SourceProperties{
-					Path:            "path/to/folder.json",
-					Checksum:        "xxxx",
-					TimestampMillis: 300,
-				},
-				Labels: map[string]string{
-					utils.LabelKeyDeprecatedInternalID: "123",
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.BulkActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 1,
+							Key: &resource.ResourceKey{
+								Name:      "zzz",
+								Namespace: "ns",
+								Group:     "folder.grafana.app",
+								Resource:  "folders",
+							},
+							Title: "zzz (folder)",
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/folder.json",
+								Checksum:        "xxxx",
+								TimestampMillis: 300,
+							},
+							Labels: map[string]string{
+								utils.LabelKeyDeprecatedInternalID: "123",
+							},
+						},
+					},
+					{
+						Action: resource.BulkActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 2,
+							Key: &resource.ResourceKey{
+								Name:      "yyy",
+								Namespace: "ns",
+								Group:     "folder.grafana.app",
+								Resource:  "folders",
+							},
+							Title: "yyy (folder)",
+							Labels: map[string]string{
+								"region":                           "west",
+								utils.LabelKeyDeprecatedInternalID: "321",
+							},
+						},
+					},
 				},
 			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 2,
-				Key: &resource.ResourceKey{
-					Name:      "yyy",
-					Namespace: "ns",
-					Group:     "folder.grafana.app",
-					Resource:  "folders",
-				},
-				Title: "yyy (folder)",
-				Labels: map[string]string{
-					"region":                           "west",
-					utils.LabelKeyDeprecatedInternalID: "321",
-				},
-			})
+			if err != nil {
+				return 0, err
+			}
 			return rv, nil
 		})
 		require.NoError(t, err)
