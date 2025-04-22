@@ -32,6 +32,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/
+  math-operation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#math
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#math
 ---
 
 # Queries and conditions
@@ -88,14 +93,22 @@ The following aggregations functions are included: `Min`, `Max`, `Mean`, `Mediam
 
 ### Math
 
-Performs free-form math functions/operations on time series data and numbers. For instance, `$A + 1` or `$A * 100`.
+Performs free-form math functions/operations on time series data and numbers. For example, `$A + 1` or `$A * 100`.
 
-You can also use a Math expression to define the alert condition for numbers. For example:
+If queries being compared have **multiple series in their results**, series from different queries are matched(joined) if they have the same labels. For example:
+
+- `$A` returns series `{host=web01} 30` and `{host=web02} 20`
+- `$B` returns series `{host=web01} 10` and `{host=web02} 0`
+- `$A + $B` returns `{host=web01} 40` and `{host=web02} 20`.
+
+In this case, only series with matching labels are joined, and the operation is calculated between them.
+
+For additional scenarios on how Math handles different data types, refer to the [Math documentation](ref:math-operation).
+
+You can also use a Math expression to define the **alert condition**. For example:
 
 - `$B > 70` should fire if the value of B (query or expression) is more than 70.
 - `$B < $C * 100` should fire if the value of B is less than the value of C multiplied by 100.
-
-If queries being compared have multiple series in their results, series from different queries are matched if they have the same labels or one is a subset of the other.
 
 ### Resample
 
