@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -63,7 +62,8 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 	})
 
 	t.Run("should succeed for user identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Type:    authtypes.TypeUser,
 			OrgID:   1,
 			OrgRole: "Admin",
 			UserID:  1,
@@ -85,7 +85,8 @@ func TestAfterCreatePermissionCreator(t *testing.T) {
 	})
 
 	t.Run("should succeed for service account identity", func(t *testing.T) {
-		ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+		ctx := identity.WithRequester(context.Background(), &identity.StaticRequester{
+			Type:    authtypes.TypeServiceAccount,
 			OrgID:   1,
 			OrgRole: "Admin",
 			UserID:  1,
