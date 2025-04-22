@@ -2,8 +2,6 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -15,6 +13,10 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
+// FIXME: the name of the mock is different because there is another generated mock for Repository
+// I don't know how it got generated.
+//
+//go:generate mockery --name Repository --structname MockConfigRepository --inpackage --filename config_repository_mock.go --with-expecter
 type Repository interface {
 	// Config returns the saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -196,15 +198,4 @@ type Versioned interface {
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
-}
-
-func writeWithReadThenCreateOrUpdate(ctx context.Context, r ReaderWriter, path, ref string, data []byte, comment string) error {
-	_, err := r.Read(ctx, path, ref)
-	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
-		return fmt.Errorf("failed to check if file exists before writing: %w", err)
-	}
-	if err == nil {
-		return r.Update(ctx, path, ref, data, comment)
-	}
-	return r.Create(ctx, path, ref, data, comment)
 }

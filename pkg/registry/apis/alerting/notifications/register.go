@@ -13,7 +13,7 @@ import (
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource"
+	resource "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/receiver"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/templategroup"
