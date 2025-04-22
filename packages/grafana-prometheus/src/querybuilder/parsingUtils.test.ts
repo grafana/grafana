@@ -48,7 +48,7 @@ describe('getString', () => {
   });
 });
 
-describe('replaceBuiltInVariables', () => {
+describe('builtInTimeVariables', () => {
   const testCases = [
     {
       expr: 'sum_over_time([[metric_var]]{bar="${app}"}[$__interval])',
