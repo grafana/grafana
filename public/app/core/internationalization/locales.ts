@@ -145,7 +145,6 @@ export const LOCALES: Locale[] = [
   { name: 'Èdè Yorùbá', code: 'yo-ng' },
 ];
 
-
 // Options for locale date formatting
 export const DATE_TIME_LOCALE_OPTIONS: Intl.DateTimeFormatOptions = {
   day: '2-digit',

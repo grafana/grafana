@@ -293,7 +293,9 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
   const describeTimeRange = rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
-  const formattedRange = isLocaleFormatEnabled ? formatRange(describeTimeRange, DATE_TIME_LOCALE_OPTIONS) : describeTimeRange;
+  const formattedRange = isLocaleFormatEnabled
+    ? formatRange(describeTimeRange, DATE_TIME_LOCALE_OPTIONS)
+    : describeTimeRange;
   return formattedRange;
 };
 
