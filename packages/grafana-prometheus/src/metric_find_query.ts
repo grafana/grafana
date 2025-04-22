@@ -86,23 +86,17 @@ export class PrometheusMetricFindQuery {
       escapedLabel = escapeForUtf8Support(label);
     }
 
-    if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
-      const url = `/api/v1/label/${escapedLabel}/values`;
+    const url = `/api/v1/label/${escapedLabel}/values`;
 
+    if (!metric || this.datasource.hasLabelsMatchAPISupport()) {
       return this.datasource.metadataRequest(url, params).then((result) => {
         return _map(result.data.data, (value) => {
           return { text: value };
         });
       });
     } else {
-      const url = `/api/v1/series`;
-
       return this.datasource.metadataRequest(url, params).then((result) => {
-        const _labels = _map(result.data.data, (metric) => {
-          return metric[label] || '';
-        }).filter((label) => {
-          return label !== '';
-        });
+        const _labels = _map(result.data.data, (metric) => metric);
 
         return uniq(_labels).map((metric) => {
           return {
