@@ -529,54 +529,53 @@ export const LogsPanel = ({
           </div>
         </ScrollContainer>
       ) : (
-        <ScrollContainer ref={(scrollElement) => setScrollElement(scrollElement)}>
-          <div onMouseLeave={onLogContainerMouseLeave} className={style.container} ref={logsContainerRef}>
-            {showCommonLabels && !isAscending && renderCommonLabels()}
-            <ControlledLogRows
-              visualisationType="logs"
-              loading={infiniteScrolling}
-              loadMoreLogs={enableInfiniteScrolling ? loadMoreLogs : undefined}
-              range={data.timeRange}
-              logRows={logRows}
-              deduplicatedRows={deduplicatedRows}
-              dedupStrategy={dedupStrategy}
-              onClickFilterLabel={
-                isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
-              }
-              onClickFilterOutLabel={
-                isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
-              }
-              showContextToggle={showContextToggle}
-              showLabels={showLabels}
-              showTime={showTime}
-              enableLogDetails={enableLogDetails}
-              wrapLogMessage={wrapLogMessage}
-              prettifyLogMessage={prettifyLogMessage}
-              timeZone={timeZone}
-              getFieldLinks={getFieldLinks}
-              logsSortOrder={sortOrder}
-              displayedFields={displayedFields}
-              onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
-              onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
-              app={isCoreApp(app) ? app : CoreApp.Dashboard}
-              onLogRowHover={onLogRowHover}
-              onOpenContext={onOpenContext}
-              onPermalinkClick={onPermalinkClick}
-              permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
-              scrollIntoView={scrollIntoView}
-              isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
-              onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
-              onClickFilterOutString={
-                isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
-              }
-              onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
-              logOptionsStorageKey={controlsStorageKey}
-              // Ascending order causes scroll to stick to the bottom, so previewing is futile
-              renderPreview={false}
-            />
-            {showCommonLabels && isAscending && renderCommonLabels()}
-          </div>
-        </ScrollContainer>
+        <div onMouseLeave={onLogContainerMouseLeave} className={style.controlledLogsContainer}>
+          {showCommonLabels && !isAscending && renderCommonLabels()}
+          <ControlledLogRows
+            ref={(scrollElement: HTMLDivElement | null) => setScrollElement(scrollElement)}
+            visualisationType="logs"
+            loading={infiniteScrolling}
+            loadMoreLogs={enableInfiniteScrolling ? loadMoreLogs : undefined}
+            range={data.timeRange}
+            logRows={logRows}
+            deduplicatedRows={deduplicatedRows}
+            dedupStrategy={dedupStrategy}
+            onClickFilterLabel={
+              isOnClickFilterLabel(onClickFilterLabel) ? onClickFilterLabel : defaultOnClickFilterLabel
+            }
+            onClickFilterOutLabel={
+              isOnClickFilterOutLabel(onClickFilterOutLabel) ? onClickFilterOutLabel : defaultOnClickFilterOutLabel
+            }
+            showContextToggle={showContextToggle}
+            showLabels={showLabels}
+            showTime={showTime}
+            enableLogDetails={enableLogDetails}
+            wrapLogMessage={wrapLogMessage}
+            prettifyLogMessage={prettifyLogMessage}
+            timeZone={timeZone}
+            getFieldLinks={getFieldLinks}
+            logsSortOrder={sortOrder}
+            displayedFields={displayedFields}
+            onClickShowField={displayedFields !== undefined ? onClickShowField : undefined}
+            onClickHideField={displayedFields !== undefined ? onClickHideField : undefined}
+            app={isCoreApp(app) ? app : CoreApp.Dashboard}
+            onLogRowHover={onLogRowHover}
+            onOpenContext={onOpenContext}
+            onPermalinkClick={onPermalinkClick}
+            permalinkedRowId={getLogsPanelState()?.logs?.id ?? undefined}
+            scrollIntoView={scrollIntoView}
+            isFilterLabelActive={isIsFilterLabelActive(isFilterLabelActive) ? isFilterLabelActive : undefined}
+            onClickFilterString={isOnClickFilterString(onClickFilterString) ? onClickFilterString : undefined}
+            onClickFilterOutString={
+              isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
+            }
+            onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
+            logOptionsStorageKey={controlsStorageKey}
+            // Ascending order causes scroll to stick to the bottom, so previewing is futile
+            renderPreview={false}
+          />
+          {showCommonLabels && isAscending && renderCommonLabels()}
+        </div>
       )}
     </>
   );
@@ -585,6 +584,9 @@ export const LogsPanel = ({
 const getStyles = (theme: GrafanaTheme2) => ({
   container: css({
     marginBottom: theme.spacing(1.5),
+  }),
+  controlledLogsContainer: css({
+    height: '100%',
   }),
   labelContainer: css({
     margin: theme.spacing(0, 0, 0.5, 0.5),
