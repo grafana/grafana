@@ -1,6 +1,8 @@
 ---
 title: Data links and actions options
 comments: |
+  There are four data link shared files, datalink-options.md, datalink-options-1.md, datalink-options-2.md, and datalink-options-3.md to cover the most common combinations of options. 
+  Using shared files ensures that content remains consistent across visualizations that share the same options and users don't have to figure out which options apply to a specific visualization when reading that content.
   This file is used in the following visualizations: bar gauge, gauge, pie chart, stat
 ---
 

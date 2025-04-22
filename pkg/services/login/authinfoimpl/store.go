@@ -151,10 +151,11 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 
 func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-		AuthId:     cmd.AuthId,
-		Created:    GetTime(),
+		UserId:      cmd.UserId,
+		AuthModule:  cmd.AuthModule,
+		AuthId:      cmd.AuthId,
+		Created:     GetTime(),
+		ExternalUID: cmd.ExternalUID,
 	}
 
 	if cmd.OAuthToken != nil {

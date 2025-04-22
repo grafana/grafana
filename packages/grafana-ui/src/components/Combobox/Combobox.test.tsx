@@ -192,7 +192,7 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await userEvent.click(input);
 
-      const allHeaders = await screen.findAllByRole('presentation');
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
       expect(allHeaders).toHaveLength(2);
 
       const listbox = await screen.findByRole('listbox');
@@ -219,7 +219,7 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await userEvent.click(input);
 
-      const allHeaders = await screen.findAllByRole('presentation');
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
 
       expect(allHeaders[0]).toHaveTextContent('Group 1');
       expect(allHeaders[1]).toHaveTextContent('');
@@ -514,11 +514,9 @@ describe('Combobox', () => {
       });
 
       const customItem = screen.getByRole('option');
-      const customValue = customItem.getElementsByTagName('span')[0].textContent;
-      const customDescription = customItem.getElementsByTagName('span')[1].textContent;
-      expect(customItem).toBeInTheDocument();
-      expect(customValue).toBe('fir');
-      expect(customDescription).toBe('Use custom value');
+
+      expect(customItem).toHaveTextContent('fir');
+      expect(customItem).toHaveTextContent('Use custom value');
     });
 
     it('should display message when there is an error loading async options', async () => {

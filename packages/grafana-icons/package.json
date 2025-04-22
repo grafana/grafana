@@ -35,7 +35,7 @@
     "build": "yarn generate && rollup -c rollup.config.ts --configPlugin esbuild"
   },
   "devDependencies": {
-    "@babel/core": "7.26.9",
+    "@babel/core": "7.26.10",
     "@grafana/tsconfig": "^2.0.0",
     "@rollup/plugin-node-resolve": "^16.0.0",
     "@rollup/plugin-typescript": "^12.1.0",

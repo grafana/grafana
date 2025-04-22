@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/go-github/v69/github"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/google/go-github/v70/github"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type githubClient struct {

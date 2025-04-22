@@ -82,7 +82,7 @@ export const AuthConfigPageUnconnected = ({
     <Page
       navId="authentication"
       subTitle={
-        <>
+        <Trans i18nKey="auth-config-auth-config-page-unconnected.subtitle">
           Manage your auth settings and configure single sign-on. Find out more in our{' '}
           <TextLink
             external={true}
@@ -91,7 +91,7 @@ export const AuthConfigPageUnconnected = ({
             documentation
           </TextLink>
           .
-        </>
+        </Trans>
       }
       actions={
         config.buildInfo.edition !== GrafanaEdition.OpenSource && (

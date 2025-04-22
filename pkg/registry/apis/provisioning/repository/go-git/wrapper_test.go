@@ -45,7 +45,7 @@ func TestGoGitWrapper(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	wrap, err := Clone(ctx, &v0alpha1.Repository{
+	wrap, err := Clone(ctx, "testdata/clone", &v0alpha1.Repository{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "ns",
 			Name:      "unit-tester",
@@ -57,14 +57,13 @@ func TestGoGitWrapper(t *testing.T) {
 			},
 		},
 	},
-		GoGitCloneOptions{
-			Root: "testdata/clone", // where things are cloned,
-			// one commit (not 11)
-			SingleCommitBeforePush: true,
-			CreateIfNotExists:      true,
+		repository.CloneOptions{
+			PushOnWrites:      false,
+			CreateIfNotExists: true,
+			Progress:          os.Stdout,
 		},
 		&dummySecret{},
-		os.Stdout)
+	)
 	require.NoError(t, err)
 
 	tree, err := wrap.ReadTree(ctx, "")
@@ -89,9 +88,10 @@ func TestGoGitWrapper(t *testing.T) {
 	}
 
 	fmt.Printf("push...\n")
-	err = wrap.Push(ctx, GoGitPushOptions{
-		Timeout: 10,
-	}, os.Stdout)
+	err = wrap.Push(ctx, repository.PushOptions{
+		Timeout:  10,
+		Progress: os.Stdout,
+	})
 	require.NoError(t, err)
 }
 

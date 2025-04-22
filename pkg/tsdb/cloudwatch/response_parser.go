@@ -254,6 +254,7 @@ func buildDataFrames(ctx context.Context, aggregatedResponse models.QueryRowResp
 			RefID: query.RefId,
 			Meta:  createMeta(query),
 		}
+		frame.Meta.Type = data.FrameTypeTimeSeriesMulti
 
 		for code := range aggregatedResponse.ErrorCodes {
 			if aggregatedResponse.ErrorCodes[code] {

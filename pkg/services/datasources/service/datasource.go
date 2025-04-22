@@ -920,7 +920,7 @@ func awsServiceNamespace(dsType string, jsonData *simplejson.Json) string {
 		} else {
 			return "es"
 		}
-	case datasources.DS_PROMETHEUS, datasources.DS_ALERTMANAGER:
+	case datasources.DS_PROMETHEUS, datasources.DS_AMAZON_PROMETHEUS, datasources.DS_ALERTMANAGER:
 		return "aps"
 	default:
 		panic(fmt.Sprintf("Unsupported datasource %q", dsType))

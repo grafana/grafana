@@ -573,7 +573,7 @@
   },
   {
     "type": "label",
-    "name": "area/exploremetrics",
+    "name": "area/metricsdrilldown",
     "action": "addToProject",
     "addToProject": {
       "url": "https://github.com/orgs/grafana/projects/516"

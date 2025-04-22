@@ -8,6 +8,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Dropdown, Icon, Menu, PanelChrome, ToolbarButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getPanelLinks } from './PanelMenuBehavior';
 
@@ -56,7 +57,11 @@ function VizPanelLinksRenderer({ model }: SceneComponentProps<VizPanelLinks>) {
         return <menu.Component model={menu} key={menu.state.key} />;
       }}
     >
-      <ToolbarButton icon="external-link-alt" iconSize="md" aria-label="panel links" />
+      <ToolbarButton
+        icon="external-link-alt"
+        iconSize="md"
+        aria-label={t('dashboard-scene.viz-panel-links-renderer.aria-label-panel-links', 'Panel links')}
+      />
     </Dropdown>
   );
 }

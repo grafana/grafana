@@ -4,7 +4,7 @@ import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
+import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
@@ -136,15 +136,16 @@ const BrowseDashboardsPage = memo(() => {
       renderTitle={renderTitle}
       actions={
         <>
-          {config.featureToggles.dashboardRestore && hasAdminRights && (
-            <LinkButton
-              variant="secondary"
-              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
-              onClick={handleButtonClickToRecentlyDeleted}
-            >
-              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-            </LinkButton>
-          )}
+          {false &&
+            hasAdminRights && ( // TODO: change this to a feature flag when dashboard restore is reworked
+              <LinkButton
+                variant="secondary"
+                href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
+                onClick={handleButtonClickToRecentlyDeleted}
+              >
+                <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+              </LinkButton>
+            )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton

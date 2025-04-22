@@ -15,7 +15,7 @@ import { isRecordingRuleByType } from '../../../utils/rules';
 import AlertLabelDropdown from '../../AlertLabelDropdown';
 import { AlertLabels } from '../../AlertLabels';
 import { NeedHelpInfo } from '../NeedHelpInfo';
-import { useAlertRuleSuggestions } from '../useAlertRuleSuggestions';
+import { useGetLabelsFromDataSourceName } from '../useAlertRuleSuggestions';
 
 import { AddButton, RemoveButton } from './LabelsButtons';
 
@@ -80,7 +80,12 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
     <FormProvider {...formAPI}>
       <form onSubmit={formAPI.handleSubmit(onSave)}>
         <Stack direction="column" gap={4}>
-          <Text>{getLabelText(type)}</Text>
+          <Stack direction="column" gap={1}>
+            <Text>{getLabelText(type)}</Text>
+            <Text variant="bodySmall" color="secondary">
+              {getDescriptionText()}
+            </Text>
+          </Stack>
           <Stack direction="column" gap={1}>
             <LabelsWithSuggestions dataSourceName={dataSourceName} />
             <Space v={2} />
@@ -90,7 +95,9 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
               <Button type="button" variant="secondary" onClick={onCancel}>
                 <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
               </Button>
-              <Button type="submit">Save</Button>
+              <Button type="submit">
+                <Trans i18nKey="alerting.labels-sub-form.save">Save</Trans>
+              </Button>
             </div>
           </Stack>
         </Stack>
@@ -109,7 +116,7 @@ export function useCombinedLabels(
   selectedKey: string
 ) {
   // ------- Get labels keys and their values from existing alerts
-  const { isLoading, labels: labelsByKeyFromExisingAlerts } = useAlertRuleSuggestions(dataSourceName);
+  const { labels: labelsByKeyFromExisingAlerts, isLoading } = useGetLabelsFromDataSourceName(dataSourceName);
   // ------- Get only the keys from the ops labels, as we will fetch the values for the keys once the key is selected.
   const { loading: isLoadingLabels, labelsOpsKeys = [] } = useGetOpsLabelsKeys(
     !labelsPluginInstalled || loadingLabelsPlugin
@@ -258,7 +265,11 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
 
   return (
     <>
-      {isLoading && <LoadingPlaceholder text="Loading existing labels" />}
+      {isLoading && (
+        <LoadingPlaceholder
+          text={t('alerting.labels-with-suggestions.text-loading-existing-labels', 'Loading existing labels')}
+        />
+      )}
       {!isLoading && (
         <Stack direction="column" gap={1} alignItems="flex-start">
           {fields.map((field, index) => {
@@ -361,7 +372,7 @@ export const LabelsWithoutSuggestions: FC = () => {
                   {...register(`labels.${index}.key`, {
                     required: { value: !!labels[index]?.value, message: 'Required.' },
                   })}
-                  placeholder="key"
+                  placeholder={t('alerting.labels-without-suggestions.placeholder-key', 'key')}
                   data-testid={`label-key-${index}`}
                   defaultValue={field.key}
                 />
@@ -376,7 +387,7 @@ export const LabelsWithoutSuggestions: FC = () => {
                   {...register(`labels.${index}.value`, {
                     required: { value: !!labels[index]?.key, message: 'Required.' },
                   })}
-                  placeholder="value"
+                  placeholder={t('alerting.labels-without-suggestions.placeholder-value', 'value')}
                   data-testid={`label-value-${index}`}
                   defaultValue={field.value}
                 />
@@ -398,7 +409,9 @@ function LabelsField() {
   return (
     <div>
       <Stack direction="column" gap={1}>
-        <Text element="h5">Labels</Text>
+        <Text element="h5">
+          <Trans i18nKey="alerting.labels-field.labels">Labels</Trans>
+        </Text>
         <Stack direction={'row'} gap={1}>
           <Text variant="bodySmall" color="secondary">
             {getLabelText(type)}
@@ -408,7 +421,7 @@ function LabelsField() {
             linkText={`Read about labels`}
             contentText="The dropdown only displays labels that you have previously used for alerts.
             Select a label from the options below or type in a new one."
-            title="Labels"
+            title={t('alerting.labels-field.title-labels', 'Labels')}
           />
         </Stack>
       </Stack>
@@ -426,6 +439,13 @@ function getLabelText(type: RuleFormType) {
         'Add labels to your rule for searching, silencing, or routing to a notification policy.'
       );
   return text;
+}
+
+function getDescriptionText() {
+  return t(
+    'alerting.labels-sub-form.description',
+    'Select a label key/value from the options below, or type a new one and press Enter.'
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {
