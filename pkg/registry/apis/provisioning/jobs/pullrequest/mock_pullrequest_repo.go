@@ -24,53 +24,6 @@ func (_m *MockPullRequestRepo) EXPECT() *MockPullRequestRepo_Expecter {
 	return &MockPullRequestRepo_Expecter{mock: &_m.Mock}
 }
 
-// ClearAllPullRequestFileComments provides a mock function with given fields: ctx, pr
-func (_m *MockPullRequestRepo) ClearAllPullRequestFileComments(ctx context.Context, pr int) error {
-	ret := _m.Called(ctx, pr)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ClearAllPullRequestFileComments")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int) error); ok {
-		r0 = rf(ctx, pr)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockPullRequestRepo_ClearAllPullRequestFileComments_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ClearAllPullRequestFileComments'
-type MockPullRequestRepo_ClearAllPullRequestFileComments_Call struct {
-	*mock.Call
-}
-
-// ClearAllPullRequestFileComments is a helper method to define mock.On call
-//   - ctx context.Context
-//   - pr int
-func (_e *MockPullRequestRepo_Expecter) ClearAllPullRequestFileComments(ctx interface{}, pr interface{}) *MockPullRequestRepo_ClearAllPullRequestFileComments_Call {
-	return &MockPullRequestRepo_ClearAllPullRequestFileComments_Call{Call: _e.mock.On("ClearAllPullRequestFileComments", ctx, pr)}
-}
-
-func (_c *MockPullRequestRepo_ClearAllPullRequestFileComments_Call) Run(run func(ctx context.Context, pr int)) *MockPullRequestRepo_ClearAllPullRequestFileComments_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int))
-	})
-	return _c
-}
-
-func (_c *MockPullRequestRepo_ClearAllPullRequestFileComments_Call) Return(_a0 error) *MockPullRequestRepo_ClearAllPullRequestFileComments_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockPullRequestRepo_ClearAllPullRequestFileComments_Call) RunAndReturn(run func(context.Context, int) error) *MockPullRequestRepo_ClearAllPullRequestFileComments_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CommentPullRequest provides a mock function with given fields: ctx, pr, comment
 func (_m *MockPullRequestRepo) CommentPullRequest(ctx context.Context, pr int, comment string) error {
 	ret := _m.Called(ctx, pr, comment)
@@ -115,56 +68,6 @@ func (_c *MockPullRequestRepo_CommentPullRequest_Call) Return(_a0 error) *MockPu
 }
 
 func (_c *MockPullRequestRepo_CommentPullRequest_Call) RunAndReturn(run func(context.Context, int, string) error) *MockPullRequestRepo_CommentPullRequest_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CommentPullRequestFile provides a mock function with given fields: ctx, pr, path, ref, comment
-func (_m *MockPullRequestRepo) CommentPullRequestFile(ctx context.Context, pr int, path string, ref string, comment string) error {
-	ret := _m.Called(ctx, pr, path, ref, comment)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CommentPullRequestFile")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, string, string, string) error); ok {
-		r0 = rf(ctx, pr, path, ref, comment)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// MockPullRequestRepo_CommentPullRequestFile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CommentPullRequestFile'
-type MockPullRequestRepo_CommentPullRequestFile_Call struct {
-	*mock.Call
-}
-
-// CommentPullRequestFile is a helper method to define mock.On call
-//   - ctx context.Context
-//   - pr int
-//   - path string
-//   - ref string
-//   - comment string
-func (_e *MockPullRequestRepo_Expecter) CommentPullRequestFile(ctx interface{}, pr interface{}, path interface{}, ref interface{}, comment interface{}) *MockPullRequestRepo_CommentPullRequestFile_Call {
-	return &MockPullRequestRepo_CommentPullRequestFile_Call{Call: _e.mock.On("CommentPullRequestFile", ctx, pr, path, ref, comment)}
-}
-
-func (_c *MockPullRequestRepo_CommentPullRequestFile_Call) Run(run func(ctx context.Context, pr int, path string, ref string, comment string)) *MockPullRequestRepo_CommentPullRequestFile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(int), args[2].(string), args[3].(string), args[4].(string))
-	})
-	return _c
-}
-
-func (_c *MockPullRequestRepo_CommentPullRequestFile_Call) Return(_a0 error) *MockPullRequestRepo_CommentPullRequestFile_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockPullRequestRepo_CommentPullRequestFile_Call) RunAndReturn(run func(context.Context, int, string, string, string) error) *MockPullRequestRepo_CommentPullRequestFile_Call {
 	_c.Call.Return(run)
 	return _c
 }
