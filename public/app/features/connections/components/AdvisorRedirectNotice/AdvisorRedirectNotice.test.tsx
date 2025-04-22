@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { PluginLoadingStrategy } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
@@ -23,6 +24,27 @@ describe('AdvisorRedirectNotice', () => {
   afterEach(() => {
     jest.clearAllMocks();
     config.featureToggles.grafanaAdvisor = originalFeatureToggleValue;
+    config.apps['grafana-advisor-app'] = {
+      id: 'grafana-advisor-app',
+      path: '/a/grafana-advisor-app',
+      version: '1.0.0',
+      preload: false,
+      angular: { detected: false, hideDeprecation: false },
+      loadingStrategy: PluginLoadingStrategy.fetch,
+      dependencies: {
+        grafanaDependency: '*',
+        grafanaVersion: '*',
+        plugins: [],
+        extensions: { exposedComponents: [] },
+      },
+      extensions: {
+        addedLinks: [],
+        addedComponents: [],
+        exposedComponents: [],
+        extensionPoints: [],
+        addedFunctions: [],
+      },
+    };
   });
 
   it('should not render when user is not admin', async () => {
@@ -36,6 +58,13 @@ describe('AdvisorRedirectNotice', () => {
     render(<AdvisorRedirectNotice />);
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
+
+  it('should not render when app is not installed', async () => {
+    delete config.apps['grafana-advisor-app'];
+    render(<AdvisorRedirectNotice />);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
   it('should render notice with correct content', async () => {
     render(<AdvisorRedirectNotice />);
 

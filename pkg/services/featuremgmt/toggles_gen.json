@@ -114,7 +114,8 @@
       "metadata": {
         "name": "alertingApiServer",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-06-20T20:52:03Z"
+        "creationTimestamp": "2024-06-20T20:52:03Z",
+        "deletionTimestamp": "2025-04-16T17:44:22Z"
       },
       "spec": {
         "description": "Register Alerting APIs with the K8s API server",
@@ -1379,7 +1380,8 @@
       "metadata": {
         "name": "frontendSandboxMonitorOnly",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-07-05T11:48:25Z"
+        "creationTimestamp": "2023-07-05T11:48:25Z",
+        "deletionTimestamp": "2025-04-14T13:27:59Z"
       },
       "spec": {
         "description": "Enables monitor only in the plugin frontend sandbox (if enabled)",
@@ -2465,6 +2467,18 @@
         "stage": "experimental",
         "codeowner": "@grafana/plugins-platform-backend",
         "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "pluginsAutoUpdate",
+        "resourceVersion": "1744729584489",
+        "creationTimestamp": "2025-04-15T15:06:24Z"
+      },
+      "spec": {
+        "description": "Enables auto-updating of users installed plugins",
+        "stage": "experimental",
+        "codeowner": "@grafana/plugins-platform-backend"
       }
     },
     {
