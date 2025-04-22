@@ -52,7 +52,7 @@ func TestIsAuthenticated(t *testing.T) {
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetUser,
-					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						w.WriteHeader(http.StatusForbidden)
 						require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"message": "Forbidden"}))
 					}),
@@ -352,7 +352,8 @@ func TestGithubClient_GetContents(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						w.WriteHeader(http.StatusConflict)
 						// Return a non-GitHub error format
-						w.Write([]byte("not a github error"))
+						_, err := w.Write([]byte("not a github error"))
+						require.NoError(t, err)
 					}),
 				),
 			),
@@ -518,6 +519,21 @@ func TestGithubClient_GetTree(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
 					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Check if this is the first request for the root tree
+						if !strings.Contains(r.URL.Path, "subdirsha") {
+							// Verify the request URL contains the correct owner, repo, and ref
+							expectedPath := "/repos/test-owner/test-repo/git/trees/main"
+							assert.True(t, strings.Contains(r.URL.Path, expectedPath),
+								"Expected URL path to contain %s, got %s", expectedPath, r.URL.Path)
+
+							// Verify query parameters for recursive flag
+							query := r.URL.Query()
+							assert.Equal(t, "", query.Get("recursive"), "Recursive parameter should not be set")
+						} else {
+							// This is the second request for the subtree
+							assert.True(t, strings.Contains(r.URL.Path, "subdirsha"),
+								"Expected URL path to contain subdirsha, got %s", r.URL.Path)
+						}
 						// First request for the root tree
 						tree := &github.Tree{
 							SHA: github.Ptr("rootsha"),
@@ -987,7 +1003,8 @@ func TestGithubClient_CreateFile(t *testing.T) {
 					mockhub.PutReposContentsByOwnerByRepoByPath,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						w.WriteHeader(http.StatusInternalServerError)
-						w.Write([]byte("not a github error"))
+						_, err := w.Write([]byte("not a github error"))
+						require.NoError(t, err)
 					}),
 				),
 			),
@@ -2140,6 +2157,10 @@ func TestGithubClient_CreateBranch(t *testing.T) {
 				mockhub.WithRequestMatchHandler(
 					mockhub.GetReposBranchesByOwnerByRepoByBranch,
 					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// Verify the request URL contains the correct owner, repo, and branch
+						expectedPath := "/repos/test-owner/test-repo/branches/existing-branch"
+						assert.True(t, strings.Contains(r.URL.Path, expectedPath),
+							"Expected URL path to contain %s, got %s", expectedPath, r.URL.Path)
 						// Branch exists check returns success
 						branch := &github.Branch{
 							Name: github.Ptr("existing-branch"),
@@ -2277,9 +2298,9 @@ func TestGithubClient_BranchExists(t *testing.T) {
 					mockhub.GetReposBranchesByOwnerByRepoByBranch,
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						branch := &github.Branch{
-							Name: github.String("existing-branch"),
+							Name: github.Ptr("existing-branch"),
 							Commit: &github.RepositoryCommit{
-								SHA: github.String("abc123"),
+								SHA: github.Ptr("abc123"),
 							},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -3232,20 +3253,20 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 						files := []*github.CommitFile{
 							{
-								Filename:  github.String("file1.txt"),
-								Additions: github.Int(10),
-								Deletions: github.Int(5),
-								Changes:   github.Int(15),
-								Status:    github.String("modified"),
-								Patch:     github.String("@@ -1,5 +1,10 @@"),
+								Filename:  github.Ptr("file1.txt"),
+								Additions: github.Ptr(10),
+								Deletions: github.Ptr(5),
+								Changes:   github.Ptr(15),
+								Status:    github.Ptr("modified"),
+								Patch:     github.Ptr("@@ -1,5 +1,10 @@"),
 							},
 							{
-								Filename:  github.String("file2.txt"),
-								Additions: github.Int(20),
-								Deletions: github.Int(0),
-								Changes:   github.Int(20),
-								Status:    github.String("added"),
-								Patch:     github.String("@@ -0,0 +1,20 @@"),
+								Filename:  github.Ptr("file2.txt"),
+								Additions: github.Ptr(20),
+								Deletions: github.Ptr(0),
+								Changes:   github.Ptr(20),
+								Status:    github.Ptr("added"),
+								Patch:     github.Ptr("@@ -0,0 +1,20 @@"),
 							},
 						}
 						w.WriteHeader(http.StatusOK)
@@ -3258,20 +3279,20 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 			number:     123,
 			wantFiles: []CommitFile{
 				&github.CommitFile{
-					Filename:  github.String("file1.txt"),
-					Additions: github.Int(10),
-					Deletions: github.Int(5),
-					Changes:   github.Int(15),
-					Status:    github.String("modified"),
-					Patch:     github.String("@@ -1,5 +1,10 @@"),
+					Filename:  github.Ptr("file1.txt"),
+					Additions: github.Ptr(10),
+					Deletions: github.Ptr(5),
+					Changes:   github.Ptr(15),
+					Status:    github.Ptr("modified"),
+					Patch:     github.Ptr("@@ -1,5 +1,10 @@"),
 				},
 				&github.CommitFile{
-					Filename:  github.String("file2.txt"),
-					Additions: github.Int(20),
-					Deletions: github.Int(0),
-					Changes:   github.Int(20),
-					Status:    github.String("added"),
-					Patch:     github.String("@@ -0,0 +1,20 @@"),
+					Filename:  github.Ptr("file2.txt"),
+					Additions: github.Ptr(20),
+					Deletions: github.Ptr(0),
+					Changes:   github.Ptr(20),
+					Status:    github.Ptr("added"),
+					Patch:     github.Ptr("@@ -0,0 +1,20 @@"),
 				},
 			},
 			wantErr: nil,
@@ -3304,11 +3325,11 @@ func TestGithubClient_ListPullRequestFiles(t *testing.T) {
 						files := make([]*github.CommitFile, maxPRFiles+1)
 						for i := 0; i < maxPRFiles+1; i++ {
 							files[i] = &github.CommitFile{
-								Filename:  github.String(fmt.Sprintf("file%d.txt", i+1)),
-								Additions: github.Int(i + 1),
-								Deletions: github.Int(0),
-								Changes:   github.Int(i + 1),
-								Status:    github.String("added"),
+								Filename:  github.Ptr(fmt.Sprintf("file%d.txt", i+1)),
+								Additions: github.Ptr(i + 1),
+								Deletions: github.Ptr(0),
+								Changes:   github.Ptr(i + 1),
+								Status:    github.Ptr("added"),
 							}
 						}
 						w.WriteHeader(http.StatusOK)
