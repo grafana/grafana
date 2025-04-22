@@ -1016,7 +1016,32 @@ func TestGitHubRepository_Create(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "branch does not exist",
+			name: "branch already exists error",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "feature-branch",
+			data:    []byte("dashboard content"),
+			comment: "Add new dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
+				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(pgh.ErrResourceAlreadyExists)
+			},
+			expectedError: &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusConflict,
+					Message: "branch already exists",
+				},
+			},
+		},
+		{
+			name: "branch does not exist error",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
@@ -1033,7 +1058,28 @@ func TestGitHubRepository_Create(t *testing.T) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
 				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(fmt.Errorf("failed to create branch"))
 			},
-			expectedError: fmt.Errorf("create branch on create: create branch: %w", fmt.Errorf("failed to create branch")),
+			expectedError: fmt.Errorf("create branch: %w", fmt.Errorf("failed to create branch")),
+		},
+		{
+			name: "branch does not exist but it's created",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "feature-branch",
+			data:    []byte("dashboard content"),
+			comment: "Add new dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
+				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(nil)
+				mockClient.EXPECT().CreateFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "feature-branch", "Add new dashboard", []byte("dashboard content")).Return(nil)
+			},
+			expectedError: nil,
 		},
 		{
 			name: "invalid branch name",
@@ -1052,7 +1098,12 @@ func TestGitHubRepository_Create(t *testing.T) {
 			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
 				// No mock expectations needed as validation should fail before any GitHub API calls
 			},
-			expectedError: fmt.Errorf("create branch on create: %w", fmt.Errorf("invalid branch name")),
+			expectedError: &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusBadRequest,
+					Message: "invalid branch name",
+				},
+			},
 		},
 		{
 			name: "branch exists check fails",
@@ -1071,7 +1122,7 @@ func TestGitHubRepository_Create(t *testing.T) {
 			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
 				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature-branch").Return(false, fmt.Errorf("failed to check branch"))
 			},
-			expectedError: fmt.Errorf("create branch on create: %w", fmt.Errorf("check branch exists: %w", fmt.Errorf("failed to check branch"))),
+			expectedError: fmt.Errorf("check branch exists: %w", fmt.Errorf("failed to check branch")),
 		},
 		{
 			name: "file already exists",

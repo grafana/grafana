@@ -272,7 +272,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on create: %w", err)
+		return err
 	}
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
@@ -307,7 +307,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on update: %w", err)
+		return err
 	}
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
@@ -359,7 +359,7 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on delete: %w", err)
+		return err
 	}
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
