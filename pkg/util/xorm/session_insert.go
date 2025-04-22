@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"xorm.io/builder"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/builder"
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
