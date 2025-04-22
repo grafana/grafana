@@ -40,9 +40,12 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 func exportResource(ctx context.Context, options provisioning.ExportJobOptions, client dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
 		// When requesting v2 (or v0) dashboards over the v1 api, we want to keep the original format
-		storedVersion, ok, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
-		if ok && strings.HasPrefix(item.GetAPIVersion(), resources.DashboardResource.Group) {
-			item.SetAPIVersion(fmt.Sprintf("%s/%s", resources.DashboardResource.Group, storedVersion))
+		failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
+		if failed && strings.HasPrefix(item.GetAPIVersion(), resources.DashboardResource.Group) {
+			storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+			if storedVersion != "" {
+				item.SetAPIVersion(fmt.Sprintf("%s/%s", resources.DashboardResource.Group, storedVersion))
+			}
 		}
 
 		fileName, err := repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
