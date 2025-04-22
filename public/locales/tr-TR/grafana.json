@@ -1,5 +1,6 @@
 {
   "_comment": "Kod, İngilizce ifadeler için ana referans kaynağıdır. Bileşenlerde doğrudan güncellenmeli ve ek çoğul formlar bu dosyada belirtilmelidir.",
+  "{{pageStart}} - {{pageEnd}} of {{numPages}}": "",
   "access-control": {
     "add-permission": {
       "built-in-aria-label": "",
@@ -73,6 +74,8 @@
         "deprecated": "",
         "ga": ""
       },
+      "save-changes": "",
+      "saving": "",
       "title-apply-feature-toggle-changes": ""
     },
     "admin-orgs-table": {
@@ -108,6 +111,8 @@
       "title-white-labeling": ""
     },
     "feature-toggles": {
+      "restart-pending": "",
+      "restart-required": "",
       "sub-title": "Özellik anahtarlarını görüntüleyin ve düzenleyin. Özellik anahtarları hakkında daha fazla bilgi için <2>grafana.com</2> adresini ziyaret edin."
     },
     "get-enterprise": {
@@ -194,8 +199,13 @@
     },
     "service-info": {
       "title-critical-sla-hours": "",
+      "title-email": "",
       "title-enterprise-plugins": "",
-      "title-unlimited-expert-support": ""
+      "title-handinhand-support-in-the-upgrade-process": "",
+      "title-phone": "",
+      "title-private-slack-channel": "",
+      "title-unlimited-expert-support": "",
+      "year-round-support": ""
     },
     "settings": {
       "info-description": "Bu sistem ayarları, grafana.ini veya custom.ini dosyalarında tanımlanmıştır (veya ENV değişkenlerinde geçersiz kılınabilir). Bu ayarları değiştirmek için şu anda Grafana'yı yeniden başlatmanız gerekmektedir."
@@ -264,6 +274,7 @@
       "ip-column": "IP adresi",
       "last-seen-column": "Son görülme",
       "logged-on-column": "Giriş yapıldı",
+      "now": "",
       "title": "Oturumlar"
     },
     "users-create": {
@@ -317,20 +328,37 @@
       "target-datasource-uid": "Hedef veri kaynağı"
     },
     "alert-details": {
+      "button-see-rule": "",
+      "button-see-source": "",
       "manage-silences": "",
+      "receivers-list": "",
       "silence": ""
     },
     "alert-group": {
+      "delivered-to": "",
       "no-grouping": ""
+    },
+    "alert-group-alerts-table": {
+      "duration": ""
     },
     "alert-group-filter": {
       "clear-filters": ""
     },
     "alert-groups": {
+      "body-grafana-alerted-delivered": "",
+      "grouped-by": "",
       "no-results": "",
       "text-loading-notifications": "",
       "title-error-loading-notifications": "",
       "title-grafana-alerts-delivered-alertmanager": ""
+    },
+    "alert-groups-summary": {
+      "text-firing_one": "",
+      "text-firing_other": "",
+      "text-suppressed_one": "",
+      "text-suppressed_other": "",
+      "text-unprocessed_one": "",
+      "text-unprocessed_other": ""
     },
     "alert-instance-details": {
       "label-value": ""
@@ -341,6 +369,7 @@
     "alert-instance-modal-selector": {
       "add-alert-data-to-payload": "",
       "placeholder-search-alert-rule": "",
+      "select-alert-rule": "",
       "text-loading-rule": "",
       "text-loading-rules": "",
       "title-search-alert-rule": "",
@@ -352,8 +381,13 @@
     "alert-label": {
       "tooltip-remove-label": ""
     },
+    "alert-label-dropdown": {
+      "placeholder-select": ""
+    },
     "alert-labels": {
-      "aria-label-labels": ""
+      "aria-label-labels": "",
+      "common-labels-count_one": "",
+      "common-labels-count_other": ""
     },
     "alert-manager-manual-routing": {
       "label-muting-grouping-and-timings-optional": "",
@@ -376,15 +410,21 @@
     "alert-rule-form": {
       "action-buttons": {
         "delete": "",
-        "edit-yaml": ""
+        "edit-yaml": "",
+        "save": "",
+        "save-exit": ""
       },
       "title-delete-rule": ""
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
+      "description-section": "",
       "label-metric": "",
       "label-name": "",
-      "metric-aria-label-metric": ""
+      "metric-aria-label-metric": "",
+      "metric-placeholder-recorded-metric": "",
+      "placeholder-name": "",
+      "title-section": ""
     },
     "alert-rules": {
       "firing-for": "Şunun için tetikleniyor:",
@@ -400,7 +440,13 @@
       "text-loading-alert-rules": ""
     },
     "alert-state-filter": {
-      "suppressed-the-alert-has-been-silenced": ""
+      "active-the-alert-is-firing": "",
+      "notification-state": "",
+      "suppressed-the-alert-has-been-silenced": "",
+      "unprocessed-the-alert-is-received": ""
+    },
+    "alert-state-tag": {
+      "paused": ""
     },
     "alert-warning": {
       "to-rule-list": ""
@@ -451,7 +497,8 @@
       "aria-label-sort": "",
       "label-filter-placeholder-search-alerts-by-labels": "",
       "name-filter-placeholder-search-alert-rules-by-name": "",
-      "no-alert-rules-found": ""
+      "no-alert-rules-found": "",
+      "placeholder-sort-default-az": ""
     },
     "alertVersionHistory": {
       "alerting": "Uyarı sistemi",
@@ -496,9 +543,13 @@
       "warning-restore-manually-title": "Kural manuel olarak geri yükleniyor"
     },
     "am-root-route-form": {
+      "am-group-description-label": "",
+      "am-group-interval-description": "",
       "am-group-interval-label-group-interval": "",
+      "am-group-select-description-group-by": "",
       "am-group-select-label-group-by": "",
       "am-group-wait-label-group-wait": "",
+      "am-repeat-interval-description": "",
       "am-repeat-interval-label-repeat-interval": "",
       "aria-label-group-by": "",
       "aria-label-group-interval": "",
@@ -515,6 +566,8 @@
       "am-mute-timing-select-label-mute-timings": "",
       "aria-label-group-by": "",
       "aria-label-operator": "",
+      "badge-no-matchers": "",
+      "description-group-by": "",
       "label-contact-point": "",
       "label-continue-matching-subsequent-sibling-nodes": "",
       "label-group-by": "",
@@ -530,6 +583,10 @@
       "tooltip-remove-matcher": ""
     },
     "annotations": {
+      "dashboard-annotation-field": {
+        "dashboard": "",
+        "panel": ""
+      },
       "description": "Uyarı bildirimlerinize daha fazla bağlam ekleyin.",
       "title": "Bildirim mesajını yapılandırın"
     },
@@ -539,7 +596,8 @@
       "get-annotations-section-description": {
         "title-annotations": ""
       },
-      "link-dashboard-and-panel": ""
+      "link-dashboard-and-panel": "",
+      "placeholder-value-input-default": ""
     },
     "central-alert-history": {
       "details": {
@@ -589,10 +647,12 @@
       "duplicate": "",
       "label-integration": "",
       "label-notification-settings": "",
+      "label-section": "",
       "test": ""
     },
     "classic-condition-viewer": {
-      "of": ""
+      "of": "",
+      "when": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -606,17 +666,24 @@
       "alerts-preview": "",
       "info": "",
       "labels": "",
+      "running-query-preview": "",
       "state": ""
     },
     "cloud-common-channel-settings": {
       "description-whether-notify-about-resolved-alerts": "",
       "label-send-resolved": ""
     },
+    "cloud-data-source-selector": {
+      "label": "",
+      "label-disabled": ""
+    },
     "cloud-evaluation-behavior": {
+      "description-pending-period": "",
       "label-pending-period": "",
       "title-set-evaluation-behavior": ""
     },
     "cloud-receiver-form": {
+      "body-info": "",
       "title-info": ""
     },
     "common": {
@@ -637,10 +704,17 @@
       "restore": "",
       "return": ""
     },
+    "contact-point-errors": {
+      "label-contact-point": ""
+    },
     "contact-point-header": {
+      "aria-label-more-actions": "",
+      "button-edit": "",
+      "button-view": "",
       "export-label-export": "",
       "label-delete": "",
-      "label-manage-permissions": ""
+      "label-manage-permissions": "",
+      "tooltip-provisioned-contact-points": ""
     },
     "contact-point-selector": {
       "aria-label-refresh-contact-points": "",
@@ -731,6 +805,9 @@
     },
     "dashboard-picker": {
       "confirm": "",
+      "current-selection-dashboard": "",
+      "current-selection-panel": "",
+      "fallback-dashboards-string": "",
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -745,6 +822,7 @@
       "import-to-grafana": ""
     },
     "datasource-not-found": {
+      "card-description": "",
       "remove-query": "",
       "show-details": "",
       "this-datasource-has-been-removed": "",
@@ -803,6 +881,13 @@
       "text-loading-notification-template": "",
       "title-error-loading-notification-template": ""
     },
+    "duration-quick-pick": {
+      "none": ""
+    },
+    "dynamic-table": {
+      "tooltip-collapse-row": "",
+      "tooltip-expand-row": ""
+    },
     "edit-contact-point": {
       "text-loading": "",
       "title-failed-to-fetch-contact-point": "",
@@ -815,9 +900,6 @@
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
-    },
-    "error-summary-button": {
-      "error": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -834,6 +916,7 @@
       "text-provisioned": ""
     },
     "evaluation-group-creation-modal": {
+      "description-group-name": "",
       "description-often-rules-group-evaluated": "",
       "placeholder-enter-a-name": "",
       "title-new-evaluation-group": ""
@@ -842,6 +925,7 @@
       "title-something-wrong-trying-fetch-group-details": ""
     },
     "evaluation-interval-limit-exceeded": {
+      "body-minimum-interval": "",
       "title-global-evaluation-interval-limit-exceeded": ""
     },
     "existing-rule-editor": {
@@ -853,7 +937,9 @@
       "title-rule-not-found": ""
     },
     "existing-silence-editor": {
-      "text-loading-existing-silence-information": ""
+      "text-loading-existing-silence-information": "",
+      "title-permission-editrecreate-silence": "",
+      "title-silence-not-found": ""
     },
     "export": {
       "subtitle": {
@@ -865,15 +951,19 @@
       "tooltip-export-new-grafana-rule": ""
     },
     "expression": {
+      "not-supported": "",
       "title-expression-failed": "",
       "title-expression-warning": ""
     },
     "expression-editor": {
+      "could-not-load-editor": "",
+      "error-no-component": "",
       "preview-alerts": "",
       "there-firing-alerts-query": "",
       "title-alerts-preview": ""
     },
     "expression-preview": {
+      "expression-not-supported": "",
       "title-expression-failed": ""
     },
     "expression-result": {
@@ -882,8 +972,14 @@
       "no-data": ""
     },
     "federated-rule-warning": {
+      "experimental": "",
       "read-documentation": "",
       "title-federated-group": ""
+    },
+    "file-export-inline-documentation": {
+      "api-provisioning": "",
+      "file-provisioning": "",
+      "terraform-provisioning": ""
     },
     "file-export-preview": {
       "copy-code": "",
@@ -905,6 +1001,9 @@
         }
       }
     },
+    "for-input": {
+      "description-pending": ""
+    },
     "generate-alert-data-modal": {
       "add-alert-data": "",
       "add-alert-data-to-payload": "",
@@ -914,16 +1013,28 @@
     "get-preview-results": {
       "title-error": ""
     },
+    "getting-stared": {
+      "learn-more": ""
+    },
     "getting-started": {
       "condition-breached-alert-instance-fires": "",
+      "create-alert-rule": "",
+      "firing-instances-routed-notification-policies": "",
       "get-started": "",
-      "how-it-works": ""
+      "how-it-works": "",
+      "monitor-alert-rules": "",
+      "notification-policies-contact-points": "",
+      "periodically-queries-data-sources": "",
+      "route-alert-notifications": ""
     },
     "global-config": {
       "title-failed-to-fetch-notification-template": ""
     },
     "global-config-alert": {
-      "title-global-config-for-contact-points": ""
+      "body": "",
+      "edit-global-config": "",
+      "title-global-config-for-contact-points": "",
+      "view-global-config": ""
     },
     "global-config-form": {
       "save-global-config": "",
@@ -931,10 +1042,15 @@
       "title-error-saving-receiver": ""
     },
     "grafana-alertmanager-delivery-warning": {
+      "admin-hint-all": "",
+      "admin-hint-external": "",
+      "configuration-changes-all": "",
+      "configuration-changes-external": "",
       "title-grafana-alerts-delivered-alertmanager": "",
       "title-you-have-additional-alertmanagers-to-configure": ""
     },
     "grafana-common-channel-settings": {
+      "description-disable-resolved-message": "",
       "label-disable-resolved-message": ""
     },
     "grafana-evaluation-behavior-step": {
@@ -947,7 +1063,11 @@
     "grafana-folder-and-labels-step": {
       "title-add-folder-and-labels": ""
     },
+    "grafana-managed-rule-type": {
+      "description": ""
+    },
     "grafana-modify-export": {
+      "body-invalid-rule-id": "",
       "title-invalid-rule-id": ""
     },
     "grafana-mute-timing-exporter-preview": {
@@ -963,6 +1083,7 @@
       "text-loading": ""
     },
     "grafana-receiver-form": {
+      "body-loading-on-call-integration-failed": "",
       "text-loading-notifiers": "",
       "title-loading-on-call-integration-failed": ""
     },
@@ -981,8 +1102,14 @@
     "grafana-rule-folder-export-preview": {
       "text-loading": ""
     },
+    "grafana-rule-folder-exporter": {
+      "title-drawer": ""
+    },
     "grafana-rule-group-export-preview": {
       "text-loading": ""
+    },
+    "grafana-rule-group-exporter": {
+      "title-drawer": ""
     },
     "grafana-rules": {
       "export-all-grafana-rules-aria-label-export-all-grafana-rules": "",
@@ -1008,7 +1135,9 @@
     },
     "group-by": {
       "aria-label-group-by-label-keys": "",
-      "placeholder-group-by": ""
+      "custom-group-by": "",
+      "placeholder-group-by": "",
+      "tooltip-group-by": ""
     },
     "group-details": {
       "ds-features-error": "Veri kaynağı ayrıntıları yüklenirken hata oluştu",
@@ -1051,6 +1180,9 @@
     },
     "group-loader": {
       "group-load-failed": ""
+    },
+    "header": {
+      "tooltip-remove": ""
     },
     "home": {
       "label-get-started": "",
@@ -1104,8 +1236,14 @@
         "label": ""
       }
     },
+    "insights": {
+      "monitor-status-of-system": "",
+      "monitor-status-system-tooltip": "",
+      "monitor-status-system-tooltip-identify": ""
+    },
     "insights-menu-button-renderer": {
       "aria-label-rate-this-panel": "",
+      "help-us": "",
       "menu": {
         "label-explore": "",
         "label-rate-this-panel": ""
@@ -1141,10 +1279,14 @@
     },
     "key-value-template-data-table": {
       "arguments": "",
+      "description": "",
       "keyvalue-methods": "",
       "name": "",
       "notes": "",
       "returns": ""
+    },
+    "label-picker": {
+      "no-options-message": ""
     },
     "labels-editor-modal": {
       "title-edit-labels": ""
@@ -1161,6 +1303,7 @@
       "title-labels": ""
     },
     "labels-sub-form": {
+      "description": "",
       "save": ""
     },
     "labels-with-suggestions": {
@@ -1205,6 +1348,7 @@
     "loki-state-history": {
       "clear-filters": "",
       "common-labels": "",
+      "error-unable-to-fetch": "",
       "loading": "",
       "title-error-fetching-the-state-history": ""
     },
@@ -1213,8 +1357,12 @@
       "title": "İzinleri yönet"
     },
     "matcher-filter": {
+      "filter-alerts-using-label-querying-without-braces": "",
+      "filter-alerts-using-label-querying-without-spaces": "",
+      "invalid-use-of-spaces": "",
       "search-by-label": "",
-      "search-query-input-placeholder-search": ""
+      "search-query-input-placeholder-search": "",
+      "valid-use-of-spaces": ""
     },
     "matchers-field": {
       "add-matcher": "",
@@ -1234,18 +1382,27 @@
       "input": ""
     },
     "max-data-points-option": {
-      "label-max-data-points": ""
+      "label-max-data-points": "",
+      "tooltip-max-data-points": ""
     },
     "migrate-to-gmabutton": {
       "aria-label-new": ""
     },
+    "mimir-flavored-type": {
+      "description": ""
+    },
     "min-interval-option": {
-      "label-interval": ""
+      "label-interval": "",
+      "tooltip-interval": ""
     },
     "modify-export-rule-form": {
       "action-buttons": {
         "export": ""
       }
+    },
+    "more-button": {
+      "aria-label": "",
+      "button-text": ""
     },
     "mute_timings": {
       "error-loading": {
@@ -1258,6 +1415,7 @@
       "title-delete-mute-timing": ""
     },
     "mute-timing-fields": {
+      "am-mute-timing-select-description-mute-timings": "",
       "am-mute-timing-select-label-mute-timings": ""
     },
     "mute-timing-form": {
@@ -1268,6 +1426,9 @@
     },
     "mute-timing-time-interval": {
       "add-another-time-interval": "",
+      "description": "",
+      "description-dats-of-the-month": "",
+      "description-months": "",
       "label-days-of-the-month": "",
       "label-days-of-the-week": "",
       "label-disable": "",
@@ -1282,6 +1443,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
       "label-time-range": "",
@@ -1316,16 +1478,24 @@
       "need-help": ""
     },
     "need-help-info-for-contactpoint": {
+      "customize-notifications": "",
+      "notification-policies": "",
+      "select-contact-point": "",
       "title-notify-by-selecting-a-contact-point": ""
     },
     "need-help-info-for-notification-policy": {
+      "custom-labels": "",
+      "notification-policies": "",
+      "read-more": "",
       "title-notification-routing": ""
     },
     "new-rule-from-panel-button": {
+      "body-no-alerting-capable-query-found": "",
       "new-alert-rule": "",
       "title-no-alerting-capable-query-found": ""
     },
     "no-alert-managers-available": {
+      "body-no-alertmanager-found": "",
       "title-no-alertmanager-found": ""
     },
     "notification-policies-filter": {
@@ -1363,13 +1533,16 @@
     "notification-route-details-modal": {
       "alert-instances-routed-follows": "",
       "close": "",
+      "contact-point": "",
       "default-policy": "",
       "notification-policy-path": "",
+      "see-details-link": "",
       "title-routing-details": ""
     },
     "notification-route-header": {
       "aria-label-expand-policy-route": "",
       "delivered-to": "",
+      "notification-policy": "",
       "see-details": ""
     },
     "notification-templates": {
@@ -1394,20 +1567,26 @@
     },
     "notifications-step": {
       "labels-better-manage-recording-rules": "",
-      "recipient": ""
+      "recipient": "",
+      "recipient-notification-fires": ""
     },
     "option-customfield": {
       "label-custom-template": ""
     },
     "other-alert-managers-available": {
+      "body-selected-alertmanager-not-found": "",
       "title-selected-alertmanager-not-found": ""
     },
     "panel-alert-tab-content": {
       "alert": {
         "title-errors-loading-rules": ""
       },
+      "failed-to-load-error": "",
       "text-loading-rules": "",
       "title-dashboard-not-saved": ""
+    },
+    "paused-badge": {
+      "paused": ""
     },
     "payload-editor": {
       "edit-payload": "",
@@ -1416,7 +1595,14 @@
       "label-use-existing-alert-instances": "",
       "reference": ""
     },
+    "plugin-integrations": {
+      "tailored-apps": ""
+    },
     "policies": {
+      "aria-label-collapse": "",
+      "aria-label-expand": "",
+      "aria-label-more": "",
+      "aria-label-more-default": "",
       "default-policy": {
         "description": "Başka bir eşleşen politika bulunamazsa tüm uyarı örnekleri varsayılan politika tarafından işlenecektir.",
         "title": "Varsayılan politika",
@@ -1487,17 +1673,23 @@
       "no-matchers": ""
     },
     "preview-rule": {
+      "body-preview-is-not-available": "",
       "preview-alerts": "",
       "title-preview-is-not-available": ""
     },
     "preview-rule-result": {
-      "loading-preview": ""
+      "loading-preview": "",
+      "no-data-error-handling-not-applied": "",
+      "preview-based-on-query-result": "",
+      "preview-failed": ""
     },
     "preview-summary": {
       "no-series": ""
     },
     "prom-duration-docs": {
+      "different-units": "",
       "example": "",
+      "explanation": "",
       "multiple-units-combined": "",
       "symbol": "",
       "time-unit": ""
@@ -1507,7 +1699,9 @@
     },
     "provisioning": {
       "badge-tooltip-provenance": "Bu kaynak {{provenance}} aracılığıyla sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
-      "badge-tooltip-standard": "Bu kaynak sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez"
+      "badge-tooltip-standard": "Bu kaynak sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
+      "body-provisioned": "",
+      "title-provisioned": ""
     },
     "provisioning-badge": {
       "badge": {
@@ -1516,8 +1710,11 @@
     },
     "query-and-expressions-step": {
       "add-query": "",
+      "body-queries-expressions-configured": "",
       "expressions": "",
+      "loading-data-sources": "",
       "manipulate-returned-queries-other-operations": "",
+      "no-compatible-sources": "",
       "title-deactivate-advanced-options": "",
       "title-queries-expressions-configured": ""
     },
@@ -1526,7 +1723,13 @@
       "view-in-explore": ""
     },
     "query-options": {
-      "label-time-range": ""
+      "button-options": "",
+      "label-time-range": "",
+      "max-data-points": "",
+      "min-interval": ""
+    },
+    "query-preview": {
+      "relative-time-range": ""
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -1537,6 +1740,10 @@
     },
     "receiver-form": {
       "add-contact-point-integration": "",
+      "body-attention": "",
+      "contact-point": "",
+      "contact-point-create": "",
+      "contact-point-update": "",
       "label-name": "",
       "name-placeholder-name": "",
       "save-contact-point": "",
@@ -1545,9 +1752,16 @@
       "title-manage-contact-point-permissions": ""
     },
     "receivers-section": {
+      "button-more": "",
       "new-menu": {
         "label-export-all": ""
       }
+    },
+    "recording-rule-editor": {
+      "error-no-query-editor": ""
+    },
+    "recording-rule-type": {
+      "description": ""
     },
     "recording-rules": {
       "description-target-data-source": "",
@@ -1558,11 +1772,16 @@
       "title-add-namespace-and-group": ""
     },
     "redirect-to-clone-rule": {
+      "body-evaluation-group": "",
+      "body-not-provisioned": "",
       "title-copy-provisioned-alert-rule": ""
     },
     "redirect-to-rule-viewer": {
+      "no-rules-found": "",
+      "several-rules-found": "",
       "text-loading-rule": "",
-      "title-could-not-view-rule": ""
+      "title-could-not-view-rule": "",
+      "title-failed-to-load": ""
     },
     "reduce-condition-viewer": {
       "function": "",
@@ -1581,15 +1800,27 @@
     "routing": {
       "routing": ""
     },
+    "routing-option-description": {
+      "manual": "",
+      "matching-labels": ""
+    },
     "routing-settings": {
       "aria-label-group-by": "",
+      "description-group-by": "",
+      "group-interval": "",
+      "group-wait": "",
+      "grouping": "",
       "label-group-by": "",
       "label-override-grouping": "",
-      "label-override-timings": ""
+      "label-override-timings": "",
+      "repeat-interval": ""
     },
     "rule-actions-buttons": {
       "title-edit": "",
       "title-view": ""
+    },
+    "rule-config-status": {
+      "tooltip-min-interval": ""
     },
     "rule-details": {
       "keep-firing-for": "",
@@ -1612,6 +1843,11 @@
     },
     "rule-details-federated-sources": {
       "label-tenant-sources": ""
+    },
+    "rule-details-matching-instances": {
+      "showing-count": "",
+      "button-show-all_one": "",
+      "button-show-all_other": ""
     },
     "rule-editor": {
       "get-content": {
@@ -1771,7 +2007,20 @@
       "unknown-rule-type": ""
     },
     "rule-list-errors": {
-      "cloud-rulessource-errors-title-errors-loading-rules": ""
+      "cloud-rulessource-errors-title-errors-loading-rules": "",
+      "failed-to-load-grafana-rules-config": "",
+      "failed-to-load-grafana-rules-state": "",
+      "failed-to-load-rules-config": "",
+      "failed-to-load-rules-state": "",
+      "unknown-error": "",
+      "button-errors_one": "",
+      "button-errors_other": "",
+      "more-errors_one": "",
+      "more-errors_other": ""
+    },
+    "rule-list-v1": {
+      "collapse-all": "",
+      "expand-all": ""
     },
     "rule-modify-export": {
       "text-loading-the-rule": "",
@@ -1783,6 +2032,7 @@
     "rule-state": {
       "creating": "Oluşturuluyor",
       "deleting": "Siliniyor",
+      "for": "",
       "na": "",
       "paused": "Duraklatıldı",
       "recording-rule": "Kayıt kuralı"
@@ -1798,6 +2048,9 @@
       "error_one": "",
       "error_other": ""
     },
+    "rule-type-picker": {
+      "grafana-managed": ""
+    },
     "rule-view": {
       "query": {
         "datasources-na": {
@@ -1808,6 +2061,7 @@
     },
     "rule-viewer": {
       "error-loading": "Kural yüklenirken bir hata oluştu",
+      "evaluation-interval": "",
       "prometheus-consistency-check": {
         "alert-message": "",
         "alert-title": "Güncelleme sürüyor"
@@ -1833,6 +2087,7 @@
     },
     "rules-filter": {
       "clear-filters": "",
+      "configured-alert-rules": "",
       "dashboard": "",
       "data-source-picker-inline-help-title-search-by-data-sources-help": "",
       "filter-options": {
@@ -1841,6 +2096,7 @@
         "label-saved-searches": ""
       },
       "health": "",
+      "manage-alerts": "",
       "placeholder-all-data-sources": "",
       "plugin-rules": "",
       "rule-type": "",
@@ -1852,6 +2108,7 @@
       "view-as": ""
     },
     "rules-group": {
+      "deleting": "",
       "text-federated": "",
       "text-provisioned": ""
     },
@@ -1874,11 +2131,13 @@
     "search-field-input": {
       "clear": "",
       "filter-instances": "",
+      "filter-instances-tooltip": "",
       "instancesSearchInput-placeholder-filter-instances": ""
     },
     "search-query-help": {
       "expression": "",
       "filter-type": "",
+      "search-syntax": "",
       "title-contact-point": "",
       "title-dashboard-uid": "",
       "title-datasources": "",
@@ -1889,6 +2148,9 @@
       "title-rule": "",
       "title-state": "",
       "title-type": ""
+    },
+    "selecting-data-source-tooltip": {
+      "tooltip-content": ""
     },
     "settings-content": {
       "add-new-alertmanager": "",
@@ -1910,7 +2172,11 @@
       "label-silence-start-and-end": "",
       "placeholder-select-time-range": ""
     },
+    "silenced-alerts-table-row": {
+      "silenced-for": ""
+    },
     "silenced-instances-preview": {
+      "error-generating-preview": "",
       "no-firing-alert-instances-found": "",
       "text-loading-affected-alert-rule-instances": "",
       "title-preview-not-available": "",
@@ -1931,28 +2197,41 @@
       "saving": ""
     },
     "silences-filter": {
+      "search-by-matchers-tooltip": "",
       "search-query-input-placeholder-search": ""
     },
     "silences-table": {
+      "label-section-expired": "",
       "text-loading-silences": "",
       "title-error-loading-silences": "",
       "title-the-selected-alertmanager-has-no-configuration": ""
     },
     "simple-condition-editor": {
-      "label-when": ""
+      "label-of-query": "",
+      "label-when": "",
+      "label-when-query": ""
     },
     "simpleCondition": {
       "alertCondition": "Uyarı koşulu"
     },
     "smart-alert-type-detector": {
+      "data-source-managed": "",
       "data-sourcemanaged-alert-rules": "",
+      "data-sourcemanaged-alert-rules-description": "",
+      "grafana-managed": "",
       "grafanamanaged-alert-rules": "",
+      "grafanamanaged-alert-rules-description": "",
       "rule-type": "",
+      "rule-type-cannot-be-changed": "",
+      "rule-type-grafana-managed": "",
       "select-where-alert-managed": "",
+      "switch-to-data-source-managed": "",
+      "switch-to-grafana-managed": "",
       "title-alert-rule-types": ""
     },
     "state-history": {
       "filter-group": "",
+      "filter-group-tooltip": "",
       "placeholder-search": "",
       "text-loading-history": "",
       "title-failed-to-fetch-alert-state-history": ""
@@ -1971,6 +2250,14 @@
     },
     "template-content-and-preview": {
       "label-template-content": ""
+    },
+    "template-data-docs": {
+      "alert-template-data-table": {
+        "alert-template-data": "",
+        "only-in-alert": ""
+      },
+      "available-context-notification": "",
+      "notification-template-data": ""
     },
     "template-data-table": {
       "name": "",
@@ -2001,7 +2288,8 @@
       "error-loading-templates": "",
       "existing-templates-selector-aria-label-choose-notification-template": "",
       "existing-templates-selector-placeholder-choose-notification-template": "",
-      "loading": ""
+      "loading": "",
+      "tooltip-copy": ""
     },
     "templates": {
       "editor": {
@@ -2016,6 +2304,11 @@
       "misconfigured-warning": "Bu şablon yanlış yapılandırılmış.",
       "misconfigured-warning-details": "Şablonlar, alertmanager yapılandırmanızın hem <1></1> hem de <4></4> bölümlerinde tanımlanmalıdır."
     },
+    "templates-picker": {
+      "button-edit": "",
+      "title-drawer": "",
+      "tooltip-edit": ""
+    },
     "templates-table": {
       "actions": "",
       "no-templates-defined": "",
@@ -2023,7 +2316,9 @@
       "title-delete-template-group": ""
     },
     "test-contact-point-modal": {
+      "custom-notification-message": "",
       "notification-message": "",
+      "predefined-notification-message": "",
       "send-test-notification": "",
       "title-test-contact-point": ""
     },
@@ -2039,6 +2334,9 @@
       "timestamp": "",
       "value": ""
     },
+    "timestamp": {
+      "time-ago": ""
+    },
     "to-gma": {
       "confirm-modal": {
         "body": "",
@@ -2046,12 +2344,16 @@
         "title-warning": ""
       }
     },
+    "type-selector-button": {
+      "add-expression": ""
+    },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
     },
     "unused-contact-point-badge": {
       "aria-label-unused": "",
-      "text-unused": ""
+      "text-unused": "",
+      "tooltip-unused": ""
     },
     "use-add-policy-modal": {
       "modal-element": {
@@ -2069,6 +2371,8 @@
       "label-export": ""
     },
     "use-delete-contact-point-modal": {
+      "delete-confirm": "",
+      "deleting": "",
       "modal-element": {
         "delete-contact-point": "",
         "deleting-contact-point-permanently-remove": "",
@@ -2103,11 +2407,15 @@
       "table": ""
     },
     "welcome-header": {
+      "description-alert-rules": "",
       "description-configure-firing-alert-instances-routed-contact": "",
       "description-configure-receives-notifications": "",
       "title-alert-rules": "",
       "title-contact-points": "",
       "title-notification-policies": ""
+    },
+    "yaml-content-info": {
+      "body": ""
     }
   },
   "annotations": {
@@ -2205,6 +2513,10 @@
       "configuration-required": "",
       "refer-documentation-configure-authentication": ""
     },
+    "provider-card": {
+      "text-badge-enabled": "",
+      "text-badge-not-enabled": ""
+    },
     "provider-config-form": {
       "additional-actions-menu": {
         "label-reset-to-default-values": ""
@@ -2217,6 +2529,10 @@
       "title-more-actions": "",
       "title-reset": "",
       "tooltip-more-actions": ""
+    },
+    "provider-config-page": {
+      "text-badge-enabled": "",
+      "text-badge-not-enabled": ""
     },
     "server-discovery-modal": {
       "label-the-wellknownopenidconfiguration-endpoint-for-your-id-p": "",
@@ -2403,7 +2719,8 @@
       "folder-search-results": "Klasörler",
       "pages": "Sayfalar",
       "preferences": "Tercihler",
-      "recent-dashboards": "Son panolar"
+      "recent-dashboards": "Son panolar",
+      "recent-scopes": ""
     }
   },
   "common": {
@@ -2428,6 +2745,11 @@
     }
   },
   "connections": {
+    "advisor-redirect-notice": {
+      "aria-label-link-to-advisor": "",
+      "body": "",
+      "go-to-advisor": ""
+    },
     "connect-data": {
       "category-header-label": "Veri kaynakları",
       "empty-message": "Sorgunuzla eşleşen sonuç bulunamadı",
@@ -2439,14 +2761,10 @@
       "body": "",
       "go-to-connections": ""
     },
-    "advisor-redirect-notice": {
-      "aria-label-link-to-advisor": "",
-      "body": "",
-      "go-to-advisor": ""
-    },
     "no-access-modal": {
       "connection-contact-grafana-admin": "",
       "editor-warning": "",
+      "links": "",
       "okay": ""
     },
     "not-found-datasource": {
@@ -2615,6 +2933,7 @@
       "delete": "",
       "description-color-annotation-event-markers": "",
       "description-enabled-annotation-query-issued-every-dashboard": "",
+      "description-hidden": "",
       "label-color": "",
       "label-data-source": "",
       "label-enabled": "",
@@ -2627,6 +2946,7 @@
       "title-annotation-support-source": ""
     },
     "annotation-settings-list": {
+      "aria-label-delete": "",
       "data-source": "",
       "new-query": "",
       "query-name": "",
@@ -2750,6 +3070,9 @@
         "tooltip-view-as-scene": ""
       }
     },
+    "dashboard-links-menu": {
+      "aria-label-dashboard-name": ""
+    },
     "dashboard-loading": {
       "cancel-loading-dashboard": ""
     },
@@ -2846,8 +3169,34 @@
           "title": "Satır başlığı"
         }
       },
+      "variable": {
+        "custom-options": {
+          "values": "",
+          "values-placeholder": ""
+        },
+        "description": "",
+        "description-placeholder": "",
+        "label": "",
+        "label-description": "",
+        "name": "",
+        "open-editor": "",
+        "open-editor-tooltip": "",
+        "selection-options": {
+          "allow-custom-values": "",
+          "allow-custom-values-description": "",
+          "category": "",
+          "custom-all-value": "",
+          "custom-all-value-description": "",
+          "include-all": "",
+          "include-all-description": "",
+          "multi-value": ""
+        },
+        "type-category": ""
+      },
       "variables": {
         "add-variable": "",
+        "select-type": "",
+        "select-type-card-tooltip": "",
         "select-variable": ""
       }
     },
@@ -2875,13 +3224,18 @@
     },
     "help-wizard": {
       "copy-to-clipboard": "",
+      "description-obfuscate-data": "",
+      "description-support-snapshot": "",
+      "download-snapshot": "",
       "label-obfuscate-data": "",
       "label-support-snapshot": "",
       "label-template": "",
       "randomize-field-names-label-field-names": "",
       "randomize-labels-label-labels": "",
       "randomize-string-values-label-string-values": "",
-      "title-complete-git-hub-comment-clipboard": ""
+      "title-complete-git-hub-comment-clipboard": "",
+      "title-get-help-with-this-panel": "",
+      "troubleshooting-docs": ""
     },
     "inspect": {
       "data-tab": "Veri",
@@ -2968,7 +3322,9 @@
     },
     "options-pane-options": {
       "placeholder-search-options": "",
-      "Recent options-title-recent-options": ""
+      "Recent options-title-recent-options": "",
+      "title-matched_one": "",
+      "title-matched_other": ""
     },
     "outline": {
       "tree-item": {
@@ -3005,6 +3361,7 @@
         "title-undo-all-changes": ""
       },
       "table-view-label-table-view": "",
+      "title-unlink": "",
       "unlink": ""
     },
     "panel-links": {
@@ -3109,7 +3466,8 @@
       "save-json-to-file": ""
     },
     "solo-panel": {
-      "loading-initializing-dashboard": ""
+      "loading-initializing-dashboard": "",
+      "title-not-found": ""
     },
     "sub-menu-un-connected": {
       "aria-label-template-variables": ""
@@ -3280,7 +3638,8 @@
         "title-filter": "",
         "title-remove": "",
         "title-show-transform-help": ""
-      }
+      },
+      "title-delete": ""
     },
     "transformation-picker": {
       "placeholder-search-for-transformation": "",
@@ -3321,6 +3680,7 @@
       "label-view-json-diff": ""
     },
     "version-history-table": {
+      "aria-label-toggle-selection": "",
       "date": "",
       "notes": "",
       "restore": "",
@@ -3332,7 +3692,11 @@
     },
     "visualization-button": {
       "aria-label-change-visualization": "",
-      "tooltip-click-to-change-visualization": ""
+      "aria-label-close": "",
+      "aria-label-show": "",
+      "tooltip-click-to-change-visualization": "",
+      "tooltip-close": "",
+      "tooltip-show": ""
     },
     "visualization-select-pane": {
       "placeholder-search-for": "",
@@ -3508,6 +3872,10 @@
       "title-get-help-with-this-panel": "",
       "troubleshooting-docs": "",
       "troubleshooting-request-help": ""
+    },
+    "import-dashboard-form-v2": {
+      "cancel": "",
+      "label-folder": ""
     },
     "inspect-data-tab": {
       "no-data-found": ""
@@ -3710,19 +4078,13 @@
       "aria-label-variable-editor-form": "",
       "back-to-list": "",
       "delete": "",
-      "description": "",
       "description-optional-display-name": "",
       "description-template-variable-characters": "",
       "general": "",
-      "label": "",
-      "name": "",
-      "open-editor": "",
-      "open-editor-tooltip": "",
       "placeholder-descriptive-text": "",
       "placeholder-label-name": "",
       "placeholder-variable-name": "",
-      "text-running-query": "",
-      "type": ""
+      "text-running-query": ""
     },
     "variable-editor-list": {
       "definition": "",
@@ -3902,9 +4264,19 @@
     }
   },
   "datasources": {
+    "add-new-data-source-button": {
+      "tooltip-no-permission": ""
+    },
+    "alert-success-message": {
+      "aria-label-create-a-dashboard": "",
+      "aria-label-explore-data": ""
+    },
     "alerting-enabled": {
       "text-alerting-not-supported": "",
       "text-alerting-supported": ""
+    },
+    "basic-serttings": {
+      "tooltip-name": ""
     },
     "basic-settings": {
       "aria-label-datasource-settings-page-basic": "",
@@ -3917,7 +4289,8 @@
       "test": ""
     },
     "cloud-info-box": {
-      "title-includes-active-metrics-storage": ""
+      "body-alert": "",
+      "title-alert": ""
     },
     "dashboards-table": {
       "aria-label-delete-dashboard": "",
@@ -3942,6 +4315,9 @@
     "data-source-read-only-message": {
       "title-provisioned-data-source": ""
     },
+    "data-source-type-card": {
+      "aria-label-learn-more": ""
+    },
     "data-sources-list-card": {
       "build-a-dashboard": "",
       "explore": ""
@@ -3950,12 +4326,19 @@
       "build-a-dashboard": "",
       "explore-data": ""
     },
+    "error-details-link": {
+      "aria-label-more-details-about-the-error": ""
+    },
     "footer": {
       "add-csv-or-spreadsheet": ""
     },
     "new-data-source-view": {
       "cancel": "",
       "placeholder-filter-by-name-or-type": ""
+    },
+    "use-data-source-info": {
+      "badge-text-not-supported": "",
+      "badge-text-supported": ""
     }
   },
   "dimensions": {
@@ -4001,8 +4384,12 @@
       "label-template": "",
       "label-value": ""
     },
+    "threshold-editor": {
+      "tooltip-remove-threshold": ""
+    },
     "thresholds-editor": {
       "add-threshold": "",
+      "aria-label-threshold": "",
       "description-percentage-means-thresholds-relative": "",
       "thresholds-mode": ""
     },
@@ -4071,6 +4458,10 @@
       "open": "",
       "open-in-new-tab": ""
     },
+    "content-outline": {
+      "tooltip-collapse-outline": "",
+      "tooltip-expand-outline": ""
+    },
     "content-outline-item-button": {
       "body": {
         "aria-label-content-outline-item-collapse-button": ""
@@ -4089,18 +4480,27 @@
       "title-correlation-details": ""
     },
     "correlation-transformation-add-modal": {
+      "add-transformation": "",
+      "added-variables": "",
       "aria-label-field": "",
       "aria-label-type": "",
+      "body": "",
       "cancel": "",
+      "edit-transformation": "",
       "label-expression": "",
+      "label-expression-without-tooltip": "",
       "label-field": "",
       "label-type": "",
-      "label-variable-name": ""
+      "label-variable-name": "",
+      "label-variable-name-without-tooltip": "",
+      "title-add": "",
+      "title-edit": ""
     },
     "correlation-unsaved-changes-modal": {
       "cancel": "",
       "continue-without-saving": "",
-      "save-correlation": ""
+      "save-correlation": "",
+      "title-unsaved-changes-to-correlation": ""
     },
     "draggable-manager-demo": {
       "click-horizontally-somewhere-colored-below": "",
@@ -4171,6 +4571,9 @@
     "logs-container": {
       "label-logs": ""
     },
+    "logs-feedback": {
+      "give-feedback": ""
+    },
     "logs-meta-row": {
       "download": "",
       "show-original-line": ""
@@ -4182,6 +4585,9 @@
         "open-logs-in-split-view": ""
       },
       "title-failed-sample-query": ""
+    },
+    "logs-table-available-fields": {
+      "title-label-percentage": ""
     },
     "logs-table-empty-fields": {
       "no-fields": ""
@@ -4210,6 +4616,10 @@
       "aria-label-query": ""
     },
     "next": "",
+    "next-prev-result": {
+      "aria-label-next": "",
+      "aria-label-prev": ""
+    },
     "no-data-source-call-to-action": {
       "cta-element": {
         "add-data-source": ""
@@ -4222,6 +4632,9 @@
     "prev": "",
     "queryless-apps-extensions": {
       "aria-label-go-queryless": ""
+    },
+    "raw-list-container": {
+      "label-expand-results": ""
     },
     "raw-list-item": {
       "tooltip-copy-to-clipboard": ""
@@ -4353,6 +4766,7 @@
     "show-critical-path-only": "",
     "show-matches-only": "",
     "span-bar-section": {
+      "description-link": "",
       "title-span-bar": ""
     },
     "span-bar-settings": {
@@ -4361,7 +4775,8 @@
       "label-tag-key": "",
       "placeholder-duration": "",
       "placeholder-enter-tag-key": "",
-      "tooltip-default-duration": ""
+      "tooltip-default-duration": "",
+      "tooltip-tag-key": ""
     },
     "span-detail": {
       "label-resource-attributes": "",
@@ -4381,7 +4796,9 @@
       "label-span-name": "",
       "label-tags": "",
       "placeholder-all-service-names": "",
-      "placeholder-all-span-names": ""
+      "placeholder-all-span-names": "",
+      "tooltip-duration": "",
+      "tooltip-tags": ""
     },
     "span-filters-tags": {
       "aria-label-add-tag": "",
@@ -4406,6 +4823,10 @@
       "no-data": "0 seri döndürüldü",
       "title": "Tablo",
       "title-with-name": "Tablo - {{name}}"
+    },
+    "time-sync-button": {
+      "aria-label-synced": "",
+      "aria-label-unsynced": ""
     },
     "timeline-collapser": {
       "tooltip-collapse": "",
@@ -4436,17 +4857,27 @@
     },
     "trace-page-actions": {
       "give-feedback": "",
+      "label-copied": "",
       "label-export": "",
+      "label-trace-id": "",
       "title-share-thoughts-about-tracing-grafana": ""
     },
     "trace-page-header": {
       "text-partial-trace": ""
+    },
+    "trace-page-search-bar": {
+      "aria-label-clear-filters": "",
+      "label-show-matches": "",
+      "label-show-paths": ""
     },
     "trace-view": {
       "no-data": ""
     },
     "trace-view-container": {
       "title-trace": ""
+    },
+    "unconnected-node-graph-container": {
+      "title-node-graph": ""
     },
     "unthemed-logs": {
       "label-deduplication": "",
@@ -4479,6 +4910,20 @@
     "menu": {
       "export-as-json-label": "Dışa aktar",
       "export-as-json-tooltip": "Dışa aktar"
+    }
+  },
+  "expression": {
+    "math": {
+      "description-abs": "",
+      "description-ceil": "",
+      "description-floor": "",
+      "description-inf-nan-null": "",
+      "description-is-inf": "",
+      "description-is-nan": "",
+      "description-is-null": "",
+      "description-is-number": "",
+      "description-log": "",
+      "description-round": ""
     }
   },
   "expressions": {
@@ -4617,6 +5062,10 @@
       "palette-tab": "Renkler",
       "spectrum-tab": "Özel"
     },
+    "color-swatch": {
+      "aria-label-default": "",
+      "aria-label-selected-color": ""
+    },
     "confirm-button": {
       "cancel": "İptal"
     },
@@ -4753,7 +5202,11 @@
       "clear": "Temizle"
     },
     "interactive-table": {
-      "expand-row-tooltip": "Satır genişletmeyi aç/kapat"
+      "aria-label-collapse-all": "",
+      "aria-label-expand-all": "",
+      "expand-row-tooltip": "Satır genişletmeyi aç/kapat",
+      "tooltip-collapse-all": "",
+      "tooltip-expand-all": ""
     },
     "menu-item": {
       "keyboard-shortcut-label": "Klavye kısayolu"
@@ -4779,9 +5232,24 @@
       "next-page": "sonraki sayfa",
       "previous-page": "önceki sayfa"
     },
+    "panel-chrome": {
+      "aria-label-toggle-collapse": ""
+    },
     "panel-menu": {
       "label": "Panel için menü {{ title }}",
       "title": "Menü"
+    },
+    "password-field": {
+      "tooltip-hide": "",
+      "tooltip-show": ""
+    },
+    "row-expander": {
+      "aria-label-expand": "",
+      "collapse": "",
+      "expand": ""
+    },
+    "row-expander-ng": {
+      "aria-label-collapse": ""
     },
     "secret-form-field": {
       "reset": "Sıfırla"
@@ -4837,6 +5305,10 @@
     "tags-input": {
       "add": "Ekle",
       "remove": "Etiketi kaldır: {{name}}"
+    },
+    "time-sync-button": {
+      "aria-label-sync": "",
+      "aria-label-unsync": ""
     },
     "toggletip": {
       "close": "Kapat"
@@ -4925,7 +5397,7 @@
     "title": "Kısayollar"
   },
   "help-wizard": {
-    "download-snapshot": "Anlık görüntüyü indir",
+    "download-snapshot": "",
     "github-comment": "Github yorumunu kopyala",
     "support-bundle": "<1>Destek paketleri bölümünden</1>, Grafana örneğiniz ve yapılandırılmış veri kaynakları hakkında bilgi içeren bir destek paketi de alabilirsiniz.",
     "troubleshooting-help": "Sorun giderme yardımı istemek için bu panelin anlık görüntüsünü Grafana Labs Teknik Destek ekibine gönderin. Anlık görüntü, sorgu yanıt verilerini ve panel ayarlarını içerir."
@@ -5387,11 +5859,17 @@
       "tooltip-hide-adhoc-statistics": ""
     }
   },
+  "manage-dashbaords": {
+    "import-dashboard-form": {
+      "description-existing-library-panels": ""
+    }
+  },
   "manage-dashboards": {
     "import-dashboard-form": {
       "cancel": "",
       "change-uid": "",
       "description-library-panels-imported": "",
+      "description-unique-identifier-uid": "",
       "label-existing-library-panels": "",
       "label-folder": "",
       "label-name": "",
@@ -6011,7 +6489,11 @@
       "aria-label": ""
     },
     "extension-sidebar": {
-      "button-tooltip": ""
+      "button-tooltip": {
+        "close": "",
+        "open": "",
+        "open-all": ""
+      }
     },
     "help": {
       "aria-label": ""
@@ -6062,7 +6544,8 @@
     },
     "starred-dashboard": "Pano yıldızlandı",
     "stored-notifications": {
-      "dismiss-notifications": ""
+      "dismiss-notifications": "",
+      "title-alert": ""
     },
     "unstarred-dashboard": "Panonun yıldızı kaldırıldı"
   },
@@ -6143,12 +6626,18 @@
       "open-visualization-suggestions": "",
       "switch-to-table": ""
     },
+    "panel-plugin-error": {
+      "text-load-error": "",
+      "title-load-error": "",
+      "title-not-found": ""
+    },
     "panel-renderer": {
       "loading-plugin-panel": "",
       "no-panel-data": ""
     },
     "panel-type-card": {
       "aria-label-delete-button-on-panel-type-card": "",
+      "title-click-to-close": "",
       "tooltip-delete": ""
     },
     "visualization-suggestions": {
@@ -6330,12 +6819,19 @@
       "enable": ""
     },
     "get-started-with-data-source": {
-      "add-new-data-source": ""
+      "add-new-data-source": "",
+      "title-button-disabled": ""
+    },
+    "install-controls-button": {
+      "title-uninstall-modal": ""
     },
     "install-controls-warning": {
+      "body-not-published": "",
       "learn-more": "",
       "no-valid-grafana-enterprise-license-detected": "",
+      "title-dev-alert": "",
       "title-plugin-doesnt-support-version-grafana": "",
+      "title-remote-plugins-unavailable": "",
       "title-renderer-plugins-cannot-managed-plugin-catalog": ""
     },
     "log-view-filters": {
@@ -6383,6 +6879,10 @@
     "plugin-installed-badge": {
       "text-installed": ""
     },
+    "plugin-list-item": {
+      "label-author": "",
+      "title-icon-plugin-type": ""
+    },
     "plugin-signature-details-badge": {
       "signed-by": ""
     },
@@ -6390,7 +6890,13 @@
       "update-available": ""
     },
     "plugin-usage": {
-      "title-missing-feature-toggle-panel-title-search": ""
+      "title-missing-feature-toggle-panel-title-search": "",
+      "title-not-used-yet": ""
+    },
+    "plugins-errors-info": {
+      "disabled-list": "",
+      "read-more-about-plugin-signing": "",
+      "title-unsigned-plugins": ""
     },
     "search-field": {
       "placeholder-search-grafana-plugins": ""
@@ -6441,6 +6947,9 @@
     }
   },
   "provisioning": {
+    "banner": {
+      "message": ""
+    },
     "bootstrap-step": {
       "description-clear-repository-connection": "",
       "empty": "",
@@ -7106,7 +7615,8 @@
       "basic-roles": "Temel roller"
     },
     "input": {
-      "no-roles": "Atanan rol yok"
+      "no-roles": "Atanan rol yok",
+      "placeholder-select-role": ""
     },
     "menu": {
       "clear-button": "Tümünü temizle",
@@ -7332,7 +7842,11 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "expired-label": "",
       "never": ""
+    },
+    "token-revoked": {
+      "revoked-label": ""
     }
   },
   "share-dashboard": {
@@ -7736,7 +8250,7 @@
     },
     "range-content": {
       "apply-button": "Zaman aralığını uygula",
-      "default-error": "Lütfen geçmiş bir tarihi veya \"şimdi\" ifadesini girin",
+      "default-error": "",
       "fiscal-year": "Mali yıl",
       "from-input": "Başlangıç",
       "open-input-calendar": "Takvimi aç",
@@ -7826,7 +8340,9 @@
     },
     "draggable-field-name": {
       "rename-placeholder": "",
-      "title-drag-and-drop-to-reorder": ""
+      "title-drag-and-drop-to-reorder": "",
+      "tooltip-disable": "",
+      "tooltip-enable": ""
     },
     "enum-mapping-editor": {
       "add-enum-value": "",
@@ -7843,7 +8359,8 @@
       "label-replace-all-fields": "",
       "label-source": "",
       "placeholder-auto": "",
-      "placeholder-select-delimiter": ""
+      "placeholder-select-delimiter": "",
+      "tooltip-regexp": ""
     },
     "field-config-mapping-handler-arguments-editor": {
       "aria-label-threshold-color": ""
@@ -8050,9 +8567,13 @@
       "label-calculation": "",
       "label-field": "",
       "label-type": "",
+      "label-window-size": "",
       "label-window-size-mode": "",
+      "label-window-size-percent": "",
       "placeholder-auto": "",
-      "placeholder-field": ""
+      "placeholder-field": "",
+      "tooltip-window-size": "",
+      "tooltip-window-size-percent": ""
     }
   },
   "upgrade-box": {
@@ -8142,6 +8663,11 @@
   "variables": {
     "ad-hoc-filter": {
       "label-and": ""
+    },
+    "ad-hoc-filter-key": {
+      "plus-segment": {
+        "aria-label-add-filter": ""
+      }
     },
     "confirm-delete-modal": {
       "title-delete-variable": ""

@@ -11,7 +11,7 @@ weight: 400
 
 # Grafana Cloud Migration Assistant
 
-The Grafana Cloud Migration Assistant is available in Grafana 11.2+ as a [public preview feature](https://grafana.com/docs/release-life-cycle/#public-preview) that automatically migrates resources from your Grafana OSS/Enterprise instance to Grafana Cloud. It provides the following functionalities:
+The Grafana Cloud Migration Assistant, generally available from Grafana v12.0, automatically migrates resources from your Grafana OSS/Enterprise instance to Grafana Cloud. It provides the following functionality:
 
 - Securely connect your self-managed instance to a Grafana Cloud instance.
 - Seamlessly migrate resources such as dashboards, data sources, and folders to your cloud instance in a few easy steps.
@@ -82,9 +82,6 @@ You can use the migration assistant to generate a migration token on your Grafan
 
 1. Navigate to **Home** > **Administration** > **General** > **Migrate to Grafana Cloud** in the cloud instance where you intend to migrate your resources.
 1. Click on the **Generate a migration token** button.
-
-   ![The Generate a migration token button in the Migrate to Grafana Cloud page in the intended Grafana Cloud Stack](/media/docs/grafana-cloud/account-management/screenshot-generate-migration-token.png)
-
 1. Make a copy of the migration token by copying to clipboard. The token is required to authenticate your self-managed instance with the Grafana Cloud Stack.
 
 ### Connect your self-managed Grafana instance to the Grafana Cloud Stack
@@ -93,33 +90,50 @@ You can use the migration assistant to generate a migration token on your Grafan
 
 1. Click the **Migrate this instance to Cloud** button.
 
-   ![The Migrate this instance to Cloud button in the Migrate to Grafana Cloud page on a self-managed Grafana instance](/media/docs/grafana-cloud/account-management/screenshot-migrate-to-cloud.png)
-
-1. Enter your token and click **Connect to this Stack**.
-
-   ![The Migration token field and Connect to this stack button in the Connect to a cloud stack page in a self-managed Grafana instance](/media/docs/grafana-cloud/account-management/screenshot-connect-to-a-stack.png)
+1. Enter your token in the **Migration token** field and click **Connect to this Stack**.
 
 ### Build a snapshot
 
 After connecting to the cloud stack, this is the empty state of the migration assistant. You need to create a snapshot of the self-managed Grafana instance to upload it to the cloud stack.
 
-- Click **Build snapshot**
+1. Select the checkbox next to each resource you want to migrate to your cloud stack.
+   {{< admonition type="note" >}}
+   Some resources can't be uploaded to your cloud stack alone because they rely on other resources:
+   | Desired resource | Requires |
+   | :---- | :---- |
+   | Dashboards | <ul><li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li></ul> |
+   | Library Elements | Folders |
+   | Data Sources | Plugins |
+   | Plugins | Nothing else |
+   | Folders | Nothing else |
+   | All Alert rule groups | All other resources |
+   | Alert Rules | <ul><li>Dashboards</li> <li>Library Elements</li> <li>Data Sources</li> <li>Plugins</li> <li>Folders</li> <li>Notification Policies</li> <li>Notification Templates</li> <li>Contact Points</li> <li>Mute Timings</li></ul> |
+   | Notification Policies | <ul><li>Notification Templates</li> <li>Contact Points</li></ul> |
+   | Notification Templates | Nothing else |
+   | Contact Points | Notification Templates |
+   | Mute Timings | Nothing else |
+   {{< /admonition >}}
+1. Click **Build snapshot**
 
-  ![The Build snapshot button on the Migrate to Grafana Cloud page in a self-managed Grafana instance](/media/docs/grafana-cloud/account-management/screenshot-build-a-snapshot.png)
+   ![A list of resources selected for migration and the Build snapshot button](/media/docs/grafana/screenshot-grafana-12-select-resources.png)
 
 ### Upload resources to the cloud
 
 After a snapshot is created, a list of resources appears with resource Type and Status populated with **Not yet uploaded**.
 
-![A list of resources with snapshots built but not yet uploaded to Grafana Cloud](/media/docs/grafana-cloud/account-management/screenshot-upload-snapshot.png)
+1. Click on **Upload snapshot** to copy the resources to the Grafana Cloud instance.
 
-1. Click on **Upload snapshot** to copy the resources to the Grafana Cloud instance. This also updates statuses for the list of resources. The status changes to 'Uploaded to cloud' for resources successfully copied to the cloud.
+1. Use the assistant's real-time progress tracking to monitor the migration. The status changes to 'Uploaded to cloud' for resources successfully copied to the cloud.
+
+   You can group and sort resources during and after the migration:
+
+   - Click **Name** to sort resources alphabetically.
+   - Click **Type** to group and sort by resource type.
+   - Click **Status** to group and sort by upload status (pending upload, uploaded successfully, or experienced errors).
 
    The Snapshot information also updates to inform the user of total resources, errors, and total number of successfully migrated resources.
 
-   ![An updates list of resources with snapshots built after attempting to upload them to Grafana Cloud](/media/docs/grafana-cloud/account-management/screenshot-updated-snapshot-page.png)
-
-1. Use the assistant's real-time progress tracking to monitor the migration.
+   ![An updates list of resources with snapshots built after attempting to upload them to Grafana Cloud](/media/docs/grafana/screenshot-grafana-12-updated-snapshot-page.png)
 
 1. Review error details for any issues that need manual resolution.
 

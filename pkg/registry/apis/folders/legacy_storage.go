@@ -11,10 +11,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/apierrors"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -195,12 +195,16 @@ func (s *legacyStorage) Create(ctx context.Context,
 	}
 
 	parent := accessor.GetFolder()
+	descr := ""
+	if p.Spec.Description != nil {
+		descr = *p.Spec.Description
+	}
 
 	out, err := s.service.CreateLegacy(ctx, &folder.CreateFolderCommand{
 		SignedInUser: user,
 		UID:          p.Name,
 		Title:        p.Spec.Title,
-		Description:  p.Spec.Description,
+		Description:  descr,
 		OrgID:        info.OrgID,
 		ParentUID:    parent,
 	})
@@ -285,7 +289,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		changed = true
 	}
 	if f.Spec.Description != old.Spec.Description {
-		cmd.NewDescription = &f.Spec.Description
+		cmd.NewDescription = f.Spec.Description
 		changed = true
 	}
 	if changed {

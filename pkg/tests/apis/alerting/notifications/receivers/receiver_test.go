@@ -21,7 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
@@ -75,7 +75,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		},
 		Spec: v0alpha1.Spec{
 			Title:        "Test-Receiver",
-			Integrations: nil,
+			Integrations: []v0alpha1.Integration{},
 		},
 	}
 
@@ -307,7 +307,7 @@ func TestIntegrationResourcePermissions(t *testing.T) {
 				},
 				Spec: v0alpha1.Spec{
 					Title:        "receiver-1",
-					Integrations: nil,
+					Integrations: []v0alpha1.Integration{},
 				},
 			}
 			d, err := json.Marshal(created)
@@ -573,7 +573,7 @@ func TestIntegrationAccessControl(t *testing.T) {
 				},
 				Spec: v0alpha1.Spec{
 					Title:        fmt.Sprintf("receiver-1-%s", tc.user.Identity.GetLogin()),
-					Integrations: nil,
+					Integrations: []v0alpha1.Integration{},
 				},
 			}
 			d, err := json.Marshal(expected)
@@ -929,7 +929,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		},
 		Spec: v0alpha1.Spec{
 			Title:        "receiver-1",
-			Integrations: nil,
+			Integrations: []v0alpha1.Integration{},
 		},
 	}
 
@@ -1271,7 +1271,7 @@ func TestIntegrationCRUD(t *testing.T) {
 			},
 			Spec: v0alpha1.Spec{
 				Title:        defaultReceiver.Spec.Title,
-				Integrations: nil,
+				Integrations: []v0alpha1.Integration{},
 			},
 		}
 		_, err := adminClient.Create(ctx, newReceiver, v1.CreateOptions{})
