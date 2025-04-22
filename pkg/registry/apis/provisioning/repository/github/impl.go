@@ -375,12 +375,22 @@ func (r *githubClient) CompareCommits(ctx context.Context, owner, repository, ba
 }
 
 func (r *githubClient) GetBranch(ctx context.Context, owner, repository, branchName string) (Branch, error) {
-	branch, _, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
+	branch, resp, err := r.gh.Repositories.GetBranch(ctx, owner, repository, branchName, 0)
 	if err != nil {
+		// For some reason, GitHub client handles this case differently by failing with a wrapped error
+		if resp != nil && resp.StatusCode == http.StatusNotFound {
+			return Branch{}, ErrResourceNotFound
+		}
+
+		if resp != nil && resp.StatusCode == http.StatusServiceUnavailable {
+			return Branch{}, ErrServiceUnavailable
+		}
+
 		var ghErr *github.ErrorResponse
 		if !errors.As(err, &ghErr) {
 			return Branch{}, err
 		}
+		// Leaving these just in case
 		if ghErr.Response.StatusCode == http.StatusServiceUnavailable {
 			return Branch{}, ErrServiceUnavailable
 		}
