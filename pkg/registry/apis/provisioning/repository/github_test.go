@@ -2375,9 +2375,12 @@ func TestGitHubRepository_History(t *testing.T) {
 			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
-					require.Equal(t, statusErr.Status().Message, err.(*apierrors.StatusError).Status().Message)
-					require.Equal(t, statusErr.Status().Code, err.(*apierrors.StatusError).Status().Code)
+				var statusErr *apierrors.StatusError
+				if errors.As(tt.expectedError, &statusErr) {
+					var actualStatusErr *apierrors.StatusError
+					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
+					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
+					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
 				} else {
 					require.Equal(t, tt.expectedError.Error(), err.Error())
 				}
