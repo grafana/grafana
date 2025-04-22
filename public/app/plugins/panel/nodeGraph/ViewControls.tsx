@@ -36,7 +36,7 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
   return (
     <div className={styles.wrapper}>
       <Stack direction="column" gap={1}>
-        <Stack gap={3}>
+        <Stack gap={0.5}>
           <Button
             icon={'plus-circle'}
             onClick={onPlus}
