@@ -1780,7 +1780,8 @@
       "metadata": {
         "name": "libpqToPGX",
         "resourceVersion": "1744277171149",
-        "creationTimestamp": "2025-04-10T09:26:11Z"
+        "creationTimestamp": "2025-04-10T09:26:11Z",
+        "deletionTimestamp": "2025-04-22T11:22:13Z"
       },
       "spec": {
         "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
@@ -2520,6 +2521,18 @@
         "stage": "GA",
         "codeowner": "@grafana/plugins-platform-backend",
         "expression": "false"
+      }
+    },
+    {
+      "metadata": {
+        "name": "postgresDSUsePGX",
+        "resourceVersion": "1745320933872",
+        "creationTimestamp": "2025-04-22T11:22:13Z"
+      },
+      "spec": {
+        "description": "Enables using PGX instead of libpq for PostgreSQL datasource",
+        "stage": "experimental",
+        "codeowner": "@grafana/oss-big-tent"
       }
     },
     {

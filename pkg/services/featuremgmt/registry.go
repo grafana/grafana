@@ -1790,7 +1790,7 @@ var (
 			FrontendOnly: true,
 		},
 		{
-			Name:        "libpqToPGX",
+			Name:        "postgresDSUsePGX",
 			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOSSBigTent,

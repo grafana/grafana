@@ -1043,5 +1043,5 @@ export interface FeatureToggles {
   /**
   * Enables using PGX instead of libpq for PostgreSQL datasource
   */
-  libpqToPGX?: boolean;
+  postgresDSUsePGX?: boolean;
 }

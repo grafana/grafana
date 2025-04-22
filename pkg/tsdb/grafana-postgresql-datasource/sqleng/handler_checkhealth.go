@@ -17,7 +17,7 @@ import (
 
 func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckHealthRequest, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
 	var err error
-	if features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+	if features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
 		err = e.PingPGX(ctx)
 	} else {
 		err = e.Ping()
@@ -70,7 +70,7 @@ func ErrToHealthCheckResult(ctx context.Context, err error, features featuremgmt
 			res.Message += fmt.Sprintf(". Error message: %s", errMessage)
 		}
 	}
-	if features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+	if features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr != nil {

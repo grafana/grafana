@@ -60,7 +60,7 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+	if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
 		return dsInfo.QueryDataPGX(ctx, req)
 	}
 
@@ -206,7 +206,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		var cnnstr string
-		if s.features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+		if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
 			cnnstr, err = s.generateConnectionString(dsInfo)
 		} else {
 			cnnstr, err = generateConnectionConfigPGX(dsInfo)
@@ -221,7 +221,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 		}
 
 		var handler instancemgmt.Instance
-		if s.features.IsEnabled(ctx, featuremgmt.FlagLibpqToPGX) {
+		if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
 			_, handler, err = newPostgresPGX(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)
 		} else {
 			_, handler, err = newPostgres(ctx, userFacingDefaultError, sqlCfg.RowLimit, dsInfo, cnnstr, logger, settings)

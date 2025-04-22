@@ -947,7 +947,7 @@ const (
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
 
-	// FlagLibpqToPGX
+	// FlagPostgresDSUsePGX
 	// Enables using PGX instead of libpq for PostgreSQL datasource
-	FlagLibpqToPGX = "libpqToPGX"
+	FlagPostgresDSUsePGX = "postgresDSUsePGX"
 )
