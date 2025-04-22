@@ -1233,3 +1233,326 @@ func TestGitHubRepository_Create(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHubRepository_Update(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        *provisioning.Repository
+		path          string
+		ref           string
+		data          []byte
+		comment       string
+		mockSetup     func(t *testing.T, client *pgh.MockClient)
+		expectedError error
+	}{
+		{
+			name: "Successfully update file",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+				fileContent.EXPECT().IsDirectory().Return(false)
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
+					Return(fileContent, nil, nil)
+				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch",
+					"Update test file", "abc123", []byte("updated content")).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Use default branch when ref is empty",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+				fileContent.EXPECT().IsDirectory().Return(false)
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "main").
+					Return(fileContent, nil, nil)
+				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "main",
+					"Update test file", "abc123", []byte("updated content")).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Branch does not exist",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
+				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(errors.New("failed to create branch"))
+			},
+			expectedError: errors.New("create branch: failed to create branch"),
+		},
+		{
+			name: "Invalid branch name",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "invalid//branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				// No mock calls expected
+			},
+			expectedError: &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusBadRequest,
+					Message: "invalid branch name",
+				},
+			},
+		},
+		{
+			name: "Branch exists check fails",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, errors.New("failed to check branch"))
+			},
+			expectedError: errors.New("check branch exists: failed to check branch"),
+		},
+		{
+			name: "Branch does not exist but it's created successfully",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
+				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(nil)
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+				fileContent.EXPECT().IsDirectory().Return(false)
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
+					Return(fileContent, nil, nil)
+				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch",
+					"Update test file", "abc123", []byte("updated content")).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "Branch already exists error",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(false, nil)
+				client.On("CreateBranch", mock.Anything, "grafana", "grafana", "main", "feature-branch").Return(pgh.ErrResourceAlreadyExists)
+			},
+			expectedError: &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    http.StatusConflict,
+					Message: "branch already exists",
+				},
+			},
+		},
+		{
+			name: "File not found",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
+					Return(nil, nil, pgh.ErrResourceNotFound)
+			},
+			expectedError: &apierrors.StatusError{
+				ErrStatus: metav1.Status{
+					Message: "file not found",
+					Code:    http.StatusNotFound,
+				},
+			},
+		},
+		{
+			name: "Error getting file contents",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
+					Return(nil, nil, errors.New("API error"))
+			},
+			expectedError: errors.New("get content before file update: API error"),
+		},
+		{
+			name: "Cannot update directory",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/directory",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test directory",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
+
+				// Create a directory file
+				dirFile := pgh.NewMockRepositoryContent(t)
+				dirFile.EXPECT().IsDirectory().Return(true)
+
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/directory", "feature-branch").
+					Return(dirFile, nil, nil)
+			},
+			expectedError: apierrors.NewBadRequest("cannot update a directory"),
+		},
+		{
+			name: "Error updating file",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+						Path:   "base/path",
+					},
+				},
+			},
+			path:    "test/file.txt",
+			ref:     "feature-branch",
+			data:    []byte("updated content"),
+			comment: "Update test file",
+			mockSetup: func(t *testing.T, client *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+				fileContent.EXPECT().IsDirectory().Return(false)
+				client.On("BranchExists", mock.Anything, "grafana", "grafana", "feature-branch").Return(true, nil)
+				client.On("GetContents", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch").
+					Return(fileContent, nil, nil)
+				client.On("UpdateFile", mock.Anything, "grafana", "grafana", "base/path/test/file.txt", "feature-branch",
+					"Update test file", "abc123", []byte("updated content")).Return(errors.New("update failed"))
+			},
+			expectedError: errors.New("update file: update failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock GitHub client
+			mockClient := pgh.NewMockClient(t)
+
+			// Set up the mock expectations
+			if tt.mockSetup != nil {
+				tt.mockSetup(t, mockClient)
+			}
+
+			// Create a GitHub repository with the test config and mock client
+			repo := &githubRepository{
+				config: tt.config,
+				gh:     mockClient,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			// Call the Update method
+			err := repo.Update(context.Background(), tt.path, tt.ref, tt.data, tt.comment)
+
+			// Check the error
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
+					// For StatusError, check if the actual error is also a StatusError and compare specific fields
+					actualStatusErr, ok := err.(*apierrors.StatusError)
+					require.True(t, ok, "Expected StatusError but got different error type")
+					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
+					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
+				} else {
+					// For other errors, compare error messages
+					require.Equal(t, tt.expectedError.Error(), err.Error())
+				}
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Verify all mock expectations were met
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
