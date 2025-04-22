@@ -277,7 +277,14 @@ module.exports = [
       '@grafana': grafanaPlugin,
     },
     files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
-    ignores: ['public/app/plugins/**', '**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test'],
+    ignores: [
+      'public/app/extensions/**',
+      'public/app/plugins/**',
+      '**/*.story.tsx',
+      '**/*.{test,spec}.{ts,tsx}',
+      '**/__mocks__/',
+      'public/test',
+    ],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
       '@grafana/no-translation-top-level': 'error',
