@@ -12,7 +12,6 @@
 - **Alerting:** Update slack image upload to use new API [#101487](https://github.com/grafana/grafana/pull/101487), [@moustafab](https://github.com/moustafab)
 - **CloudMigrations:** Fix OrderBy clause in GetSnapshotList sql handler [#102351](https://github.com/grafana/grafana/pull/102351), [@mmandrus](https://github.com/mmandrus)
 - **Service Accounts:** Do not show error pop-ups for Service Account and Renderer UI flows [#101795](https://github.com/grafana/grafana/pull/101795), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
-
 - **Security:** Fix CVE-2025-3454
 - **Security:** Fix CVE-2025-2703
 - **Security:** Fix CVE-2025-3260
