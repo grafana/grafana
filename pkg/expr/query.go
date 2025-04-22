@@ -27,7 +27,7 @@ const (
 	// Threshold
 	QueryTypeThreshold QueryType = "threshold"
 
-	// SQL query via DuckDB
+	// SQL query
 	QueryTypeSQL QueryType = "sql"
 )
 

@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/localcache"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/server"
@@ -229,6 +230,15 @@ func (c *K8sTestHelper) AsStatusError(err error) *errors.StatusError {
 	statusError, ok := err.(*errors.StatusError)
 	require.True(c.t, ok)
 	return statusError
+}
+
+func (c *K8sTestHelper) EnsureStatusError(err error, expectedHttpStatus int, expectedMessage string) {
+	statusError := c.AsStatusError(err)
+	require.NotNil(c.t, statusError)
+	require.Equal(c.t, int32(expectedHttpStatus), statusError.ErrStatus.Code)
+	if expectedMessage != "" {
+		require.Equal(c.t, expectedMessage, statusError.ErrStatus.Message)
+	}
 }
 
 func (c *K8sResourceClient) SanitizeJSONList(v *unstructured.UnstructuredList, replaceMeta ...string) string {
@@ -884,4 +894,23 @@ func (c *K8sTestHelper) DeleteServiceAccount(user User, orgID int64, saID int64)
 	}, &struct{}{})
 
 	require.Equal(c.t, http.StatusOK, resp.Response.StatusCode, "failed to delete service account, body: %s", string(resp.Body))
+}
+
+// Ensures that the passed error is an APIStatus error and fails the test if it is not.
+func (c *K8sTestHelper) RequireApiErrorStatus(err error, reason metav1.StatusReason, httpCode int) metav1.Status {
+	require.Error(c.t, err)
+	status, ok := utils.ExtractApiErrorStatus(err)
+	if !ok {
+		c.t.Fatalf("Expected error to be an APIStatus, but got %T", err)
+	}
+
+	if reason != metav1.StatusReasonUnknown {
+		require.Equal(c.t, status.Reason, reason)
+	}
+
+	if httpCode != 0 {
+		require.Equal(c.t, status.Code, int32(httpCode))
+	}
+
+	return status
 }

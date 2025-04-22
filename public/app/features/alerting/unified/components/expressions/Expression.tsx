@@ -136,7 +136,11 @@ export const Expression: FC<ExpressionProps> = ({
           return <SqlExpr onChange={(query) => onChangeQuery(query)} query={query} refIds={availableRefIds} alerting />;
 
         default:
-          return <>Expression not supported: {query.type}</>;
+          return (
+            <Trans i18nKey="alerting.expression.not-supported" values={{ expression: query.type }}>
+              Expression not supported: {'{{expression}}'}
+            </Trans>
+          );
       }
     },
     [onChangeQuery, queries, onQueriesValidationError]
@@ -265,7 +269,9 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
             />
             <Spacer />
             <span className={styles.mutedText}>
-              {pageStart} - {pageEnd} of {series.length}
+              <Trans i18nKey="" values={{ pageStart, pageEnd, numPages: series.length }}>
+                {'{{pageStart}}'} - {'{{pageEnd}}'} of {'{{numPages}}'}
+              </Trans>
             </span>
             <Spacer />
             <Button
@@ -388,7 +394,7 @@ const Header: FC<HeaderProps> = ({
           variant="secondary"
           className={styles.mutedIcon}
           onClick={onRemoveExpression}
-          tooltip={`Remove expression "${refId}"`}
+          tooltip={t('alerting.header.tooltip-remove', 'Remove expression "{{refId}}"', { refId })}
         />
       </Stack>
     </header>

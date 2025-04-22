@@ -84,6 +84,7 @@ export const PromQueryBuilder = memo<PromQueryBuilderProps>((props) => {
           onChange={onChange}
           onRunQuery={onRunQuery}
           highlightedOp={highlightedOp}
+          timeRange={data?.timeRange ?? getDefaultTimeRange()}
         />
         <div data-testid={selectors.components.DataSource.Prometheus.queryEditor.builder.hints}>
           <QueryBuilderHints<PromVisualQuery>

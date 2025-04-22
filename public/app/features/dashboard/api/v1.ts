@@ -9,6 +9,7 @@ import {
   ResourceForCreate,
   AnnoKeyMessage,
   AnnoKeyFolder,
+  AnnoKeyGrantPermissions,
   Resource,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
@@ -58,11 +59,17 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       };
     }
 
+    // for v1 in g12, we will ignore the schema version validation from all default clients,
+    // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+      return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    return this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+    return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {

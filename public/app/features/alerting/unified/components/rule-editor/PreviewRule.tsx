@@ -46,7 +46,9 @@ export function PreviewRule(): React.ReactElement | null {
             title={t('alerting.preview-rule.title-preview-is-not-available', 'Preview is not available')}
             severity="warning"
           >
-            Cannot display the query preview. Some of the data sources used in the queries are not available.
+            <Trans i18nKey="alerting.preview-rule.body-preview-is-not-available">
+              Cannot display the query preview. Some of the data sources used in the queries are not available.
+            </Trans>
           </Alert>
         )}
       </Stack>

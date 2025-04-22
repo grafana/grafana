@@ -1,4 +1,3 @@
-import { config } from '@grafana/runtime';
 import { GlobalStyles } from '@grafana/ui';
 
 import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
@@ -10,5 +9,5 @@ import { useExtensionSidebarContext } from './ExtensionSidebarProvider';
 export const GlobalStylesWrapper = () => {
   const { isOpen } = useExtensionSidebarContext();
 
-  return <GlobalStyles hackNoBackdropBlur={config.featureToggles.noBackdropBlur} isExtensionSidebarOpen={isOpen} />;
+  return <GlobalStyles isExtensionSidebarOpen={isOpen} />;
 };

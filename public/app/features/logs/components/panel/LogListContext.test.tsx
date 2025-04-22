@@ -9,6 +9,7 @@ import { defaultProps } from './__mocks__/LogListContext';
 const log = createLogLine({ rowId: 'yep' });
 const value = {
   ...defaultProps,
+  downloadLogs: jest.fn(),
   getRowContextQuery: jest.fn(),
   logSupportsContext: jest.fn(),
   onPermalinkClick: jest.fn(),

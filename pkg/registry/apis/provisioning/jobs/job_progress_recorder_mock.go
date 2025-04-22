@@ -69,51 +69,6 @@ func (_c *MockJobProgressRecorder_Complete_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
-// GetRef provides a mock function with no fields
-func (_m *MockJobProgressRecorder) GetRef() string {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetRef")
-	}
-
-	var r0 string
-	if rf, ok := ret.Get(0).(func() string); ok {
-		r0 = rf()
-	} else {
-		r0 = ret.Get(0).(string)
-	}
-
-	return r0
-}
-
-// MockJobProgressRecorder_GetRef_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRef'
-type MockJobProgressRecorder_GetRef_Call struct {
-	*mock.Call
-}
-
-// GetRef is a helper method to define mock.On call
-func (_e *MockJobProgressRecorder_Expecter) GetRef() *MockJobProgressRecorder_GetRef_Call {
-	return &MockJobProgressRecorder_GetRef_Call{Call: _e.mock.On("GetRef")}
-}
-
-func (_c *MockJobProgressRecorder_GetRef_Call) Run(run func()) *MockJobProgressRecorder_GetRef_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_GetRef_Call) Return(_a0 string) *MockJobProgressRecorder_GetRef_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_GetRef_Call) RunAndReturn(run func() string) *MockJobProgressRecorder_GetRef_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Record provides a mock function with given fields: ctx, result
 func (_m *MockJobProgressRecorder) Record(ctx context.Context, result JobResourceResult) {
 	_m.Called(ctx, result)
@@ -248,39 +203,6 @@ func (_c *MockJobProgressRecorder_SetMessage_Call) RunAndReturn(run func(context
 	return _c
 }
 
-// SetRef provides a mock function with given fields: ref
-func (_m *MockJobProgressRecorder) SetRef(ref string) {
-	_m.Called(ref)
-}
-
-// MockJobProgressRecorder_SetRef_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetRef'
-type MockJobProgressRecorder_SetRef_Call struct {
-	*mock.Call
-}
-
-// SetRef is a helper method to define mock.On call
-//   - ref string
-func (_e *MockJobProgressRecorder_Expecter) SetRef(ref interface{}) *MockJobProgressRecorder_SetRef_Call {
-	return &MockJobProgressRecorder_SetRef_Call{Call: _e.mock.On("SetRef", ref)}
-}
-
-func (_c *MockJobProgressRecorder_SetRef_Call) Run(run func(ref string)) *MockJobProgressRecorder_SetRef_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
-	})
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_SetRef_Call) Return() *MockJobProgressRecorder_SetRef_Call {
-	_c.Call.Return()
-	return _c
-}
-
-func (_c *MockJobProgressRecorder_SetRef_Call) RunAndReturn(run func(string)) *MockJobProgressRecorder_SetRef_Call {
-	_c.Run(run)
-	return _c
-}
-
 // SetTotal provides a mock function with given fields: ctx, total
 func (_m *MockJobProgressRecorder) SetTotal(ctx context.Context, total int) {
 	_m.Called(ctx, total)
@@ -311,6 +233,38 @@ func (_c *MockJobProgressRecorder_SetTotal_Call) Return() *MockJobProgressRecord
 }
 
 func (_c *MockJobProgressRecorder_SetTotal_Call) RunAndReturn(run func(context.Context, int)) *MockJobProgressRecorder_SetTotal_Call {
+	_c.Run(run)
+	return _c
+}
+
+// Strict provides a mock function with no fields
+func (_m *MockJobProgressRecorder) Strict() {
+	_m.Called()
+}
+
+// MockJobProgressRecorder_Strict_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Strict'
+type MockJobProgressRecorder_Strict_Call struct {
+	*mock.Call
+}
+
+// Strict is a helper method to define mock.On call
+func (_e *MockJobProgressRecorder_Expecter) Strict() *MockJobProgressRecorder_Strict_Call {
+	return &MockJobProgressRecorder_Strict_Call{Call: _e.mock.On("Strict")}
+}
+
+func (_c *MockJobProgressRecorder_Strict_Call) Run(run func()) *MockJobProgressRecorder_Strict_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_Strict_Call) Return() *MockJobProgressRecorder_Strict_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_Strict_Call) RunAndReturn(run func()) *MockJobProgressRecorder_Strict_Call {
 	_c.Run(run)
 	return _c
 }

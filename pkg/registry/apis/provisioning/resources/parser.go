@@ -17,10 +17,12 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 // ParserFactory is a factory for creating parsers for a given repository
@@ -136,7 +138,7 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		logger.Debug("failed to find GVK of the input data, trying fallback loader", "error", err)
 		parsed.Obj, gvk, parsed.Classic, err = ReadClassicResource(ctx, info)
 		if err != nil || gvk == nil {
-			return nil, err
+			return nil, apierrors.NewBadRequest("unable to read file as a resource")
 		}
 	}
 
@@ -177,8 +179,12 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 		Checksum: info.Hash,
 	})
 
-	if obj.GetName() == "" && obj.GetGenerateName() == "" {
-		return nil, ErrMissingName
+	if obj.GetName() == "" {
+		if obj.GetGenerateName() == "" {
+			return nil, ErrMissingName
+		}
+		// Generate a new UID
+		obj.SetName(obj.GetGenerateName() + util.GenerateShortUID())
 	}
 
 	// Calculate folder identifier from the file path
@@ -206,32 +212,42 @@ func (r *parser) Parse(ctx context.Context, info *repository.FileInfo) (parsed *
 }
 
 func (f *ParsedResource) DryRun(ctx context.Context) error {
+	if f.DryRunResponse != nil {
+		return nil // this already ran (and helpful for testing)
+	}
+
 	// FIXME: remove this check once we have better unit tests
 	if f.Client == nil {
 		return fmt.Errorf("no client configured")
 	}
 
-	var err error
+	// Use the same identity that would eventually write the resource (via Run)
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return err
+	}
+
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
 	// FIXME: shouldn't we check for the specific error?
 	// Dry run CREATE or UPDATE
 	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
 	if f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.DryRunResponse, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
-			DryRun: []string{"All"},
+			DryRun:          []string{"All"},
+			FieldValidation: fieldValidation,
 		})
 	} else {
 		f.Action = provisioning.ResourceActionUpdate
 		f.DryRunResponse, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
-			DryRun: []string{"All"},
+			DryRun:          []string{"All"},
+			FieldValidation: fieldValidation,
 		})
 	}
-
-	// When the name is missing (and generateName is configured) use the value from DryRun
-	if f.Obj.GetName() == "" && f.DryRunResponse != nil {
-		f.Obj.SetName(f.DryRunResponse.GetName())
-	}
-
 	return err
 }
 
@@ -241,18 +257,39 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return fmt.Errorf("unable to find client")
 	}
 
-	var err error
-	// FIXME: shouldn't we check for the specific error?
-	// Run update or create
-	f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
-	if f.Existing == nil {
-		f.Action = provisioning.ResourceActionCreate
-		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{})
-	} else {
-		f.Action = provisioning.ResourceActionUpdate
-		f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{})
+	// Always use the provisioning identity when writing
+	ctx, _, err := identity.WithProvisioningIdentity(ctx, f.Obj.GetNamespace())
+	if err != nil {
+		return err
 	}
 
+	fieldValidation := "Strict"
+	if f.GVR == DashboardResource {
+		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
+	}
+
+	// If we have already tried loading existing, start with create
+	if f.DryRunResponse != nil && f.Existing == nil {
+		f.Action = provisioning.ResourceActionCreate
+		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
+		if err == nil {
+			return nil // it worked, return
+		}
+	}
+
+	// Try update, otherwise create
+	f.Action = provisioning.ResourceActionUpdate
+	f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+		FieldValidation: fieldValidation,
+	})
+	if apierrors.IsNotFound(err) {
+		f.Action = provisioning.ResourceActionCreate
+		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
+			FieldValidation: fieldValidation,
+		})
+	}
 	return err
 }
 

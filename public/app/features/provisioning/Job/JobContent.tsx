@@ -18,6 +18,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
   }
 
   const { state, message, progress, summary } = job.status;
+  const repoName = job.metadata?.labels?.['provisioning.grafana.app/repository'];
 
   const getStatusDisplay = () => {
     switch (state) {
@@ -52,11 +53,11 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
     <Stack direction="column" gap={2}>
       <Stack direction="column" gap={2}>
         {getStatusDisplay()}
-
-        <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
-          <ProgressBar progress={progress} />
-        </Stack>
-
+        {state && !['success', 'error'].includes(state) && (
+          <Stack direction="row" alignItems="center" justifyContent="center" gap={2}>
+            <ProgressBar progress={progress ?? 0} />
+          </Stack>
+        )}
         {isFinishedJob && summary && (
           <Stack direction="column" gap={2}>
             <Text variant="h3">
@@ -66,7 +67,7 @@ export function JobContent({ job, isFinishedJob = false }: JobContentProps) {
           </Stack>
         )}
         {state === 'success' ? (
-          <RepositoryLink name={job.metadata?.labels?.repository} />
+          <RepositoryLink name={repoName} />
         ) : (
           <ControlledCollapse label={t('provisioning.job-status.label-view-details', 'View details')} isOpen={false}>
             <pre>{JSON.stringify(job, null, 2)}</pre>

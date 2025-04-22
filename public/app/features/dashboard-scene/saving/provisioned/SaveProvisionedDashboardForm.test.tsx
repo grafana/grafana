@@ -48,15 +48,9 @@ jest.mock('app/features/provisioning/hooks/useCreateOrUpdateRepositoryFile', () 
   };
 });
 
-jest.mock('app/features/provisioning/hooks/useGetResourceRepository', () => {
+jest.mock('app/features/provisioning/hooks/useGetResourceRepositoryView', () => {
   return {
-    useGetResourceRepository: jest.fn(),
-  };
-});
-
-jest.mock('app/features/provisioning/hooks/useRepositoryList', () => {
-  return {
-    useRepositoryList: jest.fn(),
+    useGetResourceRepositoryView: jest.fn(),
   };
 });
 
@@ -133,15 +127,12 @@ function setup(props: Partial<Props> = {}) {
       description: 'Test Description',
       workflow: 'write',
     },
-    repositoryConfig: {
+    repository: {
+      name: 'repo-xyz',
       type: 'github',
       workflows: ['write', 'branch'],
-      sync: { enabled: false, target: 'folder' },
       title: 'Test Repository',
-      github: {
-        branch: 'main',
-        generateDashboardPreviews: false,
-      },
+      target: 'folder',
     },
     ...props,
   };
@@ -401,10 +392,11 @@ describe('SaveProvisionedDashboardForm', () => {
 
   it('should show read-only alert when repository has no workflows', () => {
     setup({
-      repositoryConfig: {
+      repository: {
+        name: 'repo-abc',
         type: 'github',
         workflows: [],
-        sync: { enabled: false, target: 'folder' },
+        target: 'folder',
         title: 'Read-only Repository',
       },
     });
