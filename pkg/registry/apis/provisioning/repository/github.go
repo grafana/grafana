@@ -193,12 +193,7 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
 			// FIXME: shouldn't we return ErrFileNotFound here?
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: fmt.Sprintf("file not found; path=%s ref=%s", finalPath, ref),
-					Code:    http.StatusNotFound,
-				},
-			}
+			return nil, ErrFileNotFound
 		}
 
 		return nil, fmt.Errorf("get contents: %w", err)
@@ -340,16 +335,15 @@ func (r *githubRepository) Write(ctx context.Context, path string, ref string, d
 	}
 
 	ctx, _ = r.logger(ctx, ref)
-	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-	_, err := r.Read(ctx, finalPath, ref)
+	_, err := r.Read(ctx, path, ref)
 	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
-		return fmt.Errorf("failed to check if file exists before writing: %w", err)
+		return fmt.Errorf("check if file exists before writing: %w", err)
 	}
 	if err == nil {
-		return r.Update(ctx, finalPath, ref, data, message)
+		return r.Update(ctx, path, ref, data, message)
 	}
 
-	return r.Create(ctx, finalPath, ref, data, message)
+	return r.Create(ctx, path, ref, data, message)
 }
 
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
