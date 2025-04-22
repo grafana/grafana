@@ -211,10 +211,10 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           htmlFor="max-data-points-input"
           tooltip={
-            <>
+            <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.max-data-points-tooltip">
               The maximum data points per series. Used directly by some data sources and used in calculation of auto
               interval. With streaming data this value is used for the rolling buffer.
-            </>
+            </Trans>
           }
         >
           <Trans i18nKey="query.query-group-options-editor.render-max-data-points-option.max-data-points">
@@ -253,10 +253,10 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           className={styles.firstColumn}
           tooltip={
-            <>
+            <Trans i18nKey="query.query-group-options-editor.render-interval-option.min-interval-tooltip">
               A lower limit for the interval. Recommended to be set to write frequency, for example <code>1m</code> if
               your data is written every minute. Default value can be set in data source settings for most data sources.
-            </>
+            </Trans>
           }
           htmlFor="min-interval-input"
         >
@@ -274,11 +274,11 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           className={styles.firstColumn}
           tooltip={
-            <>
+            <Trans i18nKey="query.query-group-options-editor.render-interval-option.interval-tooltip">
               The evaluated interval that is sent to data source and is used in <code>$__interval</code> and{' '}
               <code>$__interval_ms</code>. This value is not exactly equal to <code>Time range / max data points</code>,
               it will approximate a series of magic number.
-            </>
+            </Trans>
           }
         >
           <Trans i18nKey="query.query-group-options-editor.render-interval-option.interval">Interval</Trans>
@@ -308,8 +308,16 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
 
     return (
       <>
-        {<span className={styles.collapsedText}>MD = {mdDesc}</span>}
-        {<span className={styles.collapsedText}>Interval = {intervalDesc}</span>}
+        {
+          <span className={styles.collapsedText}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {mdDesc}</Trans>
+          </span>
+        }
+        {
+          <span className={styles.collapsedText}>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {intervalDesc}</Trans>
+          </span>
+        }
       </>
     );
   };
@@ -333,12 +341,15 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
         <InlineLabel
           htmlFor="relative-time-input"
           tooltip={
-            <>
+            <Trans
+              i18nKey="query.query-group-options-editor.relative-time-tooltip"
+              values={{ relativeFrom: 'now-5m', relativeTo: '5m', variable: '$_relativeTime' }}
+            >
               Overrides the relative time range for individual panels, which causes them to be different than what is
               selected in the dashboard time picker in the top-right corner of the dashboard. For example to configure
-              the Last 5 minutes the Relative time should be <code>now-5m</code> and <code>5m</code>, or variables like{' '}
-              <code>$_relativeTime</code>.
-            </>
+              the Last 5 minutes the Relative time should be <code>{'{{relativeFrom}}'}</code> and{' '}
+              <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
+            </Trans>
           }
         >
           <Trans i18nKey="query.query-group-options-editor.relative-time">Relative time</Trans>
@@ -357,11 +368,14 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
           htmlFor="time-shift-input"
           className={styles.firstColumn}
           tooltip={
-            <>
+            <Trans
+              i18nKey="query.query-group-options-editor.time-shift-tooltip"
+              values={{ relativeFrom: 'now-1h', relativeTo: '1h', variable: '$_timeShift' }}
+            >
               Overrides the time range for individual panels by shifting its start and end relative to the time picker.
-              For example to configure the Last 1h the Time shift should be <code>now-1h</code> and <code>1h</code>, or
-              variables like <code>$_timeShift</code>.
-            </>
+              For example to configure the Last 1h the Time shift should be <code>{'{{relativeFrom}}'}</code> and{' '}
+              <code>{'{{relativeTo}}'}</code>, or variables like <code>{'{{variable}}'}</code>.
+            </Trans>
           }
         >
           <Trans i18nKey="query.query-group-options-editor.time-shift">Time shift</Trans>
