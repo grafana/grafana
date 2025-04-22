@@ -12,6 +12,8 @@
 
 - **Auth:** Fix SAML user IsExternallySynced not being set correctly [#103101](https://github.com/grafana/grafana/pull/103101), [@volcanonoodle](https://github.com/volcanonoodle)
 - **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102983](https://github.com/grafana/grafana/pull/102983), [@kalleep](https://github.com/kalleep)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
 
 <!-- 11.3.6 END -->
 <!-- 11.3.5 START -->
