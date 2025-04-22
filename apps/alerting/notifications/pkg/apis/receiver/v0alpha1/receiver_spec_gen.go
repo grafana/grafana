@@ -13,7 +13,9 @@ type Integration struct {
 
 // NewIntegration creates a new Integration object.
 func NewIntegration() *Integration {
-	return &Integration{}
+	return &Integration{
+		Settings: map[string]interface{}{},
+	}
 }
 
 // +k8s:openapi-gen=true
@@ -24,5 +26,7 @@ type Spec struct {
 
 // NewSpec creates a new Spec object.
 func NewSpec() *Spec {
-	return &Spec{}
+	return &Spec{
+		Integrations: []Integration{},
+	}
 }

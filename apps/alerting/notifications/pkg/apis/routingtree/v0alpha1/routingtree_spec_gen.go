@@ -56,6 +56,7 @@ type Spec struct {
 func NewSpec() *Spec {
 	return &Spec{
 		Defaults: *NewRouteDefaults(),
+		Routes:   []Route{},
 	}
 }
 

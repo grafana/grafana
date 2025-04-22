@@ -24,5 +24,8 @@ type Metadata struct {
 
 // NewMetadata creates a new Metadata object.
 func NewMetadata() *Metadata {
-	return &Metadata{}
+	return &Metadata{
+		Finalizers: []string{},
+		Labels:     map[string]string{},
+	}
 }

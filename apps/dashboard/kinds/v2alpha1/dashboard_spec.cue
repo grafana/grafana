@@ -915,6 +915,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
+	origin?: string
 	// @deprecated
 	condition?: string
 }

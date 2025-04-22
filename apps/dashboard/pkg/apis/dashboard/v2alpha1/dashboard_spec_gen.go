@@ -1672,6 +1672,7 @@ type DashboardAdHocFilterWithLabels struct {
 	KeyLabel    *string  `json:"keyLabel,omitempty"`
 	ValueLabels []string `json:"valueLabels,omitempty"`
 	ForceEdit   *bool    `json:"forceEdit,omitempty"`
+	Origin      *string  `json:"origin,omitempty"`
 	// @deprecated
 	Condition *string `json:"condition,omitempty"`
 }
