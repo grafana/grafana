@@ -199,7 +199,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
               units: 'ns, us, ms, s, m, h',
             })}
           >
-            <Stack alignItems={'flex-start'} gap={3}>
+            <Stack alignItems="flex-start" gap={0.5}>
               <Select
                 aria-label={t('explore.span-filters.aria-label-select-min-span-operator', 'Select min span operator')}
                 onChange={(v) => setSpanFiltersSearch({ ...search, fromOperator: v.value! })}
