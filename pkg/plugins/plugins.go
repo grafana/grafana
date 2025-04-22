@@ -66,6 +66,9 @@ type Plugin struct {
 	mu sync.Mutex
 
 	Translations map[string]string
+
+	// IsCloudProvisioned is true if the plugin is a Grafana Cloud provisioned plugin.
+	IsCloudProvisioned bool
 }
 
 var (

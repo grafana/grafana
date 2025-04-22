@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"slices"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -137,6 +138,40 @@ func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin,
 	}
 
 	return p, nil
+}
+
+type reportLoadingMetricsStep struct {
+	cfg *config.PluginManagementCfg
+	// pluginAssets *pluginassets.Service
+	pluginsStore pluginStore.Store
+}
+
+func (s *reportLoadingMetricsStep) initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.IsCorePlugin() {
+		return p, nil
+	}
+	_, ok := s.pluginsStore.Plugin(ctx, p.PluginID())
+	if !ok {
+		// TODO: warn
+		return p, nil
+	}
+	var method string
+	strategy := "default"
+	switch p.Class {
+	case plugins.ClassCDN:
+		method = "cdn"
+		// strategy = string(s.pluginAssets.LoadingStrategy(ctx, ps))
+	case plugins.ClassExternal:
+		method = "fs"
+		strategy = "default"
+	}
+	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, p.IsCloudProvisioned, method, strategy)
+	return p, nil
+}
+
+func ReportLoadingMetricsStep(cfg *config.PluginManagementCfg, pluginStore pluginStore.Store) initialization.InitializeFunc {
+	step := &reportLoadingMetricsStep{cfg: cfg, pluginsStore: pluginStore}
+	return step.initialize
 }
 
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.

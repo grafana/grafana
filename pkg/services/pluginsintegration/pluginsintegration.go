@@ -2,6 +2,7 @@ package pluginsintegration
 
 import (
 	"github.com/google/wire"
+	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/prometheus/client_golang/prometheus"
@@ -19,7 +20,6 @@ import (
 	pAngularInspector "github.com/grafana/grafana/pkg/plugins/manager/loader/angular/angularinspector"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/assetpath"
 	"github.com/grafana/grafana/pkg/plugins/manager/loader/finder"
-	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/bootstrap"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/discovery"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/initialization"
 	"github.com/grafana/grafana/pkg/plugins/manager/pipeline/termination"
@@ -78,14 +78,17 @@ var WireSet = wire.NewSet(
 	pluginscdn.ProvideService,
 	assetpath.ProvideService,
 
+	// Plugins pipeline
+	// Discovery stage
 	pipeline.ProvideDiscoveryStage,
 	wire.Bind(new(discovery.Discoverer), new(*discovery.Discovery)),
-	pipeline.ProvideBootstrapStage,
-	wire.Bind(new(bootstrap.Bootstrapper), new(*bootstrap.Bootstrap)),
+	// Bootstrap stage: Enterprise-specific, defined in WireExtensionSet.
 	pipeline.ProvideInitializationStage,
 	wire.Bind(new(initialization.Initializer), new(*initialization.Initialize)),
+	// Termination stage
 	pipeline.ProvideTerminationStage,
 	wire.Bind(new(termination.Terminator), new(*termination.Terminate)),
+	// Validation stage
 	pipeline.ProvideValidationStage,
 	wire.Bind(new(validation.Validator), new(*validation.Validate)),
 
@@ -137,6 +140,11 @@ var WireSet = wire.NewSet(
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
 // extended.
 var WireExtensionSet = wire.NewSet(
+	// Plugins pipeline
+	// Bootstrap stage
+	pipeline.ProvideBootstrapStage,
+	wire.Bind(new(bootstrap.Bootstrapper), new(*bootstrap.Bootstrap)),
+
 	provider.ProvideService,
 	wire.Bind(new(plugins.BackendFactoryProvider), new(*provider.Service)),
 	signature.ProvideOSSAuthorizer,
