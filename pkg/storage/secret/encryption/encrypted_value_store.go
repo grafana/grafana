@@ -54,8 +54,15 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 		return nil, fmt.Errorf("executing template %q: %w", sqlEncryptedValueCreate.Name(), err)
 	}
 
-	if _, err = s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...); err != nil {
+	res, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
+	if err != nil {
 		return nil, fmt.Errorf("inserting row: %w", err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil {
+		return nil, fmt.Errorf("getting rows affected: %w", err)
+	} else if rowsAffected != 1 {
+		return nil, fmt.Errorf("expected 1 row affected, got %d", rowsAffected)
 	}
 
 	return &contracts.EncryptedValue{
@@ -88,8 +95,8 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid 
 
 	if rowsAffected, err := res.RowsAffected(); err != nil {
 		return fmt.Errorf("getting rows affected: %w", err)
-	} else if rowsAffected == 0 {
-		return ErrEncryptedValueNotFound
+	} else if rowsAffected != 1 {
+		return fmt.Errorf("expected 1 row affected, got %d on %s", rowsAffected, namespace)
 	}
 
 	return nil
@@ -116,7 +123,7 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 		return nil, ErrEncryptedValueNotFound
 	}
 
-	encryptedValue := &EncryptedValue{}
+	var encryptedValue EncryptedValue
 	err = rows.Scan(&encryptedValue.UID, &encryptedValue.Namespace, &encryptedValue.EncryptedData, &encryptedValue.Created, &encryptedValue.Updated)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan encrypted value row: %w", err)
