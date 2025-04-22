@@ -43,7 +43,7 @@ func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Pool, conf
 	return &queryDataHandler, nil
 }
 
-func (e *DataSourceHandler) DisposePGX(ctx context.Context) {
+func (e *DataSourceHandler) DisposePGX() {
 	e.log.Debug("Disposing DB...")
 
 	if e.p != nil {
@@ -83,7 +83,7 @@ func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.Query
 		}
 
 		wg.Add(1)
-		go e.executeQueryPGX(query, &wg, ctx, ch, queryjson)
+		go e.executeQueryPGX(ctx, query, &wg, ch, queryjson)
 	}
 
 	wg.Wait()
@@ -98,8 +98,8 @@ func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.Query
 	return result, nil
 }
 
-func (e *DataSourceHandler) executeQueryPGX(query backend.DataQuery, wg *sync.WaitGroup, queryContext context.Context,
-	ch chan DBDataResponse, queryJson QueryJson) {
+func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query backend.DataQuery, wg *sync.WaitGroup,
+	ch chan DBDataResponse, queryJSON QueryJson) {
 	defer wg.Done()
 	queryResult := DBDataResponse{
 		dataResponse: backend.DataResponse{},
@@ -125,7 +125,7 @@ func (e *DataSourceHandler) executeQueryPGX(query backend.DataQuery, wg *sync.Wa
 		}
 	}()
 
-	if queryJson.RawSql == "" {
+	if queryJSON.RawSql == "" {
 		panic("Query model property rawSql should not be empty at this point")
 	}
 
@@ -146,7 +146,7 @@ func (e *DataSourceHandler) executeQueryPGX(query backend.DataQuery, wg *sync.Wa
 	}
 
 	// global substitutions
-	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJson.RawSql)
+	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJSON.RawSql)
 
 	// data source specific substitutions
 	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
@@ -175,14 +175,14 @@ func (e *DataSourceHandler) executeQueryPGX(query backend.DataQuery, wg *sync.Wa
 		return
 	}
 
-	qm, err := e.newProcessCfgPGX(query, queryContext, results, interpolatedQuery)
+	qm, err := e.newProcessCfgPGX(queryContext, query, results, interpolatedQuery)
 	if err != nil {
 		errAppendDebug("failed to get configurations", err, interpolatedQuery, backend.ErrorSourcePlugin)
 		return
 	}
 
 	// Convert row.Rows to dataframe
-	frame, err := convertResultsToFrame(results, interpolatedQuery, e.rowLimit)
+	frame, err := convertResultsToFrame(results, e.rowLimit)
 	if err != nil {
 		errAppendDebug("convert frame from rows error", err, interpolatedQuery, backend.ErrorSourcePlugin)
 		return
@@ -282,7 +282,7 @@ func (e *DataSourceHandler) executeQueryPGX(query backend.DataQuery, wg *sync.Wa
 	ch <- queryResult
 }
 
-func (e *DataSourceHandler) newProcessCfgPGX(query backend.DataQuery, queryContext context.Context,
+func (e *DataSourceHandler) newProcessCfgPGX(queryContext context.Context, query backend.DataQuery,
 	results []*pgconn.Result, interpolatedQuery string) (*dataQueryModel, error) {
 	columnNames := []string{}
 	columnTypesPGX := []string{}
@@ -295,11 +295,12 @@ func (e *DataSourceHandler) newProcessCfgPGX(query backend.DataQuery, queryConte
 			pqtype, ok := pgtype.NewMap().TypeForOID(field.DataTypeOID)
 			if !ok {
 				// Handle special cases for field types
-				if field.DataTypeOID == pgtype.TimetzOID {
+				switch field.DataTypeOID {
+				case pgtype.TimetzOID:
 					columnTypesPGX = append(columnTypesPGX, "timetz")
-				} else if field.DataTypeOID == 790 {
+				case 790:
 					columnTypesPGX = append(columnTypesPGX, "money")
-				} else {
+				default:
 					return nil, fmt.Errorf("unknown data type oid: %d", field.DataTypeOID)
 				}
 			} else {
@@ -318,23 +319,23 @@ func (e *DataSourceHandler) newProcessCfgPGX(query backend.DataQuery, queryConte
 		queryContext:   queryContext,
 	}
 
-	queryJson := QueryJson{}
-	err := json.Unmarshal(query.JSON, &queryJson)
+	queryJSON := QueryJson{}
+	err := json.Unmarshal(query.JSON, &queryJSON)
 	if err != nil {
 		return nil, err
 	}
 
-	if queryJson.Fill {
+	if queryJSON.Fill {
 		qm.FillMissing = &data.FillMissing{}
-		qm.Interval = time.Duration(queryJson.FillInterval * float64(time.Second))
-		switch strings.ToLower(queryJson.FillMode) {
+		qm.Interval = time.Duration(queryJSON.FillInterval * float64(time.Second))
+		switch strings.ToLower(queryJSON.FillMode) {
 		case "null":
 			qm.FillMissing.Mode = data.FillModeNull
 		case "previous":
 			qm.FillMissing.Mode = data.FillModePrevious
 		case "value":
 			qm.FillMissing.Mode = data.FillModeValue
-			qm.FillMissing.Value = queryJson.FillValue
+			qm.FillMissing.Value = queryJSON.FillValue
 		default:
 		}
 	}
@@ -342,13 +343,13 @@ func (e *DataSourceHandler) newProcessCfgPGX(query backend.DataQuery, queryConte
 	qm.TimeRange.From = query.TimeRange.From.UTC()
 	qm.TimeRange.To = query.TimeRange.To.UTC()
 
-	switch queryJson.Format {
+	switch queryJSON.Format {
 	case "time_series":
 		qm.Format = dataQueryFormatSeries
 	case "table":
 		qm.Format = dataQueryFormatTable
 	default:
-		panic(fmt.Sprintf("Unrecognized query model format: %q", queryJson.Format))
+		panic(fmt.Sprintf("Unrecognized query model format: %q", queryJSON.Format))
 	}
 
 	for i, col := range qm.columnNames {
@@ -383,7 +384,7 @@ func (e *DataSourceHandler) newProcessCfgPGX(query backend.DataQuery, queryConte
 	return qm, nil
 }
 
-func convertResultsToFrame(results []*pgconn.Result, query string, rowLimit int64) (*data.Frame, error) {
+func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Frame, error) {
 	frame := data.Frame{}
 	m := pgtype.NewMap()
 
