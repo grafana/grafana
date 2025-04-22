@@ -172,7 +172,7 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
         </InlineFieldRow>
         <InlineFieldRow>
           <InlineField label={t('explore.span-filters.label-span-name', 'Span name')} labelWidth={16}>
-            <Stack gap={3}>
+            <Stack gap={0.5}>
               <Select
                 aria-label={t('explore.span-filters.aria-label-select-span-name-operator', 'Select span name operator')}
                 onChange={(v) => setSpanFiltersSearch({ ...search, spanNameOperator: v.value! })}
