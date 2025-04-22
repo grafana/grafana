@@ -31,7 +31,6 @@ import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { QueryVariableEditor } from './editors/QueryVariableEditor';
-import { getSystemVariableOptions } from './editors/SystemVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
