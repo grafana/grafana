@@ -1,3 +1,26 @@
+<!-- 11.5.3+security-01 START -->
+
+# 11.5.3+security-01 (2025-04-22)
+
+### Features and enhancements
+
+- **Chore:** Bump Go to 1.23.7 [#101581](https://github.com/grafana/grafana/pull/101581), [@macabu](https://github.com/macabu)
+- **Chore:** Bump Go to 1.23.7 (Enterprise)
+- **Chore:** Update CVE-affected dependencies [#102709](https://github.com/grafana/grafana/pull/102709), [@grambbledook](https://github.com/grambbledook)
+
+### Bug fixes
+
+- **Alerting:** Fix token-based Slack image upload to work with channel names [#101078](https://github.com/grafana/grafana/pull/101078), [@JacobsonMT](https://github.com/JacobsonMT)
+- **Auth:** Fix AzureAD config UI's ClientAuthentication dropdown [#100869](https://github.com/grafana/grafana/pull/100869), [@mgyongyosi](https://github.com/mgyongyosi)
+- **Dashboard:** Fix the unintentional time range and variables updates on saving [#101671](https://github.com/grafana/grafana/pull/101671), [@harisrozajac](https://github.com/harisrozajac)
+- **Dashboards:** Fix missing `v/e/i` keybindings to return back to dashboard [#102365](https://github.com/grafana/grafana/pull/102365), [@mdvictor](https://github.com/mdvictor)
+- **InfluxDB:** Improve handling of template variables contained in regular expressions (InfluxQL) [#100977](https://github.com/grafana/grafana/pull/100977), [@aangelisc](https://github.com/aangelisc)
+- **LDAP test:** Fix page crash [#102683](https://github.com/grafana/grafana/pull/102683), [@ashharrison90](https://github.com/ashharrison90)
+- **Org redirection:** Fix linking between orgs [#102089](https://github.com/grafana/grafana/pull/102089), [@ashharrison90](https://github.com/ashharrison90)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.5.3+security-01 END -->
 <!-- 11.4.3+security-01 START -->
 
 # 11.4.3+security-01 (2025-04-22)
