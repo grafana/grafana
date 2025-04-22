@@ -309,11 +309,6 @@ export interface FeatureToggles {
   */
   formatString?: boolean;
   /**
-  * Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-  * @default true
-  */
-  kubernetesPlaylists?: boolean;
-  /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
   kubernetesSnapshots?: boolean;
@@ -658,11 +653,6 @@ export interface FeatureToggles {
   * Enables the scopes usage in Metrics Explore
   */
   enableScopesInMetricsExplore?: boolean;
-  /**
-  * Register Alerting APIs with the K8s API server
-  * @default true
-  */
-  alertingApiServer?: boolean;
   /**
   * Round up end time for metric queries to the next minute to avoid missing data
   * @default true
@@ -1032,4 +1022,17 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables auto-updating of users installed plugins
+  */
+  pluginsAutoUpdate?: boolean;
+  /**
+  * Enables the alerting list view v2 preview toggle
+  */
+  alertingListViewV2PreviewToggle?: boolean;
+  /**
+  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
+  * @default false
+  */
+  alertRuleUseFiredAtForStartsAt?: boolean;
 }

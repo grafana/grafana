@@ -129,14 +129,20 @@ export function ReceiverForm<R extends ChannelValues>({
     <FormProvider {...formAPI}>
       {showDefaultRouteWarning && (
         <Alert severity="warning" title={t('alerting.receiver-form.title-attention', 'Attention')}>
-          Because there is no default policy configured yet, this contact point will automatically be set as default.
+          <Trans i18nKey="alerting.receiver-form.body-attention">
+            Because there is no default policy configured yet, this contact point will automatically be set as default.
+          </Trans>
         </Alert>
       )}
 
       <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
         <Stack justifyContent="space-between" alignItems="center">
           <h2 className={styles.heading}>
-            {!isEditable ? 'Contact point' : initialValues ? 'Update contact point' : 'Create contact point'}
+            {!isEditable
+              ? t('alerting.receiver-form.contact-point', 'Contact point')
+              : initialValues
+                ? t('alerting.receiver-form.contact-point-update', 'Update contact point')
+                : t('alerting.receiver-form.contact-point-create', 'Create contact point')}
           </h2>
           {canManagePermissions && contactPointId && (
             <ManagePermissions
