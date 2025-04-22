@@ -224,12 +224,31 @@
     {
       "metadata": {
         "name": "alertingListViewV2",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2024-05-24T14:40:49Z"
+        "resourceVersion": "1744700823766",
+        "creationTimestamp": "2024-05-24T14:40:49Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-15 07:07:03.766981 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables the new alert list view design",
-        "stage": "experimental",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "alertingListViewV2PreviewToggle",
+        "resourceVersion": "1744700823766",
+        "creationTimestamp": "2025-04-14T13:28:02Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-15 07:07:03.766981 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the alerting list view v2 preview toggle",
+        "stage": "privatePreview",
         "codeowner": "@grafana/alerting-squad",
         "frontend": true
       }
