@@ -2737,6 +2737,436 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			},
 		},
 		{
+			name: "pull request event - opened",
+			config: &provisioning.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "opened",
+					"pull_request": {
+						"html_url": "https://github.com/grafana/grafana/pull/123",
+						"number": 123,
+						"head": {
+							"ref": "feature-branch",
+							"sha": "abcdef1234567890"
+						},
+						"base": {
+							"ref": "main"
+						}
+					},
+					"repository": {
+						"full_name": "grafana/grafana"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expected: &provisioning.WebhookResponse{
+				Code:    http.StatusAccepted,
+				Message: "pull request: opened",
+				Job: &provisioning.JobSpec{
+					Repository: "test-repo",
+					Action:     provisioning.JobActionPullRequest,
+					PullRequest: &provisioning.PullRequestJobOptions{
+						URL:  "https://github.com/grafana/grafana/pull/123",
+						PR:   123,
+						Ref:  "feature-branch",
+						Hash: "abcdef1234567890",
+					},
+				},
+			},
+		},
+		{
+			name: "pull request event - synchronize",
+			config: &provisioning.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-repo",
+				},
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "synchronize",
+					"pull_request": {
+						"html_url": "https://github.com/grafana/grafana/pull/123",
+						"number": 123,
+						"head": {
+							"ref": "feature-branch",
+							"sha": "abcdef1234567890"
+						},
+						"base": {
+							"ref": "main"
+						}
+					},
+					"repository": {
+						"full_name": "grafana/grafana"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expected: &provisioning.WebhookResponse{
+				Code:    http.StatusAccepted,
+				Message: "pull request: synchronize",
+				Job: &provisioning.JobSpec{
+					Repository: "test-repo",
+					Action:     provisioning.JobActionPullRequest,
+					PullRequest: &provisioning.PullRequestJobOptions{
+						URL:  "https://github.com/grafana/grafana/pull/123",
+						PR:   123,
+						Ref:  "feature-branch",
+						Hash: "abcdef1234567890",
+					},
+				},
+			},
+		},
+		{
+			name: "pull request event - wrong base branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "opened",
+					"pull_request": {
+						"html_url": "https://github.com/grafana/grafana/pull/123",
+						"number": 123,
+						"head": {
+							"ref": "feature-branch",
+							"sha": "abcdef1234567890"
+						},
+						"base": {
+							"ref": "develop"
+						}
+					},
+					"repository": {
+						"full_name": "grafana/grafana"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expected: &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: "ignoring pull request event as develop is not  the configured branch",
+			},
+		},
+		{
+			name: "pull request event - ignored action",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "closed",
+					"pull_request": {
+						"html_url": "https://github.com/grafana/grafana/pull/123",
+						"number": 123,
+						"head": {
+							"ref": "feature-branch",
+							"sha": "abcdef1234567890"
+						},
+						"base": {
+							"ref": "main"
+						}
+					},
+					"repository": {
+						"full_name": "grafana/grafana"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expected: &provisioning.WebhookResponse{
+				Code:    http.StatusOK,
+				Message: "ignore pull request event: closed",
+			},
+		},
+		{
+			name: "pull request event missing repository",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "opened",
+					"pull_request": {
+						"html_url": "https://github.com/grafana/grafana/pull/123",
+						"number": 123,
+						"head": {
+							"ref": "feature-branch",
+							"sha": "abcdef1234567890"
+						},
+						"base": {
+							"ref": "main"
+						}
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expectedError: fmt.Errorf("missing repository in pull request event"),
+		},
+		{
+			name: "pull request event with missing GitHub config",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					// GitHub config is intentionally missing
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "opened",
+					"pull_request": {
+						"html_url": "https://github.com/grafana/grafana/pull/123",
+						"number": 123,
+						"head": {
+							"ref": "feature-branch",
+							"sha": "abcdef1234567890"
+						},
+						"base": {
+							"ref": "main"
+						}
+					},
+					"repository": {
+						"full_name": "grafana/grafana"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expectedError: fmt.Errorf("missing GitHub config"),
+		},
+		{
+			name: "pull request event with repository mismatch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "opened",
+					"pull_request": {
+						"html_url": "https://github.com/different-owner/different-repo/pull/123",
+						"number": 123,
+						"head": {
+							"ref": "feature-branch",
+							"sha": "abcdef1234567890"
+						},
+						"base": {
+							"ref": "main"
+						}
+					},
+					"repository": {
+						"full_name": "different-owner/different-repo"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expectedError: fmt.Errorf("repository mismatch"),
+		},
+		{
+			name: "pull request event missing pull request info",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"action": "opened",
+					"repository": {
+						"full_name": "grafana/grafana"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "pull_request")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expectedError: fmt.Errorf("expected PR in event"),
+		},
+		{
 			name: "unsupported event type",
 			config: &provisioning.Repository{
 				Spec: provisioning.RepositorySpec{
@@ -2814,7 +3244,15 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 				if tt.expected.Job != nil {
 					require.NotNil(t, response.Job)
 					require.Equal(t, tt.expected.Job.Action, response.Job.Action)
-					require.Equal(t, tt.expected.Job.Pull.Incremental, response.Job.Pull.Incremental)
+					if tt.expected.Job.Pull != nil {
+						require.Equal(t, tt.expected.Job.Pull.Incremental, response.Job.Pull.Incremental)
+					}
+					if tt.expected.Job.PullRequest != nil {
+						require.Equal(t, tt.expected.Job.PullRequest.URL, response.Job.PullRequest.URL)
+						require.Equal(t, tt.expected.Job.PullRequest.PR, response.Job.PullRequest.PR)
+						require.Equal(t, tt.expected.Job.PullRequest.Ref, response.Job.PullRequest.Ref)
+						require.Equal(t, tt.expected.Job.PullRequest.Hash, response.Job.PullRequest.Hash)
+					}
 				} else {
 					require.Nil(t, response.Job)
 				}

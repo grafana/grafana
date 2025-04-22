@@ -588,7 +588,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}
 	cfg := r.config.Spec.GitHub
 	if cfg == nil {
-		return nil, fmt.Errorf("missing github config")
+		return nil, fmt.Errorf("missing GitHub config")
 	}
 
 	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
