@@ -34,7 +34,7 @@ const DurationInput = ({ filter, operators, updateFilter }: Props) => {
   }
 
   return (
-    <Stack gap={3}>
+    <Stack gap={0}>
       <Select
         className={styles.noBoxShadow}
         inputId={`${filter.id}-operator`}
