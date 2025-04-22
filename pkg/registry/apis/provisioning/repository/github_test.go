@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -934,14 +934,13 @@ func TestGitHubRepository_Read(t *testing.T) {
 			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
-					// For StatusError, check if the actual error is also a StatusError and compare specific fields
-					actualStatusErr, ok := err.(*apierrors.StatusError)
-					require.True(t, ok, "Expected StatusError but got different error type")
+				var statusErr *apierrors.StatusError
+				if errors.As(tt.expectedError, &statusErr) {
+					var actualStatusErr *apierrors.StatusError
+					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
 					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
 					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
 				} else {
-					// For other errors, compare error messages
 					require.Equal(t, tt.expectedError.Error(), err.Error())
 				}
 			} else {
@@ -1214,14 +1213,13 @@ func TestGitHubRepository_Create(t *testing.T) {
 			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
-					// For StatusError, check if the actual error is also a StatusError and compare specific fields
-					actualStatusErr, ok := err.(*apierrors.StatusError)
-					require.True(t, ok, "Expected StatusError but got different error type")
+				var statusErr *apierrors.StatusError
+				if errors.As(tt.expectedError, &statusErr) {
+					var actualStatusErr *apierrors.StatusError
+					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
 					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
 					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
 				} else {
-					// For other errors, compare error messages
 					require.Equal(t, tt.expectedError.Error(), err.Error())
 				}
 			} else {
@@ -1537,14 +1535,13 @@ func TestGitHubRepository_Update(t *testing.T) {
 			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
-					// For StatusError, check if the actual error is also a StatusError and compare specific fields
-					actualStatusErr, ok := err.(*apierrors.StatusError)
-					require.True(t, ok, "Expected StatusError but got different error type")
+				var statusErr *apierrors.StatusError
+				if errors.As(tt.expectedError, &statusErr) {
+					var actualStatusErr *apierrors.StatusError
+					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
 					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
 					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
 				} else {
-					// For other errors, compare error messages
 					require.Equal(t, tt.expectedError.Error(), err.Error())
 				}
 			} else {
@@ -3228,9 +3225,12 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			// Check the error
 			if tt.expectedError != nil {
 				require.Error(t, err)
-				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
-					require.Equal(t, statusErr.Status().Message, err.(*apierrors.StatusError).Status().Message)
-					require.Equal(t, statusErr.Status().Code, err.(*apierrors.StatusError).Status().Code)
+				var statusErr *apierrors.StatusError
+				if errors.As(tt.expectedError, &statusErr) {
+					var actualStatusErr *apierrors.StatusError
+					require.True(t, errors.As(err, &actualStatusErr), "Expected StatusError but got different error type")
+					require.Equal(t, statusErr.Status().Message, actualStatusErr.Status().Message)
+					require.Equal(t, statusErr.Status().Code, actualStatusErr.Status().Code)
 				} else {
 					require.Equal(t, tt.expectedError.Error(), err.Error())
 				}
