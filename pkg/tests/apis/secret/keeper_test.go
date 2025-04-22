@@ -267,6 +267,49 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.NotNil(t, keeperAWS)
 	})
 
+	t.Run("creating a keeper that references a securevalue that is stored in a 3rdparty Keeper returns an error", func(t *testing.T) {
+		// 0. Create user with required permissions.
+		permissions := map[string]ResourcePermission{
+			ResourceKeepers: {Actions: ActionsAllKeepers},
+			// needed for this test to create (and delete for cleanup) securevalues.
+			ResourceSecureValues: {
+				Actions: []string{
+					secret.ActionSecretSecureValuesCreate,
+					secret.ActionSecretSecureValuesDelete,
+				},
+			},
+		}
+
+		editor := mustCreateUsers(t, helper, permissions).Editor
+
+		// 1. Create a 3rdparty keeper.
+		keeperAWS := mustGenerateKeeper(t, helper, editor, nil, "testdata/keeper-aws-generate.yaml")
+
+		// 2. Create a secureValue that is stored in the previously created keeper (AWS).
+		secureValue := mustGenerateSecureValue(t, helper, editor, keeperAWS.GetName())
+
+		// 3. Create another 3rdparty keeper that uses the secureValue.
+		testDataKeeperAWS := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
+		testDataKeeperAWS.Object["spec"].(map[string]any)["aws"] = map[string]any{
+			"accessKeyId": map[string]any{
+				"secureValueName": secureValue.GetName(),
+			},
+			"secretAccessKey": map[string]any{
+				"secureValueName": secureValue.GetName(),
+			},
+		}
+
+		editorClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editor,
+			GVR:  gvrKeepers,
+		})
+
+		raw, err := editorClient.Resource.Create(ctx, testDataKeeperAWS, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, raw)
+		require.Contains(t, err.Error(), secureValue.GetName())
+	})
+
 	t.Run("creating keepers in multiple namespaces", func(t *testing.T) {
 		permissions := map[string]ResourcePermission{
 			ResourceKeepers: {Actions: ActionsAllKeepers},
