@@ -406,12 +406,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: "path not found",
-					Code:    http.StatusNotFound,
-				},
-			}
+			return nil, ErrFileNotFound
 		}
 
 		return nil, fmt.Errorf("get commits: %w", err)

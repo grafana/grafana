@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	mock "github.com/stretchr/testify/mock"
@@ -2077,6 +2078,312 @@ func TestGitHubRepository_Delete(t *testing.T) {
 				require.Equal(t, tt.expectedError.Error(), err.Error())
 			} else {
 				require.NoError(t, err)
+			}
+
+			// Verify all mock expectations were met
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_History(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        *provisioning.Repository
+		path          string
+		ref           string
+		mockSetup     func(t *testing.T, mockClient *pgh.MockClient)
+		expected      []provisioning.HistoryItem
+		expectedError error
+	}{
+		{
+			name: "successful history retrieval",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "main",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				commits := []pgh.Commit{
+					{
+						Ref:     "abc123",
+						Message: "Update dashboard",
+						Author: &pgh.CommitAuthor{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+						Committer: &pgh.CommitAuthor{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+					},
+					{
+						Ref:     "def456",
+						Message: "Initial commit",
+						Author: &pgh.CommitAuthor{
+							Name:      "Jane Smith",
+							Username:  "janesmith",
+							AvatarURL: "https://example.com/avatar2.png",
+						},
+						Committer: &pgh.CommitAuthor{
+							Name:      "Bob Johnson",
+							Username:  "bjohnson",
+							AvatarURL: "https://example.com/avatar3.png",
+						},
+						CreatedAt: time.Date(2022, 12, 31, 10, 0, 0, 0, time.UTC),
+					},
+				}
+
+				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "dashboard.json", "main").
+					Return(commits, nil)
+			},
+			expected: []provisioning.HistoryItem{
+				{
+					Ref:     "abc123",
+					Message: "Update dashboard",
+					Authors: []provisioning.Author{
+						{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
+				},
+				{
+					Ref:     "def456",
+					Message: "Initial commit",
+					Authors: []provisioning.Author{
+						{
+							Name:      "Jane Smith",
+							Username:  "janesmith",
+							AvatarURL: "https://example.com/avatar2.png",
+						},
+						{
+							Name:      "Bob Johnson",
+							Username:  "bjohnson",
+							AvatarURL: "https://example.com/avatar3.png",
+						},
+					},
+					CreatedAt: time.Date(2022, 12, 31, 10, 0, 0, 0, time.UTC).UnixMilli(),
+				},
+			},
+		},
+		{
+			name: "committer same as author",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "main",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				commits := []pgh.Commit{
+					{
+						Ref:     "abc123",
+						Message: "Update dashboard",
+						Author: &pgh.CommitAuthor{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+						Committer: &pgh.CommitAuthor{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+					},
+				}
+
+				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
+					Return(commits, nil)
+			},
+			expected: []provisioning.HistoryItem{
+				{
+					Ref:     "abc123",
+					Message: "Update dashboard",
+					Authors: []provisioning.Author{
+						{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
+				},
+			},
+		},
+		{
+			name: "file not found",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path: "nonexistent.json",
+			ref:  "main",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "grafana/nonexistent.json", "main").
+					Return(nil, pgh.ErrResourceNotFound)
+			},
+			expectedError: ErrFileNotFound,
+		},
+		{
+			name: "prefixed path",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "custom/prefix",
+						Branch: "main",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "main",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				commits := []pgh.Commit{
+					{
+						Ref:     "abc123",
+						Message: "Update dashboard",
+						Author: &pgh.CommitAuthor{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+					},
+				}
+
+				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "custom/prefix/dashboard.json", "main").
+					Return(commits, nil)
+			},
+			expected: []provisioning.HistoryItem{
+				{
+					Ref:     "abc123",
+					Message: "Update dashboard",
+					Authors: []provisioning.Author{
+						{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
+				},
+			},
+		},
+		{
+			name: "other error",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "main",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
+					Return(nil, errors.New("api error"))
+			},
+			expectedError: errors.New("get commits: api error"),
+		},
+		{
+			name: "use default branch when ref is empty",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path: "dashboard.json",
+			ref:  "",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				commits := []pgh.Commit{
+					{
+						Ref:     "abc123",
+						Message: "Update dashboard",
+						Author: &pgh.CommitAuthor{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+						CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC),
+					},
+				}
+
+				mockClient.EXPECT().Commits(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
+					Return(commits, nil)
+			},
+			expected: []provisioning.HistoryItem{
+				{
+					Ref:     "abc123",
+					Message: "Update dashboard",
+					Authors: []provisioning.Author{
+						{
+							Name:      "John Doe",
+							Username:  "johndoe",
+							AvatarURL: "https://example.com/avatar1.png",
+						},
+					},
+					CreatedAt: time.Date(2023, 1, 1, 12, 0, 0, 0, time.UTC).UnixMilli(),
+				},
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock GitHub client
+			mockClient := pgh.NewMockClient(t)
+
+			// Set up the mock expectations
+			if tt.mockSetup != nil {
+				tt.mockSetup(t, mockClient)
+			}
+
+			// Create a GitHub repository with the test config and mock client
+			repo := &githubRepository{
+				config: tt.config,
+				gh:     mockClient,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			// Call the History method
+			history, err := repo.History(context.Background(), tt.path, tt.ref)
+
+			// Check the error
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				if statusErr, ok := tt.expectedError.(*apierrors.StatusError); ok {
+					require.Equal(t, statusErr.Status().Message, err.(*apierrors.StatusError).Status().Message)
+					require.Equal(t, statusErr.Status().Code, err.(*apierrors.StatusError).Status().Code)
+				} else {
+					require.Equal(t, tt.expectedError.Error(), err.Error())
+				}
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expected, history)
 			}
 
 			// Verify all mock expectations were met
