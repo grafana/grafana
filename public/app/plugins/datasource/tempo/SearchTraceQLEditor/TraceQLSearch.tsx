@@ -185,7 +185,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
             label={'Duration'}
             tooltip="The trace or span duration, i.e. end - start time of the trace/span. Accepted units are ns, ms, s, m, h"
           >
-            <Stack gap={3}>
+            <Stack gap={0}>
               <Select
                 options={[
                   { label: 'span', value: 'span' },
