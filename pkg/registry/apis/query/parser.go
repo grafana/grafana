@@ -237,6 +237,18 @@ func (p *queryParser) getValidDataSourceRef(ctx context.Context, ds *data.DataSo
 		}
 		return p.legacy.GetDataSourceFromDeprecatedFields(ctx, "", id)
 	}
+
+	// we need to special-case the "grafana" data source
+	if ds.UID == "grafana" {
+		return &data.DataSourceRef{
+			// it does not really matter what `type` we set here,
+			// we will always detect this case by `uid` later.
+			// here we go with what the data source's plugin.json says.
+			Type: "grafana",
+			UID:  "grafana",
+		}, nil
+	}
+
 	if ds.Type == "" {
 		if ds.UID == "" {
 			return nil, fmt.Errorf("missing name/uid in data source reference")

@@ -5,8 +5,8 @@ go 1.24.2
 require (
 	cuelang.org/go v0.11.1
 	github.com/grafana/grafana-app-sdk v0.35.1
-	github.com/grafana/grafana-plugin-sdk-go v0.275.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250312121619-f64be062c432
+	github.com/grafana/grafana-plugin-sdk-go v0.277.0
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.32.3
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
@@ -81,9 +81,9 @@ require (
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/smartystreets/goconvey v1.6.4 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/unknwon/bra v0.0.0-20200517080246-1e3013ecaff8 // indirect
 	github.com/unknwon/com v1.0.1 // indirect
 	github.com/unknwon/log v0.0.0-20200308114134-929b1006e34a // indirect

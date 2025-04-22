@@ -12,6 +12,7 @@ import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
 
 import { getRecentDashboardActions } from './dashboardActions';
+import { getRecentScopesActions } from './recentScopesActions';
 import { useStaticActions } from './staticActions';
 import useExtensionActions from './useExtensionActions';
 
@@ -42,6 +43,11 @@ export function useRegisterRecentDashboardsActions(searchQuery: string) {
   }, [searchQuery]);
 
   useRegisterActions(recentDashboardActions, [recentDashboardActions]);
+}
+
+export function useRegisterRecentScopesActions() {
+  const recentScopesActions = getRecentScopesActions();
+  useRegisterActions(recentScopesActions, [recentScopesActions]);
 }
 
 /**

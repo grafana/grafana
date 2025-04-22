@@ -46,7 +46,7 @@ interface InputState {
 }
 
 const ERROR_MESSAGES = {
-  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "now"'),
+  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
   range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
 };
 

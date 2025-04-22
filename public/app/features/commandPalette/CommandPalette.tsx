@@ -17,6 +17,7 @@ import { ResultItem } from './ResultItem';
 import { useSearchResults } from './actions/dashboardActions';
 import {
   useRegisterRecentDashboardsActions,
+  useRegisterRecentScopesActions,
   useRegisterScopesActions,
   useRegisterStaticActions,
 } from './actions/useActions';
@@ -32,18 +33,23 @@ export function CommandPalette() {
   );
 }
 
+/**
+ * Actual contents of the command palette. As KBarPortal controls the mount of this component this is split so that
+ * we can run code only after command palette is opened.
+ * @constructor
+ */
 function CommandPaletteContents() {
   const lateralSpace = getCommandPalettePosition();
   const styles = useStyles2(getSearchStyles, lateralSpace);
 
-  const { query, showing, searchQuery, currentRootActionId, actions } = useKBar((state) => ({
+  const { query, showing, searchQuery, currentRootActionId } = useKBar((state) => ({
     showing: state.visualState === VisualState.showing,
     searchQuery: state.searchQuery,
     currentRootActionId: state.currentRootActionId,
-    actions: state.actions,
   }));
 
   useRegisterRecentDashboardsActions(searchQuery);
+  useRegisterRecentScopesActions();
 
   const queryToggle = useCallback(() => query.toggle(), [query]);
   const { scopesRow } = useRegisterScopesActions(searchQuery, queryToggle, currentRootActionId);
@@ -64,11 +70,7 @@ function CommandPaletteContents() {
     reportInteraction('command_palette_opened');
   }, []);
 
-  // To show breadcrumbs of actions selected if they are nested
-  const ancestorActions = currentRootActionId
-    ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
-    : [];
-
+  console.log('rerender');
   return (
     <KBarPositioner className={styles.positioner}>
       <KBarAnimator className={styles.animator}>
@@ -76,13 +78,7 @@ function CommandPaletteContents() {
           <div {...overlayProps} {...dialogProps}>
             <div className={styles.searchContainer}>
               <Icon name="search" size="md" className={styles.searchIcon} />
-              {ancestorActions.length > 0 && (
-                <span className={styles.breadcrumbs}>
-                  {ancestorActions.map((action, index) => (
-                    <React.Fragment key={action.id || index}>{action.name} / </React.Fragment>
-                  ))}
-                </span>
-              )}
+              <AncestorBreadcrumbs />
               <KBarSearch
                 defaultPlaceholder={t('command-palette.search-box.placeholder', 'Search or jump to...')}
                 className={styles.search}
@@ -99,6 +95,37 @@ function CommandPaletteContents() {
         </FocusScope>
       </KBarAnimator>
     </KBarPositioner>
+  );
+}
+
+/**
+ * Breadcrumbs for selected actions or categories in the command palette. This has to be a separate component
+ * from the one that is registering actions because we need actions prop from kbar and doing both in the same component
+ * creates rerender loop.
+ * @constructor
+ */
+function AncestorBreadcrumbs() {
+  const lateralSpace = getCommandPalettePosition();
+  const styles = useStyles2(getSearchStyles, lateralSpace);
+
+  const { actions, currentRootActionId } = useKBar((state) => ({
+    actions: state.actions,
+    currentRootActionId: state.currentRootActionId,
+  }));
+
+  // To show breadcrumbs of actions selected if they are nested
+  const ancestorActions = currentRootActionId
+    ? [...actions[currentRootActionId].ancestors, actions[currentRootActionId]]
+    : [];
+
+  return (
+    ancestorActions.length > 0 && (
+      <span className={styles.breadcrumbs}>
+        {ancestorActions.map((action, index) => (
+          <React.Fragment key={action.id || index}>{action.name} / </React.Fragment>
+        ))}
+      </span>
+    )
   );
 }
 
