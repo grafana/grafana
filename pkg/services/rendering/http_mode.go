@@ -30,7 +30,7 @@ var netClient = &http.Client{
 	Transport: otelhttp.NewTransport(netTransport),
 }
 
-const authTokenHeader = "X-Auth-Token"  //#nosec G101 -- This is a false positive
+const authTokenHeader = "X-Auth-Token"
 const rateLimiterHeader = "X-Tenant-ID"
 
 var (
