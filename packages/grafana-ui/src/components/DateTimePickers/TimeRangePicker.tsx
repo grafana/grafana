@@ -18,6 +18,7 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { config } from '../../../../../public/app/core/config';
 import { formatDate, formatRange } from '../../../../../public/app/core/internationalization/dates';
+import { DATE_TIME_LOCALE_OPTIONS } from '../../../../../public/app/core/internationalization/locales';
 import { useStyles2 } from '../../themes/ThemeContext';
 import { t, Trans } from '../../utils/i18n';
 import { ButtonGroup } from '../Button';
@@ -244,22 +245,14 @@ const ZoomOutTooltip = () => (
 );
 
 const isLocaleFormatEnabled = config.featureToggles.localeFormatPreference;
-const localeOptions: Intl.DateTimeFormatOptions = {
-  day: '2-digit',
-  month: '2-digit',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-};
 export const TimePickerTooltip = ({ timeRange, timeZone }: { timeRange: TimeRange; timeZone?: TimeZone }) => {
   const styles = useStyles2(getLabelStyles);
 
   const from = dateTimeFormat(timeRange.from, { timeZone });
   const to = dateTimeFormat(timeRange.to, { timeZone });
 
-  const currentFrom = isLocaleFormatEnable ? formatDate(from, localeOptions) : from;
-  const currentTo = isLocaleFormatEnable ? formatDate(to, localeOptions) : to;
+  const currentFrom = isLocaleFormatEnabled ? formatDate(from, DATE_TIME_LOCALE_OPTIONS) : from;
+  const currentTo = isLocaleFormatEnabled ? formatDate(to, DATE_TIME_LOCALE_OPTIONS) : to;
 
   return (
     <>
@@ -300,7 +293,7 @@ const formattedRange = (value: TimeRange, timeZone?: TimeZone, quickRanges?: Tim
     from: dateMath.isMathString(value.raw.from) ? value.raw.from : value.from,
   };
   const describeTimeRange = rangeUtil.describeTimeRange(adjustedTimeRange, timeZone, quickRanges);
-  const formattedRange = isLocaleFormatEnable ? formatRange(describeTimeRange, localeOptions) : describeTimeRange;
+  const formattedRange = isLocaleFormatEnabled ? formatRange(describeTimeRange, DATE_TIME_LOCALE_OPTIONS) : describeTimeRange;
   return formattedRange;
 };
 

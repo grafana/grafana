@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { GrafanaTheme2, TimeOption } from '@grafana/data';
 
 import { formatRange } from '../../../../../../public/app/core/internationalization/dates';
+import { DATE_TIME_LOCALE_OPTIONS } from '../../../../../../public/app/core/internationalization/locales';
 import { config } from '../../../../../grafana-runtime';
 import { useStyles2 } from '../../../themes/ThemeContext';
 import { getFocusStyles } from '../../../themes/mixins';
@@ -66,16 +67,8 @@ export const TimeRangeOption = memo<Props>(({ value, onSelect, selected = false,
   const styles = useStyles2(getStyles);
   // In case there are more of the same timerange in the list
   const id = uuidv4();
-  const isLocaleFormatEnable = config.featureToggles.localeFormatPreference;
-  const localeOptions: Intl.DateTimeFormatOptions = {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  };
-  const formattedRange = isLocaleFormatEnable ? formatRange(value.display, localeOptions) : value.display;
+  const isLocaleFormatEnabled = config.featureToggles.localeFormatPreference;
+  const formattedRange = isLocaleFormatEnabled ? formatRange(value.display, DATE_TIME_LOCALE_OPTIONS) : value.display;
 
   return (
     <li className={styles.container}>

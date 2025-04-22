@@ -144,3 +144,14 @@ export const LOCALES: Locale[] = [
   { name: 'Chinese (Taiwan)', code: 'zh-tw' }, // TODO translate
   { name: 'Èdè Yorùbá', code: 'yo-ng' },
 ];
+
+
+// Options for locale date formatting
+export const DATE_TIME_LOCALE_OPTIONS: Intl.DateTimeFormatOptions = {
+  day: '2-digit',
+  month: '2-digit',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+};
