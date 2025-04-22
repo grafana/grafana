@@ -9,6 +9,7 @@ import (
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 )
 
 func RegisterConversions(s *runtime.Scheme) error {
@@ -143,6 +144,13 @@ func Convert_V1_to_V2(in *dashv1.Dashboard, out *dashv2.Dashboard, scope convers
 func Convert_V2_to_V0(in *dashv2.Dashboard, out *dashv0.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
 
+	// Copy the unstructured parts to V0
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&in.Spec)
+	if err != nil {
+		return err
+	}
+	out.Spec = v0alpha1.Unstructured{Object: obj}
+
 	// TODO: implement V2 to V0 conversion
 
 	out.Status = dashv0.DashboardStatus{
@@ -158,6 +166,13 @@ func Convert_V2_to_V0(in *dashv2.Dashboard, out *dashv0.Dashboard, scope convers
 
 func Convert_V2_to_V1(in *dashv2.Dashboard, out *dashv1.Dashboard, scope conversion.Scope) error {
 	out.ObjectMeta = in.ObjectMeta
+
+	// Copy the unstructured parts to V0
+	obj, err := runtime.DefaultUnstructuredConverter.ToUnstructured(&in.Spec)
+	if err != nil {
+		return err
+	}
+	out.Spec = v0alpha1.Unstructured{Object: obj}
 
 	// TODO: implement V2 to V1 conversion
 

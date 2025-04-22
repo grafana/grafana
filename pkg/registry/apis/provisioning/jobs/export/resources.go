@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
@@ -38,6 +39,12 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 
 func exportResource(ctx context.Context, options provisioning.ExportJobOptions, client dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
+		// When requesting v2 (or v0) dashboards over the v1 api, we want to keep the original format
+		storedVersion, ok, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+		if ok && strings.HasPrefix(item.GetAPIVersion(), resources.DashboardResource.Group) {
+			item.SetAPIVersion(fmt.Sprintf("%s/%s", resources.DashboardResource.Group, storedVersion))
+		}
+
 		fileName, err := repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 			Path: options.Path,
 			Ref:  options.Branch,
