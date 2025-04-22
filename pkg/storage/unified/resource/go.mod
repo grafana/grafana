@@ -4,6 +4,7 @@ go 1.24.2
 
 replace (
 	github.com/grafana/grafana/apps/folder => ../../../../apps/folder
+	github.com/grafana/grafana/apps/dashboard => ../../../../apps/dashboard
 	github.com/grafana/grafana/pkg/apimachinery => ../../../apimachinery
 	github.com/grafana/grafana/pkg/apiserver => ../../../apiserver
 )
@@ -17,9 +18,9 @@ require (
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040
 	github.com/grafana/grafana-app-sdk/logging v0.35.1
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250317130411-3f270d1de043
-	github.com/grafana/grafana/apps/folder v0.0.0-20250402082028-6781612335d9
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/apps/folder v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.1
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3
 	github.com/hashicorp/golang-lru/v2 v2.0.7
