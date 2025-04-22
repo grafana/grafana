@@ -25,6 +25,78 @@ export interface Props {
   unmountContentWhenClosed?: boolean;
 }
 
+export const UncontrolledCollapsableSection = ({
+  isOpen,
+  labelId,
+  label,
+  contentClassName,
+  children,
+  contentDataTestId,
+  onToggle,
+  loading,
+  headerDataTestId,
+  className,
+  unmountContentWhenClosed,
+}: Omit<Props, 'onToggle'> & { onToggle: () => void }) => {
+  const styles = useStyles2(collapsableSectionStyles);
+
+  const { current: id } = useRef(uniqueId());
+
+  const buttonLabelId = labelId ?? `collapse-label-${id}`;
+
+  const content = (
+    <div
+      id={`collapse-content-${id}`}
+      className={cx(styles.content, contentClassName, {
+        [styles.contentHidden]: !isOpen && !unmountContentWhenClosed,
+      })}
+      data-testid={contentDataTestId}
+    >
+      {children}
+    </div>
+  );
+
+  const onClick = (e: React.MouseEvent) => {
+    if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    onToggle?.();
+  };
+
+  return (
+    <>
+      {/* disabling the a11y rules here as the button handles keyboard interactions */}
+      {/* this is just to provide a better experience for mouse users */}
+      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+      <div onClick={onClick} className={cx(styles.header, className)}>
+        <button
+          type="button"
+          id={`collapse-button-${id}`}
+          className={styles.button}
+          onClick={onClick}
+          aria-expanded={isOpen && !loading}
+          aria-controls={`collapse-content-${id}`}
+          aria-labelledby={buttonLabelId}
+        >
+          {loading ? (
+            <Spinner className={styles.spinner} />
+          ) : (
+            <Icon name={isOpen ? 'angle-up' : 'angle-down'} className={styles.icon} />
+          )}
+        </button>
+        <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
+          {label}
+        </div>
+      </div>
+      {unmountContentWhenClosed ? isOpen && content : content}
+    </>
+  );
+};
+
 export const CollapsableSection = ({
   label,
   isOpen,
@@ -39,62 +111,26 @@ export const CollapsableSection = ({
   unmountContentWhenClosed = true,
 }: Props) => {
   const [open, toggleOpen] = useState<boolean>(isOpen);
-  const styles = useStyles2(collapsableSectionStyles);
 
-  const onClick = (e: React.MouseEvent) => {
-    if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
-      return;
-    }
-
-    e.preventDefault();
-    e.stopPropagation();
-
+  const onClick = () => {
     onToggle?.(!open);
     toggleOpen(!open);
   };
-  const { current: id } = useRef(uniqueId());
-
-  const buttonLabelId = labelId ?? `collapse-label-${id}`;
-
-  const content = (
-    <div
-      id={`collapse-content-${id}`}
-      className={cx(styles.content, contentClassName, {
-        [styles.contentHidden]: !open && !unmountContentWhenClosed,
-      })}
-      data-testid={contentDataTestId}
-    >
-      {children}
-    </div>
-  );
 
   return (
-    <>
-      {/* disabling the a11y rules here as the button handles keyboard interactions */}
-      {/* this is just to provide a better experience for mouse users */}
-      {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
-      <div onClick={onClick} className={cx(styles.header, className)}>
-        <button
-          type="button"
-          id={`collapse-button-${id}`}
-          className={styles.button}
-          onClick={onClick}
-          aria-expanded={open && !loading}
-          aria-controls={`collapse-content-${id}`}
-          aria-labelledby={buttonLabelId}
-        >
-          {loading ? (
-            <Spinner className={styles.spinner} />
-          ) : (
-            <Icon name={open ? 'angle-up' : 'angle-down'} className={styles.icon} />
-          )}
-        </button>
-        <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
-          {label}
-        </div>
-      </div>
-      {unmountContentWhenClosed ? open && content : content}
-    </>
+    <UncontrolledCollapsableSection
+      isOpen={open}
+      onToggle={onClick}
+      label={label}
+      labelId={labelId}
+      contentClassName={contentClassName}
+      children={children}
+      contentDataTestId={contentDataTestId}
+      headerDataTestId={headerDataTestId}
+      className={className}
+      unmountContentWhenClosed={unmountContentWhenClosed}
+      loading={loading}
+    />
   );
 };
 
