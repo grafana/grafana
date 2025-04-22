@@ -2562,6 +2562,9 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		{
 			name: "push event for main branch",
 			config: &provisioning.Repository{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-repo",
+				},
 				Spec: provisioning.RepositorySpec{
 					GitHub: &provisioning.GitHubRepositoryConfig{
 						Branch: "main",
@@ -2603,12 +2606,134 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 			expected: &provisioning.WebhookResponse{
 				Code: http.StatusAccepted,
 				Job: &provisioning.JobSpec{
-					Repository: "",
+					Repository: "test-repo",
 					Action:     provisioning.JobActionPull,
 					Pull: &provisioning.SyncJobOptions{
 						Incremental: true,
 					},
 				},
+			},
+		},
+		{
+			name: "push event with missing repository",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"ref": "refs/heads/main"
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "push")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expectedError: fmt.Errorf("missing repository in push event"),
+		},
+		{
+			name: "push event with repository mismatch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"ref": "refs/heads/main",
+					"repository": {
+						"full_name": "different-owner/different-repo"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "push")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expectedError: fmt.Errorf("repository mismatch"),
+		},
+		{
+			name: "push event when sync is disabled",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+					Sync: provisioning.SyncOptions{
+						Enabled: false,
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						EncryptedSecret: []byte("encrypted-secret"),
+					},
+				},
+			},
+			webhookSecret: "webhook-secret",
+			setupRequest: func() *http.Request {
+				payload := `{
+					"ref": "refs/heads/main",
+					"repository": {
+						"full_name": "grafana/grafana"
+					}
+				}`
+				req, _ := http.NewRequest("POST", "/webhook", strings.NewReader(payload))
+				req.Header.Set("X-GitHub-Event", "push")
+				req.Header.Set("Content-Type", "application/json")
+
+				// Create a valid signature
+				mac := hmac.New(sha1.New, []byte("webhook-secret"))
+				mac.Write([]byte(payload))
+				signature := hex.EncodeToString(mac.Sum(nil))
+				req.Header.Set("X-Hub-Signature", "sha1="+signature)
+
+				return req
+			},
+			mockSetup: func(t *testing.T, mockSecrets *secrets.MockService) {
+				mockSecrets.EXPECT().Decrypt(mock.Anything, []byte("encrypted-secret")).
+					Return([]byte("webhook-secret"), nil)
+			},
+			expected: &provisioning.WebhookResponse{
+				Code: http.StatusOK,
 			},
 		},
 		{
