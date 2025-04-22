@@ -301,6 +301,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": "Active timings"
+    },
     "add-button": {
       "add-more": "Add more"
     },
@@ -561,6 +564,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Add matcher",
+      "am-active-timing-select-label-active-timings": "Active timings",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "Add active timing to policy",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Add mute timing to policy",
       "am-mute-timing-select-label-mute-timings": "Mute timings",
       "aria-label-group-by": "Group by",
@@ -1415,6 +1420,7 @@
       "title-delete-mute-timing": "Delete mute timing"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "Select a time interval to define when not to send notifications for this alert rule",
       "am-mute-timing-select-description-mute-timings": "Select a mute timing to define when not to send notifications for this alert rule",
       "am-mute-timing-select-label-mute-timings": "Mute timings"
     },
@@ -1459,8 +1465,8 @@
       "saving": "Saving mute timing"
     },
     "mute-timings-selector": {
-      "aria-label-mute-timings": "Mute timings",
-      "placeholder-select-mute-timings": "Select mute timings..."
+      "aria-label-mute-timings": "Time intervals",
+      "placeholder-select-mute-timings": "Select time intervals..."
     },
     "mute-timings-table": {
       "text-havent-created-timings": "You haven't created any mute timings yet",
