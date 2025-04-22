@@ -141,6 +141,7 @@ func (r *githubClient) GetTree(ctx context.Context, owner, repository, basePath,
 				if currentRef != ref {
 					// We're operating with a subpath which doesn't exist yet.
 					// Pretend as if there is simply no files.
+					// FIXME: why should we pretend this?
 					return nil, false, nil
 				}
 				// currentRef == ref

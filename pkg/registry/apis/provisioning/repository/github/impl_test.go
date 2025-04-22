@@ -569,6 +569,113 @@ func TestGithubClient_GetTree(t *testing.T) {
 			wantErr:    nil,
 		},
 		{
+			name: "subpath not found should pretend is empty",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						// First request for the root tree
+						if !strings.Contains(r.URL.Path, "nonexistentsha") {
+							tree := &github.Tree{
+								SHA: github.Ptr("rootsha"),
+								Entries: []*github.TreeEntry{
+									{
+										Path: github.Ptr("nonexistent"),
+										Mode: github.Ptr("040000"),
+										Type: github.Ptr("tree"),
+										SHA:  github.Ptr("nonexistentsha"),
+									},
+								},
+								Truncated: github.Ptr(false),
+							}
+							w.WriteHeader(http.StatusOK)
+							require.NoError(t, json.NewEncoder(w).Encode(tree))
+						} else {
+							// Second request for the nonexistent subtree returns 404
+							w.WriteHeader(http.StatusNotFound)
+							require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+								Response: &http.Response{
+									StatusCode: http.StatusNotFound,
+								},
+								Message: "Not Found",
+							}))
+						}
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "nonexistent",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    nil,
+		},
+		{
+			name: "get tree fails with service unavailable",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						w.WriteHeader(http.StatusServiceUnavailable)
+						require.NoError(t, json.NewEncoder(w).Encode(github.ErrorResponse{
+							Response: &http.Response{
+								StatusCode: http.StatusServiceUnavailable,
+							},
+							Message: "Service unavailable",
+						}))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    ErrServiceUnavailable,
+		},
+		{
+			name: "tree contains too many items",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// Create more entries than the maxTreeItems limit
+						entries := make([]*github.TreeEntry, maxTreeItems+1)
+						for i := 0; i < maxTreeItems+1; i++ {
+							entries[i] = &github.TreeEntry{
+								Path: github.Ptr(fmt.Sprintf("file%d.txt", i+1)),
+								Mode: github.Ptr("100644"),
+								Type: github.Ptr("blob"),
+								Size: github.Ptr(12),
+								SHA:  github.Ptr(fmt.Sprintf("sha%d", i+1)),
+							}
+						}
+
+						tree := &github.Tree{
+							SHA:       github.Ptr("abc123"),
+							Entries:   entries,
+							Truncated: github.Ptr(false),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(tree))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    fmt.Errorf("tree contains too many items (more than %d)", maxTreeItems),
+		},
+
+		{
 			name: "tree is truncated with recursive mode",
 			mockHandler: mockhub.NewMockedHTTPClient(
 				mockhub.WithRequestMatchHandler(
@@ -686,6 +793,46 @@ func TestGithubClient_GetTree(t *testing.T) {
 			wantItems:  0,
 			wantTrunc:  false,
 			wantErr:    fmt.Errorf("tree contains too many items (more than 10000)"),
+		},
+		{
+			name: "folder not found in tree",
+			mockHandler: mockhub.NewMockedHTTPClient(
+				mockhub.WithRequestMatchHandler(
+					mockhub.GetReposGitTreesByOwnerByRepoByTreeSha,
+					http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+						// Return a tree that doesn't contain the requested folder
+						tree := &github.Tree{
+							SHA: github.Ptr("rootsha"),
+							Entries: []*github.TreeEntry{
+								{
+									Path: github.Ptr("other-folder"),
+									Mode: github.Ptr("040000"),
+									Type: github.Ptr("tree"),
+									SHA:  github.Ptr("othersha"),
+								},
+								{
+									Path: github.Ptr("file.txt"),
+									Mode: github.Ptr("100644"),
+									Type: github.Ptr("blob"),
+									Size: github.Ptr(12),
+									SHA:  github.Ptr("filesha"),
+								},
+							},
+							Truncated: github.Ptr(false),
+						}
+						w.WriteHeader(http.StatusOK)
+						require.NoError(t, json.NewEncoder(w).Encode(tree))
+					}),
+				),
+			),
+			owner:      "test-owner",
+			repository: "test-repo",
+			basePath:   "non-existent-folder/subpath",
+			ref:        "main",
+			recursive:  false,
+			wantItems:  0,
+			wantTrunc:  false,
+			wantErr:    nil,
 		},
 	}
 
