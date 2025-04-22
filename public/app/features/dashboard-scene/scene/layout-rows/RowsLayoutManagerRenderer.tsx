@@ -103,10 +103,26 @@ function RepeatingRow({
 
     // Loop through variable values and create repeats
     for (let rowIndex = 0; rowIndex < variableValues.length; rowIndex++) {
-      const isSourceRow = rowIndex === 0;
+      if (rowIndex === 0) {
+        row.setState({
+          $variables: new SceneVariableSet({
+            variables: [
+              new LocalValueVariable({
+                name: variable.state.name,
+                value: variableValues[rowIndex],
+                text: String(variableTexts[rowIndex]),
+                isMulti: variable.state.isMulti,
+                includeAll: variable.state.includeAll,
+              }),
+            ],
+          }),
+        });
+        continue;
+      }
+
       const rowClone = row.clone({ repeatByVariable: undefined, repeatedRows: undefined });
       const rowCloneKey = getCloneKey(row.state.key!, rowIndex);
-      const rowContentClone = row.state.layout.cloneLayout?.(rowCloneKey, isSourceRow);
+      const rowContentClone = row.state.layout.cloneLayout?.(rowCloneKey, false);
 
       rowClone.setState({
         key: rowCloneKey,
@@ -130,7 +146,12 @@ function RepeatingRow({
     row.setState({ repeatedRows: clonedRows });
   }, [value, variable, row]);
 
-  return <>{repeatedRows?.map((rowClone) => <rowClone.Component model={rowClone} key={row.state.key!} />)}</>;
+  return (
+    <>
+      <row.Component model={row} key={row.state.key!} />
+      {repeatedRows?.map((rowClone) => <rowClone.Component model={rowClone} key={row.state.key!} />)}
+    </>
+  );
 }
 
 function getStyles(theme: GrafanaTheme2) {
