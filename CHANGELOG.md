@@ -14,7 +14,6 @@
 - **Service Accounts:** Do not show error pop-ups for Service Account and Renderer UI flows [#101795](https://github.com/grafana/grafana/pull/101795), [@IevaVasiljeva](https://github.com/IevaVasiljeva)
 - **Security:** Fix CVE-2025-3454
 - **Security:** Fix CVE-2025-2703
-- **Security:** Fix CVE-2025-3260
 
 <!-- 11.2.8+security-01 END -->
 <!-- 10.4.17+security-01 START -->
