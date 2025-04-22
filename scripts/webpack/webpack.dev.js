@@ -24,8 +24,6 @@ const esbuildOptions = {
 };
 
 const fs = require('fs');
-const { get } = require('jquery');
-const { isConstructorDeclaration } = require('typescript');
 
 // To speed up webpack and prevent unnecessary rebuilds we ignore decoupled packages
 function getDecoupledPlugins() {
