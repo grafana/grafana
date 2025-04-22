@@ -232,11 +232,14 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 	if err != nil {
 		return fmt.Errorf("deleting row: %w", err)
 	}
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("getting rows affected: %w", err)
 	}
-	if rowsAffected != 1 {
+	if rowsAffected == 0 {
+		return contracts.ErrKeeperNotFound
+	} else if rowsAffected != 1 {
 		return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, name, namespace)
 	}
 
