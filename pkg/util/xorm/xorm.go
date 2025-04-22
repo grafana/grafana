@@ -11,6 +11,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"math/rand"
 	"os"
 	"reflect"
 	"runtime"
@@ -95,6 +96,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		tagHandlers:     defaultTagHandlers,
 		defaultContext:  context.Background(),
 		timestampFormat: "2006-01-02 15:04:05",
+		snowflake:       newSnowflake(rand.Int63n(1024)),
 	}
 
 	switch uri.DbType {

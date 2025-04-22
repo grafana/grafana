@@ -7,10 +7,14 @@ package xorm
 import (
 	"errors"
 	"fmt"
+	"log"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
@@ -306,13 +310,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 
 	// If engine has a sequence number generator, use it to produce values for auto-increment columns.
 	if len(table.AutoIncrement) > 0 && session.engine.sequenceGenerator != nil {
-		var found bool
-		for _, col := range colNames {
-			if col == table.AutoIncrement {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(colNames, table.AutoIncrement)
 		if !found {
 			seq, err := session.engine.sequenceGenerator.Next(session.ctx, table.Name, table.AutoIncrement)
 			if err != nil {
@@ -321,6 +319,15 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 
 			colNames = append(colNames, table.AutoIncrement)
 			args = append(args, seq)
+		}
+	} else if len(table.Snowflake) > 0 {
+		found := slices.Contains(colNames, table.AutoIncrement)
+		log.Println("found", found)
+		if !found {
+			id := session.engine.snowflake.Generate()
+			colNames = append(colNames, table.Snowflake)
+			args = append(args, id)
+			log.Println("found", id, args, colNames)
 		}
 	}
 
@@ -779,4 +786,35 @@ func (session *Session) insertMap(columns []string, args []any) (int64, error) {
 		return 0, err
 	}
 	return affected, nil
+}
+
+type snowflake struct {
+	mu       sync.Mutex
+	nodeID   int64
+	sequence int64
+	lastTime int64
+}
+
+// NewSnowflake creates a new instance with a random node ID (0-1023)
+const snowflakeEpoch = 1288834974657       // 2010-11-04 01:42:54.657 UTC
+func newSnowflake(nodeID int64) *snowflake { return &snowflake{nodeID: nodeID & 0x3ff} }
+
+func (s *snowflake) Generate() int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	currentTime := time.Now().UnixMilli() - snowflakeEpoch
+	if currentTime == s.lastTime {
+		s.sequence = (s.sequence + 1) & 4095
+		if s.sequence == 0 {
+			for currentTime <= s.lastTime {
+				time.Sleep(time.Millisecond)
+				currentTime = time.Now().UnixMilli() - snowflakeEpoch
+			}
+		}
+	} else {
+		s.sequence = 0
+	}
+	s.lastTime = currentTime
+	id := (currentTime << 22) | (s.nodeID << 12) | s.sequence
+	return id
 }

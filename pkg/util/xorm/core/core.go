@@ -1581,6 +1581,7 @@ type Table struct {
 	Indexes       map[string]*Index
 	PrimaryKeys   []string
 	AutoIncrement string
+	Snowflake     string
 	Created       map[string]bool
 	Updated       string
 	Deleted       string
@@ -1695,6 +1696,9 @@ func (table *Table) AddColumn(col *Column) {
 	}
 	if col.IsAutoIncrement {
 		table.AutoIncrement = col.Name
+	}
+	if col.IsSnowflakeID {
+		table.Snowflake = col.Name
 	}
 	if col.IsCreated {
 		table.Created[col.Name] = true
