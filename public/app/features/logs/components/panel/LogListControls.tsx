@@ -345,7 +345,6 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 <IconButton
                   name="download-alt"
                   className={styles.controlButton}
-                  aria-pressed={wrapLogMessage}
                   tooltip={t('logs.logs-controls.download', 'Download logs')}
                   size="lg"
                 />
