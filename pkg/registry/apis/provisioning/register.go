@@ -71,9 +71,6 @@ var (
 	_ builder.APIGroupRouteProvider         = (*APIBuilder)(nil)
 	_ builder.APIGroupPostStartHookProvider = (*APIBuilder)(nil)
 	_ builder.OpenAPIPostProcessor          = (*APIBuilder)(nil)
-
-	// For now max 15min jobs
-	jobTimeout = 15 * time.Minute
 )
 
 type APIBuilder struct {
@@ -333,7 +330,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
-	b.jobs, err = jobs.NewJobStore(realJobStore, jobTimeout)
+	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -587,9 +584,9 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
 			driver, err := jobs.NewJobDriver(
-				jobTimeout,                  // Max time for each job
-				jobTimeout+(30*time.Second), // Cleanup any checked out jobs
-				time.Second*30,              // Periodically look for new jobs
+				time.Minute*20, // Max time for each job
+				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				time.Second*30, // Periodically look for new jobs
 				b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
 			if err != nil {
