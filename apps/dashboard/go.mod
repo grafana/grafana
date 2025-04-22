@@ -6,7 +6,7 @@ require (
 	cuelang.org/go v0.11.1
 	github.com/grafana/grafana-app-sdk v0.35.1
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.32.3
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
