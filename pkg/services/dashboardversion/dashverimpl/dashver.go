@@ -389,6 +389,7 @@ func (s *Service) unstructuredToLegacyDashboardVersionWithUsers(item *unstructur
 		Version:       int(dashVersion),
 		ParentVersion: int(parentVersion),
 		Data:          simplejson.NewFromAny(spec),
+		TrialBlob:     obj.GetBlob(),
 	}, nil
 }
 

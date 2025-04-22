@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -85,6 +86,7 @@ type DashboardVersionDTO struct {
 	CreatedBy     int64            `json:"createdBy"`
 	Message       string           `json:"message"`
 	Data          *simplejson.Json `json:"data" db:"data"`
+	TrialBlob     *utils.BlobInfo  `json:"trialBlob"`
 }
 
 // DashboardVersionMeta extends the DashboardVersionDTO with the names

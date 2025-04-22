@@ -213,6 +213,7 @@ type SaveDashboardCommand struct {
 	IsFolder  bool   `json:"isFolder"`
 
 	UpdatedAt time.Time
+	TrialBlob *utils.BlobInfo `json:"trialBlob"`
 }
 
 type RestoreDeletedDashboardCommand struct {
@@ -306,6 +307,7 @@ type SaveDashboardDTO struct {
 	Message   string
 	Overwrite bool
 	Dashboard *Dashboard
+	TrialBlob *utils.BlobInfo `json:"trialBlob"`
 }
 
 type DashboardSearchProjection struct {

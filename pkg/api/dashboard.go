@@ -505,6 +505,7 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		OrgID:     c.SignedInUser.GetOrgID(),
 		User:      c.SignedInUser,
 		Overwrite: cmd.Overwrite,
+		TrialBlob: cmd.TrialBlob,
 	}
 
 	dashboard, saveErr := hs.DashboardService.SaveDashboard(ctx, dashItem, allowUiUpdate)
@@ -1038,6 +1039,7 @@ func (hs *HTTPServer) RestoreDashboardVersion(c *contextmodel.ReqContext) respon
 	saveCmd.FolderID = dash.FolderID
 	metrics.MFolderIDsAPICount.WithLabelValues(metrics.RestoreDashboardVersion).Inc()
 	saveCmd.FolderUID = dash.FolderUID
+	saveCmd.TrialBlob = version.TrialBlob
 
 	return hs.postDashboard(c, saveCmd)
 }

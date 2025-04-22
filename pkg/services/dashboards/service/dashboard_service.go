@@ -757,6 +757,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 		FolderUID: dash.FolderUID,
 		IsFolder:  dash.IsFolder,
 		PluginID:  dash.PluginID,
+		TrialBlob: dto.TrialBlob,
 	}
 
 	if !dto.UpdatedAt.IsZero() {
@@ -2362,6 +2363,10 @@ func LegacySaveCommandToUnstructured(cmd *dashboards.SaveDashboardCommand, names
 
 	if cmd.Message != "" {
 		meta.SetMessage(cmd.Message)
+	}
+
+	if cmd.TrialBlob != nil {
+		meta.SetBlob(cmd.TrialBlob)
 	}
 
 	return finalObj, nil

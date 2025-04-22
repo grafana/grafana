@@ -562,7 +562,7 @@ func (s *Storage) GuaranteedUpdate(
 
 		// restore the full original object before tryUpdate
 		if s.opts.LargeObjectSupport != nil && existing.GetBlob() != nil {
-			err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, existing)
+			err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, existing, false)
 			if err != nil {
 				return err
 			}
@@ -578,7 +578,8 @@ func (s *Storage) GuaranteedUpdate(
 		break
 	}
 
-	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
+	// #TODO: propagate "isRestore" more
+	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj, "", true)
 	if err != nil {
 		return err
 	}
