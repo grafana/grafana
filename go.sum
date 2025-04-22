@@ -1631,8 +1631,8 @@ github.com/grafana/prometheus-alertmanager v0.25.1-0.20250417181314-6d0f5436a1fb
 github.com/grafana/prometheus-alertmanager v0.25.1-0.20250417181314-6d0f5436a1fb/go.mod h1:FGdGvhI40Dq+CTQaSzK9evuve774cgOUdGfVO04OXkw=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8/go.mod h1:2+l7K7twW49Ct4wFluZD3tZ6e0SjanjcUUBPVD/UuGU=
-github.com/grafana/pyroscope/api v1.2.1-0.20250407234737-7655d6b3113a h1:4DgdsjKtC2RAXhSuNAGHsHpprc9i9Vl+yFOfDVA23DU=
-github.com/grafana/pyroscope/api v1.2.1-0.20250407234737-7655d6b3113a/go.mod h1:6CJ1uXmLZ13ufpO9xE4pST+DyaBt0uszzrV0YnoaVLQ=
+github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae h1:35W3Wjp9KWnSoV/DuymmyIj5aHE0CYlDQ5m2KeXUPAc=
+github.com/grafana/pyroscope/api v1.2.1-0.20250415190842-3ff7247547ae/go.mod h1:6CJ1uXmLZ13ufpO9xE4pST+DyaBt0uszzrV0YnoaVLQ=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc h1:GN2Lv3MGO7AS6PrRoT6yV5+wkrOpcszoIsO4+4ds248=
 github.com/grafana/regexp v0.0.0-20240518133315-a468a5bfb3bc/go.mod h1:+JKpmjMGhpgPL+rXZ5nsZieVzvarn86asRlBg4uNGnk=
 github.com/grafana/saml v0.4.15-0.20240917091248-ae3bbdad8a56 h1:SDGrP81Vcd102L3UJEryRd1eestRw73wt+b8vnVEFe0=
