@@ -34,8 +34,6 @@ type tagHandler func(ctx *tagContext) error
 var (
 	// defaultTagHandlers enumerates all the default tag handler
 	defaultTagHandlers = map[string]tagHandler{
-		"<-":       OnlyFromDBTagHandler,
-		"->":       OnlyToDBTagHandler,
 		"PK":       PKTagHandler,
 		"NULL":     NULLTagHandler,
 		"NOT":      IgnoreTagHandler,
@@ -62,18 +60,6 @@ func init() {
 
 // IgnoreTagHandler describes ignored tag handler
 func IgnoreTagHandler(ctx *tagContext) error {
-	return nil
-}
-
-// OnlyFromDBTagHandler describes mapping direction tag handler
-func OnlyFromDBTagHandler(ctx *tagContext) error {
-	ctx.col.MapType = core.ONLYFROMDB
-	return nil
-}
-
-// OnlyToDBTagHandler describes mapping direction tag handler
-func OnlyToDBTagHandler(ctx *tagContext) error {
-	ctx.col.MapType = core.ONLYTODB
 	return nil
 }
 
