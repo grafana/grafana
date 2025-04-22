@@ -356,39 +356,35 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 		return err
 	}
 
+	// FIXME: we need integration tests to validate if GetContents returns the relative or absolute path
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-
 	return r.deleteRecursively(ctx, finalPath, ref, comment)
 }
 
 func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, comment string) error {
-	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
+	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
-			return &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: "file not found",
-					Code:    http.StatusNotFound,
-				},
-			}
+			return ErrFileNotFound
 		}
-		return fmt.Errorf("finding file to delete: %w", err)
+
+		return fmt.Errorf("find file to delete: %w", err)
 	}
 
 	if file != nil && !file.IsDirectory() {
-		return r.gh.DeleteFile(ctx, r.owner, r.repo, finalPath, ref, comment, file.GetSHA())
+		return r.gh.DeleteFile(ctx, r.owner, r.repo, path, ref, comment, file.GetSHA())
 	}
 
 	for _, c := range contents {
+		p := c.GetPath()
 		if c.IsDirectory() {
-			if err := r.deleteRecursively(ctx, c.GetPath(), ref, comment); err != nil {
-				return fmt.Errorf("delete file recursive: %w", err)
+			if err := r.deleteRecursively(ctx, p, ref, comment); err != nil {
+				return fmt.Errorf("delete file recursively: %w", err)
 			}
 			continue
 		}
 
-		if err := r.gh.DeleteFile(ctx, r.owner, r.repo, c.GetPath(), ref, comment, c.GetSHA()); err != nil {
+		if err := r.gh.DeleteFile(ctx, r.owner, r.repo, p, ref, comment, c.GetSHA()); err != nil {
 			return fmt.Errorf("delete file: %w", err)
 		}
 	}

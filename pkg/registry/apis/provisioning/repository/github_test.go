@@ -1749,3 +1749,265 @@ func TestGitHubRepository_Write(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHubRepository_Delete(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        *provisioning.Repository
+		path          string
+		ref           string
+		comment       string
+		mockSetup     func(t *testing.T, mockClient *pgh.MockClient)
+		expectedError error
+	}{
+		{
+			name: "delete existing file",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "main",
+			comment: "Delete dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().IsDirectory().Return(false)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
+					Return(fileContent, nil, nil)
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
+					"Delete dashboard", "abc123").Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "delete with default branch",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "",
+			comment: "Delete dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().IsDirectory().Return(false)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
+					Return(fileContent, nil, nil)
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
+					"Delete dashboard", "abc123").Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "delete directory recursively",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboards",
+			ref:     "main",
+			comment: "Delete dashboards directory",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				dirContent := pgh.NewMockRepositoryContent(t)
+				dirContent.EXPECT().IsDirectory().Return(true)
+
+				// Directory contents
+				file1Content := pgh.NewMockRepositoryContent(t)
+				file1Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard1.json")
+				file1Content.EXPECT().IsDirectory().Return(false)
+				file1Content.EXPECT().GetSHA().Return("file1-sha")
+
+				file2Content := pgh.NewMockRepositoryContent(t)
+				file2Content.EXPECT().GetPath().Return("grafana/dashboards/dashboard2.json")
+				file2Content.EXPECT().IsDirectory().Return(false)
+				file2Content.EXPECT().GetSHA().Return("file2-sha")
+
+				subDirContent := pgh.NewMockRepositoryContent(t)
+				subDirContent.EXPECT().GetPath().Return("grafana/dashboards/subfolder")
+				subDirContent.EXPECT().IsDirectory().Return(true)
+
+				// Subfolder contents
+				subFile1Content := pgh.NewMockRepositoryContent(t)
+				subFile1Content.EXPECT().GetPath().Return("grafana/dashboards/subfolder/subdashboard.json")
+				subFile1Content.EXPECT().IsDirectory().Return(false)
+				subFile1Content.EXPECT().GetSHA().Return("subfile-sha")
+
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+
+				// Get main directory
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards", "main").
+					Return(dirContent, []pgh.RepositoryContent{file1Content, file2Content, subDirContent}, nil)
+
+				// Get subfolder contents
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder", "main").
+					Return(subDirContent, []pgh.RepositoryContent{subFile1Content}, nil)
+
+				// Delete files in reverse order (depth-first)
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/subfolder/subdashboard.json", "main",
+					"Delete dashboards directory", "subfile-sha").Return(nil)
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard2.json", "main",
+					"Delete dashboards directory", "file2-sha").Return(nil)
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboards/dashboard1.json", "main",
+					"Delete dashboards directory", "file1-sha").Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name: "file not found",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "nonexistent.json",
+			ref:     "main",
+			comment: "Delete nonexistent file",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/nonexistent.json", "main").
+					Return(nil, nil, pgh.ErrResourceNotFound)
+			},
+			expectedError: ErrFileNotFound,
+		},
+		{
+			name: "branch does not exist and creation fails",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "feature",
+			comment: "Delete dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "feature").Return(false, nil)
+				mockClient.EXPECT().CreateBranch(mock.Anything, "grafana", "grafana", "main", "feature").
+					Return(errors.New("failed to create branch"))
+			},
+			expectedError: errors.New("create branch: failed to create branch"),
+		},
+		{
+			name: "error checking if branch exists",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "main",
+			comment: "Delete dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").
+					Return(false, errors.New("API error"))
+			},
+			expectedError: errors.New("check branch exists: API error"),
+		},
+		{
+			name: "error getting file content",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "main",
+			comment: "Delete dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
+					Return(nil, nil, errors.New("API rate limit exceeded"))
+			},
+			expectedError: fmt.Errorf("find file to delete: %w", errors.New("API rate limit exceeded")),
+		},
+		{
+			name: "error deleting file",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Path:   "grafana",
+						Branch: "main",
+					},
+				},
+			},
+			path:    "dashboard.json",
+			ref:     "main",
+			comment: "Delete dashboard",
+			mockSetup: func(t *testing.T, mockClient *pgh.MockClient) {
+				fileContent := pgh.NewMockRepositoryContent(t)
+				fileContent.EXPECT().IsDirectory().Return(false)
+				fileContent.EXPECT().GetSHA().Return("abc123")
+
+				mockClient.EXPECT().BranchExists(mock.Anything, "grafana", "grafana", "main").Return(true, nil)
+				mockClient.EXPECT().GetContents(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main").
+					Return(fileContent, nil, nil)
+				mockClient.EXPECT().DeleteFile(mock.Anything, "grafana", "grafana", "grafana/dashboard.json", "main",
+					"Delete dashboard", "abc123").Return(errors.New("delete failed"))
+			},
+			expectedError: errors.New("delete failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a mock GitHub client
+			mockClient := pgh.NewMockClient(t)
+
+			// Set up the mock expectations
+			if tt.mockSetup != nil {
+				tt.mockSetup(t, mockClient)
+			}
+
+			// Create a GitHub repository with the test config and mock client
+			repo := &githubRepository{
+				config: tt.config,
+				gh:     mockClient,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			// Call the Delete method
+			err := repo.Delete(context.Background(), tt.path, tt.ref, tt.comment)
+
+			// Check the error
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Verify all mock expectations were met
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
