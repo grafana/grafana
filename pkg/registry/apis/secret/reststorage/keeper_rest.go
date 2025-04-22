@@ -193,7 +193,11 @@ func (s *KeeperRest) Delete(ctx context.Context, name string, deleteValidation r
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.storage.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+	err := s.storage.Delete(ctx, xkube.Namespace(namespace), name)
+	if err != nil {
+		if errors.Is(err, contracts.ErrKeeperNotFound) {
+			return nil, false, s.resource.NewNotFound(name)
+		}
 		return nil, false, fmt.Errorf("failed to delete keeper: %w", err)
 	}
 

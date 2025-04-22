@@ -11,8 +11,8 @@ import (
 	spannerclient "cloud.google.com/go/spanner"
 	_ "github.com/googleapis/go-sql-spanner"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
 )
 
 func init() {
@@ -383,7 +383,7 @@ func (s *spanner) CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
 		return nil, err
 	}
 
-	if connectorConfig.Params["inMemSequenceGenerator"] == "true" {
+	if connectorConfig.Params[strings.ToLower("inMemSequenceGenerator")] == "true" {
 		// Switch to using in-memory sequence number generator.
 		// Using database-based sequence generator doesn't work with emulator, as emulator
 		// only supports single transaction. If there is already another transaction started

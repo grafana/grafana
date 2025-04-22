@@ -229,16 +229,19 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 		return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
 	}
 
-	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
-		// should we check the result?
-		if _, err := sess.Exec(ctx, query, req.GetArgs()...); err != nil {
-			return fmt.Errorf("deleting row: %w", err)
-		}
-
-		return nil
-	})
+	result, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("db failure: %w", err)
+		return fmt.Errorf("deleting row: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting rows affected: %w", err)
+	}
+	if rowsAffected == 0 {
+		return contracts.ErrKeeperNotFound
+	} else if rowsAffected != 1 {
+		return fmt.Errorf("expected 1 row affected, got %d for %s on %s", rowsAffected, name, namespace)
 	}
 
 	return nil

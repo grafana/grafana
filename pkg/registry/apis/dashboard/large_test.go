@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	dashboardv1alpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
 )
 
 func TestLargeDashboardSupport(t *testing.T) {
@@ -21,7 +21,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	f, err := os.ReadFile(devdash)
 	require.NoError(t, err)
 
-	dash := &dashboardv1alpha1.Dashboard{
+	dash := &dashv1.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test",
 			Namespace: "test",
@@ -38,7 +38,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 
 	scheme := runtime.NewScheme()
 
-	err = dashboardv1alpha1.AddToScheme(scheme)
+	err = dashv1.AddToScheme(scheme)
 	require.NoError(t, err)
 
 	largeObject := NewDashboardLargeObjectSupport(scheme, 0)
@@ -50,13 +50,13 @@ func TestLargeDashboardSupport(t *testing.T) {
 	small, err := json.MarshalIndent(&dash.Spec, "", "  ")
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"schemaVersion": 33,
+		"schemaVersion": 36,
 		"title": "Panel tests - All panels",
 		"tags": ["gdev","panel-tests","all-panels"]
 	}`, string(small))
 
 	// Now make it big again
-	rehydratedDash := &dashboardv1alpha1.Dashboard{
+	rehydratedDash := &dashv1.Dashboard{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "test",
 			Namespace: "test",

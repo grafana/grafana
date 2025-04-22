@@ -27,9 +27,9 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -546,21 +547,41 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				statusPatcher.Patch,
 				syncer,
 			)
-
-			migrationWorker := migrate.NewMigrationWorker(
-				b.legacyMigrator,
+			signerFactory := signature.NewSignerFactory(b.clients)
+			legacyFolders := migrate.NewLegacyFoldersMigrator(b.legacyMigrator)
+			legacyResources := migrate.NewLegacyResourcesMigrator(
+				b.repositoryResources,
 				b.parsers,
-				b.clients,
-				b.storageStatus,
-				b.unified,
+				b.legacyMigrator,
+				legacyFolders,
+				signerFactory,
+			)
+			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
+			legacyMigrator := migrate.NewLegacyMigrator(
+				legacyResources,
+				storageSwapper,
+				syncWorker,
+				repository.WrapWithCloneAndPushIfPossible,
+			)
+
+			cleaner := migrate.NewNamespaceCleaner(b.clients)
+			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+				cleaner,
 				exportWorker,
 				syncWorker,
 			)
 
+			migrationWorker := migrate.NewMigrationWorker(
+				legacyMigrator,
+				unifiedStorageMigrator,
+				b.storageStatus,
+			)
+
 			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
-			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, previewer)
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
+			evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
+			commenter := pullrequest.NewCommenter()
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
 			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
@@ -702,6 +723,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					In:          "query",
 					Description: "optional message sent with any changes",
 					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "skipDryRun",
+					In:          "query",
+					Description: "do not pro-actively verify the payload",
+					Schema:      spec.BooleanProperty(),
 					Required:    false,
 				},
 			},
@@ -1115,7 +1145,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn), nil
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

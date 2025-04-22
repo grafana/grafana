@@ -64,9 +64,14 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 	})
 
-	t.Run("deleting a keeper that does not exist does not return an error", func(t *testing.T) {
+	t.Run("deleting a keeper that does not exist returns an error", func(t *testing.T) {
 		err := client.Resource.Delete(ctx, "some-keeper-that-does-not-exist", metav1.DeleteOptions{})
-		require.NoError(t, err)
+		require.Error(t, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, "keeper.secret.grafana.app \"some-keeper-that-does-not-exist\" not found", err.Error())
+		require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 	})
 
 	t.Run("creating a keeper returns it", func(t *testing.T) {
@@ -393,10 +398,14 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 
 		// Delete
-		t.Run("deleting a keeper from another namespace does not return an error but does not delete it", func(t *testing.T) {
+		t.Run("deleting a keeper from another namespace returns an error and does not delete it", func(t *testing.T) {
+			var statusErr *apierrors.StatusError
+
 			// OrgA trying to delete keeper from OrgB.
 			err := clientOrgA.Resource.Delete(ctx, keeperOrgB.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.Error(t, err)
+			require.True(t, errors.As(err, &statusErr))
+			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
 			// Check that it still exists from the perspective of OrgB.
 			raw, err := clientOrgB.Resource.Get(ctx, keeperOrgB.GetName(), metav1.GetOptions{})
@@ -405,7 +414,8 @@ func TestIntegrationKeeper(t *testing.T) {
 
 			// OrgB trying to delete keeper from OrgA.
 			err = clientOrgB.Resource.Delete(ctx, keeperOrgA.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.Error(t, err)
+			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
 			// Check that it still exists from the perspective of OrgA.
 			raw, err = clientOrgA.Resource.Get(ctx, keeperOrgA.GetName(), metav1.GetOptions{})
