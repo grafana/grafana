@@ -99,8 +99,7 @@ func (r *githubRepository) Validate() (list field.ErrorList) {
 	}
 	if gh.Branch == "" {
 		list = append(list, field.Required(field.NewPath("spec", "github", "branch"), "a github branch is required"))
-	}
-	if !isValidGitBranchName(gh.Branch) {
+	} else if !isValidGitBranchName(gh.Branch) {
 		list = append(list, field.Invalid(field.NewPath("spec", "github", "branch"), gh.Branch, "invalid branch name"))
 	}
 	// TODO: Use two fields for token
@@ -193,12 +192,7 @@ func (r *githubRepository) Read(ctx context.Context, filePath, ref string) (*Fil
 	content, dirContent, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: fmt.Sprintf("file not found; path=%s ref=%s", finalPath, ref),
-					Code:    http.StatusNotFound,
-				},
-			}
+			return nil, ErrFileNotFound
 		}
 
 		return nil, fmt.Errorf("get contents: %w", err)
@@ -227,8 +221,7 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 		ref = r.config.Spec.GitHub.Branch
 	}
 
-	ctx, logger := r.logger(ctx, ref)
-
+	ctx, _ = r.logger(ctx, ref)
 	tree, truncated, err := r.gh.GetTree(ctx, r.owner, r.repo, r.config.Spec.GitHub.Path, ref, true)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
@@ -239,9 +232,11 @@ func (r *githubRepository) ReadTree(ctx context.Context, ref string) ([]FileTree
 				},
 			}
 		}
+		return nil, fmt.Errorf("get tree: %w", err)
 	}
+
 	if truncated {
-		logger.Warn("tree from github was truncated")
+		return nil, fmt.Errorf("tree truncated")
 	}
 
 	entries := make([]FileTreeEntry, 0, len(tree))
@@ -271,7 +266,7 @@ func (r *githubRepository) Create(ctx context.Context, path, ref string, data []
 	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on create: %w", err)
+		return err
 	}
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
@@ -306,7 +301,7 @@ func (r *githubRepository) Update(ctx context.Context, path, ref string, data []
 	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on update: %w", err)
+		return err
 	}
 
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
@@ -339,16 +334,15 @@ func (r *githubRepository) Write(ctx context.Context, path string, ref string, d
 	}
 
 	ctx, _ = r.logger(ctx, ref)
-	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-	_, err := r.Read(ctx, finalPath, ref)
+	_, err := r.Read(ctx, path, ref)
 	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
-		return fmt.Errorf("failed to check if file exists before writing: %w", err)
+		return fmt.Errorf("check if file exists before writing: %w", err)
 	}
 	if err == nil {
-		return r.Update(ctx, finalPath, ref, data, message)
+		return r.Update(ctx, path, ref, data, message)
 	}
 
-	return r.Create(ctx, finalPath, ref, data, message)
+	return r.Create(ctx, path, ref, data, message)
 }
 
 func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string) error {
@@ -358,42 +352,42 @@ func (r *githubRepository) Delete(ctx context.Context, path, ref, comment string
 	ctx, _ = r.logger(ctx, ref)
 
 	if err := r.ensureBranchExists(ctx, ref); err != nil {
-		return fmt.Errorf("create branch on delete: %w", err)
+		return err
 	}
 
+	// TODO: should add some protection against deleting the root directory?
+
+	// Inside deleteRecursively, all paths are relative to the root of the repository
+	// so we need to prepend the prefix there but only here.
 	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
 
 	return r.deleteRecursively(ctx, finalPath, ref, comment)
 }
 
 func (r *githubRepository) deleteRecursively(ctx context.Context, path, ref, comment string) error {
-	finalPath := safepath.Join(r.config.Spec.GitHub.Path, path)
-	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, finalPath, ref)
+	file, contents, err := r.gh.GetContents(ctx, r.owner, r.repo, path, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
-			return &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: "file not found",
-					Code:    http.StatusNotFound,
-				},
-			}
+			return ErrFileNotFound
 		}
-		return fmt.Errorf("finding file to delete: %w", err)
+
+		return fmt.Errorf("find file to delete: %w", err)
 	}
 
 	if file != nil && !file.IsDirectory() {
-		return r.gh.DeleteFile(ctx, r.owner, r.repo, finalPath, ref, comment, file.GetSHA())
+		return r.gh.DeleteFile(ctx, r.owner, r.repo, path, ref, comment, file.GetSHA())
 	}
 
 	for _, c := range contents {
+		p := c.GetPath()
 		if c.IsDirectory() {
-			if err := r.deleteRecursively(ctx, c.GetPath(), ref, comment); err != nil {
-				return fmt.Errorf("delete file recursive: %w", err)
+			if err := r.deleteRecursively(ctx, p, ref, comment); err != nil {
+				return fmt.Errorf("delete directory recursively: %w", err)
 			}
 			continue
 		}
 
-		if err := r.gh.DeleteFile(ctx, r.owner, r.repo, c.GetPath(), ref, comment, c.GetSHA()); err != nil {
+		if err := r.gh.DeleteFile(ctx, r.owner, r.repo, p, ref, comment, c.GetSHA()); err != nil {
 			return fmt.Errorf("delete file: %w", err)
 		}
 	}
@@ -411,12 +405,7 @@ func (r *githubRepository) History(ctx context.Context, path, ref string) ([]pro
 	commits, err := r.gh.Commits(ctx, r.owner, r.repo, finalPath, ref)
 	if err != nil {
 		if errors.Is(err, pgh.ErrResourceNotFound) {
-			return nil, &apierrors.StatusError{
-				ErrStatus: metav1.Status{
-					Message: "path not found",
-					Code:    http.StatusNotFound,
-				},
-			}
+			return nil, ErrFileNotFound
 		}
 
 		return nil, fmt.Errorf("get commits: %w", err)
@@ -553,12 +542,12 @@ func (r *githubRepository) parseWebhook(messageType string, payload []byte) (*pr
 			Code:    http.StatusOK,
 			Message: "ping received",
 		}, nil
+	default:
+		return &provisioning.WebhookResponse{
+			Code:    http.StatusNotImplemented,
+			Message: fmt.Sprintf("unsupported messageType: %s", messageType),
+		}, nil
 	}
-
-	return &provisioning.WebhookResponse{
-		Code:    http.StatusNotImplemented,
-		Message: fmt.Sprintf("unsupported messageType: %s", messageType),
-	}, nil
 }
 
 func (r *githubRepository) parsePushEvent(event *github.PushEvent) (*provisioning.WebhookResponse, error) {
@@ -598,7 +587,7 @@ func (r *githubRepository) parsePullRequestEvent(event *github.PullRequestEvent)
 	}
 	cfg := r.config.Spec.GitHub
 	if cfg == nil {
-		return nil, fmt.Errorf("missing github config")
+		return nil, fmt.Errorf("missing GitHub config")
 	}
 
 	if event.GetRepo().GetFullName() != fmt.Sprintf("%s/%s", r.owner, r.repo) {
