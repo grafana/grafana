@@ -148,7 +148,7 @@ type BlobConfig struct {
 // IndexLatencyObserver is an interface for observing index latency metrics
 // This is used for testing
 type IndexLatencyObserver interface {
-	Observe(evt *WrittenEvent, doc *IndexableDocument, latency float64)
+	Observe(evt *WrittenEvent, latency float64)
 }
 
 // Passed as input to the constructor

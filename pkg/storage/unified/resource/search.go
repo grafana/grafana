@@ -21,6 +21,8 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
+const maxBatchSize = 1000
+
 type NamespacedResource struct {
 	Namespace string
 	Group     string
@@ -461,18 +463,27 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 		s.log.Error("error getting index queue processor for watch event", "error", err)
 		return
 	}
-	indexQueueProcessor.Add(evt)
+	resp := indexQueueProcessor.Add(evt)
+	go func() {
+		r := <-resp
+		if r.err != nil {
+			s.log.Error("error indexing watch event", "error", r.err)
+		}
+		// record latency from when event was created to when it was indexed
+		latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
+		span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
+		s.log.Debug("indexed new object", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
+		if latencySeconds > 1 {
+			s.log.Warn("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
+		}
+		if s.indexMetrics != nil {
+			s.indexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+		}
+		if s.indexLatencyObserver != nil {
+			s.indexLatencyObserver.Observe(evt, latencySeconds)
+		}
+	}()
 
-	// record latency from when event was created to when it was indexed
-	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
-	span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
-	s.log.Debug("indexed new object", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
-	if latencySeconds > 1 {
-		s.log.Warn("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
-	}
-	if s.indexMetrics != nil {
-		s.indexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
-	}
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
@@ -698,139 +709,6 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 	return nil, fmt.Errorf("unknown resource type")
 }
 
-// IndexQueueProcessor manages queue-based operations for a specific index
-// It is responsible for ingesting events for a single index
-// It will batch events and send them to the index in a single bulk request
-type IndexQueueProcessor struct {
-	index     ResourceIndex
-	nsr       NamespacedResource
-	queue     chan *WrittenEvent
-	batchSize int
-	ctx       context.Context
-	cancel    context.CancelFunc
-	builder   DocumentBuilder
-	observer  IndexLatencyObserver
-	log       *slog.Logger
-}
-
-// NewIndexQueueProcessor creates a new IndexQueueProcessor for the given index
-func NewIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource, batchSize int, builder DocumentBuilder, observer IndexLatencyObserver, log *slog.Logger) *IndexQueueProcessor {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &IndexQueueProcessor{
-		index:     index,
-		nsr:       nsr,
-		queue:     make(chan *WrittenEvent, 1000), // Buffer size of 1000 events
-		batchSize: batchSize,
-		ctx:       ctx,
-		cancel:    cancel,
-		builder:   builder,
-		observer:  observer,
-		log:       log,
-	}
-}
-
-// Start begins processing events from the queue
-func (b *IndexQueueProcessor) Start() {
-	go func() {
-		for {
-			batch := make([]*WrittenEvent, 0, b.batchSize)
-			select {
-			case <-b.ctx.Done():
-				return
-			case evt := <-b.queue:
-				batch = append(batch, evt)
-			}
-			// append more events if the queue is not empty and we have space
-		prepare:
-			for len(batch) < b.batchSize {
-				select {
-				case <-b.ctx.Done():
-					return
-				case evt := <-b.queue:
-					batch = append(batch, evt)
-				default:
-					break prepare
-				}
-			}
-			b.process(batch)
-		}
-	}()
-}
-
-// Stop stops the index queue processor
-func (b *IndexQueueProcessor) Stop() {
-	b.cancel()
-}
-
-// Add adds an event to the queue
-func (b *IndexQueueProcessor) Add(evt *WrittenEvent) {
-	b.queue <- evt
-}
-
-// process handles a batch of events
-func (b *IndexQueueProcessor) process(batch []*WrittenEvent) {
-	if len(batch) == 0 {
-		return
-	}
-
-	// Create bulk request
-	req := &BulkIndexRequest{
-		Items: make([]*BulkIndexItem, 0, len(batch)),
-	}
-
-	for _, evt := range batch {
-		item := &BulkIndexItem{}
-		if evt.Type == WatchEvent_DELETED {
-			item.Action = BulkActionDelete
-			item.Key = evt.Key
-		} else {
-			item.Action = BulkActionIndex
-			doc, err := b.builder.BuildDocument(context.Background(), evt.Key, evt.ResourceVersion, evt.Value)
-			if err != nil {
-				// Log error but continue with other events
-				b.log.Error("error building document", "error", err)
-				continue
-			}
-			item.Doc = doc
-		}
-		req.Items = append(req.Items, item)
-	}
-
-	if len(req.Items) > 0 {
-		err := b.index.BulkIndex(req)
-		if err != nil {
-			b.log.Error("error bulk indexing", "error", err)
-			// TODO: handle error
-		}
-
-		// Calculate and record latency for each event in the batch
-		now := time.Now().UnixMicro()
-		for _, evt := range batch {
-			latencySeconds := float64(now-evt.ResourceVersion) / 1e6
-			if b.observer != nil {
-				b.observer.Observe(evt, nil, latencySeconds)
-			}
-
-			// Add logging using the struct's logger
-			b.log.Debug("indexed new object",
-				"resource", evt.Key.Resource,
-				"latency_seconds", latencySeconds,
-				"name", evt.Key.Name,
-				"namespace", evt.Key.Namespace,
-				"rv", evt.ResourceVersion)
-
-			if latencySeconds > 1 {
-				b.log.Warn("high index latency object details",
-					"resource", evt.Key.Resource,
-					"latency_seconds", latencySeconds,
-					"name", evt.Key.Name,
-					"namespace", evt.Key.Namespace,
-					"rv", evt.ResourceVersion)
-			}
-		}
-	}
-}
-
 // getOrCreateIndexQueueProcessor returns an IndexQueueProcessor for the given index
 func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource) (*IndexQueueProcessor, error) {
 	s.indexQueueProcessorsMutex.Lock()
@@ -847,8 +725,7 @@ func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr 
 		return nil, err
 	}
 
-	indexQueueProcessor := NewIndexQueueProcessor(index, nsr, 200, builder, s.indexLatencyObserver, s.log) // Batch size of 100
-	indexQueueProcessor.Start()
+	indexQueueProcessor := NewIndexQueueProcessor(index, nsr, maxBatchSize, builder)
 	s.indexQueueProcessors[key] = indexQueueProcessor
 	return indexQueueProcessor, nil
 }

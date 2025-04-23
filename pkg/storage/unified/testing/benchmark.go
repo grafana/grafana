@@ -445,7 +445,7 @@ func (o *testIndexLatencyObserver) Len() int {
 	return len(o.latencies)
 }
 
-func (o *testIndexLatencyObserver) Observe(evt *resource.WrittenEvent, doc *resource.IndexableDocument, latency float64) {
+func (o *testIndexLatencyObserver) Observe(evt *resource.WrittenEvent, latency float64) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	o.latencies = append(o.latencies, latency)
