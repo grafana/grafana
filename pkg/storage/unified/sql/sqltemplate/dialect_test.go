@@ -2,6 +2,7 @@ package sqltemplate
 
 import (
 	"errors"
+	"k8s.io/utils/ptr"
 	"strings"
 	"testing"
 )
@@ -153,6 +154,7 @@ func TestStandardDerefString_DerefString(t *testing.T) {
 		output string
 	}{
 		{input: nil, output: "NULL"},
+		{input: ptr.To("NULL"), output: "NULL"},
 		{input: &input1, output: "some input"},
 	}
 
