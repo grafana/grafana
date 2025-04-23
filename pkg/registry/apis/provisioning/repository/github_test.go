@@ -3738,3 +3738,197 @@ func TestGitHubRepository_CompareFiles(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHubRepository_CommentPullRequest(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(m *pgh.MockClient)
+		prNumber      int
+		comment       string
+		expectedError error
+	}{
+		{
+			name: "successfully comment on pull request",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 123, "Test comment").
+					Return(nil)
+			},
+			prNumber:      123,
+			comment:       "Test comment",
+			expectedError: nil,
+		},
+		{
+			name: "error commenting on pull request",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 456, "Error comment").
+					Return(fmt.Errorf("failed to create comment"))
+			},
+			prNumber:      456,
+			comment:       "Error comment",
+			expectedError: fmt.Errorf("failed to create comment"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh: mockGH,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							Branch: "main",
+						},
+					},
+				},
+				owner: "grafana",
+				repo:  "grafana",
+			}
+
+			// Call the CommentPullRequest method
+			err := repo.CommentPullRequest(context.Background(), tt.prNumber, tt.comment)
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_ResourceURLs(t *testing.T) {
+	tests := []struct {
+		name          string
+		file          *FileInfo
+		config        *provisioning.Repository
+		expectedURLs  *provisioning.ResourceURLs
+		expectedError error
+	}{
+		{
+			name: "file with ref",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.ResourceURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "file without ref uses default branch",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.ResourceURLs{
+				RepositoryURL: "https://github.com/grafana/grafana",
+				SourceURL:     "https://github.com/grafana/grafana/blob/main/dashboards/test.json",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "file with ref same as branch",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "main",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.ResourceURLs{
+				RepositoryURL: "https://github.com/grafana/grafana",
+				SourceURL:     "https://github.com/grafana/grafana/blob/main/dashboards/test.json",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "empty path returns nil",
+			file: &FileInfo{
+				Path: "",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs:  nil,
+			expectedError: nil,
+		},
+		{
+			name: "nil github config returns nil",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: nil,
+				},
+			},
+			expectedURLs:  nil,
+			expectedError: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create repository
+			repo := &githubRepository{
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			// Call the ResourceURLs method
+			urls, err := repo.ResourceURLs(context.Background(), tt.file)
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedURLs, urls)
+			}
+		})
+	}
+}
