@@ -66,6 +66,37 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
+  annotate-visualizations:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/build-dashboards/annotate-visualizations/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/dashboards/build-dashboards/annotate-visualizations/
+  recorded-queries:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/administration/recorded-queries/
+  transformations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/transform-data/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/transform-data/
+  alerting:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/alerting/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/alerting-and-irm/alerting/
+  visualizations:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/panels-visualizations/visualizations/
+  variables:
+   - pattern: /docs/grafana/
+     destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/variables/
+   - pattern: /docs/grafana-cloud/
+     destination: /docs/grafana-cloud/visualizations/dashboards/variables/
+
 ---
 
 # Prometheus data source
@@ -126,9 +157,9 @@ Grafana has deprecated the Prometheus data source for Amazon Managed Service for
 
 After you install and configure Prometheus you can:
 
-- Create a wide variety of [visualizations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/)
-- Configure and use [templates and variables](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/variables/)
-- Add [transformations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/panels/transformations/)
-- Add [annotations](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/annotations/)
-- Set up [alerting](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/alerting/)
-- Create [recorded queries](https://grafana.com/docs/grafana/latest/administration/recorded-queries/)
+- Create a wide variety of [visualizations](ref:visualizations)
+- Configure and use [templates and variables](ref:variables)
+- Add [transformations](ref:transformations)
+- Add [annotations](ref:annotate-visualizations)
+- Set up [alerting](ref:alerting)
+- Create [recorded queries](ref:recorded-queries)
