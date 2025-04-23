@@ -78,6 +78,7 @@ import {
 } from './reducer';
 import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
+import { onlyOneDSInQueries } from './utils';
 
 interface Props {
   editingExistingRule: boolean;
@@ -474,7 +475,10 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         }
       : undefined;
 
-  const hasDatasourcesForDataSourceManaged = Boolean(rulesSourcesWithRuler.length);
+  const canSelectDataSourceManaged =
+    onlyOneDSInQueries(queries) &&
+    Boolean(rulesSourcesWithRuler.length) &&
+    queries.some((query) => rulesSourcesWithRuler.some((source) => source.uid === query.datasourceUid));
 
   return (
     <>
@@ -594,7 +598,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               </Tooltip>
             )}
             {/* We only show Switch for Grafana managed alerts */}
-            {hasDatasourcesForDataSourceManaged && isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
+            {canSelectDataSourceManaged && isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
               <>
                 <Divider />
                 <SmartAlertTypeDetector
