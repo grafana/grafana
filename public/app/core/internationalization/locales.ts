@@ -62,8 +62,6 @@ export const LOCALES: Locale[] = [
   { name: 'ދިވެހި', code: 'dv-MV' },
   // Greek - Greece
   { name: 'Ελληνικά', code: 'el-GR' },
-  // English - US
-  { name: 'English', code: 'en-US' },
   // English - Australia
   { name: 'English (Australia)', code: 'en-AU' },
   // English - Canada
