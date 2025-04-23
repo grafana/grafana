@@ -618,6 +618,7 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		"Test dashboard. Created at v2",
 	} {
 		fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(title)+".json")
+		//nolint:gosec // we are ok with reading files in testdata
 		body, err := os.ReadFile(fpath)
 		require.NoError(t, err, "exported file was not created at path %s", fpath)
 		obj := map[string]any{}
