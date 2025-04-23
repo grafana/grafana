@@ -1,6 +1,7 @@
 package state
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"math/rand"
@@ -8,6 +9,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/data"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -144,6 +147,72 @@ func Test_mergeLabels(t *testing.T) {
 		for key, val := range b {
 			require.Equal(t, val, result[key])
 		}
+	})
+}
+
+func TestCacheMetrics(t *testing.T) {
+	orgID := int64(1)
+
+	t.Run("should return metrics for all states", func(t *testing.T) {
+		states := []*State{
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Normal,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Alerting,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Pending,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Error,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.NoData,
+			},
+			{
+				OrgID:        orgID,
+				AlertRuleUID: "rule1",
+				CacheID:      data.Fingerprint(rand.Int63()),
+				State:        eval.Recovering,
+			},
+		}
+		expectedMetrics := `
+			# HELP grafana_alerting_alerts How many alerts by state are in the scheduler.
+			# TYPE grafana_alerting_alerts gauge
+			grafana_alerting_alerts{state="alerting"} 1
+			grafana_alerting_alerts{state="error"} 1
+			grafana_alerting_alerts{state="nodata"} 1
+			grafana_alerting_alerts{state="normal"} 1
+			grafana_alerting_alerts{state="pending"} 1
+			grafana_alerting_alerts{state="recovering"} 1
+		`
+
+		reg := prometheus.NewPedanticRegistry()
+		cache := newCache()
+		for _, state := range states {
+			cache.set(state)
+		}
+
+		cache.RegisterMetrics(reg)
+
+		err := testutil.GatherAndCompare(reg, bytes.NewBufferString(expectedMetrics), "grafana_alerting_alerts")
+		require.NoError(t, err)
 	})
 }
 
