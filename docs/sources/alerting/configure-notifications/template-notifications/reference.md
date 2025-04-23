@@ -96,25 +96,25 @@ You can execute this template by passing the dot (`.`):
 
 `Alert` contains data for an individual alert:
 
-| Name           | Type          | Description                                                                                                                                    |
-| -------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Status`       | string        | Firing or resolved.                                                                                                                            |
-| `Labels`       | [KV](#kv)     | The labels for this alert. It includes all [types of labels](ref:label-types).                                                                 |
-| `Annotations`  | [KV](#kv)     | The annotations for this alert.                                                                                                                |
-| `StartsAt`     | [Time](#time) | The time the alert fired                                                                                                                       |
-| `EndsAt`       | [Time](#time) | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received. |
-| `GeneratorURL` | string        | A link to Grafana, or the source of the alert if using an external alert generator.                                                            |
-| `Fingerprint`  | string        | A unique string that identifies the alert.                                                                                                     |
+| Name           | Type          | Description                                                                                                                                         |
+| -------------- | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Status`       | string        | Firing or resolved.                                                                                                                                 |
+| `Labels`       | [KV](#kv)     | The labels associated with this alert. <br/> It includes all [types of labels](ref:label-types), but only query labels used in the alert condition. |
+| `Annotations`  | [KV](#kv)     | The annotations for this alert.                                                                                                                     |
+| `StartsAt`     | [Time](#time) | The time the alert fired                                                                                                                            |
+| `EndsAt`       | [Time](#time) | Only set if the end time of an alert is known. Otherwise set to a configurable timeout period from the time since the last alert was received.      |
+| `GeneratorURL` | string        | A link to Grafana, or the source of the alert if using an external alert generator.                                                                 |
+| `Fingerprint`  | string        | A unique string that identifies the alert.                                                                                                          |
 
 Grafana-managed alerts include these additional properties:
 
-| Name           | Type      | Description                                                                          |
-| -------------- | --------- | ------------------------------------------------------------------------------------ |
-| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.         |
-| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation.                          |
-| `SilenceURL`   | string    | A link to silence the alert.                                                         |
-| `Values`       | [KV](#kv) | The values of all expressions, including Classic Conditions.                         |
-| `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert. |
+| Name           | Type      | Description                                                                                        |
+| -------------- | --------- | -------------------------------------------------------------------------------------------------- |
+| `DashboardURL` | string    | A link to the Grafana Dashboard if the alert has a Dashboard UID annotation.                       |
+| `PanelURL`     | string    | A link to the panel if the alert has a Panel ID annotation.                                        |
+| `SilenceURL`   | string    | A link to silence the alert.                                                                       |
+| `Values`       | [KV](#kv) | The values of expressions used to evaluate the alert condition. Only relevant values are included. |
+| `ValueString`  | string    | A string that contains the labels and value of each reduced expression in the alert.               |
 
 This example iterates over the list of firing and resolved alerts (`.Alerts`) in the notification and prints the data for each alert:
 

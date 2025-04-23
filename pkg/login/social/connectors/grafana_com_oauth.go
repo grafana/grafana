@@ -39,12 +39,12 @@ type OrgRecord struct {
 }
 
 func NewGrafanaComProvider(info *social.OAuthInfo, cfg *setting.Cfg, orgRoleMapper *OrgRoleMapper, ssoSettings ssosettings.Service, features featuremgmt.FeatureToggles) *SocialGrafanaCom {
-	s := newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg)
-
 	// Override necessary settings
 	info.AuthUrl = cfg.GrafanaComURL + "/oauth2/authorize"
 	info.TokenUrl = cfg.GrafanaComURL + "/api/oauth2/token"
 	info.AuthStyle = "inheader"
+
+	s := newSocialBase(social.GrafanaComProviderName, orgRoleMapper, info, features, cfg)
 
 	allowedOrganizations, err := util.SplitStringWithError(info.Extra[allowedOrganizationsKey])
 	if err != nil {

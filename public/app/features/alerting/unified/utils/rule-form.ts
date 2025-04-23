@@ -54,10 +54,11 @@ import {
 import { getRulesAccess } from './access-control';
 import { Annotation, defaultAnnotations } from './constants';
 import {
-  DataSourceType,
   GRAFANA_RULES_SOURCE_NAME,
   getDefaultOrFirstCompatibleDataSource,
   isGrafanaRulesSource,
+  isSupportedExternalPrometheusFlavoredRulesSourceType,
+  isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
 import {
@@ -516,7 +517,7 @@ export const getDefaultQueries = (isRecordingRule = false): AlertQuery[] => {
   const relativeTimeRange = getDefaultRelativeTimeRange();
 
   const expressions = isRecordingRule ? getDefaultExpressionsForRecording('B') : getDefaultExpressions('B', 'C');
-  const isLokiOrPrometheus = dataSource?.type === DataSourceType.Prometheus || dataSource?.type === DataSourceType.Loki;
+  const isLokiOrPrometheus = dataSource ? isSupportedExternalRulesSourceType(dataSource.type) : false;
   return [
     {
       refId: 'A',
@@ -918,22 +919,19 @@ export function formValuesFromExistingRule(rule: RuleWithLocation<RulerRuleDTO>)
 }
 
 export function getInstantFromDataQuery(model: AlertDataQuery, type: string): boolean | undefined {
-  // if the datasource is not prometheus or loki, instant is defined in the model or defaults to undefined
-  if (type !== DataSourceType.Prometheus && type !== DataSourceType.Loki) {
-    if ('instant' in model) {
-      return model.instant;
-    } else {
-      if ('queryType' in model) {
-        return model.queryType === 'instant';
-      } else {
-        return undefined;
-      }
-    }
+  if (!type) {
+    return undefined;
+  }
+
+  // if the datasource is not a supported prometheus flavor or loki, return "undefined"
+  if (!isSupportedExternalRulesSourceType(type)) {
+    return undefined;
   }
   // if the datasource is prometheus or loki, instant is defined in the model, or defaults to true
   const isInstantForPrometheus = 'instant' in model && model.instant !== undefined ? model.instant : true;
   const isInstantForLoki = 'queryType' in model && model.queryType !== undefined ? model.queryType === 'instant' : true;
 
-  const isInstant = type === DataSourceType.Prometheus ? isInstantForPrometheus : isInstantForLoki;
+  const isPrometheusFlavoredDataSourceType = isSupportedExternalPrometheusFlavoredRulesSourceType(type);
+  const isInstant = isPrometheusFlavoredDataSourceType ? isInstantForPrometheus : isInstantForLoki;
   return isInstant;
 }

@@ -1,4 +1,4 @@
-import { llms } from '@grafana/experimental';
+import { llm } from '@grafana/llm';
 
 import { DASHBOARD_SCHEMA_VERSION } from '../../state/DashboardMigrator';
 import { createDashboardModelFixture, createPanelSaveModel } from '../../state/__fixtures__/dashboardFixtures';
@@ -6,15 +6,14 @@ import { NEW_PANEL_TITLE } from '../../utils/dashboard';
 
 import { getDashboardChanges, getPanelStrings, isLLMPluginEnabled, sanitizeReply } from './utils';
 
-// Mock the llms.openai module
-jest.mock('@grafana/experimental', () => ({
-  ...jest.requireActual('@grafana/experimental'),
-  llms: {
-    openai: {
-      streamChatCompletions: jest.fn(),
-      accumulateContent: jest.fn(),
-      health: jest.fn(),
-    },
+// Mock the llm module
+jest.mock('@grafana/llm', () => ({
+  ...jest.requireActual('@grafana/llm'),
+  llm: {
+    streamChatCompletions: jest.fn(),
+    accumulateContent: jest.fn(),
+    health: jest.fn(),
+    Model: { LARGE: 'large' },
   },
 }));
 
@@ -101,8 +100,8 @@ describe('getDashboardChanges', () => {
 
 describe('isLLMPluginEnabled', () => {
   it('should return false if LLM plugin is not enabled', async () => {
-    // Mock llms.openai.health to return false
-    jest.mocked(llms.openai.health).mockResolvedValue({ ok: false, configured: false });
+    // Mock llm.health to return false
+    jest.mocked(llm.health).mockResolvedValue({ ok: false, configured: false });
 
     const enabled = await isLLMPluginEnabled();
 
@@ -110,8 +109,8 @@ describe('isLLMPluginEnabled', () => {
   });
 
   it('should return true if LLM plugin is enabled', async () => {
-    // Mock llms.openai.health to return true
-    jest.mocked(llms.openai.health).mockResolvedValue({ ok: true, configured: false });
+    // Mock llm.health to return true
+    jest.mocked(llm.health).mockResolvedValue({ ok: true, configured: false });
 
     const enabled = await isLLMPluginEnabled();
 

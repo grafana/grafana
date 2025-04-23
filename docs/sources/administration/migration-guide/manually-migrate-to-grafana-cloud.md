@@ -219,7 +219,7 @@ Some data sources, like Prometheus or SQL databases, live on private networks or
 
 To access these data sources from Grafana Cloud, follow our guide to [configure PDC in your network](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/), and then configure the applicable Grafana data sources to [connect using PDC](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-a-data-source-to-use-private-data-source-connect-pdc). Note that PDC is only needed for your network-secured data sources, not for data sources like Splunk or CloudWatch that are accessible over the public internet.
 
-For more information on how PDC works, see our [overview document]({{< relref "../connect-externally-hosted/private-data-source-connect" >}}).
+For more information on how PDC works, see our [overview document](/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/).
 
 ### Migrate reports and playlists using Grafana’s HTTP API
 

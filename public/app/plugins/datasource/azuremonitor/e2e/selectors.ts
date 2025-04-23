@@ -113,6 +113,9 @@ export const components = {
     region: {
       input: 'data-testid region',
     },
+    customNamespace: {
+      input: 'data-testid custom-namespace',
+    },
   },
 };
 

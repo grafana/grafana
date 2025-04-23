@@ -2161,10 +2161,8 @@ var expAlertmanagerConfigFromAPI = `
             "name": "discord_test",
             "type": "discord",
             "disableResolveMessage": false,
-            "settings": {
-              "url": "http://CHANNEL_ADDR/discord_recv/discord_test"
-            },
-            "secureFields": {}
+            "settings": {},
+            "secureFields": {"url": true}
           }
         ]
       },
@@ -2176,10 +2174,8 @@ var expAlertmanagerConfigFromAPI = `
             "name": "googlechat_test",
             "type": "googlechat",
             "disableResolveMessage": false,
-            "settings": {
-              "url": "http://CHANNEL_ADDR/googlechat_recv/googlechat_test"
-            },
-            "secureFields": {}
+            "settings": {},
+            "secureFields": {"url": true}
           }
         ]
       },
@@ -2207,10 +2203,8 @@ var expAlertmanagerConfigFromAPI = `
             "name": "victorops_test",
             "type": "victorops",
             "disableResolveMessage": false,
-            "settings": {
-              "url": "http://CHANNEL_ADDR/victorops_recv/victorops_test"
-            },
-            "secureFields": {}
+            "settings": {},
+            "secureFields": {"url": true}
           }
         ]
       },

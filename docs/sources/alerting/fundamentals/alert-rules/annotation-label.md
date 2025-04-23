@@ -136,6 +136,8 @@ If multiple label keys are sanitized to the same value, the duplicates have a sh
 
 Annotations add additional information to alert instances, helping responders identify and address potential issues.
 
+Create clear and self-explanatory annotations so that first responders can investigate without needing deeper knowledge of the alert setup.
+
 Annotations are displayed in Grafana and are included by default in notifications. Grafana provides several optional annotations that you can edit:
 
 - `summary`: A short summary of what the alert has detected and why.
