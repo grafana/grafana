@@ -127,14 +127,6 @@ func TestNewGitHub(t *testing.T) {
 			factory := pgh.ProvideFactory()
 			factory.Client = http.DefaultClient
 
-			// If we expect success, set up the factory mock
-			if tt.expectedError == "" {
-				token := tt.config.Spec.GitHub.Token
-				if token == "" {
-					token = "decrypted-token"
-				}
-			}
-
 			// Create a mock clone function
 			cloneFn := func(ctx context.Context, opts CloneOptions) (ClonedRepository, error) {
 				return nil, nil
