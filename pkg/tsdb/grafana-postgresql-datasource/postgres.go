@@ -362,7 +362,7 @@ func generateConnectionConfigPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
 	connStr := buildBaseConnectionString(params)
 
 	// NOTE: we always set sslmode=disable in the connection string, we handle TLS manually later
-	connStr += fmt.Sprintf(" sslmode=disable")
+	connStr += " sslmode=disable"
 
 	conf, err := pgxpool.ParseConfig(connStr)
 	if err != nil {

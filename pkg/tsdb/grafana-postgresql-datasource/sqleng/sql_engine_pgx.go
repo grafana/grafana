@@ -127,7 +127,7 @@ func (e *DataSourceHandler) handlePanic(logger log.Logger, queryResult *DBDataRe
 	}
 }
 
-func (e *DataSourceHandler) execQuery(ctx context.Context, query string) ([]*pgconn.Result, error) {
+func (e *DataSourceHandler) execQuery(ctx context.Context, query string, logger log.Logger) ([]*pgconn.Result, error) {
 	c, err := e.pool.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %w", err)
@@ -135,7 +135,11 @@ func (e *DataSourceHandler) execQuery(ctx context.Context, query string) ([]*pgc
 	defer c.Release()
 
 	mrr := c.Conn().PgConn().Exec(ctx, query)
-	defer mrr.Close()
+	defer func() {
+		if err := mrr.Close(); err != nil {
+			logger.Warn("Failed to close multi-result reader", "error", err)
+		}
+	}()
 	return mrr.ReadAll()
 }
 
@@ -164,7 +168,7 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 		return
 	}
 
-	results, err := e.execQuery(queryContext, interpolatedQuery)
+	results, err := e.execQuery(queryContext, interpolatedQuery, logger)
 	if err != nil {
 		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
