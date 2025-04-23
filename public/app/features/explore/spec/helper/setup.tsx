@@ -290,8 +290,6 @@ export function makeDatasourceSetup({
       components: {
         QueryEditor(props: QueryEditorProps<LokiDatasource, LokiQuery>) {
           return (
-            // don't need translations, this is a test helper
-            // eslint-disable-next-line @grafana/no-untranslated-strings
             <div>
               <input
                 aria-label="query"
