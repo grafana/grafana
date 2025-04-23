@@ -161,7 +161,7 @@ For Tempo refer to [Trace to profiles](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 You can use [correlations](/docs/grafana/<GRAFANA_VERSION>/administration/correlations/) to define custom links that appear in the trace view based on trace and span information.
 
-For Tempo refer to [Trace correlations](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/traces-in-grafana/trace-correlations/) for configuration instructions.
+For Tempo, refer to [Trace correlations](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/traces-in-grafana/trace-correlations/) for configuration instructions.
 
 {{< figure src="/static/img/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 

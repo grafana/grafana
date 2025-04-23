@@ -22,7 +22,7 @@ You can use Grafana [correlations](/docs/grafana/<GRAFANA_VERSION>/administratio
 
 ## What are trace correlations?
 
-Trace correlations allow you to define rules that inject context-sensitive links into your trace spans. When viewing traces in Explore or the Traces panel, users can click these links to navigate directly to relevant queries or URLs. Correlations are similar but more flexible to the [trace to logs, metrics, and profiles links you can configure for the Tempo data source](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source).
+Trace correlations let you define rules that inject context-sensitive links into your trace spans. When viewing traces in Explore or the Traces panel, users can click these links to navigate directly to relevant queries or URLs. Correlations are similar but more flexible to the [trace to logs, metrics, and profiles links you can configure for the Tempo data source](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source).
 
 {{< figure src="/static/img/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 
@@ -30,7 +30,7 @@ Trace correlations allow you to define rules that inject context-sensitive links
 
 - Grafana 12 or later
 - A Tempo tracing data source configured in Grafana
-- Admin access to Grafana’s configuration settings or provisioning files
+- Admin access to configuration settings or provisioning files in Grafana
 
 ## Set up a trace correlation
 
