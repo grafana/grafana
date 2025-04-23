@@ -282,6 +282,19 @@ module.exports = [
     },
   },
   {
+    name: 'grafana/test-overrides',
+    languageOptions: {
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    files: ['public/app/features/**/*.{spec,test}.tsx'],
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
+    },
+  },
+  {
     name: 'grafana/alerting-test-overrides',
     plugins: {
       'testing-library': testingLibraryPlugin,
