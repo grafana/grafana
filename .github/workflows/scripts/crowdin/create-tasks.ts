@@ -1,4 +1,4 @@
-const crowdin = require('@crowdin/crowdin-api-client');
+import crowdin, { type Credentials } from '@crowdin/crowdin-api-client';
 const TRANSLATED_CONNECTOR_DESCRIPTION = '{{tos_service_type: premium}}';
 
 const API_TOKEN = process.env.CROWDIN_PERSONAL_TOKEN;
@@ -7,30 +7,32 @@ if (!API_TOKEN) {
   process.exit(1);
 }
 
-const PROJECT_ID = process.env.CROWDIN_PROJECT_ID;
+const PROJECT_ID = process.env.CROWDIN_PROJECT_ID ? parseInt(process.env.CROWDIN_PROJECT_ID, 10) : undefined;
 if (!PROJECT_ID) {
   console.error('Error: CROWDIN_PROJECT_ID environment variable is not set');
   process.exit(1);
 }
 
-const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin.default({
+const credentials: Credentials = {
   token: API_TOKEN,
   organization: 'grafana'
-});
+};
 
-const languages = await getLanguages();
-const fileIds = await getFileIds();
+const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin(credentials);
+
+const languages = await getLanguages(PROJECT_ID);
+const fileIds = await getFileIds(PROJECT_ID);
 console.log('Languages: ', languages);
 console.log('File IDs: ', fileIds);
 
 // for (const language of languages) {
 //   const { name, id } = language;
-//   await createTask(`Translate to ${name}`, id, fileIds);
-// }
+//   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds);
+  // }
 
-async function getLanguages() {
+async function getLanguages(projectId: number) {
   try {
-    const project = await projectsGroupsApi.getProject(PROJECT_ID);
+    const project = await projectsGroupsApi.getProject(projectId);
     const languages = project.data.targetLanguages;
     return languages;
   } catch (error) {
@@ -42,9 +44,9 @@ async function getLanguages() {
   }
 }
 
-async function getFileIds() {
+async function getFileIds(projectId: number) {
   try {
-    const response = await sourceFilesApi.listProjectFiles(PROJECT_ID);
+    const response = await sourceFilesApi.listProjectFiles(projectId);
     const files = response.data;
     const fileIds = files.map(file => file.data.id);
     return fileIds;
@@ -57,7 +59,7 @@ async function getFileIds() {
   }
 }
 
-async function createTask(title, languageId, fileIds) {
+async function createTask(projectId, title, languageId, fileIds) {
   try {
     const taskParams = {
       title,
@@ -71,7 +73,7 @@ async function createTask(title, languageId, fileIds) {
 
     console.log(`Creating Crowdin task: "${title}" for language ${languageId}`);
 
-    const response = await tasksApi.addTask(PROJECT_ID, taskParams);
+    const response = await tasksApi.addTask(projectId, taskParams);
     console.log(`Task created successfully! Task ID: ${response.data.id}`);
     return response.data;
   } catch (error) {
