@@ -98,6 +98,47 @@ func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.Query
 	return result, nil
 }
 
+func (e *DataSourceHandler) handleQueryError(err error, query string, source backend.ErrorSource, ch chan DBDataResponse, queryResult DBDataResponse) {
+	var emptyFrame data.Frame
+	emptyFrame.SetMeta(&data.FrameMeta{ExecutedQueryString: query})
+	if backend.IsDownstreamError(err) {
+		source = backend.ErrorSourceDownstream
+	}
+	queryResult.dataResponse.Error = fmt.Errorf("%s: %w", "query execution failed", err)
+	queryResult.dataResponse.ErrorSource = source
+	queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
+	ch <- queryResult
+}
+
+func (e *DataSourceHandler) handlePanic(logger log.Logger, queryResult *DBDataResponse, ch chan DBDataResponse) {
+	if r := recover(); r != nil {
+		logger.Error("ExecuteQuery panic", "error", r, "stack", string(debug.Stack()))
+		if theErr, ok := r.(error); ok {
+			queryResult.dataResponse.Error = theErr
+			queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
+		} else if theErrString, ok := r.(string); ok {
+			queryResult.dataResponse.Error = errors.New(theErrString)
+			queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
+		} else {
+			queryResult.dataResponse.Error = fmt.Errorf("unexpected error - %s", e.userError)
+			queryResult.dataResponse.ErrorSource = backend.ErrorSourceDownstream
+		}
+		ch <- *queryResult
+	}
+}
+
+func (e *DataSourceHandler) execQuery(ctx context.Context, query string) ([]*pgconn.Result, error) {
+	c, err := e.pool.Acquire(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire connection: %w", err)
+	}
+	defer c.Release()
+
+	mrr := c.Conn().PgConn().Exec(ctx, query)
+	defer mrr.Close()
+	return mrr.ReadAll()
+}
+
 func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query backend.DataQuery, wg *sync.WaitGroup,
 	ch chan DBDataResponse, queryJSON QueryJson) {
 	defer wg.Done()
@@ -107,92 +148,48 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 	}
 
 	logger := e.log.FromContext(queryContext)
-
-	defer func() {
-		if r := recover(); r != nil {
-			logger.Error("ExecuteQuery panic", "error", r, "stack", string(debug.Stack()))
-			if theErr, ok := r.(error); ok {
-				queryResult.dataResponse.Error = theErr
-				queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
-			} else if theErrString, ok := r.(string); ok {
-				queryResult.dataResponse.Error = errors.New(theErrString)
-				queryResult.dataResponse.ErrorSource = backend.ErrorSourcePlugin
-			} else {
-				queryResult.dataResponse.Error = fmt.Errorf("unexpected error - %s", e.userError)
-				queryResult.dataResponse.ErrorSource = backend.ErrorSourceDownstream
-			}
-			ch <- queryResult
-		}
-	}()
+	defer e.handlePanic(logger, &queryResult, ch)
 
 	if queryJSON.RawSql == "" {
 		panic("Query model property rawSql should not be empty at this point")
 	}
 
-	timeRange := query.TimeRange
-
-	errAppendDebug := func(frameErr string, err error, query string, source backend.ErrorSource) {
-		var emptyFrame data.Frame
-		emptyFrame.SetMeta(&data.FrameMeta{
-			ExecutedQueryString: query,
-		})
-		if backend.IsDownstreamError(err) {
-			source = backend.ErrorSourceDownstream
-		}
-		queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
-		queryResult.dataResponse.ErrorSource = source
-		queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
-		ch <- queryResult
-	}
-
 	// global substitutions
-	interpolatedQuery := Interpolate(query, timeRange, e.dsInfo.JsonData.TimeInterval, queryJSON.RawSql)
+	interpolatedQuery := Interpolate(query, query.TimeRange, e.dsInfo.JsonData.TimeInterval, queryJSON.RawSql)
 
 	// data source specific substitutions
-	interpolatedQuery, err := e.macroEngine.Interpolate(&query, timeRange, interpolatedQuery)
+	interpolatedQuery, err := e.macroEngine.Interpolate(&query, query.TimeRange, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin)
+		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
-	c, err := e.p.Acquire(queryContext)
+	results, err := e.execQuery(queryContext, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("failed to acquire connection", err, interpolatedQuery, backend.ErrorSourcePlugin)
-		return
-	}
-	defer c.Release()
-
-	// We need to use Exec in here because we need to support multiple statements
-	mrr := c.Conn().PgConn().Exec(queryContext, interpolatedQuery)
-	defer func() {
-		if err := mrr.Close(); err != nil {
-			errAppendDebug("failed to close reader", err, interpolatedQuery, backend.ErrorSourcePlugin)
-		}
-	}()
-	results, err := mrr.ReadAll()
-	if err != nil {
-		errAppendDebug("failed to read rows", err, interpolatedQuery, backend.ErrorSourcePlugin)
+		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
 	qm, err := e.newProcessCfgPGX(queryContext, query, results, interpolatedQuery)
 	if err != nil {
-		errAppendDebug("failed to get configurations", err, interpolatedQuery, backend.ErrorSourcePlugin)
+		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
-	// Convert row.Rows to dataframe
 	frame, err := convertResultsToFrame(results, e.rowLimit)
 	if err != nil {
-		errAppendDebug("convert frame from rows error", err, interpolatedQuery, backend.ErrorSourcePlugin)
+		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
+	e.processFrame(frame, qm, queryResult, ch)
+}
+
+func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, queryResult DBDataResponse, ch chan DBDataResponse) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
-
-	frame.Meta.ExecutedQueryString = interpolatedQuery
+	frame.Meta.ExecutedQueryString = qm.InterpolatedQuery
 
 	// If no rows were returned, clear any previously set `Fields` with a single empty `data.Field` slice.
 	// Then assign `queryResult.dataResponse.Frames` the current single frame with that single empty Field.
@@ -206,14 +203,14 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 	}
 
 	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
-		errAppendDebug("converting time columns failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
+		e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
-			errAppendDebug("db has no time column", errors.New("time column is missing; make sure your data includes a time column for time series format or switch to a table format that doesn't require it"), interpolatedQuery, backend.ErrorSourceDownstream)
+			e.handleQueryError(errors.New("time column is missing; make sure your data includes a time column for time series format or switch to a table format that doesn't require it"), qm.InterpolatedQuery, backend.ErrorSourceDownstream, ch, queryResult)
 			return
 		}
 
@@ -231,7 +228,7 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
-				errAppendDebug("convert value to float failed", err, interpolatedQuery, backend.ErrorSourcePlugin)
+				e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 				return
 			}
 		}
@@ -242,7 +239,7 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
-				errAppendDebug("failed to convert long to wide series when converting from dataframe", err, interpolatedQuery, backend.ErrorSourcePlugin)
+				e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 				return
 			}
 
@@ -272,8 +269,8 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 			var err error
 			frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval)
 			if err != nil {
-				logger.Error("Failed to resample dataframe", "err", err)
-				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
+				e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+				return
 			}
 		}
 	}
@@ -393,15 +390,14 @@ func convertResultsToFrame(results []*pgconn.Result, rowLimit int64) (*data.Fram
 		if !result.CommandTag.Select() {
 			continue
 		}
-		fieldDescriptions := result.FieldDescriptions
-		fields := make(data.Fields, len(fieldDescriptions))
+		fields := make(data.Fields, len(result.FieldDescriptions))
 
-		fieldTypes, err := getFieldTypesFromDescriptions(fieldDescriptions, m)
+		fieldTypes, err := getFieldTypesFromDescriptions(result.FieldDescriptions, m)
 		if err != nil {
 			return nil, err
 		}
 
-		for i, v := range fieldDescriptions {
+		for i, v := range result.FieldDescriptions {
 			fields[i] = data.NewFieldFromFieldType(fieldTypes[i], 0)
 			fields[i].Name = v.Name
 		}
