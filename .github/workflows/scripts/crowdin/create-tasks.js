@@ -1,4 +1,4 @@
-const crowdin = require('@crowdin/crowdin-api-client');
+import crowdin from '@crowdin/crowdin-api-client';
 const TRANSLATED_CONNECTOR_DESCRIPTION = '{{tos_service_type: premium}}';
 
 const API_TOKEN = process.env.CROWDIN_PERSONAL_TOKEN;
