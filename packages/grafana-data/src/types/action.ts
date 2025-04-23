@@ -1,6 +1,3 @@
-import { ScopedVars } from './ScopedVars';
-import { DataFrame, Field, ValueLinkConfig } from './dataFrame';
-import { InterpolateFunction } from './panel';
 import { SelectableValue } from './select';
 
 export enum ActionType {
@@ -17,6 +14,7 @@ export interface Action {
   [ActionType.Fetch]: FetchOptions;
   confirmation?: string;
   oneClick?: boolean;
+  variables?: ActionVariable[];
 }
 
 /**
@@ -27,6 +25,17 @@ export interface ActionModel<T = any> {
   onClick: (event: any, origin?: any) => void;
   confirmation?: string;
   oneClick?: boolean;
+  variables?: ActionVariable[];
+}
+
+export type ActionVariable = {
+  key: string;
+  name: string;
+  type: ActionVariableType;
+};
+
+export enum ActionVariableType {
+  String = 'string',
 }
 
 interface FetchOptions {
@@ -66,13 +75,4 @@ export const defaultActionConfig: Action = {
     queryParams: [],
     headers: [['Content-Type', 'application/json']],
   },
-};
-
-export type ActionsArgs = {
-  frame: DataFrame;
-  field: Field;
-  fieldScopedVars: ScopedVars;
-  replaceVariables: InterpolateFunction;
-  actions: Action[];
-  config: ValueLinkConfig;
 };
