@@ -22,18 +22,17 @@ const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin.default(cred
 
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
-console.log('Languages: ', languages);
-console.log('File IDs: ', fileIds);
 
 // for (const language of languages) {
-//   const { name, id } = language;
-//   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds);
-  // }
+  const { name, id } = languages[0];
+  await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds);
+// }
 
 async function getLanguages(projectId) {
   try {
     const project = await projectsGroupsApi.getProject(projectId);
     const languages = project.data.targetLanguages;
+    console.log('Fetched languages successfully!');
     return languages;
   } catch (error) {
     console.error('Failed to fetch languages: ', error.message);
@@ -49,6 +48,7 @@ async function getFileIds(projectId) {
     const response = await sourceFilesApi.listProjectFiles(projectId);
     const files = response.data;
     const fileIds = files.map(file => file.data.id);
+    console.log('Fetched file ids successfully!');
     return fileIds;
   } catch (error) {
     console.error('Failed to fetch file IDs: ', error.message);
@@ -63,7 +63,8 @@ async function createTask(projectId, title, languageId, fileIds) {
   try {
     const taskParams = {
       title,
-      description: TRANSLATED_CONNECTOR_DESCRIPTION,
+      // description: TRANSLATED_CONNECTOR_DESCRIPTION,
+      description: 'test',
       languageId,
       type: 2, // Translation by vendor
       workflowStepId: 78, // Translation step ID
