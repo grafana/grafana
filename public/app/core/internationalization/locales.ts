@@ -277,7 +277,7 @@ export const LOCALES: Locale[] = [
   // Chinese - Hong Kong
   { name: '中文 (香港)', code: 'zh-HK' },
   // Chinese - Taiwan
-  { name: '中文 (台灣)', code: 'zh-TW' },
+  { name: '正體中文 (台灣)', code: 'zh-TW' },
   // Chinese - Macau
   { name: '中文 (澳門)', code: 'zh-MO' },
   // Yoruba - Nigeria, Benin, Togo
