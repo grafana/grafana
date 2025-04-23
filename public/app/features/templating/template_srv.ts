@@ -201,7 +201,7 @@ export class TemplateSrv implements BaseTemplateSrv {
       return false;
     }
 
-    // Scenes compatability
+    // Scenes compatibility
     if (window.__grafanaSceneContext && window.__grafanaSceneContext.isActive) {
       // We are just checking that this is a valid variable reference, and we are not looking up the variable
       this.regex.lastIndex = 0;
