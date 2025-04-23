@@ -19,15 +19,17 @@ const credentials = {
   organization: 'grafana'
 };
 
-const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin.default(credentials);
+const { tasksApi, projectsGroupsApi, sourceFilesApi, workflowsApi } = new crowdin(credentials);
 
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
+const workflowStepId = await getWorkflowStepId(PROJECT_ID);
+console.log('Workflow step ID: ', workflowStepId);
 
-for (const language of languages) {
-  const { name, id } = language;
-  await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds);
-}
+// for (const language of languages) {
+//   const { name, id } = language;
+//   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds, workflowStepId);
+// }
 
 async function getLanguages(projectId) {
   try {
@@ -60,13 +62,29 @@ async function getFileIds(projectId) {
   }
 }
 
-async function createTask(projectId, title, languageId, fileIds) {
+async function getWorkflowStepId(projectId) {
+  try {
+    const response = await workflowsApi.listWorkflowSteps(projectId);
+    const workflowSteps = response.data;
+    const workflowStepId = workflowSteps.find(step => step.data.type === 'Translation by vendor').data.id;
+    console.log('Fetched workflow step ID successfully!');
+    return workflowStepId;
+  } catch (error) {
+    console.error('Failed to fetch workflow step ID: ', error.message);
+    if (error.response && error.response.data) {
+      console.error('Error details: ', JSON.stringify(error.response.data, null, 2));
+    }
+    process.exit(1);
+  }
+}
+
+async function createTask(projectId, title, languageId, fileIds, workflowStepId) {
   try {
     const taskParams = {
       title,
       description: TRANSLATED_CONNECTOR_DESCRIPTION,
       languageId,
-      workflowStepId: TRANSLATED_WORKFLOW_STEP_ID,
+      workflowStepId,
       skipAssignedStrings: true,
       fileIds,
     };
