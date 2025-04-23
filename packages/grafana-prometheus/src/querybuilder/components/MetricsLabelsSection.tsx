@@ -2,7 +2,6 @@
 import { useCallback } from 'react';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
-import { config } from '@grafana/runtime';
 
 import { PrometheusDatasource } from '../../datasource';
 import { getMetadataString } from '../../language_provider';
@@ -14,7 +13,6 @@ import { PromVisualQuery } from '../types';
 
 import { LabelFilters } from './LabelFilters';
 import { MetricCombobox } from './MetricCombobox';
-import { MetricSelect } from './MetricSelect';
 
 export interface MetricsLabelsSectionProps {
   query: PromVisualQuery;
@@ -196,11 +194,9 @@ export function MetricsLabelsSection({
     return withTemplateVariableOptions(getMetrics(datasource, query, timeRange));
   }, [datasource, query, timeRange, withTemplateVariableOptions]);
 
-  const MetricSelectComponent = config.featureToggles.prometheusUsesCombobox ? MetricCombobox : MetricSelect;
-
   return (
     <>
-      <MetricSelectComponent
+      <MetricCombobox
         query={query}
         onChange={onChange}
         onGetMetrics={onGetMetrics}
