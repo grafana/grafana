@@ -2,7 +2,6 @@ package metadata
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
@@ -109,11 +108,7 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	return keeper, nil
 }
 
-type dbQuerier interface {
-	Query(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-}
-
-func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, namespace, name string, forUpdate sqlForUpdate) (*keeperDB, error) {
+func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier session.SessionQuerier, namespace, name string, forUpdate sqlForUpdate) (*keeperDB, error) {
 	req := &readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,

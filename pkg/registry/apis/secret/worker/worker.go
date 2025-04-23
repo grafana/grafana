@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
@@ -67,7 +68,7 @@ func (w *Worker) ControlLoop(ctx context.Context) error {
 
 // TODO: don't rollback every message when a single error happens
 func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
-	if err := w.database.Transaction(ctx, func(ctx context.Context) error {
+	if err := w.database.Transaction(ctx, func(sess *session.SessionTx) error {
 		timeoutCtx, cancel := context.WithTimeout(ctx, w.config.ReceiveTimeout)
 		messages, err := w.outboxQueue.ReceiveN(timeoutCtx, w.config.BatchSize)
 		cancel()

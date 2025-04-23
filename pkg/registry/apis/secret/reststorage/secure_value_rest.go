@@ -19,6 +19,7 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
+	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 )
 
 var (
@@ -133,7 +134,7 @@ func (s *SecureValueRest) Create(
 	// Assigned inside the transaction callback
 	var object runtime.Object
 
-	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+	if err := s.database.Transaction(ctx, func(*session.SessionTx) error {
 		// TODO: return err when secret already exists
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv)
 		if err != nil {
