@@ -1,7 +1,7 @@
 import saveAs from 'file-saver';
+import yaml from 'js-yaml';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import yaml from 'yaml';
 
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
@@ -90,7 +90,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const dashboardJsonPretty = JSON.stringify(dashboard.json, null, 2);
     const { isSharingExternally, isViewingYAML } = this.state;
 
-    const blob = new Blob([isViewingYAML ? yaml.stringify(dashboard.json) : dashboardJsonPretty], {
+    const blob = new Blob([isViewingYAML ? yaml.dump(dashboard.json) : dashboardJsonPretty], {
       type: 'application/json;charset=utf-8',
     });
 

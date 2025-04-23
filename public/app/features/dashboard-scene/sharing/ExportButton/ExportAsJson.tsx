@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
+import yaml from 'js-yaml';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
-import yaml from 'yaml';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
@@ -47,7 +47,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   }, [isSharingExternally]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
-  const stringifiedDashboardYaml = yaml.stringify(dashboardJson.value?.json);
+  const stringifiedDashboardYaml = yaml.dump(dashboardJson.value?.json);
   const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYaml : stringifiedDashboardJson;
   const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
   const isV2Dashboard = dashboardJson.value?.json && 'elements' in dashboardJson.value.json;
