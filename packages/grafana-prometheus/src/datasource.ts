@@ -1071,28 +1071,6 @@ export class PrometheusDatasource
   }
 }
 
-/**
- * Align query range to step.
- * Rounds start and end down to a multiple of step.
- * @param start Timestamp marking the beginning of the range.
- * @param end Timestamp marking the end of the range.
- * @param step Interval to align start and end with.
- * @param utcOffsetSec Number of seconds current timezone is offset from UTC
- */
-export function alignRange(
-  start: number,
-  end: number,
-  step: number,
-  utcOffsetSec: number
-): { end: number; start: number } {
-  const alignedEnd = Math.floor((end + utcOffsetSec) / step) * step - utcOffsetSec;
-  const alignedStart = Math.floor((start + utcOffsetSec) / step) * step - utcOffsetSec;
-  return {
-    end: alignedEnd,
-    start: alignedStart,
-  };
-}
-
 export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {
   return groups.reduce<RuleQueryMapping>(
     (mapping, group) =>
