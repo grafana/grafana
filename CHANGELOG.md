@@ -19,6 +19,9 @@
 - **InfluxDB:** Fix nested variable interpolation [#104096](https://github.com/grafana/grafana/pull/104096), [@aangelisc](https://github.com/aangelisc)
 - **LDAP test:** Fix page crash [#102684](https://github.com/grafana/grafana/pull/102684), [@ashharrison90](https://github.com/ashharrison90)
 - **Org redirection:** Fix linking between orgs [#102870](https://github.com/grafana/grafana/pull/102870), [@ashharrison90](https://github.com/ashharrison90)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+- **Security:** Fix CVE-2025-3260
 
 <!-- 11.6.1 END -->
 <!-- 11.6.0 START -->
