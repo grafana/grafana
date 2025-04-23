@@ -353,18 +353,18 @@ func newSecureValueMetadataStorageWrapper(rng *rand.Rand, impl contracts.SecureV
 	return &secureValueMetadataStorageWrapper{rng: rng, impl: impl}
 }
 
-func (wrapper *secureValueMetadataStorageWrapper) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	return wrapper.impl.Create(ctx, sv)
+func (wrapper *secureValueMetadataStorageWrapper) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+	return wrapper.impl.Create(ctx, sv, actorUID)
 }
 func (wrapper *secureValueMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	return wrapper.impl.Read(ctx, namespace, name)
 }
-func (wrapper *secureValueMetadataStorageWrapper) Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (wrapper *secureValueMetadataStorageWrapper) Update(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
 		return nil, context.DeadlineExceeded
 	}
-	sv, err := wrapper.impl.Update(ctx, sv)
+	sv, err := wrapper.impl.Update(ctx, sv, actorUID)
 	if err != nil {
 		return sv, err
 	}

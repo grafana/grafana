@@ -26,7 +26,7 @@ type fakeSecureValueMetadataStorage struct {
 	latency time.Duration
 }
 
-func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// TODO: Remove once the outbox is implemented
 	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
 	sv.Status.Message = ""
@@ -60,7 +60,7 @@ func (s *fakeSecureValueMetadataStorage) Read(ctx context.Context, namespace xku
 	return &v, nil
 }
 
-func (s *fakeSecureValueMetadataStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *fakeSecureValueMetadataStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// TODO: Remove once the outbox is implemented
 	nsv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
 	nsv.Status.Message = ""

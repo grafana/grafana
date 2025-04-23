@@ -58,16 +58,11 @@ type secureValueMetadataStorage struct {
 	keepers               map[contracts.KeeperType]contracts.Keeper
 }
 
-func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
+func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID())
+	row, err := toCreateRow(sv, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
@@ -111,11 +106,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 }
 
 func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -142,12 +132,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
+func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -181,7 +166,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
 	newSecureValue.Status.Message = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), currentRow.ExternalID)
+	newRow, err := toUpdateRow(currentRow, newSecureValue, actorUID, currentRow.ExternalID)
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
@@ -222,10 +207,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
 
 	// Delete from the keeper.
 	// TODO: here temporary, the moment of deletion will change in the async flow.
@@ -360,11 +341,6 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)

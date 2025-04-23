@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -133,9 +134,15 @@ func (s *SecureValueRest) Create(
 	// Assigned inside the transaction callback
 	var object runtime.Object
 
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+	actorUID := authInfo.GetUID()
+
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		// TODO: return err when secret already exists
-		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv)
+		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
 		if err != nil {
 			return fmt.Errorf("failed to create securevalue: %w", err)
 		}
@@ -171,6 +178,12 @@ func (s *SecureValueRest) Update(
 	forceAllowCreate bool,
 	options *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, false, fmt.Errorf("missing auth info in context")
+	}
+	actorUID := authInfo.GetUID()
+
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -196,7 +209,7 @@ func (s *SecureValueRest) Update(
 	newSecureValue.Annotations = xkube.CleanAnnotations(newSecureValue.Annotations)
 
 	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-	updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue)
+	updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue, actorUID)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to update secure value: %w", err)
 	}
