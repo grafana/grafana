@@ -3329,3 +3329,412 @@ func TestGitHubRepository_LatestRef(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHubRepository_CompareFiles(t *testing.T) {
+	tests := []struct {
+		name            string
+		setupMock       func(m *pgh.MockClient)
+		base            string
+		ref             string
+		expectedFiles   []VersionedFileChange
+		expectedError   error
+		shouldGetLatest bool
+	}{
+		{
+			name: "successfully compare files",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/test.json")
+				commitFile1.On("GetStatus").Return("added")
+
+				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2.On("GetFilename").Return("dashboards/modified.json")
+				commitFile2.On("GetStatus").Return("modified")
+
+				commitFile3 := pgh.NewMockCommitFile(t)
+				commitFile3.On("GetFilename").Return("dashboards/renamed.json")
+				commitFile3.On("GetStatus").Return("renamed")
+				commitFile3.On("GetPreviousFilename").Return("dashboards/old.json")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+						commitFile2,
+						commitFile3,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "test.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+				{
+					Path:   "modified.json",
+					Ref:    "def456",
+					Action: FileActionUpdated,
+				},
+				{
+					Path:         "renamed.json",
+					Ref:          "def456",
+					Action:       FileActionRenamed,
+					PreviousPath: "old.json",
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error comparing commits",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return(nil, fmt.Errorf("failed to compare commits"))
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: nil,
+			expectedError: fmt.Errorf("compare commits: failed to compare commits"),
+		},
+		{
+			name: "file outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/path.json")
+				commitFile1.On("GetStatus").Return("added")
+
+				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2.On("GetFilename").Return("dashboards/valid.json")
+				commitFile2.On("GetStatus").Return("added")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+						commitFile2,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "valid.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "modified file outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/modified.json")
+				commitFile1.On("GetStatus").Return("modified")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "copied file status",
+			setupMock: func(m *pgh.MockClient) {
+				// File inside configured path
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/copied.json")
+				commitFile1.On("GetStatus").Return("copied")
+
+				// File outside configured path
+				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2.On("GetFilename").Return("../outside/copied.json")
+				commitFile2.On("GetStatus").Return("copied")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+						commitFile2,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "copied.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "removed file status - inside path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/removed.json")
+				commitFile1.On("GetStatus").Return("removed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:         "removed.json",
+					PreviousPath: "removed.json",
+					Ref:          "def456",
+					PreviousRef:  "abc123",
+					Action:       FileActionDeleted,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - both paths outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("../outside/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - both paths inside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("dashboards/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:         "renamed.json",
+					PreviousPath: "original.json",
+					Ref:          "def456",
+					PreviousRef:  "abc123",
+					Action:       FileActionRenamed,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - moving out of configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("dashboards/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "original.json",
+					Ref:    "abc123",
+					Action: FileActionDeleted,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - moving into configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("../outside/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "renamed.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "removed file status - outside path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/removed.json")
+				commitFile1.On("GetStatus").Return("removed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "changed file outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/changed.json")
+				commitFile1.On("GetStatus").Return("changed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "get latest ref when ref is empty",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/test.json")
+				commitFile1.On("GetStatus").Return("added")
+
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{Sha: "latest123"}, nil)
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "latest123").
+					Return([]pgh.CommitFile{commitFile1}, nil)
+			},
+			base:            "abc123",
+			ref:             "",
+			shouldGetLatest: true,
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "test.json",
+					Ref:    "latest123",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "unchanged file status",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetStatus").Return("unchanged")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "unknown file status",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/unknown.json")
+				commitFile1.On("GetStatus").Return("unknown_status")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "error getting latest ref",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{}, fmt.Errorf("branch not found"))
+			},
+			base:            "abc123",
+			ref:             "",
+			shouldGetLatest: true,
+			expectedFiles:   nil,
+			expectedError:   fmt.Errorf("get latest ref: get branch: branch not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh: mockGH,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							Branch: "main",
+							Path:   "dashboards",
+						},
+					},
+				},
+				owner: "grafana",
+				repo:  "grafana",
+			}
+
+			// Call the CompareFiles method
+			files, err := repo.CompareFiles(context.Background(), tt.base, tt.ref)
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, len(tt.expectedFiles), len(files))
+
+				for i, expectedFile := range tt.expectedFiles {
+					require.Equal(t, expectedFile.Path, files[i].Path)
+					require.Equal(t, expectedFile.Ref, files[i].Ref)
+					require.Equal(t, expectedFile.Action, files[i].Action)
+					require.Equal(t, expectedFile.PreviousPath, files[i].PreviousPath)
+				}
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}

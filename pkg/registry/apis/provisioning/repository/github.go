@@ -705,8 +705,8 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 				})
 			case previousErr == nil && currentErr != nil:
 				changes = append(changes, VersionedFileChange{
-					Path:   currentPath,
-					Ref:    ref,
+					Path:   previousPath,
+					Ref:    base,
 					Action: FileActionDeleted,
 				})
 			case previousErr != nil && currentErr == nil:
