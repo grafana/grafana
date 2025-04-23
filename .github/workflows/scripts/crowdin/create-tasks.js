@@ -66,7 +66,7 @@ async function createTask(projectId, title, languageId, fileIds) {
       // description: TRANSLATED_CONNECTOR_DESCRIPTION,
       description: 'test',
       languageId,
-      type: 2, // Translation by vendor
+      // type: 2, // Translation by vendor
       workflowStepId: 78, // Translation step ID
       skipAssignedStrings: true,
       fileIds,
