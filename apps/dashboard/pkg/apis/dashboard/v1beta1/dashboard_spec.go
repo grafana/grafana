@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 

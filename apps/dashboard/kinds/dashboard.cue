@@ -2,7 +2,7 @@ package kinds
 
 import (
 	v0 "github.com/grafana/grafana/sdkkinds/dashboard/v0alpha1"
-	v1 "github.com/grafana/grafana/sdkkinds/dashboard/v1alpha1"
+	v1 "github.com/grafana/grafana/sdkkinds/dashboard/v1beta1"
 	v2 "github.com/grafana/grafana/sdkkinds/dashboard/v2alpha1"
 )
 
@@ -31,7 +31,7 @@ ConversionStatus: {
 dashboard: {
 	kind:       "Dashboard"
 	pluralName: "Dashboards"
-	current:    "v0alpha1"
+	current:    "v1beta1"
 
 	codegen: {
 		ts: {
@@ -55,7 +55,7 @@ dashboard: {
 				status: DashboardStatus
 			}
 		}
-		"v1alpha1": {
+		"v1beta1": {
 			schema: {
 				spec:   v1.DashboardSpec
 				status: DashboardStatus
