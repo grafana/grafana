@@ -1,3 +1,12 @@
+<!-- 11.4.4 START -->
+
+# 11.4.4 (2025-04-23)
+
+### Features and enhancements
+
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+<!-- 11.4.4 END -->
 <!-- 11.3.6 START -->
 
 # 11.3.6 (2025-04-22)
