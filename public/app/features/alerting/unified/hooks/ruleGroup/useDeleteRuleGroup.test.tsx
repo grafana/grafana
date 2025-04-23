@@ -78,7 +78,7 @@ const DeleteTestComponent = ({ ruleGroupIdentifier }: DeleteTestComponentProps) 
   const [deleteRuleGroup, requestState] = useDeleteRuleGroup();
 
   const onClick = () => {
-    deleteRuleGroup.execute(ruleGroupIdentifier);
+    void deleteRuleGroup.execute(ruleGroupIdentifier);
   };
 
   return (

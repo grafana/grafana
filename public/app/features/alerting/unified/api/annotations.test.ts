@@ -18,9 +18,9 @@ jest.mock('@grafana/runtime', () => ({
 describe('annotations', () => {
   beforeEach(() => get.mockClear());
 
-  it('should fetch annotation for an alertId', () => {
+  it('should fetch annotation for an alertId', async () => {
     const ALERT_ID = 'abc123';
-    fetchAnnotations(ALERT_ID);
+    await fetchAnnotations(ALERT_ID);
     expect(get).toBeCalledWith('/api/annotations', { alertUID: ALERT_ID });
   });
 });

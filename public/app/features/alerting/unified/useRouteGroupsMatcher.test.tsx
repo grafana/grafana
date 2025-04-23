@@ -33,8 +33,8 @@ describe('useRouteGroupsMatcher', () => {
 
     expect(createWorkerMock).toHaveBeenCalledTimes(1);
     expect(wrapMock).toHaveBeenCalledTimes(0); // When loading worker failed we shouldn't call wrap
-    expect(async () => {
+    await expect(async () => {
       await result.current.getRouteGroupsMap({ id: '1' }, []);
-    }).rejects.toThrowError(Error);
+    }).rejects.toThrow(Error);
   });
 });

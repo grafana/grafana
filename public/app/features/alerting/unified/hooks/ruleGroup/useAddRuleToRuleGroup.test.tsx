@@ -145,7 +145,7 @@ const AddRuleTestComponent = ({ ruleGroupIdentifier, rule, interval }: AddRuleTe
   const [addRule, requestState] = useAddRuleToRuleGroup();
 
   const onClick = () => {
-    addRule.execute(ruleGroupIdentifier, rule, interval);
+    void addRule.execute(ruleGroupIdentifier, rule, interval);
   };
 
   return (

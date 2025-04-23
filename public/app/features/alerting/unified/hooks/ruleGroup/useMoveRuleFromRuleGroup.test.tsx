@@ -269,7 +269,7 @@ const MoveRuleTestComponent = ({
   const [moveRule, requestState] = useMoveRuleToRuleGroup();
 
   const onClick = () => {
-    moveRule.execute(currentRuleGroupIdentifier, targetRuleGroupIdentifier, ruleID, rule);
+    void moveRule.execute(currentRuleGroupIdentifier, targetRuleGroupIdentifier, ruleID, rule);
   };
 
   return (
