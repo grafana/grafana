@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -13,8 +14,10 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8testing "k8s.io/client-go/testing"
 )
@@ -336,13 +339,11 @@ func TestExportFolders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			scheme := runtime.NewScheme()
-			require.NoError(t, metav1.AddMetaToScheme(scheme))
 			listGVK := schema.GroupVersionKind{
 				Group:   resources.FolderResource.Group,
 				Version: resources.FolderResource.Version,
 				Kind:    "FolderList",
 			}
-
 			scheme.AddKnownTypeWithName(listGVK, &metav1.PartialObjectMetadataList{})
 			scheme.AddKnownTypeWithName(schema.GroupVersionKind{
 				Group:   resources.FolderResource.Group,
@@ -376,4 +377,136 @@ func TestExportFolders(t *testing.T) {
 			mockProgress.AssertExpectations(t)
 		})
 	}
+}
+
+func TestFolderMetaAccessor(t *testing.T) {
+	t.Run("should export folders from another manager", func(t *testing.T) {
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test-folder",
+					"annotations": map[string]interface{}{
+						"folder.grafana.app/uid": "test-folder-uid",
+					},
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:        utils.ManagerKindRepo,
+			Identity:    "other-manager",
+			AllowsEdits: true,
+			Suspended:   false,
+		})
+		fakeFolderClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{*obj},
+		}
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.MatchedBy(func(tree resources.FolderTree) bool {
+			return tree.Count() == 1
+		}), mock.MatchedBy(func(fn func(folder resources.Folder, created bool, err error) error) bool {
+			require.NoError(t, fn(resources.Folder{ID: "test-folder-uid", Path: "grafana/test-folder"}, true, nil))
+			return true
+		})).Return(nil)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
+		progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+			return result.Action == repository.FileActionCreated &&
+				result.Name == "test-folder-uid" &&
+				result.Error == nil &&
+				result.Path == "grafana/test-folder"
+		})).Return()
+		progress.On("TooManyErrors").Return(nil)
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+			Path:   "grafana",
+			Branch: "feature/branch",
+		}, fakeFolderClient, mockRepoResources, progress)
+
+		require.NoError(t, err)
+
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+	t.Run("should skip if repo is the manager", func(t *testing.T) {
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{
+					"name": "test-folder",
+					"annotations": map[string]interface{}{
+						"folder.grafana.app/uid": "test-folder-uid",
+					},
+				},
+			},
+		}
+		meta, err := utils.MetaAccessor(obj)
+		require.NoError(t, err)
+		meta.SetManagerProperties(utils.ManagerProperties{
+			Kind:        utils.ManagerKindRepo,
+			Identity:    "test-repo",
+			AllowsEdits: true,
+			Suspended:   false,
+		})
+		fakeFolderClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{*obj},
+		}
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
+		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.Anything, mock.Anything).Return(nil)
+
+		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+			Path:   "grafana",
+			Branch: "feature/branch",
+		}, fakeFolderClient, mockRepoResources, progress)
+
+		require.NoError(t, err)
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+	t.Run("should fail with invalid meta accessor", func(t *testing.T) {
+		t.Skip("skipping this test for now as we cannot make it invalid")
+
+		obj := &unstructured.Unstructured{
+			Object: map[string]interface{}{
+				// make it invalid
+			},
+		}
+		fakeFolderClient := &mockDynamicInterface{
+			items: []unstructured.Unstructured{*obj},
+		}
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
+		err := ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
+			Path:   "grafana",
+			Branch: "feature/branch",
+		}, fakeFolderClient, mockRepoResources, progress)
+
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "extract meta accessor")
+		mockRepoResources.AssertExpectations(t)
+		progress.AssertExpectations(t)
+	})
+}
+
+// mockDynamicInterface implements a simplified version of the dynamic.ResourceInterface
+type mockDynamicInterface struct {
+	dynamic.ResourceInterface
+	items       []unstructured.Unstructured
+	deleteError error
+}
+
+func (m *mockDynamicInterface) List(ctx context.Context, opts metav1.ListOptions) (*unstructured.UnstructuredList, error) {
+	return &unstructured.UnstructuredList{
+		Items: m.items,
+	}, nil
+}
+
+func (m *mockDynamicInterface) Delete(ctx context.Context, name string, opts metav1.DeleteOptions, subresources ...string) error {
+	return m.deleteError
 }

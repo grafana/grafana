@@ -9,8 +9,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 func (session *Session) queryPreprocess(sqlStr *string, paramStr ...any) {

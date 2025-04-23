@@ -19,9 +19,11 @@ import {
   SceneVariableSet,
 } from '@grafana/scenes';
 import { VariableHide, VariableType } from '@grafana/schema';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
+import { getCustomVariableOptions } from './components/CustomVariableForm';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
@@ -35,6 +37,7 @@ interface EditableVariableConfig {
   name: string;
   description: string;
   editor: React.ComponentType<any>;
+  getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
 //exclude system variable type and snapshot variable type
@@ -47,27 +50,28 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
 export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
   custom: {
     name: 'Custom',
-    description: 'Define variable values manually',
+    description: 'Values are static and defined manually',
     editor: CustomVariableEditor,
+    getOptions: getCustomVariableOptions,
   },
   query: {
     name: 'Query',
-    description: 'Variable values are fetched from a datasource query',
+    description: 'Values are fetched from a data source query',
     editor: QueryVariableEditor,
   },
   constant: {
     name: 'Constant',
-    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
+    description: 'A hidden constant variable, useful for metric prefixes in dashboards you want to share',
     editor: ConstantVariableEditor,
   },
   interval: {
     name: 'Interval',
-    description: 'Define a timespan interval (ex 1m, 1h, 1d)',
+    description: 'Values are timespans, ex 1m, 1h, 1d',
     editor: IntervalVariableEditor,
   },
   datasource: {
     name: 'Data source',
-    description: 'Enables you to dynamically switch the data source for multiple panels',
+    description: 'Dynamically switch the data source for multiple panels',
     editor: DataSourceVariableEditor,
   },
   adhoc: {
@@ -82,10 +86,19 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
   },
   textbox: {
     name: 'Textbox',
-    description: 'Define a textbox variable, where users can enter any arbitrary string',
+    description: 'Users can enter any arbitrary strings in a textbox',
     editor: TextBoxVariableEditor,
   },
 };
+
+export function getEditableVariableDefinition(type: string): EditableVariableConfig {
+  const editableVariable = EDITABLE_VARIABLES[type as EditableVariableType];
+  if (!editableVariable) {
+    throw new Error(`Variable type ${type} not found`);
+  }
+
+  return editableVariable;
+}
 
 export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'query',
