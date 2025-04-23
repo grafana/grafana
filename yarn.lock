@@ -1629,6 +1629,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@crowdin/crowdin-api-client@npm:^1.42.0":
+  version: 1.42.0
+  resolution: "@crowdin/crowdin-api-client@npm:1.42.0"
+  dependencies:
+    axios: "npm:^1"
+  checksum: 10/9e816c5d1fe6f93c0f20625f377f0caa1c2d0cc2a5df97440fc3494ab1d3a7a29d6fe40af8fae32ea96f2bc7fa2bcdc1c7af6dc6563d8fdf86624dc7885e98ff
+  languageName: node
+  linkType: hard
+
 "@cspotcode/source-map-support@npm:^0.8.0":
   version: 0.8.1
   resolution: "@cspotcode/source-map-support@npm:0.8.1"
@@ -11644,7 +11653,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.7.9, axios@npm:^1.8.2, axios@npm:^1.8.3":
+"axios@npm:^1, axios@npm:^1.7.9, axios@npm:^1.8.2, axios@npm:^1.8.3":
   version: 1.8.4
   resolution: "axios@npm:1.8.4"
   dependencies:
@@ -17592,6 +17601,7 @@ __metadata:
     "@betterer/betterer": "npm:5.4.0"
     "@betterer/cli": "npm:5.4.0"
     "@bsull/augurs": "npm:^0.9.0"
+    "@crowdin/crowdin-api-client": "npm:^1.42.0"
     "@cypress/webpack-preprocessor": "npm:6.0.4"
     "@emotion/css": "npm:11.13.5"
     "@emotion/eslint-plugin": "npm:11.12.0"
