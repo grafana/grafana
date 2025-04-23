@@ -89,8 +89,6 @@ func RunTargetServer(opts standalone.BuildInfo, cli *cli.Context) error {
 		return err
 	}
 
-	fmt.Printf("Arguments: %v\n", os.Args)
-
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
 
 	s, err := server.InitializeModuleServer(
