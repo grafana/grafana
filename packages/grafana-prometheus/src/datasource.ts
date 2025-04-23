@@ -60,7 +60,7 @@ import { getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/PromQueryModeller';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
-import { getOriginalMetricName, transformV2 } from './result_transformer';
+import { transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
@@ -902,10 +902,6 @@ export class PrometheusDatasource
       start: getPrometheusTime(timeRange.from, false).toString(),
       end: getPrometheusTime(timeRange.to, true).toString(),
     };
-  }
-
-  getOriginalMetricName(labelData: { [key: string]: string }) {
-    return getOriginalMetricName(labelData);
   }
 
   /**
