@@ -14,7 +14,7 @@ import { NeedHelpInfo } from '../../NeedHelpInfo';
 
 import { ContactPointDetails } from './contactPoint/ContactPointDetails';
 import { ContactPointSelector } from './contactPoint/ContactPointSelector';
-import {ActiveTimingFields} from "./route-settings/ActiveTimingFields";
+import { ActiveTimingFields } from './route-settings/ActiveTimingFields';
 import { MuteTimingFields } from './route-settings/MuteTimingFields';
 import { RoutingSettings } from './route-settings/RouteSettings';
 
