@@ -81,11 +81,13 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
     const location = await getLocationMatchers(options.location);
     const source = new FrameVectorSource<Point>(location);
     const symbolLayer = new WebGLPointsLayer({ source, style: webGLStyle });
-    const textLayer = new VectorImage({ source, declutter: true });
-    // TODO need to check if the source contains line strings and stack the layers appropriately
+    const vectorLayer = new VectorImage({ source, declutter: true });
+    // Initialize hasVector with just text check, will be updated when features are available
+    let hasVector = hasText;
+
     const layers = new LayerGroup({
       // If text and no symbol, only show text - fall back on default symbol
-      layers: hasText && symbol ? [symbolLayer, textLayer] : hasText && !symbol ? [textLayer] : [symbolLayer],
+      layers: hasVector && symbol ? [symbolLayer, vectorLayer] : hasVector && !symbol ? [vectorLayer] : [symbolLayer],
     });
 
     const legendProps = new ReplaySubject<MarkersLegendProps>(1);
@@ -117,8 +119,15 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
           }
 
           source.update(frame);
+
+          // Track if we find any line strings during feature processing
+          let hasLineString = false;
+
           source.forEachFeature((feature) => {
             const isLineString = feature.getGeometry()?.getType() === 'LineString';
+            if (isLineString) {
+              hasLineString = true;
+            }
             const idx: number = feature.get('rowIndex');
             const dims = style.dims;
             const values = { ...style.base };
@@ -135,7 +144,6 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
             if (dims?.rotation) {
               values.rotation = dims.rotation.get(idx);
             }
-
             if (!isLineString) {
               const colorString = tinycolor(theme.visualization.getColorByName(values.color)).toString();
               const colorValues = getRGBValues(colorString);
@@ -166,6 +174,21 @@ export const markersLayer: MapLayerRegistryItem<MarkersConfig> = {
               feature.setStyle(lineStringStyle);
             }
           });
+
+          // Update hasVector state after processing all features
+          hasVector = hasText || hasLineString;
+
+          // Update layer visibility based on current hasVector state
+          const layersArray = layers.getLayers();
+          layersArray.clear();
+          if (hasVector && symbol) {
+            layersArray.extend([symbolLayer, vectorLayer]);
+          } else if (hasVector && !symbol) {
+            layersArray.extend([vectorLayer]);
+          } else {
+            layersArray.extend([symbolLayer]);
+          }
+
           break; // Only the first frame for now!
         }
       },
