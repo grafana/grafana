@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, FilterPill, Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { Trans } from '../../core/internationalization';
 import { getModKey } from '../../core/utils/browser';
 import { ToggleNode, TreeScope } from '../scopes/selector/types';
 
@@ -22,7 +23,9 @@ export function ScopesRow({ treeScopes, isDirty, apply, toggleNode }: Props) {
   return (
     <>
       <Stack alignItems={'center'}>
-        <span className={styles.scopesText}>Scopes: </span>
+        <span className={styles.scopesText}>
+          <Trans i18nKey={'command-palette.scopes.selected-scopes-label'}>Scopes: </Trans>
+        </span>
         {treeScopes?.map((scope) => {
           return (
             <FilterPill
@@ -43,7 +46,7 @@ export function ScopesRow({ treeScopes, isDirty, apply, toggleNode }: Props) {
             apply();
           }}
         >
-          Apply&nbsp;
+          <Trans i18nKey={'command-palette.scopes.apply-selected-scopes'}>Apply</Trans>&nbsp;
           <Text variant="bodySmall">{`${getModKey()}+↵`}</Text>
         </Button>
       )}
