@@ -212,6 +212,12 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 			Code: http.StatusNotFound,
 		}
 	} else {
+		meta, err := utils.MetaAccessor(dash)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+		}
+		rsp.Folder = meta.GetFolder()
+
 		rsp.Value, err = json.Marshal(dash)
 		if err != nil {
 			rsp.Error = resource.AsErrorResult(err)
