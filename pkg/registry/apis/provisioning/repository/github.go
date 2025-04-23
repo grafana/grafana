@@ -826,7 +826,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 
 	var mustUpdate bool
 
-	if hook.URL != r.config.Status.Webhook.URL {
+	if hook.URL != r.webhookURL {
 		mustUpdate = true
 		hook.URL = r.webhookURL
 	}
