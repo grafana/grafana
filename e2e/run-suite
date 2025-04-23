@@ -23,6 +23,7 @@ CLEANUP=""
 declare -A env=(
   [BASE_URL]=${BASE_URL:-"http://$HOST:$PORT"}
   [SLOWMO]=0
+  [STACK_ID]=12345
 )
 
 testFilesForSingleSuite="*.spec.ts"
