@@ -31,6 +31,7 @@ type legacyResourcesMigrator struct {
 	legacyMigrator      legacy.LegacyMigrator
 	signerFactory       signature.SignerFactory
 	clients             resources.ClientFactory
+	exportFn            export.ExportFn
 }
 
 func NewLegacyResourcesMigrator(
@@ -39,6 +40,7 @@ func NewLegacyResourcesMigrator(
 	legacyMigrator legacy.LegacyMigrator,
 	signerFactory signature.SignerFactory,
 	clients resources.ClientFactory,
+	exportFn export.ExportFn,
 ) LegacyResourcesMigrator {
 	return &legacyResourcesMigrator{
 		repositoryResources: repositoryResources,
@@ -46,6 +48,7 @@ func NewLegacyResourcesMigrator(
 		legacyMigrator:      legacyMigrator,
 		signerFactory:       signerFactory,
 		clients:             clients,
+		exportFn:            exportFn,
 	}
 }
 
@@ -71,19 +74,15 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 	}
 
 	progress.SetMessage(ctx, "migrate folders from SQL")
-	if m.clients != nil {
-		clients, err := m.clients.Clients(ctx, namespace)
-		if err != nil {
-			return err
-		}
-		folderClient, err := clients.Folder()
-		if err != nil {
-			return err
-		}
-		err = export.ExportFolders(ctx, rw.Config().Name, provisioning.ExportJobOptions{}, folderClient, repositoryResources, progress)
-		if err != nil {
-			return fmt.Errorf("migrate folders from SQL: %w", err)
-		}
+	clients, err := m.clients.Clients(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	// nothing special for the export for now
+	exportOpts := provisioning.ExportJobOptions{}
+	if err = m.exportFn(ctx, rw.Config().Name, exportOpts, clients, repositoryResources, progress); err != nil {
+		return fmt.Errorf("migrate folders from SQL: %w", err)
 	}
 
 	progress.SetMessage(ctx, "migrate resources from SQL")

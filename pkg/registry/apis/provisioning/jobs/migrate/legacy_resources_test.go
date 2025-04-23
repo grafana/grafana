@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -16,6 +17,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
@@ -29,13 +31,16 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			Return(nil, errors.New("parser factory error"))
 
 		signerFactory := signature.NewMockSignerFactory(t)
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockExportFn := export.NewMockExportFn(t)
 
 		migrator := NewLegacyResourcesMigrator(
 			nil,
 			mockParserFactory,
 			nil,
 			signerFactory,
-			nil,
+			mockClientFactory,
+			mockExportFn.Execute,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
@@ -43,6 +48,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		require.EqualError(t, err, "get parser: parser factory error")
 
 		mockParserFactory.AssertExpectations(t)
+		mockExportFn.AssertExpectations(t)
+		mockClientFactory.AssertExpectations(t)
 	})
 
 	t.Run("should fail when repository resources factory fails", func(t *testing.T) {
@@ -51,16 +58,19 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			Return(resources.NewMockParser(t), nil)
 
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything).
 			Return(nil, errors.New("repo resources factory error"))
 		signerFactory := signature.NewMockSignerFactory(t)
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockExportFn := export.NewMockExportFn(t)
 
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			nil,
 			signerFactory,
-			nil,
+			mockClientFactory,
+			mockExportFn.Execute,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, jobs.NewMockJobProgressRecorder(t))
@@ -69,6 +79,8 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
+		mockExportFn.AssertExpectations(t)
+		mockClientFactory.AssertExpectations(t)
 	})
 
 	t.Run("should fail when resource migration fails", func(t *testing.T) {
@@ -78,7 +90,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything).
 			Return(mockRepoResources, nil)
 
 		mockLegacyMigrator := legacy.NewMockLegacyMigrator(t)
@@ -94,15 +106,31 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		signerFactory.On("New", mock.Anything, mock.Anything).
 			Return(signer, nil)
 
+		mockClients := resources.NewMockResourceClients(t)
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
+			Return(mockClients, nil)
+		mockExportFn := export.NewMockExportFn(t)
+
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			mockLegacyMigrator,
 			signerFactory,
-			nil,
+			mockClientFactory,
+			mockExportFn.Execute,
 		)
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-repo",
+			},
+		})
+		mockExportFn.On("Execute", mock.Anything, mock.Anything, provisioning.ExportJobOptions{}, mockClients, mockRepoResources, mock.Anything).
+			Return(nil)
 
-		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{}, progress)
+		err := migrator.Migrate(context.Background(), repo, "test-namespace", provisioning.MigrateJobOptions{}, progress)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "migrate resource")
 
@@ -110,6 +138,56 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockRepoResourcesFactory.AssertExpectations(t)
 		mockLegacyMigrator.AssertExpectations(t)
 		progress.AssertExpectations(t)
+		mockExportFn.AssertExpectations(t)
+		mockClientFactory.AssertExpectations(t)
+		mockClients.AssertExpectations(t)
+		repo.AssertExpectations(t)
+	})
+	t.Run("should fail when client creation fails", func(t *testing.T) {
+		mockParserFactory := resources.NewMockParserFactory(t)
+		mockParserFactory.On("GetParser", mock.Anything, mock.Anything).
+			Return(resources.NewMockParser(t), nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything).
+			Return(mockRepoResources, nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		mockSignerFactory := signature.NewMockSignerFactory(t)
+		mockSignerFactory.On("New", mock.Anything, mock.Anything).
+			Return(mockSigner, nil)
+
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
+			Return(nil, errors.New("client creation error"))
+
+		mockExportFn := export.NewMockExportFn(t)
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, "migrate folders from SQL").Return()
+
+		migrator := NewLegacyResourcesMigrator(
+			mockRepoResourcesFactory,
+			mockParserFactory,
+			nil,
+			mockSignerFactory,
+			mockClientFactory,
+			mockExportFn.Execute,
+		)
+
+		repo := repository.NewMockRepository(t)
+		err := migrator.Migrate(context.Background(), repo, "test-namespace", provisioning.MigrateJobOptions{}, progress)
+		require.Error(t, err)
+		require.EqualError(t, err, "client creation error")
+
+		mockParserFactory.AssertExpectations(t)
+		mockRepoResourcesFactory.AssertExpectations(t)
+		mockSignerFactory.AssertExpectations(t)
+		mockClientFactory.AssertExpectations(t)
+		progress.AssertExpectations(t)
+		mockExportFn.AssertExpectations(t)
+		repo.AssertExpectations(t)
 	})
 
 	t.Run("should fail when signer factory fails", func(t *testing.T) {
@@ -119,7 +197,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything).
 			Return(mockRepoResources, nil)
 
 		mockSignerFactory := signature.NewMockSignerFactory(t)
@@ -128,13 +206,17 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			History:   true,
 		}).Return(nil, fmt.Errorf("signer factory error"))
 
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockExportFn := export.NewMockExportFn(t)
+
 		progress := jobs.NewMockJobProgressRecorder(t)
 		migrator := NewLegacyResourcesMigrator(
 			mockRepoResourcesFactory,
 			mockParserFactory,
 			nil,
 			mockSignerFactory,
-			nil,
+			mockClientFactory,
+			mockExportFn.Execute,
 		)
 
 		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
@@ -146,6 +228,65 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
 		mockSignerFactory.AssertExpectations(t)
+		mockClientFactory.AssertExpectations(t)
+		progress.AssertExpectations(t)
+		mockExportFn.AssertExpectations(t)
+	})
+	t.Run("should fail when folder export fails", func(t *testing.T) {
+		mockParser := resources.NewMockParser(t)
+		mockParserFactory := resources.NewMockParserFactory(t)
+		mockParserFactory.On("GetParser", mock.Anything, mock.Anything).
+			Return(mockParser, nil)
+
+		mockRepoResources := resources.NewMockRepositoryResources(t)
+		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything).
+			Return(mockRepoResources, nil)
+
+		mockSigner := signature.NewMockSigner(t)
+		mockSignerFactory := signature.NewMockSignerFactory(t)
+		mockSignerFactory.On("New", mock.Anything, signature.SignOptions{
+			Namespace: "test-namespace",
+			History:   false,
+		}).Return(mockSigner, nil)
+
+		mockClients := resources.NewMockResourceClients(t)
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
+			Return(mockClients, nil)
+
+		mockExportFn := export.NewMockExportFn(t)
+		mockExportFn.On("Execute", mock.Anything, mock.Anything, provisioning.ExportJobOptions{}, mockClients, mockRepoResources, mock.Anything).
+			Return(fmt.Errorf("export error"))
+
+		progress := jobs.NewMockJobProgressRecorder(t)
+		progress.On("SetMessage", mock.Anything, "migrate folders from SQL").Return()
+
+		migrator := NewLegacyResourcesMigrator(
+			mockRepoResourcesFactory,
+			mockParserFactory,
+			nil,
+			mockSignerFactory,
+			mockClientFactory,
+			mockExportFn.Execute,
+		)
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-repo",
+			},
+		})
+
+		err := migrator.Migrate(context.Background(), repo, "test-namespace", provisioning.MigrateJobOptions{}, progress)
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "migrate folders from SQL: export error")
+
+		mockParserFactory.AssertExpectations(t)
+		mockRepoResourcesFactory.AssertExpectations(t)
+		mockSignerFactory.AssertExpectations(t)
+		mockClientFactory.AssertExpectations(t)
+		mockExportFn.AssertExpectations(t)
 		progress.AssertExpectations(t)
 	})
 
@@ -157,7 +298,7 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 
 		mockRepoResources := resources.NewMockRepositoryResources(t)
 		mockRepoResourcesFactory := resources.NewMockRepositoryResourcesFactory(t)
-		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything, mock.Anything).
+		mockRepoResourcesFactory.On("Client", mock.Anything, mock.Anything).
 			Return(mockRepoResources, nil)
 
 		mockSigner := signature.NewMockSigner(t)
@@ -184,6 +325,12 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			},
 		}, nil).Once() // Migration phase
 
+		mockClients := resources.NewMockResourceClients(t)
+		mockClientFactory := resources.NewMockClientFactory(t)
+		mockClientFactory.On("Clients", mock.Anything, "test-namespace").
+			Return(mockClients, nil)
+		mockExportFn := export.NewMockExportFn(t)
+
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, "migrate folders from SQL").Return()
 		progress.On("SetMessage", mock.Anything, "migrate resources from SQL").Return()
@@ -194,10 +341,21 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 			mockParserFactory,
 			mockLegacyMigrator,
 			mockSignerFactory,
-			nil,
+			mockClientFactory,
+			mockExportFn.Execute,
 		)
 
-		err := migrator.Migrate(context.Background(), nil, "test-namespace", provisioning.MigrateJobOptions{
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: "test-namespace",
+				Name:      "test-repo",
+			},
+		})
+		mockExportFn.On("Execute", mock.Anything, mock.Anything, provisioning.ExportJobOptions{}, mockClients, mockRepoResources, mock.Anything).
+			Return(nil)
+
+		err := migrator.Migrate(context.Background(), repo, "test-namespace", provisioning.MigrateJobOptions{
 			History: true,
 		}, progress)
 		require.NoError(t, err)
@@ -205,7 +363,10 @@ func TestLegacyResourcesMigrator_Migrate(t *testing.T) {
 		mockParserFactory.AssertExpectations(t)
 		mockRepoResourcesFactory.AssertExpectations(t)
 		mockLegacyMigrator.AssertExpectations(t)
+		mockClientFactory.AssertExpectations(t)
+		mockExportFn.AssertExpectations(t)
 		progress.AssertExpectations(t)
+		mockClients.AssertExpectations(t)
 	})
 }
 
