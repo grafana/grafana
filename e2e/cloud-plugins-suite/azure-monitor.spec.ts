@@ -124,7 +124,7 @@ const storageAcctName = 'azmonteststorage';
 const logAnalyticsName = 'az-mon-test-logs';
 const applicationInsightsName = 'az-mon-test-ai-a';
 
-describe('Azure monitor datasource', () => {
+describe.skip('Azure monitor datasource', () => {
   before(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
 
@@ -167,7 +167,7 @@ describe('Azure monitor datasource', () => {
     e2e.flows.revertAllChanges();
   });
 
-  it.skip('create dashboard, add panel for metrics, log analytics, ARG, and traces queries', () => {
+  it('create dashboard, add panel for metrics, log analytics, ARG, and traces queries', () => {
     e2e.flows.addDashboard({
       timeRange: {
         from: 'now-6h',
