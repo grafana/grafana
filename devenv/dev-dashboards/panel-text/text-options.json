@@ -29,10 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -64,10 +61,7 @@
       "type": "text"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -99,10 +93,7 @@
       "type": "text"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 9,
         "w": 12,
@@ -134,10 +125,7 @@
       "type": "text"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 9,
         "w": 12,
