@@ -1,8 +1,17 @@
 import { NotifierDTO } from 'app/types';
 
-import { GrafanaManagedContactPoint, Receiver } from '../../../../plugins/datasource/alertmanager/types';
+import {
+  GrafanaManagedContactPoint,
+  GrafanaManagedReceiverConfig,
+  Receiver,
+} from '../../../../plugins/datasource/alertmanager/types';
 import { grafanaAlertNotifiers } from '../mockGrafanaNotifiers';
-import { CloudChannelValues, GrafanaChannelValues, ReceiverFormValues } from '../types/receiver-form';
+import {
+  CloudChannelValues,
+  GrafanaChannelMap,
+  GrafanaChannelValues,
+  ReceiverFormValues,
+} from '../types/receiver-form';
 
 import {
   convertJiraFieldToJson,
@@ -166,43 +175,221 @@ describe('Receiver form utils', () => {
 });
 
 describe('formValuesToGrafanaReceiver', () => {
-  it('should migrate regular settings to secure settings if the field is defined as secure', () => {
+  const emailChannelValues: GrafanaChannelValues = {
+    __id: '__1',
+    type: 'email',
+    settings: {
+      to: 'test@example.com',
+    },
+    secureFields: {},
+    disableResolveMessage: false,
+  };
+
+  const slackChannelValues: GrafanaChannelValues = {
+    __id: '__2',
+    type: 'slack',
+    settings: {
+      url: 'https://slack.example.com',
+      channel: '#alerts',
+    },
+    secureFields: {},
+    disableResolveMessage: false,
+  };
+
+  const defaultChannelValues = { ...emailChannelValues };
+
+  it('should convert form values to Grafana receiver with basic settings for a new receiver', () => {
+    const formValues: ReceiverFormValues<GrafanaChannelValues> = {
+      name: 'my-receiver',
+      items: [slackChannelValues],
+    };
+
+    const channelMap: GrafanaChannelMap = {};
+
+    const result = formValuesToGrafanaReceiver(formValues, channelMap, defaultChannelValues);
+
+    expect(result).toEqual<GrafanaManagedContactPoint>({
+      name: 'my-receiver',
+      grafana_managed_receiver_configs: [
+        {
+          name: 'my-receiver',
+          type: 'slack',
+          settings: {
+            url: 'https://slack.example.com',
+            channel: '#alerts',
+          },
+          secureFields: {},
+          disableResolveMessage: false,
+        },
+      ],
+    });
+  });
+
+  it('should convert form values to Grafana receiver with uid mapping for existing receiver', () => {
+    const formValues: ReceiverFormValues<GrafanaChannelValues> = {
+      name: 'my-receiver',
+      items: [emailChannelValues, slackChannelValues],
+    };
+
+    const channelMap: GrafanaChannelMap = {
+      __1: { ...emailChannelValues, secureFields: {}, uid: 'email-1' },
+      __2: { ...slackChannelValues, secureFields: {}, uid: 'slack-1' },
+    };
+
+    const result = formValuesToGrafanaReceiver(formValues, channelMap, defaultChannelValues);
+
+    expect(result).toEqual<GrafanaManagedContactPoint>({
+      name: 'my-receiver',
+      grafana_managed_receiver_configs: [
+        {
+          uid: 'email-1',
+          name: 'my-receiver',
+          type: 'email',
+          settings: { to: 'test@example.com' },
+          secureFields: {},
+          disableResolveMessage: false,
+        },
+        {
+          uid: 'slack-1',
+          name: 'my-receiver',
+          type: 'slack',
+          settings: { url: 'https://slack.example.com', channel: '#alerts' },
+          secureFields: {},
+          disableResolveMessage: false,
+        },
+      ],
+    });
+  });
+
+  it('should omit empty values from settings', () => {
     const formValues: ReceiverFormValues<GrafanaChannelValues> = {
       name: 'my-receiver',
       items: [
         {
-          __id: '1',
-          secureFields: {},
-          type: 'discord',
+          __id: '__1',
+          type: 'email',
           settings: {
-            url: 'https://foo.bar/',
+            to: 'test@example.com',
+            from: '', // empty string
+            subject: undefined, // undefined
+            body: null, // null
+            cc: 'cc@example.com',
+          },
+          secureFields: {},
+          disableResolveMessage: false,
+        },
+      ],
+    };
+
+    const channelMap: GrafanaChannelMap = {
+      __1: {
+        uid: 'email-1',
+        type: 'email',
+        settings: {
+          to: 'test@example.com',
+          from: 'old@example.com', // existing value that should be removed
+        },
+        secureFields: {},
+        disableResolveMessage: false,
+      },
+    };
+
+    const result = formValuesToGrafanaReceiver(formValues, channelMap, defaultChannelValues);
+
+    expect(result).toEqual<GrafanaManagedContactPoint>({
+      name: 'my-receiver',
+      grafana_managed_receiver_configs: [
+        {
+          uid: 'email-1',
+          name: 'my-receiver',
+          type: 'email',
+          settings: {
+            to: 'test@example.com',
+            cc: 'cc@example.com',
+          },
+          secureFields: {},
+          disableResolveMessage: false,
+        },
+      ],
+    });
+  });
+
+  it('should remove falsy secure fields and preserve truthy ones', () => {
+    const formValues: ReceiverFormValues<GrafanaChannelValues> = {
+      name: 'my-receiver',
+      items: [
+        {
+          __id: '__1',
+          type: 'sns',
+          settings: { api_url: 'https://sns.example.com' },
+          secureFields: {
+            // Basic secure fields
+            password: true, // should be preserved
+            token: false, // should be omitted
+            apiKey: '', // should be omitted
+
+            // Nested secure fields with dot notation
+            'sigv4.access_key': true, // should be preserved
+            'sigv4.secret_key': false, // should be omitted
+            'sigv4.session_token': '', // should be omitted
+            'other.nested.key': true, // should be preserved
+            'other.nested.empty': false, // should be omitted
+
+            // Various falsy values
+            secret: false, // should be omitted
+            key: '', // should be omitted
+            empty: false, // should be omitted
           },
           disableResolveMessage: false,
         },
       ],
     };
 
-    const channelMap = {
-      '1': {
-        uid: 'abc123',
-        secureFields: {},
-        type: 'discord',
-        settings: {
-          url: 'https://foo.bar/',
+    const channelMap: GrafanaChannelMap = {
+      __1: {
+        uid: 'sns-1',
+        type: 'sns',
+        settings: { api_url: 'https://sns.example.com' },
+        secureFields: {
+          // All fields exist in the channel map
+          password: true,
+          token: true,
+          apiKey: true,
+          'sigv4.access_key': true,
+          'sigv4.secret_key': true,
+          'sigv4.session_token': true,
+          'other.nested.key': true,
+          'other.nested.empty': true,
+          secret: true,
+          key: true,
+          empty: true,
         },
         disableResolveMessage: false,
       },
     };
 
-    const notifiers = [
-      {
-        type: 'discord',
-        options: [{ propertyName: 'url', secure: true }],
-      },
-    ] as NotifierDTO[];
+    const result = formValuesToGrafanaReceiver(formValues, channelMap, defaultChannelValues);
 
-    // @ts-expect-error
-    expect(formValuesToGrafanaReceiver(formValues, channelMap, {}, notifiers)).toMatchSnapshot();
+    expect(result).toEqual<GrafanaManagedContactPoint>({
+      name: 'my-receiver',
+      grafana_managed_receiver_configs: [
+        {
+          uid: 'sns-1',
+          name: 'my-receiver',
+          type: 'sns',
+          settings: {
+            api_url: 'https://sns.example.com',
+          },
+          secureFields: {
+            // Only truthy values should be preserved
+            password: true,
+            'sigv4.access_key': true,
+            'other.nested.key': true,
+          },
+          disableResolveMessage: false,
+        },
+      ],
+    });
   });
 });
 
@@ -302,25 +489,6 @@ describe('grafanaReceiverToFormValues', () => {
     expect(formValues.items[0].settings.sigv4.region).toBe('us-east-1');
     expect(formValues.items[0].secureFields['sigv4.access_key']).toBe(true);
     expect(formValues.items[0].secureFields['sigv4.secret_key']).toBe(true);
-  });
-
-  // Some receivers have migrated options that are now marked as secure but were standard fields in the past
-  // We need to handle the case where the field is still present in settings but marked as secure
-  it('should convert fields from settings to secureSettings for migrated options', () => {
-    const googleChatReceiver: GrafanaManagedContactPoint = {
-      name: 'googlechat-receiver',
-      grafana_managed_receiver_configs: [
-        {
-          type: googlechat.type,
-          settings: {
-            url: 'https://googlechat.example.com/',
-          },
-        },
-      ],
-    };
-
-    const [formValues, _] = grafanaReceiverToFormValues(googleChatReceiver);
-    expect(formValues.items[0].settings.url).toBeUndefined();
   });
 });
 

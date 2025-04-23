@@ -77,22 +77,14 @@ export function cloudReceiverToFormValues(
 export function formValuesToGrafanaReceiver(
   values: ReceiverFormValues<GrafanaChannelValues>,
   channelMap: GrafanaChannelMap,
-  defaultChannelValues: GrafanaChannelValues,
-  notifiers: NotifierDTO[]
-): Receiver {
+  defaultChannelValues: GrafanaChannelValues
+): GrafanaManagedContactPoint {
   return {
     name: values.name,
     grafana_managed_receiver_configs: (values.items ?? []).map((channelValues) => {
       const existing: GrafanaManagedReceiverConfig | undefined = channelMap[channelValues.__id];
-      const notifier = notifiers.find((notifier) => notifier.type === channelValues.type);
 
-      return formChannelValuesToGrafanaChannelConfig(
-        channelValues,
-        defaultChannelValues,
-        values.name,
-        existing,
-        notifier
-      );
+      return formChannelValuesToGrafanaChannelConfig(channelValues, defaultChannelValues, values.name, existing);
     }),
   };
 }
@@ -100,7 +92,7 @@ export function formValuesToGrafanaReceiver(
 export function formValuesToCloudReceiver(
   values: ReceiverFormValues<CloudChannelValues>,
   defaults: CloudChannelValues
-): Receiver {
+): AlertmanagerReceiver {
   const recv: AlertmanagerReceiver = {
     name: values.name,
   };
@@ -231,8 +223,7 @@ export function formChannelValuesToGrafanaChannelConfig(
   values: GrafanaChannelValues,
   defaults: GrafanaChannelValues,
   name: string,
-  existing?: GrafanaManagedReceiverConfig,
-  notifier?: NotifierDTO
+  existing?: GrafanaManagedReceiverConfig
 ): GrafanaManagedReceiverConfig {
   const secureFieldsFromValues = values.secureFields ? omitFalsySecureFields(values.secureFields) : undefined;
 

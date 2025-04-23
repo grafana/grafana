@@ -88,7 +88,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
   }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
+    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
 
     try {
       if (editMode) {
