@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { useCallback, useState } from 'react';
 
-import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack } from '@grafana/ui';
+import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { SaveDashboardFormProps } from '../types';
@@ -25,23 +25,27 @@ export const SaveProvisionedDashboardForm = ({ dashboard, onCancel }: Omit<SaveD
     <>
       <Stack direction="column" gap={2}>
         <div>
-          This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
-          the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
+          <Trans i18nKey="dashboard.save-provisioned-dashboard-form.cannot-be-saved">
+            This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
+            the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
+          </Trans>
           <br />
           <i>
-            See{' '}
-            <a
-              className="external-link"
-              href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards"
-              target="_blank"
-              rel="noreferrer"
-            >
-              documentation
-            </a>{' '}
-            for more information about provisioning.
+            <Trans i18nKey="dashboard.save-provisioned-dashboard-form.see-docs">
+              See{' '}
+              <TextLink href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards" external>
+                documentation
+              </TextLink>{' '}
+              for more information about provisioning.
+            </Trans>
           </i>
           <br /> <br />
-          <strong>File path: </strong> {dashboard.meta.provisionedExternalId}
+          <Trans
+            i18nKey="dashboard.save-provisioned-dashboard-form.file-path"
+            values={{ filePath: dashboard.meta.provisionedExternalId }}
+          >
+            <strong>File path:</strong> {'{{filePath}}'}
+          </Trans>
         </div>
         <TextArea
           spellCheck={false}

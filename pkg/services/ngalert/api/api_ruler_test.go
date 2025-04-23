@@ -335,7 +335,10 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		expectedRules := make([]*models.AlertRule, 0)
+		for i := 0; i < 10; i++ {
+			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(util.Pointer(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
+		}
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)

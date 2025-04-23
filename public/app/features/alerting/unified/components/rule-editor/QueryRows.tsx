@@ -290,7 +290,9 @@ const DatasourceNotFound = ({ index, onUpdateDatasource, onRemoveQuery, model }:
             </Trans>
           </Card.Heading>
           <Card.Description>
-            The datasource for this query was not found, it was either removed or is not installed correctly.
+            <Trans i18nKey="alerting.datasource-not-found.card-description">
+              The datasource for this query was not found, it was either removed or is not installed correctly.
+            </Trans>
           </Card.Description>
           <Card.Figure>
             <Icon name="question-circle" />

@@ -26,12 +26,12 @@ func (_m *MockRepositoryResources) EXPECT() *MockRepositoryResources_Expecter {
 	return &MockRepositoryResources_Expecter{mock: &_m.Mock}
 }
 
-// CreateResourceFileFromObject provides a mock function with given fields: ctx, obj, options
-func (_m *MockRepositoryResources) CreateResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
+// WriteResourceFileFromObject provides a mock function with given fields: ctx, obj, options
+func (_m *MockRepositoryResources) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
 	ret := _m.Called(ctx, obj, options)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateResourceFileFromObject")
+		panic("no return value specified for WriteResourceFileFromObject")
 	}
 
 	var r0 string
@@ -54,32 +54,32 @@ func (_m *MockRepositoryResources) CreateResourceFileFromObject(ctx context.Cont
 	return r0, r1
 }
 
-// MockRepositoryResources_CreateResourceFileFromObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateResourceFileFromObject'
-type MockRepositoryResources_CreateResourceFileFromObject_Call struct {
+// MockRepositoryResources_WriteResourceFileFromObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WriteResourceFileFromObject'
+type MockRepositoryResources_WriteResourceFileFromObject_Call struct {
 	*mock.Call
 }
 
-// CreateResourceFileFromObject is a helper method to define mock.On call
+// WriteResourceFileFromObject is a helper method to define mock.On call
 //   - ctx context.Context
 //   - obj *unstructured.Unstructured
 //   - options WriteOptions
-func (_e *MockRepositoryResources_Expecter) CreateResourceFileFromObject(ctx interface{}, obj interface{}, options interface{}) *MockRepositoryResources_CreateResourceFileFromObject_Call {
-	return &MockRepositoryResources_CreateResourceFileFromObject_Call{Call: _e.mock.On("CreateResourceFileFromObject", ctx, obj, options)}
+func (_e *MockRepositoryResources_Expecter) WriteResourceFileFromObject(ctx interface{}, obj interface{}, options interface{}) *MockRepositoryResources_WriteResourceFileFromObject_Call {
+	return &MockRepositoryResources_WriteResourceFileFromObject_Call{Call: _e.mock.On("WriteResourceFileFromObject", ctx, obj, options)}
 }
 
-func (_c *MockRepositoryResources_CreateResourceFileFromObject_Call) Run(run func(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions)) *MockRepositoryResources_CreateResourceFileFromObject_Call {
+func (_c *MockRepositoryResources_WriteResourceFileFromObject_Call) Run(run func(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions)) *MockRepositoryResources_WriteResourceFileFromObject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(*unstructured.Unstructured), args[2].(WriteOptions))
 	})
 	return _c
 }
 
-func (_c *MockRepositoryResources_CreateResourceFileFromObject_Call) Return(_a0 string, _a1 error) *MockRepositoryResources_CreateResourceFileFromObject_Call {
+func (_c *MockRepositoryResources_WriteResourceFileFromObject_Call) Return(_a0 string, _a1 error) *MockRepositoryResources_WriteResourceFileFromObject_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRepositoryResources_CreateResourceFileFromObject_Call) RunAndReturn(run func(context.Context, *unstructured.Unstructured, WriteOptions) (string, error)) *MockRepositoryResources_CreateResourceFileFromObject_Call {
+func (_c *MockRepositoryResources_WriteResourceFileFromObject_Call) RunAndReturn(run func(context.Context, *unstructured.Unstructured, WriteOptions) (string, error)) *MockRepositoryResources_WriteResourceFileFromObject_Call {
 	_c.Call.Return(run)
 	return _c
 }
