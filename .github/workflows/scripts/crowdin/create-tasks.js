@@ -1,4 +1,4 @@
-import crowdin, { type Credentials } from '@crowdin/crowdin-api-client';
+const crowdin = require('@crowdin/crowdin-api-client');
 const TRANSLATED_CONNECTOR_DESCRIPTION = '{{tos_service_type: premium}}';
 
 const API_TOKEN = process.env.CROWDIN_PERSONAL_TOKEN;
@@ -13,12 +13,12 @@ if (!PROJECT_ID) {
   process.exit(1);
 }
 
-const credentials: Credentials = {
+const credentials = {
   token: API_TOKEN,
   organization: 'grafana'
 };
 
-const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin(credentials);
+const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin.default(credentials);
 
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
@@ -30,7 +30,7 @@ console.log('File IDs: ', fileIds);
 //   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds);
   // }
 
-async function getLanguages(projectId: number) {
+async function getLanguages(projectId) {
   try {
     const project = await projectsGroupsApi.getProject(projectId);
     const languages = project.data.targetLanguages;
@@ -44,7 +44,7 @@ async function getLanguages(projectId: number) {
   }
 }
 
-async function getFileIds(projectId: number) {
+async function getFileIds(projectId) {
   try {
     const response = await sourceFilesApi.listProjectFiles(projectId);
     const files = response.data;
