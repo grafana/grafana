@@ -77,6 +77,90 @@ Trace correlations let you define rules that inject context-sensitive links into
 
 1. Select **Save** to save the correlation.
 
-The correlation link will now show when viewing a trace span, both in the span links menu and the span details.
+## Verifying correlations in Explore
 
-{{< figure src="/media/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+1. Open **Explore** and select your Tempo tracing source.
+
+1. Run a query to load spans.
+
+1. Hover over a the span links menu or open the span details to reveal the correlation link buttons.
+
+   {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+
+1. Click a correlation link to open a split view or navigate to your target system or query.
+
+## Examples
+
+Below are several practical correlation configurations to get you started.
+
+### 1. Trace to logs by service name and trace identifier
+
+1. On step 1, add a new correlation with the label **Logs for this service and trace** and an optional description.
+
+   {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations-example-1-step-1.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+
+1. On step 2, configure the correlation target:
+
+   - Select the target type **Query** and select your Loki data source as **Target**.
+
+   - Define the Loki query, using `serviceName` and `traceID` as variables derived from the span data:
+
+     ```
+     {service_name="$serviceName"} | trace_id=`$traceID` |= ``
+     ```
+
+     {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations-example-1-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+
+1. On step 3, configure the correlation source:
+
+   - Select your Tempo data source as **Source**.
+
+   - Use `traceID` as **Results field**.
+
+   - Add a new transformation to extract the `serviceName` from the span `serviceTags` using the regular expression:
+
+     ```
+     {(?=[^\}]*\bkey":"service.name")[^\}]*\bvalue":"(.*?)".*}
+     ```
+
+   {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations-example-1-step-3.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+
+1. Save the correlation.
+
+### 2. Trace to custom URL
+
+1. On step 1, add a new correlation with the label **Open custom URL** and an optional description.
+
+1. On step 2, configure the correlation target:
+
+   - Select the target type **External**.
+
+   - Define your target URL, using variables derived from the span data. In this example, we are using `serviceName` and `traceID`.
+
+     ```
+     https://my-server.example.com/service=$serviceName&trace=$traceID
+     ```
+
+1. On step 3, configure the correlation source:
+
+   - Select your Tempo data source as **Source**.
+
+   - Use `traceID` as **Results field**.
+
+   - Add a new transformation to extract the `serviceName` from the span `serviceTags` using the regular expression:
+
+     ```
+     {(?=[^\}]*\bkey":"service.name")[^\}]*\bvalue":"(.*?)".*}
+     ```
+
+1. Save the correlation.
+
+## Best practices
+
+- **Name clearly:** Use descriptive names indicating source and target (e.g., **Trace to errors in logs**).
+
+- **Limit scope**: For high-cardinality fields (like `traceID`), ensure your target system can handle frequent queries.
+
+- **Template wisely:** Use multiple `$variable` tokens if you need to inject more than one field.
+
+- **Test links:** After configuration, verify links on representative traces before rolling out broadly.
