@@ -374,25 +374,25 @@ func (g *GoGitRepo) Delete(ctx context.Context, fpath string, ref string, messag
 }
 
 // Read implements repository.Repository.
-func (g *GoGitRepo) Read(ctx context.Context, fpath string, ref string) (*repository.FileInfo, error) {
-	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
-	if err := verifyPathWithoutRef(fpath, ref); err != nil {
+func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
+	if err := verifyPathWithoutRef(path, ref); err != nil {
 		return nil, err
 	}
-	stat, err := g.tree.Filesystem.Lstat(fpath)
+	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
+	stat, err := g.tree.Filesystem.Lstat(readPath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, repository.ErrFileNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to stat path '%s': %w", fpath, err)
+		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
 	}
 	info := &repository.FileInfo{
-		Path: fpath,
+		Path: path,
 		Modified: &metav1.Time{
 			Time: stat.ModTime(),
 		},
 	}
 	if !stat.IsDir() {
-		f, err := g.tree.Filesystem.Open(fpath)
+		f, err := g.tree.Filesystem.Open(readPath)
 		if err != nil {
 			return nil, err
 		}
