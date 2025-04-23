@@ -291,22 +291,20 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 
 		frames, err := seriesToDataFrames(series)
 		require.NoError(t, err)
-		require.Equal(t, 1, len(frames))
-		require.Equal(t, 3, len(frames[0].Fields))
-		annotationsField := frames[0].Fields[2]
+		require.Equal(t, 2, len(frames))
+		require.Equal(t, 1, len(frames[1].Fields))
+		annotationsField := frames[1].Fields[0]
 		require.Equal(t, "annotations", annotationsField.Name)
 
-		require.Equal(t, 2, annotationsField.Len())
+		require.Equal(t, 1, annotationsField.Len())
 
-		firstPointAnnotations := annotationsField.At(0).(json.RawMessage)
-		require.True(t, strings.Contains(string(firstPointAnnotations), "key1"))
-		require.True(t, strings.Contains(string(firstPointAnnotations), "key2"))
-		require.True(t, strings.Contains(string(firstPointAnnotations), "value1"))
-		require.True(t, strings.Contains(string(firstPointAnnotations), "value2"))
-
-		secondPointAnnotations := annotationsField.At(1).(json.RawMessage)
-		require.True(t, strings.Contains(string(secondPointAnnotations), "key3"))
-		require.True(t, strings.Contains(string(secondPointAnnotations), "value3"))
+		annotations := annotationsField.At(0).(json.RawMessage)
+		require.True(t, strings.Contains(string(annotations), "key1"))
+		require.True(t, strings.Contains(string(annotations), "key2"))
+		require.True(t, strings.Contains(string(annotations), "value1"))
+		require.True(t, strings.Contains(string(annotations), "value2"))
+		require.True(t, strings.Contains(string(annotations), "key3"))
+		require.True(t, strings.Contains(string(annotations), "value3"))
 	})
 }
 

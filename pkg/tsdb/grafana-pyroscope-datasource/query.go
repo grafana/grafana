@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/grafana/grafana-plugin-sdk-go/live"
 	"github.com/grafana/grafana/pkg/tsdb/grafana-pyroscope-datasource/kinds/dataquery"
+	typesv1 "github.com/grafana/pyroscope/api/gen/proto/go/types/v1"
 	"github.com/xlab/treeprint"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -418,15 +419,21 @@ func walkTree(tree *ProfileTree, fn func(tree *ProfileTree)) {
 	}
 }
 
+type TimedAnnotation struct {
+	Timestamp  int64                      `json:"timestamp"`
+	Annotation *typesv1.ProfileAnnotation `json:"annotation"`
+}
+
 func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
+	annotations := make([]*TimedAnnotation, 0)
 
 	for _, series := range resp.Series {
 		// We create separate data frames as the series may not have the same length
 		frame := data.NewFrame("series")
 		frame.Meta = &data.FrameMeta{PreferredVisualization: "graph"}
 
-		fields := make(data.Fields, 0, 3)
+		fields := make(data.Fields, 0, 2)
 		timeField := data.NewField("time", nil, []time.Time{})
 		fields = append(fields, timeField)
 
@@ -439,30 +446,43 @@ func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 		valueField.Config = &data.FieldConfig{Unit: resp.Units}
 		fields = append(fields, valueField)
 
-		annotationsField := data.NewField("annotations", nil, []json.RawMessage{})
-		hasAnnotations := false
-
 		for _, point := range series.Points {
 			timeField.Append(time.UnixMilli(point.Timestamp))
 			valueField.Append(point.Value)
-			if len(point.Annotations) > 0 {
-				hasAnnotations = true
-				annotationsJson, err := json.Marshal(point.Annotations)
-				if err != nil {
-					return nil, err
-				}
-				annotationsField.Append(json.RawMessage(annotationsJson))
-			} else {
-				annotationsField.Append(json.RawMessage(nil))
+			for _, a := range point.Annotations {
+				annotations = append(annotations, &TimedAnnotation{
+					Timestamp:  point.Timestamp,
+					Annotation: a,
+				})
 			}
-		}
-
-		if hasAnnotations {
-			fields = append(fields, annotationsField)
 		}
 
 		frame.Fields = fields
 		frames = append(frames, frame)
 	}
+
+	if len(annotations) > 0 {
+		frame, err := annotationsToDataFrame(annotations)
+		if err != nil {
+			return nil, err
+		}
+		frames = append(frames, frame)
+	}
+
 	return frames, nil
+}
+
+func annotationsToDataFrame(annotations []*TimedAnnotation) (*data.Frame, error) {
+	annotationsField := data.NewField("annotations", nil, []json.RawMessage{})
+	annotationsJson, err := json.Marshal(annotations)
+	if err != nil {
+		return nil, err
+	}
+	annotationsField.Append(json.RawMessage(annotationsJson))
+	frame := data.NewFrame("annotations")
+	frame.SetMeta(&data.FrameMeta{
+		DataTopic: data.DataTopicAnnotations,
+	})
+	frame.Fields = data.Fields{annotationsField}
+	return frame, nil
 }
