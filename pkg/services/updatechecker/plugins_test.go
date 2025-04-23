@@ -21,6 +21,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
+type mockPluginPreinstall struct {
+	plugininstaller.Preinstall
+}
+
+func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
+	return false
+}
+
 func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 	t.Run("update is available", func(t *testing.T) {
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
@@ -40,6 +48,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				},
 			},
 			updateCheckURL: updateCheckURL,
+			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -78,6 +87,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				},
 			},
 			updateCheckURL: updateCheckURL,
+			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -121,14 +131,6 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 		require.False(t, exists)
 		require.Empty(t, update)
 	})
-}
-
-type mockPluginPreinstall struct {
-	plugininstaller.Preinstall
-}
-
-func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
-	return false
 }
 
 func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
