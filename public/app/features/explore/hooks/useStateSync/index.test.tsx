@@ -545,8 +545,8 @@ describe('useStateSync', () => {
       expect(store.getState().explore.panes['one']?.datasourceInstance?.uid).toBe('loki-uid');
     });
 
-    act(() => {
-      store.dispatch(splitOpen());
+    await act(async () => {
+      await store.dispatch(splitOpen());
     });
 
     await waitFor(() => {
