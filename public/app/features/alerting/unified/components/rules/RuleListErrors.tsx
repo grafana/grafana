@@ -49,7 +49,7 @@ export function RuleListErrors(): ReactElement {
         </>
       );
     }
-    if (true) {
+    if (grafanaRulerError) {
       result.push(
         <>
           <Trans i18nKey="alerting.rule-list-errors.failed-to-load-grafana-rules-config">
