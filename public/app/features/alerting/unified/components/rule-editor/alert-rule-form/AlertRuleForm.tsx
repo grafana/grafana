@@ -362,13 +362,15 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           onDismiss={() => setShowDeleteModal(false)}
         />
       ) : null}
-      {showEditYaml ? (
-        isGrafanaManagedRuleByType(type) ? (
-          <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
-        ) : (
-          <RuleInspector onClose={() => setShowEditYaml(false)} />
-        )
-      ) : null}
+      {showEditYaml && (
+        <>
+          {isGrafanaManagedRuleByType(type) && (
+            <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+          )}
+
+          {!isGrafanaManagedRuleByType(type) && <RuleInspector onClose={() => setShowEditYaml(false)} />}
+        </>
+      )}
     </FormProvider>
   );
 };
