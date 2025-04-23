@@ -114,21 +114,21 @@ describe('AnnotationsEditView', () => {
       expect(console.error).toHaveBeenCalledWith('Default datasource does not support annotations');
     });
 
-    it('should add a new annotation and group it with the other annotations', () => {
+    it('should add a new annotation and group it with the other annotations', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
       expect(dataLayers?.state.annotationLayers.length).toBe(1);
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[1].state.name).toBe(newAnnotationName);
       expect(dataLayers?.state.annotationLayers[1].isActive).toBe(true);
     });
 
-    it('should move an annotation up one position', () => {
+    it('should move an annotation up one position', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
@@ -139,10 +139,10 @@ describe('AnnotationsEditView', () => {
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe(newAnnotationName);
     });
 
-    it('should move an annotation down one position', () => {
+    it('should move an annotation down one position', async () => {
       const dataLayers = dashboardSceneGraph.getDataLayers(annotationsView.getDashboard());
 
-      annotationsView.onNew();
+      await annotationsView.onNew();
 
       expect(dataLayers?.state.annotationLayers.length).toBe(2);
       expect(dataLayers?.state.annotationLayers[0].state.name).toBe('test');
