@@ -40,7 +40,6 @@ func ExportFolders(ctx context.Context, repoName string, options provisioning.Ex
 	}); err != nil {
 		return fmt.Errorf("load folder tree: %w", err)
 	}
-	repositoryResources.SetTree(tree)
 
 	progress.SetMessage(ctx, "write folders to repository")
 	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {

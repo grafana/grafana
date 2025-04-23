@@ -6,6 +6,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	mock "github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,12 +20,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8testing "k8s.io/client-go/testing"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	v0alpha1 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
 func TestExportFolders(t *testing.T) {
@@ -84,12 +83,7 @@ func TestExportFolders(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, mock.Anything).Return()
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources) {
-				repoResources.
-					On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.Anything, mock.Anything).
-					Return(fmt.Errorf("failed to ensure folder tree"))
-				repoResources.
-					On("SetTree", mock.Anything).
-					Return(nil)
+				repoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.Anything, mock.Anything).Return(fmt.Errorf("failed to ensure folder tree"))
 			},
 		},
 		{
@@ -151,7 +145,6 @@ func TestExportFolders(t *testing.T) {
 
 					return true
 				})).Return(nil)
-				repoResources.On("SetTree", mock.Anything).Return(nil)
 			},
 		},
 		{
@@ -213,7 +206,6 @@ func TestExportFolders(t *testing.T) {
 
 					return true
 				})).Return(nil)
-				repoResources.On("SetTree", mock.Anything).Return(nil)
 			},
 		},
 		{
@@ -255,8 +247,6 @@ func TestExportFolders(t *testing.T) {
 					require.Error(t, fn(resources.Folder{ID: "folder-1-uid", Path: "grafana/folder-1"}, true, nil), "too many errors encountered")
 					return true
 				})).Return(fmt.Errorf("too many errors encountered"))
-
-				repoResources.On("SetTree", mock.Anything).Return(nil)
 			},
 		},
 		{
@@ -342,8 +332,6 @@ func TestExportFolders(t *testing.T) {
 					require.NoError(t, fn(resources.Folder{ID: "child-uid", Path: "grafana/parent-folder/child-folder"}, true, nil))
 					return true
 				})).Return(nil)
-
-				repoResources.On("SetTree", mock.Anything).Return(nil)
 			},
 		},
 	}
@@ -422,7 +410,6 @@ func TestFolderMetaAccessor(t *testing.T) {
 			require.NoError(t, fn(resources.Folder{ID: "test-folder-uid", Path: "grafana/test-folder"}, true, nil))
 			return true
 		})).Return(nil)
-		mockRepoResources.On("SetTree", mock.Anything).Return(nil)
 
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return()
@@ -470,7 +457,6 @@ func TestFolderMetaAccessor(t *testing.T) {
 		progress := jobs.NewMockJobProgressRecorder(t)
 		progress.On("SetMessage", mock.Anything, mock.Anything).Return().Twice()
 		mockRepoResources.On("EnsureFolderTreeExists", mock.Anything, "feature/branch", "grafana", mock.Anything, mock.Anything).Return(nil)
-		mockRepoResources.On("SetTree", mock.Anything).Return(nil)
 
 		err = ExportFolders(context.Background(), "test-repo", v0alpha1.ExportJobOptions{
 			Path:   "grafana",
