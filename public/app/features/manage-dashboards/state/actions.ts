@@ -337,6 +337,11 @@ export async function processV2DatasourceInput(
   const datasourceRef = obj?.datasource;
   if (!datasourceRef && obj?.query) {
     const dsType = obj.query.kind;
+    // if dsType is grafana, it means we are using a built-in annotation or default grafana datasource, in those
+    // cases we don't need to map it
+    if (dsType === 'grafana') {
+      return;
+    }
     const datasource = await getDatasourceSrv().get({ type: dsType });
     let dataSourceInput: DataSourceInput | undefined;
     if (datasource) {
