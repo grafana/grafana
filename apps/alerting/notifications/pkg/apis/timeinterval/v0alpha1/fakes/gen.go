@@ -8,8 +8,9 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
-	"github.com/grafana/grafana/pkg/util"
 )
+
+var UTCLocation = "UTC"
 
 // +k8s:openapi-gen=false
 type IntervalMutator func(spec *v0alpha1.Interval)
@@ -62,7 +63,7 @@ func (t IntervalGenerator) generateLocation() *string {
 	if rand.Int()%3 == 0 {
 		return nil
 	}
-	return util.Pointer("UTC")
+	return &UTCLocation
 }
 
 func (t IntervalGenerator) generateMonth() string {

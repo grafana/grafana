@@ -7,13 +7,12 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/kube-openapi/pkg/common"
 
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	receiverv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
 	routingtreev0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
 	templategroupv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/templategroup/v0alpha1"
 	timeintervalv0alpha1 "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
 )
-
-var GroupVersion = schema.GroupVersion{Group: "notifications.alerting.grafana.app", Version: "v0alpha1"}
 
 func GetOpenAPIDefinitions(c common.ReferenceCallback) map[string]common.OpenAPIDefinition {
 	tmpl := templategroupv0alpha1.GetOpenAPIDefinitions(c)
@@ -30,7 +29,7 @@ func GetOpenAPIDefinitions(c common.ReferenceCallback) map[string]common.OpenAPI
 
 func GetKinds() map[schema.GroupVersion][]sdkResource.Kind {
 	result := map[schema.GroupVersion][]sdkResource.Kind{
-		GroupVersion: {
+		v0alpha1.GroupVersion: {
 			receiverv0alpha1.Kind(),
 			routingtreev0alpha1.Kind(),
 			templategroupv0alpha1.Kind(),
