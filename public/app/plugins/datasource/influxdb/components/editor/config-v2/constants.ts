@@ -1,3 +1,6 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { AuthMethod } from '@grafana/plugin-ui';
 import { ComboboxOption } from '@grafana/ui';
@@ -7,32 +10,41 @@ export const RADIO_BUTTON_OPTIONS = [
   { label: 'Disabled', value: false },
 ];
 
+export const AUTH_RADIO_BUTTON_OPTIONS = [
+  { label: 'No Authentication', value: AuthMethod.NoAuth },
+  { label: 'Basic Authentication', value: AuthMethod.BasicAuth },
+  { label: 'Forward OAuth Identity', value: AuthMethod.OAuthForward },
+];
+
 export const CONFIG_SECTION_HEADERS = [
   { label: 'URL and connection', id: 'url', isOpen: true },
   { label: 'Database Connection Settings', id: 'tls', isOpen: true },
   { label: 'Save & test', id: `${selectors.pages.DataSource.saveAndTest}`, isOpen: true },
 ];
 
-export const httpModes: ComboboxOption[] = [
+export const HTTP_MODES: ComboboxOption[] = [
   { label: 'GET', value: 'GET' },
   { label: 'POST', value: 'POST' },
 ];
 
-export const authenticationOptions: Partial<Record<AuthMethod, ComboboxOption<AuthMethod>>> = {
-  [AuthMethod.BasicAuth]: {
-    label: 'Basic authentication',
-    value: AuthMethod.BasicAuth,
-    description: 'Authenticate with your data source username and password',
-  },
-  [AuthMethod.OAuthForward]: {
-    label: 'Forward OAuth Identity',
-    value: AuthMethod.OAuthForward,
-    description:
-      'Forward the OAuth access token (and if available: the OIDC ID token) of the user querying to the data source',
-  },
-  [AuthMethod.NoAuth]: {
-    label: 'No Authentication',
-    value: AuthMethod.NoAuth,
-    description: 'Data source is available without authentication',
-  },
+export const getInlineLabelStyles = (theme: GrafanaTheme2, transparent = false, width?: number | 'auto') => {
+  return {
+    label: css({
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexShrink: 0,
+      padding: theme.spacing(0, 1),
+      fontWeight: theme.typography.fontWeightMedium,
+      fontSize: theme.typography.size.md,
+      backgroundColor: transparent ? 'transparent' : theme.colors.background.secondary,
+      height: theme.spacing(theme.components.height.md),
+      lineHeight: theme.spacing(theme.components.height.md),
+      marginRight: theme.spacing(0.5),
+      borderRadius: theme.shape.radius.default,
+      border: 'none',
+      width: '240px',
+      color: theme.colors.text.primary,
+    }),
+  };
 };
