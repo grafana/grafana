@@ -77,27 +77,26 @@ describe('LogListControls', () => {
   );
 
   test('Renders a subset of options for plugins', () => {
-      render(
-        <LogListContextProvider {...contextProps} app={CoreApp.Unknown}>
-          <LogListControls eventBus={new EventBusSrv()} />
-        </LogListContextProvider>
-      );
-      expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
-      expect(screen.getByLabelText('Oldest logs first')).toBeInTheDocument();
-      expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
-      expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
-      expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
-      expect(screen.getByLabelText('Wrap lines')).toBeInTheDocument();
-      expect(screen.getByLabelText('Enable highlighting')).toBeInTheDocument();
-      expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
-      expect(
-        screen.queryByLabelText('Fix incorrectly escaped newline and tab sequences in log lines')
-      ).not.toBeInTheDocument();
-      expect(screen.queryByLabelText('Remove escaping')).not.toBeInTheDocument();
-    }
-  );
+    render(
+      <LogListContextProvider {...contextProps} app={CoreApp.Unknown}>
+        <LogListControls eventBus={new EventBusSrv()} />
+      </LogListContextProvider>
+    );
+    expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
+    expect(screen.getByLabelText('Oldest logs first')).toBeInTheDocument();
+    expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
+    expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
+    expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
+    expect(screen.getByLabelText('Wrap lines')).toBeInTheDocument();
+    expect(screen.getByLabelText('Enable highlighting')).toBeInTheDocument();
+    expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Show unique labels')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Expand JSON logs')).not.toBeInTheDocument();
+    expect(
+      screen.queryByLabelText('Fix incorrectly escaped newline and tab sequences in log lines')
+    ).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Remove escaping')).not.toBeInTheDocument();
+  });
 
   test('Allows to scroll', async () => {
     const eventBus = new EventBusSrv();
