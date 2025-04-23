@@ -200,7 +200,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
-      layoutOrchestrator: config.featureToggles.dashboardNewLayouts ? new DashboardLayoutOrchestrator() : undefined,
+      layoutOrchestrator: new DashboardLayoutOrchestrator(),
     });
 
     this.serializer =

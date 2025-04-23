@@ -122,11 +122,6 @@ func (a *dashboardSqlAccess) getRows(ctx context.Context, sql *legacysql.LegacyD
 		rows:    rows,
 		a:       a,
 		history: query.GetHistory,
-		// This looks up rules from the permissions on a user
-		canReadDashboard: func(scopes ...string) bool {
-			return true // ???
-		},
-		// accesscontrol.Checker(user, dashboards.ActionDashboardsRead),
 	}, err
 }
 
@@ -137,8 +132,6 @@ type rowsWrapper struct {
 	rows    *sql.Rows
 	history bool
 	count   int
-
-	canReadDashboard func(scopes ...string) bool
 
 	// Current
 	row *dashboardRow
@@ -180,17 +173,6 @@ func (r *rowsWrapper) Next() bool {
 		}
 
 		if r.row != nil {
-			d := r.row
-
-			// Access control checker
-			scopes := []string{dashboards.ScopeDashboardsProvider.GetResourceScopeUID(d.Dash.Name)}
-			if d.FolderUID != "" { // Copied from searchV2... not sure the logic is right
-				scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(d.FolderUID))
-			}
-			if !r.canReadDashboard(scopes...) {
-				continue
-			}
-
 			// returns the first visible dashboard
 			return true
 		}
@@ -550,7 +532,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 			ObjectMeta: metav1.ObjectMeta{
 				Name:              p.UID,
 				CreationTimestamp: metav1.NewTime(p.Created),
-				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMilli(), 10),
+				ResourceVersion:   strconv.FormatInt(p.Updated.UnixMicro(), 10),
 			},
 			Spec: dashboard.LibraryPanelSpec{},
 		}
@@ -610,7 +592,7 @@ func (a *dashboardSqlAccess) GetLibraryPanels(ctx context.Context, query Library
 	if query.UID == "" {
 		rv, err := sqlx.GetResourceVersion(ctx, "library_element", "updated")
 		if err == nil {
-			res.ResourceVersion = strconv.FormatInt(rv, 10)
+			res.ResourceVersion = strconv.FormatInt(rv*1000, 10) // convert to microseconds
 		}
 	}
 	return res, err

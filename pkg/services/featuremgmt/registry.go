@@ -284,13 +284,6 @@ var (
 			Owner:       grafanaPluginsPlatformSquad,
 		},
 		{
-			Name:         "frontendSandboxMonitorOnly",
-			Description:  "Enables monitor only in the plugin frontend sandbox (if enabled)",
-			Stage:        FeatureStagePrivatePreview,
-			FrontendOnly: true,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:         "pluginsDetailsRightPanel",
 			Description:  "Enables right panel for the plugins details page",
 			Stage:        FeatureStageGeneralAvailability,
@@ -482,13 +475,6 @@ var (
 			Expression:  "true", // enabled by default
 		},
 		{
-			Name:         "pluginsAPIMetrics",
-			Description:  "Sends metrics of public grafana packages usage by plugins",
-			FrontendOnly: true,
-			Stage:        FeatureStageExperimental,
-			Owner:        grafanaPluginsPlatformSquad,
-		},
-		{
 			Name:              "externalServiceAccounts",
 			Description:       "Automatic service account and token setup for plugins",
 			HideFromAdminPage: true,
@@ -530,14 +516,6 @@ var (
 			FrontendOnly: true,
 			Owner:        grafanaDatavizSquad,
 			Expression:   "true", // enabled by default
-		},
-		{
-			Name:            "kubernetesPlaylists",
-			Description:     "Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAppPlatformSquad,
-			Expression:      "true",
-			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:            "kubernetesSnapshots",
@@ -1048,7 +1026,7 @@ var (
 		{
 			Name:         "alertingListViewV2",
 			Description:  "Enables the new alert list view design",
-			Stage:        FeatureStageExperimental,
+			Stage:        FeatureStagePrivatePreview,
 			Owner:        grafanaAlertingSquad,
 			FrontendOnly: true,
 		},
@@ -1149,14 +1127,6 @@ var (
 			AllowSelfServe:    false,
 			HideFromDocs:      true,
 			HideFromAdminPage: true,
-		},
-		{
-			Name:            "alertingApiServer",
-			Description:     "Register Alerting APIs with the K8s API server",
-			Stage:           FeatureStageGeneralAvailability,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
 		},
 		{
 			Name:        "cloudWatchRoundUpEndTime",
@@ -1333,13 +1303,6 @@ var (
 			Description: "Enables time pickers sync",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaFrontendPlatformSquad,
-		},
-		{
-			Name:        "prometheusUsesCombobox",
-			Description: "Use new **Combobox** component for Prometheus query editor",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true", // enabled by default
 		},
 		{
 			Name:        "azureMonitorDisableLogLimit",
@@ -1794,6 +1757,27 @@ var (
 			Description: "Enables using PGX instead of libpq for PostgreSQL datasource",
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaOSSBigTent,
+		},
+		{
+			Name:         "pluginsAutoUpdate",
+			Description:  "Enables auto-updating of users installed plugins",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "alertingListViewV2PreviewToggle",
+			Description:  "Enables the alerting list view v2 preview toggle",
+			FrontendOnly: true,
+			Stage:        FeatureStagePrivatePreview,
+			Owner:        grafanaAlertingSquad,
+		},
+		{
+			Name:        "alertRuleUseFiredAtForStartsAt",
+			Description: "Use FiredAt for StartsAt when sending alerts to Alertmaanger",
+			Stage:       FeatureStageExperimental,
+			Owner:       grafanaAlertingSquad,
+			Expression:  "false",
 		},
 	}
 )

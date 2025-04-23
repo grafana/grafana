@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
 func IsReadingLegacyDashboardsAndFolders(ctx context.Context, svc Service) bool {

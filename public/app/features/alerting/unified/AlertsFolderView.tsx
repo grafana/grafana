@@ -80,7 +80,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
             options={sortOptions}
             width={25}
             aria-label={t('alerting.alerts-folder-view.aria-label-sort', 'Sort')}
-            placeholder={`Sort (Default A-Z)`}
+            placeholder={t('alerting.alerts-folder-view.placeholder-sort-default-az', 'Sort (Default A-Z)')}
             prefix={<Icon name={sortOrder === SortOrder.Ascending ? 'sort-amount-up' : 'sort-amount-down'} />}
           />
           <FilterInput
@@ -149,13 +149,16 @@ function useAlertsFolderViewParams() {
   const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewParams.labelFilter) ?? '');
 
   const sortParam = searchParams.get(AlertFolderViewParams.sortOrder);
-  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(
-    sortParam === SortOrder.Ascending
-      ? SortOrder.Ascending
-      : sortParam === SortOrder.Descending
-        ? SortOrder.Descending
-        : undefined
-  );
+  const defaultSortOrder = (() => {
+    if (sortParam === SortOrder.Ascending) {
+      return SortOrder.Ascending;
+    }
+    if (sortParam === SortOrder.Descending) {
+      return SortOrder.Descending;
+    }
+    return undefined;
+  })();
+  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(defaultSortOrder);
 
   useDebounce(
     () =>
