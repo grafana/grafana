@@ -50,9 +50,9 @@ refs:
 
 # Prometheus query editor
 
-Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/). The PostgreSQL query editor is located on the [Explore page](ref:explore). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
+Grafana provides a query editor for the Prometheus data source to create queries in PromQL. For more information about PromQL, see [Querying Prometheus](http://prometheus.io/docs/querying/basics/). The Prometheus query editor is located on the [Explore page](ref:explore). You can also access the PostgreSQL query editor from a dashboard panel. Click the ellipsis in the upper right of the panel and select **Edit**.
 
-For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data).For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
+For general documentation on querying data sources in Grafana, refer to [Query and transform data](ref:query-transform-data). For options and functions common to all query editors, refer to [Query editors](ref:query-transform-data).
 
 The Prometheus query editor has two modes:
 
@@ -93,9 +93,9 @@ Click the arrow next to each to see the available options to add to your query.
 
 If you select Builder mode you will see the following options:
 
-- **Metric** - Select a metric from the drop-down. Click the icon to open Metrics Explorer, where you can search for metrics by name and filter by type if your instance has a large number of metrics. Refer to [Metrics Explorer](#metrics-explorer) for more detail on using this feature.
+- **Metric** - Select a metric from the drop-down. Click the icon to open Metrics explorer, where you can search for metrics by name and filter by type if your instance has a large number of metrics. Refer to [Metrics explorer](#metrics-explorer) for more detail on using this feature.
 - **Label filters** - Select label filters from the drop-down. Select an operator and a value.
-Select desired labels and their values from the dropdown list.
+Select desired labels and their values from the drop-down list.
 When a metric is selected, the data source requests available labels and their values from the server.
 Use the `+` button to add a label, and the `x` button to remove a label.
 
@@ -103,7 +103,7 @@ Click **+ Operations** to select from a list of operations including Aggregation
 
 **Options:**
 
-- **Legend**- Let's you customize the name for the time series. You can use a predefined or custom format.
+- **Legend**- Lets you customize the name for the time series. You can use a predefined or custom format.
   - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
   - **Verbose** - Displays all label names.
   - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
@@ -115,49 +115,51 @@ Click **+ Operations** to select from a list of operations including Aggregation
   - **Table** - Displays data in table format. This format works only in a [Table panel](ref:table).
   - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](ref:heatmap) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. Converts cumulative histogram data into regular histogram format and sorts the series by bucket boundaries for proper display.
 
-- **Type** - This setting sets the query type. These include:
+- **Type** - This setting determines the query type. These include:
   - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
   - **Range** - Returns a range vector - a set of time series 
   a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
   - **Instant** - Returns a single data point per series — the most recent value within the selected time range. The results can be displayed in a table or as raw data. To visualize instant query results in a time series panel, start by adding field override, then add a property to the override called `Transform`, and set the Transform value to `Constant` in the drop-down. For more information, refer to the [Time Series Transform option documentation](ref:time-series-transform).
 
 {{% admonition type="note" %}}
-Grafana adjusts the query time range to align with the dynamically calculated step interval. This alignment ensures consistent metric visualization and supports Prometheus's requirement for result caching. However, aligning the time range to the step can lead to minor visual differences—such as a slight gap at the end (right edge) of a graph or a shifted start time. For example, a `15s` step aligns timestamps to Unix times divisible by 15 seconds. A `1w` `minstep` aligns the range to the start of the week, which for Prometheus is Thursday at 00:00 UTC.
+Grafana adjusts the query time range to align with the dynamically calculated step interval. This alignment ensures consistent metric visualization and supports Prometheus's result caching requirements. However, this alignment can cause minor visual differences, such as a slight gap at the graph's right edge or a shifted start time. For example, a `15s` step aligns timestamps to Unix times divisible by 15 seconds. A `1w` `minstep` aligns the range to the start of the week, which for Prometheus is Thursday at 00:00 UTC.
 {{% /admonition %}}
 
-- **Exemplars** - Toggle on to to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](ref:exemplars).
+- **Exemplars** - Toggle on to run a query that includes exemplars in the graph. Exemplars are unique to Prometheus. For more information see [Introduction to exemplars](ref:exemplars).
 
 {{% admonition type="note" %}}
 There is no option to add exemplars with an **Instant** query type.
 {{% /admonition %}}
 
-### Metrics
+### Filter metrics
 
 {{< figure src="/static/img/docs/prometheus/metrics-and-labels.png" max-width="500px" class="docs-image--no-shadow" caption="Metric and label filters" >}}
 
-When you are ready to create a query, you can choose the specific metric name from the dropdown list under **Metric**.
+When you are ready to create a query, you can choose the specific metric name from the drop-down list under **Metric**.
 The data source provides the list of available metrics based on the selected time range.
-You can also enter text into the selector when the dropdown is open to search and filter the list.
+You can also enter text into the selector when the drop-down is open to search and filter the list.
 
-#### Metrics Explorer
+#### Metrics explorer in Builder mode
 
 {{< figure src="/static/img/docs/prometheus/screenshot-grafana-prometheus-metrics-explorer-2.png" max-width="500px" class="docs-image--no-shadow" caption="Metrics explorer" >}}
 
-Click the **Open book icon** to open the Metrics Explorer, where you can search for and filter all the metrics in your instance.
+Click the **Open book icon** to open the Metrics explorer, where you can search for and filter all the metrics in your instance.
 
-If you would like to explore your metrics in the query builder further, you can open the **Metrics Explorer** by clicking the first option in the metric select component of the query builder.
+If you would like to explore your metrics in the query builder further, you can open the **Metrics explorer** by clicking the first option in the metric select component of the query builder.
 
-The metrics explorer is different than the metrics browser. The metrics explorer is only found in the query builder section. The metrics browser is only found in the code editor. The metrics explorer does not have the ability to browse labels yet, but the metrics browser can display all labels on a metric name.
-
-The metrics explorer displays all metrics in a paginated table list. The list shows the total number of metrics, as well as the name, type and description for each metric. You can enter text into the search input to filter results.
+The Metrics explorer displays all metrics in a paginated table list. The list shows the total number of metrics, as well as the name, type, and description for each metric. You can enter text into the search input to filter results.
 You can also filter by type.
 
-There are also additional settings for the following items:
+The following options are included under the **Additional Settings** drop-down:
 
-- Include description in search. Search by name **and** description
-- Include results with no metadata. Many Prometheus metrics have no metadata. This allows users to include metrics with undefined type and description.
-- Disable text wrap.
-- Enable regex search. This uses the Prometheus API to enable regex search for the metric name.
+- **Include description in search**: Toggle on to search by both name and description.
+- **Include results with no metadata**: Toggle on to include metrics that lack type or description metadata.
+- **Disable text wrap**: Toggle on to disable text wrapping.
+- **Enable regex search**: Toggle on to filter metric names by regex search, which uses an additional call on the Prometheus API.
+
+{{% admonition type="note" %}}
+The Metrics explorer (Builder mode) and [Metrics browser (Code mode)](#metrics-browser-in-code-mode) are separate elements. The Metrics explorer does not have the ability to browse labels yet, but the Metrics browser can display all labels on a metric name.
+{{% /admonition %}}
 
 ### Operations
 
@@ -178,8 +180,7 @@ All operations have function parameters under the operation header. Click the `o
 
 {{< figure src="/static/img/docs/prometheus/use-function-by-label-9-5.png" max-width="500px" class="docs-image--no-shadow" caption="Functions and labels" >}}
 
-Some operations make sense only when used in a specific order.
-If adding an operation would result in nonsensical query, the query editor adds the operation to the correct place.
+Some operations are only valid when used in a specific order. If you add an operation in a way that would create an invalid or illogical query, the query editor automatically places it in the correct position to maintain a valid query structure.
 
 ### Hints
 
@@ -198,7 +199,7 @@ Once you are satisfied with your query, click **Run query**.
 
 {{< figure src="/static/img/docs/prometheus/code-mode.png" max-width="500px" class="docs-image--no-shadow" caption="Code mode" >}}
 
-The user interface (UI) also lets you select metrics, labels, filters and operations.
+The user interface (UI) also lets you select metrics, labels, filters, and operations.
 
 You can write complex queries using the text editor with autocompletion features and syntax highlighting. Code mode's autocomplete feature works automatically while typing. The query editor can autocomplete static functions, aggregations, keywords, and also dynamic items like metrics and labels. The autocompletion drop-down includes documentation for the suggested items where available.
 
@@ -206,22 +207,22 @@ It also contains a [Metrics browser](#metrics-browser-in-code-mode) to further h
 
 ### Metrics browser in Code mode
 
-The metrics browser locates metrics and selects relevant labels to help you build basic queries.
+The Metrics browser locates metrics and selects relevant labels to help you build basic queries.
 When you click **Metrics browser** in `Code` mode, it displays all available metrics and labels.
 If supported by your Prometheus instance, each metric also displays its `HELP` and `TYPE` as a tooltip.
 
 {{< figure alt="Prometheus query editor metrics browser"  src="/media/docs/prometheus/Metrics-browser-V10-prom-query-editor.png" caption="Metrics browser" >}}
 
-When you select a metric under Step 1, the browser narrows down the available labels to show only the ones applicable to the metric.
-You can then select one or more labels shown in Step 2.
-Select one or more values in Step 3 for each label to tighten your query scope.
-In Step 4, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
+When you select a metric under **Step 1**, the browser narrows down the available labels to show only the ones applicable to the metric.
+You can then select one or more labels shown in **Step 2**.
+Select one or more values in **Step 3** for each label to tighten your query scope.
+In **Step 4**, you can select **Use query** to run the query, **Use as rate query** to add the rate operation to your query (`$__rate_interval`), **Validate selector** to verify the selector is valid and show the number of series found, or **Clear** to clear your selections and start over.
 
 {{% admonition type="note" %}}
 If you don't remember the exact metric name, you can start by selecting a few labels to filter the list. This helps you find relevant label values and narrow down your options.
 {{% /admonition %}}
 
-All lists in the metrics browser include a search field to quickly filter metrics or labels by keyword.
+All lists in the Metrics browser include a search field to quickly filter metrics or labels by keyword.
 In the **Values** section, there's a single search field that filters across all selected labels, making it easier to find matching values. For example, if you have labels like `app`, `job`, and `job_name`, only one of them might contain the value you're looking for.
 
 Once you are satisfied with your query, click **Run query**.

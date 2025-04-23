@@ -56,7 +56,31 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/
-  
+  manage-alerts-toggle:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
+  private-data-source-connect:
+    - pattern: /docs/grafana/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+    - pattern: /docs/grafana-cloud/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+  configure-pdc:
+    - pattern: /docs/grafana/
+      destination:  /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+  azure-active-directory:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication
+  configure-grafana-configuration-file-location:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
 ---
 
 # Configure the Prometheus data source
@@ -111,7 +135,7 @@ Use the IP address of the Prometheus container, or the hostname if you are using
 
 **Authentication:**
 
-There are three authentication option for the Prometheus data source.
+There are three authentication options for the Prometheus data source.
 
 - **Basic authentication** - The most common authentication method.
 
@@ -125,14 +149,14 @@ There are three authentication option for the Prometheus data source.
 **TLS settings:**
 
 {{< admonition type="note" >}}
-Use TLS (Transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Prometheus see [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/). You must add TLS settings to your Prometheus configuration file **prior** to setting these options in Grafana.
+Use TLS (Transport Layer Security) for an additional layer of security when working with Prometheus. For information on setting up TLS encryption with Prometheus refer to [Securing Prometheus API and UI Endpoints Using TLS Encryption](https://prometheus.io/docs/guides/tls-encryption/). You must add TLS settings to your Prometheus configuration file **prior** to setting these options in Grafana.
 {{< /admonition >}}
 
 - **Add self-signed certificate** - Check the box to authenticate with a CA certificate. Follow the instructions of the CA (Certificate Authority) to download the certificate file. Required for verifying self-signed TLS certificates.
   - **CA certificate** - Add your certificate.
 - **TLS client authentication** - Check the box to enable TLS client authentication.
   - **Server name** - Add the server name, which is used to verify the hostname on the returned certificate. 
-  - **Client certificate** - The client certificate is generated from a Certificate Authority or it's self-signed. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
+  - **Client certificate** - The client certificate is generated from a Certificate Authority or its self-signed. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
   - **Client key** - Add your client key, which can also be generated from a Certificate Authority (CA) or be self-signed. The client key encrypts data between the client and server.
 - **Skip TLS verify** - Toggle on to bypass TLS certificate validation. Skipping TLS certificate validation is not recommended unless absolutely necessary or for testing purposes.
 
@@ -153,7 +177,7 @@ Following are optional configuration settings you can configure for more control
 
 **Alerting:**
 
-- **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](../../../setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle) option in the Grafana configuration file.
+- **Manage alerts via Alerting UI** -Toggled on by default. This enables [data source-managed rules in Grafana Alerting](ref:alerting-alert-rules) for this data source. For `Mimir`, it enables managing data source-managed rules and alerts. For `Prometheus`, it only supports viewing existing rules and alerts, which are displayed as data source-managed. Change this by setting the [`default_manage_alerts_ui_toggle`](ref:manage-alerts-toggle) option in the `grafana.ini` configuration file.
 
 **Interval behavior:**
 
@@ -170,7 +194,7 @@ Following are optional configuration settings you can configure for more control
 - **Prometheus type** - Select the type of your Prometheus-compatible database, such as Prometheus, Cortex, Mimir, or Thanos. Changing this setting will save your current configuration. Different database types support different APIs. For example, some allow `regex` matching for label queries to improve performance, while others provide a metadata API. Setting this incorrectly may cause unexpected behavior when querying metrics and labels. Refer to your Prometheus documentation to ensure you select the correct type.
 - **Cache level** - Sets the browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, or `None`. Higher cache settings are recommended for high cardinality data sources.
 - **Incremental querying (beta)** - Toggle on to enable incremental querying. Enabling this feature changes the default behavior of relative queries. Instead of always requesting fresh data from the Prometheus instance, Grafana will cache query results and only fetch new records. This helps reduce database and network load.
-  - **Query overlap window** - If you are using incremental querying, specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`. This is a buffer of time added to incremental queries This value is added to the duration of each incremental request.
+  - **Query overlap window** - If you are using incremental querying, specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`. This is a buffer of time added to incremental queries and this value is added to the duration of each incremental request.
 - **Disable recording rules (beta)** - Toggle to disable the recording rules. Enable this option to improve dashboard performance.
 
 **Other settings:**
@@ -195,13 +219,17 @@ Click the **+ sign** to add exemplars.
 
 You can add multiple exemplars.
 
-- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
+- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
-Once you have configured your MongDB data source options, click **Save & test** at the bottom to test out your data source connection. 
+Once you have configured your Prometheus data source options, click **Save & test** at the bottom to test out your data source connection. 
 
-You should see a confirmation dialog box that says **Successfully queried the Prometheus API**.
+You should see a confirmation dialog box that says: 
+
+**Successfully queried the Prometheus API.**
+
+**Next, you can start to visualize data by building a dashboard, or by querying data in the Explore view.**
 
 You can also remove a connection by clicking **Delete**.
 
@@ -249,7 +277,7 @@ The Prometheus data source works with Azure authentication. To configure Azure a
 
 In Grafana Enterprise, you need to update the .ini configuration file. Refer to [Configuration file location](ref:configure-grafana-configuration-file-location) to locate your .ini file.
 
-Add the following setting in the **[auth]** section of the .ini configuration file :
+Add the following setting in the **[auth]** section of the .ini configuration file:
 
 ```bash
 [auth]
@@ -268,10 +296,7 @@ You can configure the Prometheus data source to disable recording rules in the d
 
 Refer to the following troubleshooting information as needed.
 
-**Data doesn't appear in Explore metrics:**
+**Data doesn't appear in Metrics Drilldown:**
 
 If you have successfully tested the connection to a Prometheus data source or are sending metrics to Grafana Cloud and there is no metric data appearing in Explore, make sure you've selected the correct data source from the data source drop-down menu. When using `remote_write` to send metrics to Grafana Cloud, the data source name follows the convention `grafanacloud-stackname-prom`.
 
-The following image shows the **Data source** field in Explore metrics:
-
-![Image that shows Prometheus metrics in Explore](/media/docs/grafana/data-sources/prometheus/troubleshoot-connection-1.png)

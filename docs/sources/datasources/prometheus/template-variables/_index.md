@@ -42,7 +42,7 @@ refs:
 # Prometheus template variables
 
 Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables. Grafana refers to such variables as **template** variables.
-Grafana lists these variables in drop-down select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana lists these variables in drop-down select boxes at the top of the dashboard to help you change the displayed data.
 
 For an introduction to templating and template variables, refer to [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
 
@@ -72,7 +72,7 @@ With the query variable type, you can set the following query options:
 | **Data source**       | Select your data source from the drop-down list.                                                         |
 | **Select query type** | Options are `default`, `value` and `metric name`. Each query type hits a different Prometheus endpoint. |
 | **Regex**             | Optional, if you want to extract part of a series name or metric node segment.                          |
-| **Sort**              | Default is `disabled`. Options include `alphabetical`, `numerical` and `alphabetical case-sensitive`.   |
+| **Sort**              | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.   |
 | **Refresh**           | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
 
 ### Selection options
@@ -117,10 +117,7 @@ Regex:
 
 ## Use `$__rate_interval`
 
-<!-- We recommend using `$__rate_interval` in the `rate` and `increase` functions instead of `$__interval` or a fixed interval value.
-Because `$__rate_interval` is always at least four times the value of the Scrape interval, it avoid problems specific to Prometheus. -->
-
-Grafana recommends using `$__rate_interval` with the rate and increase functions instead of `$__interval` or a fixed interval value.
+Grafana recommends using `$__rate_interval` with the `rate` and `increase` functions instead of `$__interval` or a fixed interval value.
 Since `$__rate_interval` is always at least four times the scrape interval, it helps avoid issues specific to Prometheus, such as gaps or inaccuracies in query results.
 
 For example, instead of using the following:
@@ -141,14 +138,21 @@ Use the following:
 rate(http_requests_total[$__rate_interval])
 ```
 
-The value of `$__rate_interval` is defined as
+<!-- The value of `$__rate_interval` is defined as
 *max(`$__interval` + *Scrape interval*, 4 \* *Scrape interval*)*,
 where _Scrape interval_ is the "Min step" setting (also known as `query*interval`, a setting per PromQL query) if any is set.
-Otherwise, Grafana uses the Prometheus data source's "Scrape interval" setting.
+Otherwise, Grafana uses the Prometheus data source's `scrape interval` setting. -->
 
-The "Min interval" setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on _Scrape interval_.
+The value of `$__rate_interval` is calculated as:
 
-For details, refer to the [Grafana blog](/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+```
+max($__interval + scrape_interval, 4 * scrape_interval)
+```
+Here, `scrape_interval` refers to the `min step` setting (also known as `query_interval`) specified per PromQL query, if set. If not, Grafana falls back to the Prometheus data source’s scrape interval setting.
+
+The `min interval` setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on `scrape interval`.
+
+For details, refer to the Grafana blog [$__rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## Choose a variable syntax
 
@@ -161,4 +165,4 @@ If you've enabled the `Multi-value_` or `Include all value_` options, Grafana co
 
 ## Use the ad hoc filters variable type
 
-Prometheus supports the special [ad hoc filters](ref:add-template-variables-add-ad-hoc-filters) variable type, which allows you to dynamically apply label/value filters across your dashboards. These filters are automatically added to all Prometheus queries, enabling flexible filtering without modifying individual queries.
+Prometheus supports the special [ad hoc filters](ref:add-template-variables-add-ad-hoc-filters) variable type, which allows you to dynamically apply label/value filters across your dashboards. These filters are automatically added to all Prometheus queries, allowing dynamic filtering without modifying individual queries.

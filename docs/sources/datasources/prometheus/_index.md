@@ -26,21 +26,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/getting-started/get-started-grafana-prometheus/#get-started-with-grafana-and-prometheus
-  configure-grafana-configuration-file-location:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#configuration-file-location
   provisioning-data-sources:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/provisioning/#data-sources
-  explore:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
   set-up-grafana-monitoring:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/set-up-grafana-monitoring/
@@ -76,11 +66,7 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
-  azure-active-directory:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/azure-monitor/#configure-azure-active-directory-ad-authentication
+
 ---
 
 # Prometheus data source
@@ -102,9 +88,9 @@ The following documentation will help you get started working with Prometheus an
 
 In Prometheus, an **exemplar** is a specific trace that represents a measurement taken within a given time interval. While metrics provide an aggregated view of your system, and traces offer a detailed view of individual requests, exemplars serve as a bridge between the two, linking high-level metrics to specific traces for deeper insights. 
 
-Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. Refer to [Introduction to exemplars](ref:exemplars) in Prometheus' documentation for detailed information on how they work.
+Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. Refer to [Introduction to exemplars](ref:exemplars) in the Prometheus documentation for detailed information on how they work.
 
-Grafana can show exemplars data alongside a metric both in Explore and in Dashboards.
+Grafana can show exemplar data alongside a metric both in Explore and in Dashboards.
 
 {{< figure src="/static/img/docs/v74/exemplars.png" class="docs-image--no-shadow" caption="Exemplar window" >}}
 
@@ -125,7 +111,7 @@ For more information on how to query other Prometheus-compatible projects from G
 
 Grafana exposes metrics for Prometheus on the `/metrics` endpoint and includes a pre-built dashboard to help you start visualizing your metrics immediately.
 
-**To import the bundled dashboard:**
+Complete the following steps to import the pre-built dashboard:
 
 1. Navigate to the Prometheus [configuration page](ref:configure-prometheus-data-source).
 1. Click the **Dashboards** tab.
@@ -135,7 +121,7 @@ For details about these metrics, refer to [Internal Grafana metrics](ref:set-up-
 
 ## Amazon Managed Service for Prometheus
 
-Grafana has deprecated the Prometheus data source with Amazon Managed Service for Prometheus. Use the [Amazon Managed service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
+Grafana has deprecated the Prometheus data source for Amazon Managed Service for Prometheus. Use the [Amazon Managed Service for Prometheus data source](https://grafana.com/grafana/plugins/grafana-amazonprometheus-datasource/) instead. The linked documentation outlines the migration steps.
 
 ## Get the most out of the Prometheus data source
 
