@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
-      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
@@ -4859,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "a week ago",
       "days-ago": "{{num}} days ago",
-      "default-from": "now-1h",
-      "default-to": "now",
       "today": "today",
       "two-weeks-ago": "two weeks ago",
       "yesterday": "yesterday"
@@ -8522,15 +8520,11 @@
       "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
-      "example": "Example: to select a time range from 10 minutes ago to now",
-      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
       "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
-      "more-info": "For more information see <2>docs <1></1></2>.",
-      "specify": "Specify time range <1></1>",
+      "specify": "Specify time range",
       "submit-button-label": "TimePicker submit button",
-      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>",
       "to-label": "To"
     },
     "zone": {
