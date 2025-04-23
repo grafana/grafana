@@ -336,7 +336,10 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 	if err != nil {
 		return err
 	}
+	return g.maybeCommit(ctx, message)
+}
 
+func (g *GoGitRepo) maybeCommit(ctx context.Context, message string) error {
 	// Skip commit for each file
 	if !g.opts.PushOnWrites {
 		return nil
@@ -351,7 +354,7 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 			When:  sig.When,
 		}
 	}
-	_, err = g.tree.Commit(message, opts)
+	_, err := g.tree.Commit(message, opts)
 	if errors.Is(err, git.ErrEmptyCommit) {
 		return nil // empty commit is fine -- no change
 	}
@@ -359,16 +362,22 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 }
 
 // Delete implements repository.Repository.
-func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message string) error {
-	if _, err := g.tree.Remove(safepath.Join(g.config.Spec.GitHub.Path, path)); err != nil {
+func (g *GoGitRepo) Delete(ctx context.Context, fpath string, ref string, message string) error {
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
+	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
-
-	return nil
+	if _, err := g.tree.Remove(fpath); err != nil {
+		return err
+	}
+	return g.maybeCommit(ctx, message)
 }
 
 // Read implements repository.Repository.
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
+	if err := verifyPathWithoutRef(path, ref); err != nil {
+		return nil, err
+	}
 	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
 	stat, err := g.tree.Filesystem.Lstat(readPath)
 	if errors.Is(err, fs.ErrNotExist) {

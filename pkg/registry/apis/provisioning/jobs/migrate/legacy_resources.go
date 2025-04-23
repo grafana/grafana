@@ -10,6 +10,7 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
@@ -28,23 +29,26 @@ type legacyResourcesMigrator struct {
 	repositoryResources resources.RepositoryResourcesFactory
 	parsers             resources.ParserFactory
 	legacyMigrator      legacy.LegacyMigrator
-	folderMigrator      LegacyFoldersMigrator
 	signerFactory       signature.SignerFactory
+	clients             resources.ClientFactory
+	exportFn            export.ExportFn
 }
 
 func NewLegacyResourcesMigrator(
 	repositoryResources resources.RepositoryResourcesFactory,
 	parsers resources.ParserFactory,
 	legacyMigrator legacy.LegacyMigrator,
-	folderMigrator LegacyFoldersMigrator,
 	signerFactory signature.SignerFactory,
+	clients resources.ClientFactory,
+	exportFn export.ExportFn,
 ) LegacyResourcesMigrator {
 	return &legacyResourcesMigrator{
 		repositoryResources: repositoryResources,
 		parsers:             parsers,
 		legacyMigrator:      legacyMigrator,
-		folderMigrator:      folderMigrator,
 		signerFactory:       signerFactory,
+		clients:             clients,
+		exportFn:            exportFn,
 	}
 }
 
@@ -70,17 +74,25 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 	}
 
 	progress.SetMessage(ctx, "migrate folders from SQL")
-	if err := m.folderMigrator.Migrate(ctx, namespace, repositoryResources, progress); err != nil {
+	clients, err := m.clients.Clients(ctx, namespace)
+	if err != nil {
+		return err
+	}
+
+	// nothing special for the export for now
+	exportOpts := provisioning.ExportJobOptions{}
+	if err = m.exportFn(ctx, rw.Config().Name, exportOpts, clients, repositoryResources, progress); err != nil {
 		return fmt.Errorf("migrate folders from SQL: %w", err)
 	}
 
 	progress.SetMessage(ctx, "migrate resources from SQL")
 	for _, kind := range resources.SupportedProvisioningResources {
 		if kind == resources.FolderResource {
-			continue
+			continue // folders have special handling
 		}
 
-		reader := NewLegacyResourceMigrator(
+		reader := newLegacyResourceMigrator(
+			rw,
 			m.legacyMigrator,
 			parser,
 			repositoryResources,
@@ -100,6 +112,7 @@ func (m *legacyResourcesMigrator) Migrate(ctx context.Context, rw repository.Rea
 }
 
 type legacyResourceResourceMigrator struct {
+	repo      repository.ReaderWriter
 	legacy    legacy.LegacyMigrator
 	parser    resources.Parser
 	progress  jobs.JobProgressRecorder
@@ -111,7 +124,8 @@ type legacyResourceResourceMigrator struct {
 	history   map[string]string // UID >> file path
 }
 
-func NewLegacyResourceMigrator(
+func newLegacyResourceMigrator(
+	repo repository.ReaderWriter,
 	legacy legacy.LegacyMigrator,
 	parser resources.Parser,
 	resources resources.RepositoryResources,
@@ -126,6 +140,7 @@ func NewLegacyResourceMigrator(
 		history = make(map[string]string)
 	}
 	return &legacyResourceResourceMigrator{
+		repo:      repo,
 		legacy:    legacy,
 		parser:    parser,
 		progress:  progress,
@@ -178,11 +193,11 @@ func (r *legacyResourceResourceMigrator) Write(ctx context.Context, key *resourc
 
 	// When replaying history, the path to the file may change over time
 	// This happens when the title or folder change
-	if r.history != nil {
+	if r.history != nil && err == nil {
 		name := parsed.Meta.GetName()
 		previous := r.history[name]
 		if previous != "" && previous != fileName {
-			_, _, err = r.resources.RemoveResourceFromFile(ctx, previous, "")
+			err = r.repo.Delete(ctx, previous, "", fmt.Sprintf("moved to: %s", fileName))
 		}
 		r.history[name] = fileName
 	}
