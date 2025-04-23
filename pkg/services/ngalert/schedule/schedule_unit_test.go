@@ -1216,6 +1216,7 @@ func setupScheduler(t *testing.T, rs *fakeRulesStore, is *state.FakeInstanceStor
 		AlertSender:            senderMock,
 		Tracer:                 testTracer,
 		Log:                    log.New("ngalert.scheduler"),
+		FeatureToggles:         featuremgmt.WithFeatures(),
 		RecordingWriter:        fakeRecordingWriter,
 		RuleStopReasonProvider: ruleStopReasonProvider,
 	}
