@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"hash/fnv"
 	"log/slog"
-	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -15,18 +14,17 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/flagext"
-	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
 	userutils "github.com/grafana/dskit/user"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/log"
 )
 
 // ResourceServer implements all gRPC services
@@ -207,7 +205,7 @@ type ResourceServerOptions struct {
 
 	IndexMetrics *BleveIndexMetrics
 
-	ShardingConfig *ShardingConfig
+	Distributor *Distributor
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -276,12 +274,9 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		reg:            opts.Reg,
 	}
 
-	if opts.ShardingConfig != nil && opts.ShardingConfig.Enabled {
-		go s.enableSharding(*opts.ShardingConfig)
-		// err := s.enableSharding(*opts.ShardingConfig)
-		// if err != nil {
-		// 	return nil, fmt.Errorf("error sharding: %s", err)
-		// }
+	if opts.Distributor != nil {
+		s.shardingEnabled = true
+		s.distributor = *opts.Distributor
 	}
 
 	if opts.Search.Resources != nil {
@@ -327,12 +322,33 @@ type server struct {
 	once    sync.Once
 	initErr error
 
-	// sharding things
 	shardingEnabled bool
-	pool            *ringclient.Pool
-	ring            *ring.Ring
-	lifecycler      *ring.BasicLifecycler
+	distributor     Distributor
 	reg             prometheus.Registerer
+}
+
+type Distributor struct {
+	ClientPool *ringclient.Pool
+	Ring       *ring.Ring
+	Lifecycler *ring.BasicLifecycler
+}
+
+type RingClient struct {
+	Client ResourceClient
+	grpc_health_v1.HealthClient
+	Conn *grpc.ClientConn
+}
+
+func (c RingClient) Close() error {
+	return c.Conn.Close()
+}
+
+func (c *RingClient) String() string {
+	return c.RemoteAddress()
+}
+
+func (c *RingClient) RemoteAddress() string {
+	return c.Conn.Target()
 }
 
 // Init implements ResourceServer.
@@ -363,89 +379,7 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
-func (s *server) enableSharding(cfg ShardingConfig) {
-	ctx := context.Background()
-	grpcclientcfg := &grpcclient.Config{}
-	flagext.DefaultValues(grpcclientcfg)
-	log := log.New("resource-server-ring")
-	pool := newClientPool(*grpcclientcfg, log, s.reg, s.tracer)
-
-	ringsvc, lfcsvc, err := initRing(cfg, log, s.reg)
-
-	if err != nil {
-		log.Error("Error instantiating the ring: ", err)
-		return
-	}
-
-	err = ringsvc.StartAsync(ctx)
-	if err != nil {
-		log.Error("Error instantiating the ring: ", err)
-		return
-	}
-	err = lfcsvc.StartAsync(ctx)
-	if err != nil {
-		log.Error("Error instantiating the ring: ", err)
-		return
-	}
-
-	log.Info("ring and lifecycle service started successfully ", "InstanceID", lfcsvc.GetInstanceID())
-
-	s.log.Info("waiting until resource server is JOINING in the ring")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
-	defer cancel()
-	if err := ring.WaitInstanceState(ctx, ringsvc, lfcsvc.GetInstanceID(), ring.JOINING); err != nil {
-		log.Error("Error switching to JOINING in the ring: ", "err", err)
-		return
-	}
-	s.log.Info("resource server is JOINING in the ring")
-
-	if err := lfcsvc.ChangeState(context.Background(), ring.ACTIVE); err != nil {
-		log.Error("Error switching to ACTIVE in the ring: ", "err", err)
-		return
-	}
-
-	s.log.Info("waiting until resource server is ACTIVE in the ring")
-	if err := ring.WaitInstanceState(context.Background(), ringsvc, lfcsvc.GetInstanceID(), ring.ACTIVE); err != nil {
-		log.Error("Error switching to ACTIVE in the ring: ", "err", err)
-		return
-	}
-	s.log.Info("resource server is ACTIVE in the ring")
-
-	if err := pool.StartAsync(context.Background()); err != nil {
-		log.Error("Error creating pool client: ", "err", err)
-		return
-	}
-
-	s.pool = pool
-	s.ring = ringsvc
-	s.lifecycler = lfcsvc
-	s.shardingEnabled = true
-
-	if cfg.RingDebugServerPort != "" {
-		go func() {
-			listener, err := net.Listen("tcp", net.JoinHostPort(cfg.MemberlistBindAddr, cfg.RingDebugServerPort))
-			if err != nil {
-				panic(err)
-			}
-			mux := http.NewServeMux()
-			mux.Handle("/ring", lfcsvc)
-			server := http.Server{
-				Handler:           mux,
-				ReadTimeout:       15 * time.Second,
-				WriteTimeout:      15 * time.Second,
-				IdleTimeout:       60 * time.Second,
-				ReadHeaderTimeout: 5 * time.Second,
-			}
-			err = server.Serve(listener)
-			if err != nil {
-				s.log.Error("could not start debug ring server", "err", err)
-			}
-			// mux.Handle("/kv", memberlistsvc)
-		}()
-	}
-}
-
-func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
+func (s *server) getClientToDistributeRequest(namespace string) *RingClient {
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
 	if err != nil {
@@ -453,22 +387,24 @@ func (s *server) getClientToDistributeRequest(namespace string) *ringClient {
 		return nil
 	}
 
-	rs, err := s.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
+	rs, err := s.distributor.Ring.Get(ringHasher.Sum32(), ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+		return s != ring.ACTIVE
+	}), nil, nil, nil)
 
 	if err != nil {
 		s.log.Error("Error getting replication set. Will not distribute request", "err", err)
 		return nil
 	}
 
-	if rs.Instances[0].Id != s.lifecycler.GetInstanceID() {
+	if rs.Instances[0].Id != s.distributor.Lifecycler.GetInstanceID() {
 		s.log.Info("distributing request", "instanceId", rs.Instances[0].Id)
 
-		ins, err := s.pool.GetClientForInstance(rs.Instances[0])
+		ins, err := s.distributor.ClientPool.GetClientForInstance(rs.Instances[0])
 		if err != nil {
 			s.log.Error("Error getting client. Will not distribute request", "err", err)
 			return nil
 		}
-		return ins.(*ringClient)
+		return ins.(*RingClient)
 	}
 
 	return nil
@@ -1178,7 +1114,7 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 	if s.shardingEnabled {
 		client := s.getClientToDistributeRequest(req.Options.Key.Namespace)
 		if client != nil {
-			return client.client.Search(userutils.InjectOrgID(ctx, "1"), req)
+			return client.Client.Search(userutils.InjectOrgID(ctx, "1"), req)
 		}
 	}
 
@@ -1196,7 +1132,7 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	if s.shardingEnabled {
 		client := s.getClientToDistributeRequest(req.Namespace)
 		if client != nil {
-			return client.client.GetStats(userutils.InjectOrgID(ctx, "1"), req)
+			return client.Client.GetStats(userutils.InjectOrgID(ctx, "1"), req)
 		}
 	}
 
