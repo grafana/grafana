@@ -1,6 +1,6 @@
-import { CoreApp } from "@grafana/data";
+import { CoreApp } from '@grafana/data';
 
-import { isCoreApp } from "./types";
+import { isCoreApp } from './types';
 
 describe('isCoreApp', () => {
   test('Identifies core apps', () => {

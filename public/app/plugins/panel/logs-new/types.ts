@@ -19,6 +19,6 @@ export function isLogsGrammar(grammar: unknown): grammar is Grammar {
 }
 
 export function isCoreApp(app: unknown): app is CoreApp {
-  const apps = Object.values(CoreApp).map(coreApp => coreApp.toString());
+  const apps = Object.values(CoreApp).map((coreApp) => coreApp.toString());
   return typeof app === 'string' && apps.includes(app);
 }

@@ -63,6 +63,6 @@ export function isReactNodeArray(node: unknown): node is ReactNode[] {
 }
 
 export function isCoreApp(app: unknown): app is CoreApp {
-  const apps = Object.values(CoreApp).map(coreApp => coreApp.toString());
+  const apps = Object.values(CoreApp).map((coreApp) => coreApp.toString());
   return typeof app === 'string' && apps.includes(app);
 }
