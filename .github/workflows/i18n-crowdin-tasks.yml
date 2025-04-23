@@ -1,0 +1,44 @@
+name: Crowdin Create Tasks
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: "0 0 * * *"
+
+jobs:
+  create-tasks-in-crowdin:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write # needed to commit changes into the PR
+      pull-requests: write # needed to update PR description, labels, etc
+      id-token: write # needed to get vault secrets
+
+    steps:
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.generate_token.outputs.token }}
+
+      - name: Setup Node.js
+        id: setup_node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'yarn'
+
+      - name: Create tasks
+        id: crowdin_tasks
+        env:
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+        run: node ./scripts/crowdin/create-tasks.js
+
+
