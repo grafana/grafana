@@ -24,7 +24,7 @@ Local file provisioning is an [experimental feature](https://grafana.com/docs/re
   - [Set up Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/)
   - [Set up file provisioning](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/)
   - [Work with provisioned dashboards](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/provisioned-dashboards/)
-  - [Manage provisioned repositories with Git Sync](/docs/grafana/<GRAFANA_VERSION>observability-as-code/provision-resources/use-git-sync/)
+  - [Manage provisioned repositories with Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/)
 
 <hr />
 
