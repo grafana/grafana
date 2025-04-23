@@ -19,7 +19,7 @@ const credentials = {
   organization: 'grafana'
 };
 
-const { tasksApi, projectsGroupsApi, sourceFilesApi, workflowsApi } = new crowdin(credentials);
+const { tasksApi, projectsGroupsApi, sourceFilesApi, workflowsApi } = new crowdin.default(credentials);
 
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
@@ -66,6 +66,8 @@ async function getWorkflowStepId(projectId) {
   try {
     const response = await workflowsApi.listWorkflowSteps(projectId);
     const workflowSteps = response.data;
+    // TODO remove this
+    console.log(workflowSteps)
     const workflowStepId = workflowSteps.find(step => step.data.type === 'Translation by vendor').data.id;
     console.log('Fetched workflow step ID successfully!');
     return workflowStepId;
