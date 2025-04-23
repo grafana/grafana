@@ -106,6 +106,7 @@ function DashboardOutlineNode({
           ) : (
             <>
               <span>{instanceName}</span>
+              {isCloned && <span>- Repeated copy</span>}
               {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
               {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>}
             </>
