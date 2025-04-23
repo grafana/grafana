@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"path"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -13,11 +12,7 @@ import (
 
 func (hs *HTTPServer) registerOpenFeatureRoutes(apiRoute routing.RouteRegister) {
 	if hs.Cfg.OpenFeature.ProviderType == setting.StaticProviderType {
-		p := "/ofrep/v1"
-		if hs.Cfg.OpenFeature.Subpath != "" {
-			p = path.Join(hs.Cfg.OpenFeature.Subpath, p)
-		}
-		apiRoute.Group(p, func(apiRoute routing.RouteRegister) {
+		apiRoute.Group("/ofrep/v1", func(apiRoute routing.RouteRegister) {
 			apiRoute.Post("/evaluate/flags", hs.allFlagsStaticProvider)
 			apiRoute.Post("/evaluate/flags/:flagKey", hs.evalFlagStaticProvider)
 		})

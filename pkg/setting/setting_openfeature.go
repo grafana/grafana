@@ -6,8 +6,6 @@ const (
 )
 
 type OpenFeatureSettings struct {
-	Subpath string // to configure path for open feature api endpoints
-
 	ProviderType string
 	URL          string
 	TargetingKey string
@@ -18,9 +16,6 @@ func (cfg *Cfg) readOpenFeatureSettings() {
 	cfg.OpenFeature = OpenFeatureSettings{}
 
 	config := cfg.Raw.Section("feature_toggles.openfeature")
-
-	cfg.OpenFeature.Subpath = config.Key("subpath").MustString("")
-
 	cfg.OpenFeature.ProviderType = config.Key("provider").MustString(StaticProviderType)
 	cfg.OpenFeature.URL = config.Key("url").MustString("")
 	cfg.OpenFeature.TargetingKey = config.Key("targetingKey").MustString(cfg.AppURL)

@@ -86,8 +86,8 @@ func (s *OpenFeatureService) EvalAllFlagsWithStaticProvider(ctx context.Context)
 			ErrorCode:    string(result.ErrorCode),
 			ErrorDetails: result.ErrorMessage,
 		})
-
 	}
+
 	return OFREPBulkResponse{Flags: allFlags}, nil
 }
 
