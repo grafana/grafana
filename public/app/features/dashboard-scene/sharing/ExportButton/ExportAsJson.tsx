@@ -151,7 +151,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
             variant="secondary"
             icon="copy"
             disabled={dashboardJson.loading}
-            getText={() => stringifiedDashboardJson ?? ''}
+            getText={() => (isViewingYAML ? stringifiedDashboardYaml : stringifiedDashboardJson)}
             onClipboardCopy={() => {
               DashboardInteractions.exportCopyJsonClicked();
             }}
