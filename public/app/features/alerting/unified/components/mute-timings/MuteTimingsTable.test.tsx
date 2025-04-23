@@ -94,7 +94,7 @@ describe('MuteTimingsTable', () => {
     it('shows error when mute timings cannot load', async () => {
       setMuteTimingsListError();
       renderWithProvider();
-      expect(await screen.findByText(/error loading mute timings/i)).toBeInTheDocument();
+      expect(await screen.findByText(/error loading time intervals/i)).toBeInTheDocument();
     });
 
     it('deletes interval', async () => {

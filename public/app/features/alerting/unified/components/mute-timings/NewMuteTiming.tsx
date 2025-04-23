@@ -7,7 +7,7 @@ function NewMuteTimingPage() {
   return (
     <AlertmanagerPageWrapper
       navId="am-routes"
-      pageNav={{ id: 'alert-policy-new', text: 'Add mute timing' }}
+      pageNav={{ id: 'alert-policy-new', text: 'Add time interval' }}
       accessType="notification"
     >
       <MuteTimingForm />
