@@ -569,6 +569,8 @@ export const LogsPanel = ({
             onClickFilterOutString={
               isOnClickFilterOutString(onClickFilterOutString) ? onClickFilterOutString : undefined
             }
+            logRowMenuIconsBefore={isReactNodeArray(logRowMenuIconsBefore) ? logRowMenuIconsBefore : undefined}
+            logRowMenuIconsAfter={isReactNodeArray(logRowMenuIconsAfter) ? logRowMenuIconsAfter : undefined}
             onLogOptionsChange={isOnLogOptionsChange(onLogOptionsChange) ? onLogOptionsChange : undefined}
             logOptionsStorageKey={controlsStorageKey}
             // Ascending order causes scroll to stick to the bottom, so previewing is futile
