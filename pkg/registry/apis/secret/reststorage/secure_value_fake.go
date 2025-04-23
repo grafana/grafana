@@ -26,7 +26,7 @@ type fakeSecureValueMetadataStorage struct {
 	latency time.Duration
 }
 
-func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *fakeSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// TODO: Remove once the outbox is implemented
 	sv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
 	sv.Status.Message = ""
@@ -60,7 +60,7 @@ func (s *fakeSecureValueMetadataStorage) Read(ctx context.Context, namespace xku
 	return &v, nil
 }
 
-func (s *fakeSecureValueMetadataStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (s *fakeSecureValueMetadataStorage) Update(ctx context.Context, nsv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// TODO: Remove once the outbox is implemented
 	nsv.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
 	nsv.Status.Message = ""
@@ -99,7 +99,7 @@ func (s *fakeSecureValueMetadataStorage) Delete(ctx context.Context, namespace x
 	return nil
 }
 
-func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) ([]secretv0alpha1.SecureValue, error) {
 	ns, ok := s.values[namespace.String()]
 	if !ok {
 		ns = make(map[string]secretv0alpha1.SecureValue)
@@ -109,9 +109,7 @@ func (s *fakeSecureValueMetadataStorage) List(ctx context.Context, namespace xku
 	for _, v := range ns {
 		l = append(l, v)
 	}
-	return &secretv0alpha1.SecureValueList{
-		Items: l,
-	}, nil
+	return l, nil
 }
 
 func (s *fakeSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {

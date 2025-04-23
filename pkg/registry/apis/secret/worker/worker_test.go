@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
+	secretservice "github.com/grafana/grafana/pkg/registry/apis/secret/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -39,6 +40,20 @@ import (
 )
 
 func TestProcessMessage(t *testing.T) {
+	t.Run("create secret message", func(t *testing.T) {
+		panic("TODO")
+	})
+
+	t.Run("update secret message", func(t *testing.T) {
+		panic("TODO")
+	})
+	t.Run("delete secret message", func(t *testing.T) {
+
+		panic("TODO")
+	})
+}
+
+func TestProcessMessageProperty(t *testing.T) {
 	t.Parallel()
 
 	seed := time.Now().UnixMicro()
@@ -57,7 +72,7 @@ func TestProcessMessage(t *testing.T) {
 		testDB := sqlstore.NewTestStore(t)
 		require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
 
-		database := database.New(testDB)
+		database := database.ProvideDatabase(testDB)
 
 		outboxQueueWrapper := newOutboxQueueWrapper(rng, metadata.ProvideOutboxQueue(testDB))
 
@@ -99,7 +114,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorageWrapper, keeperService)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, keeperMetadataStorageWrapper, keeperService)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
@@ -108,7 +123,9 @@ func TestProcessMessage(t *testing.T) {
 			contracts.SQLKeeperType: sqlKeeperWrapper,
 		}
 
-		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, utils.ResourceInfo{})
+		secretService := secretservice.ProvideSecretService(accessClient, database, secureValueMetadataStorageWrapper, outboxQueueWrapper)
+
+		secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
 
 		worker := NewWorker(Config{
 			// TODO: randomize
@@ -353,18 +370,18 @@ func newSecureValueMetadataStorageWrapper(rng *rand.Rand, impl contracts.SecureV
 	return &secureValueMetadataStorageWrapper{rng: rng, impl: impl}
 }
 
-func (wrapper *secureValueMetadataStorageWrapper) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	return wrapper.impl.Create(ctx, sv)
+func (wrapper *secureValueMetadataStorageWrapper) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+	return wrapper.impl.Create(ctx, sv, actorUID)
 }
 func (wrapper *secureValueMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
 	return wrapper.impl.Read(ctx, namespace, name)
 }
-func (wrapper *secureValueMetadataStorageWrapper) Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (wrapper *secureValueMetadataStorageWrapper) Update(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
 		return nil, context.DeadlineExceeded
 	}
-	sv, err := wrapper.impl.Update(ctx, sv)
+	sv, err := wrapper.impl.Update(ctx, sv, actorUID)
 	if err != nil {
 		return sv, err
 	}
@@ -388,7 +405,7 @@ func (wrapper *secureValueMetadataStorageWrapper) Delete(ctx context.Context, na
 	}
 	return nil
 }
-func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) ([]secretv0alpha1.SecureValue, error) {
 	return wrapper.impl.List(ctx, namespace, options)
 }
 

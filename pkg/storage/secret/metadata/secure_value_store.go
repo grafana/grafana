@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	claims "github.com/grafana/authlib/types"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -23,7 +20,6 @@ import (
 func ProvideSecureValueMetadataStorage(
 	db db.DB,
 	features featuremgmt.FeatureToggles,
-	accessClient claims.AccessClient,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -44,7 +40,6 @@ func ProvideSecureValueMetadataStorage(
 
 	return &secureValueMetadataStorage{
 		db:                    db,
-		accessClient:          accessClient,
 		keeperMetadataStorage: keeperMetadataStorage,
 		keepers:               keepers,
 	}, nil
@@ -53,21 +48,15 @@ func ProvideSecureValueMetadataStorage(
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
 	db                    db.DB
-	accessClient          claims.AccessClient
 	keeperMetadataStorage contracts.KeeperMetadataStorage
 	keepers               map[contracts.KeeperType]contracts.Keeper
 }
 
-func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
+func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = ""
 
-	row, err := toCreateRow(sv, authInfo.GetUID())
+	row, err := toCreateRow(sv, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
@@ -111,11 +100,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 }
 
 func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -142,12 +126,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
+func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -166,22 +145,12 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	// Update in keeper.
-	// TODO: here temporary, the moment of update will change in the async flow.
-	err = s.updateInKeeper(ctx, currentRow, newSecureValue)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update in keeper: %w", err)
-	}
-
-	// From this point on, we should not have a need to read value.
-	newSecureValue.Spec.Value = ""
-
 	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
 	// Temporarily mark succeeded here since the value is already stored in the keeper.
 	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
 	newSecureValue.Status.Message = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, authInfo.GetUID(), currentRow.ExternalID)
+	newRow, err := toUpdateRow(currentRow, newSecureValue, actorUID, currentRow.ExternalID)
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
@@ -222,16 +191,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return fmt.Errorf("missing auth info in context")
-	}
-
-	// Delete from the keeper.
-	// TODO: here temporary, the moment of deletion will change in the async flow.
-	// TODO: do we care to inform the caller if there is any error?
-	_ = s.deleteFromKeeper(ctx, namespace, name)
-
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 
@@ -250,22 +209,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	return nil
 }
 
-func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-		Group:     secretv0alpha1.GROUP,
-		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
-		Namespace: namespace.String(),
-		Verb:      utils.VerbGet, // Why not VerbList?
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile checker: %w", err)
-	}
-
+func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) ([]secretv0alpha1.SecureValue, error) {
 	labelSelector := options.LabelSelector
 	if labelSelector == nil {
 		labelSelector = labels.Everything()
@@ -277,7 +221,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 
 	secureValueRows := make([]*secureValueDB, 0)
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	if err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		cond := &secureValueDB{Namespace: namespace.String()}
 
 		if err := sess.Find(&secureValueRows, cond); err != nil {
@@ -285,18 +229,13 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		}
 
 		return nil
-	})
-	if err != nil {
+	}); err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
 	secureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueRows))
 
 	for _, row := range secureValueRows {
-		// Check whether the user has permission to access this specific SecureValue in the namespace.
-		if !hasPermissionFor(row.Name, "") {
-			continue
-		}
 
 		secureValue, err := row.toKubernetes()
 		if err != nil {
@@ -312,9 +251,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		}
 	}
 
-	return &secretv0alpha1.SecureValueList{
-		Items: secureValues,
-	}, nil
+	return secureValues, nil
 }
 
 func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {

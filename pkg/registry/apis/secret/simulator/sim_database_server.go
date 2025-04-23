@@ -124,16 +124,13 @@ func (db *SimDatabaseServer) readRow(transactionID TransactionID, row secureValu
 	}
 
 	if _, ok := ns[row.Name]; !ok {
-		fmt.Printf("\n\naaaaaaa  row being copied %+v\n\n", db.secretMetadata[row.Namespace][row.Name])
 		v, err := copystructure.Copy(db.secretMetadata[row.Namespace][row.Name])
 		if err != nil {
 			panic(fmt.Sprintf("copying database row for transaction: %+v", err))
 		}
-		fmt.Printf("\n\naaaaaaa copied value: v %+v\n\n", v)
+
 		copy := v.(*secureValueMetadataRow)
 
-		fmt.Printf("\n\naaaaaaa transaction %+v\n\n", transaction)
-		fmt.Printf("\n\naaaaaaa copy %+v\n\n", copy)
 		transaction.secretMetadata[copy.Namespace][copy.Name] = copy
 	}
 

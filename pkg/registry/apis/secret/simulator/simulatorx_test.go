@@ -239,8 +239,7 @@ func (sim *Simulator) execute(action Action) {
 				return nil
 			}
 			createOptions := &metav1.CreateOptions{}
-			s, err := sim.secureValueRest.Create(ctx, sv, validateObjectFunc, createOptions)
-			fmt.Printf("\n\naaaaaaa s %+v\n\n", s)
+			_, err := sim.secureValueRest.Create(ctx, sv, validateObjectFunc, createOptions)
 			_, modelErr := sim.model.Create(ctx, sv, validateObjectFunc, createOptions)
 			require.ErrorIs(sim.t, err, modelErr)
 		})
@@ -364,6 +363,7 @@ func TestSimulate(t *testing.T) {
 	activityLog := NewActivityLog()
 
 	defer func() {
+		fmt.Println(activityLog.String())
 		if err := recover(); err != nil || t.Failed() {
 			fmt.Println(activityLog.String())
 			fmt.Printf("SEED=%+v", simulatorConfig.Seed)
