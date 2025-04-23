@@ -11,6 +11,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -215,4 +217,122 @@ func TestGoGitRepo_Webhook(t *testing.T) {
 	require.True(t, errors.As(err, &statusErr), "Error should be a StatusError")
 	require.Equal(t, http.StatusNotImplemented, int(statusErr.ErrStatus.Code))
 	require.Contains(t, statusErr.ErrStatus.Message, "history is not yet implemented")
+}
+
+func TestGoGitRepo_Read(t *testing.T) {
+	// Setup test cases
+	tests := []struct {
+		name        string
+		path        string
+		ref         string
+		setupMock   func(fs billy.Filesystem)
+		expectError bool
+		errorType   error
+		checkResult func(t *testing.T, info *repository.FileInfo)
+	}{
+		{
+			name: "successfully read file",
+			path: "test.txt",
+			ref:  "",
+			setupMock: func(fs billy.Filesystem) {
+				// Create a test file
+				f, err := fs.Create("grafana/test.txt")
+				require.NoError(t, err, "failed to create test file")
+				_, err = f.Write([]byte("test content"))
+				require.NoError(t, err, "failed to write test content")
+				err = f.Close()
+				require.NoError(t, err, "failed to close test file")
+			},
+			expectError: false,
+			checkResult: func(t *testing.T, info *repository.FileInfo) {
+				require.Equal(t, "test.txt", info.Path)
+				require.Equal(t, "test content", string(info.Data))
+				require.NotNil(t, info.Modified)
+			},
+		},
+		{
+			name:        "empty path",
+			path:        "",
+			ref:         "",
+			setupMock:   func(fs billy.Filesystem) {},
+			expectError: true,
+			errorType:   fmt.Errorf("expected path"),
+		},
+		{
+			name:        "ref not supported",
+			path:        "test.txt",
+			ref:         "main",
+			setupMock:   func(fs billy.Filesystem) {},
+			expectError: true,
+			errorType:   fmt.Errorf("ref unsupported"),
+		},
+		{
+			name: "file not found",
+			path: "nonexistent.txt",
+			ref:  "",
+			setupMock: func(fs billy.Filesystem) {
+				// Don't create the file
+			},
+			expectError: true,
+			errorType:   repository.ErrFileNotFound,
+		},
+		{
+			name: "read directory",
+			path: "testdir",
+			ref:  "",
+			setupMock: func(fs billy.Filesystem) {
+				// Create a test directory
+				err := fs.MkdirAll("grafana/testdir", 0755)
+				require.NoError(t, err, "failed to create test directory")
+			},
+			expectError: false,
+			checkResult: func(t *testing.T, info *repository.FileInfo) {
+				require.Equal(t, "testdir", info.Path)
+				require.Nil(t, info.Data)
+				require.NotNil(t, info.Modified)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup filesystem and repo
+			fs := memfs.New()
+			tt.setupMock(fs)
+
+			// Create a worktree with the filesystem
+			repo := &GoGitRepo{
+				config: &v0alpha1.Repository{
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							Path: "grafana/",
+						},
+					},
+				},
+				tree: &git.Worktree{
+					Filesystem: fs,
+				},
+			}
+
+			// Test Read method
+			ctx := context.Background()
+			info, err := repo.Read(ctx, tt.path, tt.ref)
+
+			// Check results
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.errorType != nil {
+					if errors.Is(tt.errorType, repository.ErrFileNotFound) {
+						require.ErrorIs(t, err, repository.ErrFileNotFound)
+					} else {
+						require.Contains(t, err.Error(), tt.errorType.Error())
+					}
+				}
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, info)
+				tt.checkResult(t, info)
+			}
+		})
+	}
 }

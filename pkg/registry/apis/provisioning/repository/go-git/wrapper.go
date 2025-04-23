@@ -368,6 +368,10 @@ func (g *GoGitRepo) Delete(ctx context.Context, fpath string, ref string, messag
 		return err
 	}
 	if _, err := g.tree.Remove(fpath); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return repository.ErrFileNotFound
+		}
+
 		return err
 	}
 	return g.maybeCommit(ctx, message)
@@ -383,7 +387,7 @@ func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*reposit
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, repository.ErrFileNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
+		return nil, fmt.Errorf("stat path '%s': %w", readPath, err)
 	}
 	info := &repository.FileInfo{
 		Path: path,
@@ -394,11 +398,11 @@ func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*reposit
 	if !stat.IsDir() {
 		f, err := g.tree.Filesystem.Open(readPath)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("open file '%s': %w", readPath, err)
 		}
 		info.Data, err = io.ReadAll(f)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("read file '%s': %w", readPath, err)
 		}
 	}
 	return info, err
