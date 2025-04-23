@@ -1,6 +1,6 @@
 import crowdin from '@crowdin/crowdin-api-client';
 const TRANSLATED_CONNECTOR_DESCRIPTION = '{{tos_service_type: premium}}';
-const TRANSLATED_WORKFLOW_STEP_ID = 78;
+const TRANSLATE_BY_VENDOR_WORKFLOW_TYPE = 'TranslateByVendor'
 
 const API_TOKEN = process.env.CROWDIN_PERSONAL_TOKEN;
 if (!API_TOKEN) {
@@ -68,7 +68,7 @@ async function getWorkflowStepId(projectId) {
     const workflowSteps = response.data;
     // TODO remove this
     console.log(workflowSteps)
-    const workflowStepId = workflowSteps.find(step => step.data.type === 'Translation by vendor').data.id;
+    const workflowStepId = workflowSteps.find(step => step.data.type === TRANSLATE_BY_VENDOR_WORKFLOW_TYPE).data.id;
     console.log('Fetched workflow step ID successfully!');
     return workflowStepId;
   } catch (error) {
