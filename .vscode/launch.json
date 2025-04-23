@@ -80,7 +80,8 @@
       "mode": "auto",
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "cwd": "${workspaceFolder}",
-      "args": ["server", "target", "frontend", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+      "env": { "GF_DEFAULT_TARGET": "frontend-server" },
+      "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {
       "name": "Run Authz server",

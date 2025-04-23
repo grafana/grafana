@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"sync"
 
+	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -19,7 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
-	"github.com/prometheus/client_golang/prometheus"
 )
 
 // NewModule returns an instance of a ModuleServer, responsible for managing
@@ -153,7 +154,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.promGatherer)
+		return frontend.ProvideFrontendService(s.cfg, s.promGatherer, nil) // FIXME? include license for CDN?
 	})
 
 	m.RegisterModule(modules.All, nil)
