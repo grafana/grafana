@@ -270,9 +270,9 @@ export const LOCALES: Locale[] = [
   { name: 'Tiếng Việt', code: 'vi-VN' },
   // Chinese - China
   { name: '中文', code: 'zh-CN' },
-  // Chinese - Simplified 
+  // Chinese - Simplified
   { name: '简体中文', code: 'zh-Hans' },
-  // Chinese - Traditional 
+  // Chinese - Traditional
   { name: '繁體中文', code: 'zh-Hant' },
   // Chinese - Hong Kong
   { name: '中文 (香港)', code: 'zh-HK' },
@@ -281,5 +281,5 @@ export const LOCALES: Locale[] = [
   // Chinese - Macau
   { name: '中文 (澳門)', code: 'zh-MO' },
   // Yoruba - Nigeria, Benin, Togo
-  { name: 'Yorùbá', code: 'yo' }
+  { name: 'Yorùbá', code: 'yo' },
 ];
