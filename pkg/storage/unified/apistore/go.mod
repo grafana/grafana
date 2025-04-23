@@ -118,7 +118,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d // indirect
+	github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
 	github.com/grafana/grafana-app-sdk v0.35.1 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
