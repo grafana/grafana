@@ -1,5 +1,6 @@
 import crowdin from '@crowdin/crowdin-api-client';
 const TRANSLATED_CONNECTOR_DESCRIPTION = '{{tos_service_type: premium}}';
+const TRANSLATED_WORKFLOW_STEP_ID = 78;
 
 const API_TOKEN = process.env.CROWDIN_PERSONAL_TOKEN;
 if (!API_TOKEN) {
@@ -23,10 +24,10 @@ const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin.default(cred
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
 
-// for (const language of languages) {
-  const { name, id } = languages[0];
+for (const language of languages) {
+  const { name, id } = language;
   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds);
-// }
+}
 
 async function getLanguages(projectId) {
   try {
@@ -63,11 +64,9 @@ async function createTask(projectId, title, languageId, fileIds) {
   try {
     const taskParams = {
       title,
-      // description: TRANSLATED_CONNECTOR_DESCRIPTION,
-      description: 'test',
+      description: TRANSLATED_CONNECTOR_DESCRIPTION,
       languageId,
-      // type: 2, // Translation by vendor
-      workflowStepId: 78, // Translation step ID
+      workflowStepId: TRANSLATED_WORKFLOW_STEP_ID,
       skipAssignedStrings: true,
       fileIds,
     };
