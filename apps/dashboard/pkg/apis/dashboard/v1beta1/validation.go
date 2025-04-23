@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import (
 	_ "embed"
@@ -13,6 +13,7 @@ import (
 	"cuelang.org/go/cue/cuecontext"
 	"cuelang.org/go/cue/errors"
 	cuejson "cuelang.org/go/encoding/json"
+
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 )
 
