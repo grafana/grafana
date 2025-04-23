@@ -92,16 +92,16 @@ To create a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Click **New** and select **New Dashboard**.
-1. In the right side edit pane, enter the dashboard title and description.
-1. Under **Panel layout** choose one of the following options:
+1. In the edit pane, enter the dashboard title and description.
 
-   - **Custom** - Position and size each panel manually. Default selection.
-   - **Auto grid** - Panels are resized to create a uniform grid based on the column and row settings.
+<!-- screenshot here with edit pane highlighted-->
+
+1. Under **Panel layout**, choose one of the following options:
+
+   - **Custom** - Position and size panels manually. The default selection.
+   - **Auto grid** - Panels are automatically resized to create a uniform grid based on the column and row settings.
 
 1. Click **+ Add visualization**.
-
-   ![Empty dashboard state](/media/docs/grafana/dashboards/empty-dashboard-10.2.png) <!-- replace screenshot, maybe add 2 captioned for each workflow -->
-
 1. In the dialog box that opens, do one of the following:
 
    - Select one of your existing data sources.
@@ -119,7 +119,7 @@ To create a dashboard, follow these steps:
 1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 
-   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-11-2.png)
+   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-11-2.png) <!-- update screenshot -->
 
    Grafana displays a preview of your query results with the visualization applied.
 
@@ -138,37 +138,43 @@ To create a dashboard, follow these steps:
 
 1. When you've finished editing your panel, click **Save**.
 
-   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save dashboard** when you're ready.
+   Alternatively, click **Back to dashboard** if you want to see your changes applied to the dashboard first. Then click **Save** when you're ready.
 
 1. Enter a title and description for your dashboard if you haven't already or have Grafana create them using [generative AI features](ref:generative-ai-features).
 1. Select a folder, if applicable.
+1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. To add more panels to the dashboard, click **Back to dashboard**.
-   Then click **Add** in the dashboard header and select **Visualization** in the drop-down.
+1. To add more panels to the dashboard, click **Back to dashboard** and at the bottom-left corner of the dashboard, click **+ Add panel**.
 
-   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-11.2.png)
+   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-11.2.png) <!-- update screenshot -->
 
-   When you add additional panels to the dashboard, you're taken straight to the **Edit panel** view.
-
-1. When you've saved all the changes you want to make to the dashboard, click **Exit edit**.
-
-   Now, when you want to make more changes to the saved dashboard, click **Edit** in the top-right corner.
+1. (Optional) In the edit pane, enter a title and description for the panel and set the panel transparency and repeat options, if applicable.
+1. Click **Configure** in either the edit pane or on the panel to the configuration process.
+1. When you've saved all the changes you want to make to the dashboard, click **Back to dashboard**.
+1. Toggle off the edit mode switch.
 
 ## Group panels
 
-You can group panels into rows or tabs, and you can nest tabs and rows within each other.
-The following sections describe the configuration options for adding tabs and rows.
-While grouping is meant for multiple panels, you can start grouping with even just one panel.
+To help create meaningful sections in your dashboard, you can group panels into rows or tabs.
+Rows and tabs let you break up big dashboards or make one dashboard out of several smaller ones.
+You can nest tabs and rows within each other or themselves.
+Also, tabs are included in the dashboard URL.
 
-1. On the dashboard, toggle on the edit mode switch.
+The following sections describe the configuration options for adding tabs and rows.
+While grouping is meant for multiple panels, you can start a grouping with just one panel.
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to work on.
+1. Toggle on the edit mode switch.
 1. At the bottom-left corner of the dashboard, click **Group panels**.
 1. Select **Group into row** or **Group into tab**.
 
-   A dotted line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
+   A dotted line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard. <!-- maybe screenshot here? -->
 
 1. Set the [grouping configuration options](#grouping-configuration-options).
 1. When you're finished, click **Save** at the top-right corner of the dashboard.
-1.Click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
 
 ### Grouping configuration options
 
@@ -181,8 +187,8 @@ The following table describes the options you can set for a row.
 | Title                    | Title of the row or tab. |
 | Fill screen              | Toggle the switch on to make the row fill the screen. Only applies to rows. |
 | Hide row header          | Toggle the switch on to hide the header. In edit mode, the row header is visible, but crossed out with the hidden icon next to it. Only applies to rows. |
-| Group layout             | Select the grouping option, between **Rows** and **Tabs**. Only available when a grouping contains another grouping for use on the nested grouping.  |
-| Panel layout             | Select the way panels are sized and positioned between **Custom** and **Auto grid**. Only available when a grouping contains panels. |
+| Group layout             | Select the grouping option, between **Rows** and **Tabs**. Only available when there's a nested grouping and applies to the nested grouping. |
+| Panel layout             | Select whether panels are sized and positioned manually, **Custom**, or automatically, **Auto grid**. Only available when a grouping contains panels. |
 | Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add rows or tabs based on the value of a variable. |
 | Show / hide rules > [Row/Tab visibility](#configure-show--hide-rules) | Control whether or not rows or tabs are displayed based on variables or a time range. |
 
@@ -192,8 +198,10 @@ The following table describes the options you can set for a row.
 
 <!-- previous heading "Configure repeating rows" -->
 
-If you have a query that includes a multi-value variable, you can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of that variable.
+You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of that variable.
 Variables dynamically change your queries across all rows in a dashboard.
+
+This only applies to queries that include a multi-value variable.
 
 <!-- To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows).
 The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
@@ -207,7 +215,7 @@ To configure repeats, follow these steps:
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
 
-1. Click in the area you want to edit to put it in focus and change the edit pane to that item.
+1. Click in the panel, row, or tab you want to work with to bring it into focus and display the associated options in the edit pane.
 1. Expand the **Repeat options** section.
 1. Select the **Repeat by variable**.
 1. For panels only, set the following options:
@@ -219,10 +227,11 @@ To configure repeats, follow these steps:
 
    - If you selected **Horizontal**, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
 
+1. (Optional) To provide context to dashboard users, add the variable name to the panel, row, or tab title.
 1. When you've finished setting the repeat option, click **Save**.
-1. Enter an optional description of your changes and click **Save**.
-
-To provide context to dashboard users, add the variable to the row title.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Toggle off the edit mode switch.
 
 ### Repeating rows and the Dashboard special data source
 
@@ -237,15 +246,14 @@ For example, in a dashboard:
 - Repeating row, `Row 2`, includes `Panel 2A` and `Panel 2B`
 - `Panel 2B` references `Panel 1A`, not `Panel 2A`
 
-## Configure Show / hide rules
+## Configure show/hide rules
 
 You can configure panels, rows, and tabs to be shown or hidden based on rules.
-For example, you might want to set a panel to be hidden if there's no data returned by a query, or you might want a tab to only be shown based on a variable value being present.
+For example, you might want to set a panel to be hidden if there's no data returned by a query or a tab to only be shown based on a variable being present.
 
 {{< admonition type="note" >}}
 You can only configure show/hide rules for panels when the dashboard is using the **Auto grid** panel layout.
 {{< /admonition >}}
-<!-- why -->
 
 To configure show/hide rules, follow these steps:
 
@@ -255,39 +263,39 @@ To configure show/hide rules, follow these steps:
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
 
-1. Click in the area you want to edit to put it in focus and change the edit pane to that item.
+1. Click in the panel, row, or tab you want to work with to bring it into focus and display the associated options in the edit pane.
 1. Expand the **Show / hide rules** section.
-1. Select **Show** or **Hide** to determine the action that will be taken based on the rules set.
+1. Select **Show** or **Hide** to set whether the panel, row, or tab is shown or hidden based on the rules outcome.
 1. Click **+ Add rule**.
 1. Select a rule type:
 
-   - **Query result** - For panels only, show or hide a panel based on query results. Choose from **Has data** and **No data**.
-
+   - **Query result** - Show or hide a panel based on query results. Choose from **Has data** and **No data**. For panels only.
    - **Template variable** - Show or hide the panel, row, or tab dynamically based on the variable value. Select a variable and operator and enter a value.
-
    - **Time range less than** - Show or hide the panel, row, or tab if the dashboard time range is shorter than the selected time frame. Select or enter a time range.
 
 1. Configure the rule.
 1. Under **Match rules**, select one of the following:
 
-   - **Match all** - The panel, row, or tab is shown or hidden only if all the rules are matched.
-   - **Match any** - The panel, row, or tab is shown or hidden if any of the rules are matched.
+   - **Match all** - The panel, row, or tab is shown or hidden only if _all_ the rules are matched.
+   - **Match any** - The panel, row, or tab is shown or hidden if _any_ of the rules are matched.
 
    This option is only displayed if you add multiple rules.
 
 1. When you've finished setting rules, click **Save**.
-1. Enter an optional description of your changes and click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Toggle off the edit mode switch.
 
 ## Edit dashboards
 
-When you're in edit mode in the dashboard, the edit pane that opens aligns with the part of the dashboard that it's in focus.
-For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the settings for that area:
+When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
+For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
 
 <!-- screenshot here -->
 
-For rows and tabs, all of the settings are in the edit pane.
-For panels, high-level settings are in the edit pane and further configuration options are in the **Edit panel** view.
-For dashboards, high-level settings are in the edit pane and further configuration options are in the **Settings** page.
+- For rows and tabs, all of the available options are in the edit pane.
+- For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
+- For dashboards, high-level options are in the edit pane and further configuration options are in the **Settings** page.
 
 To edit dashboards, follow these steps:
 
@@ -297,21 +305,24 @@ To edit dashboards, follow these steps:
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
 
-1. Click in the area you want to edit to put it in focus and change the edit pane to that item.
+1. Click in the area you want to work with to bring it into focus and display the associated options in the edit pane.
 1. Do one of the following:
 
    - For rows or tabs, make the required changes using the edit pane.
    - For panels, update the panel title, description, repeat options or show/hide rules in the edit pane. For more changes, click **Configure** and continue in **Edit panel** view.
    - For dashboards, update the dashboard title, description, grouping or panel layout. For more changes, click the settings (gear) icon in the top-right corner.
 
-1. When you've finished making the required changes, click **Save**.
-1. Enter an optional description of your changes and click **Save**.
+1. When you've finished making changes, click **Save**.
+1. (Optional) Enter a description of the changes you've made.
+1. Click **Save**.
+1. Toggle off the edit mode switch.
 
 ## Move or resize a panel
 
 <!-- previous headings Move a panel & Resize a panel -->
 
-When you're dashboard has a **Custom** layout, you can place a panel on a dashboard in any location.
+When you're dashboard has a **Custom** layout, you can resize or move a panel to any location on the dashboard.
+
 To move or resize, follow these steps:
 
 1. Click **Dashboards** in the main menu.
@@ -322,10 +333,10 @@ To move or resize, follow these steps:
    - Click the panel title and drag the panel to the new location.
    - Click and drag the lower-right corner of the panel to change the size of the panel.
 
-1. Click **Save dashboard**.
+1. Click **Save**.
 1. (Optional) Enter a description of the changes you've made.
 1. Click **Save**.
-1. Click **Exit edit**.
+1. Toggle off the edit mode switch.
 
 ## Navigate using the dashboard outline
 
@@ -333,12 +344,12 @@ TBA
 
 ## Copy a dashboard
 
-To copy a dashboard, follow these steps:
+To make a copy of a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Open the dashboard you want to copy.
-1. Click **Edit** in top-right corner.
-1. Click the **Save dashboard** drop-down and select **Save as copy**.
+1. Navigate to the dashboard you want to work on.
+1. Toggle on the edit mode switch.
+1. Click the **Save** drop-down and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
 
    By default, the copied dashboard has the same name as the original dashboard with the word "Copy" appended and is in the same folder.
