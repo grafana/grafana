@@ -36,6 +36,12 @@ func TestConversionMatrixExist(t *testing.T) {
 				}
 				err = scheme.Convert(in, out, nil)
 				require.NoError(t, err)
+
+				meta, err := utils.MetaAccessor(out)
+				require.NoError(t, err)
+				spec, err := meta.GetSpec()
+				require.NoError(t, err)
+				require.NotNil(t, spec) // must have a spec
 			}
 
 			// Make sure we get the right title for each value

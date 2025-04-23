@@ -14,6 +14,8 @@ import (
 	dynamicfake "k8s.io/client-go/dynamic/fake"
 	k8testing "k8s.io/client-go/testing"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
 	provisioningV0 "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -258,6 +260,60 @@ func TestExportResources(t *testing.T) {
 				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
 					return obj.GetName() == "existing-dashboard"
 				}), options).Return("", resources.ErrAlreadyInRepository)
+			},
+		},
+		{
+			name: "uses saved dashboard version",
+			reactorFunc: func(action k8testing.Action) (bool, runtime.Object, error) {
+				return true, &dashboardV1.DashboardList{
+					TypeMeta: metav1.TypeMeta{
+						APIVersion: resources.DashboardResource.GroupVersion().String(),
+						Kind:       "DashboardList",
+					},
+					Items: []dashboardV1.Dashboard{
+						{
+							TypeMeta: metav1.TypeMeta{
+								APIVersion: resources.DashboardResource.GroupVersion().String(),
+								Kind:       "Dashboard",
+							},
+							ObjectMeta: metav1.ObjectMeta{
+								Name: "existing-dashboard",
+							},
+							Spec: v0alpha1.Unstructured{
+								Object: map[string]interface{}{
+									"hello": "world",
+								},
+							},
+							Status: dashboardV1.DashboardStatus{
+								Conversion: &dashboardV1.DashboardConversionStatus{
+									Failed:        true,
+									StoredVersion: "vXyz",
+								},
+							},
+						},
+					},
+				}, nil
+			},
+			expectedError: "",
+			setupProgress: func(progress *jobs.MockJobProgressRecorder) {
+				progress.On("SetMessage", mock.Anything, "start resource export").Return()
+				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
+				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
+					return result.Name == "existing-dashboard" && result.Action == repository.FileActionIgnored
+				})).Return()
+				progress.On("TooManyErrors").Return(nil)
+			},
+			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, dynamicClient *dynamicfake.FakeDynamicClient, gvk schema.GroupVersionKind) {
+				resourceClients.On("ForResource", resources.DashboardResource).Return(dynamicClient.Resource(resources.DashboardResource), gvk, nil)
+				options := resources.WriteOptions{
+					Path: "grafana",
+					Ref:  "feature/branch",
+				}
+
+				// Return true to indicate the file already exists, and provide the updated path
+				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
+					return obj.GetName() == "existing-dashboard"
+				}), options).Return(nil, fmt.Errorf("XXX"))
 			},
 		},
 	}

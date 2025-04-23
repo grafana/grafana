@@ -23,7 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -47,6 +48,7 @@ type provisioningTestHelper struct {
 	Jobs         *apis.K8sResourceClient
 	Folders      *apis.K8sResourceClient
 	Dashboards   *apis.K8sResourceClient
+	DashboardsV2 *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
 	EditorREST   *rest.RESTClient
 	ViewerREST   *rest.RESTClient
@@ -253,7 +255,12 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 	dashboards := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR:       dashboard.DashboardResourceInfo.GroupVersionResource(),
+		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+	dashboardsV2 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       dashboardV2.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
@@ -276,7 +283,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		return nil
 	}
 
-	require.NoError(t, deleteAll(dashboards), "deleting all dashboards")
+	require.NoError(t, deleteAll(dashboards), "deleting all dashboards") // v1+v2
 	require.NoError(t, deleteAll(folders), "deleting all folders")
 	require.NoError(t, deleteAll(repositories), "deleting all repositories")
 
@@ -291,6 +298,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Jobs:         jobs,
 		Folders:      folders,
 		Dashboards:   dashboards,
+		DashboardsV2: dashboardsV2,
 	}
 }
 

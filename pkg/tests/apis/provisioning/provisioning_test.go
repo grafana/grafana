@@ -579,9 +579,13 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	ctx := context.Background()
 
 	// Set up dashboards first, then the repository, and finally export.
-	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/root_dashboard.json")
+	dashboard := helper.LoadYAMLOrJSONFile("../dashboard/testdata/dashboard-test-v1.yaml")
 	_, err := helper.Dashboards.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create prerequisite dashboard")
+	require.NoError(t, err, "should be able to create v1 dashboard")
+
+	dashboard = helper.LoadYAMLOrJSONFile("../dashboard/testdata/dashboard-test-v2.yaml")
+	_, err = helper.DashboardsV2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2 dashboard")
 
 	// Now for the repository.
 	const repo = "local-repository"
@@ -608,7 +612,28 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	// And time to assert.
 	helper.AwaitJobs(t, repo)
 
-	fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(mustNestedString(dashboard.Object, "spec", "title"))+".json")
-	_, err = os.Stat(fpath)
-	require.NoError(t, err, "exported file was not created at path %s", fpath)
+	// Check that each file was exported with its stored version
+	for _, title := range []string{
+		"Test dashboard. Created at v1",
+		"Test dashboard. Created at v2",
+	} {
+		fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(title)+".json")
+		body, err := os.ReadFile(fpath)
+		require.NoError(t, err, "exported file was not created at path %s", fpath)
+		obj := map[string]any{}
+		err = json.Unmarshal(body, &obj)
+		require.NoError(t, err, "exported file not json %s", fpath)
+		apiVerison, _, err := unstructured.NestedString(obj, "apiVersion")
+		require.NoError(t, err)
+		name, _, err := unstructured.NestedString(obj, "metadata", "name")
+		require.NoError(t, err)
+		switch name {
+		case "test-v1":
+			require.Equal(t, "dashboard.grafana.app/v1alpha1", apiVerison)
+		case "test-v2":
+			require.Equal(t, "dashboard.grafana.app/v2alpha1", apiVerison)
+		default:
+			require.Fail(t, "missing known name in exported json %s", fpath)
+		}
+	}
 }
