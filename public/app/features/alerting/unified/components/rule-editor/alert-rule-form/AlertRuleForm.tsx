@@ -297,13 +297,15 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         </div>
       </form>
 
-      {showEditYaml ? (
-        isGrafanaManagedRuleByType(type) && uidFromParams ? (
-          <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
-        ) : (
-          <RuleInspector onClose={() => setShowEditYaml(false)} />
-        )
-      ) : null}
+      {showEditYaml && (
+        <>
+          {grafanaTypeRule && uidFromParams && (
+            <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+          )}
+
+          {!grafanaTypeRule && <RuleInspector onClose={() => setShowEditYaml(false)} />}
+        </>
+      )}
     </FormProvider>
   );
 };

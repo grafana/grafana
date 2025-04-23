@@ -93,7 +93,6 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
 
   return (
     <FormProvider {...formAPI}>
-      <AppChromeUpdate actions={actionButtons} />
       <form onSubmit={(e) => e.preventDefault()}>
         <div>
           <Stack direction="column" gap={3}>
