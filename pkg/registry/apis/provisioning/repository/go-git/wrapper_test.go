@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -14,6 +15,8 @@ import (
 	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
+	plumbing "github.com/go-git/go-git/v5/plumbing"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -104,7 +107,7 @@ func TestReadTree(t *testing.T) {
 	dir := t.TempDir()
 	gitRepo, err := git.PlainInit(dir, false)
 	require.NoError(t, err, "failed to init a new git repository")
-	worktree, err := gitRepo.Worktree()
+	tree, err := gitRepo.Worktree()
 	require.NoError(t, err, "failed to get worktree")
 
 	repo := &GoGitRepo{
@@ -128,8 +131,10 @@ func TestReadTree(t *testing.T) {
 		decryptedPassword: "password",
 
 		repo: gitRepo,
-		tree: worktree,
-		dir:  dir,
+		tree: &worktree{
+			Worktree: tree,
+		},
+		dir: dir,
 	}
 
 	err = os.WriteFile(filepath.Join(dir, "test.txt"), []byte("test"), 0644)
@@ -309,8 +314,10 @@ func TestGoGitRepo_Read(t *testing.T) {
 						},
 					},
 				},
-				tree: &git.Worktree{
-					Filesystem: fs,
+				tree: &worktree{
+					Worktree: &git.Worktree{
+						Filesystem: fs,
+					},
 				},
 			}
 
@@ -333,6 +340,155 @@ func TestGoGitRepo_Read(t *testing.T) {
 				require.NotNil(t, info)
 				tt.checkResult(t, info)
 			}
+		})
+	}
+}
+
+func TestGoGitRepo_Delete(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		ref         string
+		pushOnWrite bool
+		setupMock   func(mockTree *MockWorktree)
+		expectError bool
+		errorType   error
+	}{
+		{
+			name:        "delete existing file",
+			path:        "testfile.txt",
+			ref:         "",
+			pushOnWrite: false,
+			setupMock: func(mockTree *MockWorktree) {
+				mockTree.On("Remove", "grafana/testfile.txt").Return(plumbing.Hash{}, nil)
+			},
+			expectError: false,
+		},
+		{
+			name:        "delete non-existent file",
+			path:        "nonexistent.txt",
+			ref:         "",
+			pushOnWrite: false,
+			setupMock: func(mockTree *MockWorktree) {
+				mockTree.On("Remove", "grafana/nonexistent.txt").Return(plumbing.Hash{}, fs.ErrNotExist)
+			},
+			expectError: true,
+			errorType:   repository.ErrFileNotFound,
+		},
+		{
+			name:        "delete with other error",
+			path:        "testfile.txt",
+			ref:         "",
+			pushOnWrite: false,
+			setupMock: func(mockTree *MockWorktree) {
+				mockTree.On("Remove", "grafana/testfile.txt").Return(plumbing.Hash{}, fmt.Errorf("some other error"))
+			},
+			expectError: true,
+			errorType:   fmt.Errorf("some other error"),
+		},
+		{
+			name:        "empty path",
+			path:        "",
+			ref:         "",
+			pushOnWrite: false,
+			setupMock:   func(mockTree *MockWorktree) {},
+			expectError: true,
+			errorType:   fmt.Errorf("expected path"),
+		},
+		{
+			name:        "with ref",
+			path:        "testfile.txt",
+			ref:         "main",
+			pushOnWrite: false,
+			setupMock: func(mockTree *MockWorktree) {
+			},
+			expectError: true,
+			errorType:   fmt.Errorf("ref unsupported"),
+		},
+		{
+			name:        "delete with push on write enabled",
+			path:        "testfile.txt",
+			ref:         "",
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				mockTree.On("Remove", "grafana/testfile.txt").Return(plumbing.Hash{}, nil)
+				mockTree.On("Commit", "test delete", mock.MatchedBy(func(opts *git.CommitOptions) bool {
+					return opts.Author != nil &&
+						opts.Author.Name == "Test User" &&
+						opts.Author.Email == "test@example.com" &&
+						opts.Author.When.After(time.Now().Add(-time.Minute)) &&
+						opts.Author.When.Before(time.Now().Add(time.Minute))
+				})).Return(plumbing.Hash{}, nil)
+			},
+			expectError: false,
+		},
+		{
+			name:        "delete with empty commit",
+			path:        "testfile.txt",
+			ref:         "",
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				mockTree.On("Remove", "grafana/testfile.txt").Return(plumbing.Hash{}, nil)
+				mockTree.On("Commit", "test delete", mock.MatchedBy(func(opts *git.CommitOptions) bool {
+					return opts.Author != nil &&
+						opts.Author.Name == "Test User" &&
+						opts.Author.Email == "test@example.com" &&
+						opts.Author.When.After(time.Now().Add(-time.Minute)) &&
+						opts.Author.When.Before(time.Now().Add(time.Minute))
+				})).Return(plumbing.Hash{}, git.ErrEmptyCommit)
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup filesystem and repo
+
+			mockTree := NewMockWorktree(t)
+			tt.setupMock(mockTree)
+
+			// Create a worktree with the filesystem
+			repo := &GoGitRepo{
+				config: &v0alpha1.Repository{
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							Path: "grafana/",
+						},
+					},
+				},
+				tree: mockTree,
+				opts: repository.CloneOptions{
+					PushOnWrites: tt.pushOnWrite,
+				},
+			}
+
+			// Test Delete method
+			ctx := context.Background()
+			// Set author signature for the test
+			ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
+				Name:  "Test User",
+				Email: "test@example.com",
+				When:  time.Now(),
+			})
+
+			err := repo.Delete(ctx, tt.path, tt.ref, "test delete")
+
+			// Check results
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.errorType != nil {
+					if errors.Is(tt.errorType, repository.ErrFileNotFound) {
+						require.ErrorIs(t, err, repository.ErrFileNotFound)
+					} else {
+						require.Contains(t, err.Error(), tt.errorType.Error())
+					}
+				}
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockTree.AssertExpectations(t)
 		})
 	}
 }
