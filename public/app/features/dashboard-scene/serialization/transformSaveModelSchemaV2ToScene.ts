@@ -396,9 +396,9 @@ function getDataQueryForVariable(variable: QueryVariableKind) {
   return LEGACY_STRING_VALUE_KEY in variable.spec.query.spec
     ? (variable.spec.query.spec[LEGACY_STRING_VALUE_KEY] ?? '')
     : {
-      ...variable.spec.query.spec,
-      refId: variable.spec.query.spec.refId ?? 'A',
-    };
+        ...variable.spec.query.spec,
+        refId: variable.spec.query.spec.refId ?? 'A',
+      };
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {
