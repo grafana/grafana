@@ -40,8 +40,8 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
+			{Name: "annotations", Type: migrator.DB_Text, Nullable: false},
+			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_Text, Nullable: false},
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
@@ -49,13 +49,13 @@ func initSecretStore(mg *migrator.Migrator) string {
 
 			// Kubernetes Status
 			{Name: "status_phase", Type: migrator.DB_Text, Nullable: false},
-			{Name: "status_message", Type: migrator.DB_Text, Nullable: true},
+			{Name: "status_message", Type: migrator.DB_Text, Nullable: false},
 
 			// Spec
 			{Name: "title", Type: migrator.DB_Text, Nullable: false},
 			{Name: "keeper", Type: migrator.DB_Text, Nullable: false},
-			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
-			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
+			{Name: "decrypters", Type: migrator.DB_Text, Nullable: false},
+			{Name: "ref", Type: migrator.DB_Text, Nullable: false}, // Reference to third-party storage secret path.
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 		},
 		Indices: []*migrator.Index{
@@ -70,8 +70,8 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "guid", Type: migrator.DB_NVarchar, Length: 36, IsPrimaryKey: true},    // Fixed size of a UUID.
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "annotations", Type: migrator.DB_Text, Nullable: true},
-			{Name: "labels", Type: migrator.DB_Text, Nullable: true},
+			{Name: "annotations", Type: migrator.DB_Text, Nullable: false},
+			{Name: "labels", Type: migrator.DB_Text, Nullable: false},
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 			{Name: "created_by", Type: migrator.DB_Text, Nullable: false},
 			{Name: "updated", Type: migrator.DB_BigInt, Nullable: false}, // Used as RV (ResourceVersion)
@@ -81,7 +81,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "title", Type: migrator.DB_Text, Nullable: false},
 			{Name: "type", Type: migrator.DB_Text, Nullable: false},
 			// Each keeper has a different payload so we store the whole thing as a blob.
-			{Name: "payload", Type: migrator.DB_Text, Nullable: true},
+			{Name: "payload", Type: migrator.DB_Text, Nullable: false},
 		},
 		Indices: []*migrator.Index{
 			{Cols: []string{"namespace", "name"}, Type: migrator.UniqueIndex},
@@ -126,7 +126,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
 			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: false},
 			{Name: "keeper_name", Type: migrator.DB_Text, Nullable: false},
-			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true}, // Fixed size of a UUID.
+			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: false}, // Fixed size of a UUID.
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
 		},
 		Indices: []*migrator.Index{

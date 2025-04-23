@@ -20,7 +20,7 @@ type AppendOutboxMessage struct {
 	Namespace       string
 	EncryptedSecret secretv0alpha1.ExposedSecureValue
 	KeeperName      string
-	ExternalID      *string
+	ExternalID      string
 }
 
 type OutboxMessage struct {
@@ -30,7 +30,7 @@ type OutboxMessage struct {
 	Namespace       string
 	EncryptedSecret secretv0alpha1.ExposedSecureValue
 	KeeperName      string
-	ExternalID      *string
+	ExternalID      string
 }
 
 type OutboxQueue interface {

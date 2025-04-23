@@ -115,12 +115,12 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		// TODO: DECRYPT HERE
 		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
 
-		if err := keeper.Update(ctx, keeperCfg, message.Name, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
+		if err := keeper.Update(ctx, keeperCfg, message.Name, contracts.ExternalID(message.ExternalID), rawSecret); err != nil {
 			return fmt.Errorf("calling keeper to update secret: %w", err)
 		}
 
 	case contracts.DeleteSecretOutboxMessage:
-		if err := keeper.Delete(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID)); err != nil {
+		if err := keeper.Delete(ctx, keeperCfg, message.Namespace, contracts.ExternalID(message.ExternalID)); err != nil {
 			return fmt.Errorf("calling keeper to delete secret: %w", err)
 		}
 

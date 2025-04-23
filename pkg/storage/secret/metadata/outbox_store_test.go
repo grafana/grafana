@@ -66,7 +66,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 		KeeperName:      contracts.DefaultSQLKeeper,
-		ExternalID:      nil,
+		ExternalID:      "",
 	}
 
 	outboxMessage1 := contracts.OutboxMessage{
@@ -76,7 +76,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 		KeeperName:      contracts.DefaultSQLKeeper,
-		ExternalID:      nil,
+		ExternalID:      "",
 	}
 
 	outboxMessage2 := contracts.OutboxMessage{
@@ -86,7 +86,7 @@ func TestOutboxStoreModel(t *testing.T) {
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 		KeeperName:      contracts.DefaultSQLKeeper,
-		ExternalID:      nil,
+		ExternalID:      "",
 	}
 
 	model.Append("message_id_1", appendOutboxMessage)
@@ -120,7 +120,7 @@ func TestOutboxStore(t *testing.T) {
 		Namespace:       "n-1",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 		KeeperName:      contracts.DefaultSQLKeeper,
-		ExternalID:      nil,
+		ExternalID:      "",
 	}
 	m2 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
@@ -128,7 +128,7 @@ func TestOutboxStore(t *testing.T) {
 		Namespace:       "n-2",
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 		KeeperName:      contracts.DefaultSQLKeeper,
-		ExternalID:      nil,
+		ExternalID:      "",
 	}
 
 	messages, err := outbox.ReceiveN(ctx, 10)
@@ -199,7 +199,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 					Namespace:       fmt.Sprintf("n-%d", i),
 					EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value"),
 					KeeperName:      contracts.DefaultSQLKeeper,
-					ExternalID:      nil,
+					ExternalID:      "",
 				}
 				messageID, err := outbox.Append(ctx, message)
 				require.NoError(t, err)

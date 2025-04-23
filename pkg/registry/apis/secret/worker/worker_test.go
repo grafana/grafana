@@ -159,7 +159,7 @@ func TestProcessMessage(t *testing.T) {
 					Namespace:       secret.namespace,
 					KeeperName:      contracts.DefaultSQLKeeper,
 					EncryptedSecret: secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("v-%d", i)),
-					ExternalID:      &externalID,
+					ExternalID:      externalID,
 				})
 				require.NoError(t, err)
 
@@ -173,7 +173,7 @@ func TestProcessMessage(t *testing.T) {
 					Name:       secret.name,
 					Namespace:  secret.namespace,
 					KeeperName: contracts.DefaultSQLKeeper,
-					ExternalID: &externalID,
+					ExternalID: externalID,
 				})
 				require.NoError(t, err)
 
@@ -263,13 +263,13 @@ func nextAction(rng *rand.Rand, state *state) action {
 
 func buildState(database contracts.Database) *state {
 	const secureValuesNotInOutboxQueueQuery = `
-	SELECT 
+	SELECT
 		secret_secure_value.namespace,
 		secret_secure_value.name,
 		secret_secure_value.external_id
 	FROM secret_secure_value
 	WHERE NOT EXISTS (
-		SELECT 1 FROM secret_secure_value_outbox 
+		SELECT 1 FROM secret_secure_value_outbox
 		WHERE secret_secure_value_outbox.namespace = secret_secure_value.namespace
 					AND secret_secure_value_outbox.name = secret_secure_value.name
 		)

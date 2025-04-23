@@ -28,15 +28,15 @@ type secureValueDB struct {
 	UpdatedBy   string `xorm:"updated_by"`
 
 	// Kubernetes Status
-	Phase   string  `xorm:"status_phase"`
-	Message *string `xorm:"status_message"`
+	Phase   string `xorm:"status_phase"`
+	Message string `xorm:"status_message"`
 
 	// Spec
-	Title      string  `xorm:"title"`
-	Keeper     string  `xorm:"keeper"`
-	Decrypters *string `xorm:"decrypters"`
-	Ref        *string `xorm:"ref"`
-	ExternalID string  `xorm:"external_id"`
+	Title      string `xorm:"title"`
+	Keeper     string `xorm:"keeper"`
+	Decrypters string `xorm:"decrypters"`
+	Ref        string `xorm:"ref"`
+	ExternalID string `xorm:"external_id"`
 }
 
 func (*secureValueDB) TableName() string {
@@ -60,8 +60,8 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	}
 
 	decrypters := make([]string, 0)
-	if sv.Decrypters != nil && *sv.Decrypters != "" {
-		if err := json.Unmarshal([]byte(*sv.Decrypters), &decrypters); err != nil {
+	if sv.Decrypters != "" {
+		if err := json.Unmarshal([]byte(sv.Decrypters), &decrypters); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
 		}
 	}
@@ -70,17 +70,13 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      sv.Title,
 			Keeper:     sv.Keeper,
+			Ref:        sv.Ref,
 			Decrypters: decrypters,
 		},
 		Status: secretv0alpha1.SecureValueStatus{
-			Phase: secretv0alpha1.SecureValuePhase(sv.Phase),
+			Phase:   secretv0alpha1.SecureValuePhase(sv.Phase),
+			Message: sv.Message,
 		},
-	}
-	if sv.Ref != nil {
-		resource.Spec.Ref = *sv.Ref
-	}
-	if sv.Message != nil && *sv.Message != "" {
-		resource.Status.Message = *sv.Message
 	}
 
 	// Set all meta fields here for consistency.
@@ -168,15 +164,14 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		labels = string(encodedLabels)
 	}
 
-	var decrypters *string
+	var decrypters string
 	if len(sv.Spec.Decrypters) > 0 {
 		encodedDecrypters, err := json.Marshal(sv.Spec.Decrypters)
 		if err != nil {
 			return nil, fmt.Errorf("failed to encode decrypters: %w", err)
 		}
 
-		rawDecrypters := string(encodedDecrypters)
-		decrypters = &rawDecrypters
+		decrypters = string(encodedDecrypters)
 	}
 
 	meta, err := utils.MetaAccessor(sv)
@@ -193,16 +188,6 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
-	var ref *string
-	if sv.Spec.Ref != "" {
-		ref = &sv.Spec.Ref
-	}
-
-	var statusMessage *string
-	if sv.Status.Message != "" {
-		statusMessage = &sv.Status.Message
-	}
-
 	return &secureValueDB{
 		GUID:        string(sv.UID),
 		Name:        sv.Name,
@@ -215,12 +200,12 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		UpdatedBy:   meta.GetUpdatedBy(),
 
 		Phase:   string(sv.Status.Phase),
-		Message: statusMessage,
+		Message: sv.Status.Message,
 
 		Title:      sv.Spec.Title,
 		Keeper:     sv.Spec.Keeper,
 		Decrypters: decrypters,
-		Ref:        ref,
+		Ref:        sv.Spec.Ref,
 		ExternalID: externalID,
 	}, nil
 }
@@ -228,8 +213,8 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 // to Decrypt maps a DB row into a DecryptSecureValue object needed for decryption.
 func (sv *secureValueDB) toDecrypt() (*contracts.DecryptSecureValue, error) {
 	decrypters := make([]string, 0)
-	if sv.Decrypters != nil && *sv.Decrypters != "" {
-		if err := json.Unmarshal([]byte(*sv.Decrypters), &decrypters); err != nil {
+	if sv.Decrypters != "" {
+		if err := json.Unmarshal([]byte(sv.Decrypters), &decrypters); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
 		}
 	}
@@ -238,9 +223,7 @@ func (sv *secureValueDB) toDecrypt() (*contracts.DecryptSecureValue, error) {
 		Keeper:     sv.Keeper,
 		Decrypters: decrypters,
 		ExternalID: sv.ExternalID,
-	}
-	if sv.Ref != nil {
-		decryptSecureValue.Ref = *sv.Ref
+		Ref:        sv.Ref,
 	}
 
 	return decryptSecureValue, nil
