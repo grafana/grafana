@@ -32,6 +32,7 @@ export const AsyncSelect = forwardRef(
   <T, Rest = {}>(props: AsyncSelectProps<T> & Rest, ref: React.Ref<HTMLElement>) => (
     <SelectBase<T, Rest> ref={ref} {...props} />
   )
+  // eslint-ignore
 ) as <T, Rest = {}>(props: AsyncSelectProps<T> & Rest & { ref?: React.Ref<HTMLElement> }) => JSX.Element;
 
 /** @deprecated Use Combobox component instead - it's virtualised by default! */

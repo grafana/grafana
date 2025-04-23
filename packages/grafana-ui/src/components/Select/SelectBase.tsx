@@ -409,6 +409,7 @@ export const SelectBase = forwardRef(
       </>
     );
   }
+  // eslint-ignore
 ) as <T, Rest = {}>(props: SelectBaseProps<T> & Rest & { ref?: React.Ref<HTMLElement> }) => JSX.Element;
 
 function defaultFormatCreateLabel(input: string) {
