@@ -48,7 +48,7 @@ var (
 			Namespace: "plugins",
 			Name:      "datasource_response_size",
 			Help:      "gauge of external data source response sizes returned to Grafana in bytes",
-		}, []string{"datasource_type", "secure_socks_ds_proxy_enabled", "endpoint"},
+		}, []string{"datasource", "datasource_type", "secure_socks_ds_proxy_enabled"},
 	)
 
 	datasourceRequestsInFlight = promauto.NewGaugeVec(
