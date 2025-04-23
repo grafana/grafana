@@ -146,7 +146,7 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 	s := setupTestService(t).(*secureValueMetadataStorage)
 
 	t.Run("create secure value in default sql keeper does not return error", func(t *testing.T) {
-		sv, err := s.Create(ctx, testSV)
+		sv, err := s.Create(ctx, testSV, "actor-uid")
 		require.NoError(t, err)
 		require.NotEmpty(t, sv)
 
