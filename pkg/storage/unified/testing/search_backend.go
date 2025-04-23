@@ -72,7 +72,7 @@ func runTestSearchBackendBuildIndex(t *testing.T, backend resource.SearchBackend
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						Key: &resource.ResourceKey{
 							Namespace: ns.Namespace,
@@ -118,7 +118,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						Key: &resource.ResourceKey{
 							Namespace: ns.Namespace,
@@ -135,7 +135,7 @@ func runTestResourceIndex(t *testing.T, backend resource.SearchBackend, nsPrefix
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						Key: &resource.ResourceKey{
 							Namespace: ns.Namespace,

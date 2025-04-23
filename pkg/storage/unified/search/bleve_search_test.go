@@ -33,7 +33,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -47,7 +47,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
@@ -77,7 +77,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -91,7 +91,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
@@ -121,7 +121,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -135,7 +135,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
@@ -164,7 +164,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -178,7 +178,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
@@ -208,7 +208,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -249,7 +249,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -263,7 +263,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   2,
 						Name: "name2",
@@ -296,7 +296,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -361,7 +361,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -375,7 +375,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name2",
@@ -389,7 +389,7 @@ func TestCanSearchByTitle(t *testing.T) {
 					},
 				},
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name3",
@@ -430,7 +430,7 @@ func TestCanSearchByTitle(t *testing.T) {
 		err := index.BulkIndex(&resource.BulkIndexRequest{
 			Items: []*resource.BulkIndexItem{
 				{
-					Action: resource.BulkActionIndex,
+					Action: resource.ActionIndex,
 					Doc: &resource.IndexableDocument{
 						RV:   1,
 						Name: "name1",
@@ -451,7 +451,7 @@ func TestCanSearchByTitle(t *testing.T) {
 			err = index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
-						Action: resource.BulkActionIndex,
+						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV:   int64(i),
 							Name: fmt.Sprintf("name%d", i),

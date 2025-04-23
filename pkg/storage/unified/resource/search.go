@@ -34,15 +34,15 @@ func (s *NamespacedResource) Valid() bool {
 	return s.Namespace != "" && s.Group != "" && s.Resource != ""
 }
 
-type BulkAction int
+type IndexAction int
 
 const (
-	BulkActionIndex BulkAction = iota
-	BulkActionDelete
+	ActionIndex IndexAction = iota
+	ActionDelete
 )
 
 type BulkIndexItem struct {
-	Action BulkAction
+	Action IndexAction
 	Key    *ResourceKey       // Only used for delete actions
 	Doc    *IndexableDocument // Only used for index actions
 }
@@ -102,20 +102,23 @@ const tracingPrexfixSearch = "unified_search."
 
 // This supports indexing+search regardless of implementation
 type searchSupport struct {
-	tracer               trace.Tracer
-	log                  *slog.Logger
-	storage              StorageBackend
-	search               SearchBackend
-	indexMetrics         *BleveIndexMetrics
-	access               types.AccessClient
-	builders             *builderCache
-	initWorkers          int
-	initMinSize          int
-	indexLatencyObserver IndexLatencyObserver
-	// IndexQueueProcessors is a map of index name to index queue processor
-	// Each processor is responsible to ingest events for a single index
-	indexQueueProcessors      map[string]*IndexQueueProcessor
+	tracer       trace.Tracer
+	log          *slog.Logger
+	storage      StorageBackend
+	search       SearchBackend
+	indexMetrics *BleveIndexMetrics
+	access       types.AccessClient
+	builders     *builderCache
+	initWorkers  int
+	initMinSize  int
+
+	// Index queue processors
 	indexQueueProcessorsMutex sync.Mutex
+	indexQueueProcessors      map[string]*indexQueueProcessor
+	indexEventsChan           chan *IndexEvent
+
+	// testing
+	clientIndexEventsChan chan *IndexEvent
 }
 
 var (
@@ -137,16 +140,17 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	support = &searchSupport{
-		access:               access,
-		tracer:               tracer,
-		storage:              storage,
-		search:               opts.Backend,
-		log:                  slog.Default().With("logger", "resource-search"),
-		initWorkers:          opts.WorkerThreads,
-		initMinSize:          opts.InitMinCount,
-		indexMetrics:         indexMetrics,
-		indexLatencyObserver: opts.IndexLatencyObserver,
-		indexQueueProcessors: make(map[string]*IndexQueueProcessor),
+		access:                access,
+		tracer:                tracer,
+		storage:               storage,
+		search:                opts.Backend,
+		log:                   slog.Default().With("logger", "resource-search"),
+		initWorkers:           opts.WorkerThreads,
+		initMinSize:           opts.InitMinCount,
+		indexMetrics:          indexMetrics,
+		clientIndexEventsChan: opts.IndexEventsChan,
+		indexEventsChan:       make(chan *IndexEvent),
+		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -420,6 +424,33 @@ func (s *searchSupport) init(ctx context.Context) error {
 		}
 	}()
 
+	go func() {
+		// Monitor index events
+		var evt *IndexEvent
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case evt = <-s.indexEventsChan:
+			}
+			if evt.Err != nil {
+				s.log.Error("error indexing watch event", "error", evt.Err)
+			}
+			// record latency from when event was created to when it was indexed
+			span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", evt.Latency.Seconds())))
+			s.log.Debug("indexed new object", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
+			if evt.Latency.Seconds() > 1 {
+				s.log.Warn("high index latency object details", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
+			}
+			if s.indexMetrics != nil {
+				s.indexMetrics.IndexLatency.WithLabelValues(evt.WrittenEvent.Key.Resource).Observe(evt.Latency.Seconds())
+			}
+			if s.clientIndexEventsChan != nil {
+				s.clientIndexEventsChan <- evt
+			}
+		}
+	}()
+
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
 	if s.indexMetrics != nil {
@@ -463,27 +494,7 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 		s.log.Error("error getting index queue processor for watch event", "error", err)
 		return
 	}
-	resp := indexQueueProcessor.Add(evt)
-	go func() {
-		r := <-resp
-		if r.err != nil {
-			s.log.Error("error indexing watch event", "error", r.err)
-		}
-		// record latency from when event was created to when it was indexed
-		latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
-		span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
-		s.log.Debug("indexed new object", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
-		if latencySeconds > 1 {
-			s.log.Warn("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
-		}
-		if s.indexMetrics != nil {
-			s.indexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
-		}
-		if s.indexLatencyObserver != nil {
-			s.indexLatencyObserver.Observe(evt, latencySeconds)
-		}
-	}()
-
+	indexQueueProcessor.Add(evt)
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
@@ -531,6 +542,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		Resource:  nsr.Resource,
 		Namespace: nsr.Namespace,
 	}
+
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &ListRequest{
 			Limit: 1000000000000, // big number
@@ -558,7 +570,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 				// Add to bulk items
 				items = append(items, &BulkIndexItem{
-					Action: BulkActionIndex,
+					Action: ActionIndex,
 					Doc:    doc,
 				})
 			}
@@ -710,7 +722,7 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 }
 
 // getOrCreateIndexQueueProcessor returns an IndexQueueProcessor for the given index
-func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource) (*IndexQueueProcessor, error) {
+func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource) (*indexQueueProcessor, error) {
 	s.indexQueueProcessorsMutex.Lock()
 	defer s.indexQueueProcessorsMutex.Unlock()
 
@@ -724,8 +736,7 @@ func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr 
 		s.log.Error("error getting document builder", "error", err)
 		return nil, err
 	}
-
-	indexQueueProcessor := NewIndexQueueProcessor(index, nsr, maxBatchSize, builder)
+	indexQueueProcessor := NewIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
 	s.indexQueueProcessors[key] = indexQueueProcessor
 	return indexQueueProcessor, nil
 }

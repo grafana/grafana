@@ -101,7 +101,7 @@ func newTestWriter(size int, batchSize int) IndexWriter {
 		for i := 0; i < size; i++ {
 			name := fmt.Sprintf("name%d", i)
 			item := &resource.BulkIndexItem{
-				Action: resource.BulkActionIndex,
+				Action: resource.ActionIndex,
 				Doc: &resource.IndexableDocument{
 					RV:   int64(i),
 					Name: name,

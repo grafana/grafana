@@ -68,7 +68,7 @@ func TestBleveBackend(t *testing.T) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
-						Action: resource.BulkActionIndex,
+						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV:   1,
 							Name: "aaa",
@@ -101,7 +101,7 @@ func TestBleveBackend(t *testing.T) {
 						},
 					},
 					{
-						Action: resource.BulkActionIndex,
+						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV:   2,
 							Name: "bbb",
@@ -135,7 +135,7 @@ func TestBleveBackend(t *testing.T) {
 						},
 					},
 					{
-						Action: resource.BulkActionIndex,
+						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV: 3,
 							Key: &resource.ResourceKey{
@@ -349,7 +349,7 @@ func TestBleveBackend(t *testing.T) {
 			err := index.BulkIndex(&resource.BulkIndexRequest{
 				Items: []*resource.BulkIndexItem{
 					{
-						Action: resource.BulkActionIndex,
+						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV: 1,
 							Key: &resource.ResourceKey{
@@ -374,7 +374,7 @@ func TestBleveBackend(t *testing.T) {
 						},
 					},
 					{
-						Action: resource.BulkActionIndex,
+						Action: resource.ActionIndex,
 						Doc: &resource.IndexableDocument{
 							RV: 2,
 							Key: &resource.ResourceKey{

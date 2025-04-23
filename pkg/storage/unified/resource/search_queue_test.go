@@ -13,7 +13,9 @@ func TestNewIndexQueueProcessor(t *testing.T) {
 	mockBuilder := &MockDocumentBuilder{}
 	nsr := NamespacedResource{Resource: "test"}
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder)
+	resChan := make(chan *IndexEvent)
+
+	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	assert.NotNil(t, processor)
 	assert.Equal(t, 10, processor.batchSize)
@@ -26,7 +28,9 @@ func TestIndexQueueProcessor_SingleEvent(t *testing.T) {
 	// mockObserver := &MockIndexLatencyObserver{}
 	nsr := NamespacedResource{Resource: "test"}
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder)
+	resChan := make(chan *IndexEvent)
+
+	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	// Test data
 	key := ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"}
@@ -44,10 +48,12 @@ func TestIndexQueueProcessor_SingleEvent(t *testing.T) {
 	})).Return(nil)
 
 	// Start processor and wait for the document to be indexed
-	resp := <-processor.Add(evt)
+	processor.Add(evt)
+
+	resp := <-resChan
 	assert.NotNil(t, resp)
-	assert.Nil(t, resp.err)
-	assert.Equal(t, &key, resp.doc.Key)
+	assert.Nil(t, resp.Err)
+	assert.Equal(t, &key, resp.IndexableDocument.Key)
 
 	mockBuilder.AssertExpectations(t)
 	mockIndex.AssertExpectations(t)
@@ -58,7 +64,9 @@ func TestIndexQueueProcessor_BatchProcessing(t *testing.T) {
 	mockBuilder := &MockDocumentBuilder{}
 	nsr := NamespacedResource{Namespace: "default", Resource: "test"}
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 2, mockBuilder)
+	resChan := make(chan *IndexEvent)
+
+	processor := NewIndexQueueProcessor(mockIndex, nsr, 2, mockBuilder, resChan)
 
 	// Test data for two events
 	events := []*WrittenEvent{
@@ -80,21 +88,21 @@ func TestIndexQueueProcessor_BatchProcessing(t *testing.T) {
 		Return(&IndexableDocument{Key: events[0].Key}, nil)
 	mockIndex.On("BulkIndex", mock.MatchedBy(func(req *BulkIndexRequest) bool {
 		return len(req.Items) == 2 &&
-			req.Items[0].Action == BulkActionIndex &&
-			req.Items[1].Action == BulkActionDelete
+			req.Items[0].Action == ActionIndex &&
+			req.Items[1].Action == ActionDelete
 	})).Return(nil)
 
 	// Start processor and add events
-	d0 := processor.Add(events[0])
-	d1 := processor.Add(events[1])
+	processor.Add(events[0])
+	processor.Add(events[1])
 
-	r0 := <-d0
-	r1 := <-d1
+	r0 := <-resChan
+	assert.Nil(t, r0.Err)
+	assert.Equal(t, events[0].Key, r0.IndexableDocument.Key)
 
-	assert.Nil(t, r0.err)
-	assert.Nil(t, r1.err)
-	assert.Equal(t, events[0].Key, r0.doc.Key)
-	assert.Nil(t, r1.doc) // deleted event
+	r1 := <-resChan
+	assert.Nil(t, r1.Err)
+	assert.Nil(t, r1.IndexableDocument) // deleted event
 
 	mockBuilder.AssertExpectations(t)
 	mockIndex.AssertExpectations(t)
@@ -105,7 +113,9 @@ func TestIndexQueueProcessor_BuildDocumentError(t *testing.T) {
 	mockBuilder := &MockDocumentBuilder{}
 	nsr := NamespacedResource{Resource: "test"}
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder)
+	resChan := make(chan *IndexEvent)
+
+	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	evt := &WrittenEvent{
 		Key:             &ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
@@ -121,10 +131,12 @@ func TestIndexQueueProcessor_BuildDocumentError(t *testing.T) {
 	// The bulk index should not be called since document building failed
 	mockIndex.On("BulkIndex", mock.Anything).Return(nil).Maybe()
 
-	resp := <-processor.Add(evt)
+	processor.Add(evt)
+
+	resp := <-resChan
 	assert.NotNil(t, resp)
-	assert.Error(t, resp.err)
-	assert.Nil(t, resp.doc)
+	assert.Error(t, resp.Err)
+	assert.Nil(t, resp.IndexableDocument)
 
 	mockBuilder.AssertExpectations(t)
 	mockIndex.AssertExpectations(t)
@@ -135,7 +147,9 @@ func TestIndexQueueProcessor_BulkIndexError(t *testing.T) {
 	mockBuilder := &MockDocumentBuilder{}
 	nsr := NamespacedResource{Resource: "test"}
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder)
+	resChan := make(chan *IndexEvent)
+
+	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	evt := &WrittenEvent{
 		Key:             &ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
@@ -149,9 +163,11 @@ func TestIndexQueueProcessor_BulkIndexError(t *testing.T) {
 		Return(&IndexableDocument{Key: evt.Key}, nil)
 	mockIndex.On("BulkIndex", mock.Anything).Return(assert.AnError)
 
-	resp := <-processor.Add(evt)
+	processor.Add(evt)
+
+	resp := <-resChan
 	assert.NotNil(t, resp)
-	assert.Error(t, resp.err)
+	assert.Error(t, resp.Err)
 
 	mockBuilder.AssertExpectations(t)
 	mockIndex.AssertExpectations(t)

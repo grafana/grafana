@@ -323,7 +323,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	batch := b.index.NewBatch()
 	for _, item := range req.Items {
 		switch item.Action {
-		case resource.BulkActionIndex:
+		case resource.ActionIndex:
 			doc := item.Doc.UpdateCopyFields()
 			doc.References = nil // remove references (for now!)
 
@@ -331,7 +331,7 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 			if err != nil {
 				return err
 			}
-		case resource.BulkActionDelete:
+		case resource.ActionDelete:
 			batch.Delete(item.Key.SearchID())
 		}
 	}
