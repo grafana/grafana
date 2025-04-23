@@ -268,19 +268,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const actionButtons = (
     <Stack justifyContent="flex-end" alignItems="center">
-      {existing && (
-        <Button
-          data-testid="save-rule"
-          variant="primary"
-          type="button"
-          size="sm"
-          onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-          disabled={isSubmitting}
-        >
-          {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-          <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save rule</Trans>
-        </Button>
-      )}
       <Button
         data-testid="save-rule-and-exit"
         variant="primary"
