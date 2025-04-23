@@ -1106,7 +1106,7 @@
             }
           },
           "origin": {
-            "default": ""
+            "type": "string"
           }
         }
       },
