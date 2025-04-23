@@ -14,18 +14,12 @@ type indexQueueProcessor struct {
 	nsr       NamespacedResource
 	queue     chan *WrittenEvent
 	batchSize int
-	cancel    context.CancelFunc
 	builder   DocumentBuilder
 
 	resChan chan *IndexEvent // Channel to send results to the caller
 
 	mu      sync.Mutex
 	running bool
-}
-
-type indexEvent struct {
-	ev   *WrittenEvent
-	done chan *IndexEvent
 }
 
 type IndexEvent struct {
@@ -52,18 +46,19 @@ func NewIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource, batchSi
 
 // Add adds an event to the queue and ensures the background processor is running
 func (b *indexQueueProcessor) Add(evt *WrittenEvent) {
+	b.queue <- evt
+
+	// Start the processor if it's not already running
 	b.mu.Lock()
 	defer b.mu.Unlock()
 	if !b.running {
 		b.running = true
 		b.startProcessor()
 	}
-	b.queue <- evt
 }
 
 // startProcessor starts the background goroutine if it's not already running
 func (b *indexQueueProcessor) startProcessor() {
-	// No need for lock here since running is already set
 	go func() {
 		defer func() {
 			b.mu.Lock()
@@ -76,8 +71,8 @@ func (b *indexQueueProcessor) startProcessor() {
 			select {
 			case evt := <-b.queue:
 				batch = append(batch, evt)
-			default:
-				// No need for stop() method, just return and let defer handle it
+			case <-time.After(5 * time.Second):
+				// No events in the past few seconds, stop the processor
 				return
 			}
 

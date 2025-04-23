@@ -44,7 +44,7 @@ func TestIndexQueueProcessor_SingleEvent(t *testing.T) {
 	// Setup expectations
 	mockBuilder.On("BuildDocument", mock.Anything, &key, evt.ResourceVersion, evt.Value).Return(&IndexableDocument{Key: &key}, nil)
 	mockIndex.On("BulkIndex", mock.MatchedBy(func(req *BulkIndexRequest) bool {
-		return len(req.Items) == 1 && req.Items[0].Action == BulkActionIndex
+		return len(req.Items) == 1 && req.Items[0].Action == ActionIndex
 	})).Return(nil)
 
 	// Start processor and wait for the document to be indexed

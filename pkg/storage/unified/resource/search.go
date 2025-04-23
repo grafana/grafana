@@ -551,8 +551,8 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 			},
 		}, func(iter ListIterator) error {
 			// Collect all documents in a single bulk request
-			// TODO: update to either use the index queue processor or use multiple smaller bulk requests
 			items := make([]*BulkIndexItem, 0)
+
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
 					return err
