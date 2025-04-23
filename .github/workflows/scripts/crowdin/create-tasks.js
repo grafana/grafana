@@ -24,12 +24,11 @@ const { tasksApi, projectsGroupsApi, sourceFilesApi, workflowsApi } = new crowdi
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
 const workflowStepId = await getWorkflowStepId(PROJECT_ID);
-console.log('Workflow step ID: ', workflowStepId);
 
-// for (const language of languages) {
-//   const { name, id } = language;
-//   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds, workflowStepId);
-// }
+for (const language of languages) {
+  const { name, id } = language;
+  await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds, workflowStepId);
+}
 
 async function getLanguages(projectId) {
   try {
@@ -66,8 +65,6 @@ async function getWorkflowStepId(projectId) {
   try {
     const response = await workflowsApi.listWorkflowSteps(projectId);
     const workflowSteps = response.data;
-    // TODO remove this
-    console.log(workflowSteps)
     const workflowStepId = workflowSteps.find(step => step.data.type === TRANSLATE_BY_VENDOR_WORKFLOW_TYPE).data.id;
     console.log('Fetched workflow step ID successfully!');
     return workflowStepId;
