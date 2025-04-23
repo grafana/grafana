@@ -98,21 +98,19 @@ export function ExistingRuleEditor({
     return null;
   }
 
-  const returnTo = createViewLinkFromRuleWithLocation(ruleWithLocation);
-
   const rulerRule = ruleWithLocation.rule;
   const summary = rulerRuleType.any.alertingRule(rulerRule) ? rulerRule.annotations?.[Annotation.summary] : null;
 
   const isFederatedRule = isFederatedRuleGroup(ruleWithLocation.group);
-  const isPaused = rulerRuleType.grafana.rule(rulerRule) && isPausedRule(rulerRule);
-  const ruleOrigin = getRulePluginOrigin(rulerRule);
+  const isRecordingRule = rulerRuleType.any.recordingRule(rulerRule);
+
+  const pageTitle = isRecordingRule
+    ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
+    : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
 
   return (
     <AlertingPageWrapper
       navId="alert-list"
-      renderTitle={(name?: string) =>
-        name ? <Title name={name} returnToHref={returnTo} paused={isPaused} ruleOrigin={ruleOrigin} /> : null
-      }
       subTitle={
         <Stack direction="column">
           {summary}
@@ -120,7 +118,7 @@ export function ExistingRuleEditor({
           {isFederatedRule && <FederatedRuleWarning />}
         </Stack>
       }
-      pageNav={getPageNav({ text: ruleWithLocation.rule ? getRuleName(ruleWithLocation.rule) : '' })}
+      pageNav={getPageNav({ text: pageTitle })}
     >
       {clone ? (
         <AlertRuleForm prefill={rulerRuleToFormValues(cloneRuleDefinition(ruleWithLocation))} />

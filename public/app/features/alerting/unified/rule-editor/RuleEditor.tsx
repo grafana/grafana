@@ -70,7 +70,7 @@ const RuleEditor = () => {
   return <NewRuleEditor />;
 };
 
-const RECORDING_TYPE = ['grafana-recording', 'recording'];
+export const RECORDING_TYPE = ['grafana-recording', 'recording'];
 
 /**
  * This one is used for creating new rules (both alerting and recording rules)
@@ -90,6 +90,7 @@ function NewRuleEditor() {
   const editText = isRecordingRule
     ? t('alerting.editor.edit-recording-rule', 'Edit recording rule')
     : t('alerting.editor.edit-alert-rule', 'Edit alert rule');
+
   return (
     <AlertingPageWrapper
       navId="alert-list"
