@@ -19,8 +19,6 @@ type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error)
-	ClearAllPullRequestFileComments(ctx context.Context, pr int) error
-	CommentPullRequestFile(ctx context.Context, pr int, path string, ref string, comment string) error
 	CommentPullRequest(ctx context.Context, pr int, comment string) error
 }
 
