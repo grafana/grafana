@@ -1104,6 +1104,10 @@
               "type": "string",
               "default": ""
             }
+          },
+          "origin": {
+            "type": "string",
+            "default": ""
           }
         }
       },
