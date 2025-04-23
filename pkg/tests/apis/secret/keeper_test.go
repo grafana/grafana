@@ -64,9 +64,14 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 	})
 
-	t.Run("deleting a keeper that does not exist does not return an error", func(t *testing.T) {
+	t.Run("deleting a keeper that does not exist returns an error", func(t *testing.T) {
 		err := client.Resource.Delete(ctx, "some-keeper-that-does-not-exist", metav1.DeleteOptions{})
-		require.NoError(t, err)
+		require.Error(t, err)
+
+		var statusErr *apierrors.StatusError
+		require.True(t, errors.As(err, &statusErr))
+		require.Equal(t, "keeper.secret.grafana.app \"some-keeper-that-does-not-exist\" not found", err.Error())
+		require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 	})
 
 	t.Run("creating a keeper returns it", func(t *testing.T) {
@@ -267,6 +272,49 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.NotNil(t, keeperAWS)
 	})
 
+	t.Run("creating a keeper that references a securevalue that is stored in a 3rdparty Keeper returns an error", func(t *testing.T) {
+		// 0. Create user with required permissions.
+		permissions := map[string]ResourcePermission{
+			ResourceKeepers: {Actions: ActionsAllKeepers},
+			// needed for this test to create (and delete for cleanup) securevalues.
+			ResourceSecureValues: {
+				Actions: []string{
+					secret.ActionSecretSecureValuesCreate,
+					secret.ActionSecretSecureValuesDelete,
+				},
+			},
+		}
+
+		editor := mustCreateUsers(t, helper, permissions).Editor
+
+		// 1. Create a 3rdparty keeper.
+		keeperAWS := mustGenerateKeeper(t, helper, editor, nil, "testdata/keeper-aws-generate.yaml")
+
+		// 2. Create a secureValue that is stored in the previously created keeper (AWS).
+		secureValue := mustGenerateSecureValue(t, helper, editor, keeperAWS.GetName())
+
+		// 3. Create another 3rdparty keeper that uses the secureValue.
+		testDataKeeperAWS := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
+		testDataKeeperAWS.Object["spec"].(map[string]any)["aws"] = map[string]any{
+			"accessKeyId": map[string]any{
+				"secureValueName": secureValue.GetName(),
+			},
+			"secretAccessKey": map[string]any{
+				"secureValueName": secureValue.GetName(),
+			},
+		}
+
+		editorClient := helper.GetResourceClient(apis.ResourceClientArgs{
+			User: editor,
+			GVR:  gvrKeepers,
+		})
+
+		raw, err := editorClient.Resource.Create(ctx, testDataKeeperAWS, metav1.CreateOptions{})
+		require.Error(t, err)
+		require.Nil(t, raw)
+		require.Contains(t, err.Error(), secureValue.GetName())
+	})
+
 	t.Run("creating keepers in multiple namespaces", func(t *testing.T) {
 		permissions := map[string]ResourcePermission{
 			ResourceKeepers: {Actions: ActionsAllKeepers},
@@ -350,10 +398,14 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 
 		// Delete
-		t.Run("deleting a keeper from another namespace does not return an error but does not delete it", func(t *testing.T) {
+		t.Run("deleting a keeper from another namespace returns an error and does not delete it", func(t *testing.T) {
+			var statusErr *apierrors.StatusError
+
 			// OrgA trying to delete keeper from OrgB.
 			err := clientOrgA.Resource.Delete(ctx, keeperOrgB.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.Error(t, err)
+			require.True(t, errors.As(err, &statusErr))
+			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
 			// Check that it still exists from the perspective of OrgB.
 			raw, err := clientOrgB.Resource.Get(ctx, keeperOrgB.GetName(), metav1.GetOptions{})
@@ -362,7 +414,8 @@ func TestIntegrationKeeper(t *testing.T) {
 
 			// OrgB trying to delete keeper from OrgA.
 			err = clientOrgB.Resource.Delete(ctx, keeperOrgA.GetName(), metav1.DeleteOptions{})
-			require.NoError(t, err)
+			require.Error(t, err)
+			require.Equal(t, http.StatusNotFound, int(statusErr.Status().Code))
 
 			// Check that it still exists from the perspective of OrgA.
 			raw, err = clientOrgA.Resource.Get(ctx, keeperOrgA.GetName(), metav1.GetOptions{})

@@ -295,3 +295,34 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 		})
 	})
 }
+
+func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
+	_, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+		found, err := sess.Get(row)
+		if err != nil {
+			return fmt.Errorf("could not get row: %w", err)
+		}
+
+		if !found {
+			return contracts.ErrSecureValueNotFound
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("db failure: %w", err)
+	}
+
+	secureValue, err := row.toDecrypt()
+	if err != nil {
+		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
+	}
+
+	return secureValue, nil
+}

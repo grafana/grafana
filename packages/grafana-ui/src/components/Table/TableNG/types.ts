@@ -207,6 +207,12 @@ export interface DataLinksCellProps {
   rowIdx: number;
 }
 
+export interface GeoCellProps {
+  value: TableCellValue;
+  justifyContent: Property.JustifyContent;
+  height: number;
+}
+
 export interface ActionCellProps {
   actions?: ActionModel[];
 }

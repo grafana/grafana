@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
@@ -310,8 +311,10 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(db, features, accessClient, keeperMetadataStorage, keeperService)
 	require.NoError(t, err)
 
+	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(allowList)
+
 	// Initialize the decrypt storage
-	decryptSvc, err := ProvideDecryptStorage(features, keeperService, keeperMetadataStorage, secureValueMetadataStorage, allowList)
+	decryptSvc, err := ProvideDecryptStorage(features, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer)
 	require.NoError(t, err)
 
 	return decryptSvc.(*decryptStorage), secureValueMetadataStorage
@@ -343,7 +346,11 @@ func createSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVal
 	require.NoError(t, err)
 
 	// Since creating secrets is async, store the secret in the keeper synchronously to make testing easier
-	_, err = db.(*secureValueMetadataStorage).storeInKeeper(ctx, sv)
+	externalID, err := db.(*secureValueMetadataStorage).storeInKeeper(ctx, sv)
+	require.NoError(t, err)
+
+	// Set external id for the secure value
+	err = db.SetExternalID(ctx, xkube.Namespace(sv.Namespace), sv.Name, externalID)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {

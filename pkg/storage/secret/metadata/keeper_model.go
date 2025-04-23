@@ -280,33 +280,33 @@ func toProvider(keeperType contracts.KeeperType, payload string) secretv0alpha1.
 	}
 }
 
-// extractSecureValues extracts securevalues referenced by the keeper, if any.
-func extractSecureValues(kp *secretv0alpha1.Keeper) []string {
-	secureValuesFromAWS := func(aws secretv0alpha1.AWSCredentials) []string {
-		secureValues := make([]string, 0)
+// extractSecureValues extracts unique securevalues referenced by the keeper, if any.
+func extractSecureValues(kp *secretv0alpha1.Keeper) map[string]struct{} {
+	secureValuesFromAWS := func(aws secretv0alpha1.AWSCredentials) map[string]struct{} {
+		secureValues := make(map[string]struct{}, 0)
 
 		if aws.AccessKeyID.SecureValueName != "" {
-			secureValues = append(secureValues, aws.AccessKeyID.SecureValueName)
+			secureValues[aws.AccessKeyID.SecureValueName] = struct{}{}
 		}
 
 		if aws.SecretAccessKey.SecureValueName != "" {
-			secureValues = append(secureValues, aws.SecretAccessKey.SecureValueName)
+			secureValues[aws.SecretAccessKey.SecureValueName] = struct{}{}
 		}
 
 		return secureValues
 	}
 
-	secureValuesFromAzure := func(azure secretv0alpha1.AzureCredentials) []string {
+	secureValuesFromAzure := func(azure secretv0alpha1.AzureCredentials) map[string]struct{} {
 		if azure.ClientSecret.SecureValueName != "" {
-			return []string{azure.ClientSecret.SecureValueName}
+			return map[string]struct{}{azure.ClientSecret.SecureValueName: {}}
 		}
 
 		return nil
 	}
 
-	secureValuesFromHashiCorp := func(hashicorp secretv0alpha1.HashiCorpCredentials) []string {
+	secureValuesFromHashiCorp := func(hashicorp secretv0alpha1.HashiCorpCredentials) map[string]struct{} {
 		if hashicorp.Token.SecureValueName != "" {
-			return []string{hashicorp.Token.SecureValueName}
+			return map[string]struct{}{hashicorp.Token.SecureValueName: {}}
 		}
 
 		return nil

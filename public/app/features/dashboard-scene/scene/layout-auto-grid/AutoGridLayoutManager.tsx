@@ -114,18 +114,30 @@ export class AutoGridLayoutManager
   }
 
   public duplicate(): DashboardLayoutManager {
+    const children = this.state.layout.state.children;
+    const clonedChildren: AutoGridItem[] = [];
+
+    if (children.length) {
+      let panelId = dashboardSceneGraph.getNextPanelId(children[0].state.body);
+
+      children.forEach((child) => {
+        const clone = child.clone({
+          key: undefined,
+          body: child.state.body.clone({
+            key: getVizPanelKeyForPanelId(panelId),
+          }),
+        });
+
+        clonedChildren.push(clone);
+        panelId++;
+      });
+    }
+
     return this.clone({
       key: undefined,
       layout: this.state.layout.clone({
         key: undefined,
-        children: this.state.layout.state.children.map((child) =>
-          child.clone({
-            key: undefined,
-            body: child.state.body.clone({
-              key: getVizPanelKeyForPanelId(dashboardSceneGraph.getNextPanelId(child.state.body)),
-            }),
-          })
-        ),
+        children: clonedChildren,
       }),
     });
   }
@@ -294,7 +306,7 @@ function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
 
   switch (rowHeight) {
     case 'short':
-      return 128;
+      return 168;
     case 'tall':
       return 512;
     case 'custom':
