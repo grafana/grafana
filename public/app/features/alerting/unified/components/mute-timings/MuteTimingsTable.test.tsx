@@ -11,13 +11,13 @@ import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/ti
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { MuteTimingsTable } from './MuteTimingsTable';
+import { TimeIntervalsTable } from './MuteTimingsTable';
 import { defaultConfig } from './mocks';
 
 const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
-      <MuteTimingsTable />
+      <TimeIntervalsTable />
     </AlertmanagerProvider>
   );
 };
@@ -94,7 +94,7 @@ describe('MuteTimingsTable', () => {
     it('shows error when mute timings cannot load', async () => {
       setMuteTimingsListError();
       renderWithProvider();
-      expect(await screen.findByText(/error loading mute timings/i)).toBeInTheDocument();
+      expect(await screen.findByText(/error loading time intervals/i)).toBeInTheDocument();
     });
 
     it('deletes interval', async () => {

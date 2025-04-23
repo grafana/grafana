@@ -145,7 +145,7 @@ const fillOutForm = async ({
 
 const saveMuteTiming = async () => {
   const user = userEvent.setup();
-  await user.click(await screen.findByText(/save mute timing/i));
+  await user.click(await screen.findByText(/save time interval/i));
 };
 
 setupMswServer();
@@ -177,7 +177,7 @@ describe('Mute timings', () => {
     const capture = captureRequests();
     renderMuteTimings({ pathname: '/alerting/routes/new', search: `?alertmanager=${dataSources.am.name}` });
 
-    await screen.findByText(/add mute timing/i);
+    await screen.findByText(/add time interval/i);
 
     await fillOutForm({
       name: 'maintenance period',
@@ -314,13 +314,13 @@ describe('Mute timings', () => {
       search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${'does not exist'}`,
     });
 
-    expect(await screen.findByText(/No matching mute timing found/i)).toBeInTheDocument();
+    expect(await screen.findByText(/No matching time interval found/i)).toBeInTheDocument();
   });
 
   it('allows creation of new mute timings', async () => {
     renderMuteTimings('/alerting/routes/new');
 
-    await fillOutForm({ name: 'a new mute timing' });
+    await fillOutForm({ name: 'a new time interval' });
 
     await saveMuteTiming();
     await expectToHaveRedirectedToRoutesRoute();
@@ -332,7 +332,7 @@ describe('Mute timings', () => {
       search: `?alertmanager=${GRAFANA_RULES_SOURCE_NAME}&muteName=${TIME_INTERVAL_NAME_HAPPY_PATH + '_force_breakage'}`,
     });
 
-    expect(await screen.findByText(/No matching mute timing found/i)).toBeInTheDocument();
+    expect(await screen.findByText(/No matching time interval found/i)).toBeInTheDocument();
   });
 
   it('loads edit form correctly and allows saving', async () => {
@@ -351,6 +351,6 @@ describe('Mute timings', () => {
       search: `?muteName=${TIME_INTERVAL_NAME_FILE_PROVISIONED}`,
     });
 
-    expect(await screen.findByText(/This mute timing cannot be edited through the UI/i)).toBeInTheDocument();
+    expect(await screen.findByText(/This time interval cannot be edited through the UI/i)).toBeInTheDocument();
   });
 });

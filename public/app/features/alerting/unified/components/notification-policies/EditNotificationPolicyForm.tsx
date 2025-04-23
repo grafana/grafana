@@ -52,7 +52,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const { selectedAlertmanager } = useAlertmanager();
-  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
