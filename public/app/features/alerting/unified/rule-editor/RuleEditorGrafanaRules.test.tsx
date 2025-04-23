@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { screen } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
@@ -128,7 +128,7 @@ describe('RuleEditor grafana managed rules', () => {
     const nameInput = await ui.inputs.name.find();
     expect(nameInput).toHaveValue(grafanaRulerRule.grafana_alert.title);
     //check that folder is in the list
-    expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title));
+    await waitFor(() => expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title)));
     expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations[Annotation.summary]);
 
     expect(ui.manualRestoreBanner.get()).toBeInTheDocument(); // check that manual restore banner is shown

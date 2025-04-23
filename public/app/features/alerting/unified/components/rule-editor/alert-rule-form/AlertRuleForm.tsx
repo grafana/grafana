@@ -277,6 +277,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 type="button"
                 onClick={handleSubmit((values) => submit(values), onInvalid)}
                 disabled={isSubmitting}
+                icon={isSubmitting ? 'spinner' : undefined}
               >
                 {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
                 <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save</Trans>
