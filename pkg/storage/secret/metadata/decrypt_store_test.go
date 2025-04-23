@@ -97,7 +97,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		require.Empty(t, exposed)
 	})
 
-	t.Skip("TODO: fix test which is failing due to missing external id for decrypt")
 	t.Run("when happy path with valid auth and permissions, it returns decrypted value", func(t *testing.T) {
 		t.Parallel()
 
@@ -347,7 +346,11 @@ func createSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVal
 	require.NoError(t, err)
 
 	// Since creating secrets is async, store the secret in the keeper synchronously to make testing easier
-	_, err = db.(*secureValueMetadataStorage).storeInKeeper(ctx, sv)
+	externalID, err := db.(*secureValueMetadataStorage).storeInKeeper(ctx, sv)
+	require.NoError(t, err)
+
+	// Set external id for the secure value
+	err = db.SetExternalID(ctx, xkube.Namespace(sv.Namespace), sv.Name, externalID)
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
