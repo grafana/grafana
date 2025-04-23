@@ -96,12 +96,12 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 		return nil, "", err
 	}
 
-	val, err := s.handleLargeResources(ctx, obj, buf, &utils.BlobInfo{}, false)
+	val, err := s.handleLargeResources(ctx, obj, buf)
 	return val, grantPermisions, err
 }
 
 // Called on update
-func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object, targetUID string, isRestore bool) ([]byte, error) {
+func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runtime.Object, previousObject runtime.Object) ([]byte, error) {
 	info, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, errors.New("missing auth info")
@@ -186,18 +186,11 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 	if err = s.codec.Encode(updateObject, &buf); err != nil {
 		return nil, err
 	}
-
-	var blobInfo utils.BlobInfo
-	if targetUID != "" {
-		blobInfo = utils.BlobInfo{
-			UID: targetUID,
-		}
-	}
-	return s.handleLargeResources(ctx, obj, buf, &blobInfo, isRestore)
+	return s.handleLargeResources(ctx, obj, buf)
 }
 
-func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer, updatedBlob *utils.BlobInfo, isRestore bool) ([]byte, error) {
-	if isRestore && s.opts.LargeObjectSupport != nil && obj.GetBlob() != nil {
+func (s *Storage) handleLargeResources(ctx context.Context, obj utils.GrafanaMetaAccessor, buf bytes.Buffer) ([]byte, error) {
+	if s.opts.LargeObjectSupport != nil && obj.GetBlob() != nil {
 		buf.Reset()
 		orig, ok := obj.GetRuntimeObject()
 		if !ok {

@@ -166,7 +166,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta.SetGeneration(123) // will be removed
 
 		// Update status without changing generation or update metadata
-		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject, "", false)
+		_, err = s.prepareObjectForUpdate(ctx, updatedObject, insertedObject)
 		require.NoError(t, err)
 		require.Equal(t, "", meta.GetUpdatedBy())
 		require.Equal(t, int64(1), meta.GetGeneration())
@@ -178,7 +178,7 @@ func TestPrepareObjectForStorage(t *testing.T) {
 		meta2, err := utils.MetaAccessor(dashboard2)
 		require.NoError(t, err)
 		meta2.SetFolder("xyz") // will bump generation
-		_, err = s.prepareObjectForUpdate(ctx, dashboard2, updatedObject, "", false)
+		_, err = s.prepareObjectForUpdate(ctx, dashboard2, updatedObject)
 		require.NoError(t, err)
 		require.Equal(t, "user:user2", meta2.GetUpdatedBy())
 		require.Equal(t, int64(2), meta2.GetGeneration())
@@ -306,7 +306,7 @@ func getPreparedObject(t *testing.T, ctx context.Context, s *Storage, obj runtim
 	if old == nil {
 		raw, _, err = s.prepareObjectForStorage(ctx, obj)
 	} else {
-		raw, err = s.prepareObjectForUpdate(ctx, obj, old, "", false)
+		raw, err = s.prepareObjectForUpdate(ctx, obj, old)
 	}
 	require.NoError(t, err)
 

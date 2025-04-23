@@ -114,7 +114,7 @@ func (r *DTOConnector) Connect(ctx context.Context, name string, opts runtime.Ob
 			Resource:  gr.Resource,
 			Namespace: obj.GetNamespace(),
 			Name:      obj.GetName(),
-		}, r.unified, obj, false)
+		}, r.unified, obj)
 		if err != nil {
 			return nil, err
 		}

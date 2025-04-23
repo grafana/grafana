@@ -31,7 +31,7 @@ type LargeObjectSupport interface {
 
 	// Reconstruct will join the resource+blob back into a complete resource
 	// NOTE: changes to the object must be handled by mutating the input obj
-	Reconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor, isRestore bool) error
+	Reconstruct(ctx context.Context, key *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor) error
 }
 
 var _ LargeObjectSupport = (*BasicLargeObjectSupport)(nil)
@@ -125,7 +125,7 @@ func (s *BasicLargeObjectSupport) Deconstruct(ctx context.Context, key *resource
 }
 
 // Reconstruct implements LargeObjectSupport.
-func (s *BasicLargeObjectSupport) Reconstruct(ctx context.Context, _ *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor, isRestore bool) error {
+func (s *BasicLargeObjectSupport) Reconstruct(ctx context.Context, _ *resource.ResourceKey, client resource.BlobStoreClient, obj utils.GrafanaMetaAccessor) error {
 	blobInfo := obj.GetBlob()
 	if blobInfo == nil {
 		return fmt.Errorf("the object does not have a blob")
