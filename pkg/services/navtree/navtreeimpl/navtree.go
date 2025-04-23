@@ -139,7 +139,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
-		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
 			Id:         navtree.NavIDDrilldown,
@@ -148,7 +147,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
-			Children:   drilldownChildNavLinks,
 		})
 	}
 
@@ -431,20 +429,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	contactPointsPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
-	}
 
-	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
-	// alerting API to maintain backwards compatibility.
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
-		contactPointsPerms = append(contactPointsPerms,
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		ac.EvalPermission(ac.ActionAlertingReceiversRead),
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),
 
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
-		)
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 	}
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
@@ -571,18 +563,4 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
-}
-
-func (s *ServiceImpl) buildDrilldownNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
-	drilldownChildNavs := []*navtree.NavLink{}
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) && !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		drilldownChildNavs = append(drilldownChildNavs, &navtree.NavLink{
-			Text:     "Metrics",
-			SubTitle: "Queryless exploration of your metrics",
-			Id:       "explore/metrics",
-			Url:      s.cfg.AppSubURL + "/explore/metrics",
-			Icon:     "code-branch",
-		})
-	}
-	return drilldownChildNavs
 }

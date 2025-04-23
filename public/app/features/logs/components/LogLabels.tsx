@@ -108,7 +108,7 @@ export const LogLabelsList = memo(({ labels }: LogLabelsArrayProps) => {
     <span className={styles.logsLabels}>
       {labels.map((label) => (
         <LogLabel key={label} styles={styles} tooltip={label}>
-          {label === LOG_LINE_BODY_FIELD_NAME ? 'log line' : label}
+          {label === LOG_LINE_BODY_FIELD_NAME ? t('logs.log-labels-list.log-line', 'log line') : label}
         </LogLabel>
       ))}
     </span>

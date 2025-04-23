@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
 
 	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admission.ObjectInterfaces) (err error) {
@@ -58,7 +58,17 @@ func (b *DashboardsAPIBuilder) Mutate(ctx context.Context, a admission.Attribute
 			}
 		}
 	case *dashboardV2.Dashboard:
+		// Temporary fix: The generator fails to properly initialize this property, so we'll do it here
+		// until the generator is fixed.
+		if v.Spec.Layout.GridLayoutKind == nil && v.Spec.Layout.RowsLayoutKind == nil && v.Spec.Layout.AutoGridLayoutKind == nil && v.Spec.Layout.TabsLayoutKind == nil {
+			v.Spec.Layout.GridLayoutKind = &dashboardV2.DashboardGridLayoutKind{
+				Kind: "GridLayout",
+				Spec: dashboardV2.DashboardGridLayoutSpec{},
+			}
+		}
+
 		resourceInfo = dashboardV2.DashboardResourceInfo
+
 		// Noop for V2
 	default:
 		return fmt.Errorf("mutation error: expected to dashboard, got %T", obj)

@@ -29,6 +29,28 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
+func TestIntegrationStorageServer(t *testing.T) {
+	if infraDB.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
+	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
+		dbstore := infraDB.InitTestDB(t)
+		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+		require.NoError(t, err)
+		require.NotNil(t, eDB)
+
+		backend, err := sql.NewBackend(sql.BackendOptions{
+			DBProvider: eDB,
+			IsHA:       true,
+		})
+		require.NoError(t, err)
+		require.NotNil(t, backend)
+		err = backend.Init(testutil.NewDefaultTestContext(t))
+		require.NoError(t, err)
+		return backend
+	})
+}
+
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
 	if infraDB.IsTestDBSpanner() {
