@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"runtime"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -22,27 +21,24 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type PluginsService struct {
-	availableUpdates   map[string]string
-	provisionedPlugins []string
+	availableUpdates map[string]string
 
-	enabled                   bool
-	grafanaVersion            string
-	pluginStore               pluginstore.Store
-	httpClient                httpClient
-	mutex                     sync.RWMutex
-	log                       log.Logger
-	tracer                    tracing.Tracer
-	updateCheckURL            *url.URL
-	pluginInstaller           plugins.Installer
-	managedPluginsManager     managedplugins.Manager
-	provisionedPluginsManager provisionedplugins.Manager
+	enabled         bool
+	grafanaVersion  string
+	pluginStore     pluginstore.Store
+	httpClient      httpClient
+	mutex           sync.RWMutex
+	log             log.Logger
+	tracer          tracing.Tracer
+	updateCheckURL  *url.URL
+	pluginInstaller plugins.Installer
+	updateChecker   *pluginupdatechecker.Service
 
 	features featuremgmt.FeatureToggles
 }
@@ -50,10 +46,9 @@ type PluginsService struct {
 func ProvidePluginsService(cfg *setting.Cfg,
 	pluginStore pluginstore.Store,
 	pluginInstaller plugins.Installer,
-	managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
+	updateChecker *pluginupdatechecker.Service,
 ) (*PluginsService, error) {
 	logger := log.New("plugins.update.checker")
 	cl, err := httpclient.New(httpclient.Options{
@@ -76,18 +71,17 @@ func ProvidePluginsService(cfg *setting.Cfg,
 	}
 
 	return &PluginsService{
-		enabled:                   cfg.CheckForPluginUpdates,
-		grafanaVersion:            cfg.BuildVersion,
-		httpClient:                cl,
-		log:                       logger,
-		tracer:                    tracer,
-		pluginStore:               pluginStore,
-		availableUpdates:          make(map[string]string),
-		updateCheckURL:            parsedUpdateCheckURL,
-		pluginInstaller:           pluginInstaller,
-		features:                  features,
-		managedPluginsManager:     managedPlugins,
-		provisionedPluginsManager: provisionedPlugins,
+		enabled:          cfg.CheckForPluginUpdates,
+		grafanaVersion:   cfg.BuildVersion,
+		httpClient:       cl,
+		log:              logger,
+		tracer:           tracer,
+		pluginStore:      pluginStore,
+		availableUpdates: make(map[string]string),
+		updateCheckURL:   parsedUpdateCheckURL,
+		pluginInstaller:  pluginInstaller,
+		features:         features,
+		updateChecker:    updateChecker,
 	}, nil
 }
 
@@ -130,7 +124,7 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 			return "", false
 		}
 
-		if canUpdate(plugin.Info.Version, updateVers) {
+		if s.canUpdate(ctx, plugin, updateVers) {
 			return updateVers, true
 		}
 	}
@@ -196,7 +190,7 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	availableUpdates := map[string]string{}
 	for _, gcomP := range gcomPlugins {
 		if localP, exists := localPlugins[gcomP.Slug]; exists {
-			if s.isPluginUpdatable(ctx, localP) && canUpdate(localP.Info.Version, gcomP.Version) {
+			if s.canUpdate(ctx, localP, gcomP.Version) {
 				availableUpdates[localP.ID] = gcomP.Version
 			}
 		}
@@ -211,44 +205,21 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	return nil
 }
 
-func canUpdate(v1, v2 string) bool {
-	ver1, err1 := version.NewVersion(v1)
+func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugin, gcomVersion string) bool {
+	if !s.updateChecker.IsUpdatable(ctx, plugin) {
+		return false
+	}
+
+	ver1, err1 := version.NewVersion(plugin.Info.Version)
 	if err1 != nil {
 		return false
 	}
-	ver2, err2 := version.NewVersion(v2)
+	ver2, err2 := version.NewVersion(gcomVersion)
 	if err2 != nil {
 		return false
 	}
 
 	return ver1.LessThan(ver2)
-}
-
-func (s *PluginsService) isPluginUpdatable(ctx context.Context, plugin pluginstore.Plugin) bool {
-	if plugin.IsCorePlugin() || s.isManaged(ctx, plugin.ID) || s.isProvisioned(ctx, plugin.ID) {
-		return false
-	}
-	return true
-}
-
-func (s *PluginsService) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range s.managedPluginsManager.ManagedPlugins(ctx) {
-		if managedPlugin == pluginID {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *PluginsService) isProvisioned(ctx context.Context, pluginID string) bool {
-	if s.provisionedPlugins == nil {
-		var err error
-		s.provisionedPlugins, err = s.provisionedPluginsManager.ProvisionedPlugins(ctx)
-		if err != nil {
-			return false
-		}
-	}
-	return slices.Contains(s.provisionedPlugins, pluginID)
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]pluginstore.Plugin) string {
@@ -274,7 +245,7 @@ func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map
 func (s *PluginsService) updateAll(ctx context.Context) {
 	ctxLogger := s.log.FromContext(ctx)
 
-	availableUpdates := map[string]string{}
+	failedUpdates := map[string]string{}
 
 	for pluginID, updateVersion := range s.availableUpdates {
 		compatOpts := plugins.NewAddOpts(s.grafanaVersion, runtime.GOOS, runtime.GOARCH, "")
@@ -284,13 +255,11 @@ func (s *PluginsService) updateAll(ctx context.Context) {
 		err := s.pluginInstaller.Add(ctx, pluginID, updateVersion, compatOpts)
 		if err != nil {
 			ctxLogger.Error("Failed to auto update plugin", "pluginID", pluginID, "error", err)
-			availableUpdates[pluginID] = updateVersion
+			failedUpdates[pluginID] = updateVersion
 		}
 	}
 
-	if len(availableUpdates) != len(s.availableUpdates) {
-		s.mutex.Lock()
-		s.availableUpdates = availableUpdates
-		s.mutex.Unlock()
-	}
+	s.mutex.Lock()
+	s.availableUpdates = failedUpdates
+	s.mutex.Unlock()
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	sysruntime "runtime"
-	"slices"
 
 	"github.com/Masterminds/semver/v3"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
@@ -12,10 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 )
 
 const (
@@ -27,25 +24,19 @@ const (
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
-	pluginPreinstall plugininstaller.Preinstall,
-	managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager,
+	updateChecker *pluginupdatechecker.Service,
 ) checks.Check {
 	return &check{
-		PluginStore:        pluginStore,
-		PluginRepo:         pluginRepo,
-		PluginPreinstall:   pluginPreinstall,
-		ManagedPlugins:     managedPlugins,
-		ProvisionedPlugins: provisionedPlugins,
+		PluginStore:   pluginStore,
+		PluginRepo:    pluginRepo,
+		updateChecker: updateChecker,
 	}
 }
 
 type check struct {
-	PluginStore        pluginstore.Store
-	PluginRepo         repo.Service
-	PluginPreinstall   plugininstaller.Preinstall
-	ManagedPlugins     managedplugins.Manager
-	ProvisionedPlugins provisionedplugins.Manager
+	PluginStore   pluginstore.Store
+	PluginRepo    repo.Service
+	updateChecker *pluginupdatechecker.Service
 }
 
 func (c *check) ID() string {
@@ -67,11 +58,9 @@ func (c *check) Steps() []checks.Step {
 			PluginRepo: c.PluginRepo,
 		},
 		&updateStep{
-			PluginRepo:         c.PluginRepo,
-			PluginPreinstall:   c.PluginPreinstall,
-			ManagedPlugins:     c.ManagedPlugins,
-			ProvisionedPlugins: c.ProvisionedPlugins,
-			log:                log.New("advisor.check.plugin.update"),
+			PluginRepo:    c.PluginRepo,
+			log:           log.New("advisor.check.plugin.update"),
+			updateChecker: c.updateChecker,
 		},
 	}
 }
@@ -131,12 +120,9 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 }
 
 type updateStep struct {
-	PluginRepo         repo.Service
-	PluginPreinstall   plugininstaller.Preinstall
-	ManagedPlugins     managedplugins.Manager
-	ProvisionedPlugins provisionedplugins.Manager
-	provisionedPlugins []string
-	log                log.Logger
+	PluginRepo    repo.Service
+	log           log.Logger
+	updateChecker *pluginupdatechecker.Service
 }
 
 func (s *updateStep) Title() string {
@@ -161,21 +147,7 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 		return nil, fmt.Errorf("invalid item type %T", i)
 	}
 
-	// Skip if it's a core plugin
-	if p.IsCorePlugin() {
-		s.log.Debug("Skipping core plugin", "plugin", p.ID)
-		return nil, nil
-	}
-
-	// Skip if it's managed or pinned
-	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
-		s.log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
-		return nil, nil
-	}
-
-	// Skip if it's provisioned
-	if s.isProvisioned(ctx, p.ID) {
-		s.log.Debug("Skipping provisioned plugin", "plugin", p.ID)
+	if !s.updateChecker.IsUpdatable(ctx, p) {
 		return nil, nil
 	}
 
@@ -212,24 +184,4 @@ func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool 
 	}
 	// In other case, assume that a different latest version will always be newer
 	return current.Info.Version != latest.Version
-}
-
-func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
-		if managedPlugin == pluginID {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *updateStep) isProvisioned(ctx context.Context, pluginID string) bool {
-	if s.provisionedPlugins == nil {
-		var err error
-		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
-		if err != nil {
-			return false
-		}
-	}
-	return slices.Contains(s.provisionedPlugins, pluginID)
 }

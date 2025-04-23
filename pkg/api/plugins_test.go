@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/updatechecker"
@@ -591,6 +592,14 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	return backend.NewQueryDataResponse(), nil
 }
 
+type mockPluginPreinstall struct {
+	plugininstaller.Preinstall
+}
+
+func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
+	return false
+}
+
 func Test_PluginsList_AccessControl(t *testing.T) {
 	p1 := createPlugin(plugins.JSONData{
 		ID: "test-app", Type: "app", Name: "test-app",
@@ -650,10 +659,9 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 					hs.Cfg,
 					hs.pluginStore,
 					nil, // plugins.Installer
-					hs.managedPluginsService,
-					provisionedplugins.NewNoop(),
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
+					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -850,10 +858,9 @@ func Test_PluginsSettings(t *testing.T) {
 					hs.Cfg,
 					hs.pluginStore,
 					&fakes.FakePluginInstaller{},
-					hs.managedPluginsService,
-					provisionedplugins.NewNoop(),
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
+					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})

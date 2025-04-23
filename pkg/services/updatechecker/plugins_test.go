@@ -15,7 +15,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
@@ -121,6 +123,14 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 	})
 }
 
+type mockPluginPreinstall struct {
+	plugininstaller.Preinstall
+}
+
+func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
+	return false
+}
+
 func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 	t.Run("update is available", func(t *testing.T) {
 		jsonResp := `[
@@ -183,11 +193,10 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			httpClient: &fakeHTTPClient{
 				fakeResp: jsonResp,
 			},
-			log:                       log.NewNopLogger(),
-			tracer:                    tracing.InitializeTracerForTest(),
-			updateCheckURL:            updateCheckURL,
-			managedPluginsManager:     &managedplugins.Noop{},
-			provisionedPluginsManager: &provisionedplugins.Noop{},
+			log:            log.NewNopLogger(),
+			tracer:         tracing.InitializeTracerForTest(),
+			updateCheckURL: updateCheckURL,
+			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 		}
 
 		svc.instrumentedCheckForUpdates(context.Background())
