@@ -22,6 +22,11 @@ posts:
   - title: Experimental themes
     items:
       - docs/grafana-cloud/whats-new/2025-04-10-experimental-themes.md
+  - title: Alerting
+    items:
+      - docs/grafana-cloud/whats-new/2025-04-10-alert-rule-migration-tool.md
+      - docs/grafana-cloud/whats-new/2025-04-10-grafana-managed-alert-rule-recovering-state.md
+      - docs/grafana-cloud/whats-new/2025-04-11-grafana-managed-alert-rule-improvements.md
 
 whats_new_grafana_version: 12.0
 weight: -49
