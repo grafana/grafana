@@ -127,7 +127,7 @@ export function QueryPreview({
           i18nKey="alerting.query-preview.relative-time-range"
           values={{ from: rangeUtil.secondsToHms(relativeTimeRange.from) }}
         >
-          {'{{from}}'} to now
+          <code>{'{{from}}'}</code> to now
         </Trans>
       </Text>
     );
