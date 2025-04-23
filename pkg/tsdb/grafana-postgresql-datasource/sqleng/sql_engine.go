@@ -89,7 +89,7 @@ type DataSourceHandler struct {
 	dsInfo                 DataSourceInfo
 	rowLimit               int64
 	userError              string
-	p                      *pgxpool.Pool
+	pool                   *pgxpool.Pool
 }
 
 type QueryJson struct {

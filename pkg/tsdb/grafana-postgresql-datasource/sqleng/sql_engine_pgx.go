@@ -39,22 +39,22 @@ func NewQueryDataHandlerPGX(userFacingDefaultError string, p *pgxpool.Pool, conf
 		queryDataHandler.metricColumnTypes = config.MetricColumnTypes
 	}
 
-	queryDataHandler.p = p
+	queryDataHandler.pool = p
 	return &queryDataHandler, nil
 }
 
 func (e *DataSourceHandler) DisposePGX() {
 	e.log.Debug("Disposing DB...")
 
-	if e.p != nil {
-		e.p.Close()
+	if e.pool != nil {
+		e.pool.Close()
 	}
 
 	e.log.Debug("DB disposed")
 }
 
 func (e *DataSourceHandler) PingPGX(ctx context.Context) error {
-	return e.p.Ping(ctx)
+	return e.pool.Ping(ctx)
 }
 
 func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
