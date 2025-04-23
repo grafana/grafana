@@ -2,17 +2,14 @@ package metadata
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	"k8s.io/apimachinery/pkg/labels"
@@ -20,14 +17,14 @@ import (
 
 // keeperMetadataStorage is the actual implementation of the keeper metadata storage.
 type keeperMetadataStorage struct {
-	db           db.DB
+	db           contracts.Database
 	dialect      sqltemplate.Dialect
 	accessClient claims.AccessClient
 }
 
 var _ contracts.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
 
-func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles, accessClient claims.AccessClient) (contracts.KeeperMetadataStorage, error) {
+func ProvideKeeperMetadataStorage(db contracts.Database, features featuremgmt.FeatureToggles, accessClient claims.AccessClient) (contracts.KeeperMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &keeperMetadataStorage{}, nil
@@ -35,7 +32,7 @@ func ProvideKeeperMetadataStorage(db db.DB, features featuremgmt.FeatureToggles,
 
 	return &keeperMetadataStorage{
 		db:           db,
-		dialect:      sqltemplate.DialectForDriver(string(db.GetDBType())),
+		dialect:      sqltemplate.DialectForDriver(db.DriverName()),
 		accessClient: accessClient,
 	}, nil
 }
@@ -61,13 +58,13 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperCreate.Name(), err)
 	}
 
-	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
+	err = s.db.Transaction(ctx, func(ctx context.Context) error {
 		// Validate before inserting that any `secureValues` referenced exist and do not reference other third-party keepers.
-		if err := s.validateSecureValueReferences(ctx, sess, keeper); err != nil {
+		if err := s.validateSecureValueReferences(ctx, keeper); err != nil {
 			return err
 		}
 
-		result, err := sess.Exec(ctx, query, req.GetArgs()...)
+		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("inserting row: %w", err)
 		}
@@ -96,7 +93,7 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 }
 
 func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
-	keeperDB, err := s.read(ctx, s.db.GetSqlxSession(), namespace.String(), name, notForUpdate)
+	keeperDB, err := s.read(ctx, namespace.String(), name, notForUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -109,11 +106,7 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	return keeper, nil
 }
 
-type dbQuerier interface {
-	Query(ctx context.Context, query string, args ...any) (*sql.Rows, error)
-}
-
-func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, namespace, name string, forUpdate sqlForUpdate) (*keeperDB, error) {
+func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string, forUpdate sqlForUpdate) (*keeperDB, error) {
 	req := &readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
@@ -126,7 +119,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, dbQuerier dbQuerier, n
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 	}
 
-	res, err := dbQuerier.Query(ctx, query, req.GetArgs()...)
+	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
@@ -159,14 +152,14 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 
 	var newRow *keeperDB
 
-	err := s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
+	err := s.db.Transaction(ctx, func(ctx context.Context) error {
 		// Validate before updating that any `secureValues` referenced exists and does not reference other third-party keepers.
-		if err := s.validateSecureValueReferences(ctx, sess, newKeeper); err != nil {
+		if err := s.validateSecureValueReferences(ctx, newKeeper); err != nil {
 			return err
 		}
 
 		// Read old value first.
-		oldKeeperRow, err := s.read(ctx, sess, newKeeper.Namespace, newKeeper.Name, yesForUpdate)
+		oldKeeperRow, err := s.read(ctx, newKeeper.Namespace, newKeeper.Name, yesForUpdate)
 		if err != nil {
 			return fmt.Errorf("failed to get row: %w", err)
 		}
@@ -189,7 +182,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 			return fmt.Errorf("execute template %q: %w", sqlKeeperUpdate.Name(), err)
 		}
 
-		result, err := sess.Exec(ctx, query, req.GetArgs()...)
+		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("updating row: %w", err)
 		}
@@ -229,7 +222,7 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 		return fmt.Errorf("execute template %q: %w", sqlKeeperDelete.Name(), err)
 	}
 
-	result, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
+	result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("deleting row: %w", err)
 	}
@@ -278,7 +271,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperList.Name(), err)
 	}
 
-	rows, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("listing keepers %q: %w", sqlKeeperList.Name(), err)
 	}
@@ -317,7 +310,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 
 // validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
 // It is used by other methods inside a transaction.
-func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, sess *session.SessionTx, keeper *secretv0alpha1.Keeper) error {
+func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Context, keeper *secretv0alpha1.Keeper) error {
 	usedSecureValues := extractSecureValues(keeper)
 
 	// No secure values are referenced, return early.
@@ -342,7 +335,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueListByName.Name(), err)
 	}
 
-	rows, err := sess.Query(ctx, querySecureValueList, reqSecureValue.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, querySecureValueList, reqSecureValue.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("executing query: %w", err)
 	}
@@ -406,7 +399,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 		return fmt.Errorf("template %q: %w", sqlKeeperListByName.Name(), err)
 	}
 
-	keepersRows, err := sess.Query(ctx, qKeeper, reqKeeper.GetArgs()...)
+	keepersRows, err := s.db.QueryContext(ctx, qKeeper, reqKeeper.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("listing by name %q: %w", qKeeper, err)
 	}
@@ -449,7 +442,7 @@ func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace s
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := s.read(ctx, s.db.GetSqlxSession(), namespace, name, notForUpdate)
+	kp, err := s.read(ctx, namespace, name, notForUpdate)
 	if err != nil {
 		return "", nil, err
 	}

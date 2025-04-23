@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -171,6 +172,8 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
+	database := database.New(testDB)
+
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "sdDkslslld",
@@ -188,7 +191,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
 	// Initialize the encryption manager
@@ -210,7 +213,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
 	// Initialize the keeper storage and add a test keeper
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(testDB, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{

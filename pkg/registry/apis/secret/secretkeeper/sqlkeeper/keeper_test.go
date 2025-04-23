@@ -16,6 +16,7 @@ import (
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -155,6 +156,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 
 func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	testDB := db.InitTestDB(t)
+	database := database.New(testDB)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
@@ -174,7 +176,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	require.NoError(t, err)
 
 	// Initialize encrypted value storage with a fake db
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
 	// Initialize the SQLKeeper
