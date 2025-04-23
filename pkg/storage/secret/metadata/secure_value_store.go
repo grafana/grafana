@@ -297,11 +297,6 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	_, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
 	row := &secureValueDB{Name: name, Namespace: namespace.String()}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		found, err := sess.Get(row)
