@@ -45,7 +45,7 @@ describe('RuleEditor cloud', () => {
   it('can create a new cloud alert', async () => {
     const { user } = renderRuleEditor();
 
-    const removeExpressionsButtons = screen.getAllByLabelText(/Remove expression/);
+    const removeExpressionsButtons = await screen.findAllByLabelText(/Remove expression/);
     expect(removeExpressionsButtons).toHaveLength(2);
 
     // Needs to wait for featrue discovery API call to finish - Check if ruler enabled

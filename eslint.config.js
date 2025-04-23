@@ -47,6 +47,7 @@ module.exports = [
       'public/vendor/',
       'scripts/grafana-server/tmp',
       '!.betterer.eslint.config.js',
+      'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
     ],
   },
   // Conditionally run the betterer rules if enabled in dev's config
@@ -267,6 +268,7 @@ module.exports = [
       'react/self-closing-comp': 'error',
       'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
+      'no-nested-ternary': 'error',
     },
   },
   {
@@ -275,10 +277,19 @@ module.exports = [
     plugins: {
       '@grafana': grafanaPlugin,
     },
-    files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
-    ignores: ['**/*.{spec,test}.tsx'],
+    files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
+    ignores: [
+      'public/app/extensions/**',
+      'public/app/plugins/**',
+      '**/*.story.tsx',
+      '**/*.{test,spec}.{ts,tsx}',
+      '**/__mocks__/',
+      'public/test',
+      '**/spec/**/*.{ts,tsx}',
+    ],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
+      '@grafana/no-translation-top-level': 'error',
     },
   },
   {
