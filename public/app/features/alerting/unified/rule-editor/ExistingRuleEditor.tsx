@@ -7,15 +7,14 @@ import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import { AlertRuleForm } from '../components/rule-editor/alert-rule-form/AlertRuleForm';
 import { FederatedRuleWarning } from '../components/rule-viewer/FederatedRuleWarning';
-import { Title } from '../components/rule-viewer/RuleViewer';
 import { useRuleWithLocation } from '../hooks/useCombinedRule';
 import { useIsRuleEditable } from '../hooks/useIsRuleEditable';
 import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
-import { createViewLinkFromRuleWithLocation, stringifyErrorLike } from '../utils/misc';
+import { stringifyErrorLike } from '../utils/misc';
 import { rulerRuleToFormValues } from '../utils/rule-form';
 import * as ruleId from '../utils/rule-id';
-import { getRuleName, getRulePluginOrigin, isFederatedRuleGroup, isPausedRule, rulerRuleType } from '../utils/rules';
+import { isFederatedRuleGroup, rulerRuleType } from '../utils/rules';
 
 import { defaultPageNav } from './RuleEditor';
 import { cloneRuleDefinition } from './clone.utils';
