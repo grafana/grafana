@@ -192,34 +192,41 @@ The following table describes the options you can set for a row.
 
 <!-- previous heading "Configure repeating rows" -->
 
-You can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of a variable.
+If you have a query that includes a multi-value variable, you can configure Grafana to dynamically add panels, rows, or tabs to a dashboard based on the value of that variable.
 Variables dynamically change your queries across all rows in a dashboard.
-For more information about repeating panels, refer to [Configure repeating panels](ref:configure-repeating-panels).
 
-To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows).
+<!-- To see an example of repeating rows, refer to [Dashboard with repeating rows](https://play.grafana.org/d/000000153/repeat-rows).
 The example shows that you can also repeat rows if you have variables set with `Multi-value` or `Include all values` selected.
+Might be good to update this Play example -->
 
-### Before you begin
-
-Ensure that the query includes a multi-value variable.
-
-### Steps
-
-To configure repeating rows, follow these steps:
+To configure repeats, follow these steps:
 
 1. Click **Dashboards** in the main menu.
 1. Navigate to the dashboard you want to work on.
-1. At the top of the dashboard, click **Add** and select **Row** in the drop-down.
+1. Toggle on the edit mode switch.
 
-   If the dashboard is empty, you can click the **+ Add row** button in the middle of the dashboard.
+   The **Dashboard** edit pane opens on the right side of the dashboard.
 
-1. Hover over the row title and click the cog icon.
-1. In the **Row Options** dialog box, add a title and select the variable for which you want to add repeating rows.
-1. Click **Update**.
+1. Click in the area you want to edit to put it in focus and change the edit pane to that item.
+1. Expand the **Repeat options** section.
+1. Select the **Repeat by variable**.
+1. For panels only, set the following options:
+
+   - Under **Repeat direction**, choose one of the following:
+
+     - **Horizontal** - Arrange panels side-by-side. Grafana adjusts the width of a repeated panel. You can’t mix other panels on a row with a repeated panel.
+     - **Vertical** - Arrange panels in a column. The width of repeated panels is the same as the original, repeated panel.
+
+   - If you selected **Horizontal**, select a value in the **Max per row** drop-down list to control the maximum number of panels that can be in a row.
+
+1. When you've finished setting the repeat option, click **Save**.
+1. Enter an optional description of your changes and click **Save**.
 
 To provide context to dashboard users, add the variable to the row title.
 
 ### Repeating rows and the Dashboard special data source
+
+<!-- is this still true? -->
 
 If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
