@@ -6,6 +6,11 @@
 
 - **Go:** Bump to 1.24.2 (Enterprise)
 
+### Bug Fixes
+
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
 <!-- 11.4.4 END -->
 <!-- 11.4.3 START -->
 
