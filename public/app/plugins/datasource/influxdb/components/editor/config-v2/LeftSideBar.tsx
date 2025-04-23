@@ -1,4 +1,4 @@
-import { Box, InlineField, LinkButton, PanelContainer, Space, Stack, Text } from '@grafana/ui';
+import { Box, InlineField, LinkButton, Space, Stack, Text } from '@grafana/ui';
 
 import { CONFIG_SECTION_HEADERS } from './constants';
 

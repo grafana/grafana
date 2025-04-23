@@ -32,8 +32,8 @@ export const AuthSettings = ({ options, onOptionsChange }: Props) => {
     onChange: onOptionsChange,
   });
 
-  const isAuthMethod = (value: unknown): value is AuthMethod =>
-    typeof value === 'string' && Object.values(AuthMethod).includes(value as AuthMethod);
+  const isAuthMethod = (v: unknown): v is AuthMethod =>
+    v === AuthMethod.NoAuth || v === AuthMethod.BasicAuth || v === AuthMethod.OAuthForward;
 
   const selectedMethod = isAuthMethod(authProps.selectedMethod)
     ? authProps.selectedMethod

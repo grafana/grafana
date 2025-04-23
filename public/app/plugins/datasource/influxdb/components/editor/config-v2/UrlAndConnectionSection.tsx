@@ -31,7 +31,9 @@ export const UrlAndConnectionSection = ({ options, onOptionsChange }: Props) => 
     onOptionsChange({ ...options, jsonData: { ...options.jsonData, product: value } });
 
   const isInfluxVersion = (v: unknown): v is InfluxVersion => {
-    return typeof v === 'string' && Object.values(InfluxVersion).includes(v as InfluxVersion);
+    return (
+      typeof v === 'string' && (v === InfluxVersion.Flux || v === InfluxVersion.InfluxQL || v === InfluxVersion.SQL)
+    );
   };
 
   const onQueryLanguageChange = ({ value }: ComboboxOption) => {
