@@ -1,3 +1,29 @@
+<!-- 11.5.4 START -->
+
+# 11.5.4 (2025-04-23)
+
+### Features and enhancements
+
+- **Azure Monitor:** Filter namespaces by resource group [#103654](https://github.com/grafana/grafana/pull/103654), [@alyssabull](https://github.com/alyssabull)
+- **Azure:** Add support for custom namespace and custom metrics variable queries [#103650](https://github.com/grafana/grafana/pull/103650), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Resource picker improvements [#103638](https://github.com/grafana/grafana/pull/103638), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Support more complex variable interpolation [#103651](https://github.com/grafana/grafana/pull/103651), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Variable editor and resource picker improvements [#103657](https://github.com/grafana/grafana/pull/103657), [@aangelisc](https://github.com/aangelisc)
+- **Chore:** Update CVE-affected dependencies [#102709](https://github.com/grafana/grafana/pull/102709), [@grambbledook](https://github.com/grambbledook)
+- **DashboardScenePage:** Correct slug in self referencing data links [#103853](https://github.com/grafana/grafana/pull/103853), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **Dependencies:** Bump github.com/redis/go-redis/v9 to 9.6.3 to address CVE-2025-29923 [#102865](https://github.com/grafana/grafana/pull/102865), [@macabu](https://github.com/macabu)
+- **Go:** Bump to 1.24.2 [#103525](https://github.com/grafana/grafana/pull/103525), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+- **Prometheus:** Add support for cloud partners Prometheus data sources [#103942](https://github.com/grafana/grafana/pull/103942), [@kevinwcyu](https://github.com/kevinwcyu)
+
+### Bug fixes
+
+- **InfluxDB:** Fix nested variable interpolation [#104095](https://github.com/grafana/grafana/pull/104095), [@aangelisc](https://github.com/aangelisc)
+- **LDAP test:** Fix page crash [#102683](https://github.com/grafana/grafana/pull/102683), [@ashharrison90](https://github.com/ashharrison90)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.5.4 END -->
 <!-- 11.4.4 START -->
 
 # 11.4.4 (2025-04-23)
