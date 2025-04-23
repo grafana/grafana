@@ -52,7 +52,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
   const { selectedAlertmanager } = useAlertmanager();
-  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
 
@@ -310,29 +310,29 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
         />
       </Field>
       <Field
-            label={t('alerting.am-routes-expanded-form.am-active-timing-select-label-active-timings', 'Active timings')}
-            data-testid="am-active-timing-select"
-            description={t(
-                'alerting.am-routes-expanded-form.am-mute-timing-select-description-add-active-timing-to-policy',
-                'Add active timing to policy'
-            )}
-            invalid={!!errors.activeTimeIntervals}
-        >
-            <Controller
-                render={({ field: { onChange, ref, ...field } }) => (
-                    <MuteTimingsSelector
-                        alertmanager={selectedAlertmanager!}
-                        selectProps={{
-                            ...field,
-                            disabled: !canSeeMuteTimings,
-                            onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
-                        }}
-                    />
-                )}
-                control={control}
-                name="activeTimeIntervals"
+        label={t('alerting.am-routes-expanded-form.am-active-timing-select-label-active-timings', 'Active timings')}
+        data-testid="am-active-timing-select"
+        description={t(
+          'alerting.am-routes-expanded-form.am-mute-timing-select-description-add-active-timing-to-policy',
+          'Add active timing to policy'
+        )}
+        invalid={!!errors.activeTimeIntervals}
+      >
+        <Controller
+          render={({ field: { onChange, ref, ...field } }) => (
+            <MuteTimingsSelector
+              alertmanager={selectedAlertmanager!}
+              selectProps={{
+                ...field,
+                disabled: !canSeeMuteTimings,
+                onChange: (value) => onChange(mapMultiSelectValueToStrings(value)),
+              }}
             />
-        </Field>
+          )}
+          control={control}
+          name="activeTimeIntervals"
+        />
+      </Field>
       {actionButtons}
     </form>
   );

@@ -11,13 +11,13 @@ import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/ti
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { MuteTimingsTable } from './MuteTimingsTable';
+import { TimeIntervalsTable } from './MuteTimingsTable';
 import { defaultConfig } from './mocks';
 
 const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
-      <MuteTimingsTable />
+      <TimeIntervalsTable />
     </AlertmanagerProvider>
   );
 };
