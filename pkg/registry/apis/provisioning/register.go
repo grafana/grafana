@@ -548,13 +548,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
-			legacyFolders := migrate.NewLegacyFoldersMigrator(b.legacyMigrator)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
 				b.repositoryResources,
 				b.parsers,
 				b.legacyMigrator,
-				legacyFolders,
 				signerFactory,
+				b.clients,
+				export.ExportAll,
 			)
 			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
 			legacyMigrator := migrate.NewLegacyMigrator(
