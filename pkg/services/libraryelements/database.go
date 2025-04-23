@@ -900,11 +900,23 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		if err := l.requireEditPermissionsOnFolderUID(c, signedInUser, folderUID); err != nil {
-			if errors.Is(err, dashboards.ErrDashboardNotFound) {
-				return dashboards.ErrFolderNotFound
-			}
+		// Try to fetch the folder before deleting the elements, this ensures that we return folder not found error if the folder does not exist
+		_, err := l.folderService.Get(c, &folder.GetFolderQuery{
+			OrgID:        signedInUser.GetOrgID(),
+			UID:          &folderUID,
+			SignedInUser: signedInUser,
+		})
+		if err != nil {
 			return err
+		}
+
+		evaluator := ac.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
+		canEdit, err := l.AccessControl.Evaluate(c, signedInUser, evaluator)
+		if err != nil {
+			return err
+		}
+		if !canEdit {
+			return dashboards.ErrFolderAccessDenied
 		}
 		var connectionIDs []struct {
 			ConnectionID int64 `xorm:"connection_id"`
@@ -912,7 +924,7 @@ func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Conte
 		sql := "SELECT lec.connection_id FROM library_element AS le"
 		sql += " INNER JOIN " + model.LibraryElementConnectionTableName + " AS lec on le.id = lec.element_id"
 		sql += " WHERE le.folder_uid=? AND le.org_id=?"
-		err := session.SQL(sql, folderUID, signedInUser.GetOrgID()).Find(&connectionIDs)
+		err = session.SQL(sql, folderUID, signedInUser.GetOrgID()).Find(&connectionIDs)
 		if err != nil {
 			return err
 		}
