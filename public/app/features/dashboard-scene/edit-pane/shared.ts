@@ -1,11 +1,12 @@
 import { useSessionStorage } from 'react-use';
 
 import { BusEventWithPayload } from '@grafana/data';
-import { SceneGridRow, SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
+import { LocalValueVariable, SceneGridRow, SceneObject, SceneVariableSet, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../scene/DashboardScene';
 import { SceneGridRowEditableElement } from '../scene/layout-default/SceneGridRowEditableElement';
 import { EditableDashboardElement, isEditableDashboardElement } from '../scene/types/EditableDashboardElement';
+import { LocalVariableEditableElement } from '../settings/variables/LocalVariableEditableElement';
 import { VariableEditableElement } from '../settings/variables/VariableEditableElement';
 import { VariableSetEditableElement } from '../settings/variables/VariableSetEditableElement';
 import { isSceneVariable } from '../settings/variables/utils';
@@ -40,6 +41,10 @@ export function getEditableElementFor(sceneObj: SceneObject | undefined): Editab
 
   if (sceneObj instanceof SceneVariableSet) {
     return new VariableSetEditableElement(sceneObj);
+  }
+
+  if (sceneObj instanceof LocalValueVariable) {
+    return new LocalVariableEditableElement(sceneObj);
   }
 
   if (isSceneVariable(sceneObj)) {
