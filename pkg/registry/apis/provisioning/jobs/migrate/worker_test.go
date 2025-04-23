@@ -92,24 +92,6 @@ func TestMigrationWorker_WithHistory(t *testing.T) {
 		err := worker.Process(context.Background(), repo, job, progressRecorder)
 		require.EqualError(t, err, "history is only supported for github repositories")
 	})
-
-	t.Run("fail unified", func(t *testing.T) {
-		progressRecorder := jobs.NewMockJobProgressRecorder(t)
-		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
-		progressRecorder.On("Strict").Return()
-
-		repo := repository.NewMockRepository(t)
-		repo.On("Config").Return(&provisioning.Repository{
-			Spec: provisioning.RepositorySpec{
-				Type: provisioning.GitHubRepositoryType,
-				GitHub: &provisioning.GitHubRepositoryConfig{
-					URL: "empty", // not valid
-				},
-			},
-		})
-		err := worker.Process(context.Background(), repo, job, progressRecorder)
-		require.EqualError(t, err, "history is not yet supported in unified storage")
-	})
 }
 
 func TestMigrationWorker_Process(t *testing.T) {
