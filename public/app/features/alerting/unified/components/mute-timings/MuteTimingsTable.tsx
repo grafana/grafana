@@ -107,9 +107,8 @@ export const MuteTimingsTable = () => {
           </>
         )}
       </Stack>
-      {items.length > 0 ? (
-        <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} />
-      ) : !hideActions ? (
+      {items.length > 0 ? <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} /> : null}
+      {items.length === 0 && !hideActions ? (
         <EmptyAreaWithCTA
           text={t(
             'alerting.mute-timings-table.text-havent-created-timings',

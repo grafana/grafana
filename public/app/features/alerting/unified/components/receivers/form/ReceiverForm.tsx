@@ -138,11 +138,9 @@ export function ReceiverForm<R extends ChannelValues>({
       <form onSubmit={handleSubmit(submitCallback, onInvalid)} className={styles.wrapper}>
         <Stack justifyContent="space-between" alignItems="center">
           <h2 className={styles.heading}>
-            {!isEditable
-              ? t('alerting.receiver-form.contact-point', 'Contact point')
-              : initialValues
-                ? t('alerting.receiver-form.contact-point-update', 'Update contact point')
-                : t('alerting.receiver-form.contact-point-create', 'Create contact point')}
+            {!isEditable && t('alerting.receiver-form.contact-point', 'Contact point')}
+            {isEditable && initialValues && t('alerting.receiver-form.contact-point-update', 'Update contact point')}
+            {isEditable && !initialValues && t('alerting.receiver-form.contact-point-create', 'Create contact point')}
           </h2>
           {canManagePermissions && contactPointId && (
             <ManagePermissions
