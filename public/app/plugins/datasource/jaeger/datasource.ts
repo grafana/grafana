@@ -13,9 +13,10 @@ import {
   getDefaultTimeRange,
   MutableDataFrame,
   ScopedVars,
+  toDataFrame,
   urlUtil,
 } from '@grafana/data';
-import { NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
+import { createNodeGraphFrames, NodeGraphOptions, SpanBarOptions } from '@grafana/o11y-ds-frontend';
 import {
   BackendSrvRequest,
   config,
@@ -69,27 +70,27 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
   }
 
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
-    // No query type means that the query is a trace ID query
-    // If all targets are trace ID queries, we can use the backend querying
-    const allTargetsTraceIdQuery = options.targets.every((target) => !target.queryType);
-    const allTargetsDependencyGraph = options.targets.every((target) => target.queryType === 'dependencyGraph');
-    // We have not migrated the node graph to the backend
-    // If the node graph is disabled, we can use the backend migration
-    const nodeGraphDisabled = !this.nodeGraph?.enabled;
-    if (
-      config.featureToggles.jaegerBackendMigration &&
-      (allTargetsTraceIdQuery || allTargetsDependencyGraph) &&
-      nodeGraphDisabled
-    ) {
-      return super.query(options);
-    }
-
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
     const target: JaegerQuery = options.targets[0];
-
     if (!target) {
       return of({ data: [emptyTraceDataFrame] });
+    }
+
+    if (
+      config.featureToggles.jaegerBackendMigration &&
+      // No query type means that the query is a trace ID query
+      (!target.queryType || target.queryType === 'dependencyGraph')
+    ) {
+      return super.query({ ...options, targets: [target] }).pipe(
+        map((response) => {
+          // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
+          if (this.nodeGraph?.enabled && !target.queryType) {
+            return addNodeGraphFramesToResponse(response);
+          }
+          return response;
+        })
+      );
     }
 
     // Use the internal Jaeger /dependencies API for rendering the dependency graph.
@@ -309,3 +310,18 @@ const emptyTraceDataFrame = new MutableDataFrame({
     },
   },
 });
+
+export function addNodeGraphFramesToResponse(response: DataQueryResponse): DataQueryResponse {
+  if (!response.data || response.data.length === 0) {
+    return response;
+  }
+
+  // Convert the first frame to a DataFrame for node graph processing
+  const frame = toDataFrame(response.data[0]);
+  // Add the node graph frames to the response
+  const data = response.data.concat(createNodeGraphFrames(frame));
+  return {
+    ...response,
+    data,
+  };
+}
