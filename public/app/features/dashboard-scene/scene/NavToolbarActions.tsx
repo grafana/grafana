@@ -26,10 +26,10 @@ import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 import { ScopesSelector } from 'app/features/scopes';
 
-import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
+// import { shareDashboardType } from '../../dashboard/components/ShareModal/utils';
 import { PanelEditor, buildPanelEditScene } from '../panel-edit/PanelEditor';
 import ExportButton from '../sharing/ExportButton/ExportButton';
-import ShareButton from '../sharing/ShareButton/ShareButton';
+// import ShareButton from '../sharing/ShareButton/ShareButton';
 import { DashboardInteractions } from '../utils/interactions';
 import { DynamicDashNavButtonModel, dynamicDashNavActions } from '../utils/registerDynamicDashNavAction';
 import { isLibraryPanel } from '../utils/utils';
@@ -79,6 +79,10 @@ export function ToolbarActions({ dashboard }: Props) {
     return null;
   }
 
+  if (isEditingPanel) {
+    dashboard.onEnterEditMode();
+  }
+
   if (!isEditingPanel) {
     // This adds the precence indicators in enterprise
     addDynamicActions(toolbarActions, dynamicDashNavActions.left, 'left-actions');
@@ -126,22 +130,22 @@ export function ToolbarActions({ dashboard }: Props) {
     });
   }
 
-  const isDevEnv = config.buildInfo.env === 'development';
+  // const isDevEnv = config.buildInfo.env === 'development';
 
-  toolbarActions.push({
-    group: 'icon-actions',
-    condition: isDevEnv && uid && isShowingDashboard && !isEditing,
-    render: () => (
-      <ToolbarButton
-        key="view-in-old-dashboard-button"
-        tooltip={'Switch to old dashboard page'}
-        icon="apps"
-        onClick={() => {
-          locationService.partial({ scenes: false });
-        }}
-      />
-    ),
-  });
+  // toolbarActions.push({
+  //   group: 'icon-actions',
+  //   condition: isDevEnv && uid && isShowingDashboard && !isEditing,
+  //   render: () => (
+  //     <ToolbarButton
+  //       key="view-in-old-dashboard-button"
+  //       tooltip={'Switch to old dashboard page'}
+  //       icon="apps"
+  //       onClick={() => {
+  //         locationService.partial({ scenes: false });
+  //       }}
+  //     />
+  //   ),
+  // });
 
   toolbarActions.push({
     group: 'icon-actions',
@@ -370,27 +374,27 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  const showShareButton = uid && !isEditing && !meta.isSnapshot && !isPlaying;
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
-    render: () => (
-      <Button
-        key="share-dashboard-button"
-        tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
-        size="sm"
-        className={styles.buttonWithExtraMargin}
-        fill="outline"
-        onClick={() => {
-          DashboardInteractions.toolbarShareClick();
-          locationService.partial({ shareView: shareDashboardType.link });
-        }}
-        data-testid={selectors.components.NavToolbar.shareDashboard}
-      >
-        Share
-      </Button>
-    ),
-  });
+  const showShareButton = uid && isEditing && !meta.isSnapshot && !isPlaying;
+  // toolbarActions.push({
+  //   group: 'main-buttons',
+  //   condition: !config.featureToggles.newDashboardSharingComponent && showShareButton,
+  //   render: () => (
+  //     <Button
+  //       key="share-dashboard-button"
+  //       tooltip={t('dashboard.toolbar.share', 'Share dashboard')}
+  //       size="sm"
+  //       className={styles.buttonWithExtraMargin}
+  //       fill="outline"
+  //       onClick={() => {
+  //         DashboardInteractions.toolbarShareClick();
+  //         locationService.partial({ shareView: shareDashboardType.link });
+  //       }}
+  //       data-testid={selectors.components.NavToolbar.shareDashboard}
+  //     >
+  //       Share
+  //     </Button>
+  //   ),
+  // });
 
   toolbarActions.push({
     group: 'main-buttons',
@@ -439,11 +443,11 @@ export function ToolbarActions({ dashboard }: Props) {
     render: () => <ExportButton key="new-export-dashboard-button" dashboard={dashboard} />,
   });
 
-  toolbarActions.push({
-    group: 'new-share-dashboard-buttons',
-    condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
-    render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
-  });
+  // toolbarActions.push({
+  //   group: 'new-share-dashboard-buttons',
+  //   condition: config.featureToggles.newDashboardSharingComponent && showShareButton,
+  //   render: () => <ShareButton key="new-share-dashboard-button" dashboard={dashboard} />,
+  // });
 
   toolbarActions.push({
     group: 'settings',
