@@ -8,7 +8,6 @@ featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
 correlations,GA,@grafana/dataviz-squad,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
