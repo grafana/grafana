@@ -2,7 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { useLocalStorage } from 'react-use';
 
 import { store, type ExtensionInfo } from '@grafana/data';
-import { config, getAppEvents } from '@grafana/runtime';
+import { config, getAppEvents, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
@@ -75,13 +75,43 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
     EXTENSION_SIDEBAR_WIDTH_LOCAL_STORAGE_KEY,
     DEFAULT_EXTENSION_SIDEBAR_WIDTH
   );
+
+  const [currentPath, setCurrentPath] = useState(locationService.getLocation().pathname);
+
+  useEffect(() => {
+    const subscription = locationService.getLocationObservable().subscribe((location) => {
+      setCurrentPath(location.pathname);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  // these links are needed to conditionally render the extension component
+  // that means, a plugin would need to register both, a link and a component to
+  // `grafana/extension-sidebar/v0-alpha` and the link's `configure` method would control
+  // whether the component is rendered or not
+  const { links } = usePluginLinks({
+    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+    context: {
+      path: currentPath,
+    },
+  });
+
   const isEnabled = !!config.featureToggles.extensionSidebar;
   // get all components for this extension point, but only for the permitted plugins
   // if the extension sidebar is not enabled, we will return an empty map
   const availableComponents = isEnabled
     ? new Map(
-        Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(([pluginId]) =>
-          PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId)
+        Array.from(getExtensionPointPluginMeta(EXTENSION_SIDEBAR_EXTENSION_POINT_ID).entries()).filter(
+          ([pluginId, pluginMeta]) =>
+            PERMITTED_EXTENSION_SIDEBAR_PLUGINS.includes(pluginId) &&
+            links.some(
+              (link) =>
+                link.pluginId === pluginId &&
+                pluginMeta.addedComponents.some((component) => component.title === link.title)
+            )
         )
       )
     : new Map<
