@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Template variables
+menuTitle: Prometheus template variables
 title: Prometheus template variables
 weight: 400
 refs:
@@ -69,10 +69,10 @@ With the query variable type, you can set the following query options:
 
 | Option                | Description                                                                                             |
 | --------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Data source**       | Select your data source from the drop-down list.                                                         |
+| **Data source**       | Select your data source from the drop-down list.                                                        |
 | **Select query type** | Options are `default`, `value` and `metric name`. Each query type hits a different Prometheus endpoint. |
 | **Regex**             | Optional, if you want to extract part of a series name or metric node segment.                          |
-| **Sort**              | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.   |
+| **Sort**              | Default is `disabled`. Options include `alphabetical`, `numerical`, and `alphabetical case-sensitive`.  |
 | **Refresh**           | When to update the values for the variable. Options are `On dashboard load` and `On time range change`. |
 
 ### Selection options
@@ -90,9 +90,8 @@ You can use global built-in variables in query variables, including the followin
 - `$__interval`
 - `$__interval_ms`
 - `$__range`
-- `$__range_s` 
+- `$__range_s`
 - `$__range_ms`
-
 
 For details, refer to [Global built-in variables](ref:add-template-variables-global-variables).
 The `label_values` function doesn't support queries, so you can use these variables in conjunction with the `query_result` function to filter variable queries.
@@ -148,11 +147,12 @@ The value of `$__rate_interval` is calculated as:
 ```
 max($__interval + scrape_interval, 4 * scrape_interval)
 ```
+
 Here, `scrape_interval` refers to the `min step` setting (also known as `query_interval`) specified per PromQL query, if set. If not, Grafana falls back to the Prometheus data source’s scrape interval setting.
 
 The `min interval` setting in the panel is modified by the resolution setting, and therefore doesn't have any effect on `scrape interval`.
 
-For details, refer to the Grafana blog [$__rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
+For details, refer to the Grafana blog [$\_\_rate_interval for Prometheus rate queries that just work](https://grafana.com/blog/2020/09/28/new-in-grafana-7.2-__rate_interval-for-prometheus-rate-queries-that-just-work/).
 
 ## Choose a variable syntax
 

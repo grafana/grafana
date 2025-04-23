@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Configure Prometheus
+menuTitle: Configure the Prometheus data source
 title: Configure the Prometheus data source
 weight: 200
 refs:
@@ -63,12 +63,12 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#default_manage_alerts_ui_toggle
   private-data-source-connect:
     - pattern: /docs/grafana/
-      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
     - pattern: /docs/grafana-cloud/
-      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
   configure-pdc:
     - pattern: /docs/grafana/
-      destination:  /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
   azure-active-directory:
@@ -155,7 +155,7 @@ Use TLS (Transport Layer Security) for an additional layer of security when work
 - **Add self-signed certificate** - Check the box to authenticate with a CA certificate. Follow the instructions of the CA (Certificate Authority) to download the certificate file. Required for verifying self-signed TLS certificates.
   - **CA certificate** - Add your certificate.
 - **TLS client authentication** - Check the box to enable TLS client authentication.
-  - **Server name** - Add the server name, which is used to verify the hostname on the returned certificate. 
+  - **Server name** - Add the server name, which is used to verify the hostname on the returned certificate.
   - **Client certificate** - The client certificate is generated from a Certificate Authority or its self-signed. Follow the instructions of the CA (Certificate Authority) to download the certificate file.
   - **Client key** - Add your client key, which can also be generated from a Certificate Authority (CA) or be self-signed. The client key encrypts data between the client and server.
 - **Skip TLS verify** - Toggle on to bypass TLS certificate validation. Skipping TLS certificate validation is not recommended unless absolutely necessary or for testing purposes.
@@ -173,7 +173,7 @@ Following are optional configuration settings you can configure for more control
 
 - **Advanced HTTP settings:**
   - **Allowed cookies** - Specify cookies by name that should be forwarded to the data source. The Grafana proxy deletes all forwarded cookies by default.
-  - **Timeout** - The HTTP request timeout, must be in seconds. 
+  - **Timeout** - The HTTP request timeout, must be in seconds.
 
 **Alerting:**
 
@@ -199,9 +199,9 @@ Following are optional configuration settings you can configure for more control
 
 **Other settings:**
 
-- **Custom query parameters** - Add custom parameters to the Prometheus query URL, which allow for more control over how queries are executed. Examples: `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be joined using `&`. 
+- **Custom query parameters** - Add custom parameters to the Prometheus query URL, which allow for more control over how queries are executed. Examples: `timeout`, `partial_response`, `dedup`, or `max_source_resolution`. Multiple parameters should be joined using `&`.
 - **HTTP method** - Select either the `POST` or `GET` HTTP method to query your data source. `POST`is recommended and selected by default, as it supports larger queries. Select `GET` if you're using Prometheus version 2.1 or older, or if your network restricts `POST` requests.
-Toggle on 
+  Toggle on
 - **Use series endpoint** - Enabling this option makes Grafana use the series endpoint (/api/v1/series) with the match[] parameter instead of the label values endpoint (/api/v1/label/<label_name>/values). While the label values endpoint is generally more performant, some users may prefer the series endpoint because it supports the `POST` method, whereas the label values endpoint only allows `GET` requests.
 
 **Exemplars:**
@@ -223,9 +223,9 @@ You can add multiple exemplars.
 
 Click **Manage private data source connect** to be taken to your PDC connection page, where you’ll find your PDC configuration details.
 
-Once you have configured your Prometheus data source options, click **Save & test** at the bottom to test out your data source connection. 
+Once you have configured your Prometheus data source options, click **Save & test** at the bottom to test out your data source connection.
 
-You should see a confirmation dialog box that says: 
+You should see a confirmation dialog box that says:
 
 **Successfully queried the Prometheus API.**
 
@@ -299,4 +299,3 @@ Refer to the following troubleshooting information as needed.
 **Data doesn't appear in Metrics Drilldown:**
 
 If you have successfully tested the connection to a Prometheus data source or are sending metrics to Grafana Cloud and there is no metric data appearing in Explore, make sure you've selected the correct data source from the data source drop-down menu. When using `remote_write` to send metrics to Grafana Cloud, the data source name follows the convention `grafanacloud-stackname-prom`.
-

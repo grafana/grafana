@@ -12,7 +12,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Query editor
+menuTitle: Prometheus query editor
 title: Prometheus query editor
 weight: 300
 refs:
@@ -42,10 +42,10 @@ refs:
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/visualizations/time-series/#transform
   explore:
-   - pattern: /docs/grafana/
-     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
-   - pattern: /docs/grafana-cloud/
-     destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana/<GRAFANA_VERSION>/explore/
 ---
 
 # Prometheus query editor
@@ -79,7 +79,7 @@ Builder mode contains the following components:
 
 - **Kick start your query** - Click to view a list of predefined operation patterns that help you quickly build queries with multiple operations. These include:
 
-  - Rate query starters 
+  - Rate query starters
   - Histogram query starters
   - Binary query starters
 
@@ -95,30 +95,32 @@ If you select Builder mode you will see the following options:
 
 - **Metric** - Select a metric from the drop-down. Click the icon to open Metrics explorer, where you can search for metrics by name and filter by type if your instance has a large number of metrics. Refer to [Metrics explorer](#metrics-explorer) for more detail on using this feature.
 - **Label filters** - Select label filters from the drop-down. Select an operator and a value.
-Select desired labels and their values from the drop-down list.
-When a metric is selected, the data source requests available labels and their values from the server.
-Use the `+` button to add a label, and the `x` button to remove a label.
+  Select desired labels and their values from the drop-down list.
+  When a metric is selected, the data source requests available labels and their values from the server.
+  Use the `+` button to add a label, and the `x` button to remove a label.
 
 Click **+ Operations** to select from a list of operations including Aggregations, Range functions, Functions, Binary operations, Trigonometric and Time functions. You can select multiple operations. Refer to [Operations](#operations) for more detail.
 
 **Options:**
 
 - **Legend**- Lets you customize the name for the time series. You can use a predefined or custom format.
+
   - **Auto** - Displays unique labels. Also displays all overlapping labels if a series has multiple labels.
   - **Verbose** - Displays all label names.
   - **Custom** - Lets you customize the legend using label templates. For example, `{{hostname}}` is replaced with the value of the `hostname` label. To switch to a different legend mode, clear the input and click outside the field.
 
 - **Min step** - Sets the minimum interval between data points returned by the query. For example, setting this to `1h` suggests that data is collected or displayed at hourly intervals. This setting supports the `$__interval` and `$__rate_interval` macros. Note that the time range of the query is aligned to this step size, which may adjust the actual start and end times of the returned data.
 
-- **Format** - Determines how the data from your Prometheus query is interpreted and visualized  in a panel. Choose from the following format options:
+- **Format** - Determines how the data from your Prometheus query is interpreted and visualized in a panel. Choose from the following format options:
+
   - **Time series** - The default format. Refer to [Time series kind formats](https://grafana.com/developers/dataplane/timeseries/) for information on time series data frames and how time and value fields are structured.
   - **Table** - Displays data in table format. This format works only in a [Table panel](ref:table).
   - **Heatmap** - Displays Histogram-type metrics in a [Heatmap panel](ref:heatmap) by converting cumulative histograms to regular ones and sorting the series by the bucket bound. Converts cumulative histogram data into regular histogram format and sorts the series by bucket boundaries for proper display.
 
 - **Type** - This setting determines the query type. These include:
   - **Both** - The default option. Returns results for both a **Range** query and an **Instant** query.
-  - **Range** - Returns a range vector - a set of time series 
-  a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
+  - **Range** - Returns a range vector - a set of time series
+    a set of time series where each series includes multiple data points over a period of time. You can choose to visualize the data as lines, bars, points, stacked lines, or stacked bars.
   - **Instant** - Returns a single data point per series — the most recent value within the selected time range. The results can be displayed in a table or as raw data. To visualize instant query results in a time series panel, start by adding field override, then add a property to the override called `Transform`, and set the Transform value to `Constant` in the drop-down. For more information, refer to the [Time Series Transform option documentation](ref:time-series-transform).
 
 {{% admonition type="note" %}}

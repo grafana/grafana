@@ -66,14 +66,13 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure
-
 ---
 
 # Prometheus data source
 
-Prometheus is an open-source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting. 
+Prometheus is an open-source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting.
 
-Grafana provides native support for Prometheus, so you don't need to install a plugin. 
+Grafana provides native support for Prometheus, so you don't need to install a plugin.
 
 The following documentation will help you get started working with Prometheus and Grafana:
 
@@ -86,7 +85,7 @@ The following documentation will help you get started working with Prometheus an
 
 ## Exemplars
 
-In Prometheus, an **exemplar** is a specific trace that represents a measurement taken within a given time interval. While metrics provide an aggregated view of your system, and traces offer a detailed view of individual requests, exemplars serve as a bridge between the two, linking high-level metrics to specific traces for deeper insights. 
+In Prometheus, an **exemplar** is a specific trace that represents a measurement taken within a given time interval. While metrics provide an aggregated view of your system, and traces offer a detailed view of individual requests, exemplars serve as a bridge between the two, linking high-level metrics to specific traces for deeper insights.
 
 Exemplars associate higher-cardinality metadata from a specific event with traditional time series data. Refer to [Introduction to exemplars](ref:exemplars) in the Prometheus documentation for detailed information on how they work.
 
@@ -115,7 +114,7 @@ Complete the following steps to import the pre-built dashboard:
 
 1. Navigate to the Prometheus [configuration page](ref:configure-prometheus-data-source).
 1. Click the **Dashboards** tab.
-1. Locate the **Grafana metrics** dashboard in the list and click **Import**. 
+1. Locate the **Grafana metrics** dashboard in the list and click **Import**.
 
 For details about these metrics, refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring).
 
