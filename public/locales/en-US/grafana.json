@@ -3174,6 +3174,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
         "multiple-panels": "Multiple panels",
