@@ -164,7 +164,7 @@ func SetDualWritingMode(
 			return Mode0, errDualWriterSetCurrentMode
 		}
 	case cfg.Mode >= Mode3 && currentMode < Mode3:
-		if cfg.DisableMigration {
+		if cfg.SkipDataSync {
 			return currentMode, nil
 		}
 

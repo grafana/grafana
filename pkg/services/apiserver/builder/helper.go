@@ -345,7 +345,7 @@ func InstallAPIs(
 				Kind:                   key,
 				RequestInfo:            requestInfo,
 				Mode:                   mode,
-				DisableMigration:       dualWriterMigrationDataSyncDisabled,
+				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
 				LegacyStorage:          legacy,
 				Storage:                storage,
 				ServerLockService:      serverLock,

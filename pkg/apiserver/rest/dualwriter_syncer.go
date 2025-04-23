@@ -36,7 +36,7 @@ type SyncerConfig struct {
 	LegacyStorage     Storage
 	Storage           Storage
 	ServerLockService ServerLockService
-	DisableMigration  bool
+	SkipDataSync      bool
 
 	DataSyncerInterval     time.Duration
 	DataSyncerRecordsLimit int

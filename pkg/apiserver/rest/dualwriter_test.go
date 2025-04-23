@@ -16,12 +16,12 @@ import (
 
 func TestSetDualWritingMode(t *testing.T) {
 	type testCase struct {
-		name             string
-		kvStore          *fakeNamespacedKV
-		desiredMode      DualWriterMode
-		expectedMode     DualWriterMode
-		disableMigration bool
-		serverLockError  error
+		name            string
+		kvStore         *fakeNamespacedKV
+		desiredMode     DualWriterMode
+		expectedMode    DualWriterMode
+		skipDataSync    bool
+		serverLockError error
 	}
 	tests :=
 		[]testCase{
@@ -63,11 +63,11 @@ func TestSetDualWritingMode(t *testing.T) {
 				serverLockError: fmt.Errorf("lock already exists"),
 			},
 			{
-				name:             "should keep mode2 when trying to go from mode2 to mode3 and migration is disabled",
-				kvStore:          &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
-				desiredMode:      Mode3,
-				expectedMode:     Mode2,
-				disableMigration: true,
+				name:         "should keep mode2 when trying to go from mode2 to mode3 and migration is disabled",
+				kvStore:      &fakeNamespacedKV{data: map[string]string{"playlist.grafana.app/playlists": "2"}, namespace: "storage.dualwriting"},
+				desiredMode:  Mode3,
+				expectedMode: Mode2,
+				skipDataSync: true,
 			},
 		}
 
@@ -94,7 +94,7 @@ func TestSetDualWritingMode(t *testing.T) {
 			Storage:           us,
 			Kind:              "playlist.grafana.app/playlists",
 			Mode:              tt.desiredMode,
-			DisableMigration:  tt.disableMigration,
+			SkipDataSync:      tt.skipDataSync,
 			ServerLockService: serverLockSvc,
 			RequestInfo:       &request.RequestInfo{},
 			Reg:               p,
