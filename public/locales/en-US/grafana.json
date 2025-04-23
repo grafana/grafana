@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "Delete",
         "edit-yaml": "Edit YAML",
-        "save": "Save rule",
         "save-exit": "Save rule and exit"
       },
       "title-delete-rule": "Delete rule"
