@@ -118,6 +118,11 @@ const getStyles = (theme: GrafanaTheme2) => ({
       background: 'none',
     },
     padding: 0,
+    height: 'auto',
+    '& span': {
+      whiteSpace: 'normal',
+      textAlign: 'left',
+    },
   }),
   oneClickWrapper: css({
     display: 'flex',

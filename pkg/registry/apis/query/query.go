@@ -191,9 +191,9 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	case 1:
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if err == nil && alertQueryWithoutExpression(req) {
-			b.log.Debug("handling alert query without expression")
-			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+		if err == nil && isSingleAlertQuery(req) {
+			b.log.Debug("handling alert query with single query")
+			qdr, err = b.convertQueryFromAlerting(ctx, req.Requests[0], qdr)
 		}
 	default:
 		b.log.Debug("executing concurrent queries")
@@ -416,7 +416,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
-func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
+func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req datasourceRequest,
 	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
 	if len(req.Request.Queries) == 0 {
 		return nil, errors.New("no queries to convert")
@@ -475,14 +475,14 @@ func (r responderWrapper) Error(err error) {
 	r.wrapped.Error(err)
 }
 
-// Checks if the request only contains a single query and not expression.
-func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+// Checks if the request only contains a single query and is from Alerting
+func isSingleAlertQuery(req parsedRequestInfo) bool {
 	if len(req.Requests) != 1 {
 		return false
 	}
 	headers := req.Requests[0].Headers
 	_, exist := headers[models.FromAlertHeaderName]
-	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+	if exist && len(req.Requests[0].Request.Queries) == 1 {
 		return true
 	}
 	return false

@@ -29,6 +29,8 @@ import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 import { createRelativeUrl } from '../utils/url';
 
+import { RuleListPageTitle } from './RuleListPageTitle';
+
 const VIEWS = {
   groups: RuleListGroupView,
   state: RuleListStateView,
@@ -123,6 +125,7 @@ const RuleListV1 = () => {
     <AlertingPageWrapper
       navId="alert-list"
       isLoading={false}
+      renderTitle={(title) => <RuleListPageTitle title={title} />}
       actions={
         hasAlertRulesCreated && (
           <Stack gap={1}>

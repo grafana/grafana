@@ -14,10 +14,10 @@ require (
 	github.com/bwmarrin/snowflake v0.3.0
 	github.com/google/uuid v1.6.0
 	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d
-	github.com/grafana/grafana/apps/dashboard v0.0.0-20250418141452-c174c855c30c
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
-	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250418141452-c174c855c30c
-	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250418141452-c174c855c30c
+	github.com/grafana/grafana/apps/dashboard v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/pkg/apiserver v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/stretchr/testify v1.10.0
 	gocloud.dev v0.40.0
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
@@ -118,12 +118,12 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/gorilla/mux v1.8.1 // indirect
-	github.com/grafana/authlib v0.0.0-20250325095148-d6da9c164a7d // indirect
+	github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a // indirect
 	github.com/grafana/dskit v0.0.0-20241105154643-a6b453a88040 // indirect
 	github.com/grafana/grafana-app-sdk v0.35.1 // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0 // indirect
-	github.com/grafana/grafana/apps/folder v0.0.0-20250418141452-c174c855c30c // indirect
+	github.com/grafana/grafana/apps/folder v0.0.0-20250422074709-7c8433fbb2c2 // indirect
 	github.com/grafana/otel-profiling-go v0.5.1 // indirect
 	github.com/grafana/pyroscope-go/godeltaprof v0.1.8 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware/providers/prometheus v1.0.1 // indirect
