@@ -488,6 +488,8 @@ func TestRouteGetRuleStatuses(t *testing.T) {
 		require.Equal(t, http.StatusOK, r.Status())
 		var res apimodels.RuleResponse
 		require.NoError(t, json.Unmarshal(r.Body(), &res))
+		require.Len(t, res.Data.RuleGroups, 1)
+		require.Len(t, res.Data.RuleGroups[0].Rules, 1)
 		require.NotNil(t, res.Data.RuleGroups[0].Rules[0].NotificationSettings)
 		require.Equal(t, notificationSettings.Receiver, res.Data.RuleGroups[0].Rules[0].NotificationSettings.Receiver)
 	})
