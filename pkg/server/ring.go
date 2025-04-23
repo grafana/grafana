@@ -135,42 +135,19 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 		if err := ring.WaitInstanceState(ctx, rulerRing, lifecycler.GetInstanceID(), ring.JOINING); err != nil {
-			return fmt.Errorf("Error switching to JOINING in the ring: %s", err)
+			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
 		}
 		logger.Info("resource server is JOINING in the ring")
 
 		if err := lifecycler.ChangeState(context.Background(), ring.ACTIVE); err != nil {
-			return fmt.Errorf("Error switching to ACTIVE in the ring: %s", err)
+			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
 
 		logger.Info("waiting until resource server is ACTIVE in the ring")
 		if err := ring.WaitInstanceState(context.Background(), rulerRing, lifecycler.GetInstanceID(), ring.ACTIVE); err != nil {
-			return fmt.Errorf("Error switching to ACTIVE in the ring: %s", err)
+			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
 		logger.Info("resource server is ACTIVE in the ring")
-
-		// if ms.cfg.RingDebugServerPort != "" {
-		// 	go func() {
-		// 		listener, err := net.Listen("tcp", net.JoinHostPort(ms.cfg.MemberlistBindAddr, ms.cfg.RingDebugServerPort))
-		// 		if err != nil {
-		// 			panic(err)
-		// 		}
-		// 		mux := http.NewServeMux()
-		// 		mux.Handle("/ring", lifecycler)
-		// 		server := http.Server{
-		// 			Handler:           mux,
-		// 			ReadTimeout:       15 * time.Second,
-		// 			WriteTimeout:      15 * time.Second,
-		// 			IdleTimeout:       60 * time.Second,
-		// 			ReadHeaderTimeout: 5 * time.Second,
-		// 		}
-		// 		err = server.Serve(listener)
-		// 		if err != nil {
-		// 			logger.Error("could not start debug ring server", "err", err)
-		// 		}
-		// 		// mux.Handle("/kv", memberlistsvc)
-		// 	}()
-		// }
 
 		return nil
 	}
@@ -296,4 +273,3 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 
 	return ringclient.NewPool(ringName, poolCfg, nil, factory, clientsCount, log)
 }
-

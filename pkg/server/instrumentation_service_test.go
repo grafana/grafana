@@ -19,8 +19,8 @@ func TestRunInstrumentationService(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.HTTPPort = "3001"
 	ms := ModuleServer{
-		log: log.New("test-logger"),
-		cfg: cfg,
+		log:          log.New("test-logger"),
+		cfg:          cfg,
 		promGatherer: prometheus.DefaultGatherer,
 	}
 	s, err := ms.initInstrumentationServer()
