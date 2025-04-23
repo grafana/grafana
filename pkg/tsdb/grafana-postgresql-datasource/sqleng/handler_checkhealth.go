@@ -25,7 +25,7 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 	if err != nil {
 		logCheckHealthError(ctx, e.dsInfo, err)
 		if strings.EqualFold(req.PluginContext.User.Role, "Admin") {
-			return ErrToHealthCheckResult(ctx, err, features)
+			return ErrToHealthCheckResult(err)
 		}
 		errResponse := &backend.CheckHealthResult{
 			Status:  backend.HealthStatusError,
@@ -38,7 +38,7 @@ func (e *DataSourceHandler) CheckHealth(ctx context.Context, req *backend.CheckH
 
 // ErrToHealthCheckResult converts error into user friendly health check message
 // This should be called with non nil error. If the err parameter is empty, we will send Internal Server Error
-func ErrToHealthCheckResult(ctx context.Context, err error, features featuremgmt.FeatureToggles) (*backend.CheckHealthResult, error) {
+func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 	if err == nil {
 		return &backend.CheckHealthResult{Status: backend.HealthStatusError, Message: "Internal Server Error"}, nil
 	}
@@ -70,36 +70,35 @@ func ErrToHealthCheckResult(ctx context.Context, err error, features featuremgmt
 			res.Message += fmt.Sprintf(". Error message: %s", errMessage)
 		}
 	}
-	if features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr != nil {
-				if pgErr.Code != "" {
-					res.Message += fmt.Sprintf(". Postgres error code: %s", pgErr.Code)
-				}
-				details["verboseMessage"] = pgErr.Message
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) {
+		if pgErr != nil {
+			if pgErr.Code != "" {
+				res.Message += fmt.Sprintf(". Postgres error code: %s", pgErr.Code)
 			}
-		}
-	} else {
-		if errors.Is(err, pq.ErrSSLNotSupported) {
-			res.Message = "SSL error: Failed to connect to the server"
-		}
-		if strings.HasPrefix(err.Error(), "pq") {
-			res.Message = "Database error: Failed to connect to the postgres server"
-			if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
-				details["verboseMessage"] = unwrappedErr.Error()
-			}
-		}
-		var pqErr *pq.Error
-		if errors.As(err, &pqErr) {
-			if pqErr != nil {
-				if pqErr.Code != "" {
-					res.Message += fmt.Sprintf(". Postgres error code: %s", pqErr.Code.Name())
-				}
-				details["verboseMessage"] = pqErr.Message
-			}
+			details["verboseMessage"] = pgErr.Message
 		}
 	}
+	if errors.Is(err, pq.ErrSSLNotSupported) {
+		res.Message = "SSL error: Failed to connect to the server"
+	}
+	if strings.HasPrefix(err.Error(), "pq") {
+		res.Message = "Database error: Failed to connect to the postgres server"
+		if unwrappedErr := errors.Unwrap(err); unwrappedErr != nil {
+			details["verboseMessage"] = unwrappedErr.Error()
+		}
+	}
+	var pqErr *pq.Error
+	if errors.As(err, &pqErr) {
+		if pqErr != nil {
+			if pqErr.Code != "" {
+				res.Message += fmt.Sprintf(". Postgres error code: %s", pqErr.Code.Name())
+			}
+			details["verboseMessage"] = pqErr.Message
+		}
+	}
+
 	detailBytes, marshalErr := json.Marshal(details)
 	if marshalErr != nil {
 		return res, nil
@@ -138,10 +137,10 @@ func logCheckHealthError(ctx context.Context, dsInfo DataSourceInfo, err error) 
 		"config_tls_client_cert_length":     len(dsInfo.DecryptedSecureJSONData["tlsClientCert"]),
 		"config_tls_client_key_length":      len(dsInfo.DecryptedSecureJSONData["tlsClientKey"]),
 	}
-	configSummaryJson, marshalError := json.Marshal(configSummary)
+	configSummaryJSON, marshalError := json.Marshal(configSummary)
 	if marshalError != nil {
 		logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error")
 		return
 	}
-	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "details", string(configSummaryJson))
+	logger.Error("Check health failed", "error", err, "message_type", "ds_config_health_check_error_detailed", "details", string(configSummaryJSON))
 }

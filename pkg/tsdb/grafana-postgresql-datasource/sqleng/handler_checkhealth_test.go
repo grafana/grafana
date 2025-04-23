@@ -1,13 +1,11 @@
 package sqleng
 
 import (
-	"context"
 	"errors"
 	"net"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -53,7 +51,7 @@ func TestErrToHealthCheckResult(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ErrToHealthCheckResult(context.Background(), tt.err, featuremgmt.WithFeatures(featuremgmt.FlagPostgresDSUsePGX))
+			got, err := ErrToHealthCheckResult(tt.err)
 			require.Nil(t, err)
 			assert.Equal(t, string(tt.want.JSONDetails), string(got.JSONDetails))
 			require.Equal(t, tt.want, got)
