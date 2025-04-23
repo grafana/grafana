@@ -492,3 +492,349 @@ func TestGoGitRepo_Delete(t *testing.T) {
 		})
 	}
 }
+
+// FIXME: missing coverage for Update / Create because we use Write for both
+// when I think it shouldn't be the case as it's inconsistent with the other repository implementations
+func TestGoGitRepo_Write(t *testing.T) {
+	tests := []struct {
+		name        string
+		path        string
+		ref         string
+		data        []byte
+		pushOnWrite bool
+		setupMock   func(mockTree *MockWorktree)
+		expectError bool
+		errorType   error
+	}{
+		{
+			name:        "successful write",
+			path:        "test.txt",
+			ref:         "",
+			data:        []byte("test content"),
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				fs := memfs.New()
+				mockTree.On("Filesystem").Return(fs)
+				mockTree.On("Add", "grafana/test.txt").Return(plumbing.NewHash("abc123"), nil)
+				mockTree.On("Commit", "test write", mock.MatchedBy(func(opts *git.CommitOptions) bool {
+					return opts.Author != nil &&
+						opts.Author.Name == "Test User" &&
+						opts.Author.Email == "test@example.com" &&
+						opts.Author.When.After(time.Now().Add(-time.Minute)) &&
+						opts.Author.When.Before(time.Now().Add(time.Minute))
+				})).Return(plumbing.NewHash("def456"), nil)
+			},
+			expectError: false,
+		},
+		{
+			name:        "create folder only",
+			path:        "testdir/",
+			ref:         "",
+			data:        []byte{},
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				fs := memfs.New()
+				mockTree.On("Filesystem").Return(fs)
+				// No Add or Commit calls expected for directory creation
+			},
+			expectError: false,
+		},
+		{
+			name:        "successful write without commit",
+			path:        "test.txt",
+			ref:         "",
+			data:        []byte("test content"),
+			pushOnWrite: false,
+			setupMock: func(mockTree *MockWorktree) {
+				fs := memfs.New()
+				mockTree.On("Filesystem").Return(fs)
+				mockTree.On("Add", "grafana/test.txt").Return(plumbing.NewHash("abc123"), nil)
+			},
+			expectError: false,
+		},
+		{
+			name:        "write with directory creation",
+			path:        "dir/test.txt",
+			ref:         "",
+			data:        []byte("test content"),
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				fs := memfs.New()
+				mockTree.On("Filesystem").Return(fs)
+				mockTree.On("Add", "grafana/dir/test.txt").Return(plumbing.NewHash("abc123"), nil)
+				mockTree.On("Commit", "test write", mock.Anything).Return(plumbing.NewHash("def456"), nil)
+			},
+			expectError: false,
+		},
+		{
+			name:        "error on add",
+			path:        "test.txt",
+			ref:         "",
+			data:        []byte("test content"),
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				fs := memfs.New()
+				mockTree.On("Filesystem").Return(fs)
+				mockTree.On("Add", "grafana/test.txt").Return(plumbing.NewHash(""), fmt.Errorf("add error"))
+			},
+			expectError: true,
+			errorType:   fmt.Errorf("add error"),
+		},
+		{
+			name:        "error with ref",
+			path:        "test.txt",
+			ref:         "main",
+			data:        []byte("test content"),
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				// No mock setup needed as it should fail before using the mock
+			},
+			expectError: true,
+			errorType:   fmt.Errorf("ref unsupported"),
+		},
+		{
+			name:        "empty path",
+			path:        "",
+			ref:         "",
+			data:        []byte("test content"),
+			pushOnWrite: true,
+			setupMock: func(mockTree *MockWorktree) {
+				// No mock setup needed as it should fail before using the mock
+			},
+			expectError: true,
+			errorType:   fmt.Errorf("expected path"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup filesystem and repo
+			mockTree := NewMockWorktree(t)
+			tt.setupMock(mockTree)
+
+			// Create a worktree with the filesystem
+			repo := &GoGitRepo{
+				config: &v0alpha1.Repository{
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							Path: "grafana/",
+						},
+					},
+				},
+				tree: mockTree,
+				opts: repository.CloneOptions{
+					PushOnWrites: tt.pushOnWrite,
+				},
+			}
+
+			// Test Write method
+			ctx := context.Background()
+			// Set author signature for the test
+			ctx = repository.WithAuthorSignature(ctx, repository.CommitSignature{
+				Name:  "Test User",
+				Email: "test@example.com",
+				When:  time.Now(),
+			})
+
+			err := repo.Update(ctx, tt.path, tt.ref, tt.data, "test write")
+
+			// Check results
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.errorType != nil {
+					require.Contains(t, err.Error(), tt.errorType.Error())
+				}
+			} else {
+				require.NoError(t, err)
+			}
+
+			mockTree.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGoGitRepo_Test(t *testing.T) {
+	tests := []struct {
+		name            string
+		treeInitialized bool
+		expectedResult  bool
+	}{
+		{
+			name:            "tree is initialized",
+			treeInitialized: true,
+			expectedResult:  true,
+		},
+		{
+			name:            "tree is not initialized",
+			treeInitialized: false,
+			expectedResult:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock tree
+			mockTree := NewMockWorktree(t)
+
+			// Create repo with or without initialized tree
+			repo := &GoGitRepo{
+				config: &v0alpha1.Repository{
+					Spec: v0alpha1.RepositorySpec{
+						GitHub: &v0alpha1.GitHubRepositoryConfig{
+							Path: "grafana/",
+						},
+					},
+				},
+				tree: nil,
+			}
+
+			if tt.treeInitialized {
+				repo.tree = mockTree
+			}
+
+			// Test the Test method
+			ctx := context.Background()
+			result, err := repo.Test(ctx)
+
+			// Verify results
+			require.NoError(t, err)
+			require.NotNil(t, result)
+			require.Equal(t, tt.expectedResult, result.Success)
+		})
+	}
+}
+
+func TestGoGitRepo_Config(t *testing.T) {
+	// Create a test repository configuration
+	testConfig := &v0alpha1.Repository{
+		ObjectMeta: v1.ObjectMeta{
+			Name:      "test-repo",
+			Namespace: "test-namespace",
+		},
+		Spec: v0alpha1.RepositorySpec{
+			GitHub: &v0alpha1.GitHubRepositoryConfig{
+				Path: "grafana/",
+			},
+		},
+	}
+
+	// Create a repository instance with the test configuration
+	repo := &GoGitRepo{
+		config: testConfig,
+		tree:   NewMockWorktree(t),
+	}
+
+	// Call the Config method
+	result := repo.Config()
+
+	// Verify the result
+	require.NotNil(t, result)
+	require.Equal(t, testConfig, result)
+	require.Equal(t, "test-repo", result.Name)
+	require.Equal(t, "test-namespace", result.Namespace)
+	require.Equal(t, "grafana/", result.Spec.GitHub.Path)
+}
+
+func TestGoGitRepo_Remove(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupMock      func(t *testing.T) (*GoGitRepo, string)
+		expectError    bool
+		expectedErrMsg string
+	}{
+		{
+			name: "successful removal",
+			setupMock: func(t *testing.T) (*GoGitRepo, string) {
+				// Create a temporary directory that will be removed
+				tempDir, err := os.MkdirTemp("", "test-repo-*")
+				require.NoError(t, err)
+
+				// Create a repository instance
+				repo := &GoGitRepo{
+					dir: tempDir,
+					config: &v0alpha1.Repository{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "test-namespace",
+						},
+					},
+				}
+
+				return repo, tempDir
+			},
+			expectError: false,
+		},
+		{
+			name: "directory already removed",
+			setupMock: func(t *testing.T) (*GoGitRepo, string) {
+				// Create a temporary directory
+				tempDir, err := os.MkdirTemp("", "test-repo-*")
+				require.NoError(t, err)
+
+				// Remove it immediately to simulate it being already gone
+				err = os.RemoveAll(tempDir)
+				require.NoError(t, err)
+
+				// Create a repository instance pointing to the removed directory
+				repo := &GoGitRepo{
+					dir: tempDir,
+					config: &v0alpha1.Repository{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "test-namespace",
+						},
+					},
+				}
+
+				return repo, tempDir
+			},
+			expectError: false, // RemoveAll doesn't error if directory doesn't exist
+		},
+		{
+			name: "invalid directory path",
+			setupMock: func(t *testing.T) (*GoGitRepo, string) {
+				// Create a repository instance with an invalid directory path
+				// that should cause an error when trying to remove
+				invalidPath := string([]byte{0})
+
+				repo := &GoGitRepo{
+					dir: invalidPath,
+					config: &v0alpha1.Repository{
+						ObjectMeta: v1.ObjectMeta{
+							Name:      "test-repo",
+							Namespace: "test-namespace",
+						},
+					},
+				}
+
+				return repo, invalidPath
+			},
+			expectError:    true,
+			expectedErrMsg: "invalid argument",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup the test
+			repo, _ := tt.setupMock(t)
+
+			// Test the Remove method
+			ctx := context.Background()
+			err := repo.Remove(ctx)
+
+			// Verify results
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.expectedErrMsg != "" {
+					require.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
+			} else {
+				require.NoError(t, err)
+				// Verify the directory no longer exists
+				_, statErr := os.Stat(repo.dir)
+				require.True(t, os.IsNotExist(statErr), "Directory should not exist after removal")
+			}
+		})
+	}
+}

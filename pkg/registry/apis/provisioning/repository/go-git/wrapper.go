@@ -322,16 +322,19 @@ func (g *GoGitRepo) Update(ctx context.Context, path string, ref string, data []
 
 // Create implements repository.Repository.
 func (g *GoGitRepo) Create(ctx context.Context, path string, ref string, data []byte, message string) error {
+	// FIXME: this means we would override files
 	return g.Write(ctx, path, ref, data, message)
 }
 
 // Write implements repository.Repository.
 func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []byte, message string) error {
-	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
 	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
 
+	// FIXME: this means that won't export empty folders
+	// should we create them with a .keep file?
 	// For folders, just create the folder and ignore the commit
 	if safepath.IsDir(fpath) {
 		return g.tree.Filesystem().MkdirAll(fpath, 0750)
