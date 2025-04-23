@@ -78,11 +78,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           },
         }
       : undefined;
-  const title = isRecordingRuleByType(type)
-    ? 'Add labels'
-    : isGrafanaManaged
-      ? 'Configure notifications'
-      : 'Configure labels and notifications';
+
+  const title = (() => {
+    if (isRecordingRuleByType(type)) {
+      return 'Add labels';
+    }
+    if (isGrafanaManaged) {
+      return 'Configure notifications';
+    }
+    return 'Configure labels and notifications';
+  })();
 
   return (
     <RuleEditorSection
@@ -128,17 +133,13 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           </Text>
         </div>
       )}
-      {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
-        simplifiedModeInNotificationsStepEnabled ? ( // simplified mode is enabled
-          <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
-        ) : (
-          // simplified mode is disabled
-          <ManualAndAutomaticRouting alertUid={alertUid} />
-        )
-      ) : // when simplified routing is not enabled, render the notification preview as we did before
-      shouldRenderpreview ? (
-        <AutomaticRooting alertUid={alertUid} />
-      ) : null}
+      {shouldAllowSimplifiedRouting && simplifiedModeInNotificationsStepEnabled && (
+        <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
+      )}
+      {shouldAllowSimplifiedRouting && !simplifiedModeInNotificationsStepEnabled && (
+        <ManualAndAutomaticRouting alertUid={alertUid} />
+      )}
+      {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
     </RuleEditorSection>
   );
 };
