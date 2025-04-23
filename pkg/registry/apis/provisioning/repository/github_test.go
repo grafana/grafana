@@ -3264,3 +3264,68 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 		})
 	}
 }
+
+func TestGitHubRepository_LatestRef(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(mock *pgh.MockClient)
+		expectedRef   string
+		expectedError error
+	}{
+		{
+			name: "successful retrieval of latest ref",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{Sha: "abc123"}, nil)
+			},
+			expectedRef:   "abc123",
+			expectedError: nil,
+		},
+		{
+			name: "error getting branch",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{}, fmt.Errorf("branch not found"))
+			},
+			expectedRef:   "",
+			expectedError: fmt.Errorf("get branch: branch not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh: mockGH,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							Branch: "main",
+						},
+					},
+				},
+				owner: "grafana",
+				repo:  "grafana",
+			}
+
+			// Call the LatestRef method
+			ref, err := repo.LatestRef(context.Background())
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedRef, ref)
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
