@@ -217,12 +217,11 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     expect(builtInAnnotation.state.isHidden).toBe(true);
     expect(builtInAnnotation.state?.query.builtIn).toBe(1);
 
-    // first annotation
+    // Enabled
     expect(dataLayers.state.annotationLayers[1].state.name).toBe(dash.annotations[1].spec.name);
     expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(dash.annotations[1].spec.enable);
     expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(dash.annotations[1].spec.hide);
 
-    // Enabled
     expect(dataLayers.state.annotationLayers[2].state.name).toBe(dash.annotations[2].spec.name);
     expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(dash.annotations[2].spec.enable);
     expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(dash.annotations[2].spec.hide);
