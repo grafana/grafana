@@ -284,6 +284,7 @@ module.exports = [
       '**/*.{test,spec}.{ts,tsx}',
       '**/__mocks__/',
       'public/test',
+      '**/spec/**/*.{ts,tsx}',
     ],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
