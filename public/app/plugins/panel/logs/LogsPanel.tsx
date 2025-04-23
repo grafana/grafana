@@ -96,6 +96,17 @@ interface LogsPanelProps extends PanelProps<Options> {
    *
    * Callback to be invoked when enableInfiniteScrolling and new logs have been received after an scroll event.
    * onNewLogsReceived?: (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
+   *
+   * Log Controls props:
+   *
+   * Enables a sidebar with controls for scrolling, sort order, deduplication, filtering, timestamps, wrapping, etc.
+   * showControls?: boolean
+   *
+   * If controls are enabled, the component will use this key to store changes to the aforementioned options.
+   * controlsStorageKey?: string
+   *
+   * If controls are enabled, this function is called when a change is made in one of the options from the controls.
+   * onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
    */
 }
 interface LogsPermalinkUrlState {
