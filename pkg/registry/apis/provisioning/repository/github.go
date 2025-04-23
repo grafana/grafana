@@ -740,31 +740,10 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 	return changes, nil
 }
 
-// ClearAllPullRequestFileComments clears all comments on a pull request
-func (r *githubRepository) ClearAllPullRequestFileComments(ctx context.Context, prNumber int) error {
-	ctx, _ = r.logger(ctx, "")
-	return r.gh.ClearAllPullRequestFileComments(ctx, r.owner, r.repo, prNumber)
-}
-
 // CommentPullRequest adds a comment to a pull request.
 func (r *githubRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
 	ctx, _ = r.logger(ctx, "")
 	return r.gh.CreatePullRequestComment(ctx, r.owner, r.repo, prNumber, comment)
-}
-
-// CommentPullRequestFile lints a file and comments the issues found.
-func (r *githubRepository) CommentPullRequestFile(ctx context.Context, prNumber int, path, ref, comment string) error {
-	ctx, _ = r.logger(ctx, ref)
-	fileComment := pgh.FileComment{
-		Content:  comment,
-		Path:     path,
-		Position: 1, // create a top-level comment
-		Ref:      ref,
-	}
-
-	// FIXME: comment with Grafana Logo
-	// FIXME: comment author should be written by Grafana and not the user
-	return r.gh.CreatePullRequestFileComment(ctx, r.owner, r.repo, prNumber, fileComment)
 }
 
 // ResourceURLs implements RepositoryWithURLs.
