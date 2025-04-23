@@ -24,8 +24,9 @@ import (
 )
 
 type State struct {
-	OrgID        int64
-	AlertRuleUID string
+	OrgID          int64
+	AlertRuleUID   string
+	AlertRuleTitle string
 
 	// CacheID is a unique, opaque identifier for the state, and is used to find the state
 	// in the state cache. It tends to be derived from the state's labels.
@@ -89,6 +90,7 @@ func newState(ctx context.Context, log log.Logger, alertRule *models.AlertRule, 
 	return &State{
 		OrgID:                alertRule.OrgID,
 		AlertRuleUID:         alertRule.UID,
+		AlertRuleTitle:       alertRule.Title,
 		CacheID:              cacheID,
 		State:                eval.Normal,
 		StateReason:          "",
@@ -119,6 +121,7 @@ func (a *State) Copy() *State {
 	return &State{
 		OrgID:                a.OrgID,
 		AlertRuleUID:         a.AlertRuleUID,
+		AlertRuleTitle:       a.AlertRuleTitle,
 		CacheID:              a.CacheID,
 		State:                a.State,
 		StateReason:          a.StateReason,
