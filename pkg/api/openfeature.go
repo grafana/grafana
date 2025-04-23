@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"path"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -10,13 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/web"
 )
 
-// TODO: figure out if new config item is needed for this:
-// >we might need to be able to change the root (/foo/bar/ofrep/v1/...) - this'll likely just need to be a config item.
-// const section = ""
-
 func (hs *HTTPServer) registerOpenFeatureRoutes(apiRoute routing.RouteRegister) {
 	if hs.Cfg.OpenFeature.ProviderType == setting.StaticProviderType {
-		apiRoute.Group("/ofrep/v1", func(apiRoute routing.RouteRegister) {
+		p := "/ofrep/v1"
+		if hs.Cfg.OpenFeature.Subpath != "" {
+			p = path.Join(hs.Cfg.OpenFeature.Subpath, p)
+		}
+		apiRoute.Group(p, func(apiRoute routing.RouteRegister) {
 			apiRoute.Post("/evaluate/flags", hs.allFlagsStaticProvider)
 			apiRoute.Post("/evaluate/flags/:flagKey", hs.evalFlagStaticProvider)
 		})

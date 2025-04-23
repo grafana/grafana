@@ -77,9 +77,9 @@ func Test_CompareStaticProviderWithFeatureManager(t *testing.T) {
 	require.NoError(t, err)
 
 	openFeatureEnabledFlags := map[string]bool{}
-	for key, flag := range allFlags.Flags {
+	for _, flag := range allFlags.Flags {
 		if flag.Value {
-			openFeatureEnabledFlags[key] = true
+			openFeatureEnabledFlags[flag.Key] = true
 		}
 	}
 

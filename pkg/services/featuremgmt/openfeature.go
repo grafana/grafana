@@ -59,18 +59,18 @@ func (s *OpenFeatureService) EvalFlagWithStaticProvider(ctx context.Context, fla
 	return result, nil
 }
 
-func (s *OpenFeatureService) EvalAllFlagsWithStaticProvider(ctx context.Context) (AllFlagsGOFFResp, error) {
+func (s *OpenFeatureService) EvalAllFlagsWithStaticProvider(ctx context.Context) (OFREPBulkResponse, error) {
 	p, ok := s.provider.(*inMemoryBulkProvider)
 	if !ok {
-		return AllFlagsGOFFResp{}, fmt.Errorf("not a static provider, request must be sent to open feature service")
+		return OFREPBulkResponse{}, fmt.Errorf("not a static provider, request must be sent to open feature service")
 	}
 
 	flags, err := p.ListFlags()
 	if err != nil {
-		return AllFlagsGOFFResp{}, fmt.Errorf("static provider failed to list all flags: %w", err)
+		return OFREPBulkResponse{}, fmt.Errorf("static provider failed to list all flags: %w", err)
 	}
 
-	allFlags := make(map[string]*FlagGOFF, len(flags))
+	allFlags := make([]OFREPFlag, 0, len(flags))
 	for _, flagKey := range flags {
 		result, err := s.Client.BooleanValueDetails(ctx, flagKey, false, openfeature.TransactionContext(ctx))
 		if err != nil {
@@ -78,25 +78,31 @@ func (s *OpenFeatureService) EvalAllFlagsWithStaticProvider(ctx context.Context)
 			continue
 		}
 
-		// TODO: see if this needs to be changed so the open feature client understands the response
-		allFlags[flagKey] = &FlagGOFF{
-			VariationType: "boolean",
-			Value:         result.Value,
-		}
+		allFlags = append(allFlags, OFREPFlag{
+			Key:          flagKey,
+			Value:        result.Value,
+			Reason:       "static provider evaluation result",
+			Variant:      result.Variant,
+			ErrorCode:    string(result.ErrorCode),
+			ErrorDetails: result.ErrorMessage,
+		})
+
 	}
-
-	return AllFlagsGOFFResp{
-		Flags: allFlags,
-	}, nil
+	return OFREPBulkResponse{Flags: allFlags}, nil
 }
 
-type AllFlagsGOFFResp struct {
-	Flags map[string]*FlagGOFF `json:"flags"`
+// Bulk evaluation response
+type OFREPBulkResponse struct {
+	Flags    []OFREPFlag    `json:"flags"`
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
-type FlagGOFF struct {
-	VariationType string `json:"variationType"`
-	Timestamp     int    `json:"timestamp"`
-	TrackEvents   bool   `json:"trackEvents"`
-	Value         bool   `json:"value"`
+type OFREPFlag struct {
+	Key          string         `json:"key"`
+	Value        bool           `json:"value"`
+	Reason       string         `json:"reason"`
+	Variant      string         `json:"variant,omitempty"`
+	Metadata     map[string]any `json:"metadata,omitempty"`
+	ErrorCode    string         `json:"errorCode,omitempty"`
+	ErrorDetails string         `json:"errorDetails,omitempty"`
 }
