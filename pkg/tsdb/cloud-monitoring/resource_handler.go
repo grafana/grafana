@@ -18,7 +18,7 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 )
 
-// nameExp matches the part after the last '/' symbol
+// nameExp matches the part after the last '/' symbol test
 var nameExp = regexp.MustCompile(`([^\/]*)\/*$`)
 
 const resourceManagerPath = "/v1/projects"
