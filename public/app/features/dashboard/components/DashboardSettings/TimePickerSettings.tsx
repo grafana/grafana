@@ -123,7 +123,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           label={t('dashboard-settings.time-picker.refresh-live-dashboards-label', 'Refresh live dashboards')}
           description={t(
             'dashboard-settings.time-picker.refresh-live-dashboards-description',
-            "Continuously re-draw panels where the time range references 'now'"
+            'Continuously update panels when the time range includes the current time'
           )}
         >
           <Switch id="refresh-live-dashboards-toggle" value={!!this.props.liveNow} onChange={this.onLiveNowChange} />
