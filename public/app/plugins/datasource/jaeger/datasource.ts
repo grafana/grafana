@@ -318,8 +318,10 @@ export function addNodeGraphFramesToResponse(response: DataQueryResponse): DataQ
 
   // Convert the first frame to a DataFrame for node graph processing
   const frame = toDataFrame(response.data[0]);
+  // Add the node graph frames to the response
+  const data = response.data.concat(createNodeGraphFrames(frame));
   return {
     ...response,
-    data: [...response.data, ...createNodeGraphFrames(frame)],
+    data,
   };
 }
