@@ -19,6 +19,7 @@ import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, Icon, InlineField, InlineFieldRow, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+
 import { defaultFilters, SearchProps } from '../../../useSearch';
 import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
 import SearchBarInput from '../../common/SearchBarInput';
