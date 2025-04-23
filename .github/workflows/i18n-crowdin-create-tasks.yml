@@ -22,4 +22,4 @@ jobs:
         env:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-        run: node --experimental-strip-types ./.github/workflows/scripts/crowdin/create-tasks.js
+        run: node --experimental-strip-types ./.github/workflows/scripts/crowdin/create-tasks.ts
