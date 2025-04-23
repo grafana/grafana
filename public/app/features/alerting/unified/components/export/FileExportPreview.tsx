@@ -98,43 +98,43 @@ function FileExportInlineDocumentation({ exportProvider }: { exportProvider: Exp
     file: {
       title: 'File-provisioning format',
       component: (
-        <>
-          {name} format is only valid for File Provisioning.{' '}
+        <Trans i18nKey="alerting.file-export-inline-documentation.file-provisioning">
+          {{ name }} format is only valid for File Provisioning.{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/file-provisioning/"
             external
           >
             Read more in the docs.
           </TextLink>
-        </>
+        </Trans>
       ),
     },
     api: {
       title: 'API-provisioning format',
       component: (
-        <>
-          {name} format is only valid for API Provisioning.{' '}
+        <Trans i18nKey="alerting.file-export-inline-documentation.api-provisioning">
+          {{ name }} format is only valid for API Provisioning.{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/http-api-provisioning/"
             external
           >
             Read more in the docs.
           </TextLink>
-        </>
+        </Trans>
       ),
     },
     terraform: {
       title: 'Terraform-provisioning format',
       component: (
-        <>
-          {name} format is only valid for Terraform Provisioning.{' '}
+        <Trans i18nKey="alerting.file-export-inline-documentation.terraform-provisioning">
+          {{ name }} format is only valid for Terraform Provisioning.{' '}
           <TextLink
             href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/terraform-provisioning/"
             external
           >
             Read more in the docs.
           </TextLink>
-        </>
+        </Trans>
       ),
     },
   };

@@ -2,7 +2,7 @@ import { forwardRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom-v5-compat';
 
 import { Button, ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import * as ruleId from '../../utils/rule-id';
@@ -44,11 +44,15 @@ export function RedirectToCloneRule({
       body={
         <div>
           <p>
-            The new rule will <strong>not</strong> be marked as a provisioned rule.
+            <Trans i18nKey="alerting.redirect-to-clone-rule.body-not-provisioned">
+              The new rule will <strong>not</strong> be marked as a provisioned rule.
+            </Trans>
           </p>
           <p>
-            You will need to set a new evaluation group for the copied rule because the original one has been
-            provisioned and cannot be used for rules created in the UI.
+            <Trans i18nKey="alerting.redirect-to-clone-rule.body-evaluation-group">
+              You will need to set a new evaluation group for the copied rule because the original one has been
+              provisioned and cannot be used for rules created in the UI.
+            </Trans>
           </p>
         </div>
       }
