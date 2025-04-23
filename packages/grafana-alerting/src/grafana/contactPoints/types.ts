@@ -55,7 +55,7 @@ type SlackIntegration = OverrideProperties<
   }
 >;
 
-export type Integration = EmailIntegration | SlackIntegration;
+export type Integration = EmailIntegration | SlackIntegration | GenericIntegration;
 
 // Enhanced version of ContactPoint with typed integrations
 // ⚠️ MergeDeep does not check if the property you are overriding exists in the base type and there is no "DeepOverrideProperties" helper

@@ -3000,17 +3000,15 @@ __metadata:
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
     "@grafana/tsconfig": "npm:^2.0.0"
+    "@grafana/ui": "npm:^12.0.0-pre"
     "@reduxjs/toolkit": "npm:2.5.1"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"
     "@types/lodash": "npm:^4"
     "@types/react": "npm:18.3.18"
     "@types/react-dom": "npm:18.3.5"
-    expect-type: "npm:^1.2.0"
-    fishery: "npm:^2.2.3"
     lodash: "npm:^4.17.21"
     react: "npm:18.3.1"
     react-dom: "npm:18.3.1"
-    rimraf: "npm:6.0.1"
     type-fest: "npm:^4.40.0"
     typescript: "npm:5.7.3"
   peerDependencies:
@@ -3695,7 +3693,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/ui@npm:12.0.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
+"@grafana/ui@npm:12.0.0-pre, @grafana/ui@npm:^12.0.0-pre, @grafana/ui@workspace:*, @grafana/ui@workspace:packages/grafana-ui":
   version: 0.0.0-use.local
   resolution: "@grafana/ui@workspace:packages/grafana-ui"
   dependencies:
@@ -16409,13 +16407,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expect-type@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "expect-type@npm:1.2.0"
-  checksum: 10/12a081159e87451a96e2e2f8a5e101509b63a4f0738590bb27988d2017c6e5aff6bf722889fe7afd96cf7e343b332b040460db41850fcd7a1392a4c8e26e51e3
-  languageName: node
-  linkType: hard
-
 "expect@npm:^29.0.0, expect@npm:^29.7.0":
   version: 29.7.0
   resolution: "expect@npm:29.7.0"
@@ -16874,7 +16865,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fishery@npm:^2.2.2, fishery@npm:^2.2.3":
+"fishery@npm:^2.2.2":
   version: 2.2.3
   resolution: "fishery@npm:2.2.3"
   dependencies:

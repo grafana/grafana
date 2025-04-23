@@ -19,8 +19,7 @@ type EnhancedHookResult = TypedUseQueryHookResult<
  * with properly typed data.items as ContactPoint[]
  */
 function useListContactPoints() {
-  const result = alertingAPI.useListReceiverQuery<EnhancedHookResult>({ namespace });
-  return result;
+  return alertingAPI.useListReceiverQuery<EnhancedHookResult>({ namespace });
 }
 
 export { useListContactPoints };

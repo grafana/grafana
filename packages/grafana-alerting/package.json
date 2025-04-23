@@ -2,7 +2,7 @@
   "author": "Grafana Labs",
   "license": "AGPL-3.0-only",
   "name": "@grafana/alerting",
-  "version": "11.6.0-pre",
+  "version": "12.0.0-pre",
   "private": true,
   "description": "Grafana Alerting Library – Build vertical integrations on top of the industry-leading alerting solution",
   "keywords": [
@@ -46,11 +46,8 @@
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
-    "expect-type": "^1.2.0",
-    "fishery": "^2.2.3",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "rimraf": "6.0.1",
     "type-fest": "^4.40.0",
     "typescript": "5.7.3"
   },
@@ -59,6 +56,7 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
+    "@grafana/ui": "^12.0.0-pre",
     "lodash": "^4.17.21"
   }
 }
