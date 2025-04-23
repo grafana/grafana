@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "Delete",
         "edit-yaml": "Edit YAML",
-        "save": "Save rule",
         "save-exit": "Save rule and exit"
       },
       "title-delete-rule": "Delete rule"
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
         "multiple-panels": "Multiple panels",
@@ -4737,9 +4737,6 @@
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
-    },
-    "make-datasource-setup": {
-      "aria-label-query": "query"
     },
     "next": "Next",
     "next-prev-result": {
