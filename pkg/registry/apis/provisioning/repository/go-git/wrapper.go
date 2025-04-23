@@ -282,7 +282,7 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 			// This is the root of the repository (or should pretend to be)
 			safepath.Clean(path) == "" || path == treePath ||
 			// This is the Git data
-			(treePath == "" && strings.HasPrefix(path, ".git/")) {
+			(treePath == "" && (strings.HasPrefix(path, ".git/") || path == ".git")) {
 			return err
 		}
 		if treePath != "" {
@@ -302,9 +302,9 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 		return err
 	})
 	if errors.Is(err, fs.ErrNotExist) {
-		// We intentionally ignore this case, as
+		// We intentionally ignore this case, as it is expected
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to walk tree for ref '%s': %w", ref, err)
+		return nil, fmt.Errorf("walk tree for ref '%s': %w", ref, err)
 	}
 	return entries, nil
 }

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"testing"
 	"time"
 
@@ -1175,6 +1176,197 @@ func TestGoGitRepo_Push(t *testing.T) {
 			if mockTree != nil {
 				mockTree.AssertExpectations(t)
 			}
+		})
+	}
+}
+func TestGoGitRepo_ReadTree(t *testing.T) {
+	tests := []struct {
+		name           string
+		setupMock      func(t *testing.T) *GoGitRepo
+		ref            string
+		expectError    bool
+		expectedErrMsg string
+		expectedFiles  []repository.FileTreeEntry
+	}{
+		{
+			name: "successful read with files",
+			setupMock: func(t *testing.T) *GoGitRepo {
+				mockFS := memfs.New()
+
+				// Create test files in the mock filesystem
+				require.NoError(t, mockFS.MkdirAll("grafana/folder1", 0750))
+				file1, err := mockFS.Create("grafana/file1.txt")
+				require.NoError(t, err)
+				_, err = file1.Write([]byte("test content"))
+				require.NoError(t, err)
+				require.NoError(t, file1.Close())
+
+				file2, err := mockFS.Create("grafana/folder1/file2.txt")
+				require.NoError(t, err)
+				_, err = file2.Write([]byte("nested file content"))
+				require.NoError(t, err)
+				require.NoError(t, file2.Close())
+
+				mockTree := NewMockWorktree(t)
+				mockTree.On("Filesystem").Return(mockFS)
+
+				return &GoGitRepo{
+					config: &v0alpha1.Repository{
+						Spec: v0alpha1.RepositorySpec{
+							GitHub: &v0alpha1.GitHubRepositoryConfig{
+								Path: "grafana/",
+							},
+						},
+					},
+					tree: mockTree,
+				}
+			},
+			ref:         "main",
+			expectError: false,
+			expectedFiles: []repository.FileTreeEntry{
+				{Path: "file1.txt", Size: 12, Blob: true, Hash: "TODO/12"},
+				{Path: "folder1", Size: 0, Blob: false},
+				{Path: "folder1/file2.txt", Size: 19, Blob: true, Hash: "TODO/19"},
+			},
+		},
+		{
+			name: "filesystem error",
+			setupMock: func(t *testing.T) *GoGitRepo {
+				mockTree := NewMockWorktree(t)
+				mockFS := memfs.New()
+
+				// Create a filesystem that will return an error when accessed
+				mockTree.On("Filesystem").Return(mockFS)
+
+				return &GoGitRepo{
+					config: &v0alpha1.Repository{
+						Spec: v0alpha1.RepositorySpec{
+							GitHub: &v0alpha1.GitHubRepositoryConfig{
+								Path: "non-existent-path/",
+							},
+						},
+					},
+					tree: mockTree,
+				}
+			},
+			ref:           "main",
+			expectError:   false, // ReadTree handles fs.ErrNotExist by returning empty entries
+			expectedFiles: []repository.FileTreeEntry{},
+		},
+		{
+			name: "successful read with empty path",
+			setupMock: func(t *testing.T) *GoGitRepo {
+				mockFS := memfs.New()
+
+				// Create test files in the mock filesystem
+				file1, err := mockFS.Create("file1.txt")
+				require.NoError(t, err)
+				_, err = file1.Write([]byte("test content"))
+				require.NoError(t, err)
+				require.NoError(t, file1.Close())
+
+				require.NoError(t, mockFS.MkdirAll("folder1", 0750))
+				file2, err := mockFS.Create("folder1/file2.txt")
+				require.NoError(t, err)
+				_, err = file2.Write([]byte("nested file content"))
+				require.NoError(t, err)
+				require.NoError(t, file2.Close())
+
+				// Create .git directory which should be ignored
+				require.NoError(t, mockFS.MkdirAll(".git", 0750))
+				gitFile, err := mockFS.Create(".git/config")
+				require.NoError(t, err)
+				_, err = gitFile.Write([]byte("git config"))
+				require.NoError(t, err)
+				require.NoError(t, gitFile.Close())
+
+				mockTree := NewMockWorktree(t)
+				mockTree.On("Filesystem").Return(mockFS)
+
+				return &GoGitRepo{
+					config: &v0alpha1.Repository{
+						Spec: v0alpha1.RepositorySpec{
+							GitHub: &v0alpha1.GitHubRepositoryConfig{
+								Path: "",
+							},
+						},
+					},
+					tree: mockTree,
+				}
+			},
+			ref:         "main",
+			expectError: false,
+			expectedFiles: []repository.FileTreeEntry{
+				{Path: "file1.txt", Size: 12, Blob: true, Hash: "TODO/12"},
+				{Path: "folder1", Size: 0, Blob: false},
+				{Path: "folder1/file2.txt", Size: 19, Blob: true, Hash: "TODO/19"},
+			},
+		},
+		{
+			name: "filesystem error",
+			setupMock: func(t *testing.T) *GoGitRepo {
+				mockTree := NewMockWorktree(t)
+				mockFS := memfs.New()
+
+				// Create a filesystem that will return an error when accessed
+				mockTree.On("Filesystem").Return(mockFS)
+
+				return &GoGitRepo{
+					config: &v0alpha1.Repository{
+						Spec: v0alpha1.RepositorySpec{
+							GitHub: &v0alpha1.GitHubRepositoryConfig{
+								Path: "non-existent-path/",
+							},
+						},
+					},
+					tree: mockTree,
+				}
+			},
+			ref:           "main",
+			expectError:   false, // ReadTree handles fs.ErrNotExist by returning empty entries
+			expectedFiles: []repository.FileTreeEntry{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup the test
+			repo := tt.setupMock(t)
+
+			// Test the ReadTree method
+			ctx := context.Background()
+			entries, err := repo.ReadTree(ctx, tt.ref)
+
+			// Verify results
+			if tt.expectError {
+				require.Error(t, err)
+				if tt.expectedErrMsg != "" {
+					require.Contains(t, err.Error(), tt.expectedErrMsg)
+				}
+			} else {
+				require.NoError(t, err)
+
+				// Sort entries for consistent comparison
+				sort.Slice(entries, func(i, j int) bool {
+					return entries[i].Path < entries[j].Path
+				})
+				sort.Slice(tt.expectedFiles, func(i, j int) bool {
+					return tt.expectedFiles[i].Path < tt.expectedFiles[j].Path
+				})
+
+				require.Equal(t, len(tt.expectedFiles), len(entries), "Number of entries should match")
+				for i, expected := range tt.expectedFiles {
+					require.Equal(t, expected.Path, entries[i].Path, "Path should match")
+					require.Equal(t, expected.Size, entries[i].Size, "Size should match")
+					require.Equal(t, expected.Blob, entries[i].Blob, "Blob flag should match")
+					if expected.Blob {
+						require.Equal(t, expected.Hash, entries[i].Hash, "Hash should match")
+					}
+				}
+			}
+
+			// Verify mock expectations
+			repo.tree.(*MockWorktree).AssertExpectations(t)
 		})
 	}
 }
