@@ -164,7 +164,7 @@ The following sections describe the configuration options for adding tabs and ro
 While grouping is meant for multiple panels, you can start a grouping with just one panel.
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
+1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 1. At the bottom-left corner of the dashboard, click **Group panels**.
 1. Select **Group into row** or **Group into tab**.
@@ -210,7 +210,7 @@ Might be good to update this Play example -->
 To configure repeats, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
+1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
@@ -258,7 +258,7 @@ You can only configure show/hide rules for panels when the dashboard is using th
 To configure show/hide rules, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
+1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
@@ -300,7 +300,7 @@ For example, if you click in the area of a panel, row, or tab, that area comes i
 To edit dashboards, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
+1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 
    The **Dashboard** edit pane opens on the right side of the dashboard.
@@ -326,7 +326,7 @@ When you're dashboard has a **Custom** layout, you can resize or move a panel to
 To move or resize, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
+1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 1. Do one of the following:
 
@@ -340,14 +340,30 @@ To move or resize, follow these steps:
 
 ## Navigate using the dashboard outline
 
-TBA
+The dashboard **Outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
+The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element in order to work with it.
+By default, the outline is collapsed except for the part that's currently in focus.
+
+<!-- screenshot here -->
+
+To navigate the dashboard using the outline, follow these steps:
+
+1. Click **Dashboards** in the main menu.
+1. Navigate to the dashboard you want to update.
+1. Toggle on the edit mode switch.
+
+   The **Dashboard** edit pane opens on the right side of the dashboard.
+
+1. In the edit pane, expand the **Outline** section.
+1. Expand the outline to find the dashboard part to which you want to navigate.
+1. Click the tree item to navigate that part of the dashboard.
 
 ## Copy a dashboard
 
 To make a copy of a dashboard, follow these steps:
 
 1. Click **Dashboards** in the main menu.
-1. Navigate to the dashboard you want to work on.
+1. Navigate to the dashboard you want to update.
 1. Toggle on the edit mode switch.
 1. Click the **Save** drop-down and select **Save as copy**.
 1. (Optional) Specify the name, folder, description, and whether or not to copy the original dashboard tags for the copied dashboard.
