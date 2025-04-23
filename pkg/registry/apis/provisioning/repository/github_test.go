@@ -28,6 +28,150 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
+func TestNewGitHub(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        *provisioning.Repository
+		setupMock     func(m *secrets.MockService)
+		expectedError string
+		expectedRepo  *githubRepository
+	}{
+		{
+			name: "successful creation with token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Token:  "token123",
+						Branch: "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				// No mock calls expected since we're using the token directly
+			},
+			expectedError: "",
+			expectedRepo: &githubRepository{
+				owner: "grafana",
+				repo:  "grafana",
+			},
+		},
+		{
+			name: "successful creation with encrypted token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:            "https://github.com/grafana/grafana",
+						EncryptedToken: []byte("encrypted-token"),
+						Branch:         "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				m.On("Decrypt", mock.Anything, []byte("encrypted-token")).
+					Return([]byte("decrypted-token"), nil)
+			},
+			expectedError: "",
+			expectedRepo: &githubRepository{
+				owner: "grafana",
+				repo:  "grafana",
+			},
+		},
+		{
+			name: "error decrypting token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:            "https://github.com/grafana/grafana",
+						EncryptedToken: []byte("encrypted-token"),
+						Branch:         "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				m.On("Decrypt", mock.Anything, []byte("encrypted-token")).
+					Return(nil, fmt.Errorf("decryption error"))
+			},
+			expectedError: "decrypt token: decryption error",
+		},
+		{
+			name: "invalid URL format",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "invalid-url",
+						Token:  "token123",
+						Branch: "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				// No mock calls expected
+			},
+			expectedError: "parse owner and repo",
+			expectedRepo: &githubRepository{
+				owner: "",
+				repo:  "",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockSecrets := secrets.NewMockService(t)
+			if tt.setupMock != nil {
+				tt.setupMock(mockSecrets)
+			}
+
+			factory := pgh.ProvideFactory()
+			factory.Client = http.DefaultClient
+
+			// If we expect success, set up the factory mock
+			if tt.expectedError == "" {
+				token := tt.config.Spec.GitHub.Token
+				if token == "" {
+					token = "decrypted-token"
+				}
+			}
+
+			// Create a mock clone function
+			cloneFn := func(ctx context.Context, opts CloneOptions) (ClonedRepository, error) {
+				return nil, nil
+			}
+
+			// Call the function under test
+			repo, err := NewGitHub(
+				context.Background(),
+				tt.config,
+				factory,
+				mockSecrets,
+				"https://example.com/webhook",
+				cloneFn,
+			)
+
+			// Check results
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Nil(t, repo)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, repo)
+				assert.Equal(t, tt.expectedRepo.owner, repo.owner)
+				assert.Equal(t, tt.expectedRepo.repo, repo.repo)
+				assert.Equal(t, tt.config, repo.config)
+				assert.Equal(t, mockSecrets, repo.secrets)
+				assert.Equal(t, "https://example.com/webhook", repo.webhookURL)
+				assert.NotNil(t, repo.cloneFn)
+			}
+
+			// Verify all mock expectations were met
+			mockSecrets.AssertExpectations(t)
+		})
+	}
+}
+
 func TestIsValidGitBranchName(t *testing.T) {
 	tests := []struct {
 		name     string

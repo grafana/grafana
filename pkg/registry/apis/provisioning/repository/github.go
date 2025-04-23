@@ -56,15 +56,21 @@ func NewGitHub(
 	secrets secrets.Service,
 	webhookURL string,
 	cloneFn CloneFn,
-) *githubRepository {
-	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
+) (*githubRepository, error) {
+	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
+	if err != nil {
+		return nil, fmt.Errorf("parse owner and repo: %w", err)
+	}
+
 	token := config.Spec.GitHub.Token
 	if token == "" {
 		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
-		if err == nil {
-			token = string(decrypted)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt token: %w", err)
 		}
+		token = string(decrypted)
 	}
+
 	return &githubRepository{
 		config:     config,
 		gh:         factory.New(ctx, token), // TODO, baseURL from config
@@ -73,7 +79,7 @@ func NewGitHub(
 		owner:      owner,
 		repo:       repo,
 		cloneFn:    cloneFn,
-	}
+	}, nil
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
