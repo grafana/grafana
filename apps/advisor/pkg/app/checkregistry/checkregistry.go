@@ -7,11 +7,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 )
 
 type CheckService interface {
@@ -24,15 +22,13 @@ type Service struct {
 	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
 	pluginRepo            repo.Service
-	pluginPreinstall      plugininstaller.Preinstall
-	managedPlugins        managedplugins.Manager
-	provisionedPlugins    provisionedplugins.Manager
+	updateChecker         *pluginupdatechecker.Service
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
-	pluginRepo repo.Service, pluginPreinstall plugininstaller.Preinstall, managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager,
+	pluginRepo repo.Service,
+	updateChecker *pluginupdatechecker.Service,
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
@@ -40,9 +36,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		pluginContextProvider: pluginContextProvider,
 		pluginClient:          pluginClient,
 		pluginRepo:            pluginRepo,
-		pluginPreinstall:      pluginPreinstall,
-		managedPlugins:        managedPlugins,
-		provisionedPlugins:    provisionedPlugins,
+		updateChecker:         updateChecker,
 	}
 }
 
@@ -58,9 +52,7 @@ func (s *Service) Checks() []checks.Check {
 		plugincheck.New(
 			s.pluginStore,
 			s.pluginRepo,
-			s.pluginPreinstall,
-			s.managedPlugins,
-			s.provisionedPlugins,
+			s.updateChecker,
 		),
 	}
 }
