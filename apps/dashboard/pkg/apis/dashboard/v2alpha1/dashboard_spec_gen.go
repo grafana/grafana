@@ -1683,13 +1683,13 @@ func NewDashboardAdHocFilterWithLabels() *DashboardAdHocFilterWithLabels {
 }
 
 // Determine the origin of the adhoc variable filter
-// Accepted values are `dashboard` (filter originated from dashboard), or `scopes` (filter originated from scopes).
+// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
 // +k8s:openapi-gen=true
 type DashboardFilterOrigin string
 
 const (
-	DashboardFilterOriginDashboards DashboardFilterOrigin = "dashboards"
-	DashboardFilterOriginScopes     DashboardFilterOrigin = "scopes"
+	DashboardFilterOriginDashboard DashboardFilterOrigin = "dashboard"
+	DashboardFilterOriginScope     DashboardFilterOrigin = "scope"
 )
 
 // Define the MetricFindValue type
