@@ -19,14 +19,6 @@ export function isLogsGrammar(grammar: unknown): grammar is Grammar {
 }
 
 export function isCoreApp(app: unknown): app is CoreApp {
-  return (
-    app === CoreApp.CloudAlerting ||
-    app === CoreApp.Correlations ||
-    app === CoreApp.Dashboard ||
-    app === CoreApp.Explore ||
-    app === CoreApp.PanelEditor ||
-    app === CoreApp.PanelViewer ||
-    app === CoreApp.UnifiedAlerting ||
-    app === CoreApp.Unknown
-  );
+  const apps = Object.values(CoreApp).map((coreApp) => coreApp.toString());
+  return typeof app === 'string' && apps.includes(app);
 }
