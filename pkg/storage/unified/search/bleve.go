@@ -27,10 +27,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/setting"
 
 	authlib "github.com/grafana/authlib/types"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -51,8 +49,6 @@ type BleveOptions struct {
 	// How big should a batch get before flushing
 	// ?? not totally sure the units
 	BatchSize int
-
-	Cfg *setting.Cfg
 }
 
 type bleveBackend struct {

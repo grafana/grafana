@@ -160,15 +160,6 @@ type SearchOptions struct {
 	InitMinCount int
 }
 
-type ShardingConfig struct {
-	Enabled              bool
-	RingDebugServerPort  string
-	MemberlistBindAddr   string
-	MemberlistJoinMember string
-	RingListenPort       int
-	InstanceID           string
-}
-
 type ResourceServerOptions struct {
 	// OTel tracer
 	Tracer trace.Tracer

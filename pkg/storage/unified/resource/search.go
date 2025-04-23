@@ -245,7 +245,6 @@ func (s *searchSupport) Search(ctx context.Context, req *ResourceSearchRequest) 
 		Namespace: req.Options.Key.Namespace,
 		Resource:  req.Options.Key.Resource,
 	}
-
 	idx, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
 		return &ResourceSearchResponse{

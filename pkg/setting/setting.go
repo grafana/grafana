@@ -548,7 +548,6 @@ type Cfg struct {
 	IndexFileThreshold          int
 	IndexMinCount               int
 	EnableSharding              bool
-	RingDebugServerPort         string
 	RingListenPort              int
 	MemberlistBindAddr          string
 	MemberlistJoinMember        string

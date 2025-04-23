@@ -54,7 +54,6 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
 	cfg.MemberlistJoinMember = section.Key("memberlist_join_member").String()
 	cfg.InstanceID = section.Key("instance_id").String()
-	cfg.RingDebugServerPort = section.Key("ring_debug_server_port").String()
 	cfg.RingListenPort = section.Key("ring_listen_port").MustInt()
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)
 	cfg.IndexMinCount = section.Key("index_min_count").MustInt(1)
