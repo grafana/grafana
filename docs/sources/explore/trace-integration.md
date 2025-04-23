@@ -163,7 +163,7 @@ You can use [correlations](/docs/grafana/<GRAFANA_VERSION>/administration/correl
 
 For Tempo, refer to [Trace correlations](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/traces-in-grafana/trace-correlations/) for configuration instructions.
 
-{{< figure src="/static/img/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 
 ## Node graph
 

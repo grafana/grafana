@@ -24,7 +24,7 @@ You can use Grafana [correlations](/docs/grafana/<GRAFANA_VERSION>/administratio
 
 Trace correlations let you define rules that inject context-sensitive links into your trace spans. When viewing traces in Explore or the Traces panel, users can click these links to navigate directly to relevant queries or URLs. Correlations are similar but more flexible to the [trace to logs, metrics, and profiles links you can configure for the Tempo data source](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source).
 
-{{< figure src="/static/img/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+{{< figure src="/media/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 
 ## Before you begin
 
@@ -63,7 +63,7 @@ Trace correlations let you define rules that inject context-sensitive links into
    | `logs`         | Object | Trace events           |
    | `references`   | Object | Trace links            |
 
-   {{< figure src="/static/img/docs/tempo/screenshot-grafana-trace-correlations-loki-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki target using trace variables" >}}
+   {{< figure src="/media/docs/tempo/screenshot-grafana-trace-correlations-loki-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki target using trace variables" >}}
 
 1. On step 3, configure the correlation **data source**:
 
@@ -73,10 +73,10 @@ Trace correlations let you define rules that inject context-sensitive links into
 
    - Optionally, add one or more **transformations** to parse the trace data into additional variables. You can use these variables to configure the correlation **target**.
 
-   {{< figure src="/static/img/docs/tempo/screenshot-grafana-trace-correlations-loki-step-3.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki data source" >}}
+   {{< figure src="/media/docs/tempo/screenshot-grafana-trace-correlations-loki-step-3.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki data source" >}}
 
 1. Select **Save** to save the correlation.
 
 The correlation link will now show when viewing a trace span, both in the span links menu and the span details.
 
-{{< figure src="/static/img/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+{{< figure src="/media/docs/tempo/screenshot-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
