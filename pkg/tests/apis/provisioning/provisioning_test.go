@@ -636,6 +636,6 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		require.NoError(t, err, "exported file not json %s", fpath)
 		apiVerison, _, err := unstructured.NestedString(obj, "apiVersion")
 		require.NoError(t, err)
-		require.Equal(t, test.apiVersion, apiVerison)
+		require.Equal(t, test.apiVersion, apiVersion)
 	}
 }
