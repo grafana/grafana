@@ -4,8 +4,8 @@ import * as React from 'react';
 import { useEffect, useMemo } from 'react';
 import { Controller, FieldErrors, useFormContext, useWatch } from 'react-hook-form';
 
-import { GrafanaTheme2 } from '@grafana/data';
-import { Alert, Button, Combobox, ComboboxOption, Field, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
@@ -119,10 +119,16 @@ export function ChannelSubForm<R extends ChannelValues>({
   };
 
   const typeOptions = useMemo(
-    (): Array<ComboboxOption<string>> =>
-      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<ComboboxOption<string>>(
+    (): SelectableValue[] =>
+      sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name]).map<SelectableValue>(
         ({ dto: { name, type }, meta }) => ({
-          label: name,
+          // @ts-expect-error ReactNode is supported
+          label: (
+            <Stack alignItems="center" gap={1}>
+              {name}
+              {meta?.badge}
+            </Stack>
+          ),
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
@@ -166,15 +172,13 @@ export function ChannelSubForm<R extends ChannelValues>({
               control={control}
               defaultValue={defaultValues.type}
               render={({ field: { ref, onChange, ...field } }) => (
-                <Combobox
-                  {...field}
-                  id={contactPointTypeInputId}
-                  options={typeOptions}
-                  onChange={(option) => onChange(option?.value)}
-                  isClearable={false}
-                  placeholder={t('receivers.form.select-type', 'Select type')}
+                <Select
                   disabled={!isEditable}
-                  width={48}
+                  inputId={contactPointTypeInputId}
+                  {...field}
+                  width={37}
+                  options={typeOptions}
+                  onChange={(value) => onChange(value?.value)}
                 />
               )}
             />
