@@ -9,6 +9,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -88,6 +90,30 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 	secureValueList, err := s.secretService.List(ctx, xkube.Namespace(namespace), options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
+	}
+
+	labelSelector := options.LabelSelector
+
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+
+	fieldSelector := options.FieldSelector
+	if fieldSelector == nil {
+		fieldSelector = fields.Everything()
+	}
+
+	allowedSecureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueList.Items))
+
+	for _, secureValue := range secureValueList.Items {
+
+		// Filter by label
+		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
+			// Filter by status.phase
+			if fieldSelector.Matches(fields.Set{"status.phase": string(secureValue.Status.Phase)}) {
+				allowedSecureValues = append(allowedSecureValues, secureValue)
+			}
+		}
 	}
 
 	return secureValueList, nil
