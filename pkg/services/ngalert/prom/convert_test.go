@@ -322,6 +322,7 @@ func TestPrometheusRulesToGrafana(t *testing.T) {
 				expectedLabels := make(map[string]string, len(promRule.Labels)+len(tc.promGroup.Labels))
 				maps.Copy(expectedLabels, tc.promGroup.Labels)
 				maps.Copy(expectedLabels, promRule.Labels)
+				expectedLabels = withInternalLabel(expectedLabels)
 
 				uidData := fmt.Sprintf("%d|%s|%s|%d", tc.orgID, tc.namespace, tc.promGroup.Name, j)
 				u := uuid.NewSHA1(uuid.NameSpaceOID, []byte(uidData))
@@ -550,11 +551,11 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		// Check that the labels are merged and the rule label takes precedence
 		require.Equal(
 			t,
-			map[string]string{
+			withInternalLabel(map[string]string{
 				"group_label":  "group_value",
 				"rule_label":   "rule_value",
 				"common_label": "rule_value",
-			},
+			}),
 			grafanaGroup.Rules[0].Labels,
 		)
 	})
@@ -586,11 +587,11 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		// Check that the labels are merged and the rule label takes precedence
 		require.Equal(
 			t,
-			map[string]string{
+			withInternalLabel(map[string]string{
 				"group_label":  "group_value",
 				"rule_label":   "rule_value",
 				"common_label": "rule_value",
-			},
+			}),
 			grafanaGroup.Rules[0].Labels,
 		)
 	})
@@ -614,8 +615,7 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
 		require.NoError(t, err)
 		require.Len(t, grafanaGroup.Rules, 1)
-
-		require.Equal(t, promGroup.Labels, grafanaGroup.Rules[0].Labels)
+		require.Equal(t, withInternalLabel(promGroup.Labels), grafanaGroup.Rules[0].Labels)
 	})
 
 	t.Run("rule and group with nil labels", func(t *testing.T) {
@@ -633,7 +633,7 @@ func TestPrometheusRulesToGrafana_GroupLabels(t *testing.T) {
 		grafanaGroup, err := converter.PrometheusRulesToGrafana(1, "namespace", promGroup)
 		require.NoError(t, err)
 		require.Len(t, grafanaGroup.Rules, 1)
-		require.Empty(t, grafanaGroup.Rules[0].Labels)
+		require.Equal(t, withInternalLabel(map[string]string{}), grafanaGroup.Rules[0].Labels)
 	})
 }
 
@@ -846,4 +846,13 @@ func TestQueryModelContainsRequiredParameters(t *testing.T) {
 		_, isNumber = maxDataPoints.(float64)
 		require.True(t, isNumber, "maxDataPoints should be a number")
 	}
+}
+
+func withInternalLabel(l map[string]string) map[string]string {
+	result := map[string]string{
+		models.ConvertedPrometheusRuleLabel: "true",
+	}
+	maps.Copy(result, l)
+
+	return result
 }
