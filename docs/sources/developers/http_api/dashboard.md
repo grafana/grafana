@@ -20,11 +20,11 @@ title: Dashboard HTTP API
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
-> To view more about the new api schema, refer to [API overview]({{< ref "apis" >}}).
+> To view more about the new api structure, refer to [API overview]({{< ref "apis" >}}).
 
 ## Create Dashboard
 
-`POST /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
+`POST /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards`
 
 Creates a new dashboard.
 
@@ -42,11 +42,10 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-
 **Example Create Request**:
 
 ```http
-POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards HTTP/1.1
+POST /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -55,25 +54,21 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "metadata": {
     "name": "gdxccn",
     "annotations": {
-      "grafana.app/folder": "fef30w4jaxla8b",
-      "grafana.app/message":"testing"
+      "grafana.app/folder": "fef30w4jaxla8b"
     },
   },
   "spec": {
-    "editable": true,
-    "schemaVersion": 41,
     "title": "New dashboard",
-    "overwrite": true, // test this
-    "refresh": "1s"
+    "schemaVersion": 41
   }
 }
 ```
 
 JSON Body schema:
-- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated uid (cannot be an empty string). 
+
+- **metadata.name** – The Grafana [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}). If you do not want to provide this, set metadata.generateName instead to the prefix you would like for the randomly generated uid (cannot be an empty string).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
-- **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
-- **spec** – Details on what can be set in the spec can be found [above]({{< ref "#dashboard-schema" >}}).
+- **spec** – The dashboard json.
 
 **Example Response**:
 
@@ -84,7 +79,7 @@ Content-Length: 485
 
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
   "metadata": {
     "name": "gdxccn",
     "namespace": "default",
@@ -131,7 +126,7 @@ Status Codes:
 
 ## Update Dashboard
 
-`PUT /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`PUT /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid`
 
 Updates an existing dashboard via the dashboard uid.
 
@@ -149,11 +144,10 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-
 **Example Update Request**:
 
 ```http
-POST /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
+POST /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -162,23 +156,23 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   "metadata": {
     "name": "gdxccn",
     "annotations": {
-      "grafana.app/folder": "fef30w4jaxla8b"
+      "grafana.app/folder": "fef30w4jaxla8b",
+      "grafana.app/message": "commit message"
     },
   },
   "spec": {
-    "editable": true,
-    "schemaVersion": 41,
     "title": "New dashboard - updated",
+    "schemaVersion": 41
   }
 }
 ```
 
-
 JSON Body schema:
+
 - **metadata.name** – The [unique identifier]({{< ref "#identifier-id-vs-unique-identifier-uid" >}}).
 - **metadata.annotations.grafana.app/folder** - Optional field, the unique identifier of the folder under which the dashboard should be created.
 - **metadata.annotations.grafana.app/message** - Optional field, to set a commit message for the version history.
-- **spec** – Details on what can be set in the spec can be found [above]({{< ref "#dashboard-schema" >}}).
+- **spec** – The dashboard json.
 
 **Example Response**:
 
@@ -189,7 +183,7 @@ Content-Length: 485
 
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
   "metadata": {
     "name": "gdxccn",
     "namespace": "default",
@@ -205,7 +199,6 @@ Content-Length: 485
     }
   },
   "spec": {
-    "editable": true,
     "schemaVersion": 41,
     "title": "New dashboard - updated"
   }
@@ -222,7 +215,7 @@ Status Codes:
 
 ## Get Dashboard
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid`
 
 Gets a dashboard via the dashboard uid.
 
@@ -242,11 +235,10 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-
 **Example Get Request**:
 
 ```http
-GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
+GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -261,7 +253,7 @@ Content-Length: 485
 
 {
   "kind": "Dashboard",
-  "apiVersion": "dashboard.grafana.app/v1",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
   "metadata": {
     "name": "gdxccn",
     "namespace": "default",
@@ -276,7 +268,6 @@ Content-Length: 485
     }
   },
   "spec": {
-    "editable": true,
     "schemaVersion": 41,
     "title": "New dashboard - updated"
   }
@@ -292,7 +283,7 @@ Status Codes:
 
 ## List Dashboards
 
-`GET /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards`
+`GET /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards`
 
 Lists all dashboards in the given organization. You can control the maximum number of dashboards returned through the `limit` query parameter. You can then use the `continue` token returned to fetch the next page of dashboards.
 
@@ -311,18 +302,16 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 { .no-spacing-list }
 <!-- prettier-ignore-end -->
 
-
 **Example Get Request**:
 
 ```http
-GET /apis/dashboard.grafana.app/v1/namespaces/default/dashboards?limit=1 HTTP/1.1
+GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards?limit=1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
 **Example Response**:
-
 
 ```http
 HTTP/1.1 200 OK
@@ -354,7 +343,6 @@ Content-Length: 644
         }
       },
       "spec": {
-        "editable": true,
         "schemaVersion": 41,
         "title": "New dashboard",
         "uid": "gpqcmf",
@@ -373,13 +361,12 @@ Status Codes:
 
 ## Delete Dashboard
 
-`DELETE /apis/dashboard.grafana.app/v1/namespaces/:namespace/dashboards/:uid`
+`DELETE /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards/:uid`
 
-Deletes a dashboard via the dashboard uid. 
+Deletes a dashboard via the dashboard uid.
 
 - namespace: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
 - uid: the unique identifier of the dashboard to update. this will be the _name_ in the dashboard response
-
 
 **Required permissions**
 
@@ -395,7 +382,7 @@ See note in the [introduction]({{< ref "#dashboard-api" >}}) for an explanation.
 **Example Delete Request**:
 
 ```http
-DELETE /apis/dashboard.grafana.app/v1/namespaces/default/dashboards/gdxccn HTTP/1.1
+DELETE /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/gdxccn HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -428,7 +415,6 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access denied
 - **404** – Not found
-
 
 ## Gets the home dashboard
 
@@ -521,10 +507,9 @@ Content-Type: application/json
 
 See [Folder/Dashboard Search API]({{< relref "folder_dashboard_search/" >}}).
 
-
 ## APIs
 
-### Unique identifier (uid) vs identifier (id) 
+### Unique identifier (uid) vs identifier (id)
 
 The unique identifier (uid) of a dashboard can be used to uniquely identify a dashboard within a given org.
 It's automatically generated if not provided when creating a dashboard. The uid allows having consistent URLs for accessing

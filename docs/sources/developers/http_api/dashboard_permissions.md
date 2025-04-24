@@ -22,36 +22,39 @@ title: Dashboard Permissions HTTP API
 
 # Dashboard Permissions API
 
-This API can be used to update/get the permissions for a dashboard.
+## Overview
 
-Permissions with `dashboardId=-1` are the default permissions for users with the Viewer and Editor roles. Permissions can be set for a user, a team or a role (Viewer or Editor). Permissions cannot be set for Admins - they always have access to everything.
+The Dashboard Permissions API allows you to manage access control for dashboards in Grafana. You can use this API to:
 
-The permission levels for the permission field:
+- Retrieve current permissions for a dashboard
+- Update permissions for users, teams, or roles
+- Set default permissions for viewers and editors
 
-- 1 = View
-- 2 = Edit
-- 4 = Admin
+## Permission Levels
 
-> If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
+Dashboard permissions use a numeric system to define access levels:
 
-## Get permissions for a dashboard
+| Level | Value | Description |
+|-------|-------|-------------|
+| View  | 1     | Can view the dashboard but cannot make changes |
+| Edit  | 2     | Can view and edit the dashboard |
+| Admin | 4     | Full control over the dashboard, including permission management |
+
+> **Note:** Admin users always have full access to all dashboards and cannot have their permissions restricted.
+
+## Get Dashboard Permissions
 
 `GET /api/dashboards/uid/:uid/permissions`
 
-Gets all existing permissions for the dashboard with the given `uid`.
+Retrieves all permissions for a specific dashboard.
 
-**Required permissions**
+### Required Permissions
 
-See note in the [introduction](#dashboard-permission-api) for an explanation.
+| Action | Scope |
+|--------|-------|
+| `dashboards.permissions:read` | `dashboards:*`, `dashboards:uid:*`, `folders:*`, `folders:uid:*` |
 
-<!-- prettier-ignore-start -->
-| Action                        | Scope                                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `dashboards.permissions:read` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-{ .no-spacing-list }
-<!-- prettier-ignore-end -->
-
-**Example request**:
+### Example Request
 
 ```http
 GET /api/dashboards/uid/dHEquNzGz/permissions HTTP/1.1
@@ -60,7 +63,7 @@ Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 ```
 
-**Example Response**
+### Example Response
 
 ```http
 HTTP/1.1 200 OK
@@ -109,31 +112,50 @@ Content-Length: 551
 ]
 ```
 
-Status Codes:
+### Response Fields
 
-- **200** - Ok
-- **401** - Unauthorized
-- **403** - Access denied
-- **404** - Dashboard not found
+| Field | Description |
+|-------|-------------|
+| `id` | Unique identifier for the permission entry |
+| `dashboardId` | Dashboard ID (-1 for default permissions) |
+| `created` | Creation timestamp |
+| `updated` | Last update timestamp |
+| `userId` | User ID (0 if not applicable) |
+| `userLogin` | Username (empty if not applicable) |
+| `userEmail` | User email (empty if not applicable) |
+| `teamId` | Team ID (0 if not applicable) |
+| `team` | Team name (empty if not applicable) |
+| `role` | Role name (Viewer, Editor, or empty) |
+| `permission` | Numeric permission level (1=View, 2=Edit, 4=Admin) |
+| `permissionName` | Human-readable permission name |
+| `uid` | Dashboard UID |
+| `title` | Dashboard title |
+| `slug` | Dashboard slug |
+| `isFolder` | Whether this is a folder permission |
+| `url` | Dashboard URL |
 
-## Update permissions for a dashboard
+### Status Codes
+
+| Code | Description |
+|------|-------------|
+| 200  | Success |
+| 401  | Unauthorized |
+| 403  | Access denied |
+| 404  | Dashboard not found |
+
+## Update Dashboard Permissions
 
 `POST /api/dashboards/uid/:uid/permissions`
 
-Updates permissions for a dashboard. This operation will remove existing permissions if they're not included in the request.
+Updates permissions for a dashboard. This operation replaces all existing permissions with the ones specified in the request.
 
-**Required permissions**
+### Required Permissions
 
-See note in the [introduction](#dashboard-permission-api) for an explanation.
+| Action | Scope |
+|--------|-------|
+| `dashboards.permissions:write` | `dashboards:*`, `dashboards:uid:*`, `folders:*`, `folders:uid:*` |
 
-<!-- prettier-ignore-start -->
-| Action                         | Scope                                                                                                   |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------- |
-| `dashboards.permissions:write` | <ul><li>`dashboards:*`</li><li>`dashboards:uid:*`</li><li>`folders:*`</li><li>`folders:uid:*`</li></ul> |
-{ .no-spacing-list }
-<!-- prettier-ignore-end -->
-
-**Example request**:
+### Example Request
 
 ```http
 POST /api/dashboards/uid/dHEquNzGz/permissions
@@ -163,11 +185,18 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 }
 ```
 
-JSON body schema:
+### Request Body
 
-- **items** - The permission items to add/update. Items that are omitted from the list will be removed.
+| Field | Description |
+|-------|-------------|
+| `items` | Array of permission items to set |
 
-**Example response**:
+Each permission item can have one of these combinations:
+- `role` and `permission` - Sets permission for a role (Viewer or Editor)
+- `teamId` and `permission` - Sets permission for a specific team
+- `userId` and `permission` - Sets permission for a specific user
+
+### Example Response
 
 ```http
 HTTP/1.1 200 OK
@@ -177,9 +206,86 @@ Content-Length: 35
 {"message":"Dashboard permissions updated"}
 ```
 
-Status Codes:
+### Status Codes
 
-- **200** - Ok
-- **401** - Unauthorized
-- **403** - Access denied
-- **404** - Dashboard not found
+| Code | Description |
+|------|-------------|
+| 200  | Success |
+| 401  | Unauthorized |
+| 403  | Access denied |
+| 404  | Dashboard not found |
+
+## Best Practices
+
+1. **Always include default role permissions** in your updates to ensure consistent access
+2. **Use the dashboard UID** rather than ID for more reliable identification
+3. **Check existing permissions** before making changes to avoid unintended access changes
+4. **Consider using teams** for permission management instead of individual users when possible
+5. **Document your permission changes** for audit purposes
+
+## Common Use Cases
+
+### Setting Default Permissions
+
+To set default permissions for all dashboards:
+
+```json
+{
+  "items": [
+    {
+      "role": "Viewer",
+      "permission": 1
+    },
+    {
+      "role": "Editor",
+      "permission": 2
+    }
+  ]
+}
+```
+
+### Granting Team Access
+
+To give a team view access to a dashboard:
+
+```json
+{
+  "items": [
+    {
+      "role": "Viewer",
+      "permission": 1
+    },
+    {
+      "role": "Editor",
+      "permission": 2
+    },
+    {
+      "teamId": 5,
+      "permission": 1
+    }
+  ]
+}
+```
+
+### Granting Admin Access to a User
+
+To give a specific user admin access to a dashboard:
+
+```json
+{
+  "items": [
+    {
+      "role": "Viewer",
+      "permission": 1
+    },
+    {
+      "role": "Editor",
+      "permission": 2
+    },
+    {
+      "userId": 42,
+      "permission": 4
+    }
+  ]
+}
+```

@@ -857,12 +857,11 @@ On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the d
 
 ### `[dashboard_cleanup]`
 
-Settings related to cleaning up dashboards that were deleted via Kubernetes/apis. This section configures how Grafana handles the cleanup process for dashboards that have been marked for deletion.
+Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
 
 #### `interval`
 
-How often to run the job that cleans up dashboards marked for deletion.
-The default interval is `30s`. The minimum allowed value is `10s` to ensure the system isn't overloaded.
+How often to run the job to cleanup associated resources. The default interval is `30s`. The minimum allowed value is `10s` to ensure the system isn't overloaded.
 
 The interval string must include a unit suffix (ms, s, m, h), e.g. 30s or 1m.
 

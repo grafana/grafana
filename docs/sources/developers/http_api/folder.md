@@ -16,24 +16,17 @@ labels:
 title: Folder HTTP API
 ---
 
-# Folder API
+# New Folders APIs
 
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](/docs/grafana/latest/administration/roles-and-permissions/access-control/custom-role-actions-scopes/) for more information.
 
-## Identifier (id) vs unique identifier (uid)
+> To view more about the new api structure, refer to [API overview]({{< ref "apis" >}}).
 
-The unique identifier (uid) of a folder can be used for uniquely identify folders within an org. It's automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.
-
-The uid can have a maximum length of 40 characters.
-
-The identifier (id) of a folder is deprecated in favor of the unique identifier (uid).
-
-## APIs
 ### Get all folders
 
-`GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
+`GET /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders`
 
-Returns all folders that the authenticated user has permission to view. You can control the maximum number of folders returned through the `limit` query parameter. You can then use the `continue` token returned to fetch the next page of folders.
+Returns all folders that the authenticated user has permission to view within the given organization. Use the `limit` query parameter to control the maximum number of dashboards returned. To retrieve additional dashboards, utilize the `continue` token provided in the response to fetch the next page.
 
 - namespace: to read more about the namespace to use, see the [API overview]({{< ref "apis" >}}).
 
@@ -48,7 +41,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-GET /apis/folder.grafana.app/v1/namespaces/default/folders?limit=1 HTTP/1.1
+GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders?limit=1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -61,14 +54,14 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "FolderList",
-  "apiVersion": "folder.grafana.app/v1",
+  "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
     "continue": "org:1/start:1158/folder:"
   },
   "items": [
     {
       "kind": "Folder",
-      "apiVersion": "folder.grafana.app/v1",
+      "apiVersion": "folder.grafana.app/v1beta1",
       "metadata": {
         "name": "aef30vrzxs3y8d",
         "namespace": "default",
@@ -95,10 +88,9 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access Denied
 
-
 ### Get folder by uid
 
-`GET /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
+`GET /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid`
 
 Will return the folder given the folder uid.
 
@@ -116,7 +108,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-GET /apis/folder.grafana.app/v1/namespaces/default/folders/aef30vrzxs3y8d HTTP/1.1
+GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/aef30vrzxs3y8d HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -129,7 +121,7 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1",
+  "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
     "name": "aef30vrzxs3y8d",
     "namespace": "default",
@@ -160,7 +152,7 @@ Status Codes:
 
 ### Create folder
 
-`POST /apis/folder.grafana.app/v1/namespaces/:namespace/folders`
+`POST /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders`
 
 Creates a new folder.
 
@@ -180,7 +172,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-POST /apis/folder.grafana.app/v1/namespaces/default/folders HTTP/1.1
+POST /apis/folder.grafana.app/v1beta1/namespaces/default/folders HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -211,7 +203,7 @@ HTTP/1.1 200
 Content-Type: application/json
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1",
+  "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
     "name": "eef33r1fprd34d",
     "namespace": "default",
@@ -242,7 +234,7 @@ Status Codes:
 
 ### Update folder
 
-`PUT /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
+`PUT /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid`
 
 Updates an existing folder identified by uid.
 
@@ -260,7 +252,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-PUT /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
+PUT /apis/folder.grafana.app/v1beta1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -290,7 +282,7 @@ Content-Type: application/json
 
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1",
+  "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
     "name": "fef30w4jaxla8b",
     "namespace": "default",
@@ -317,14 +309,7 @@ Status Codes:
 - **401** – Unauthorized
 - **403** – Access Denied
 - **404** – Folder not found
-- **412** – Precondition failed
-
-The **412** status code is used for explaining that you cannot update the folder and why.
-There can be different reasons for this:
-
-- The folder has been changed by someone else, `status=version-mismatch`
-
-The response body will have the following properties:
+- **412** – Precondition failed (the folder has been changed by someone else). With this status code, the response body will have the following properties:
 
 ```http
 HTTP/1.1 412 Precondition Failed
@@ -339,7 +324,7 @@ Content-Length: 97
 
 ### Delete folder
 
-`DELETE /apis/folder.grafana.app/v1/namespaces/:namespace/folders/:uid`
+`DELETE /apis/folder.grafana.app/v1beta1/namespaces/:namespace/folders/:uid`
 
 Deletes an existing folder identified by UID along with all dashboards (and their alerts) stored in the folder. This operation cannot be reverted.
 
@@ -359,7 +344,7 @@ See note in the [introduction]({{< ref "#folder-api" >}}) for an explanation.
 **Example Request**:
 
 ```http
-DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
+DELETE /apis/folder.grafana.app/v1beta1/namespaces/default/folders/fef30w4jaxla8b HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -374,7 +359,7 @@ Content-Type: application/json
 
 {
   "kind": "Folder",
-  "apiVersion": "folder.grafana.app/v1",
+  "apiVersion": "folder.grafana.app/v1beta1",
   "metadata": {
     "name": "fef30w4jaxla8b",
     "namespace": "default",
@@ -402,9 +387,17 @@ Status Codes:
 - **403** – Access Denied
 - **404** – Folder not found
 
+## APIs
 
-## Deprecated APIs
-### [Deprecated] Get all folders
+## Identifier (id) vs unique identifier (uid)
+
+The unique identifier (uid) of a folder can be used for uniquely identify folders within an org. It's automatically generated if not provided when creating a folder. The uid allows having consistent URLs for accessing folders and when syncing folders between multiple Grafana installs. This means that changing the title of a folder will not break any bookmarked links to that folder.
+
+The uid can have a maximum length of 40 characters.
+
+The identifier (id) of a folder is deprecated in favor of the unique identifier (uid).
+
+### Get all folders
 
 `GET /api/folders`
 
@@ -451,7 +444,7 @@ Content-Type: application/json
 ]
 ```
 
-### [Deprecated] Get folder by uid
+### Get folder by uid
 
 `GET /api/folders/:uid`
 
@@ -509,7 +502,7 @@ Status Codes:
 - **403** – Access Denied
 - **404** – Folder not found
 
-### [Deprecated] Create folder
+### Create folder
 
 `POST /api/folders`
 
@@ -583,7 +576,7 @@ Status Codes:
 - **403** – Access Denied
 - **412** - Folder already exists
 
-### [Deprecated] Update folder
+### Update folder
 
 `PUT /api/folders/:uid`
 
@@ -672,7 +665,7 @@ Content-Length: 97
 }
 ```
 
-### [Deprecated] Delete folder
+### Delete folder
 
 `DELETE /api/folders/:uid`
 
@@ -718,7 +711,7 @@ Status Codes:
 - **403** – Access Denied
 - **404** – Folder not found
 
-### [Deprecated] Move folder
+### Move folder
 
 `POST /api/folders/:uid/move`
 
