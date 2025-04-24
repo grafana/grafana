@@ -12,6 +12,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
+type PluginUpdateChecker interface {
+	IsUpdatable(ctx context.Context, plugin pluginstore.Plugin) bool
+}
+
+var _ PluginUpdateChecker = (*Service)(nil)
+
 type Service struct {
 	managedPluginsManager     managedplugins.Manager
 	provisionedPluginsManager provisionedplugins.Manager
@@ -54,19 +60,21 @@ func (s *Service) isProvisioned(ctx context.Context, pluginID string) bool {
 }
 
 func (s *Service) IsUpdatable(ctx context.Context, plugin pluginstore.Plugin) bool {
-	// Skip if it's a core plugin
 	if plugin.IsCorePlugin() {
 		s.log.Debug("Skipping core plugin", "plugin", plugin.ID)
 		return false
 	}
 
-	// Skip if it's managed or pinned
-	if s.isManaged(ctx, plugin.ID) || s.PluginPreinstall.IsPinned(plugin.ID) {
-		s.log.Debug("Skipping managed or pinned plugin", "plugin", plugin.ID)
+	if s.isManaged(ctx, plugin.ID) {
+		s.log.Debug("Skipping managed plugin", "plugin", plugin.ID)
 		return false
 	}
 
-	// Skip if it's provisioned
+	if s.PluginPreinstall.IsPinned(plugin.ID) {
+		s.log.Debug("Skipping pinned plugin", "plugin", plugin.ID)
+		return false
+	}
+
 	if s.isProvisioned(ctx, plugin.ID) {
 		s.log.Debug("Skipping provisioned plugin", "plugin", plugin.ID)
 		return false

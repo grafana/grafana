@@ -24,7 +24,7 @@ const (
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
-	updateChecker *pluginupdatechecker.Service,
+	updateChecker pluginupdatechecker.PluginUpdateChecker,
 ) checks.Check {
 	return &check{
 		PluginStore:   pluginStore,
@@ -36,7 +36,7 @@ func New(
 type check struct {
 	PluginStore   pluginstore.Store
 	PluginRepo    repo.Service
-	updateChecker *pluginupdatechecker.Service
+	updateChecker pluginupdatechecker.PluginUpdateChecker
 }
 
 func (c *check) ID() string {
@@ -122,7 +122,7 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 type updateStep struct {
 	PluginRepo    repo.Service
 	log           log.Logger
-	updateChecker *pluginupdatechecker.Service
+	updateChecker pluginupdatechecker.PluginUpdateChecker
 }
 
 func (s *updateStep) Title() string {

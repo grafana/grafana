@@ -134,6 +134,7 @@ var WireSet = wire.NewSet(
 	advisor.ProvideService,
 	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
 	pluginupdatechecker.ProvideService,
+	wire.Bind(new(pluginupdatechecker.PluginUpdateChecker), new(*pluginupdatechecker.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

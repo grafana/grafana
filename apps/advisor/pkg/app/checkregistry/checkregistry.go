@@ -22,13 +22,13 @@ type Service struct {
 	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
 	pluginRepo            repo.Service
-	updateChecker         *pluginupdatechecker.Service
+	updateChecker         pluginupdatechecker.PluginUpdateChecker
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	pluginRepo repo.Service,
-	updateChecker *pluginupdatechecker.Service,
+	updateChecker pluginupdatechecker.PluginUpdateChecker,
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
