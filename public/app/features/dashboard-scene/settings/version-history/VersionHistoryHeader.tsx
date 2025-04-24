@@ -29,7 +29,9 @@ export const VersionHistoryHeader = ({
         tooltip={t('dashboard-scene.version-history-header.tooltip-reset-version', 'Reset version')}
       />
       <span>
-        Comparing {baseVersion} <Icon name="arrows-h" /> {newVersion}{' '}
+        <Trans i18nKey="dashboard-scene.version-history-header.compare-versions">
+          Comparing {{ baseVersion }} <Icon name="arrows-h" /> {{ newVersion }}
+        </Trans>{' '}
         {isNewLatest && (
           <cite className="muted">
             <Trans i18nKey="dashboard-scene.version-history-header.latest">(Latest)</Trans>
