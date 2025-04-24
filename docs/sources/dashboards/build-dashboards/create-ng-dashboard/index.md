@@ -341,7 +341,7 @@ To move or resize, follow these steps:
 ## Navigate using the dashboard outline
 
 The dashboard **Outline** provides a tree-like structure that shows you all of the parts of your dashboard and their relationships to each other including panels, rows, tabs, and variables.
-The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element in order to work with it.
+The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element to work with it.
 By default, the outline is collapsed except for the part that's currently in focus.
 
 {{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
