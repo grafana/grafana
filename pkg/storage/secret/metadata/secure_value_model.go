@@ -82,6 +82,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	if sv.Message != nil && *sv.Message != "" {
 		resource.Status.Message = *sv.Message
 	}
+	resource.Status.ExternalID = sv.ExternalID
 
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)

@@ -7,11 +7,8 @@ import (
 	"strconv"
 	"strings"
 
-	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -19,8 +16,10 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -37,29 +36,17 @@ var (
 
 // SecureValueRest is an implementation of CRUDL operations on a `securevalue` backed by a persistence layer `store`.
 type SecureValueRest struct {
-	secureValueMetadataStorage contracts.SecureValueMetadataStorage
-	outboxQueue                contracts.OutboxQueue
-	database                   contracts.Database
-	accessClient               claims.AccessClient
-	resource                   utils.ResourceInfo
-	tableConverter             rest.TableConvertor
+	secretService  *service.SecretService
+	resource       utils.ResourceInfo
+	tableConverter rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(
-	storage contracts.SecureValueMetadataStorage,
-	database contracts.Database,
-	outboxQueue contracts.OutboxQueue,
-	accessClient claims.AccessClient,
-	resource utils.ResourceInfo,
-) *SecureValueRest {
+func NewSecureValueRest(secretService *service.SecretService, resource utils.ResourceInfo) *SecureValueRest {
 	return &SecureValueRest{
-		secureValueMetadataStorage: storage,
-		resource:                   resource,
-		tableConverter:             resource.TableConverter(),
-		database:                   database,
-		accessClient:               accessClient,
-		outboxQueue:                outboxQueue,
+		secretService:  secretService,
+		resource:       resource,
+		tableConverter: resource.TableConverter(),
 	}
 }
 
@@ -93,61 +80,17 @@ func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Obj
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
 func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	hasPermissionFor, err := s.accessClient.Compile(ctx, authInfo, claims.ListRequest{
-		Group:     secretv0alpha1.GROUP,
-		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
-		Namespace: namespace,
-		Verb:      utils.VerbGet,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile checker: %w", err)
-	}
-
-	labelSelector := options.LabelSelector
-	if labelSelector == nil {
-		labelSelector = labels.Everything()
-	}
-
-	fieldSelector := options.FieldSelector
-	if fieldSelector == nil {
-		fieldSelector = fields.Everything()
-	}
-
-	secureValueList, err := s.secureValueMetadataStorage.List(ctx, xkube.Namespace(namespace))
+	secureValueList, err := s.secretService.List(ctx, xkube.Namespace(namespace), options)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
 
-	allowedSecureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueList))
-
-	for _, secureValue := range secureValueList {
-		// Check whether the user has permission to access this specific SecureValue in the namespace.
-		if !hasPermissionFor(secureValue.Name, "") {
-			continue
-		}
-
-		// Filter by label
-		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
-			// Filter by status.phase
-			if fieldSelector.Matches(fields.Set{"status.phase": string(secureValue.Status.Phase)}) {
-				allowedSecureValues = append(allowedSecureValues, secureValue)
-			}
-		}
-	}
-
-	return &secretv0alpha1.SecureValueList{
-		Items: allowedSecureValues,
-	}, nil
+	return secureValueList, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
@@ -157,7 +100,7 @@ func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	sv, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(namespace), name)
+	sv, err := s.secretService.Read(ctx, xkube.Namespace(namespace), name)
 	if err != nil {
 		if errors.Is(err, contracts.ErrSecureValueNotFound) {
 			return nil, s.resource.NewNotFound(name)
@@ -174,7 +117,7 @@ func (s *SecureValueRest) Create(
 	ctx context.Context,
 	obj runtime.Object,
 	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
+	_ *metav1.CreateOptions,
 ) (runtime.Object, error) {
 	sv, ok := obj.(*secretv0alpha1.SecureValue)
 	if !ok {
@@ -185,40 +128,12 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	// Assigned inside the transaction callback
-	var object runtime.Object
-
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-	actorUID := authInfo.GetUID()
-
-	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		// TODO: return err when secret already exists
-		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
-		if err != nil {
-			return fmt.Errorf("failed to create securevalue: %w", err)
-		}
-		object = createdSecureValue
-
-		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-			Type:      contracts.CreateSecretOutboxMessage,
-			Name:      sv.Name,
-			Namespace: sv.Namespace,
-			// TODO: encrypt
-			EncryptedSecret: sv.Spec.Value,
-			KeeperName:      sv.Spec.Keeper,
-		}); err != nil {
-			return fmt.Errorf("failed to append to outbox queue: %w", err)
-		}
-
-		return nil
-	}); err != nil {
-		return object, err
+	createdSecureValueMetadata, err := s.secretService.Create(ctx, sv)
+	if err != nil {
+		return nil, fmt.Errorf("creating secure value %+w", err)
 	}
 
-	return object, nil
+	return createdSecureValueMetadata, nil
 }
 
 // Update a `securevalue`'s `value`. The second return parameter indicates whether the resource was newly created.
@@ -227,17 +142,11 @@ func (s *SecureValueRest) Update(
 	ctx context.Context,
 	name string,
 	objInfo rest.UpdatedObjectInfo,
-	createValidation rest.ValidateObjectFunc,
+	_ rest.ValidateObjectFunc,
 	updateValidation rest.ValidateObjectUpdateFunc,
-	forceAllowCreate bool,
-	options *metav1.UpdateOptions,
+	_forceAllowCreate bool,
+	_ *metav1.UpdateOptions,
 ) (runtime.Object, bool, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, false, fmt.Errorf("missing auth info in context")
-	}
-	actorUID := authInfo.GetUID()
-
 	oldObj, err := s.Get(ctx, name, &metav1.GetOptions{})
 	if err != nil {
 		return nil, false, err
@@ -262,28 +171,31 @@ func (s *SecureValueRest) Update(
 	// TODO: do we need to do this here again? Probably not, but double-check!
 	newSecureValue.Annotations = xkube.CleanAnnotations(newSecureValue.Annotations)
 
-	// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-	updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue, actorUID)
+	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhasePending
+
+	updatedSecureValueMetadata, _, err := s.secretService.Update(ctx, newSecureValue)
 	if err != nil {
-		return nil, false, fmt.Errorf("failed to update secure value: %w", err)
+		return updatedSecureValueMetadata, false, fmt.Errorf("updating secure value metadata: %+w", err)
 	}
 
-	return updatedSecureValue, false, nil
+	return updatedSecureValueMetadata, false, nil
 }
 
-// Delete calls the inner `store` (persistence) in order to delete the `securevalue`.
 // The second return parameter `bool` indicates whether the delete was instant or not. It always is for `securevalues`.
-func (s *SecureValueRest) Delete(ctx context.Context, name string, deleteValidation rest.ValidateObjectFunc, options *metav1.DeleteOptions) (runtime.Object, bool, error) {
+func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.ValidateObjectFunc, _ *metav1.DeleteOptions) (runtime.Object, bool, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, false, fmt.Errorf("missing namespace")
 	}
 
-	if err := s.secureValueMetadataStorage.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
-		return nil, false, fmt.Errorf("delete secure value: %w", err)
+	if err := s.secretService.Delete(ctx, xkube.Namespace(namespace), name); err != nil {
+		if errors.Is(err, contracts.ErrSecureValueNotFound) {
+			return nil, false, s.resource.NewNotFound(name)
+		}
+		return nil, false, fmt.Errorf("deleting secure value: %+w", err)
 	}
 
-	return nil, true, nil
+	return nil, false, nil
 }
 
 // ValidateSecureValue does basic spec validation of a securevalue.

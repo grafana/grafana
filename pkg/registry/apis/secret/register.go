@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -48,6 +49,7 @@ var (
 type SecretAPIBuilder struct {
 	tracer                     tracing.Tracer
 	log                        *log.ConcreteLogger
+	secretService              *service.SecretService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	secretsOutboxQueue         contracts.OutboxQueue
@@ -60,6 +62,7 @@ type SecretAPIBuilder struct {
 func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
+	secretService *service.SecretService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
 	db db.DB,
@@ -67,7 +70,7 @@ func NewSecretAPIBuilder(
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
-	database := database.New(db)
+	database := database.ProvideDatabase(db)
 	keepers, err := keeperService.GetKeepers()
 	if err != nil {
 		return nil, fmt.Errorf("getting map of keepers: %+w", err)
@@ -76,6 +79,7 @@ func NewSecretAPIBuilder(
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
 		log:                        log.New("secret.SecretAPIBuilder"),
+		secretService:              secretService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		secretsOutboxQueue:         secretsOutboxQueue,
@@ -104,6 +108,7 @@ func RegisterAPIService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
+	secretService *service.SecretService,
 	db db.DB,
 	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
@@ -122,6 +127,7 @@ func RegisterAPIService(
 	builder, err := NewSecretAPIBuilder(
 		tracer,
 		secureValueMetadataStorage,
+		secretService,
 		keeperMetadataStorage,
 		outboxQueue,
 		db,
@@ -183,9 +189,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(
-			b.secureValueMetadataStorage, b.database, b.secretsOutboxQueue, b.accessClient, secureValueResource,
-		),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secretService, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),

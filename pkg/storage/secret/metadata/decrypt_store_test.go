@@ -272,7 +272,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	)
 
 	db := sqlstore.NewTestStore(t)
-	database := database.New(db)
+	database := database.ProvideDatabase(db)
 
 	tracer := tracing.InitializeTracerForTest()
 
