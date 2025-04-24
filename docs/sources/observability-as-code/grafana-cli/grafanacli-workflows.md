@@ -182,13 +182,13 @@ Use this workflow to locate dashboards using a deprecated API version and mark t
    This command returns a list of resources, including their versions, types, and quantities:
 
    ```bash
-   GROUP                               VERSION   KIND           AMOUNT
-   folder.grafana.app                  v1        folder         23
-   dashboard.grafana.app               v1        dashboard      1
-   dashboard.grafana.app               v1        librarypanel   0
-   dashboard.grafana.app               v2        dashboard      246
-   dashboard.grafana.app               v2        librarypanel   31
-   playlist.grafana.app                v1        playlist       23
+   GROUP                               VERSION   KIND           
+   folder.grafana.app                  v1        folder         
+   dashboard.grafana.app               v1        dashboard      
+   dashboard.grafana.app               v1        librarypanel   
+   dashboard.grafana.app               v2        dashboard      
+   dashboard.grafana.app               v2        librarypanel   
+   playlist.grafana.app                v1        playlist       
    ```
 
 1. Find dashboards that are still using an old API version:
