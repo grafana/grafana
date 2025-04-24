@@ -2,7 +2,7 @@ package appregistry
 
 import (
 	"context"
-	"strings"
+	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -59,7 +59,7 @@ func ProvideRegistryServiceSink(
 		providers = append(providers, investigationAppProvider)
 	}
 	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
-		!strings.Contains(strings.Join(grafanaCfg.DisablePlugins, ","), "grafana-advisor-app") {
+		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
