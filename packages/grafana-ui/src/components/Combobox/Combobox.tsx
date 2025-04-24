@@ -205,8 +205,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     getScrollElement: () => scrollRef.current,
     estimateSize: (index: number) => {
       const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
-      const hasDescription = 'description' in filteredOptions[index] && Boolean(filteredOptions[index].description);
-      const hasGroup = 'group' in filteredOptions[index] && Boolean(filteredOptions[index].group);
+      const hasDescription = 'description' in filteredOptions[index];
+      const hasGroup = 'group' in filteredOptions[index];
 
       let itemHeight = MENU_OPTION_HEIGHT;
       if (hasDescription) {

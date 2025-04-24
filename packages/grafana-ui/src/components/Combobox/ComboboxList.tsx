@@ -40,8 +40,8 @@ export const ComboboxList = <T extends string | number>({
   const estimateSize = useCallback(
     (index: number) => {
       const firstGroupItem = isNewGroup(options[index], index > 0 ? options[index - 1] : undefined);
-      const hasDescription = 'description' in options[index] && Boolean(options[index].description);
-      const hasGroup = 'group' in options[index] && Boolean(options[index].group);
+      const hasDescription = 'description' in options[index];
+      const hasGroup = 'group' in options[index];
 
       let itemHeight = MENU_OPTION_HEIGHT;
       if (hasDescription) {

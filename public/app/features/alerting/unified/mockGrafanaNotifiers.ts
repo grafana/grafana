@@ -1855,7 +1855,6 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
             validationRule: '',
             secure: false,
             dependsOn: '',
-            subformOptions: null,
           },
           {
             element: 'textarea',
@@ -1873,7 +1872,6 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
             validationRule: '',
             secure: true,
             dependsOn: '',
-            subformOptions: null,
           },
           {
             element: 'textarea',
@@ -1891,7 +1889,6 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
             validationRule: '',
             secure: true,
             dependsOn: '',
-            subformOptions: null,
           },
           {
             element: 'textarea',
@@ -1909,7 +1906,6 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
             validationRule: '',
             secure: true,
             dependsOn: '',
-            subformOptions: null,
           },
         ],
       },
@@ -1946,7 +1942,6 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
             validationRule: '',
             secure: true,
             dependsOn: '',
-            subformOptions: null,
           },
           {
             element: 'input',
@@ -1964,7 +1959,6 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
             validationRule: '',
             secure: false,
             dependsOn: '',
-            subformOptions: null,
           },
           {
             element: 'input',
@@ -1983,7 +1977,6 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
             validationRule: '',
             secure: false,
             dependsOn: '',
-            subformOptions: null,
           },
         ],
       },
