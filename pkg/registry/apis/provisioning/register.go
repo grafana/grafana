@@ -548,13 +548,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
-			legacyFolders := migrate.NewLegacyFoldersMigrator(b.legacyMigrator)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
 				b.repositoryResources,
 				b.parsers,
 				b.legacyMigrator,
-				legacyFolders,
 				signerFactory,
+				b.clients,
+				export.ExportAll,
 			)
 			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
 			legacyMigrator := migrate.NewLegacyMigrator(
@@ -1152,7 +1152,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

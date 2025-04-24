@@ -15,6 +15,7 @@ import (
 	"github.com/grafana/grafana/pkg/modules"
 	"github.com/grafana/grafana/pkg/services/authz"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
@@ -120,7 +121,7 @@ func (s *ModuleServer) Run() error {
 
 	// only run the instrumentation server module if were not running a module that already contains an http server
 	m.RegisterInvisibleModule(modules.InstrumentationServer, func() (services.Service, error) {
-		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) {
+		if m.IsModuleEnabled(modules.All) || m.IsModuleEnabled(modules.Core) || m.IsModuleEnabled(modules.FrontendServer) {
 			return services.NewBasicService(nil, nil, nil).WithName(modules.InstrumentationServer), nil
 		}
 		return NewInstrumentationService(s.log, s.cfg, s.promGatherer)
@@ -149,6 +150,10 @@ func (s *ModuleServer) Run() error {
 
 	m.RegisterModule(modules.ZanzanaServer, func() (services.Service, error) {
 		return authz.ProvideZanzanaService(s.cfg, s.features)
+	})
+
+	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
+		return frontend.ProvideFrontendService(s.cfg, s.promGatherer)
 	})
 
 	m.RegisterModule(modules.All, nil)
