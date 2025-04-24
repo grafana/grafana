@@ -2680,9 +2680,6 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
-    "soft-delete": {
-      "success": "Dashboard {{name}} moved to Recently deleted"
-    },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
   "canvas": {
