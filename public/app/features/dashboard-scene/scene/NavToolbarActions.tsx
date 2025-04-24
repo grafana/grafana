@@ -79,9 +79,7 @@ export function ToolbarActions({ dashboard }: Props) {
     return null;
   }
 
-  console.log({ isEditingPanel });
-
-  if (isEditingPanel) {
+  if (!isEditing && dashboard.canEditDashboard() && !isViewingPanel && !isPlaying && editable) {
     dashboard.onEnterEditMode();
   }
 
