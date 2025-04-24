@@ -8,7 +8,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	notificationsResource "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
@@ -44,7 +43,7 @@ func RegisterApp(
 	}
 
 	return &AlertingNotificationsAppProvider{
-		Provider: simple.NewAppProvider(apis.LocalManifest(), appCfg, notificationsApp.New),
+		Provider: simple.NewAppProvider(notificationsResource.LocalManifest(), appCfg, notificationsApp.New),
 	}
 }
 
