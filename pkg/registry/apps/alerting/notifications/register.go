@@ -13,6 +13,7 @@ import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
 	receiverv1 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver/v0alpha1"
+	receiverv2 "github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver/v0alpha2"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/templategroup"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/timeinterval"
@@ -56,7 +57,8 @@ func getAuthorizer(authz accesscontrol.AccessControl) authorizer.Authorizer {
 				return templategroup.Authorize(ctx, authz, a)
 			case timeinterval.ResourceInfo.GroupResource().Resource:
 				return timeinterval.Authorize(ctx, authz, a)
-			case receiverv1.ResourceInfo.GroupResource().Resource:
+			case receiverv1.ResourceInfo.GroupResource().Resource,
+				receiverv2.ResourceInfo.GroupResource().Resource:
 				return receiver.Authorize(ctx, ac.NewReceiverAccess[*ngmodels.Receiver](authz, false), a)
 			case routingtree.ResourceInfo.GroupResource().Resource:
 				return routingtree.Authorize(ctx, authz, a)
@@ -75,6 +77,8 @@ func getLegacyStorage(namespacer request.NamespaceMapper, ng *ngalert.AlertNG) r
 			return templategroup.NewStorage(ng.Api.Templates, namespacer)
 		} else if gvr == routingtree.ResourceInfo.GroupVersionResource() {
 			return routingtree.NewStorage(ng.Api.Policies, namespacer)
+		} else if gvr == receiverv2.ResourceInfo.GroupVersionResource() {
+			return receiverv2.NewStorage(ng.Api.ReceiverService, namespacer, ng.Api.ReceiverService)
 		}
 		panic("unknown legacy storage requested: " + gvr.String())
 	}
