@@ -328,26 +328,32 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	return secureValues, nil
 }
 
-// TODO LND Implement this
 func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
-		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
-				Where("namespace = ? AND name = ?", namespace.String(), name).
-				Cols("external_id").
-				Update(&secureValueDB{ExternalID: externalID.String()})
+	req := updateExternalIdSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+		ExternalID:  externalID.String(),
+	}
 
-			if modifiedCount > 1 {
-				return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
-			}
+	q, err := sqltemplate.Execute(sqlSecureValueUpdateExternalId, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateExternalId.Name(), err)
+	}
 
-			if err != nil {
-				return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
-			}
+	res, err := s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("updating external id secure value: %w", err)
+	}
 
-			return nil
-		})
-	})
+	modifiedCount, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting updated rows update external id secure value: %w", err)
+	}
+	if modifiedCount > 1 {
+		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+	}
+	return nil
 }
 
 // TODO LND Implement this
