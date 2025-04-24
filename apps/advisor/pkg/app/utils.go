@@ -59,7 +59,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		return fmt.Errorf("error running steps: %w", err)
 	}
 
-	report := &advisorv0alpha1.CheckV0alpha1StatusReport{
+	report := &advisorv0alpha1.CheckReport{
 		Failures: failures,
 		Count:    int64(len(items)),
 	}

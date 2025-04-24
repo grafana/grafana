@@ -15,6 +15,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.Check":                        schema_pkg_apis_advisor_v0alpha1_Check(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckErrorLink":               schema_pkg_apis_advisor_v0alpha1_CheckErrorLink(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckList":                    schema_pkg_apis_advisor_v0alpha1_CheckList(ref),
+		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReport":                  schema_pkg_apis_advisor_v0alpha1_CheckReport(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure":           schema_pkg_apis_advisor_v0alpha1_CheckReportFailure(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec":                    schema_pkg_apis_advisor_v0alpha1_CheckSpec(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckStatus":                  schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref),
@@ -24,7 +25,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStatus":              schema_pkg_apis_advisor_v0alpha1_CheckTypeStatus(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeStep":                schema_pkg_apis_advisor_v0alpha1_CheckTypeStep(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypestatusOperatorState": schema_pkg_apis_advisor_v0alpha1_CheckTypestatusOperatorState(ref),
-		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport":    schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref),
 		"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState":     schema_pkg_apis_advisor_v0alpha1_CheckstatusOperatorState(ref),
 	}
 }
@@ -57,8 +57,9 @@ func schema_pkg_apis_advisor_v0alpha1_Check(ref common.ReferenceCallback) common
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec"),
+							Description: "Spec is the spec of the Check",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckSpec"),
 						},
 					},
 					"status": {
@@ -153,6 +154,43 @@ func schema_pkg_apis_advisor_v0alpha1_CheckList(ref common.ReferenceCallback) co
 	}
 }
 
+func schema_pkg_apis_advisor_v0alpha1_CheckReport(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"count": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Number of elements analyzed",
+							Default:     0,
+							Type:        []string{"integer"},
+							Format:      "int64",
+						},
+					},
+					"failures": {
+						SchemaProps: spec.SchemaProps{
+							Description: "List of failures",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"count", "failures"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure"},
+	}
+}
+
 func schema_pkg_apis_advisor_v0alpha1_CheckReportFailure(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
@@ -243,7 +281,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref common.ReferenceCallback) 
 					"report": {
 						SchemaProps: spec.SchemaProps{
 							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport"),
+							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReport"),
 						},
 					},
 					"operatorStates": {
@@ -281,7 +319,7 @@ func schema_pkg_apis_advisor_v0alpha1_CheckStatus(ref common.ReferenceCallback) 
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckV0alpha1StatusReport", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState"},
+			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReport", "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckstatusOperatorState"},
 	}
 }
 
@@ -313,8 +351,9 @@ func schema_pkg_apis_advisor_v0alpha1_CheckType(ref common.ReferenceCallback) co
 					},
 					"spec": {
 						SchemaProps: spec.SchemaProps{
-							Default: map[string]interface{}{},
-							Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeSpec"),
+							Description: "Spec is the spec of the CheckType",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckTypeSpec"),
 						},
 					},
 					"status": {
@@ -548,43 +587,6 @@ func schema_pkg_apis_advisor_v0alpha1_CheckTypestatusOperatorState(ref common.Re
 				Required: []string{"lastEvaluation", "state"},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_advisor_v0alpha1_CheckV0alpha1StatusReport(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Type: []string{"object"},
-				Properties: map[string]spec.Schema{
-					"count": {
-						SchemaProps: spec.SchemaProps{
-							Description: "Number of elements analyzed",
-							Default:     0,
-							Type:        []string{"integer"},
-							Format:      "int64",
-						},
-					},
-					"failures": {
-						SchemaProps: spec.SchemaProps{
-							Description: "List of failures",
-							Type:        []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure"),
-									},
-								},
-							},
-						},
-					},
-				},
-				Required: []string{"count", "failures"},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1.CheckReportFailure"},
 	}
 }
 

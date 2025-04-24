@@ -18,8 +18,11 @@ import (
 type Check struct {
 	metav1.TypeMeta   `json:",inline" yaml:",inline"`
 	metav1.ObjectMeta `json:"metadata" yaml:"metadata"`
-	Spec              CheckSpec   `json:"spec" yaml:"spec"`
-	CheckStatus       CheckStatus `json:"status" yaml:"status"`
+
+	// Spec is the spec of the Check
+	Spec CheckSpec `json:"spec" yaml:"spec"`
+
+	Status CheckStatus `json:"status" yaml:"status"`
 }
 
 func (o *Check) GetSpec() any {
@@ -37,14 +40,14 @@ func (o *Check) SetSpec(spec any) error {
 
 func (o *Check) GetSubresources() map[string]any {
 	return map[string]any{
-		"status": o.CheckStatus,
+		"status": o.Status,
 	}
 }
 
 func (o *Check) GetSubresource(name string) (any, bool) {
 	switch name {
 	case "status":
-		return o.CheckStatus, true
+		return o.Status, true
 	default:
 		return nil, false
 	}
@@ -57,7 +60,7 @@ func (o *Check) SetSubresource(name string, value any) error {
 		if !ok {
 			return fmt.Errorf("cannot set status type %#v, not of type CheckStatus", value)
 		}
-		o.CheckStatus = cast
+		o.Status = cast
 		return nil
 	default:
 		return fmt.Errorf("subresource '%s' does not exist", name)
@@ -219,6 +222,20 @@ func (o *Check) DeepCopyObject() runtime.Object {
 	return o.Copy()
 }
 
+func (o *Check) DeepCopy() *Check {
+	cpy := &Check{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *Check) DeepCopyInto(dst *Check) {
+	dst.TypeMeta.APIVersion = o.TypeMeta.APIVersion
+	dst.TypeMeta.Kind = o.TypeMeta.Kind
+	o.ObjectMeta.DeepCopyInto(&dst.ObjectMeta)
+	o.Spec.DeepCopyInto(&dst.Spec)
+	o.Status.DeepCopyInto(&dst.Status)
+}
+
 // Interface compliance compile-time check
 var _ resource.Object = &Check{}
 
@@ -262,5 +279,41 @@ func (o *CheckList) SetItems(items []resource.Object) {
 	}
 }
 
+func (o *CheckList) DeepCopy() *CheckList {
+	cpy := &CheckList{}
+	o.DeepCopyInto(cpy)
+	return cpy
+}
+
+func (o *CheckList) DeepCopyInto(dst *CheckList) {
+	resource.CopyObjectInto(dst, o)
+}
+
 // Interface compliance compile-time check
 var _ resource.ListObject = &CheckList{}
+
+// Copy methods for all subresource types
+
+// DeepCopy creates a full deep copy of Spec
+func (s *CheckSpec) DeepCopy() *CheckSpec {
+	cpy := &CheckSpec{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies Spec into another Spec object
+func (s *CheckSpec) DeepCopyInto(dst *CheckSpec) {
+	resource.CopyObjectInto(dst, s)
+}
+
+// DeepCopy creates a full deep copy of CheckStatus
+func (s *CheckStatus) DeepCopy() *CheckStatus {
+	cpy := &CheckStatus{}
+	s.DeepCopyInto(cpy)
+	return cpy
+}
+
+// DeepCopyInto deep copies CheckStatus into another CheckStatus object
+func (s *CheckStatus) DeepCopyInto(dst *CheckStatus) {
+	resource.CopyObjectInto(dst, s)
+}
