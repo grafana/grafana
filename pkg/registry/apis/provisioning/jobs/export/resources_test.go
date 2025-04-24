@@ -222,7 +222,7 @@ func TestExportResources_Dashboards(t *testing.T) {
 						"status": map[string]interface{}{
 							"conversion": map[string]interface{}{
 								"failed":        true,
-								"storedVersion": "vXyz",
+								"storedVersion": "v0xyz",
 							},
 						},
 					},
@@ -261,7 +261,7 @@ func TestExportResources_Dashboards(t *testing.T) {
 						return false
 					}
 
-					if storedVersion != "vXyz" {
+					if storedVersion != "v0xyz" {
 						return false
 					}
 
@@ -293,22 +293,15 @@ func TestExportResources_Dashboards(t *testing.T) {
 				progress.On("SetMessage", mock.Anything, "start resource export").Return()
 				progress.On("SetMessage", mock.Anything, "export dashboards").Return()
 				progress.On("Record", mock.Anything, mock.MatchedBy(func(result jobs.JobResourceResult) bool {
-					return result.Name == "dashboard-no-stored-version" && result.Action == repository.FileActionCreated
+					return result.Name == "dashboard-no-stored-version" &&
+						result.Action == repository.FileActionIgnored &&
+						result.Error != nil
 				})).Return()
 				progress.On("TooManyErrors").Return(nil)
 			},
 			setupResources: func(repoResources *resources.MockRepositoryResources, resourceClients *resources.MockResourceClients, mockClient *mockDynamicInterface, gvk schema.GroupVersionKind) {
 				resourceClients.On("ForResource", resources.DashboardResource).Return(mockClient, gvk, nil)
-				options := resources.WriteOptions{
-					Path: "grafana",
-					Ref:  "feature/branch",
-				}
-
-				repoResources.On("WriteResourceFileFromObject", mock.Anything, mock.MatchedBy(func(obj *unstructured.Unstructured) bool {
-					// Verify that the API version remains unchanged when no storedVersion is present
-					return obj.GetName() == "dashboard-no-stored-version" &&
-						obj.GetAPIVersion() == resources.DashboardResource.GroupVersion().String()
-				}), options).Return("dashboards/dashboard-no-stored-version.json", nil)
+				// The value is not saved
 			},
 		},
 	}

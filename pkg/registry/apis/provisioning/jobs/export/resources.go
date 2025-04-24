@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
@@ -49,7 +49,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 								return nil, err
 							}
 						}
-						return v2client.Get(ctx, item.GetName(), v1.GetOptions{})
+						return v2client.Get(ctx, item.GetName(), metav1.GetOptions{})
 					}
 
 					// For v0 we can simply fallback -- the full model is saved, but
@@ -91,7 +91,7 @@ func exportResource(ctx context.Context,
 		if upgrader != nil {
 			item, err = upgrader(ctx, item)
 		}
-		if err != nil {
+		if err == nil {
 			result.Path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
 				Path: options.Path,
 				Ref:  options.Branch,
