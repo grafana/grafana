@@ -343,9 +343,10 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 
 	res, err := s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("updating external id secure value: %w", err)
+		return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
 	}
 
+	// validate modified cound
 	modifiedCount, err := res.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("getting updated rows update external id secure value: %w", err)
@@ -356,26 +357,33 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	return nil
 }
 
-// TODO LND Implement this
 func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
-		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
-				Where("namespace = ? AND name = ?", namespace.String(), name).
-				Cols("status_phase").
-				Update(&secureValueDB{Phase: string(secretv0alpha1.SecureValuePhaseSucceeded)})
+	req := updateStatusSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+		Phase:       string(secretv0alpha1.SecureValuePhaseSucceeded),
+	}
 
-			if modifiedCount > 1 {
-				return fmt.Errorf("secureValueMetadataStorage.SetStatusSucceeded: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
-			}
+	q, err := sqltemplate.Execute(sqlSecureValueUpdateStatus, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateStatus.Name(), err)
+	}
 
-			if err != nil {
-				return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
-			}
+	res, err := s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
+	}
 
-			return nil
-		})
-	})
+	// validate modified cound
+	modifiedCount, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting updated rows update status secure value: %w", err)
+	}
+	if modifiedCount > 1 {
+		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+	}
+	return nil
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {

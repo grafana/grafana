@@ -223,7 +223,7 @@ func TestSecureValueQueries(t *testing.T) {
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Name:        "name",
 						Namespace:   "ns",
-						Message:     "message",
+						Phase:       "Succeeded",
 					},
 				},
 			},

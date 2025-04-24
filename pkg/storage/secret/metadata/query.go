@@ -214,7 +214,7 @@ type updateStatusSecureValue struct {
 	sqltemplate.SQLTemplate
 	Namespace string
 	Name      string
-	Message   string
+	Phase     string
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
