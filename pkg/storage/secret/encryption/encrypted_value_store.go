@@ -8,7 +8,6 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
@@ -18,7 +17,7 @@ var (
 	ErrEncryptedValueNotFound = errors.New("encrypted value not found")
 )
 
-func ProvideEncryptedValueStorage(db db.DB, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
+func ProvideEncryptedValueStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.EncryptedValueStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptedValStorage{}, nil
@@ -26,12 +25,12 @@ func ProvideEncryptedValueStorage(db db.DB, features featuremgmt.FeatureToggles)
 
 	return &encryptedValStorage{
 		db:      db,
-		dialect: sqltemplate.DialectForDriver(string(db.GetDBType())),
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 	}, nil
 }
 
 type encryptedValStorage struct {
-	db      db.DB
+	db      contracts.Database
 	dialect sqltemplate.Dialect
 }
 
@@ -54,7 +53,7 @@ func (s *encryptedValStorage) Create(ctx context.Context, namespace string, encr
 		return nil, fmt.Errorf("executing template %q: %w", sqlEncryptedValueCreate.Name(), err)
 	}
 
-	res, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("inserting row: %w", err)
 	}
@@ -88,7 +87,7 @@ func (s *encryptedValStorage) Update(ctx context.Context, namespace string, uid 
 		return fmt.Errorf("executing template %q: %w", sqlEncryptedValueUpdate.Name(), err)
 	}
 
-	res, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("updating row: %w", err)
 	}
@@ -113,7 +112,7 @@ func (s *encryptedValStorage) Get(ctx context.Context, namespace string, uid str
 		return nil, fmt.Errorf("executing template %q: %w", sqlEncryptedValueRead.Name(), err)
 	}
 
-	rows, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("getting row: %w", err)
 	}
@@ -152,7 +151,7 @@ func (s *encryptedValStorage) Delete(ctx context.Context, namespace string, uid 
 		return fmt.Errorf("executing template %q: %w", sqlEncryptedValueDelete.Name(), err)
 	}
 
-	if _, err = s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...); err != nil {
+	if _, err = s.db.ExecContext(ctx, query, req.GetArgs()...); err != nil {
 		return fmt.Errorf("deleting row: %w", err)
 	}
 

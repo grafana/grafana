@@ -66,7 +66,7 @@ func TestProcessMessage(t *testing.T) {
 		dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 		require.NoError(t, err)
 
-		encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+		encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 		require.NoError(t, err)
 
 		encMgr, err := encryptionmanager.ProvideEncryptionManager(
@@ -95,11 +95,11 @@ func TestProcessMessage(t *testing.T) {
 		keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
 		require.NoError(t, err)
 
-		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(testDB, features, accessClient)
+		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features, accessClient)
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorageWrapper, keeperService)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, keeperMetadataStorageWrapper, keeperService)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
@@ -108,7 +108,7 @@ func TestProcessMessage(t *testing.T) {
 			contracts.SQLKeeperType: sqlKeeperWrapper,
 		}
 
-		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, utils.ResourceInfo{})
+		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, accessClient, utils.ResourceInfo{})
 
 		worker := NewWorker(Config{
 			// TODO: randomize
@@ -136,9 +136,8 @@ func TestProcessMessage(t *testing.T) {
 						Namespace: fmt.Sprintf("stack-%d", i),
 					},
 					Spec: secretv0alpha1.SecureValueSpec{
-						Title:  fmt.Sprintf("title-%d", i),
-						Value:  secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", i)),
-						Keeper: contracts.DefaultSQLKeeper,
+						Title: fmt.Sprintf("title-%d", i),
+						Value: secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", i)),
 					},
 					Status: secretv0alpha1.SecureValueStatus{
 						Phase: secretv0alpha1.SecureValuePhasePending,
@@ -157,7 +156,6 @@ func TestProcessMessage(t *testing.T) {
 					Type:            contracts.UpdateSecretOutboxMessage,
 					Name:            secret.name,
 					Namespace:       secret.namespace,
-					KeeperName:      contracts.DefaultSQLKeeper,
 					EncryptedSecret: secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("v-%d", i)),
 					ExternalID:      &externalID,
 				})
@@ -172,7 +170,6 @@ func TestProcessMessage(t *testing.T) {
 					Type:       contracts.DeleteSecretOutboxMessage,
 					Name:       secret.name,
 					Namespace:  secret.namespace,
-					KeeperName: contracts.DefaultSQLKeeper,
 					ExternalID: &externalID,
 				})
 				require.NoError(t, err)
@@ -388,8 +385,8 @@ func (wrapper *secureValueMetadataStorageWrapper) Delete(ctx context.Context, na
 	}
 	return nil
 }
-func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	return wrapper.impl.List(ctx, namespace, options)
+func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error) {
+	return wrapper.impl.List(ctx, namespace)
 }
 
 func (wrapper *secureValueMetadataStorageWrapper) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
@@ -520,7 +517,7 @@ func (wrapper *keeperMetadataStorageWrapper) Delete(_ context.Context, _ xkube.N
 func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace, _ *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
 		return "", nil, context.DeadlineExceeded

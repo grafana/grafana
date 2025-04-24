@@ -55,7 +55,6 @@ type SecretAPIBuilder struct {
 	accessClient               claims.AccessClient
 	worker                     *worker.Worker
 	decryptersAllowList        map[string]struct{}
-	isDevMode                  bool // REMOVE ME
 }
 
 func NewSecretAPIBuilder(
@@ -67,7 +66,6 @@ func NewSecretAPIBuilder(
 	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
-	isDevMode bool, // REMOVE ME
 ) (*SecretAPIBuilder, error) {
 	database := database.New(db)
 	keepers, err := keeperService.GetKeepers()
@@ -95,7 +93,6 @@ func NewSecretAPIBuilder(
 			keepers,
 		),
 		decryptersAllowList: decryptersAllowList,
-		isDevMode:           isDevMode,
 	}, nil
 }
 
@@ -118,14 +115,6 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	// Check if dev mode is enabled and replace the provided stores with an in-memory stores if so.
-	// TODO: Remove before launch
-	if cfg.SecretsManagement.IsDeveloperMode {
-		fmt.Println("developer mode enabled")
-		secureValueMetadataStorage = reststorage.NewFakeSecureValueMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
-		keeperMetadataStorage = reststorage.NewFakeKeeperMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
-	}
-
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
@@ -139,7 +128,6 @@ func RegisterAPIService(
 		keeperService,
 		accessClient,
 		nil, // OSS does not need an allow list.
-		cfg.SecretsManagement.IsDeveloperMode,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -195,7 +183,9 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secureValueMetadataStorage, b.database, b.secretsOutboxQueue, secureValueResource),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(
+			b.secureValueMetadataStorage, b.database, b.secretsOutboxQueue, b.accessClient, secureValueResource,
+		),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
 		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),
@@ -432,6 +422,8 @@ spec:
 		}
 	}
 
+	exampleKeeperAWS := "{aws-keeper-that-must-already-exist}"
+
 	sub = oas.Paths.Paths[smprefix+"/securevalues"]
 	if sub != nil {
 		optionsSchema := defs[defsBase+"SecureValueSpec"].Schema
@@ -450,7 +442,6 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret in default",
 													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -464,7 +455,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret in aws",
 													Value:      "this is super duper secure",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Keeper:     &exampleKeeperAWS,
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -478,7 +469,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret from aws",
 													Ref:        "my-secret-in-aws",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Keeper:     &exampleKeeperAWS,
 													Decrypters: []string{"actor_k6"},
 												},
 											},
@@ -495,7 +486,6 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "XYZ secret",
 													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -523,7 +513,6 @@ metadata:
     bb: BBB
 spec:
   title: A secret value
-  keeper: kp-default-sql
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -583,7 +572,6 @@ metadata:
     bb: BBB
 spec:
   title: XYZ secret
-  keeper: kp-default-sql
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -608,10 +596,6 @@ spec:
 // For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	if b.isDevMode {
-		return nil
-	}
-
 	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 

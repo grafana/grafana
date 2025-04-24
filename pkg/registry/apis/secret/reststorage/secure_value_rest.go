@@ -10,6 +10,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -38,17 +40,25 @@ type SecureValueRest struct {
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	outboxQueue                contracts.OutboxQueue
 	database                   contracts.Database
+	accessClient               claims.AccessClient
 	resource                   utils.ResourceInfo
 	tableConverter             rest.TableConvertor
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(storage contracts.SecureValueMetadataStorage, database contracts.Database, outboxQueue contracts.OutboxQueue, resource utils.ResourceInfo) *SecureValueRest {
+func NewSecureValueRest(
+	storage contracts.SecureValueMetadataStorage,
+	database contracts.Database,
+	outboxQueue contracts.OutboxQueue,
+	accessClient claims.AccessClient,
+	resource utils.ResourceInfo,
+) *SecureValueRest {
 	return &SecureValueRest{
 		secureValueMetadataStorage: storage,
 		resource:                   resource,
 		tableConverter:             resource.TableConverter(),
 		database:                   database,
+		accessClient:               accessClient,
 		outboxQueue:                outboxQueue,
 	}
 }
@@ -83,17 +93,61 @@ func (s *SecureValueRest) ConvertToTable(ctx context.Context, object runtime.Obj
 
 // List calls the inner `store` (persistence) and returns a list of `securevalues` within a `namespace` filtered by the `options`.
 func (s *SecureValueRest) List(ctx context.Context, options *internalversion.ListOptions) (runtime.Object, error) {
+	authInfo, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	secureValueList, err := s.secureValueMetadataStorage.List(ctx, xkube.Namespace(namespace), options)
+	hasPermissionFor, err := s.accessClient.Compile(ctx, authInfo, claims.ListRequest{
+		Group:     secretv0alpha1.GROUP,
+		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
+		Namespace: namespace,
+		Verb:      utils.VerbGet,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to compile checker: %w", err)
+	}
+
+	labelSelector := options.LabelSelector
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+
+	fieldSelector := options.FieldSelector
+	if fieldSelector == nil {
+		fieldSelector = fields.Everything()
+	}
+
+	secureValueList, err := s.secureValueMetadataStorage.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
 
-	return secureValueList, nil
+	allowedSecureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueList))
+
+	for _, secureValue := range secureValueList {
+		// Check whether the user has permission to access this specific SecureValue in the namespace.
+		if !hasPermissionFor(secureValue.Name, "") {
+			continue
+		}
+
+		// Filter by label
+		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
+			// Filter by status.phase
+			if fieldSelector.Matches(fields.Set{"status.phase": string(secureValue.Status.Phase)}) {
+				allowedSecureValues = append(allowedSecureValues, secureValue)
+			}
+		}
+	}
+
+	return &secretv0alpha1.SecureValueList{
+		Items: allowedSecureValues,
+	}, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
@@ -263,10 +317,6 @@ func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
 
 	if sv.Spec.Title == "" {
 		errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
-	}
-
-	if sv.Spec.Keeper == "" {
-		errs = append(errs, field.Required(field.NewPath("spec", "keeper"), "a `keeper` is required"))
 	}
 
 	if sv.Spec.Value == "" && sv.Spec.Ref == "" {

@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,7 +45,6 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
@@ -57,14 +57,16 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 	})
 
 	t.Run("store secure value in a non implemented keeper returns error", func(t *testing.T) {
-		testSV.Spec.Keeper = "not-implemented-keeper"
+		keeper := "not-implemented-keeper"
+		testSV.Spec.Keeper = &keeper
 		externalID, err := s.storeInKeeper(ctx, testSV)
 		require.Error(t, err)
 		require.Empty(t, externalID)
 	})
 
 	t.Run("store secure value in a not implemented keeper returns error", func(t *testing.T) {
-		testSV.Spec.Keeper = "not-implemented-keeper"
+		keeper := "not-implemented-keeper"
+		testSV.Spec.Keeper = &keeper
 		externalID, err := s.storeInKeeper(ctx, testSV)
 		require.Error(t, err)
 		require.Empty(t, externalID)
@@ -82,14 +84,12 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
 	testsvDB := &secureValueDB{
 		Namespace: "default",
 		Name:      "name",
-		Keeper:    "kp-default-sql",
 	}
 	s := setupTestService(t).(*secureValueMetadataStorage)
 
@@ -105,8 +105,9 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 		})
 
 		t.Run("updating a secure value keeper returns error", func(t *testing.T) {
+			keeper := "another-keeper"
 			updateSV := testSV.DeepCopy()
-			updateSV.Spec.Keeper = "another-keeper"
+			updateSV.Spec.Keeper = &keeper
 			err := s.updateInKeeper(ctx, testsvDB, updateSV)
 			require.Error(t, err)
 		})
@@ -139,7 +140,6 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
@@ -171,6 +171,8 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
+	database := database.New(testDB)
+
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "sdDkslslld",
@@ -188,7 +190,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
 	// Initialize the encryption manager
@@ -210,7 +212,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
 	// Initialize the keeper storage and add a test keeper
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(testDB, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
@@ -224,7 +226,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorage, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, keeperMetadataStorage, keeperService)
 	require.NoError(t, err)
 
 	return secureValueMetadataStorage

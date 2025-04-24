@@ -678,7 +678,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					},
 					"keeper": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name of the keeper, being the actual storage of the secure value.",
+							Description: "Name of the keeper, being the actual storage of the secure value. If not specified, the default keeper for the namespace will be used.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
