@@ -99,7 +99,7 @@ export const DashboardPicker = forwardRef<HTMLElement, Props>(
         value={current}
         defaultOptions={true}
         {...props}
-        ref={ref}
+        selectRef={ref}
       />
     );
   }
