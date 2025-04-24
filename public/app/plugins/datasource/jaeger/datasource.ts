@@ -80,11 +80,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       return of({ data: [emptyTraceDataFrame] });
     }
 
-    if (
-      config.featureToggles.jaegerBackendMigration &&
-      // No query type means that the query is a trace ID query
-      (!target.queryType || target.queryType === 'dependencyGraph')
-    ) {
+    if (config.featureToggles.jaegerBackendMigration) {
       return super.query({ ...options, targets: [target] }).pipe(
         map((response) => {
           // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
