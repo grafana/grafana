@@ -73,9 +73,9 @@ Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled r
 
 ## Grafana security releases: improved version naming convention
 
-We’ve enhanced our naming convention for security release versions to make it easier to clearly identify our security releases from our standard patching releases.
+We've enhanced our naming convention for security release versions to make it easier to clearly identify our security releases from our standard patching releases.
 
-In the past, critical vulnerabilities triggered unscheduled releases that incremented the patch version (e.g., 10.3.0 to 10.3.1). However, we found that the naming convention for these releases didn’t clearly communicate the nature of the update. For example, if there was a version change from 11.3.0 to 11.3.1, there was no indication whether it was a security fix, a bug fix, or a minor feature update. This lack of clarity led to confusion about the urgency and nature of the update. <br>
+In the past, critical vulnerabilities triggered unscheduled releases that incremented the patch version (e.g., 10.3.0 to 10.3.1). However, we found that the naming convention for these releases didn't clearly communicate the nature of the update. For example, if there was a version change from 11.3.0 to 11.3.1, there was no indication whether it was a security fix, a bug fix, or a minor feature update. This lack of clarity led to confusion about the urgency and nature of the update. <br>
 
 {{< admonition type="note" >}}
 Docker does not allow the plus sign (`+`) in image tag names. A plus sign (`+`) will be a rendered as a dash (`-`) in the docker tag.
@@ -85,7 +85,7 @@ Our new approach directly addresses this issue. Going forward, security releases
 
 **For example**: A release named "11.2.3+security-01" would consist of what was released in 11.2.3 PLUS the indicated security fix. Once released, the security fix will also then be automatically included in all future releases of the impacted version.
 
-This naming convention should make it easier to identify security updates and the Grafana version they’re based on, allowing for a better understanding of the importance and urgency of each release.
+This naming convention should make it easier to identify security updates and the Grafana version they're based on, allowing for a better understanding of the importance and urgency of each release.
 
 ## What to know about version support
 
@@ -157,11 +157,11 @@ Based on your needs, choose your ideal upgrade strategy. Here’s what that migh
 
 | **Strategy/cadence**                       | **Advantages/disadvantages**                                                                                                                                                                                                                                                                                           | **Example upgrade procedure**                                                                                                                                                                                                                                               |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Minor / bi-monthly (11.1 to 11.2)**      | Our recommended strategy. It combines up-to-date, secure releases with access to latest features as soon as they’re released. <ul><li>Small changelog to review</li><li>Highest compatibility with actively maintained plugins</li><li>Easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul> | <ul><li>**January 2025**: You review the 11.5 changelog and deploy the release to testing</li><li>**February 2025**: You deploy 11.5 to production</li><li>**March 2025**: 11.6 is released</li></ul>                                                                       |
+| **Minor / bi-monthly (11.1 to 11.2)**      | Our recommended strategy. It combines up-to-date, secure releases with access to latest features as soon as they're released. <ul><li>Small changelog to review</li><li>Highest compatibility with actively maintained plugins</li><li>Easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul> | <ul><li>**January 2025**: You review the 11.5 changelog and deploy the release to testing</li><li>**February 2025**: You deploy 11.5 to production</li><li>**March 2025**: 11.6 is released</li></ul>                                                                       |
 | **Major / yearly (10.0 to 11.0)**          | Yearly upgrade path that still gives access to up-to-date features presented at GrafanaCON.<ul><li>Big changelog to review</li><li>High compatibility with plugins</li><li>Relatively easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul>                                                  | <ul><li>**May 2024**: 11.0 is released, you start a big changelog review</li><li>**June 2024**: You deploy 11.0 to testing</li><li>**July 2024**: You deploy 11.0 to production</li><li>**May 2025**: 12.0 is released</li></ul>                                            |
 | **Previous major / yearly (10.4 to 11.6)** | Release with extended support timeline<ul><li>Limited compatibility with actively developed plugins</li><li>Big changelog to review</li><li>Migrations to Grafana Cloud might require professional support</li></ul>                                                                                                   | <ul><li>**May 2025**: 12.0 is released, marking the previous minor (11.6.x) with extended support, you start a big changelog review (10.4.x to 11.6.x)</li><li>**June 2025**: You deploy 11.6.x to testing</li><li>**July 2025**: You deploy 11.6.x to production</li></ul> |
 
-Follow the "minor" strategy for the most flexibility, as you can also occasionally lengthen the cadence to a full quarter and still rely on your currently deployed minor release being supported with security fixes.
+Follow the “minor” strategy for the most flexibility, as you can also occasionally lengthen the cadence to a full quarter and still rely on your currently deployed minor release being supported with security fixes.
 
 ## How the Grafana team catches bugs and breaks during the release process
 
