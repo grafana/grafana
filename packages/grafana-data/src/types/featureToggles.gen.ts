@@ -354,11 +354,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-  * @default true
-  */
-  recoveryThreshold?: boolean;
-  /**
   * Enables the loki data source to request structured metadata from the Loki server
   * @default true
   */
