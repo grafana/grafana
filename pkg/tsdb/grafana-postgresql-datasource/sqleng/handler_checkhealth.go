@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 )
 
@@ -71,15 +70,6 @@ func ErrToHealthCheckResult(err error) (*backend.CheckHealthResult, error) {
 		}
 	}
 
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
-		if pgErr != nil {
-			if pgErr.Code != "" {
-				res.Message += fmt.Sprintf(". Postgres error code: %s", pgErr.Code)
-			}
-			details["verboseMessage"] = pgErr.Message
-		}
-	}
 	if errors.Is(err, pq.ErrSSLNotSupported) {
 		res.Message = "SSL error: Failed to connect to the server"
 	}
