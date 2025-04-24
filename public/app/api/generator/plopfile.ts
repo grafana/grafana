@@ -52,7 +52,7 @@ export default function plopGenerator(plop: NodePlopAPI) {
       {
         type: 'modify',
         path: path.join(basePath, generateScriptPath),
-        pattern: '// PLOP_INJECT_API_CLIENT',
+        pattern: '// PLOP_INJECT_API_CLIENT - Used by the API client generator',
         templateFile: './templates/config-entry.hbs',
         data: templateData,
       },

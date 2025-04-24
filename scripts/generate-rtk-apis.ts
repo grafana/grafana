@@ -72,7 +72,7 @@ const config: ConfigFile = {
       filterEndpoints: ['listPlaylist', 'getPlaylist', 'createPlaylist', 'deletePlaylist', 'replacePlaylist'],
       tag: true,
     },
-    // PLOP_INJECT_API_CLIENT
+    // PLOP_INJECT_API_CLIENT - Used by the API client generator
   },
 };
 
