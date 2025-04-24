@@ -82,7 +82,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value that is not in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
 			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
 			Decrypters: []string{"unlisted-group"},
 			Value:      secretv0alpha1.NewExposedSecureValue("value"),
 		}
@@ -115,7 +114,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value that is in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
 			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
 			Decrypters: []string{"group1"},
 			Value:      secretv0alpha1.NewExposedSecureValue("value"),
 		}
@@ -146,7 +144,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
 			Decrypters: []string{"group1"},
 			Value:      secretv0alpha1.NewExposedSecureValue("value"),
 		}
@@ -176,7 +173,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
 			Decrypters: []string{"group1"},
 			Value:      secretv0alpha1.NewExposedSecureValue("value"),
 		}
@@ -206,7 +202,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
 			Decrypters: []string{"group1"},
 			Value:      secretv0alpha1.NewExposedSecureValue("value"),
 		}
@@ -236,7 +231,6 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
 			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
 			Decrypters: []string{"group1"},
 			Value:      secretv0alpha1.NewExposedSecureValue("value"),
 		}

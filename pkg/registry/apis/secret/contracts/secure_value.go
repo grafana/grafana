@@ -9,7 +9,7 @@ import (
 )
 
 type DecryptSecureValue struct {
-	Keeper     string
+	Keeper     *string
 	Ref        string
 	ExternalID string
 	Decrypters []string
