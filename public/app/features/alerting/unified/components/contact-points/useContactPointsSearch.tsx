@@ -25,7 +25,9 @@ export const useContactPointsSearch = (
   const typeHaystack = useMemo(() => {
     return contactPoints.map((contactPoint) =>
       // we're using the resolved metadata key here instead of the "type" property – ex. we alias "teams" to "microsoft teams"
-      contactPoint.grafana_managed_receiver_configs.map((receiver) => receiver[RECEIVER_META_KEY].name).join(' ')
+      contactPoint.grafana_managed_receiver_configs
+        .map((receiver) => receiver[RECEIVER_META_KEY].name)
+        .join(' ')
     );
   }, [contactPoints]);
 

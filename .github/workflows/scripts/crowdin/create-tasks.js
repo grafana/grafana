@@ -15,7 +15,7 @@ if (!PROJECT_ID) {
 
 const { tasksApi, projectsGroupsApi, sourceFilesApi } = new crowdin.default({
   token: API_TOKEN,
-  organization: 'grafana'
+  organization: 'grafana',
 });
 
 const languages = await getLanguages();
@@ -46,7 +46,7 @@ async function getFileIds() {
   try {
     const response = await sourceFilesApi.listProjectFiles(PROJECT_ID);
     const files = response.data;
-    const fileIds = files.map(file => file.data.id);
+    const fileIds = files.map((file) => file.data.id);
     return fileIds;
   } catch (error) {
     console.error('Failed to fetch file IDs: ', error.message);

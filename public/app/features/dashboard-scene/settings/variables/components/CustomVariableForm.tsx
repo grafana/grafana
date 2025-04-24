@@ -100,7 +100,7 @@ function ValuesTextField({ variable }: { variable: CustomVariable }) {
       onBlur={onBlur}
       placeholder={t(
         'dashboard.edit-pane.variable.custom-options.values-placeholder',
-        '1, 10, mykey : myvalue, myvalue, escaped\,value'
+        '1, 10, mykey : myvalue, myvalue, escaped,value'
       )}
       required
       data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.CustomVariable.customValueInput}

@@ -129,14 +129,11 @@ function splitQueriesByStreamShard(
 
       retriesMap.set(key, retries + 1);
 
-      retryTimer = setTimeout(
-        () => {
-          console.warn(`Retrying ${group} ${cycle} (${retries + 1})`);
-          runNextRequest(subscriber, group, groups);
-          retryTimer = null;
-        },
-        1500 * Math.pow(2, retries)
-      ); // Exponential backoff
+      retryTimer = setTimeout(() => {
+        console.warn(`Retrying ${group} ${cycle} (${retries + 1})`);
+        runNextRequest(subscriber, group, groups);
+        retryTimer = null;
+      }, 1500 * Math.pow(2, retries)); // Exponential backoff
 
       retrying = true;
 

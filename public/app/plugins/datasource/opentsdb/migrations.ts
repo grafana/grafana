@@ -15,13 +15,12 @@ const migrateLegacyAnnotation = (json: LegacyAnnotation) => {
   return annotation;
 };
 
-export const prepareAnnotation: AnnotationSupport<
-  OpenTsdbQuery,
-  AnnotationQuery<OpenTsdbQuery>
->['prepareAnnotation'] = (json) => {
-  const resultingTarget = json.target && typeof json.target !== 'string' ? json.target : migrateLegacyAnnotation(json);
+export const prepareAnnotation: AnnotationSupport<OpenTsdbQuery, AnnotationQuery<OpenTsdbQuery>>['prepareAnnotation'] =
+  (json) => {
+    const resultingTarget =
+      json.target && typeof json.target !== 'string' ? json.target : migrateLegacyAnnotation(json);
 
-  json.target = resultingTarget;
+    json.target = resultingTarget;
 
-  return json;
-};
+    return json;
+  };

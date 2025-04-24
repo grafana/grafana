@@ -40,7 +40,7 @@ jobs:
         cache: 'yarn'
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
-    - run: yarn run prettier:check
+    - run: yarn run format:check-all
     - run: yarn run lint
   lint-frontend-typecheck:
     name: Typecheck

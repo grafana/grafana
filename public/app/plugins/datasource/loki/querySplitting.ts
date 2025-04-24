@@ -152,12 +152,9 @@ export function runSplitGroupedQueries(
 
       retriesMap.set(key, retries + 1);
 
-      retryTimer = setTimeout(
-        () => {
-          runNextRequest(subscriber, requestN, requestGroup);
-        },
-        1500 * Math.pow(2, retries)
-      ); // Exponential backoff
+      retryTimer = setTimeout(() => {
+        runNextRequest(subscriber, requestN, requestGroup);
+      }, 1500 * Math.pow(2, retries)); // Exponential backoff
 
       retrying = true;
 

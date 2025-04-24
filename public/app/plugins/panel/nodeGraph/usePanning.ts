@@ -29,7 +29,11 @@ interface Options {
  * @param bounds - If set the panning cannot go outside of those bounds.
  * @param focus - Position to focus on.
  */
-export function usePanning<T extends Element>({ scale = 1, bounds, focus }: Options = {}): {
+export function usePanning<T extends Element>({
+  scale = 1,
+  bounds,
+  focus,
+}: Options = {}): {
   state: State;
   ref: RefObject<T>;
 } {

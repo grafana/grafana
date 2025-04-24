@@ -40,15 +40,15 @@ const PANEL_URL = 'https://ops.grafana-ops.net/d/dmb2o0xnz/imported-property-det
 function createLinks(section, affectingProperties) {
   return section
     .map(({ name, location }) => {
-      const package = getPackage(location);
+      const pkg = getPackage(location);
 
-      if (!package && !affectingProperties.has(name)) {
+      if (!pkg && !affectingProperties.has(name)) {
         return undefined;
       }
 
-      const link = PANEL_URL + `&var-propertyName=${name}&var-packageName=${package}`;
+      const link = PANEL_URL + `&var-propertyName=${name}&var-packageName=${pkg}`;
 
-      return `<a href="${link}">${package}/${name}</a>`;
+      return `<a href="${link}">${pkg}/${name}</a>`;
     })
     .filter((item) => item !== undefined);
 }
@@ -63,13 +63,13 @@ function createLinks(section, affectingProperties) {
 function makeQuery(section) {
   const whereClause = section
     .map(({ name, location }) => {
-      const package = getPackage(location);
+      const pkg = getPackage(location);
 
-      if (!package) {
+      if (!pkg) {
         return undefined;
       }
 
-      return `(property_name = '${name}' AND package_name = '${package}')`;
+      return `(property_name = '${name}' AND package_name = '${pkg}')`;
     })
     .filter((item) => item !== undefined)
     .join(' OR ');
