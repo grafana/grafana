@@ -16,6 +16,10 @@ import (
 )
 
 func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
+	if !ms.cfg.EnableSharding {
+		return nil, nil
+	}
+
 	if ms.cfg.MemberlistJoinMember == "" {
 		return nil, fmt.Errorf("bad memberlist configuration. Missing MemberlistJoinMember")
 	}
