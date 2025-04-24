@@ -63,13 +63,15 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProv
 		index: t,
 		data: IndexViewData{
 			AppTitle:     "Grafana",
-			AppSubUrl:    cfg.AppSubURL,
+			AppSubUrl:    cfg.AppSubURL, // Based on the request?
 			BuildVersion: cfg.BuildVersion,
 			BuildCommit:  cfg.BuildCommit,
 			Assets:       assets,
 
 			CSPEnabled: cfg.CSPEnabled,
 			CSPContent: cfg.CSPTemplate,
+
+			IsDevelopmentEnv: cfg.Env == setting.Dev,
 		},
 	}, nil
 }
