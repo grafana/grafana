@@ -58,7 +58,7 @@ Enabling CORS via the `grafana.ini` or `custom.ini` file will enable CORS for th
 Access-Control-Allow-Origin = https://<YOUR_URL>.com
 ```
 {{< admonition type="note" >}} 
-Grafana doesn't reccomend using wildcard values (`*`). Use a URL instead.
+Grafana doesn't recommend using wildcard values (`*`) as header values and recommends using a URL instead.
 {{< /admonition >}}
 
 For more granular control when enabling CORS, run Grafana behind a reverse proxy and configure the CORS headers in the reverse proxy for specific endpoints, such as `/api/`.
