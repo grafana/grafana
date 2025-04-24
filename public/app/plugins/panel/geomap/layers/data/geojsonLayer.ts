@@ -102,12 +102,11 @@ export const geojsonLayer: MapLayerRegistryItem<GeoJSONMapperConfig> = {
         }
       }
     }
-    if (true) {
-      const s = await getStyleConfigState(config.style);
-      styles.push({
-        state: s,
-      });
-    }
+
+    const s = await getStyleConfigState(config.style);
+    styles.push({
+      state: s,
+    });
 
     const polyStyleStrings: string[] = Object.values(GeoJSONPolyStyles);
     const pointStyleStrings: string[] = Object.values(GeoJSONPointStyles);

@@ -1082,9 +1082,6 @@ exports[`better eslint`] = {
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/browse-dashboards/api/browseDashboardsAPI.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`@reduxjs/toolkit/query/react\`)", "0"]
-    ],
     "public/app/features/browse-dashboards/state/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],

@@ -43,10 +43,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagDisableSecretsCompatibility
-	// Disable duplicated secret storage in legacy tables
-	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
-
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
@@ -322,10 +318,6 @@ const (
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
-
-	// FlagRecoveryThreshold
-	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-	FlagRecoveryThreshold = "recoveryThreshold"
 
 	// FlagLokiStructuredMetadata
 	// Enables the loki data source to request structured metadata from the Loki server
@@ -938,4 +930,8 @@ const (
 	// FlagAlertRuleUseFiredAtForStartsAt
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
+
+	// FlagAlertingBulkActionsInUI
+	// Enables the alerting bulk actions in the UI
+	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
 )

@@ -11,7 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func TestCreateLibraryElement(t *testing.T) {
+func TestIntegration_CreateLibraryElement(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to create a library panel that already exists, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			// nolint:staticcheck
