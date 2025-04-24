@@ -619,13 +619,14 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	type props struct {
 		title      string
 		apiVersion string
+		name       string
 	}
 
 	// Check that each file was exported with its stored version
 	for _, test := range []props{
-		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1"},
-		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1"},
-		{title: "Test dashboard. Created at v2", apiVersion: "dashboard.grafana.app/v2alpha1"},
+		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1"},
+		{title: "Test dashboard. Created at v2", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2"},
 	} {
 		fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(test.title)+".json")
 		//nolint:gosec // we are ok with reading files in testdata
@@ -634,8 +635,19 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 		obj := map[string]any{}
 		err = json.Unmarshal(body, &obj)
 		require.NoError(t, err, "exported file not json %s", fpath)
-		apiVerison, _, err := unstructured.NestedString(obj, "apiVersion")
+
+		val, _, err := unstructured.NestedString(obj, "apiVersion")
 		require.NoError(t, err)
-		require.Equal(t, test.apiVersion, apiVersion)
+		require.Equal(t, test.apiVersion, val)
+
+		val, _, err = unstructured.NestedString(obj, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, test.title, val)
+
+		val, _, err = unstructured.NestedString(obj, "metadata", "name")
+		require.NoError(t, err)
+		require.Equal(t, test.name, val)
+
+		require.Nil(t, obj["status"], "should not have a status element")
 	}
 }
