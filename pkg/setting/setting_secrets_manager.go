@@ -20,15 +20,10 @@ type SecretsManagerSettings struct {
 	AvailableProviders []string
 
 	Encryption EncryptionSettings
-
-	IsDeveloperMode      bool
-	DeveloperStubLatency time.Duration
 }
 
 func (cfg *Cfg) readSecretsManagerSettings() {
 	secretsMgmt := cfg.Raw.Section("secrets_manager")
-	cfg.SecretsManagement.IsDeveloperMode = secretsMgmt.Key("dev_mode").MustBool(false)
-	cfg.SecretsManagement.DeveloperStubLatency = secretsMgmt.Key("dev_stub_latency").MustDuration(0)
 	cfg.SecretsManagement.EncryptionProvider = secretsMgmt.Key("encryption_provider").MustString(kmsproviders.Default)
 
 	// TODO: These are not used yet by the secrets manager because we need to distentagle the dependencies with OSS.
