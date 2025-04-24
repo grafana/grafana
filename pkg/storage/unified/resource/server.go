@@ -330,7 +330,7 @@ type RingClient struct {
 	Conn *grpc.ClientConn
 }
 
-func (c RingClient) Close() error {
+func (c *RingClient) Close() error {
 	return c.Conn.Close()
 }
 
@@ -370,6 +370,10 @@ func (s *server) Init(ctx context.Context) error {
 	return s.initErr
 }
 
+var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+	return s != ring.ACTIVE
+})
+
 func (s *server) getClientToDistributeRequest(namespace string) *RingClient {
 	ringHasher := fnv.New32a()
 	_, err := ringHasher.Write([]byte(namespace))
@@ -378,9 +382,7 @@ func (s *server) getClientToDistributeRequest(namespace string) *RingClient {
 		return nil
 	}
 
-	rs, err := s.distributor.Ring.Get(ringHasher.Sum32(), ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
-		return s != ring.ACTIVE
-	}), nil, nil, nil)
+	rs, err := s.distributor.Ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
 
 	if err != nil {
 		s.log.Error("Error getting replication set. Will not distribute request", "err", err)

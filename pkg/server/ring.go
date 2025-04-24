@@ -220,7 +220,6 @@ func toRingConfig(cfg *setting.Cfg, KVStore kv.Config) ring.Config {
 
 	rc.KVStore = KVStore
 	rc.HeartbeatTimeout = heartbeatTimeout
-	rc.SubringCacheDisabled = true
 
 	rc.ReplicationFactor = 1
 
