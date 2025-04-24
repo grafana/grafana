@@ -37,7 +37,7 @@ func Middleware(ac AccessControl) func(Evaluator) web.Handler {
 			if c.AllowAnonymous {
 				forceLogin, _ := strconv.ParseBool(c.Req.URL.Query().Get("forceLogin")) // ignoring error, assuming false for non-true values is ok.
 				orgID, err := strconv.ParseInt(c.Req.URL.Query().Get("orgId"), 10, 64)
-				if err == nil && orgID > 0 && orgID != c.SignedInUser.GetOrgID() {
+				if err == nil && orgID > 0 && orgID != c.GetOrgID() {
 					forceLogin = true
 				}
 
@@ -102,7 +102,7 @@ func deny(c *contextmodel.ReqContext, evaluator Evaluator, err error) {
 	} else {
 		c.Logger.Info(
 			"Access denied",
-			"id", c.SignedInUser.GetID(),
+			"id", c.GetID(),
 			"accessErrorID", id,
 			"permissions", evaluator.GoString(),
 		)
@@ -252,11 +252,11 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 			}
 
 			var orgUser identity.Requester = c.SignedInUser
-			if targetOrgID != c.SignedInUser.GetOrgID() {
-				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.SignedInUser.GetID())
+			if targetOrgID != c.GetOrgID() {
+				orgUser, err = authnService.ResolveIdentity(c.Req.Context(), targetOrgID, c.GetID())
 				if err == nil && orgUser.GetOrgID() == NoOrgID {
 					// User is not a member of the target org, so only their global permissions are relevant
-					orgUser, err = authnService.ResolveIdentity(c.Req.Context(), GlobalOrgID, c.SignedInUser.GetID())
+					orgUser, err = authnService.ResolveIdentity(c.Req.Context(), GlobalOrgID, c.GetID())
 				}
 				if err != nil {
 					deny(c, nil, fmt.Errorf("failed to authenticate user in target org: %w", err))
@@ -266,10 +266,10 @@ func AuthorizeInOrgMiddleware(ac AccessControl, authnService authn.Service) func
 			authorize(c, ac, orgUser, evaluator)
 
 			// guard against nil map
-			if c.SignedInUser.Permissions == nil {
-				c.SignedInUser.Permissions = make(map[int64]map[string][]string)
+			if c.Permissions == nil {
+				c.Permissions = make(map[int64]map[string][]string)
 			}
-			c.SignedInUser.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
+			c.Permissions[orgUser.GetOrgID()] = orgUser.GetPermissions()
 		}
 	}
 }
@@ -313,7 +313,7 @@ func UseOrgFromRequestData(c *contextmodel.ReqContext) (int64, error) {
 	}
 
 	if query.OrgId == nil {
-		return c.SignedInUser.GetOrgID(), nil
+		return c.GetOrgID(), nil
 	}
 
 	return *query.OrgId, nil
@@ -338,7 +338,7 @@ func UseGlobalOrgFromRequestData(cfg *setting.Cfg) OrgIDGetter {
 			return GlobalOrgID, nil
 		}
 
-		return c.SignedInUser.GetOrgID(), nil
+		return c.GetOrgID(), nil
 	}
 }
 
@@ -351,7 +351,7 @@ func UseGlobalOrgFromRequestParams(cfg *setting.Cfg) OrgIDGetter {
 			return GlobalOrgID, nil
 		}
 
-		return c.SignedInUser.GetOrgID(), nil
+		return c.GetOrgID(), nil
 	}
 }
 

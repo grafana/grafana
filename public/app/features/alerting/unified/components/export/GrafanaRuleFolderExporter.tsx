@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { FolderDTO } from '../../../../../types';
 import { alertRuleApi } from '../../api/alertRuleApi';
@@ -19,7 +20,9 @@ export function GrafanaRuleFolderExporter({ folder, onClose }: GrafanaRuleFolder
 
   return (
     <GrafanaExportDrawer
-      title={`Export ${folder.title} rules`}
+      title={t('alerting.grafana-rule-folder-exporter.title-drawer', 'Export {{folderName}} rules', {
+        folderName: folder.title,
+      })}
       activeTab={activeTab}
       onTabChange={setActiveTab}
       onClose={onClose}
@@ -43,7 +46,7 @@ function GrafanaRuleFolderExportPreview({ folder, exportFormat, onClose }: Grafa
   });
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-rule-folder-export-preview.text-loading', 'Loading....')} />;
   }
 
   const downloadFileName = `${folder.title}-${folder.uid}`;

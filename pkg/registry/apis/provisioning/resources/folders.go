@@ -2,6 +2,7 @@ package resources
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -9,28 +10,39 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/client-go/dynamic"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
+const MaxNumberOfFolders = 10000
+
 type FolderManager struct {
-	repo   repository.Repository
-	lookup *FolderTree
+	repo   repository.ReaderWriter
+	tree   FolderTree
 	client dynamic.ResourceInterface
 }
 
-func NewFolderManager(repo repository.Repository, client dynamic.ResourceInterface) *FolderManager {
+func NewFolderManager(repo repository.ReaderWriter, client dynamic.ResourceInterface, lookup FolderTree) *FolderManager {
 	return &FolderManager{
 		repo:   repo,
-		lookup: NewEmptyFolderTree(),
+		tree:   lookup,
 		client: client,
 	}
 }
 
 func (fm *FolderManager) Client() dynamic.ResourceInterface {
 	return fm.client
+}
+
+func (fm *FolderManager) Tree() FolderTree {
+	return fm.tree
+}
+
+func (fm *FolderManager) SetTree(tree FolderTree) {
+	fm.tree = tree
 }
 
 // EnsureFoldersExist creates the folder structure in the cluster.
@@ -48,13 +60,13 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 	}
 
 	f := ParseFolder(dir, cfg.Name)
-	if fm.lookup.In(f.ID) {
+	if fm.tree.In(f.ID) {
 		return f.ID, nil
 	}
 
 	err = safepath.Walk(ctx, f.Path, func(ctx context.Context, traverse string) error {
 		f := ParseFolder(traverse, cfg.GetName())
-		if fm.lookup.In(f.ID) {
+		if fm.tree.In(f.ID) {
 			parent = f.ID
 			return nil
 		}
@@ -63,7 +75,7 @@ func (fm *FolderManager) EnsureFolderPathExist(ctx context.Context, filePath str
 			return fmt.Errorf("ensure folder exists: %w", err)
 		}
 
-		fm.lookup.Add(f, parent)
+		fm.tree.Add(f, parent)
 		parent = f.ID
 		return nil
 	})
@@ -94,6 +106,12 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 		return fmt.Errorf("failed to check if folder exists: %w", err)
 	}
 
+	// Always use the provisioning identity when writing
+	ctx, _, err = identity.WithProvisioningIdentity(ctx, cfg.GetNamespace())
+	if err != nil {
+		return fmt.Errorf("unable to use provisioning identity %w", err)
+	}
+
 	obj = &unstructured.Unstructured{
 		Object: map[string]interface{}{
 			"spec": map[string]any{
@@ -101,8 +119,8 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 			},
 		},
 	}
-	obj.SetAPIVersion(v0alpha1.APIVERSION)
-	obj.SetKind(v0alpha1.FolderResourceInfo.GroupVersionKind().Kind)
+	obj.SetAPIVersion(folders.APIVERSION)
+	obj.SetKind(folders.FolderResourceInfo.GroupVersionKind().Kind)
 	obj.SetNamespace(cfg.GetNamespace())
 	obj.SetName(folder.ID)
 
@@ -130,4 +148,36 @@ func (fm *FolderManager) EnsureFolderExists(ctx context.Context, folder Folder, 
 
 func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructured.Unstructured, error) {
 	return fm.client.Get(ctx, name, metav1.GetOptions{})
+}
+
+// ReplicateTree replicates the folder tree to the repository.
+// The function fn is called for each folder.
+// If the folder already exists, the function is called with created set to false.
+// If the folder is created, the function is called with created set to true.
+func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error {
+	return tree.Walk(ctx, func(ctx context.Context, folder Folder, parent string) error {
+		p := folder.Path
+		if path != "" {
+			p = safepath.Join(path, p)
+		}
+		if !safepath.IsDir(p) {
+			p = p + "/" // trailing slash indicates folder
+		}
+
+		_, err := fm.repo.Read(ctx, p, ref)
+		if err != nil && (!errors.Is(err, repository.ErrFileNotFound) && !apierrors.IsNotFound(err)) {
+			return fn(folder, false, fmt.Errorf("check if folder exists before writing: %w", err))
+		} else if err == nil {
+			return fn(folder, false, nil)
+		}
+
+		msg := fmt.Sprintf("Add folder %s", p)
+		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
+			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
+		}
+		// Add it to the existing tree
+		fm.tree.Add(folder, parent)
+
+		return fn(folder, true, nil)
+	})
 }

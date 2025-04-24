@@ -24,10 +24,10 @@ Label-Based Access Control (LBAC) allows fine-grained access control to data sou
 
 LBAC for data sources is currently generally available for `Loki` and in **experimental** for `Prometheus`. Support for additional data sources may be added in future updates.
 
-| Data source | Grafana Cloud | Grafana Enterprise                                        |
-| ----------- | ------------- | --------------------------------------------------------- |
-| Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)               |
-| Prometheus  | PublicPreview | PublicPreview (requires GEM - Grafana Enterprise Metrics) |
+| Data source | Grafana Cloud | Grafana Enterprise                                        | Cross-tenant query support |
+| ----------- | ------------- | --------------------------------------------------------- | -------------------------- |
+| Loki        | GA            | GA (requires GEL - Grafana Enterprise Logs)               | ❌                         |
+| Prometheus  | PublicPreview | PublicPreview (requires GEM - Grafana Enterprise Metrics) | ❌                         |
 
 {{% admonition type="note" %}}
 For enterprise this feature requires Grafana Enterprise Metrics (GEM) or Grafana Enterprise Logs (GEL) to function.
@@ -74,6 +74,7 @@ To be able to use LBAC for data sources metrics, you need to enable the feature 
 - Cloud Access Policy (CAP) LBAC rules override LBAC for data sources rules.
   CAP are the access controls from Grafana Cloud.
 - Note that these data sources must be created manually - provisioning is not yet supported.
+- Cross-tenant querying is currently not supported
 
 You must remove any label selectors from your Cloud Access Policy that is configured for the data source, otherwise the CAP label selectors override the LBAC for data sources rules. For more information about CAP label selectors, refer to [Use label-based access control (LBAC) with access policies](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/access-policies/label-access-policies/).
 

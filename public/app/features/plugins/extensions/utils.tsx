@@ -4,10 +4,7 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  type PluginExtensionLinkConfig,
-  type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
-  PluginExtensionTypes,
   type PluginExtensionOpenModalOptions,
   isDateTime,
   dateTime,
@@ -17,22 +14,17 @@ import {
   PluginExtensionAddedLinkConfig,
   urlUtil,
   PluginExtensionPoints,
+  ExtensionInfo,
 } from '@grafana/data';
 import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { ShowModalReactEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
-
-export function isPluginExtensionLinkConfig(
-  extension: PluginExtensionConfig | undefined
-): extension is PluginExtensionLinkConfig {
-  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
-}
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
@@ -383,6 +375,15 @@ export function getLinkExtensionOnClick(
       const helpers: PluginExtensionEventHelpers = {
         context,
         openModal: createOpenModalFunction(pluginId),
+        openSidebar: (componentTitle, context) => {
+          appEvents.publish(
+            new OpenExtensionSidebarEvent({
+              props: context,
+              pluginId,
+              componentTitle,
+            })
+          );
+        },
       };
 
       log.debug(`onClick '${config.title}' at '${extensionPointId}'`);
@@ -444,6 +445,46 @@ export const getExtensionPointPluginDependencies = (extensionPointId: string): s
     .reduce((acc: string[], id: string) => {
       return [...acc, id, ...getAppPluginDependencies(id)];
     }, []);
+};
+
+export type ExtensionPointPluginMeta = Map<
+  string,
+  {
+    readonly addedComponents: ExtensionInfo[];
+    readonly addedLinks: ExtensionInfo[];
+  }
+>;
+
+/**
+ * Returns a map of plugin ids and their addedComponents and addedLinks to the extension point.
+ * @param extensionPointId - The id of the extension point.
+ * @returns A map of plugin ids and their addedComponents and addedLinks to the extension point.
+ */
+export const getExtensionPointPluginMeta = (extensionPointId: string): ExtensionPointPluginMeta => {
+  return new Map(
+    getExtensionPointPluginDependencies(extensionPointId)
+      .map((pluginId) => {
+        const app = config.apps[pluginId];
+        // if the plugin does not exist or does not expose any components or links to the extension point, return undefined
+        if (
+          !app ||
+          (!app.extensions.addedComponents.some((component) => component.targets.includes(extensionPointId)) &&
+            !app.extensions.addedLinks.some((link) => link.targets.includes(extensionPointId)))
+        ) {
+          return undefined;
+        }
+        return [
+          pluginId,
+          {
+            addedComponents: app.extensions.addedComponents.filter((component) =>
+              component.targets.includes(extensionPointId)
+            ),
+            addedLinks: app.extensions.addedLinks.filter((link) => link.targets.includes(extensionPointId)),
+          },
+        ] as const;
+      })
+      .filter((c): c is NonNullable<typeof c> => c !== undefined)
+  );
 };
 
 // Returns a list of app plugin ids that are necessary to be loaded to use the exposed component.

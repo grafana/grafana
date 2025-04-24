@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -65,7 +65,7 @@ func (s *legacyStorage) getUserDefinedRoutingTree(ctx context.Context) (*model.R
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(orgId, res, version, s.namespacer)
+	return ConvertToK8sResource(orgId, res, version, s.namespacer)
 }
 
 func (s *legacyStorage) List(ctx context.Context, _ *internalversion.ListOptions) (runtime.Object, error) {
@@ -131,7 +131,7 @@ func (s *legacyStorage) Update(ctx context.Context, name string, objInfo rest.Up
 		return nil, false, err
 	}
 
-	obj, err = convertToK8sResource(info.OrgID, updated, updatedVersion, s.namespacer)
+	obj, err = ConvertToK8sResource(info.OrgID, updated, updatedVersion, s.namespacer)
 	return obj, false, err
 }
 

@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
 type historySubresource struct {
@@ -54,7 +54,7 @@ func (h *historySubresource) NewConnectOptions() (runtime.Object, bool, string) 
 func (h *historySubresource) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "history-subresource")
 	ctx = logging.Context(ctx, logger)
-	repo, err := h.repoGetter.GetRepository(ctx, name)
+	repo, err := h.repoGetter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
@@ -76,7 +76,7 @@ func (h *historySubresource) Connect(ctx context.Context, name string, opts runt
 			return
 		}
 
-		if err := resources.IsPathSupported(filePath); err != nil {
+		if err := safepath.IsSafe(filePath); err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}

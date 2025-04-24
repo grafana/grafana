@@ -54,24 +54,6 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
             disabled={disableZoomOut}
           />
         </HorizontalGroup>
-        <HorizontalGroup spacing="xs">
-          <Button
-            icon={'code-branch'}
-            onClick={() => onConfigChange({ ...config, gridLayout: false })}
-            size={'md'}
-            title={'Default layout'}
-            variant="secondary"
-            disabled={!config.gridLayout}
-          />
-          <Button
-            icon={'apps'}
-            onClick={() => onConfigChange({ ...config, gridLayout: true })}
-            size={'md'}
-            title={'Grid layout'}
-            variant="secondary"
-            disabled={config.gridLayout}
-          />
-        </HorizontalGroup>
       </VerticalGroup>
 
       {allowConfiguration && (

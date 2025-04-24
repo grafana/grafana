@@ -32,7 +32,7 @@ describe('dateTimeParse', () => {
 
     const date = dateTimeParse('2025-03-12T07:09:37.253Z', { timeZone: 'browser' });
     expect(date.isValid()).toBe(true);
-    expect(date.format()).toEqual('2025-03-12T02:09:37-05:00');
+    expect(date.format()).toEqual('2025-03-12T07:09:37Z');
   });
 
   it('should be able to parse array formats used by calendar', () => {

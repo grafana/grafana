@@ -33,7 +33,7 @@ func TestLoadingSettings(t *testing.T) {
 		require.Nil(t, err)
 
 		require.Equal(t, "admin", cfg.AdminUser)
-		require.Equal(t, "http://localhost:3000/", cfg.RendererCallbackUrl)
+		require.Equal(t, "", cfg.RendererCallbackUrl)
 		require.Equal(t, "TLS1.2", cfg.MinTLSVersion)
 	})
 
@@ -253,17 +253,6 @@ func TestLoadingSettings(t *testing.T) {
 		hostname, err := os.Hostname()
 		require.Nil(t, err)
 		require.Equal(t, hostname, cfg.InstanceName)
-	})
-
-	t.Run("Reading callback_url should add trailing slash", func(t *testing.T) {
-		cfg := NewCfg()
-		err := cfg.Load(CommandLineArgs{
-			HomePath: "../../",
-			Args:     []string{"cfg:rendering.callback_url=http://myserver/renderer"},
-		})
-		require.Nil(t, err)
-
-		require.Equal(t, "http://myserver/renderer/", cfg.RendererCallbackUrl)
 	})
 
 	t.Run("Only sync_ttl should return the value sync_ttl", func(t *testing.T) {

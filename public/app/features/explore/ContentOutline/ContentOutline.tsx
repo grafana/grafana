@@ -6,6 +6,8 @@ import { GrafanaTheme2, store } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { useStyles2, PanelContainer, ScrollContainer } from '@grafana/ui';
 
+import { t } from '../../../core/internationalization';
+
 import { ContentOutlineItemContextProps, useContentOutlineContext } from './ContentOutlineContext';
 import { ContentOutlineItemButton } from './ContentOutlineItemButton';
 
@@ -158,7 +160,11 @@ export function ContentOutline({ scroller, panelId }: { scroller: HTMLElement | 
         <div className={styles.content}>
           <ContentOutlineItemButton
             icon={'arrow-from-right'}
-            tooltip={contentOutlineExpanded ? 'Collapse outline' : 'Expand outline'}
+            tooltip={
+              contentOutlineExpanded
+                ? t('explore.content-outline.tooltip-collapse-outline', 'Collapse outline')
+                : t('explore.content-outline.tooltip-expand-outline', 'Expand outline')
+            }
             tooltipPlacement={contentOutlineExpanded ? 'right' : 'bottom'}
             onClick={toggle}
             className={cx(styles.toggleContentOutlineButton, {

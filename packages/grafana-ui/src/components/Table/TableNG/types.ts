@@ -81,6 +81,15 @@ export interface TableRow {
   [columnName: string]: TableCellValue;
 }
 
+export interface CustomCellRendererProps {
+  field: Field;
+  rowIndex: number;
+  frame: DataFrame;
+  // Would be great to have generic type for this but that would need having a generic DataFrame type where the field
+  // types could be propagated here.
+  value: unknown;
+}
+
 export interface CustomHeaderRendererProps {
   field: Field;
   defaultContent: React.ReactNode;
@@ -134,7 +143,6 @@ export interface BaseTableProps {
 export interface TableNGProps extends BaseTableProps {}
 
 export interface TableCellNGProps {
-  cellInspect: boolean;
   field: Field;
   frame: DataFrame;
   getActions?: GetActionsFunction;
@@ -148,6 +156,7 @@ export interface TableCellNGProps {
   timeRange: TimeRange;
   value: TableCellValue;
   rowBg: Function | undefined;
+  onCellFilterAdded?: TableFilterActionCallback;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
@@ -196,6 +205,12 @@ export interface JSONCellProps {
 export interface DataLinksCellProps {
   field: Field;
   rowIdx: number;
+}
+
+export interface GeoCellProps {
+  value: TableCellValue;
+  justifyContent: Property.JustifyContent;
+  height: number;
 }
 
 export interface ActionCellProps {

@@ -46,7 +46,7 @@ interface InputState {
 }
 
 const ERROR_MESSAGES = {
-  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "now"'),
+  default: () => t('time-picker.range-content.default-error', 'Please enter a past date or "{{now}}"', { now: 'now' }),
   range: () => t('time-picker.range-content.range-error', '"From" can\'t be after "To"'),
 };
 
@@ -269,7 +269,7 @@ function valueAsString(value: DateTime | string, timeZone?: TimeZone): string {
   }
 
   if (value.endsWith('Z')) {
-    const dt = dateTimeParse(value, { timeZone: 'utc', format: 'YYYY-MM-DDTHH:mm:ss.SSSZ' });
+    const dt = dateTimeParse(value);
     return dateTimeFormat(dt, { timeZone });
   }
 

@@ -52,7 +52,9 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
   return (
     <>
       <Stack direction="row" alignItems="center" justifyContent="flex-end" wrap="wrap">
-        {!isGrafanaDataSource && isDisabled(muteTiming) && <Badge text="Disabled" color="orange" />}
+        {!isGrafanaDataSource && isDisabled(muteTiming) && (
+          <Badge text={t('alerting.mute-timing-actions-buttons.text-disabled', 'Disabled')} color="orange" />
+        )}
         <Authorize actions={[AlertmanagerAction.UpdateMuteTiming]}>{viewOrEditButton}</Authorize>
 
         {exportSupported && (
@@ -84,7 +86,7 @@ export const MuteTimingActionsButtons = ({ muteTiming, alertManagerSourceName }:
       </Stack>
       <ConfirmModal
         isOpen={showDeleteDrawer}
-        title="Delete mute timing"
+        title={t('alerting.mute-timing-actions-buttons.title-delete-mute-timing', 'Delete mute timing')}
         body={`Are you sure you would like to delete "${muteTiming.name}"?`}
         confirmText={t('alerting.common.delete', 'Delete')}
         onConfirm={async () => {

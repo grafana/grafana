@@ -196,7 +196,7 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder", nil)
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -261,7 +261,7 @@ func TestLibraryElementPatchPermissions(t *testing.T) {
 
 				toFolder := createFolder(t, sc, "ToFolder", nil)
 
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -324,7 +324,7 @@ func TestLibraryElementDeletePermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -401,8 +401,8 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 				result.Result.Meta.FolderName = folder.Title
 				result.Result.Meta.FolderUID = folder.UID
 
-				sc.reqContext.SignedInUser.OrgRole = org.RoleViewer
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.OrgRole = org.RoleViewer
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -448,8 +448,8 @@ func TestLibraryElementsGetAllPermissions(t *testing.T) {
 					result.Result.Meta.FolderUID = folder.UID
 				}
 
-				sc.reqContext.SignedInUser.OrgRole = org.RoleViewer
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.OrgRole = org.RoleViewer
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 

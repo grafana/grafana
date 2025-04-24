@@ -20,6 +20,7 @@ import {
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
   ResourceEvent,
+  ResourceClientWriteParams,
   GroupVersionResource,
 } from './types';
 
@@ -97,8 +98,8 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       );
   }
 
-  public async subresource<S>(name: string, path: string): Promise<S> {
-    return getBackendSrv().get<S>(`${this.url}/${name}/${path}`);
+  public async subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S> {
+    return getBackendSrv().get<S>(`${this.url}/${name}/${path}`, params);
   }
 
   public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, S, K>> {
@@ -109,7 +110,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<ResourceList<T, S, K>>(this.url, opts);
   }
 
-  public async create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>> {
+  public async create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       const login = contextSrv.user.login;
       // GenerateName lets the apiserver create a new uid for the name
@@ -117,12 +118,17 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       obj.metadata.generateName = login ? login.slice(0, 2) : 'g';
     }
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().post(this.url, obj);
+    return getBackendSrv().post(this.url, obj, {
+      params,
+    });
   }
 
-  public async update(obj: Resource<T, S, K>): Promise<Resource<T, S, K>> {
+  public async update(obj: Resource<T, S, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${obj.metadata.name}`, obj);
+    const url = `${this.url}/${obj.metadata.name}`;
+    return getBackendSrv().put<Resource<T, S, K>>(url, obj, {
+      params,
+    });
   }
 
   public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {

@@ -10,6 +10,7 @@ import {
   DataSourceApi,
   DataSourceJsonData,
   DataSourceRef,
+  LegacyMetricFindQueryOptions,
   MetricFindValue,
   QueryVariableModel,
   StandardVariableQuery,
@@ -61,7 +62,7 @@ interface DataSourceWithLegacyVariableSupport<
   TQuery extends DataQuery = DataQuery,
   TOptions extends DataSourceJsonData = DataSourceJsonData,
 > extends DataSourceApi<TQuery, TOptions> {
-  metricFindQuery(query: any, options?: any): Promise<MetricFindValue[]>;
+  metricFindQuery(query: string, options?: LegacyMetricFindQueryOptions): Promise<MetricFindValue[]>;
   variables: undefined;
 }
 

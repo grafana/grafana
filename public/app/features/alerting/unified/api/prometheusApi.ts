@@ -2,7 +2,7 @@ import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/type
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 
-import { alertingApi } from './alertingApi';
+import { WithNotificationOptions, alertingApi } from './alertingApi';
 import { normalizeRuleGroup } from './prometheus';
 
 export interface PromRulesResponse<TRuleGroup> {
@@ -15,7 +15,7 @@ export interface PromRulesResponse<TRuleGroup> {
   error?: string;
 }
 
-interface PromRulesOptions {
+type PromRulesOptions = WithNotificationOptions<{
   ruleSource: { uid: string };
   namespace?: string;
   groupName?: string;
@@ -23,9 +23,10 @@ interface PromRulesOptions {
   groupLimit?: number;
   excludeAlerts?: boolean;
   groupNextToken?: string;
-}
+}>;
 
-type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource'> & {
+type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource' | 'namespace'> & {
+  folderUid?: string;
   dashboardUid?: string;
   panelId?: number;
 };
@@ -33,20 +34,33 @@ type GrafanaPromRulesOptions = Omit<PromRulesOptions, 'ruleSource'> & {
 export const prometheusApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     getGroups: build.query<PromRulesResponse<PromRuleGroupDTO<PromRuleDTO>>, PromRulesOptions>({
-      query: ({ ruleSource, namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => {
+      query: ({
+        ruleSource,
+        namespace,
+        groupName,
+        ruleName,
+        groupLimit,
+        excludeAlerts,
+        groupNextToken,
+        notificationOptions,
+      }) => {
         if (ruleSource.uid === GRAFANA_RULES_SOURCE_NAME) {
           throw new Error('Please use getGrafanaGroups endpoint for grafana rules');
         }
         return {
           url: `api/prometheus/${ruleSource.uid}/api/v1/rules`,
           params: {
-            'file[]': namespace,
-            'group[]': groupName,
-            'rule[]': ruleName,
+            file: namespace, // Mimir
+            'file[]': namespace, // Prometheus
+            rule_group: groupName, // Mimir
+            'rule_group[]': groupName, // Prometheus
+            rule_name: ruleName, // Mimir
+            'rule_name[]': ruleName, // Prometheus
             exclude_alerts: excludeAlerts?.toString(),
             group_limit: groupLimit?.toFixed(0),
             group_next_token: groupNextToken,
           },
+          notificationOptions,
         };
       },
       transformResponse: (response: PromRulesResponse<PromRuleGroupDTO<PromRuleDTO>>) => {
@@ -54,12 +68,12 @@ export const prometheusApi = alertingApi.injectEndpoints({
       },
     }),
     getGrafanaGroups: build.query<PromRulesResponse<GrafanaPromRuleGroupDTO>, GrafanaPromRulesOptions>({
-      query: ({ namespace, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
+      query: ({ folderUid, groupName, ruleName, groupLimit, excludeAlerts, groupNextToken }) => ({
         url: `api/prometheus/grafana/api/v1/rules`,
         params: {
-          'file[]': namespace,
-          'group[]': groupName,
-          'rule[]': ruleName,
+          folder_uid: folderUid,
+          rule_group: groupName,
+          rule_name: ruleName,
           exclude_alerts: excludeAlerts?.toString(),
           group_limit: groupLimit?.toFixed(0),
           group_next_token: groupNextToken,

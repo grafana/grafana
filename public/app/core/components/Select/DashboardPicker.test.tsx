@@ -3,7 +3,10 @@ import { Props } from 'react-virtualized-auto-sizer';
 import { render, screen, userEvent, waitFor } from 'test/test-utils';
 
 import { defaultDashboard as defaultDashboardData } from '@grafana/schema';
-import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { DashboardSearchItemType } from 'app/features/search/types';
@@ -77,7 +80,7 @@ const mockDashboard: DashboardDTO = {
 };
 
 const mockDashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
-  apiVersion: 'v2alpha0',
+  apiVersion: 'v2alpha1',
   kind: 'DashboardWithAccessInfo',
   spec: {
     ...defaultDashboardV2Spec(),
