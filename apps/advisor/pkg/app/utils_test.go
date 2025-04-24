@@ -57,12 +57,13 @@ func TestProcessCheck(t *testing.T) {
 	}
 	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
+	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 	check := &mockCheck{
 		items: []any{"item"},
 	}
 
-	err = processCheck(ctx, client, obj, check)
+	err = processCheck(ctx, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 }
@@ -76,6 +77,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 	}
 	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
+	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 	items := make([]any, 100)
 	for i := range items {
@@ -89,7 +91,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 		items: items,
 	}
 
-	err = processCheck(ctx, client, obj, check)
+	err = processCheck(ctx, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 	r := client.lastValue.(advisorv0alpha1.CheckV0alpha1StatusReport)
@@ -101,10 +103,11 @@ func TestProcessCheck_AlreadyProcessed(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{checks.StatusAnnotation: "processed"})
 	client := &mockClient{}
+	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 	check := &mockCheck{}
 
-	err := processCheck(ctx, client, obj, check)
+	err := processCheck(ctx, client, typesClient, obj, check)
 	assert.NoError(t, err)
 }
 
@@ -117,6 +120,7 @@ func TestProcessCheck_RunError(t *testing.T) {
 	}
 	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
+	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
 	check := &mockCheck{
@@ -124,9 +128,34 @@ func TestProcessCheck_RunError(t *testing.T) {
 		err:   errors.New("run error"),
 	}
 
-	err = processCheck(ctx, client, obj, check)
+	err = processCheck(ctx, client, typesClient, obj, check)
 	assert.Error(t, err)
 	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
+}
+
+func TestProcessCheck_IgnoreSteps(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{})
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	client := &mockClient{}
+	checkType := &advisorv0alpha1.CheckType{}
+	checkType.SetAnnotations(map[string]string{checks.IgnoreStepsAnnotation: "mock"})
+	typesClient := &mockTypesClient{
+		res: checkType,
+	}
+	ctx := context.TODO()
+	check := &mockCheck{
+		items: []any{"item"},
+		err:   errors.New("run error, should not be triggered"),
+	}
+
+	err = processCheck(ctx, client, typesClient, obj, check)
+	assert.NoError(t, err)
+	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessCheckRetry_NoRetry(t *testing.T) {
@@ -138,11 +167,12 @@ func TestProcessCheckRetry_NoRetry(t *testing.T) {
 	}
 	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
+	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
 	check := &mockCheck{}
 
-	err = processCheckRetry(ctx, client, obj, check)
+	err = processCheckRetry(ctx, client, typesClient, obj, check)
 	assert.NoError(t, err)
 }
 
@@ -158,6 +188,7 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 	}
 	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
+	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
 	check := &mockCheck{
@@ -165,7 +196,7 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 		err:   errors.New("retry error"),
 	}
 
-	err = processCheckRetry(ctx, client, obj, check)
+	err = processCheckRetry(ctx, client, typesClient, obj, check)
 	assert.Error(t, err)
 	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
 }
@@ -188,13 +219,14 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 	}
 	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
+	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
 
 	check := &mockCheck{
 		items: []any{"item"},
 	}
 
-	err = processCheckRetry(ctx, client, obj, check)
+	err = processCheckRetry(ctx, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
@@ -209,6 +241,18 @@ type mockClient struct {
 func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req resource.PatchRequest, opts resource.PatchOptions, obj resource.Object) error {
 	m.lastValue = req.Operations[0].Value
 	return nil
+}
+
+type mockTypesClient struct {
+	resource.Client
+	res resource.Object
+}
+
+func (m *mockTypesClient) Get(ctx context.Context, id resource.Identifier) (resource.Object, error) {
+	if m.res == nil {
+		return advisorv0alpha1.CheckTypeKind().ZeroValue(), nil
+	}
+	return m.res, nil
 }
 
 type mockCheck struct {

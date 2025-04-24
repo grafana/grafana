@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -30,7 +31,7 @@ func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Che
 	return c, nil
 }
 
-func processCheck(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheck(ctx context.Context, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status != "" {
 		// Check already processed
@@ -50,7 +51,10 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		return fmt.Errorf("error initializing check: %w", err)
 	}
 	// Run the steps
-	steps := check.Steps()
+	steps, err := filterSteps(ctx, typesClient, check.ID(), obj.GetNamespace(), check.Steps())
+	if err != nil {
+		return err
+	}
 	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -77,7 +81,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}, resource.PatchOptions{}, obj)
 }
 
-func processCheckRetry(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheckRetry(ctx context.Context, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status == "" || status == checks.StatusAnnotationError {
 		// Check not processed yet or errored
@@ -103,7 +107,10 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 		return fmt.Errorf("error initializing check: %w", err)
 	}
 	// Run the steps
-	steps := check.Steps()
+	steps, err := filterSteps(ctx, typesClient, check.ID(), obj.GetNamespace(), check.Steps())
+	if err != nil {
+		return err
+	}
 	failures, err := runStepsInParallel(ctx, &c.Spec, steps, []any{item})
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -173,4 +180,27 @@ func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, st
 	}
 	wg.Wait()
 	return reportFailures, internalErr
+}
+
+func filterSteps(ctx context.Context, typesClient resource.Client, checkID string, namespace string, steps []checks.Step) ([]checks.Step, error) {
+	identifier := resource.Identifier{
+		Namespace: namespace,
+		Name:      checkID,
+	}
+	obj, err := typesClient.Get(ctx, identifier)
+	if err != nil {
+		return nil, err
+	}
+	ignoreSteps := obj.GetAnnotations()[checks.IgnoreStepsAnnotation]
+	if ignoreSteps != "" && ignoreSteps != "1" { // 1 is the default value for the annotation
+		filteredSteps := []checks.Step{}
+		ignoreStepsList := strings.Split(ignoreSteps, ",")
+		for _, step := range steps {
+			if !slices.Contains(ignoreStepsList, step.ID()) {
+				filteredSteps = append(filteredSteps, step)
+			}
+		}
+		return filteredSteps, nil
+	}
+	return steps, nil
 }

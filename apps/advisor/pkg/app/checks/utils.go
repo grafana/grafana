@@ -15,6 +15,7 @@ const (
 	TypeLabel                 = "advisor.grafana.app/type"
 	StatusAnnotation          = "advisor.grafana.app/status"
 	RetryAnnotation           = "advisor.grafana.app/retry"
+	IgnoreStepsAnnotation     = "advisor.grafana.app/ignore-steps"
 	StatusAnnotationError     = "error"
 	StatusAnnotationProcessed = "processed"
 )
