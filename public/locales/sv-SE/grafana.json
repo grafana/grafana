@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Instrumentpanel",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Dölj tidsväljare",
       "now-delay-description": "Uteslut senaste data som kan vara ofullständiga.",
       "now-delay-label": "Fördröj nu",
-      "refresh-live-dashboards-description": "Rita om paneler kontinuerligt där tidsintervallet refererar till ”nu”",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Uppdatera paneler i realtid",
       "time-options-label": "Tidsalternativ",
       "time-zone-label": "Tidszon",
@@ -4738,9 +4738,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4862,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "en vecka sedan",
       "days-ago": "{{num}} dagar sedan",
-      "default-from": "nu–1 timme",
-      "default-to": "nu",
       "today": "idag",
       "two-weeks-ago": "två veckor sedan",
       "yesterday": "igår"
@@ -8525,15 +8520,11 @@
       "apply": "Tillämpa tidsintervall",
       "aria-role": "Val av tidsintervall",
       "default-title": "Tidsintervall",
-      "example": "Exempel: för att välja ett tidsintervall från 10 minuter sedan fram till nu",
-      "example-details": "Från: now-10m Till: now",
       "example-title": "Exempel på tidsintervall",
       "from-label": "Från",
       "from-to": "{{timeOptionFrom}} till {{timeOptionTo}}",
-      "more-info": "För mer information se <2>dokumentationen<1></1></2>.",
-      "specify": "Ange tidsintervall <1></1>",
+      "specify": "",
       "submit-button-label": "Knapp för att skicka TimePicker",
-      "supported-formats": "Format som stöds: <1> now-[digit]s/m/h/d/w</1>",
       "to-label": "Till"
     },
     "zone": {
