@@ -308,7 +308,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public closeAndApply = () => {
     this.updateState({ opened: false });
-    return this.setNewScopes();
+    return this.apply();
   };
 
   public apply = () => {
