@@ -89,6 +89,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
+	// TODO -- restructure so the static stuff is under one variable and the rest is dynamic
 	data := p.data // copy everything
 	data.Nonce = nonce
 
