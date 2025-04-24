@@ -422,6 +422,8 @@ spec:
 		}
 	}
 
+	exampleKeeperAWS := "{aws-keeper-that-must-already-exist}"
+
 	sub = oas.Paths.Paths[smprefix+"/securevalues"]
 	if sub != nil {
 		optionsSchema := defs[defsBase+"SecureValueSpec"].Schema
@@ -440,7 +442,6 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret in default",
 													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -454,7 +455,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret in aws",
 													Value:      "this is super duper secure",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Keeper:     &exampleKeeperAWS,
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -468,7 +469,7 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "A secret from aws",
 													Ref:        "my-secret-in-aws",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
+													Keeper:     &exampleKeeperAWS,
 													Decrypters: []string{"actor_k6"},
 												},
 											},
@@ -485,7 +486,6 @@ spec:
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Title:      "XYZ secret",
 													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
 													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
@@ -513,7 +513,6 @@ metadata:
     bb: BBB
 spec:
   title: A secret value
-  keeper: kp-default-sql
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -573,7 +572,6 @@ metadata:
     bb: BBB
 spec:
   title: XYZ secret
-  keeper: kp-default-sql
   value: this is super duper secure
   decrypters:
     - actor_k6 

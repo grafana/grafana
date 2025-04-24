@@ -442,14 +442,14 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
 	// Check if keeper is default sql.
-	if name == contracts.DefaultSQLKeeper {
+	if name == nil {
 		return contracts.SQLKeeperType, nil, nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := s.read(ctx, s.db.GetSqlxSession(), namespace, name, notForUpdate)
+	kp, err := s.read(ctx, s.db.GetSqlxSession(), namespace, *name, notForUpdate)
 	if err != nil {
 		return "", nil, err
 	}

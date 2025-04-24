@@ -61,7 +61,9 @@ type SecureValueSpec struct {
 	Ref string `json:"ref,omitempty"`
 
 	// Name of the keeper, being the actual storage of the secure value.
-	Keeper string `json:"keeper,omitempty"`
+	// If not specified, the default keeper for the namespace will be used.
+	// +optional
+	Keeper *string `json:"keeper,omitempty"`
 
 	// The Decrypters that are allowed to decrypt this secret.
 	// An empty list means no service can decrypt it.
