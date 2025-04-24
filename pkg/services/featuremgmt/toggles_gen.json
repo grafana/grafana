@@ -2462,13 +2462,16 @@
     {
       "metadata": {
         "name": "queryService",
-        "resourceVersion": "1745339544057",
-        "creationTimestamp": "2024-04-19T09:26:21Z"
+        "resourceVersion": "1745480536808",
+        "creationTimestamp": "2024-04-19T09:26:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-24 07:42:16.80869 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true
       }
     },
@@ -2488,26 +2491,32 @@
     {
       "metadata": {
         "name": "queryServiceFromUI",
-        "resourceVersion": "1745339544057",
-        "creationTimestamp": "2024-04-19T09:26:21Z"
+        "resourceVersion": "1745480536808",
+        "creationTimestamp": "2024-04-19T09:26:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-24 07:42:16.80869 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Routes requests to the new query service",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "frontend": true
       }
     },
     {
       "metadata": {
         "name": "queryServiceRewrite",
-        "resourceVersion": "1745339544057",
-        "creationTimestamp": "2024-04-19T09:26:21Z"
+        "resourceVersion": "1745480536808",
+        "creationTimestamp": "2024-04-19T09:26:21Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-24 07:42:16.80869 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Rewrite requests targeting /ds/query to the query service",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-app-platform-squad",
+        "codeowner": "@grafana/grafana-datasources-core-services",
         "requiresRestart": true
       }
     },
