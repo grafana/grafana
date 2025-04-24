@@ -82,6 +82,7 @@ func TestProcessTicks(t *testing.T) {
 		RecordingRulesCfg: rrSet,
 		Tracer:            testTracer,
 		Log:               log.New("ngalert.scheduler"),
+		FeatureToggles:    featuremgmt.WithFeatures(),
 	}
 	managerCfg := state.ManagerCfg{
 		Metrics:       testMetrics.GetStateMetrics(),
