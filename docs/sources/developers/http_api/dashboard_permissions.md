@@ -34,10 +34,10 @@ The Dashboard Permissions API allows you to manage access control for dashboards
 
 Dashboard permissions use a numeric system to define access levels:
 
-| Level | Value | Description |
-|-------|-------|-------------|
-| View  | 1     | Can view the dashboard but cannot make changes |
-| Edit  | 2     | Can view and edit the dashboard |
+| Level | Value | Description                                                      |
+| ----- | ----- | ---------------------------------------------------------------- |
+| View  | 1     | Can view the dashboard but cannot make changes                   |
+| Edit  | 2     | Can view and edit the dashboard                                  |
 | Admin | 4     | Full control over the dashboard, including permission management |
 
 > **Note:** Admin users always have full access to all dashboards and cannot have their permissions restricted.
@@ -50,8 +50,8 @@ Retrieves all permissions for a specific dashboard.
 
 ### Required Permissions
 
-| Action | Scope |
-|--------|-------|
+| Action                        | Scope                                                            |
+| ----------------------------- | ---------------------------------------------------------------- |
 | `dashboards.permissions:read` | `dashboards:*`, `dashboards:uid:*`, `folders:*`, `folders:uid:*` |
 
 ### Example Request
@@ -114,33 +114,33 @@ Content-Length: 551
 
 ### Response Fields
 
-| Field | Description |
-|-------|-------------|
-| `id` | Unique identifier for the permission entry |
-| `dashboardId` | Dashboard ID (-1 for default permissions) |
-| `created` | Creation timestamp |
-| `updated` | Last update timestamp |
-| `userId` | User ID (0 if not applicable) |
-| `userLogin` | Username (empty if not applicable) |
-| `userEmail` | User email (empty if not applicable) |
-| `teamId` | Team ID (0 if not applicable) |
-| `team` | Team name (empty if not applicable) |
-| `role` | Role name (Viewer, Editor, or empty) |
-| `permission` | Numeric permission level (1=View, 2=Edit, 4=Admin) |
-| `permissionName` | Human-readable permission name |
-| `uid` | Dashboard UID |
-| `title` | Dashboard title |
-| `slug` | Dashboard slug |
-| `isFolder` | Whether this is a folder permission |
-| `url` | Dashboard URL |
+| Field            | Description                                        |
+| ---------------- | -------------------------------------------------- |
+| `id`             | Unique identifier for the permission entry         |
+| `dashboardId`    | Dashboard ID (-1 for default permissions)          |
+| `created`        | Creation timestamp                                 |
+| `updated`        | Last update timestamp                              |
+| `userId`         | User ID (0 if not applicable)                      |
+| `userLogin`      | Username (empty if not applicable)                 |
+| `userEmail`      | User email (empty if not applicable)               |
+| `teamId`         | Team ID (0 if not applicable)                      |
+| `team`           | Team name (empty if not applicable)                |
+| `role`           | Role name (Viewer, Editor, or empty)               |
+| `permission`     | Numeric permission level (1=View, 2=Edit, 4=Admin) |
+| `permissionName` | Human-readable permission name                     |
+| `uid`            | Dashboard UID                                      |
+| `title`          | Dashboard title                                    |
+| `slug`           | Dashboard slug                                     |
+| `isFolder`       | Whether this is a folder permission                |
+| `url`            | Dashboard URL                                      |
 
 ### Status Codes
 
-| Code | Description |
-|------|-------------|
-| 200  | Success |
-| 401  | Unauthorized |
-| 403  | Access denied |
+| Code | Description         |
+| ---- | ------------------- |
+| 200  | Success             |
+| 401  | Unauthorized        |
+| 403  | Access denied       |
 | 404  | Dashboard not found |
 
 ## Update Dashboard Permissions
@@ -151,8 +151,8 @@ Updates permissions for a dashboard. This operation replaces all existing permis
 
 ### Required Permissions
 
-| Action | Scope |
-|--------|-------|
+| Action                         | Scope                                                            |
+| ------------------------------ | ---------------------------------------------------------------- |
 | `dashboards.permissions:write` | `dashboards:*`, `dashboards:uid:*`, `folders:*`, `folders:uid:*` |
 
 ### Example Request
@@ -187,11 +187,12 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 ### Request Body
 
-| Field | Description |
-|-------|-------------|
+| Field   | Description                      |
+| ------- | -------------------------------- |
 | `items` | Array of permission items to set |
 
 Each permission item can have one of these combinations:
+
 - `role` and `permission` - Sets permission for a role (Viewer or Editor)
 - `teamId` and `permission` - Sets permission for a specific team
 - `userId` and `permission` - Sets permission for a specific user
@@ -208,11 +209,11 @@ Content-Length: 35
 
 ### Status Codes
 
-| Code | Description |
-|------|-------------|
-| 200  | Success |
-| 401  | Unauthorized |
-| 403  | Access denied |
+| Code | Description         |
+| ---- | ------------------- |
+| 200  | Success             |
+| 401  | Unauthorized        |
+| 403  | Access denied       |
 | 404  | Dashboard not found |
 
 ## Best Practices

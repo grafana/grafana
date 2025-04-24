@@ -40,11 +40,11 @@ Groups organize related functionality into logical collections. For example `das
 
 These APIs will also uses semantic versioning with three stability levels:
 
-| Level | Format     | Description                                                                 | Use Case |
-| ----- | ---------- | --------------------------------------------------------------------------- | -------- |
+| Level | Format     | Description                                                                 | Use Case                 |
+| ----- | ---------- | --------------------------------------------------------------------------- | ------------------------ |
 | Alpha | `v1alpha1` | Early development stage. Unstable, may contain bugs, and subject to removal | For testing new features |
 | Beta  | `v1beta1`  | More stable than alpha, but may still have some changes                     | For early production use |
-| GA    | `v1`       | Generally Available. Stable with backward compatibility guarantees          | For production use |
+| GA    | `v1`       | Generally Available. Stable with backward compatibility guarantees          | For production use       |
 
 ### Namespace (`<namespace>`)
 
