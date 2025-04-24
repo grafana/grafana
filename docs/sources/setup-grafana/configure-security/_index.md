@@ -50,7 +50,7 @@ Self-hosted reverse proxy options include but are not limited to:
 You can use the `[server.custom_response_headers]` configuration option in your `grafana.ini` or `custom.ini` file to enable CORS in Grafana.
 
 {{< admonition type="warning" >}}
-Enabling CORS via the `grafana.ini` or `custom.ini` file will enable CORS for the _entire_ Grafana instance.
+If you enable CORS via the `grafana.ini` or `custom.ini` file, you enable CORS for the _entire_ Grafana instance.
 {{< /admonition >}}
 
 1. In the `grafana.ini` or `custom.ini` file, add your desired headers to `[server.custom_response_headers]`:
