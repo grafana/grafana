@@ -122,7 +122,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
           />
         )}
       </InlineFieldRow>
-      <HysteresisSection isRange={isRange} onError={onError} />
+      {useHysteresis && <HysteresisSection isRange={isRange} onError={onError} />}
     </>
   );
   interface HysteresisSectionProps {
