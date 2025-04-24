@@ -56,7 +56,7 @@ type secureValueMetadataStorage struct {
 	keepers               map[contracts.KeeperType]contracts.Keeper
 }
 
-// TODO LND Implement this
+// TODO LND Implement this with sqlx
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = ""
@@ -66,49 +66,31 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("to create row: %w", err)
 	}
 
-	// prepare keeper read for update query and request
-	reqKeeperRead := readKeeper{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   row.Namespace,
-		Name:        *row.Keeper,
-		IsForUpdate: true,
-	}
+	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
+		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			if row.Keeper != nil {
+				// Validate before inserting that the chosen `keeper` exists.
+				keeperRow := &keeperDB{Name: *row.Keeper, Namespace: row.Namespace}
 
-	queryKeeperRead, err := sqltemplate.Execute(sqlKeeperRead, reqKeeperRead)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
-	}
+				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
+				if err != nil {
+					return fmt.Errorf("checking keeper existence: %w", err)
+				}
 
-	// prepare secure value query and request
-	reqSecValueCreate := createSecureValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Row:         row,
-	}
-
-	querySecValueCreate, err := sqltemplate.Execute(sqlSecureValueCreate, reqSecValueCreate)
-	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
-	}
-
-	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
-		if row.Keeper != nil {
-			// Validate before inserting that the chosen `keeper` exists, and lock to ensure the next
-			res, err := s.db.GetSqlxSession().Query(ctx, queryKeeperRead, reqKeeperRead.GetArgs()...)
-			if err != nil {
-				return fmt.Errorf("getting row: %w", err)
+				if !keeperExists {
+					return contracts.ErrKeeperNotFound
+				}
 			}
-			defer func() { _ = res.Close() }()
 
-			if !res.Next() {
-				return contracts.ErrKeeperNotFound
+			if _, err := sess.Insert(row); err != nil {
+				if s.db.GetDialect().IsUniqueConstraintViolation(err) {
+					return fmt.Errorf("namespace=%s name=%s %w", row.Namespace, row.Name, contracts.ErrSecureValueAlreadyExists)
+				}
+				return fmt.Errorf("inserting row: %w", err)
 			}
-		}
 
-		// insert the secure value
-		if _, err := sess.Exec(ctx, querySecValueCreate, reqSecValueCreate.GetArgs()...); err != nil {
-			return fmt.Errorf("inserting secret value row: %w", err)
-		}
-		return nil
+			return nil
+		})
 	})
 	if err != nil {
 		return nil, fmt.Errorf("db failure: %w", err)
@@ -166,6 +148,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 	return secureValueKub, nil
 }
 
+// TODO LND Implement this with sqlx
 func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 

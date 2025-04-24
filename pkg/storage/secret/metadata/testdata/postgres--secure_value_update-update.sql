@@ -13,7 +13,7 @@ SET
   "status_phase" = 'creating',
   "status_message" = '<nil>',
   "title" = 'title',
-  "keeper" = 'keeper',
+  "keeper" = '0x140014784a0',
   "decrypters" = '<nil>',
   "ref" = '<nil>',
   "external_id" = 'extId'

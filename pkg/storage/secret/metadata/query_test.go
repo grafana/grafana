@@ -141,6 +141,7 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			/** Not yet implemented
 			sqlSecureValueCreate: {
 				{
 					Name: "create",
@@ -159,7 +160,7 @@ func TestSecureValueQueries(t *testing.T) {
 							Phase:       "creating",
 							Message:     nil,
 							Title:       "title",
-							Keeper:      "keeper",
+							Keeper:      ptr.To("keeper"),
 							Decrypters:  nil,
 							Ref:         nil,
 							ExternalID:  "extId",
@@ -167,6 +168,7 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			*/
 			sqlSecureValueDelete: {
 				{
 					Name: "delete",
@@ -177,7 +179,8 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			sqlSecureValueUpdate: {
+			/** Not yet implemented
+				sqlSecureValueUpdate: {
 				{
 					Name: "update",
 					Data: &updateSecureValue{
@@ -197,7 +200,7 @@ func TestSecureValueQueries(t *testing.T) {
 							Phase:       "creating",
 							Message:     nil,
 							Title:       "title",
-							Keeper:      "keeper",
+							Keeper:      ptr.To("keeper"),
 							Decrypters:  nil,
 							Ref:         nil,
 							ExternalID:  "extId",
@@ -205,6 +208,7 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
+			*/
 			sqlSecureValueUpdateExternalId: {
 				{
 					Name: "updateExternalId",

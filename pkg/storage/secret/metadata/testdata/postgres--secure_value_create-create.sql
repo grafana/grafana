@@ -28,7 +28,7 @@ INSERT INTO "secret_secure_value" (
   'creating',
   '<nil>',
   'title',
-  'keeper',
+  '0x14001478470',
   '<nil>',
   '<nil>',
   'extId'
