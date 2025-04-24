@@ -2,19 +2,17 @@ package frontend
 
 import (
 	"context"
-	"crypto/rand"
 	"embed"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/webassets"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -40,11 +38,6 @@ type IndexViewData struct {
 	// Nonce is a cryptographic identifier for use with Content Security Policy.
 	Nonce string
 }
-
-const (
-	headerContentType = "Content-Type"
-	contentTypeHTML   = "text/html; charset=UTF-8"
-)
 
 // Templates setup.
 var (
@@ -74,6 +67,9 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProv
 			BuildVersion: cfg.BuildVersion,
 			BuildCommit:  cfg.BuildCommit,
 			Assets:       assets,
+
+			CSPEnabled: cfg.CSPEnabled,
+			CSPContent: cfg.CSPTemplate,
 		},
 	}, nil
 }
@@ -84,7 +80,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		return
 	}
 
-	nonce, err := generateNonce()
+	nonce, err := middleware.GenerateNonce()
 	if err != nil {
 		p.log.Error("error creating nonce", "err", err)
 		writer.WriteHeader(500)
@@ -94,7 +90,11 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	data := p.data // copy everything
 	data.Nonce = nonce
 
-	writer.Header().Set(headerContentType, contentTypeHTML)
+	if data.CSPEnabled {
+		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
+	}
+
+	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	writer.WriteHeader(200)
 	if err := p.index.Execute(writer, &data); err != nil {
 		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
@@ -102,12 +102,4 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		}
 		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))
 	}
-}
-
-func generateNonce() (string, error) {
-	var buf [16]byte
-	if _, err := io.ReadFull(rand.Reader, buf[:]); err != nil {
-		return "", err
-	}
-	return base64.RawStdEncoding.EncodeToString(buf[:]), nil
 }
