@@ -24,13 +24,14 @@ func dbCollector(sql db.DB) supportbundles.Collector {
 		version := []string{}
 		err := sql.WithDbSession(ctx, func(sess *db.Session) error {
 			rawSQL := ""
-			if dbType == migrator.MySQL {
+			switch dbType {
+			case migrator.MySQL:
 				rawSQL = "SELECT @@VERSION"
-			} else if dbType == migrator.Postgres {
+			case migrator.Postgres:
 				rawSQL = "SELECT version()"
-			} else if dbType == migrator.SQLite {
+			case migrator.SQLite:
 				rawSQL = "SELECT sqlite_version()"
-			} else {
+			default:
 				return fmt.Errorf("unsupported dbType: %s", dbType)
 			}
 
@@ -54,8 +55,8 @@ func dbCollector(sql db.DB) supportbundles.Collector {
 		bWriter.WriteString("\n## Migration Log\n\n")
 
 		for _, logItem := range logItems {
-			bWriter.WriteString(fmt.Sprintf("**migrationId**: %s  \nsuccess: %t  \nerror: %s  \ntimestamp: %s\n\n",
-				logItem.MigrationID, logItem.Success, logItem.Error, logItem.Timestamp.UTC()))
+			fmt.Fprintf(bWriter, "**migrationId**: %s  \nsuccess: %t  \nerror: %s  \ntimestamp: %s\n\n",
+				logItem.MigrationID, logItem.Success, logItem.Error, logItem.Timestamp.UTC())
 		}
 
 		return &supportbundles.SupportItem{

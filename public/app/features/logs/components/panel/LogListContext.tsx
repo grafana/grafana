@@ -9,20 +9,36 @@ import {
   useState,
 } from 'react';
 
-import { CoreApp, LogLevel, LogRowModel, LogsDedupStrategy, LogsSortOrder, shallowCompare, store } from '@grafana/data';
+import {
+  CoreApp,
+  LogLevel,
+  LogRowModel,
+  LogsDedupStrategy,
+  LogsMetaItem,
+  LogsSortOrder,
+  shallowCompare,
+  store,
+} from '@grafana/data';
 import { PopoverContent } from '@grafana/ui';
+
+import { DownloadFormat, downloadLogs as download } from '../../utils';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
 
-export interface LogListContextData extends Omit<Props, 'showControls'> {
+export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
+  downloadLogs: (format: DownloadFormat) => void;
   filterLevels: LogLevel[];
+  hasUnescapedContent?: boolean;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
+  setForceEscape: (forceEscape: boolean) => void;
   setLogListState: Dispatch<SetStateAction<LogListState>>;
   setPinnedLogs: (pinnedlogs: string[]) => void;
+  setPrettifyJSON: (prettifyJSON: boolean) => void;
   setSyntaxHighlighting: (syntaxHighlighting: boolean) => void;
   setShowTime: (showTime: boolean) => void;
+  setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setWrapLogMessage: (showTime: boolean) => void;
 }
@@ -31,13 +47,18 @@ export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
+  downloadLogs: () => {},
   filterLevels: [],
+  hasUnescapedContent: false,
   setDedupStrategy: () => {},
   setDisplayedFields: () => {},
   setFilterLevels: () => {},
+  setForceEscape: () => {},
   setLogListState: () => {},
   setPinnedLogs: () => {},
+  setPrettifyJSON: () => {},
   setShowTime: () => {},
+  setShowUniqueLabels: () => {},
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setWrapLogMessage: () => {},
@@ -65,8 +86,12 @@ export type LogListState = Pick<
   LogListContextData,
   | 'dedupStrategy'
   | 'displayedFields'
+  | 'forceEscape'
   | 'filterLevels'
+  | 'hasUnescapedContent'
   | 'pinnedLogs'
+  | 'prettifyJSON'
+  | 'showUniqueLabels'
   | 'showTime'
   | 'sortOrder'
   | 'syntaxHighlighting'
@@ -79,7 +104,11 @@ export interface Props {
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
   filterLevels?: LogLevel[];
+  forceEscape?: boolean;
+  hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
+  logs: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
@@ -90,7 +119,9 @@ export interface Props {
   onUnpinLine?: (row: LogRowModel) => void;
   pinLineButtonTooltipTitle?: PopoverContent;
   pinnedLogs?: string[];
+  prettifyJSON?: boolean;
   showControls: boolean;
+  showUniqueLabels?: boolean;
   showTime: boolean;
   sortOrder: LogsSortOrder;
   syntaxHighlighting?: boolean;
@@ -102,9 +133,13 @@ export const LogListContextProvider = ({
   children,
   dedupStrategy,
   displayedFields,
-  getRowContextQuery,
-  logOptionsStorageKey,
   filterLevels,
+  forceEscape = false,
+  hasUnescapedContent,
+  getRowContextQuery,
+  logs,
+  logsMeta,
+  logOptionsStorageKey,
   logSupportsContext,
   onLogOptionsChange,
   onLogLineHover,
@@ -114,10 +149,12 @@ export const LogListContextProvider = ({
   onUnpinLine,
   pinLineButtonTooltipTitle,
   pinnedLogs,
+  prettifyJSON,
   showControls,
   showTime,
+  showUniqueLabels,
   sortOrder,
-  syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
+  syntaxHighlighting,
   wrapLogMessage,
 }: Props) => {
   const [logListState, setLogListState] = useState<LogListState>({
@@ -125,8 +162,12 @@ export const LogListContextProvider = ({
     displayedFields,
     filterLevels:
       filterLevels ?? (logOptionsStorageKey ? store.getObject(`${logOptionsStorageKey}.filterLevels`, []) : []),
+    forceEscape,
+    hasUnescapedContent,
     pinnedLogs,
+    prettifyJSON,
     showTime,
+    showUniqueLabels,
     sortOrder,
     syntaxHighlighting,
     wrapLogMessage,
@@ -176,6 +217,12 @@ export const LogListContextProvider = ({
     }
   }, [filterLevels, logListState]);
 
+  useEffect(() => {
+    if (logListState.hasUnescapedContent !== hasUnescapedContent) {
+      setLogListState({ ...logListState, hasUnescapedContent });
+    }
+  }, [hasUnescapedContent, logListState]);
+
   const setDedupStrategy = useCallback(
     (dedupStrategy: LogsDedupStrategy) => {
       setLogListState({ ...logListState, dedupStrategy });
@@ -190,6 +237,13 @@ export const LogListContextProvider = ({
       onLogOptionsChange?.('displayedFields', displayedFields);
     },
     [logListState, onLogOptionsChange]
+  );
+
+  const setForceEscape = useCallback(
+    (forceEscape: boolean) => {
+      setLogListState({ ...logListState, forceEscape });
+    },
+    [logListState]
   );
 
   const setFilterLevels = useCallback(
@@ -214,6 +268,28 @@ export const LogListContextProvider = ({
       onLogOptionsChange?.('showTime', showTime);
       if (logOptionsStorageKey) {
         store.set(`${logOptionsStorageKey}.showTime`, showTime);
+      }
+    },
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
+  );
+
+  const setShowUniqueLabels = useCallback(
+    (showUniqueLabels: boolean) => {
+      setLogListState({ ...logListState, showUniqueLabels });
+      onLogOptionsChange?.('showUniqueLabels', showUniqueLabels);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.showLabels`, showUniqueLabels);
+      }
+    },
+    [logListState, logOptionsStorageKey, onLogOptionsChange]
+  );
+
+  const setPrettifyJSON = useCallback(
+    (prettifyJSON: boolean) => {
+      setLogListState({ ...logListState, prettifyJSON });
+      onLogOptionsChange?.('prettifyJSON', prettifyJSON);
+      if (logOptionsStorageKey) {
+        store.set(`${logOptionsStorageKey}.prettifyLogMessage`, prettifyJSON);
       }
     },
     [logListState, logOptionsStorageKey, onLogOptionsChange]
@@ -252,13 +328,27 @@ export const LogListContextProvider = ({
     [logListState, logOptionsStorageKey, onLogOptionsChange]
   );
 
+  const downloadLogs = useCallback(
+    (format: DownloadFormat) => {
+      const filteredLogs =
+        logListState.filterLevels.length === 0
+          ? logs
+          : logs.filter((log) => logListState.filterLevels.includes(log.logLevel));
+      download(format, filteredLogs, logsMeta);
+    },
+    [logListState.filterLevels, logs, logsMeta]
+  );
+
   return (
     <LogListContext.Provider
       value={{
         app,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields: logListState.displayedFields,
+        downloadLogs,
         filterLevels: logListState.filterLevels,
+        forceEscape: logListState.forceEscape,
+        hasUnescapedContent: logListState.hasUnescapedContent,
         getRowContextQuery,
         logSupportsContext,
         onLogLineHover,
@@ -268,16 +358,21 @@ export const LogListContextProvider = ({
         onUnpinLine,
         pinLineButtonTooltipTitle,
         pinnedLogs: logListState.pinnedLogs,
+        prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
         setDisplayedFields,
         setFilterLevels,
+        setForceEscape,
         setLogListState,
         setPinnedLogs,
+        setPrettifyJSON,
         setShowTime,
+        setShowUniqueLabels,
         setSortOrder,
         setSyntaxHighlighting,
         setWrapLogMessage,
         showTime: logListState.showTime,
+        showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
         wrapLogMessage: logListState.wrapLogMessage,
@@ -287,3 +382,16 @@ export const LogListContextProvider = ({
     </LogListContext.Provider>
   );
 };
+
+export function isLogsSortOrder(value: unknown): value is LogsSortOrder {
+  return value === LogsSortOrder.Ascending || value === LogsSortOrder.Descending;
+}
+
+export function isDedupStrategy(value: unknown): value is LogsDedupStrategy {
+  return (
+    value === LogsDedupStrategy.exact ||
+    value === LogsDedupStrategy.none ||
+    value === LogsDedupStrategy.numbers ||
+    value === LogsDedupStrategy.signature
+  );
+}

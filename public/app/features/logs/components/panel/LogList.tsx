@@ -7,18 +7,18 @@ import { VariableSizeList } from 'react-window';
 import {
   AbsoluteTimeRange,
   CoreApp,
-  DataFrame,
   EventBus,
   EventBusSrv,
-  Field,
-  LinkModel,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
+  LogsMetaItem,
   LogsSortOrder,
+  store,
   TimeRange,
 } from '@grafana/data';
 import { PopoverContent, useTheme2 } from '@grafana/ui';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
@@ -36,8 +36,6 @@ import {
   storeLogLineSize,
 } from './virtualization';
 
-export type GetFieldLinksFn = (field: Field, rowIndex: number, dataFrame: DataFrame) => Array<LinkModel<Field>>;
-
 interface Props {
   app: CoreApp;
   containerElement: HTMLDivElement;
@@ -45,7 +43,6 @@ interface Props {
   displayedFields: string[];
   eventBus?: EventBus;
   filterLevels?: LogLevel[];
-  forceEscape?: boolean;
   getFieldLinks?: GetFieldLinksFn;
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
@@ -53,6 +50,7 @@ interface Props {
   loadMore?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
+  logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
@@ -86,7 +84,6 @@ export const LogList = ({
   dedupStrategy,
   eventBus,
   filterLevels,
-  forceEscape = false,
   getFieldLinks,
   getRowContextQuery,
   grammar,
@@ -94,6 +91,7 @@ export const LogList = ({
   loadMore,
   logOptionsStorageKey,
   logs,
+  logsMeta,
   logSupportsContext,
   onLogOptionsChange,
   onLogLineHover,
@@ -106,7 +104,7 @@ export const LogList = ({
   showControls,
   showTime,
   sortOrder,
-  syntaxHighlighting,
+  syntaxHighlighting = logOptionsStorageKey ? store.getBool(`${logOptionsStorageKey}.syntaxHighlighting`, true) : true,
   timeRange,
   timeZone,
   wrapLogMessage,
@@ -118,6 +116,8 @@ export const LogList = ({
       displayedFields={displayedFields}
       filterLevels={filterLevels}
       getRowContextQuery={getRowContextQuery}
+      logs={logs}
+      logsMeta={logsMeta}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
       onLogOptionsChange={onLogOptionsChange}
@@ -137,7 +137,6 @@ export const LogList = ({
       <LogListComponent
         containerElement={containerElement}
         eventBus={eventBus}
-        forceEscape={forceEscape}
         getFieldLinks={getFieldLinks}
         grammar={grammar}
         initialScrollPosition={initialScrollPosition}
@@ -154,7 +153,6 @@ export const LogList = ({
 const LogListComponent = ({
   containerElement,
   eventBus = new EventBusSrv(),
-  forceEscape = false,
   getFieldLinks,
   grammar,
   initialScrollPosition = 'top',
@@ -164,7 +162,7 @@ const LogListComponent = ({
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
-  const { app, displayedFields, filterLevels, showTime, sortOrder, wrapLogMessage } = useLogListContext();
+  const { app, displayedFields, filterLevels, forceEscape, showTime, sortOrder, wrapLogMessage } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
     app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
@@ -191,7 +189,9 @@ const LogListComponent = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
-    setProcessedLogs(preProcessLogs(logs, { getFieldLinks, escape: forceEscape, order: sortOrder, timeZone }, grammar));
+    setProcessedLogs(
+      preProcessLogs(logs, { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone }, grammar)
+    );
   }, [forceEscape, getFieldLinks, grammar, logs, sortOrder, timeZone]);
 
   useEffect(() => {

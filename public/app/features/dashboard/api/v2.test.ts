@@ -8,6 +8,8 @@ import {
   AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyMessage,
+  AnnoKeySavedFromUI,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 
@@ -58,6 +60,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
+    buildInfo: {
+      ...jest.requireActual('@grafana/runtime').config.buildInfo,
+      versionString: '10.0.0',
+    },
   },
 }));
 
@@ -138,6 +144,7 @@ describe('v2 dashboard API', () => {
 
         annotations: {
           [AnnoKeyFolder]: 'new-folder',
+          [AnnoKeyMessage]: 'test save',
         },
       },
     };
@@ -205,13 +212,15 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: 'folderUidXyz',
+              [AnnoKeySavedFromUI]: '10.0.0',
             },
           },
           spec: {
             ...defaultSaveCommand.dashboard,
             title: 'chaing-title-dashboard',
           },
-        }
+        },
+        { params: undefined }
       );
     });
   });
@@ -235,14 +244,14 @@ describe('v2 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it('should throw DashboardVersionError for v1alpha1 conversion error', async () => {
+    it('should throw DashboardVersionError for v1beta1 conversion error', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
           conversion: {
             failed: true,
             error: 'backend conversion not yet implemented',
-            storedVersion: 'v1alpha1',
+            storedVersion: 'v1beta1',
           },
         },
       };

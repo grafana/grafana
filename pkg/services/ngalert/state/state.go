@@ -63,6 +63,9 @@ type State struct {
 	// conditions.
 	Values map[string]float64
 
+	// FiredAt is the time the state first transitions to Alerting.
+	FiredAt time.Time
+
 	StartsAt time.Time
 	// EndsAt is different from the Prometheus EndsAt as EndsAt is updated for both Normal states
 	// and states that have been resolved. It cannot be used to determine when a state was resolved.
@@ -128,6 +131,7 @@ func (a *State) Copy() *State {
 		Values:               a.Values,
 		StartsAt:             a.StartsAt,
 		EndsAt:               a.EndsAt,
+		FiredAt:              a.FiredAt,
 		ResolvedAt:           a.ResolvedAt,
 		LastSentAt:           a.LastSentAt,
 		LastEvaluationString: a.LastEvaluationString,
@@ -159,6 +163,9 @@ func (a *State) SetAlerting(reason string, startsAt, endsAt time.Time) {
 	a.StartsAt = startsAt
 	a.EndsAt = endsAt
 	a.Error = nil
+
+	// FiredAt is only ever set when the state is set to Alerting.
+	a.FiredAt = startsAt
 }
 
 // SetPending sets the state to Pending. It changes both the start and end time.
@@ -280,7 +287,7 @@ type StateTransition struct {
 }
 
 func (c StateTransition) Formatted() string {
-	return FormatStateAndReason(c.State.State, c.State.StateReason)
+	return FormatStateAndReason(c.State.State, c.StateReason)
 }
 
 func (c StateTransition) PreviousFormatted() string {
@@ -288,7 +295,7 @@ func (c StateTransition) PreviousFormatted() string {
 }
 
 func (c StateTransition) Changed() bool {
-	return c.PreviousState != c.State.State || c.PreviousStateReason != c.State.StateReason
+	return c.PreviousState != c.State.State || c.PreviousStateReason != c.StateReason
 }
 
 type StateTransitions []StateTransition
@@ -601,9 +608,9 @@ func (a *State) Equals(b *State) bool {
 		a.CacheID == b.CacheID &&
 		a.Labels.String() == b.Labels.String() &&
 		a.State.String() == b.State.String() &&
-		a.StartsAt == b.StartsAt &&
-		a.EndsAt == b.EndsAt &&
-		a.LastEvaluationTime == b.LastEvaluationTime &&
+		a.StartsAt.Equal(b.StartsAt) &&
+		a.EndsAt.Equal(b.EndsAt) &&
+		a.LastEvaluationTime.Equal(b.LastEvaluationTime) &&
 		data.Labels(a.Annotations).String() == data.Labels(b.Annotations).String()
 }
 
@@ -649,6 +656,20 @@ func (a *State) GetLastEvaluationValuesForCondition() map[string]float64 {
 // IsStale returns true if the state is stale, meaning that the state is ready to be evicted from the cache.
 func (a *State) IsStale() bool {
 	return a.StateReason == models.StateReasonMissingSeries
+}
+
+// If the state is Normal, and the previous state was Alerting, Error, NoData, or Recovering,
+// we can consider the state to be resolved. This is used to determine if we should send a resolved notification.
+func (a *State) ShouldBeResolved(oldState eval.State) bool {
+	if a.State != eval.Normal {
+		return false
+	}
+
+	if oldState != eval.Alerting && oldState != eval.Error && oldState != eval.NoData && oldState != eval.Recovering {
+		return false
+	}
+
+	return true
 }
 
 // shouldTakeImage determines whether a new image should be taken for a given transition. This should return true when
@@ -758,6 +779,7 @@ func patch(newState, existingState *State, result eval.Result) {
 	newState.LastEvaluationString = existingState.LastEvaluationString
 	newState.StartsAt = existingState.StartsAt
 	newState.EndsAt = existingState.EndsAt
+	newState.FiredAt = existingState.FiredAt
 	newState.ResolvedAt = existingState.ResolvedAt
 	newState.LastSentAt = existingState.LastSentAt
 	// Annotations can change over time, however we also want to maintain

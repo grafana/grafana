@@ -311,7 +311,7 @@ func TestRequestConfigProvider_PluginRequestConfig_azure(t *testing.T) {
 			UsernameAssertion:           true,
 		},
 		UserIdentityFallbackCredentialsEnabled: true,
-		ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql"},
+		ForwardSettingsPlugins:                 []string{"grafana-azure-monitor-datasource", "prometheus", "grafana-azure-data-explorer-datasource", "mssql", "grafana-azureprometheus-datasource"},
 		AzureEntraPasswordCredentialsEnabled:   true,
 	}
 

@@ -18,6 +18,12 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
+const (
+	CheckID           = "plugin"
+	DeprecationStepID = "deprecation"
+	UpdateStepID      = "update"
+)
+
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
@@ -43,7 +49,7 @@ type check struct {
 }
 
 func (c *check) ID() string {
-	return "plugin"
+	return CheckID
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
@@ -53,6 +59,14 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 		res[i] = p
 	}
 	return res, nil
+}
+
+func (c *check) Item(ctx context.Context, id string) (any, error) {
+	p, exists := c.PluginStore.Plugin(ctx, id)
+	if !exists {
+		return nil, fmt.Errorf("plugin %s not found", id)
+	}
+	return p, nil
 }
 
 func (c *check) Steps() []checks.Step {
@@ -88,7 +102,7 @@ func (s *deprecationStep) Resolution() string {
 }
 
 func (s *deprecationStep) ID() string {
-	return "deprecation"
+	return DeprecationStepID
 }
 
 func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
@@ -112,6 +126,7 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
@@ -146,7 +161,7 @@ func (s *updateStep) Resolution() string {
 }
 
 func (s *updateStep) ID() string {
-	return "update"
+	return UpdateStepID
 }
 
 func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
@@ -184,6 +199,7 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{

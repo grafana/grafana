@@ -29,12 +29,22 @@ import {
 const GROUP_EVALUATION_MIN_INTERVAL_MS = safeParsePrometheusDuration(config.unifiedAlerting?.minInterval ?? '10s');
 const GROUP_EVALUATION_INTERVAL_LOWER_BOUND = safeParsePrometheusDuration('1m');
 const GROUP_EVALUATION_INTERVAL_UPPER_BOUND = Infinity;
+const KEEP_FIRING_FOR_DEFAULT = '0s';
 
 export const DEFAULT_GROUP_EVALUATION_INTERVAL = formatPrometheusDuration(
   clamp(GROUP_EVALUATION_MIN_INTERVAL_MS, GROUP_EVALUATION_INTERVAL_LOWER_BOUND, GROUP_EVALUATION_INTERVAL_UPPER_BOUND)
 );
 export const getDefaultFormValues = (): RuleFormValues => {
   const { canCreateGrafanaRules, canCreateCloudRules } = getRulesAccess();
+  const type = (() => {
+    if (canCreateGrafanaRules) {
+      return RuleFormType.grafana;
+    }
+    if (canCreateCloudRules) {
+      return RuleFormType.cloudAlerting;
+    }
+    return undefined;
+  })();
 
   return Object.freeze({
     name: '',
@@ -42,7 +52,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     labels: [{ key: '', value: '' }],
     annotations: defaultAnnotations,
     dataSourceName: GRAFANA_RULES_SOURCE_NAME, // let's use Grafana-managed alert rule by default
-    type: canCreateGrafanaRules ? RuleFormType.grafana : canCreateCloudRules ? RuleFormType.cloudAlerting : undefined, // viewers can't create prom alerts
+    type, // viewers can't create prom alerts
     group: '',
 
     // grafana
@@ -53,6 +63,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
     noDataState: GrafanaAlertStateDecision.NoData,
     execErrState: GrafanaAlertStateDecision.Error,
     evaluateFor: DEFAULT_GROUP_EVALUATION_INTERVAL,
+    keepFiringFor: KEEP_FIRING_FOR_DEFAULT,
     evaluateEvery: DEFAULT_GROUP_EVALUATION_INTERVAL,
     manualRouting: getDefautManualRouting(), // we default to true if the feature toggle is enabled and the user hasn't set local storage to false
     contactPoints: {},

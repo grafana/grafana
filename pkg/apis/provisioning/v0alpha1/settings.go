@@ -31,6 +31,9 @@ type RepositoryView struct {
 	// When syncing, where values are saved
 	Target SyncTargetType `json:"target"`
 
+	// For git, this is the target branch
+	Branch string `json:"branch,omitempty"`
+
 	// The supported workflows
 	Workflows []Workflow `json:"workflows"`
 }

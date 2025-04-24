@@ -16,7 +16,7 @@ import { Tooltip } from '../Tooltip/Tooltip';
 export type BadgeColor = 'blue' | 'red' | 'green' | 'orange' | 'purple' | 'darkgrey';
 
 export interface BadgeProps extends HTMLAttributes<HTMLDivElement> {
-  text: React.ReactNode;
+  text?: React.ReactNode;
   color: BadgeColor;
   icon?: IconName;
   tooltip?: PopoverContent;

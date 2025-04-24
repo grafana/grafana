@@ -1,3 +1,4 @@
+import { isFetchError } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification, createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
@@ -12,6 +13,7 @@ import {
   JobList,
   Repository,
   RepositoryList,
+  ErrorDetails,
 } from './endpoints.gen';
 import { createOnCacheEntryAdded } from './utils/createOnCacheEntryAdded';
 
@@ -93,8 +95,18 @@ export const provisioningAPI = generatedAPI.enhanceEndpoints({
         try {
           await queryFulfilled;
         } catch (e) {
-          if (e instanceof Error) {
-            dispatch(notifyApp(createErrorNotification('Error testing repository', e)));
+          if (!e) {
+            dispatch(notifyApp(createErrorNotification('Error validating repository', new Error('Unknown error'))));
+          } else if (e instanceof Error) {
+            dispatch(notifyApp(createErrorNotification('Error validating repository', e)));
+          } else if (typeof e === 'object' && 'error' in e && isFetchError(e.error)) {
+            if (Array.isArray(e.error.data.errors) && e.error.data.errors.length) {
+              const nonFieldErrors = e.error.data.errors.filter((err: ErrorDetails) => !err.field);
+              // Only show notification if there are errors that don't have a field, field errors are handled by the form
+              if (nonFieldErrors.length > 0) {
+                dispatch(notifyApp(createErrorNotification('Error validating repository')));
+              }
+            }
           }
         }
       },

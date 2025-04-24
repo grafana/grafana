@@ -9,6 +9,7 @@ interface SnapshotCTAProps {
   onClick: () => void;
 }
 
+// TODO: this can be removed with the new configuration flow merged.
 export function BuildSnapshotCTA(props: SnapshotCTAProps) {
   const { disabled, isLoading, onClick } = props;
 
@@ -47,20 +48,10 @@ export function CreatingSnapshotCTA(props: SnapshotCTAProps) {
   const { disabled, isLoading, onClick } = props;
 
   return (
-    <CTAInfo
-      title={t('migrate-to-cloud.building-snapshot.title', 'Building installation snapshot')}
-      accessory={<Spinner inline />}
-    >
+    <CTAInfo title={t('migrate-to-cloud.building-snapshot.title', 'Building snapshot')} accessory={<Spinner inline />}>
       <Text element="p" variant="body" color="secondary">
         <Trans i18nKey="migrate-to-cloud.building-snapshot.description">
-          We&apos;re creating a point-in-time snapshot of the current state of this installation. Once the snapshot is
-          complete. you&apos;ll be able to upload it to Grafana Cloud.
-        </Trans>
-      </Text>
-
-      <Text element="p" variant="body" color="secondary">
-        <Trans i18nKey="migrate-to-cloud.building-snapshot.description-eta">
-          Creating a snapshot typically takes less than two minutes.
+          We&apos;re gathering your resources for migration to Grafana Cloud. This should only take a moment.
         </Trans>
       </Text>
 

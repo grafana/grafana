@@ -151,6 +151,7 @@ const AnnotationsStep = () => {
                   annotations={annotations}
                   annotation={annotation}
                   index={index}
+                  labelId={`annotation-${index}`}
                 />
                 {selectedDashboardUid && selectedPanelId && annotationField.key === Annotation.dashboardUID && (
                   <DashboardAnnotationField
@@ -175,13 +176,21 @@ const AnnotationsStep = () => {
                     >
                       <ValueInputComponent
                         data-testid={`annotation-value-${index}`}
+                        id={`annotation-${index}`}
                         className={cx(styles.annotationValueInput, { [styles.textarea]: !isUrl })}
                         {...register(`annotations.${index}.value`)}
                         placeholder={
                           isUrl
-                            ? 'https://'
-                            : (annotationField.key && `Enter a ${annotationField.key}...`) ||
-                              'Enter custom annotation content...'
+                            ? // eslint-disable-next-line @grafana/no-untranslated-strings
+                              'https://'
+                            : (annotationField.key &&
+                                t('alerting.annotations-step.placeholder-value-input', 'Enter a {{key}}...', {
+                                  key: annotationField.key,
+                                })) ||
+                              t(
+                                'alerting.annotations-step.placeholder-value-input-default',
+                                'Enter custom annotation content...'
+                              )
                         }
                         defaultValue={annotationField.value}
                       />

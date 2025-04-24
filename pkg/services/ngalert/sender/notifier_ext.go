@@ -10,17 +10,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 
-	"github.com/go-kit/log"
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/prometheus/config"
-	"go.uber.org/atomic"
+	"github.com/prometheus/prometheus/model/labels"
 )
 
 // ApplyConfig updates the status state as the new config requires.
@@ -33,12 +31,33 @@ func (n *Manager) ApplyConfig(conf *config.Config, headers map[string]http.Heade
 	n.opts.RelabelConfigs = conf.AlertingConfig.AlertRelabelConfigs
 
 	amSets := make(map[string]*alertmanagerSet)
+	// configToAlertmanagers maps alertmanager sets for each unique AlertmanagerConfig,
+	// helping to avoid dropping known alertmanagers and re-use them without waiting for SD updates when applying the config.
+	configToAlertmanagers := make(map[string]*alertmanagerSet, len(n.alertmanagers))
+	for _, oldAmSet := range n.alertmanagers {
+		hash, err := oldAmSet.configHash()
+		if err != nil {
+			return err
+		}
+		configToAlertmanagers[hash] = oldAmSet
+	}
 
 	for k, cfg := range conf.AlertingConfig.AlertmanagerConfigs.ToMap() {
 		ams, err := newAlertmanagerSet(cfg, n.logger, n.metrics)
 		if err != nil {
 			return err
 		}
+
+		hash, err := ams.configHash()
+		if err != nil {
+			return err
+		}
+
+		if oldAmSet, ok := configToAlertmanagers[hash]; ok {
+			ams.ams = oldAmSet.ams
+			ams.droppedAms = oldAmSet.droppedAms
+		}
+
 		// Extension: set the headers to the alertmanager set.
 		if headers, ok := headers[k]; ok {
 			ams.headers = headers
@@ -65,11 +84,12 @@ type alertmanagerSet struct {
 	mtx        sync.RWMutex
 	ams        []alertmanager
 	droppedAms []alertmanager
-	logger     log.Logger
+	logger     *slog.Logger
 }
 
 // sendAll sends the alerts to all configured Alertmanagers concurrently.
 // It returns true if the alerts could be sent successfully to at least one Alertmanager.
+// Extension: passing headers from each ams to sendOne
 func (n *Manager) sendAll(alerts ...*Alert) bool {
 	if len(alerts) == 0 {
 		return true
@@ -77,60 +97,63 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 
 	begin := time.Now()
 
-	// v1Payload and v2Payload represent 'alerts' marshaled for Alertmanager API
-	// v1 or v2. Marshaling happens below. Reference here is for caching between
+	// cachedPayload represent 'alerts' marshaled for Alertmanager API v2.
+	// Marshaling happens below. Reference here is for caching between
 	// for loop iterations.
-	var v1Payload, v2Payload []byte
+	var cachedPayload []byte
 
 	n.mtx.RLock()
 	amSets := n.alertmanagers
 	n.mtx.RUnlock()
 
 	var (
-		wg         sync.WaitGroup
-		numSuccess atomic.Uint64
+		wg           sync.WaitGroup
+		amSetCovered sync.Map
 	)
-	for _, ams := range amSets {
+	for k, ams := range amSets {
 		var (
-			payload []byte
-			err     error
+			payload  []byte
+			err      error
+			amAlerts = alerts
 		)
 
 		ams.mtx.RLock()
 
-		switch ams.cfg.APIVersion {
-		case config.AlertmanagerAPIVersionV1:
-			{
-				if v1Payload == nil {
-					v1Payload, err = json.Marshal(alerts)
-					if err != nil {
-						level.Error(n.logger).Log("msg", "Encoding alerts for Alertmanager API v1 failed", "err", err)
-						ams.mtx.RUnlock()
-						return false
-					}
-				}
+		if len(ams.ams) == 0 {
+			ams.mtx.RUnlock()
+			continue
+		}
 
-				payload = v1Payload
+		if len(ams.cfg.AlertRelabelConfigs) > 0 {
+			amAlerts = relabelAlerts(ams.cfg.AlertRelabelConfigs, labels.Labels{}, alerts)
+			if len(amAlerts) == 0 {
+				ams.mtx.RUnlock()
+				continue
 			}
+			// We can't use the cached values from previous iteration.
+			cachedPayload = nil
+		}
+
+		switch ams.cfg.APIVersion {
 		case config.AlertmanagerAPIVersionV2:
 			{
-				if v2Payload == nil {
-					openAPIAlerts := alertsToOpenAPIAlerts(alerts)
+				if cachedPayload == nil {
+					openAPIAlerts := alertsToOpenAPIAlerts(amAlerts)
 
-					v2Payload, err = json.Marshal(openAPIAlerts)
+					cachedPayload, err = json.Marshal(openAPIAlerts)
 					if err != nil {
-						level.Error(n.logger).Log("msg", "Encoding alerts for Alertmanager API v2 failed", "err", err)
+						n.logger.Error("Encoding alerts for Alertmanager API v2 failed", "err", err)
 						ams.mtx.RUnlock()
 						return false
 					}
 				}
 
-				payload = v2Payload
+				payload = cachedPayload
 			}
 		default:
 			{
-				level.Error(n.logger).Log(
-					"msg", fmt.Sprintf("Invalid Alertmanager API version '%v', expected one of '%v'", ams.cfg.APIVersion, config.SupportedAlertmanagerAPIVersions),
+				n.logger.Error(
+					fmt.Sprintf("Invalid Alertmanager API version '%v', expected one of '%v'", ams.cfg.APIVersion, config.SupportedAlertmanagerAPIVersions),
 					"err", err,
 				)
 				ams.mtx.RUnlock()
@@ -138,26 +161,34 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 			}
 		}
 
+		if len(ams.cfg.AlertRelabelConfigs) > 0 {
+			// We can't use the cached values on the next iteration.
+			cachedPayload = nil
+		}
+
+		// Being here means len(ams.ams) > 0
+		amSetCovered.Store(k, false)
 		for _, am := range ams.ams {
 			wg.Add(1)
 
-			ctx, cancel := context.WithTimeout(n.ctx, time.Duration(ams.cfg.Timeout))
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(ams.cfg.Timeout))
 			defer cancel()
 
 			// Extension: added headers parameter.
-			go func(client *http.Client, url string, headers http.Header) {
-				// Treat cancellations as a success, so that we don't increment error or dropped counters.
-				if err := n.sendOne(ctx, client, url, payload, headers); err != nil && !errors.Is(err, context.Canceled) {
-					level.Error(n.logger).Log("alertmanager", url, "count", len(alerts), "msg", "Error sending alert", "err", err)
-					n.metrics.errors.WithLabelValues(url).Inc()
+			go func(ctx context.Context, k string, client *http.Client, url string, payload []byte, count int, headers http.Header) {
+				err := n.sendOne(ctx, client, url, payload, headers)
+				if err != nil {
+					n.logger.Error("Error sending alerts", "alertmanager", url, "count", count, "err", err)
+					n.metrics.errors.WithLabelValues(url).Add(float64(count))
 				} else {
-					numSuccess.Inc()
+					amSetCovered.CompareAndSwap(k, false, true)
 				}
+
 				n.metrics.latency.WithLabelValues(url).Observe(time.Since(begin).Seconds())
-				n.metrics.sent.WithLabelValues(url).Add(float64(len(alerts)))
+				n.metrics.sent.WithLabelValues(url).Add(float64(count))
 
 				wg.Done()
-			}(ams.client, am.url().String(), ams.headers)
+			}(ctx, k, ams.client, am.url().String(), payload, len(amAlerts), ams.headers)
 		}
 
 		ams.mtx.RUnlock()
@@ -165,12 +196,23 @@ func (n *Manager) sendAll(alerts ...*Alert) bool {
 
 	wg.Wait()
 
-	return numSuccess.Load() > 0
+	// Return false if there are any sets which were attempted (e.g. not filtered
+	// out) but have no successes.
+	allAmSetsCovered := true
+	amSetCovered.Range(func(_, value any) bool {
+		if !value.(bool) {
+			allAmSetsCovered = false
+			return false
+		}
+		return true
+	})
+
+	return allAmSetsCovered
 }
 
 // Extension: added headers parameter.
 func (n *Manager) sendOne(ctx context.Context, c *http.Client, url string, b []byte, headers http.Header) error {
-	req, err := http.NewRequest("POST", url, bytes.NewReader(b))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(b))
 	if err != nil {
 		return err
 	}

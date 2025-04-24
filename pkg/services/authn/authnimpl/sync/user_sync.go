@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -54,6 +55,22 @@ var (
 		"user.sync.empty-externalUID",
 		errutil.WithPublicMessage("Empty externalUID"),
 	)
+	errUnableToRetrieveUserOrAuthInfo = errutil.Internal(
+		"user.sync.unable-to-retrieve-user-or-authinfo",
+		errutil.WithPublicMessage("Unable to retrieve user or authInfo for validation"),
+	)
+	errUnableToRetrieveUser = errutil.Internal(
+		"user.sync.unable-to-retrieve-user",
+		errutil.WithPublicMessage("Unable to retrieve user for validation"),
+	)
+	errUserNotProvisioned = errutil.Forbidden(
+		"user.sync.user-not-provisioned",
+		errutil.WithPublicMessage("User is not provisioned"),
+	)
+	errUserExternalUIDMismatch = errutil.Unauthorized(
+		"user.sync.user-externalUID-mismatch",
+		errutil.WithPublicMessage("User externalUID mismatch"),
+	)
 )
 
 var (
@@ -63,29 +80,98 @@ var (
 )
 
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
-	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 ) *UserSync {
+	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
-		userService:           userService,
-		authInfoService:       authInfoService,
-		userProtectionService: userProtectionService,
-		quotaService:          quotaService,
-		log:                   log.New("user.sync"),
-		tracer:                tracer,
-		features:              features,
-		lastSeenSF:            &singleflight.Group{},
+		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
+		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+		userService:               userService,
+		authInfoService:           authInfoService,
+		userProtectionService:     userProtectionService,
+		quotaService:              quotaService,
+		log:                       log.New("user.sync"),
+		tracer:                    tracer,
+		features:                  features,
+		lastSeenSF:                &singleflight.Group{},
 	}
 }
 
 type UserSync struct {
-	userService           user.Service
-	authInfoService       login.AuthInfoService
-	userProtectionService login.UserProtectionService
-	quotaService          quota.Service
-	log                   log.Logger
-	tracer                tracing.Tracer
-	features              featuremgmt.FeatureToggles
-	lastSeenSF            *singleflight.Group
+	allowNonProvisionedUsers  bool
+	isUserProvisioningEnabled bool
+	userService               user.Service
+	authInfoService           login.AuthInfoService
+	userProtectionService     login.UserProtectionService
+	quotaService              quota.Service
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	features                  featuremgmt.FeatureToggles
+	lastSeenSF                *singleflight.Group
+}
+
+// ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+
+	log.Debug("Validating user provisioning")
+	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
+	defer span.End()
+
+	// Skip validation if user provisioning is disabled
+	if !s.isUserProvisioningEnabled {
+		log.Debug("User provisioning is disabled, skipping validation")
+		return nil
+	}
+
+	// Skip validation if non-provisioned users are allowed
+	if s.allowNonProvisionedUsers {
+		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
+		return nil
+	}
+
+	// Skip validation if the auth module is GrafanaComAuthModule
+	if id.AuthenticatedBy == login.GrafanaComAuthModule {
+		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+		return nil
+	}
+
+	// In order to guarantee the provisioned user is the same as the identity,
+	// we must validate the authinfo.ExternalUID with the identity.ExternalUID
+
+	// Retrieve user and authinfo from database
+	usr, authInfo, err := s.getUser(ctx, id)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return nil
+		}
+		log.Error("Failed to fetch user for validation", "error", err)
+		return errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
+	}
+
+	if usr == nil {
+		log.Error("Failed to fetch user for validation", "error", err)
+		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
+	}
+
+	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
+	if usr.IsProvisioned {
+		// The user is provisioned via SAML and the identity is empty, meaning this request is not from the SAML auth flow
+		if authInfo.AuthModule == login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
+			log.Debug("Skipping ExternalUID validation for non-SAML request to SAML-provisioned user")
+			return nil
+		}
+		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
+			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
+			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
+		}
+		log.Debug("User is provisioned, access granted")
+		return nil
+	}
+
+	// Reject non-provisioned users
+	log.Error("Failed to access user, user is not provisioned")
+	return errUserNotProvisioned.Errorf("user is not provisioned")
 }
 
 // SyncUserHook syncs a user with the database
@@ -132,11 +218,6 @@ func (s *UserSync) SyncUserHook(ctx context.Context, id *authn.Identity, _ *auth
 			s.log.FromContext(ctx).Error("Failed to update user", "error", err, "auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
 			return errSyncUserInternal.Errorf("unable to update user")
 		}
-	}
-
-	if usr.IsProvisioned && id.ExternalUID != userAuth.ExternalUID {
-		s.log.Error("mismatched externalUID", "provisioned_externalUID", userAuth.ExternalUID, "identity_externalUID", id.ExternalUID)
-		return errMismatchedExternalUID.Errorf("externalUID mistmatch")
 	}
 
 	syncUserToIdentity(usr, id)
@@ -326,7 +407,7 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		attribute.String("identity.ExternalUID", id.ExternalUID),
 	)
 	if usr.IsProvisioned {
-		s.log.Debug("User is provisioned", "id,UID", id.UID)
+		s.log.Debug("User is provisioned", "id.UID", id.UID)
 		needsConnectionCreation = false
 		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
 		if err != nil {
@@ -400,7 +481,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	ctx, span := s.tracer.Start(ctx, "user.sync.getUser")
 	defer span.End()
 
-	// Check auth info fist
+	// Check auth info first
 	if identity.AuthID != "" && identity.AuthenticatedBy != "" {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
 		authInfo, errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)

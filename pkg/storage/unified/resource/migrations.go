@@ -3,13 +3,13 @@ package resource
 import (
 	"fmt"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 )
 
 // MigrateVersionMatch handles backwards compatibility for ResourceVersionMatch
 // by migrating from the deprecated version_match to version_match_v2.
 // It returns an error if the version match is unknown.
-func MigrateListRequestVersionMatch(req *ListRequest, logger log.Logger) error {
+func MigrateListRequestVersionMatch(req *ListRequest, logger logging.Logger) error {
 	if req.VersionMatch != nil && req.GetVersionMatchV2() == ResourceVersionMatchV2_UNKNOWN {
 		switch req.GetVersionMatch() {
 		case ResourceVersionMatch_DEPRECATED_NotOlderThan:

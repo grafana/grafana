@@ -197,8 +197,8 @@ export const alertmanagerApi = alertingApi.injectEndpoints({
 
         // wrap our fetchConfig function with some performance logging functions
         const fetchAMconfigWithLogging = withPerformanceLogging(
-          'unifiedalerting/fetchAmConfig',
           fetchAlertManagerConfig,
+          'unifiedalerting/fetchAmConfig',
           {
             dataSourceName: alertmanagerSourceName,
             thunk: 'unifiedalerting/fetchAmConfig',

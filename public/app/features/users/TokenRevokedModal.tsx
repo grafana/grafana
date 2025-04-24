@@ -33,18 +33,20 @@ export const TokenRevokedModal = (props: Props) => {
         >
           <div className={styles.text}>
             <p>
-              Your session token was automatically revoked because you have reached
-              <strong>
-                {` the maximum number of ${
-                  showMaxConcurrentSessions ? props.maxConcurrentSessions : ''
-                } concurrent sessions `}
-              </strong>
-              for your account.
+              <Trans
+                i18nKey="users.token-revoked-modal.auto-revoked"
+                values={{ numSessions: showMaxConcurrentSessions ? props.maxConcurrentSessions : '' }}
+              >
+                Your session token was automatically revoked because you have reached{' '}
+                <strong>the maximum number of {'{{numSessions}}'} concurrent sessions</strong> for your account.
+              </Trans>
             </p>
             <p>
-              <strong>To resume your session, sign in again.</strong>
-              Contact your administrator or visit the license page to review your quota if you are repeatedly signed out
-              automatically.
+              <Trans i18nKey="users.token-revoked-modal.resume-message">
+                <strong>To resume your session, sign in again.</strong>
+                Contact your administrator or visit the license page to review your quota if you are repeatedly signed
+                out automatically.
+              </Trans>
             </p>
           </div>
           <Button size="md" variant="primary" onClick={redirectToLogin}>
