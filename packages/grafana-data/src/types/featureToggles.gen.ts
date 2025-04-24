@@ -59,10 +59,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Disable duplicated secret storage in legacy tables
-  */
-  disableSecretsCompatibility?: boolean;
-  /**
   * Logs the path for requests that are instrumented as unknown
   */
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -308,11 +304,6 @@ export interface FeatureToggles {
   * @default true
   */
   formatString?: boolean;
-  /**
-  * Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-  * @default true
-  */
-  kubernetesPlaylists?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
@@ -767,11 +758,6 @@ export interface FeatureToggles {
   */
   timeRangeProvider?: boolean;
   /**
-  * Use new **Combobox** component for Prometheus query editor
-  * @default true
-  */
-  prometheusUsesCombobox?: boolean;
-  /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
   */
@@ -972,6 +958,7 @@ export interface FeatureToggles {
   alertingMigrationUI?: boolean;
   /**
   * Enables the unified storage history pruner
+  * @default true
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
@@ -1035,4 +1022,13 @@ export interface FeatureToggles {
   * Register MT frontend
   */
   multiTenantFrontend?: boolean;
+  /**
+  * Enables the alerting list view v2 preview toggle
+  */
+  alertingListViewV2PreviewToggle?: boolean;
+  /**
+  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
+  * @default false
+  */
+  alertRuleUseFiredAtForStartsAt?: boolean;
 }
