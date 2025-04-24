@@ -487,7 +487,7 @@ func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.Nav
 		Text:       "AI & Machine Learning",
 		SubTitle:   "Explore AI and machine learning features",
 		Id:         "ai-ml-home",
-		Icon:       "gf-ml",
+		Icon:       "gf-ml-alt",
 		Children:   aimlChildNavs,
 		SortWeight: navtree.WeightAIAndML,
 		Url:        s.cfg.AppSubURL + "/a/grafana-ml-app/home",
