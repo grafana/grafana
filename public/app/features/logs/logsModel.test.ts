@@ -512,6 +512,33 @@ describe('dataFrameToLogsModel', () => {
     });
   });
 
+  it('given multiple series with total as custom meta property should return correct total', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 4,
+          },
+        },
+      }),
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 5,
+          },
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: TOTAL_LABEL,
+      value: 9,
+      kind: LogsMetaKind.Number,
+    });
+  });
+
   it('should return the expected meta when the line limit is reached', () => {
     const series: DataFrame[] = getTestDataFrame();
     series[0].meta = {
