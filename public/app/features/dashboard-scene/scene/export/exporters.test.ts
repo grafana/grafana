@@ -538,13 +538,12 @@ describe('dashboard exporter v2', () => {
               {
                 kind: 'PanelQuery',
                 spec: {
-                  datasource: {
-                    type: 'prometheus',
-                    uid: '${datasourceVar}',
-                  },
                   hidden: false,
                   query: {
-                    kind: 'prometheus',
+                    datasource: {
+                      name: '${datasourceVar}',
+                    },
+                    group: 'prometheus',
                     spec: {
                       editorMode: 'builder',
                       expr: 'go_goroutines{job="prometheus"}',

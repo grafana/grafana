@@ -723,6 +723,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 enable: true,
                 hide: false,
                 iconColor: 'purple',
+                options: {
+                  expr: 'rate(http_requests_total[5m])',
+                  queryType: 'range',
+                  legendFormat: '{{method}} {{endpoint}}',
+                  useValueAsTime: true,
+                  step: '1m',
+                },
                 query: {
                   kind: 'DataQuery',
                   version: defaultDataQueryKind().version,
@@ -730,16 +737,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                   datasource: {
                     name: 'abc123',
                   },
-                  spec: {
-                    // FIXME: I don't think this is correct. Where options are coming from?
-                    options: {
-                      expr: 'rate(http_requests_total[5m])',
-                      queryType: 'range',
-                      legendFormat: '{{method}} {{endpoint}}',
-                      useValueAsTime: true,
-                      step: '1m',
-                    },
-                  },
+                  spec: {},
                 },
               },
             },
