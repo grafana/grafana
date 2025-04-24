@@ -9,7 +9,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
 // TODO: find a better name
@@ -33,28 +32,11 @@ func ProvideSecretService(
 	}
 }
 
-func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
-	// TODO: check permissions?
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	// hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-	// 	Group:     secretv0alpha1.GROUP,
-	// 	Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
-	// 	Namespace: namespace.String(),
-	// 	Verb:      utils.VerbGet, // Why not VerbList?
-	// })
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to compile checker: %w", err)
-	// }
-	// if !hasPermissionFor(row.Name, "") {
-
+func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, authInfo.GetUID())
+		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
 		if err != nil {
 			return fmt.Errorf("failed to create securevalue: %w", err)
 		}
@@ -80,16 +62,10 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 }
 
 func (s *SecretService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	// TODO: check permissions?
-	// _, ok := claims.AuthInfoFrom(ctx)
-	// if !ok {
-	// 	return nil, fmt.Errorf("missing auth info in context")
-	// }
-
 	return s.secureValueMetadataStorage.Read(ctx, namespace, name)
 }
 
-func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error) {
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing auth info in context")
@@ -106,6 +82,9 @@ func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace, opt
 	}
 
 	secureValuesMetadata, err := s.secureValueMetadataStorage.List(ctx, namespace)
+	if err != nil {
+		return nil, fmt.Errorf("fetching secure values from storage: %+w", err)
+	}
 
 	out := make([]secretv0alpha1.SecureValue, 0)
 
@@ -123,22 +102,16 @@ func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace, opt
 	}, nil
 }
 
-func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, bool, error) {
+func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
 	const updateIsSync = false
 
 	// TODO: if updating requires communicating with external services, the secure value metadata status must be changed to Pending
-
-	// TODO: check permissions?
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, updateIsSync, fmt.Errorf("missing auth info in context")
-	}
 
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
 		// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
-		updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue, authInfo.GetUID())
+		updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue, actorUID)
 		if err != nil {
 			return fmt.Errorf("failed to update secure value: %w", err)
 		}
@@ -164,8 +137,6 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 }
 
 func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	// TODO: check permissions?
-
 	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name)
 	if err != nil {
 		return fmt.Errorf("fetching secure value: %+w", err)

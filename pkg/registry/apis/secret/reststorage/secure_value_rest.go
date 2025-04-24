@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -87,7 +88,7 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	secureValueList, err := s.secretService.List(ctx, xkube.Namespace(namespace), options)
+	secureValueList, err := s.secretService.List(ctx, xkube.Namespace(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
@@ -115,11 +116,11 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		}
 	}
 
-	return secureValueList, nil
+	return &secretv0alpha1.SecureValueList{Items: allowedSecureValues}, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
-func (s *SecureValueRest) Get(ctx context.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+func (s *SecureValueRest) Get(ctx context.Context, name string, _ *metav1.GetOptions) (runtime.Object, error) {
 	namespace, ok := request.NamespaceFrom(ctx)
 	if !ok {
 		return nil, fmt.Errorf("missing namespace")
@@ -153,7 +154,12 @@ func (s *SecureValueRest) Create(
 		return nil, err
 	}
 
-	createdSecureValueMetadata, err := s.secretService.Create(ctx, sv)
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	createdSecureValueMetadata, err := s.secretService.Create(ctx, sv, user.GetUID())
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value %+w", err)
 	}
@@ -198,7 +204,12 @@ func (s *SecureValueRest) Update(
 
 	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhasePending
 
-	updatedSecureValueMetadata, _, err := s.secretService.Update(ctx, newSecureValue)
+	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, false, fmt.Errorf("missing auth info in context")
+	}
+
+	updatedSecureValueMetadata, _, err := s.secretService.Update(ctx, newSecureValue, user.GetUID())
 	if err != nil {
 		return updatedSecureValueMetadata, false, fmt.Errorf("updating secure value metadata: %+w", err)
 	}
