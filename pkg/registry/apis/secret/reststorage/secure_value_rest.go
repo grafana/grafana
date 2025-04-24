@@ -364,6 +364,17 @@ func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.Erro
 func validateDecrypters(decrypters []string, decryptersAllowList map[string]struct{}) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
+	// Limit the number of decrypters to 64 to not have it unbounded.
+	// The number was chosen arbitrarily and should be enough.
+	if len(decrypters) > 64 {
+		errs = append(
+			errs,
+			field.TooMany(field.NewPath("spec", "decrypters"), len(decrypters), 64),
+		)
+
+		return errs
+	}
+
 	decrypterNames := make(map[string]struct{}, 0)
 
 	for i, decrypter := range decrypters {

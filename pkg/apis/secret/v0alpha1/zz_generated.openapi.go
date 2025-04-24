@@ -10,6 +10,7 @@ package v0alpha1
 import (
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
+	ptr "k8s.io/utils/ptr"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -214,6 +215,19 @@ func schema_pkg_apis_secret_v0alpha1_CredentialValue(ref common.ReferenceCallbac
 							Description: "The value is taken from the Grafana config file.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+				},
+			},
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: spec.Extensions{
+					"x-kubernetes-unions": []interface{}{
+						map[string]interface{}{
+							"fields-to-discriminateBy": map[string]interface{}{
+								"secureValueName": "SecureValueName",
+								"valueFromConfig": "ValueFromConfig",
+								"valueFromEnv":    "ValueFromEnv",
+							},
 						},
 					},
 				},
@@ -424,6 +438,7 @@ func schema_pkg_apis_secret_v0alpha1_Keeper(ref common.ReferenceCallback) common
 						},
 					},
 				},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -490,34 +505,65 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 						SchemaProps: spec.SchemaProps{
 							Description: "Human friendly name for the keeper.",
 							Default:     "",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"sql": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Description: "You can only chose one of the following.",
+							Description: "SQL Keeper Configuration.",
 							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig"),
 						},
 					},
 					"aws": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig"),
+							Description: "AWS Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig"),
 						},
 					},
 					"azurekeyvault": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig"),
+							Description: "Azure Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig"),
 						},
 					},
 					"gcp": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig"),
+							Description: "GCP Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig"),
 						},
 					},
 					"hashivault": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig"),
+							Description: "HashiCorp Vault Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig"),
 						},
 					},
 				},
@@ -591,7 +637,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"status"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -658,6 +704,8 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 						SchemaProps: spec.SchemaProps{
 							Description: "Human friendly name for the secure value.",
 							Default:     "",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -665,13 +713,16 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					"value": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The raw value is only valid for write. Read/List will always be empty. There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.",
+							MinLength:   ptr.To[int64](1),
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When using a remote Key manager, the ref is used to reference a value inside the remote storage. This should not contain sensitive information.",
+							Description: "When using a third-party keeper, the `ref` is used to reference a value inside the remote storage. This should not contain sensitive information.",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](1024),
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -679,6 +730,8 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					"keeper": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name of the keeper, being the actual storage of the secure value. If not specified, the default keeper for the namespace will be used.",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -690,7 +743,9 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "The Decrypters that are allowed to decrypt this secret. An empty list means no service can decrypt it. Support and behavior is still TBD, but could likely look like: * testdata.grafana.app/{name1} * testdata.grafana.app/{name2} * runner.k6.grafana.app/*  -- allow any k6 test runner Rather than a string pattern, we may want a more explicit object: [{ group:\"testdata.grafana.app\", name=\"name1\"},\n { group:\"runner.k6.grafana.app\"}]",
+							Description: "The Decrypters that are allowed to decrypt this secret. An empty list means no service can decrypt it.",
+							MaxItems:    ptr.To[int64](64),
+							UniqueItems: true,
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
