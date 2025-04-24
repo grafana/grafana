@@ -99,6 +99,10 @@ Check the current configuration:
 grafanactl config check
 ```
 
+{{< admonition type="note" >}}
+This command is useful to troubleshoot your configuration.
+{{< /admonition >}}
+
 List all available contexts:
 
 ```bash
