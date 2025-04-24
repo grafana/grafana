@@ -158,6 +158,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     return { dto: n };
   });
+
   return (
     <>
       {hasOnCallError && (

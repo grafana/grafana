@@ -1,10 +1,4 @@
-import { NotifierDTO } from 'app/types';
-
-import {
-  GrafanaManagedContactPoint,
-  GrafanaManagedReceiverConfig,
-  Receiver,
-} from '../../../../plugins/datasource/alertmanager/types';
+import { GrafanaManagedContactPoint, Receiver } from '../../../../plugins/datasource/alertmanager/types';
 import { grafanaAlertNotifiers } from '../mockGrafanaNotifiers';
 import {
   CloudChannelValues,
@@ -439,7 +433,7 @@ describe('formValuesToCloudReceiver', () => {
 });
 
 describe('grafanaReceiverToFormValues', () => {
-  const { googlechat, slack, sns } = grafanaAlertNotifiers;
+  const { slack, sns } = grafanaAlertNotifiers;
 
   it('should convert fields from settings and secureFields', () => {
     const slackReceiver: GrafanaManagedContactPoint = {

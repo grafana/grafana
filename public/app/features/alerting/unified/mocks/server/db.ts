@@ -216,6 +216,16 @@ interface SlackReceiverOptions {
   url?: string;
 }
 
+interface SNSReceiverOptions {
+  api_url: string;
+  sigv4?: {
+    region: string;
+    access_key?: string;
+    secret_key?: string;
+  };
+  topic_arn?: string;
+}
+
 class GrafanaReceiverConfigFactory extends Factory<GrafanaManagedReceiverConfig> {
   email() {
     return this.params({ type: 'email', name: `email-${this.sequence()}` });
@@ -238,8 +248,18 @@ class GrafanaReceiverConfigFactory extends Factory<GrafanaManagedReceiverConfig>
     return this.params({ type: 'webhook', name: `webhook-${this.sequence()}` });
   }
 
-  sns() {
-    return this.params({ type: 'sns', name: `sns-${this.sequence()}` });
+  sns({ api_url, sigv4, topic_arn }: SNSReceiverOptions) {
+    const { access_key, secret_key, ...sigv4WithoutSecrets } = sigv4 ?? {};
+    return this.params({
+      type: 'sns',
+      name: `sns-${this.sequence()}`,
+      settings: { api_url, sigv4: sigv4WithoutSecrets, topic_arn },
+      secureFields: { 'sigv4.access_key': Boolean(access_key), 'sigv4.secret_key': Boolean(secret_key) },
+    });
+  }
+
+  mqtt() {
+    return this.params({ type: 'mqtt', name: `mqtt-${this.sequence()}` });
   }
 }
 

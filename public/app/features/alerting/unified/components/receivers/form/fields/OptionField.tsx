@@ -162,7 +162,7 @@ const OptionInput: FC<Props & { id: string }> = ({
           onSelectTemplate={onSelectTemplate}
         >
           {isEncryptedInput ? (
-            <SecretInput onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
+            <SecretInput id={id} onReset={() => onResetSecureField?.(nestedKey)} isConfigured />
           ) : (
             <Input
               id={id}

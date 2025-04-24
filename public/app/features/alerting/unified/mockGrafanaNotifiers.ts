@@ -1767,9 +1767,9 @@ export const grafanaAlertNotifiers: Record<GrafanaNotifierType, NotifierDTO> = {
   },
   oncall: {
     type: 'oncall',
-    name: 'Grafana OnCall',
-    heading: 'Grafana OnCall settings',
-    description: 'Sends notifications to Grafana OnCall',
+    name: 'Grafana IRM',
+    heading: 'Grafana IRM settings',
+    description: 'Sends notifications to Grafana IRM',
     info: '',
     options: [
       {

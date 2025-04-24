@@ -34,10 +34,10 @@ const renderWithProvider = (
     { historyOptions }
   );
 
-setupMswServer();
+const server = setupMswServer();
 
 const ui = {
-  type: byRole('combobox', { name: /Integration/ }),
+  typeSelector: byTestId('items.0.type'),
   loadingIndicator: byText('Loading notifiers...'),
   integrationType: byLabelText('Integration'),
   onCallIntegrationType: byRole('radiogroup'),
@@ -49,10 +49,18 @@ const ui = {
   },
   newOnCallIntegrationName: byRole('textbox', { name: /Integration name/ }),
   existingOnCallIntegrationSelect: (index: number) => byTestId(`items.${index}.settings.url`),
+  saveButton: byRole('button', { name: /save contact point/i }),
   slack: {
     recipient: byRole('textbox', { name: /^Recipient/ }),
     token: byRole('textbox', { name: /^Token/ }),
     webhookUrl: byRole('textbox', { name: /^Webhook URL/ }),
+  },
+  sns: {
+    apiUrl: byRole('textbox', { name: /The Amazon SNS API URL/ }),
+    region: byRole('textbox', { name: /^Region/ }),
+    accessKey: byRole('textbox', { name: /^Access Key/ }),
+    secretKey: byRole('textbox', { name: /^Secret Key/ }),
+    topicArn: byRole('textbox', { name: /^SNS topic ARN/ }),
   },
 };
 
@@ -79,6 +87,10 @@ describe('GrafanaReceiverForm', () => {
     ]);
   });
 
+  afterEach(() => {
+    server.events.removeAllListeners();
+  });
+
   it('handles nested secure fields correctly', async () => {
     const capturedRequests = captureRequests(
       (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
@@ -89,8 +101,7 @@ describe('GrafanaReceiverForm', () => {
     await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
     // Select MQTT receiver and fill out basic required fields for contact point
-    await type(await ui.type.find(), 'MQTT');
-    await click(await screen.findByRole('option', { name: 'MQTT' }));
+    await clickSelectOption(ui.typeSelector.get(), 'MQTT');
 
     await type(screen.getByLabelText(/^name/i), 'mqtt contact point');
     await type(screen.getByLabelText(/broker url/i), 'broker url');
@@ -101,7 +112,7 @@ describe('GrafanaReceiverForm', () => {
     await click(screen.getByRole('button', { name: /^Add$/i }));
     await type(screen.getByLabelText(/ca certificate/i), 'some cert');
 
-    await click(screen.getByRole('button', { name: /save contact point/i }));
+    await click(ui.saveButton.get());
 
     const [request] = await capturedRequests;
     const postRequestbody = await request.clone().json();
@@ -181,7 +192,6 @@ describe('GrafanaReceiverForm', () => {
       expect(webhookUrlField).toHaveValue('');
       expect(webhookUrlField).toHaveAttribute('readonly');
     });
-
     it('should display webhook URL field as readonly with a Reset button when editing existing contact point with configured webhook URL', async () => {
       // Create mock config for a Slack contact point using webhook
       const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
@@ -232,6 +242,83 @@ describe('GrafanaReceiverForm', () => {
     });
   });
 
+  describe('SNS contact point', () => {
+    it('should handle secure fields correctly when editing contact point', async () => {
+      // Create mock config for an SNS contact point with secure fields configured
+      const contactPointName = 'amazon-sns';
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .sns({
+              api_url: 'https://amazon.example.com:1234',
+              sigv4: { region: 'us-east-1', access_key: 'access-key', secret_key: 'secret-key' },
+            })
+            .build(),
+        ])
+        .build({ id: 'amazon-sns-id', name: contactPointName, metadata: { name: contactPointName } });
+
+      const capture = captureRequests(
+        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPointName}`) && req.method === 'PUT'
+      );
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      const apiUrlField = await ui.sns.apiUrl.find();
+      const regionField = await ui.sns.region.find();
+      const accessKeyField = await ui.sns.accessKey.find();
+      const secretKeyField = await ui.sns.secretKey.find();
+
+      expect(apiUrlField).toHaveValue('https://amazon.example.com:1234');
+      expect(regionField).toHaveValue('us-east-1');
+      expect(accessKeyField).toHaveValue('configured');
+      expect(accessKeyField).toBeDisabled();
+      expect(secretKeyField).toHaveValue('configured');
+      expect(secretKeyField).toBeDisabled();
+
+      // There should be a Reset button for secure fields
+      const resetButtons = screen.getAllByRole('button', { name: 'Reset' });
+      expect(resetButtons).toHaveLength(2);
+
+      // Reset and update access key
+      await user.click(resetButtons[0]); // Reset access key
+      expect(ui.sns.accessKey.get()).toBeEnabled();
+      expect(ui.sns.accessKey.get()).toHaveValue('');
+      await user.type(ui.sns.accessKey.get(), 'new-access-key');
+      await user.type(ui.sns.topicArn.get(), 'arn:aws:sns:us-east-1:123456789012:MyTopic');
+
+      await user.click(ui.saveButton.get());
+
+      const requests = await capture;
+      expect(requests).toHaveLength(1);
+
+      const [request] = requests;
+      const postRequestBody = await request.clone().json();
+
+      const integrationPayload = postRequestBody.spec.integrations[0];
+
+      // Verify that secureFields object correctly reflects which fields were reset
+      expect(integrationPayload.secureFields).toEqual({
+        'sigv4.secret_key': true, // Should remain true as we didn't reset it
+      });
+      // The access key should not be in the secureFields object as it was reset
+      expect(integrationPayload.secureFields).not.toHaveProperty('sigv4.access_key');
+
+      // Verify that the new access key value is included in the settings
+      expect(integrationPayload.settings).toEqual({
+        api_url: 'https://amazon.example.com:1234',
+        sigv4: {
+          access_key: 'new-access-key',
+          region: 'us-east-1',
+        },
+        topic_arn: 'arn:aws:sns:us-east-1:123456789012:MyTopic',
+      });
+
+      expect(postRequestBody).toMatchSnapshot();
+    });
+  });
+
   describe('OnCall contact point', () => {
     it('OnCall contact point should be disabled if OnCall integration is not enabled', async () => {
       disablePlugin(SupportedPlugin.OnCall);
@@ -240,12 +327,12 @@ describe('GrafanaReceiverForm', () => {
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-      await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
+      await clickSelectOption(ui.typeSelector.get(), 'Grafana IRM');
       // Clicking on a disable element shouldn't change the form value. email is the default value
       // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'email' });
 
-      await clickSelectOption(byTestId('items.0.type').get(), 'Alertmanager');
+      await clickSelectOption(ui.typeSelector.get(), 'Alertmanager');
       // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'prometheus-alertmanager' });
     });
@@ -260,7 +347,7 @@ describe('GrafanaReceiverForm', () => {
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-      await clickSelectOption(byTestId('items.0.type').get(), 'Grafana OnCall');
+      await clickSelectOption(ui.typeSelector.get(), 'Grafana IRM');
 
       // eslint-disable-next-line testing-library/no-node-access
       expect(ui.integrationType.get().closest('form')).toHaveFormValues({ 'items.0.type': 'oncall' });
@@ -312,12 +399,11 @@ describe('GrafanaReceiverForm', () => {
 
       await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
 
-      expect(byTestId('items.0.type').get()).toHaveTextContent('Grafana OnCall');
+      expect(byTestId('items.0.type').get()).toHaveTextContent('Grafana IRM');
       expect(byLabelText('URL').get()).toHaveValue('https://oncall.example.com');
     });
   });
 });
-
 function getAmCortexConfig(configure: (builder: AlertmanagerConfigBuilder) => void): AlertManagerCortexConfig {
   const configBuilder = new AlertmanagerConfigBuilder();
   configure(configBuilder);
