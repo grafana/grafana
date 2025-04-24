@@ -208,4 +208,8 @@ Use this workflow to locate dashboards using a deprecated API version and mark t
 
    ```bash
    grafanactl resources edit dashboards.v1.dashboard.grafana.app/really-old-dashboard -p '{"spec":{"tags":["deprecated"]}}'
-   ```
+    ```
+
+{{< admonition type="tip" >}}
+You can get help by using the `grafanactl --help` command.
+{{< /admonition >}}
