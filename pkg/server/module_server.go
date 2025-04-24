@@ -10,6 +10,7 @@ import (
 	"sync"
 
 	"github.com/gorilla/mux"
+	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -89,6 +90,7 @@ type ModuleServer struct {
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
 
+	KVStore          kv.Config
 	httpServerRouter *mux.Router
 	distributor      *resource.Distributor
 }
@@ -132,6 +134,7 @@ func (s *ModuleServer) Run() error {
 		return s.initInstrumentationServer()
 	})
 
+	m.RegisterModule(modules.MemberlistKV, s.initMemberlistKV)
 	m.RegisterModule(modules.StorageRing, s.initRing)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {

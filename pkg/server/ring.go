@@ -8,12 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/dskit/dns"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/grpcclient"
 	"github.com/grafana/dskit/kv"
-	"github.com/grafana/dskit/kv/codec"
-	"github.com/grafana/dskit/kv/memberlist"
 	"github.com/grafana/dskit/netutil"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
@@ -39,10 +36,6 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		return nil, nil
 	}
 
-	if ms.cfg.MemberlistJoinMember == "" {
-		return nil, fmt.Errorf("bad sharding configuration. Missing MemberlistJoinMember")
-	}
-
 	logger := log.New("resource-server-ring")
 	reg := prometheus.WrapRegistererWithPrefix(metricsPrefix, ms.registerer)
 
@@ -50,22 +43,8 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	flagext.DefaultValues(grpcclientcfg)
 	pool := newClientPool(*grpcclientcfg, logger, reg)
 
-	dnsProviderReg := prometheus.WrapRegistererWithPrefix(
-		metricsPrefix,
-		prometheus.WrapRegistererWith(
-			prometheus.Labels{"component": "memberlist"},
-			ms.registerer,
-		),
-	)
-	dnsProvider := dns.NewProvider(logger, dnsProviderReg, dns.GolangResolverType)
-
-	KVStore := kv.Config{Store: "memberlist"}
-
-	memberlistKVsvc := memberlist.NewKVInitService(toMemberlistConfig(ms.cfg), logger, dnsProvider, ms.registerer)
-	KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
-
 	ringStore, err := kv.NewClient(
-		KVStore,
+		ms.KVStore,
 		ring.GetCodec(),
 		kv.RegistererWithKVName(reg, metricsPrefix),
 		logger,
@@ -99,7 +78,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	}
 
 	storageRing, err := ring.NewWithStoreClientAndStrategy(
-		toRingConfig(ms.cfg, KVStore),
+		toRingConfig(ms.cfg, ms.KVStore),
 		ringName,
 		ringKey,
 		ringStore,
@@ -112,10 +91,6 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	}
 
 	startFn := func(ctx context.Context) error {
-		err := memberlistKVsvc.StartAsync(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to start memberlist service: %s", err)
-		}
 		err = storageRing.StartAsync(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to start the ring: %s", err)
@@ -161,21 +136,6 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	svc := services.NewIdleService(startFn, nil)
 
 	return svc, nil
-}
-
-func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
-	memberlistKVcfg := &memberlist.KVConfig{}
-	flagext.DefaultValues(memberlistKVcfg)
-	memberlistKVcfg.Codecs = []codec.Codec{
-		ring.GetCodec(),
-	}
-	if cfg.MemberlistBindAddr != "" {
-		memberlistKVcfg.AdvertiseAddr = cfg.MemberlistBindAddr
-		memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.MemberlistBindAddr}
-	}
-	memberlistKVcfg.JoinMembers = []string{cfg.MemberlistJoinMember}
-
-	return memberlistKVcfg
 }
 
 func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecyclerConfig, error) {
