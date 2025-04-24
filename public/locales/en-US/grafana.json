@@ -2336,9 +2336,9 @@
       "placeholder-select-time-intervals": "Select time intervals..."
     },
     "time-intervals-table": {
-      "text-havent-created-time-intervals": "You haven't created any time intervals yet",
+      "text-havent-created-time-intervals": "You haven't created any time interval yet",
       "text-loading-time-intervals": "Loading time intervals...",
-      "text-no-time-itervals-configured": "No time intervals configured"
+      "text-no-time-intervals-configured": "No time intervals configured"
     },
     "timeseries-row": {
       "time-series-data": "Time series data",
