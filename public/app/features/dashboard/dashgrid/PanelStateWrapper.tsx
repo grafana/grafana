@@ -458,6 +458,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
+    console.log({ timeRange });
     this.timeSrv.setTime({
       from: toUtc(timeRange.from),
       to: toUtc(timeRange.to),
