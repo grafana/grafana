@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
@@ -271,6 +272,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	)
 
 	db := sqlstore.NewTestStore(t)
+	database := database.New(db)
 
 	tracer := tracing.InitializeTracerForTest()
 
@@ -278,7 +280,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(db, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(db, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
 	encryptionManager, err := encryptionmanager.ProvideEncryptionManager(
@@ -298,7 +300,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
 	require.NoError(t, err)
 
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 )
@@ -25,6 +26,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	}))
 
 	testDB := db.InitTestDB(t)
+	database := database.New(testDB)
 
 	require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
 
@@ -33,7 +35,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
 	// Initialize the keeper storage and add a test keeper
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(testDB, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{

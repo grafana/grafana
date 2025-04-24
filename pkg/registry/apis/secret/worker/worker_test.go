@@ -66,7 +66,7 @@ func TestProcessMessage(t *testing.T) {
 		dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 		require.NoError(t, err)
 
-		encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+		encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 		require.NoError(t, err)
 
 		encMgr, err := encryptionmanager.ProvideEncryptionManager(
@@ -95,7 +95,7 @@ func TestProcessMessage(t *testing.T) {
 		keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
 		require.NoError(t, err)
 
-		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(testDB, features, accessClient)
+		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features, accessClient)
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
