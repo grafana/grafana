@@ -132,7 +132,7 @@ func (s *ModuleServer) Run() error {
 		return s.initInstrumentationServer()
 	})
 
-	m.RegisterModule(modules.Ring, s.initRing)
+	m.RegisterModule(modules.StorageRing, s.initRing)
 
 	m.RegisterModule(modules.Core, func() (services.Service, error) {
 		return NewService(s.cfg, s.opts, s.apiOpts)

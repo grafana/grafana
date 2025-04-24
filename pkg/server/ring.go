@@ -25,7 +25,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-const ringKey = "ring"
+const ringKey = "storage-ring"
 const ringName = "unified_storage"
 const numTokens = 128
 const heartbeatTimeout = time.Minute
@@ -78,7 +78,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 
 	lifecyclerCfg, err := toLifecyclerConfig(ms.cfg, logger)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize ruler's lifecycler config: %s", err)
+		return nil, fmt.Errorf("failed to initialize storage-ring lifecycler config: %s", err)
 	}
 
 	// Define lifecycler delegates in reverse order (last to be called defined first because they're
@@ -97,10 +97,10 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		reg,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize ruler's lifecycler: %s", err)
+		return nil, fmt.Errorf("failed to initialize storage-ring lifecycler: %s", err)
 	}
 
-	rulerRing, err := ring.NewWithStoreClientAndStrategy(
+	storageRing, err := ring.NewWithStoreClientAndStrategy(
 		toRingConfig(ms.cfg, KVStore),
 		ringName,
 		ringKey,
@@ -110,7 +110,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		logger,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to initialize ruler's ring: %s", err)
+		return nil, fmt.Errorf("failed to initialize storage-ring ring: %s", err)
 	}
 
 	startFn := func(ctx context.Context) error {
@@ -118,7 +118,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		if err != nil {
 			return fmt.Errorf("failed to start memberlist service: %s", err)
 		}
-		err = rulerRing.StartAsync(ctx)
+		err = storageRing.StartAsync(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to start the ring: %s", err)
 		}
@@ -134,7 +134,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		logger.Info("waiting until resource server is JOINING in the ring")
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
-		if err := ring.WaitInstanceState(ctx, rulerRing, lifecycler.GetInstanceID(), ring.JOINING); err != nil {
+		if err := ring.WaitInstanceState(ctx, storageRing, lifecycler.GetInstanceID(), ring.JOINING); err != nil {
 			return fmt.Errorf("error switching to JOINING in the ring: %s", err)
 		}
 		logger.Info("resource server is JOINING in the ring")
@@ -144,7 +144,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		}
 
 		logger.Info("waiting until resource server is ACTIVE in the ring")
-		if err := ring.WaitInstanceState(context.Background(), rulerRing, lifecycler.GetInstanceID(), ring.ACTIVE); err != nil {
+		if err := ring.WaitInstanceState(context.Background(), storageRing, lifecycler.GetInstanceID(), ring.ACTIVE); err != nil {
 			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
 		logger.Info("resource server is ACTIVE in the ring")
@@ -168,11 +168,11 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 
 	ms.distributor = &resource.Distributor{
 		ClientPool: pool,
-		Ring:       rulerRing,
+		Ring:       storageRing,
 		Lifecycler: lifecycler,
 	}
 
-	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(rulerRing)
+	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(storageRing)
 
 	svc := services.NewBasicService(startFn, runningFn, stoppingFn)
 
