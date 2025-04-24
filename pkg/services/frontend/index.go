@@ -3,10 +3,14 @@ package frontend
 import (
 	"context"
 	"crypto/rand"
+	"embed"
 	"encoding/base64"
-	"encoding/json"
+	"errors"
+	"fmt"
+	"html/template"
 	"io"
 	"net/http"
+	"syscall"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -16,19 +20,61 @@ import (
 )
 
 type IndexProvider struct {
-	log    logging.Logger
-	assets *dtos.EntryPointAssets
+	log   logging.Logger
+	index *template.Template
+	data  IndexViewData
 }
+
+type IndexViewData struct {
+	CSPContent       string
+	CSPEnabled       bool
+	IsDevelopmentEnv bool
+
+	AppSubUrl    string
+	BuildVersion string
+	BuildCommit  string
+	AppTitle     string
+
+	Assets *dtos.EntryPointAssets // Includes CDN info
+
+	// Nonce is a cryptographic identifier for use with Content Security Policy.
+	Nonce string
+}
+
+const (
+	headerContentType = "Content-Type"
+	contentTypeHTML   = "text/html; charset=UTF-8"
+)
+
+// Templates setup.
+var (
+	//go:embed *.html
+	templatesFS embed.FS
+
+	// templates
+	htmlTemplates = template.Must(template.New("html").Delims("[[", "]]").ParseFS(templatesFS, `*.html`))
+)
 
 func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProvider, error) {
 	assets, err := webassets.GetWebAssets(context.Background(), cfg, license)
 	if err != nil {
 		return nil, err
 	}
+	t := htmlTemplates.Lookup("index.html")
+	if t == nil {
+		return nil, fmt.Errorf("missing index template")
+	}
 
 	return &IndexProvider{
-		log:    logging.DefaultLogger.With("logger", "index-provider"),
-		assets: assets,
+		log:   logging.DefaultLogger.With("logger", "index-provider"),
+		index: t,
+		data: IndexViewData{
+			AppTitle:     "Grafana",
+			AppSubUrl:    cfg.AppSubURL,
+			BuildVersion: cfg.BuildVersion,
+			BuildCommit:  cfg.BuildCommit,
+			Assets:       assets,
+		},
 	}, nil
 }
 
@@ -44,42 +90,17 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 		writer.WriteHeader(500)
 		return
 	}
-	// This should:
-	// - call http://slug/api/bootdata
-	// - render index.html with the bootdata
-	// - something-something-something frontend assets
-	// - return it to the user!
 
-	jj, err := json.MarshalIndent(p.assets, "", "  ")
-	if err != nil {
-		p.log.Error("error creating nonce", "err", err)
-		writer.WriteHeader(500)
-		return
-	}
+	data := p.data // copy everything
+	data.Nonce = nonce
 
-	p.log.Info("handling request", "method", request.Method, "url", request.URL.String())
-	htmlContent := `<!DOCTYPE html>
-<html>
-<head>
-    <title>Grafana Frontend Server</title>
-    <style>
-        body {
-            font-family: sans-serif;
-        }
-    </style>
-</head>
-<body>
-    <h1>Grafana Frontend Server</h1>
-    <p>This is a simple static HTML page served by the Grafana frontend server module.</p>
-		<p>NONCE: ` + nonce + `</p>
-		<pre>Assets: ` + string(jj) + `</pre>
-</body>
-</html>`
-
-	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, err = writer.Write([]byte(htmlContent))
-	if err != nil {
-		p.log.Error("could not write to response", "err", err)
+	writer.Header().Set(headerContentType, contentTypeHTML)
+	writer.WriteHeader(200)
+	if err := p.index.Execute(writer, &data); err != nil {
+		if errors.Is(err, syscall.EPIPE) { // Client has stopped listening.
+			return
+		}
+		panic(fmt.Sprintf("Error rendering index\n %s", err.Error()))
 	}
 }
 
