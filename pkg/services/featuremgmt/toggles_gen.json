@@ -98,6 +98,25 @@
     },
     {
       "metadata": {
+        "name": "alertingBulkActionsInUI",
+        "resourceVersion": "1745504721038",
+        "creationTimestamp": "2025-04-24T14:01:56Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-04-24 14:25:21.03825 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables the alerting bulk actions in the UI",
+        "stage": "GA",
+        "codeowner": "@grafana/alerting-squad",
+        "frontend": true,
+        "hideFromAdminPage": true,
+        "hideFromDocs": true,
+        "expression": "true"
+      }
+    },
+    {
+      "metadata": {
         "name": "alertingCentralAlertHistory",
         "resourceVersion": "1745339544057",
         "creationTimestamp": "2024-05-29T15:01:38Z"
