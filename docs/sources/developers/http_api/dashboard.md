@@ -58,9 +58,167 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
     },
   },
   "spec": {
-    "title": "New dashboard",
+    "annotations": {
+    "list": [
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": false,
+        "iconColor": "red",
+        "name": "Example annotation",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        }
+      }]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "links": [
+      {
+        "asDropdown": false,
+        "icon": "external link",
+        "includeVars": false,
+        "keepTime": false,
+        "tags": [],
+        "targetBlank": false,
+        "title": "Example Link",
+        "tooltip": "",
+        "type": "dashboards",
+        "url": ""
+      }
+    ],
+    "panels": [
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "description": "With a description",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Example panel",
+        "type": "timeseries"
+      }
+    ],
+    "preload": false,
     "schemaVersion": 41,
-    ...
+    "tags": ["example"],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "definition": "",
+          "description": "example description",
+          "label": "ExampleLabel",
+          "name": "ExampleVariable",
+          "options": [],
+          "query": "",
+          "refresh": 1,
+          "regex": "cluster",
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Example Dashboard",
+    "version": 0
   }
 }
 ```
@@ -84,38 +242,222 @@ Content-Length: 485
   "metadata": {
     "name": "gdxccn",
     "namespace": "default",
-    "uid": "965b82ca-c0fa-43f9-a87e-e10c4ee55023",
+    "uid": "Cc7fA5ffHY94NnHZyMxXvFlpFtOmkK3qkBcVZPKSPXcX",
     "resourceVersion": "1",
     "generation": 1,
-    "creationTimestamp": "2025-03-07T02:48:18Z",
+    "creationTimestamp": "2025-04-24T20:35:29Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "11"
+    },
     "annotations": {
-      "grafana.app/createdBy": "service-account:cef2t2rfm73lsb",
+      "grafana.app/createdBy": "service-account:dejwtrofg77y8d",
       "grafana.app/folder": "fef30w4jaxla8b"
     },
     "managedFields": [
       {
         "manager": "curl",
         "operation": "Update",
-        "apiVersion": "dashboard.grafana.app/v1alpha1",
-        "time": "2025-03-07T02:48:18Z",
+        "apiVersion": "dashboard.grafana.app/v0alpha1",
+        "time": "2025-04-24T20:35:29Z",
         "fieldsType": "FieldsV1",
         "fieldsV1": {
           "f:spec": {
+            "f:annotations": {
+              ".": {},
+              "f:list": {}
+            },
             "f:editable": {},
+            "f:fiscalYearStartMonth": {},
+            "f:graphTooltip": {},
+            "f:links": {},
+            "f:panels": {},
+            "f:preload": {},
             "f:schemaVersion": {},
-            "f:title": {}
+            "f:tags": {},
+            "f:templating": {
+              ".": {},
+              "f:list": {}
+            },
+            "f:time": {
+              ".": {},
+              "f:from": {},
+              "f:to": {}
+            },
+            "f:timepicker": {},
+            "f:timezone": {},
+            "f:title": {},
+            "f:version": {}
           }
         }
       }
     ]
   },
   "spec": {
+    "annotations": {
+      "list": [
+        {
+          "datasource": {
+            "type": "datasource",
+            "uid": "grafana"
+          },
+          "enable": true,
+          "hide": false,
+          "iconColor": "red",
+          "name": "Example annotation",
+          "target": {
+            "limit": 100,
+            "matchAny": false,
+            "tags": [],
+            "type": "dashboard"
+          }
+        }
+      ]
+    },
     "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "links": [
+      {
+        "asDropdown": false,
+        "icon": "external link",
+        "includeVars": false,
+        "keepTime": false,
+        "tags": [],
+        "targetBlank": false,
+        "title": "Example Link",
+        "tooltip": "",
+        "type": "dashboards",
+        "url": ""
+      }
+    ],
+    "panels": [
+      {
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "description": "With a description",
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "auto",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "datasource",
+              "uid": "grafana"
+            },
+            "refId": "A"
+          }
+        ],
+        "title": "Example panel",
+        "type": "timeseries"
+      }
+    ],
+    "preload": false,
     "schemaVersion": 41,
-    "title": "New dashboard",
-    ...
-  }
-}
+    "tags": [
+      "example"
+    ],
+    "templating": {
+      "list": [
+        {
+          "current": {
+            "text": "",
+            "value": ""
+          },
+          "definition": "",
+          "description": "example description",
+          "label": "ExampleLabel",
+          "name": "ExampleVariable",
+          "options": [],
+          "query": "",
+          "refresh": 1,
+          "regex": "cluster",
+          "type": "query"
+        }
+      ]
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Example Dashboard"
+  },
+  "status": {}
 ```
 
 Status Codes:
