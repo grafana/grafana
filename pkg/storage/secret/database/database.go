@@ -13,7 +13,7 @@ type Database struct {
 	db db.DB
 }
 
-func New(db db.DB) *Database {
+func ProvideDatabase(db db.DB) *Database {
 	return &Database{db: db}
 }
 

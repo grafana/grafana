@@ -13,6 +13,9 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
+	secretcontracts "github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	secretservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/avatar"
@@ -428,6 +431,9 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideDataKeyStorage,
 	secretencryption.ProvideEncryptedValueStorage,
 	secretmetadata.ProvideOutboxQueue,
+	secretservice.ProvideSecretService,
+	secretdatabase.ProvideDatabase,
+	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	encryptionManager.ProvideEncryptionManager,
 	gsmEncryption.ProvideThirdPartyProviderMap,
 	// Unified storage
