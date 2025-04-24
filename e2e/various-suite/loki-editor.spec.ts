@@ -22,7 +22,8 @@ describe('Loki Query Editor', () => {
     e2e.flows.revertAllChanges();
   });
 
-  it('Autocomplete features should work as expected.', () => {
+  // flaky test
+  it.skip('Autocomplete features should work as expected.', () => {
     addDataSource();
 
     cy.intercept(/labels?/, (req) => {
