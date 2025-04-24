@@ -7,6 +7,7 @@ import { GrafanaTheme2, isUnsignedPluginSignature, PanelPluginMeta, PluginState 
 import { selectors } from '@grafana/e2e-selectors';
 import { IconButton, PluginSignatureBadge, useStyles2 } from '@grafana/ui';
 import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
+import { t } from 'app/core/internationalization';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 
 interface Props {
@@ -49,7 +50,9 @@ const PanelTypeCardComponent = ({
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}
       data-testid={selectors.components.PluginVisualization.item(plugin.name)}
       onClick={isDisabled ? undefined : onClick}
-      title={isCurrent ? 'Click again to close this section' : plugin.name}
+      title={
+        isCurrent ? t('panel.panel-type-card.title-click-to-close', 'Click again to close this section') : plugin.name
+      }
     >
       <img className={cx(styles.img, { [styles.disabled]: isDisabled })} src={plugin.info.logos.small} alt="" />
 
@@ -71,8 +74,11 @@ const PanelTypeCardComponent = ({
             onDelete();
           }}
           className={styles.deleteButton}
-          aria-label="Delete button on panel type card"
-          tooltip="Delete"
+          aria-label={t(
+            'panel.panel-type-card.aria-label-delete-button-on-panel-type-card',
+            'Delete button on panel type card'
+          )}
+          tooltip={t('panel.panel-type-card.tooltip-delete', 'Delete')}
         />
       )}
     </div>

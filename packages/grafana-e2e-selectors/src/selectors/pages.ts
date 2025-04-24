@@ -569,6 +569,9 @@ export const versionedPages = {
     dashboards: {
       '10.2.0': (title: string) => `Dashboard search item ${title}`,
     },
+    toggleView: {
+      [MIN_GRAFANA_VERSION]: 'data-testid radio-button',
+    },
   },
   SaveDashboardAsModal: {
     newName: {
@@ -945,6 +948,11 @@ export const versionedPages = {
       },
     },
   },
+  SearchDashboards: {
+    table: {
+      '10.2.0': 'Search results table',
+    },
+  },
   Search: {
     url: {
       '9.3.0': '/?search=openn',
@@ -1039,6 +1047,11 @@ export const versionedPages = {
   Plugin: {
     url: {
       [MIN_GRAFANA_VERSION]: (pluginId: string) => `/plugins/${pluginId}`,
+    },
+  },
+  MigrateToCloud: {
+    url: {
+      '11.2.0': '/admin/migrate-to-cloud',
     },
   },
 } satisfies VersionedSelectorGroup;

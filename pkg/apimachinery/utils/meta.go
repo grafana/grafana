@@ -26,6 +26,13 @@ const LabelKeyGetTrash = "grafana.app/get-trash"
 // AnnoKeyKubectlLastAppliedConfig is the annotation kubectl writes with the entire previous config
 const AnnoKeyKubectlLastAppliedConfig = "kubectl.kubernetes.io/last-applied-configuration"
 
+// AnnoKeyGrantPermissions allows users to explicitly grant themself permissions when creating
+// resoures in the "root" folder.  This annotation is not saved and invalud for update.
+const AnnoKeyGrantPermissions = "grafana.app/grant-permissions"
+
+// AnnoGrantPermissionsDefault is the value that should be sent with AnnoKeyGrantPermissions
+const AnnoGrantPermissionsDefault = "default"
+
 // DeletedGeneration is set on Resources that have been (soft) deleted
 const DeletedGeneration = int64(-999)
 
@@ -58,11 +65,19 @@ const AnnoKeySourcePath = "grafana.app/sourcePath"
 const AnnoKeySourceChecksum = "grafana.app/sourceChecksum"
 const AnnoKeySourceTimestamp = "grafana.app/sourceTimestamp"
 
+// Only used in modes 0-2 (legacy db) for returning the folder fullpath
+
+const LabelGetFullpath = "grafana.app/fullpath"
+const AnnoKeyFullpath = "grafana.app/fullpath"
+const AnnoKeyFullpathUIDs = "grafana.app/fullpathUIDs"
+
 // LabelKeyDeprecatedInternalID gives the deprecated internal ID of a resource
 // Deprecated: will be removed in grafana 13
 const LabelKeyDeprecatedInternalID = "grafana.app/deprecatedInternalID"
 
 // Accessor functions for k8s objects
+//
+//go:generate mockery --name GrafanaMetaAccessor --structname MockGrafanaMetaAccessor --inpackage --filename meta_mock.go --with-expecter
 type GrafanaMetaAccessor interface {
 	metav1.Object
 
@@ -86,6 +101,7 @@ type GrafanaMetaAccessor interface {
 	GetMessage() string
 	SetMessage(msg string)
 	SetAnnotation(key string, val string)
+	GetAnnotation(key string) string
 
 	SetBlob(v *BlobInfo)
 	GetBlob() *BlobInfo
@@ -95,6 +111,11 @@ type GrafanaMetaAccessor interface {
 
 	// Deprecated: This will be removed in Grafana 13
 	SetDeprecatedInternalID(id int64)
+
+	GetFullpath() string
+	SetFullpath(path string)
+	GetFullpathUIDs() string
+	SetFullpathUIDs(uids string)
 
 	GetSpec() (any, error)
 	SetSpec(any) error
@@ -192,8 +213,12 @@ func (m *grafanaMetaAccessor) SetAnnotation(key string, val string) {
 	m.obj.SetAnnotations(anno)
 }
 
-func (m *grafanaMetaAccessor) get(key string) string {
-	return m.obj.GetAnnotations()[key]
+func (m *grafanaMetaAccessor) GetAnnotation(key string) string {
+	anno := m.obj.GetAnnotations()
+	if anno == nil {
+		return ""
+	}
+	return anno[key]
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedTimestamp() (*time.Time, error) {
@@ -227,7 +252,7 @@ func (m *grafanaMetaAccessor) SetUpdatedTimestamp(v *time.Time) {
 }
 
 func (m *grafanaMetaAccessor) GetCreatedBy() string {
-	return m.get(AnnoKeyCreatedBy)
+	return m.GetAnnotation(AnnoKeyCreatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
@@ -235,7 +260,7 @@ func (m *grafanaMetaAccessor) SetCreatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetUpdatedBy() string {
-	return m.get(AnnoKeyUpdatedBy)
+	return m.GetAnnotation(AnnoKeyUpdatedBy)
 }
 
 func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
@@ -243,7 +268,7 @@ func (m *grafanaMetaAccessor) SetUpdatedBy(user string) {
 }
 
 func (m *grafanaMetaAccessor) GetBlob() *BlobInfo {
-	return ParseBlobInfo(m.get(AnnoKeyBlob))
+	return ParseBlobInfo(m.GetAnnotation(AnnoKeyBlob))
 }
 
 func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
@@ -255,7 +280,7 @@ func (m *grafanaMetaAccessor) SetBlob(info *BlobInfo) {
 }
 
 func (m *grafanaMetaAccessor) GetFolder() string {
-	return m.get(AnnoKeyFolder)
+	return m.GetAnnotation(AnnoKeyFolder)
 }
 
 func (m *grafanaMetaAccessor) SetFolder(uid string) {
@@ -263,7 +288,7 @@ func (m *grafanaMetaAccessor) SetFolder(uid string) {
 }
 
 func (m *grafanaMetaAccessor) GetMessage() string {
-	return m.get(AnnoKeyMessage)
+	return m.GetAnnotation(AnnoKeyMessage)
 }
 
 func (m *grafanaMetaAccessor) SetMessage(uid string) {
@@ -306,6 +331,22 @@ func (m *grafanaMetaAccessor) SetDeprecatedInternalID(id int64) {
 
 	labels[LabelKeyDeprecatedInternalID] = strconv.FormatInt(id, 10)
 	m.obj.SetLabels(labels)
+}
+
+func (m *grafanaMetaAccessor) GetFullpath() string {
+	return m.GetAnnotation(AnnoKeyFullpath)
+}
+
+func (m *grafanaMetaAccessor) SetFullpath(path string) {
+	m.SetAnnotation(AnnoKeyFullpath, path)
+}
+
+func (m *grafanaMetaAccessor) GetFullpathUIDs() string {
+	return m.GetAnnotation(AnnoKeyFullpathUIDs)
+}
+
+func (m *grafanaMetaAccessor) SetFullpathUIDs(uids string) {
+	m.SetAnnotation(AnnoKeyFullpathUIDs, uids)
 }
 
 // GetAnnotations implements GrafanaMetaAccessor.
@@ -818,7 +859,7 @@ func (b *BlobInfo) ContentType() string {
 func (b *BlobInfo) String() string {
 	sb := bytes.NewBufferString(b.UID)
 	if b.Size > 0 {
-		sb.WriteString(fmt.Sprintf("; size=%d", b.Size))
+		fmt.Fprintf(sb, "; size=%d", b.Size)
 	}
 	if b.Hash != "" {
 		sb.WriteString("; hash=")

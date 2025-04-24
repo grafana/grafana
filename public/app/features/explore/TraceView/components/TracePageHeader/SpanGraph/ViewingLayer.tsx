@@ -18,6 +18,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { withTheme2, stylesFactory, Button } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { autoColor } from '../../Theme';
 import { TUpdateViewRangeTimeFunction, ViewRange, ViewRangeTimeUpdate, TNil } from '../../index';
@@ -354,7 +355,7 @@ export class UnthemedViewingLayer extends React.PureComponent<ViewingLayerProps,
             type="button"
             variant="secondary"
           >
-            Reset Selection
+            <Trans i18nKey="explore.unthemed-viewing-layer.reset-selection">Reset selection</Trans>
           </Button>
         )}
         <svg

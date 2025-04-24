@@ -1723,6 +1723,7 @@
             ]
           },
           "spec": {
+            "description": "Spec is the spec of the Investigation",
             "default": {},
             "allOf": [
               {
@@ -1766,7 +1767,8 @@
           "datasource",
           "url",
           "note",
-          "noteUpdatedAt"
+          "noteUpdatedAt",
+          "fieldConfig"
         ],
         "properties": {
           "createdAt": {
@@ -1780,6 +1782,10 @@
                 "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationDatasourceRef"
               }
             ]
+          },
+          "fieldConfig": {
+            "type": "string",
+            "default": ""
           },
           "id": {
             "type": "string",
@@ -1803,12 +1809,8 @@
           "queries": {
             "type": "array",
             "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationQuery"
-                }
-              ]
+              "type": "string",
+              "default": ""
             },
             "x-kubernetes-list-type": "atomic"
           },
@@ -1872,6 +1874,7 @@
             ]
           },
           "spec": {
+            "description": "Spec is the spec of the InvestigationIndex",
             "default": {},
             "allOf": [
               {
@@ -2248,44 +2251,6 @@
           },
           "uid": {
             "description": "Unique identifier for the user",
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationQuery": {
-        "description": "Query represents a data query",
-        "type": "object",
-        "required": [
-          "refId",
-          "queryType",
-          "editorMode",
-          "supportingQueryType",
-          "legendFormat",
-          "expr"
-        ],
-        "properties": {
-          "editorMode": {
-            "type": "string",
-            "default": ""
-          },
-          "expr": {
-            "type": "string",
-            "default": ""
-          },
-          "legendFormat": {
-            "type": "string",
-            "default": ""
-          },
-          "queryType": {
-            "type": "string",
-            "default": ""
-          },
-          "refId": {
-            "type": "string",
-            "default": ""
-          },
-          "supportingQueryType": {
             "type": "string",
             "default": ""
           }

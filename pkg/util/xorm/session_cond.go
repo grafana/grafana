@@ -52,9 +52,15 @@ func (session *Session) ID(id any) *Session {
 	return session
 }
 
-// In provides a query string like "id in (1, 2, 3)"
+// In provides a query string like "id in (1, 2, 3)" using the AND conditional
 func (session *Session) In(column string, args ...any) *Session {
 	session.statement.In(column, args...)
+	return session
+}
+
+// OrIn provides a query string like "id in (1, 2, 3)" using the OR conditional
+func (session *Session) OrIn(column string, args ...any) *Session {
+	session.statement.OrIn(column, args...)
 	return session
 }
 

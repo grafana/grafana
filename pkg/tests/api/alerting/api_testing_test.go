@@ -33,7 +33,7 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	testsuite.Run(m)
+	testsuite.RunButSkipOnSpanner(m)
 }
 
 func TestGrafanaRuleConfig(t *testing.T) {

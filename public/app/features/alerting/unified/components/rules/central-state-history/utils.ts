@@ -11,7 +11,7 @@ import {
   ThresholdsMode,
   getDisplayProcessor,
 } from '@grafana/data';
-import { fieldIndexComparer } from '@grafana/data/src/field/fieldComparers';
+import { fieldIndexComparer } from '@grafana/data/internal';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
 import { labelsMatchMatchers } from '../../../utils/alertmanager';
@@ -193,7 +193,7 @@ function logRecordsToDataFrame(instanceLabels: string, records: LogRecord[]): Da
  * The time field is the timestamp of the log record.
  * The value field is the state of the log record.
  * The state is converted to a string and color is assigned based on the state.
- * The state can be Alerting, Pending, Normal, or NoData.
+ * The state can be Alerting, Pending, Recovering, Normal, or NoData.
  *
  * */
 export function logRecordsToDataFrameForState(records: LogRecord[], theme: GrafanaTheme2): DataFrame {
@@ -233,6 +233,9 @@ export function logRecordsToDataFrameForState(records: LogRecord[], theme: Grafa
                   color: theme.colors.error.main,
                 },
                 Pending: {
+                  color: theme.colors.warning.main,
+                },
+                Recovering: {
                   color: theme.colors.warning.main,
                 },
                 Normal: {

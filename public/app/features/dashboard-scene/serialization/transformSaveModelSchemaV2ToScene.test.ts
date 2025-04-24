@@ -16,11 +16,12 @@ import {
   SceneGridRow,
   SceneGridItem,
 } from '@grafana/scenes';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
   AdhocVariableKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
   GridLayoutItemSpec,
   GridLayoutSpec,
@@ -28,15 +29,15 @@ import {
   IntervalVariableKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
+import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
+import { AutoGridLayoutManager } from '../scene/layout-auto-grid/AutoGridLayoutManager';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
-import { ResponsiveGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
-import { ResponsiveGridLayoutManager } from '../scene/layout-responsive-grid/ResponsiveGridLayoutManager';
 import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { TabsLayoutManager } from '../scene/layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
@@ -58,6 +59,7 @@ export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
     name: 'dashboard-uid',
     namespace: 'default',
     labels: {},
+    generation: 123,
     resourceVersion: '123',
     creationTimestamp: 'creationTs',
     annotations: {
@@ -204,25 +206,35 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Annotations
     expect(scene.state.$data).toBeInstanceOf(DashboardDataLayerSet);
     const dataLayers = scene.state.$data as DashboardDataLayerSet;
+    // we should get two annotations, Grafana built-in and the custom ones
     expect(dataLayers.state.annotationLayers).toHaveLength(dash.annotations.length);
-    expect(dataLayers.state.annotationLayers[0].state.name).toBe(dash.annotations[0].spec.name);
-    expect(dataLayers.state.annotationLayers[0].state.isEnabled).toBe(dash.annotations[0].spec.enable);
-    expect(dataLayers.state.annotationLayers[0].state.isHidden).toBe(dash.annotations[0].spec.hide);
+    expect(dataLayers.state.annotationLayers).toHaveLength(5);
+
+    // Built-in
+    const builtInAnnotation = dataLayers.state.annotationLayers[0] as unknown as DashboardAnnotationsDataLayer;
+    expect(builtInAnnotation.state.name).toBe('Annotations & Alerts');
+    expect(builtInAnnotation.state.isEnabled).toBe(true);
+    expect(builtInAnnotation.state.isHidden).toBe(true);
+    expect(builtInAnnotation.state?.query.builtIn).toBe(1);
 
     // Enabled
     expect(dataLayers.state.annotationLayers[1].state.name).toBe(dash.annotations[1].spec.name);
     expect(dataLayers.state.annotationLayers[1].state.isEnabled).toBe(dash.annotations[1].spec.enable);
     expect(dataLayers.state.annotationLayers[1].state.isHidden).toBe(dash.annotations[1].spec.hide);
 
-    // Disabled
     expect(dataLayers.state.annotationLayers[2].state.name).toBe(dash.annotations[2].spec.name);
     expect(dataLayers.state.annotationLayers[2].state.isEnabled).toBe(dash.annotations[2].spec.enable);
     expect(dataLayers.state.annotationLayers[2].state.isHidden).toBe(dash.annotations[2].spec.hide);
 
-    // Hidden
+    // Disabled
     expect(dataLayers.state.annotationLayers[3].state.name).toBe(dash.annotations[3].spec.name);
     expect(dataLayers.state.annotationLayers[3].state.isEnabled).toBe(dash.annotations[3].spec.enable);
     expect(dataLayers.state.annotationLayers[3].state.isHidden).toBe(dash.annotations[3].spec.hide);
+
+    // Hidden
+    expect(dataLayers.state.annotationLayers[4].state.name).toBe(dash.annotations[4].spec.name);
+    expect(dataLayers.state.annotationLayers[4].state.isEnabled).toBe(dash.annotations[4].spec.enable);
+    expect(dataLayers.state.annotationLayers[4].state.isHidden).toBe(dash.annotations[4].spec.hide);
 
     // VizPanel
     const vizPanels = (scene.state.body as DashboardLayoutManager).getVizPanels();
@@ -502,16 +514,18 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       });
     });
     describe('dynamic dashboard layouts', () => {
-      it('should build a dashboard scene with a responsive grid layout', () => {
+      it('should build a dashboard scene with a auto grid layout', () => {
         const dashboard = cloneDeep(defaultDashboard);
         dashboard.spec.layout = {
-          kind: 'ResponsiveGridLayout',
+          kind: 'AutoGridLayout',
           spec: {
-            col: 'colString',
-            row: 'rowString',
+            maxColumnCount: 4,
+            columnWidthMode: 'custom',
+            columnWidth: 100,
+            rowHeightMode: 'standard',
             items: [
               {
-                kind: 'ResponsiveGridLayoutItem',
+                kind: 'AutoGridLayoutItem',
                 spec: {
                   element: {
                     kind: 'ElementReference',
@@ -523,12 +537,13 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           },
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
-        const layoutManager = scene.state.body as ResponsiveGridLayoutManager;
-        expect(layoutManager.descriptor.kind).toBe('ResponsiveGridLayout');
-        expect(layoutManager.state.layout.state.templateColumns).toBe('colString');
-        expect(layoutManager.state.layout.state.autoRows).toBe('rowString');
+        const layoutManager = scene.state.body as AutoGridLayoutManager;
+        expect(layoutManager.descriptor.id).toBe('AutoGridLayout');
+        expect(layoutManager.state.maxColumnCount).toBe(4);
+        expect(layoutManager.state.columnWidth).toBe(100);
+        expect(layoutManager.state.rowHeight).toBe('standard');
         expect(layoutManager.state.layout.state.children.length).toBe(1);
-        const gridItem = layoutManager.state.layout.state.children[0] as ResponsiveGridItem;
+        const gridItem = layoutManager.state.layout.state.children[0] as AutoGridItem;
         expect(gridItem.state.body.state.key).toBe('panel-1');
       });
 
@@ -543,13 +558,14 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 spec: {
                   title: 'tab1',
                   layout: {
-                    kind: 'ResponsiveGridLayout',
+                    kind: 'AutoGridLayout',
                     spec: {
-                      col: 'colString',
-                      row: 'rowString',
+                      maxColumnCount: 4,
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
                       items: [
                         {
-                          kind: 'ResponsiveGridLayoutItem',
+                          kind: 'AutoGridLayoutItem',
                           spec: {
                             element: {
                               kind: 'ElementReference',
@@ -567,14 +583,15 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as TabsLayoutManager;
-        expect(layoutManager.descriptor.kind).toBe('TabsLayout');
+        expect(layoutManager.descriptor.id).toBe('TabsLayout');
         expect(layoutManager.state.tabs.length).toBe(1);
         expect(layoutManager.state.tabs[0].state.title).toBe('tab1');
-        const gridLayoutManager = layoutManager.state.tabs[0].state.layout as ResponsiveGridLayoutManager;
-        expect(gridLayoutManager.state.layout.state.templateColumns).toBe('colString');
-        expect(gridLayoutManager.state.layout.state.autoRows).toBe('rowString');
+        const gridLayoutManager = layoutManager.state.tabs[0].state.layout as AutoGridLayoutManager;
+        expect(gridLayoutManager.state.maxColumnCount).toBe(4);
+        expect(gridLayoutManager.state.columnWidth).toBe('standard');
+        expect(gridLayoutManager.state.rowHeight).toBe('standard');
         expect(gridLayoutManager.state.layout.state.children.length).toBe(1);
-        const gridItem = gridLayoutManager.state.layout.state.children[0] as ResponsiveGridItem;
+        const gridItem = gridLayoutManager.state.layout.state.children[0] as AutoGridItem;
         expect(gridItem.state.body.state.key).toBe('panel-1');
       });
 
@@ -588,15 +605,16 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 kind: 'RowsLayoutRow',
                 spec: {
                   title: 'row1',
-                  collapsed: false,
+                  collapse: false,
                   layout: {
-                    kind: 'ResponsiveGridLayout',
+                    kind: 'AutoGridLayout',
                     spec: {
-                      col: 'colString',
-                      row: 'rowString',
+                      maxColumnCount: 4,
+                      columnWidthMode: 'standard',
+                      rowHeightMode: 'standard',
                       items: [
                         {
-                          kind: 'ResponsiveGridLayoutItem',
+                          kind: 'AutoGridLayoutItem',
                           spec: {
                             element: {
                               kind: 'ElementReference',
@@ -613,7 +631,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                 kind: 'RowsLayoutRow',
                 spec: {
                   title: 'row2',
-                  collapsed: true,
+                  collapse: true,
                   layout: {
                     kind: 'GridLayout',
                     spec: {
@@ -641,17 +659,136 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         };
         const scene = transformSaveModelSchemaV2ToScene(dashboard);
         const layoutManager = scene.state.body as RowsLayoutManager;
-        expect(layoutManager.descriptor.kind).toBe('RowsLayout');
+        expect(layoutManager.descriptor.id).toBe('RowsLayout');
         expect(layoutManager.state.rows.length).toBe(2);
-        const row1Manager = layoutManager.state.rows[0].state.layout as ResponsiveGridLayoutManager;
-        expect(row1Manager.descriptor.kind).toBe('ResponsiveGridLayout');
-        const row1GridItem = row1Manager.state.layout.state.children[0] as ResponsiveGridItem;
+        const row1Manager = layoutManager.state.rows[0].state.layout as AutoGridLayoutManager;
+        expect(row1Manager.descriptor.id).toBe('AutoGridLayout');
+        expect(row1Manager.state.maxColumnCount).toBe(4);
+        expect(row1Manager.state.columnWidth).toBe('standard');
+        expect(row1Manager.state.rowHeight).toBe('standard');
+        const row1GridItem = row1Manager.state.layout.state.children[0] as AutoGridItem;
         expect(row1GridItem.state.body.state.key).toBe('panel-1');
 
         const row2Manager = layoutManager.state.rows[1].state.layout as DefaultGridLayoutManager;
-        expect(row2Manager.descriptor.kind).toBe('GridLayout');
+        expect(row2Manager.descriptor.id).toBe('GridLayout');
         const row2GridItem = row2Manager.state.grid.state.children[0] as SceneGridItem;
         expect(row2GridItem.state.body!.state.key).toBe('panel-2');
+      });
+    });
+  });
+
+  describe('annotations', () => {
+    it('should transform annotation with options field', () => {
+      // Create a dashboard with an annotation that has options
+      const dashboardWithAnnotationOptions: DashboardWithAccessInfo<DashboardV2Spec> = {
+        kind: 'DashboardWithAccessInfo',
+        apiVersion: 'v2alpha1',
+        metadata: {
+          name: 'test-dashboard',
+          namespace: 'default',
+          creationTimestamp: new Date().toISOString(),
+          labels: {},
+          annotations: {},
+          generation: 1,
+          resourceVersion: '1',
+        },
+        spec: {
+          title: 'Dashboard with annotation options',
+          editable: true,
+          preload: false,
+          liveNow: false,
+          cursorSync: 'Off',
+          links: [],
+          tags: [],
+          timeSettings: {
+            from: 'now-6h',
+            to: 'now',
+            timezone: 'browser',
+            hideTimepicker: false,
+            autoRefresh: '5s',
+            autoRefreshIntervals: ['5s', '10s', '30s'],
+            fiscalYearStartMonth: 0,
+            weekStart: 'monday',
+          },
+          variables: [],
+          elements: {},
+          layout: {
+            kind: 'GridLayout',
+            spec: { items: [] },
+          },
+          annotations: [
+            {
+              kind: 'AnnotationQuery',
+              spec: {
+                name: 'Annotation with options',
+                builtIn: false,
+                enable: true,
+                hide: false,
+                iconColor: 'purple',
+                datasource: {
+                  type: 'prometheus',
+                  uid: 'abc123',
+                },
+                options: {
+                  expr: 'rate(http_requests_total[5m])',
+                  queryType: 'range',
+                  legendFormat: '{{method}} {{endpoint}}',
+                  useValueAsTime: true,
+                  step: '1m',
+                },
+              },
+            },
+          ],
+        },
+        access: {
+          canSave: true,
+          canEdit: true,
+          canDelete: true,
+          canAdmin: true,
+          canStar: true,
+          canShare: true,
+          annotationsPermissions: {
+            dashboard: {
+              canAdd: true,
+              canEdit: true,
+              canDelete: true,
+            },
+            organization: {
+              canAdd: true,
+              canEdit: true,
+              canDelete: true,
+            },
+          },
+        },
+      };
+
+      const scene = transformSaveModelSchemaV2ToScene(dashboardWithAnnotationOptions);
+
+      // Get the annotation layers
+      const dataLayerSet = scene.state.$data as DashboardDataLayerSet;
+      expect(dataLayerSet).toBeDefined();
+      // it should have two annotation layers, built-in and custom
+      expect(dataLayerSet.state.annotationLayers.length).toBe(2);
+
+      const annotationLayer = dataLayerSet.state.annotationLayers[1] as DashboardAnnotationsDataLayer;
+
+      // Verify that the options have been merged into the query object
+      expect(annotationLayer.state.query).toMatchObject({
+        name: 'Annotation with options',
+        expr: 'rate(http_requests_total[5m])',
+        queryType: 'range',
+        legendFormat: '{{method}} {{endpoint}}',
+        useValueAsTime: true,
+        step: '1m',
+      });
+
+      // Verify the original options object is also preserved
+      expect(annotationLayer.state.query.options).toMatchObject({
+        expr: 'rate(http_requests_total[5m])',
+        queryType: 'range',
+        legendFormat: '{{method}} {{endpoint}}',
+        useValueAsTime: true,
+        step: '1m',
       });
     });
   });

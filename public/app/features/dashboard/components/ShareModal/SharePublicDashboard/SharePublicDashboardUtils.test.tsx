@@ -1,5 +1,4 @@
-import { TypedVariableModel } from '@grafana/data';
-import { DataSourceRef, DataQuery } from '@grafana/data/src/types/query';
+import { DataSourceRef, DataQuery, TypedVariableModel } from '@grafana/data';
 import { DataSourceWithBackend } from '@grafana/runtime';
 import { updateConfig } from 'app/core/config';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
@@ -18,23 +17,22 @@ const mockDS = mockDataSource({
   type: 'mock-ds-type',
 });
 
-jest.mock('@grafana/runtime/src/services/dataSourceSrv', () => {
-  return {
-    getDataSourceSrv: () => ({
-      get: () =>
-        Promise.resolve(
-          new DataSourceWithBackend({
-            ...mockDS,
-            meta: {
-              ...mockDS.meta,
-              alerting: true,
-              backend: true,
-            },
-          })
-        ),
-    }),
-  };
-});
+jest.mock('@grafana/runtime', () => ({
+  ...jest.requireActual('@grafana/runtime'),
+  getDataSourceSrv: () => ({
+    get: () =>
+      Promise.resolve(
+        new DataSourceWithBackend({
+          ...mockDS,
+          meta: {
+            ...mockDS.meta,
+            alerting: true,
+            backend: true,
+          },
+        })
+      ),
+  }),
+}));
 
 describe('dashboardHasTemplateVariables', () => {
   it('false', () => {

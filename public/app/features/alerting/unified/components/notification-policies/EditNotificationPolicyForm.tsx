@@ -16,6 +16,7 @@ import {
   Switch,
   useStyles2,
 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import MuteTimingsSelector from 'app/features/alerting/unified/components/alertmanager-entities/MuteTimingsSelector';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
@@ -86,13 +87,18 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
     <form onSubmit={handleSubmit(onSubmit)}>
       <input type="hidden" {...register('id')} />
       <Stack direction="column" alignItems="flex-start">
-        <div>Matching labels</div>
+        <div>
+          <Trans i18nKey="alerting.am-routes-expanded-form.matching-labels">Matching labels</Trans>
+        </div>
         {fields.length === 0 && (
           <Badge
             color="orange"
             className={styles.noMatchersWarning}
             icon="exclamation-triangle"
-            text="If no matchers are specified, this notification policy will handle all alert instances."
+            text={t(
+              'alerting.am-routes-expanded-form.badge-no-matchers',
+              'If no matchers are specified, this notification policy will handle all alert instances.'
+            )}
           />
         )}
         {fields.length > 0 && (
@@ -101,18 +107,18 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
               return (
                 <Stack direction="row" key={field.id} alignItems="center">
                   <Field
-                    label="Label"
+                    label={t('alerting.am-routes-expanded-form.label-label', 'Label')}
                     invalid={!!errors.object_matchers?.[index]?.name}
                     error={errors.object_matchers?.[index]?.name?.message}
                   >
                     <Input
                       {...register(`object_matchers.${index}.name`, { required: 'Field is required' })}
                       defaultValue={field.name}
-                      placeholder="label"
+                      placeholder={t('alerting.am-routes-expanded-form.placeholder-label', 'label')}
                       autoFocus
                     />
                   </Field>
-                  <Field label={'Operator'}>
+                  <Field label={t('alerting.am-routes-expanded-form.label-operator', 'Operator')}>
                     <Controller
                       render={({ field: { onChange, ref, ...field } }) => (
                         <Select
@@ -120,7 +126,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                           className={styles.matchersOperator}
                           onChange={(value) => onChange(value?.value)}
                           options={matcherFieldOptions}
-                          aria-label="Operator"
+                          aria-label={t('alerting.am-routes-expanded-form.aria-label-operator', 'Operator')}
                         />
                       )}
                       defaultValue={field.operator}
@@ -130,18 +136,22 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
                     />
                   </Field>
                   <Field
-                    label="Value"
+                    label={t('alerting.am-routes-expanded-form.label-value', 'Value')}
                     invalid={!!errors.object_matchers?.[index]?.value}
                     error={errors.object_matchers?.[index]?.value?.message}
                   >
                     <Input
                       {...register(`object_matchers.${index}.value`)}
                       defaultValue={field.value}
-                      placeholder="value"
+                      placeholder={t('alerting.am-routes-expanded-form.placeholder-value', 'value')}
                     />
                   </Field>
-                  <IconButton tooltip="Remove matcher" name={'trash-alt'} onClick={() => remove(index)}>
-                    Remove
+                  <IconButton
+                    tooltip={t('alerting.am-routes-expanded-form.tooltip-remove-matcher', 'Remove matcher')}
+                    name={'trash-alt'}
+                    onClick={() => remove(index)}
+                  >
+                    <Trans i18nKey="alerting.am-routes-expanded-form.remove">Remove</Trans>
                   </IconButton>
                 </Stack>
               );
@@ -155,11 +165,11 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
           variant="secondary"
           type="button"
         >
-          Add matcher
+          <Trans i18nKey="alerting.am-routes-expanded-form.add-matcher">Add matcher</Trans>
         </Button>
       </Stack>
 
-      <Field label="Contact point">
+      <Field label={t('alerting.am-routes-expanded-form.label-contact-point', 'Contact point')}>
         <Controller
           render={({ field: { onChange, ref, value, ...field } }) => (
             <ContactPointSelector
@@ -176,16 +186,24 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
           name="receiver"
         />
       </Field>
-      <Field label="Continue matching subsequent sibling nodes">
+      <Field
+        label={t(
+          'alerting.am-routes-expanded-form.label-continue-matching-subsequent-sibling-nodes',
+          'Continue matching subsequent sibling nodes'
+        )}
+      >
         <Switch id="continue-toggle" {...register('continue')} />
       </Field>
-      <Field label="Override grouping">
+      <Field label={t('alerting.am-routes-expanded-form.label-override-grouping', 'Override grouping')}>
         <Switch id="override-grouping-toggle" {...register('overrideGrouping')} />
       </Field>
       {watch().overrideGrouping && (
         <Field
-          label="Group by"
-          description="Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy."
+          label={t('alerting.am-routes-expanded-form.label-group-by', 'Group by')}
+          description={t(
+            'alerting.am-routes-expanded-form.description-group-by',
+            'Combine multiple alerts into a single notification by grouping them by the same label values. If empty, it is inherited from the parent policy.'
+          )}
         >
           <Controller
             rules={{
@@ -199,7 +217,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
             render={({ field: { onChange, ref, ...field }, fieldState: { error } }) => (
               <>
                 <MultiSelect
-                  aria-label="Group by"
+                  aria-label={t('alerting.am-routes-expanded-form.aria-label-group-by', 'Group by')}
                   {...field}
                   invalid={Boolean(error)}
                   allowCustomValue
@@ -219,7 +237,7 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
           />
         </Field>
       )}
-      <Field label="Override general timings">
+      <Field label={t('alerting.am-routes-expanded-form.label-override-general-timings', 'Override general timings')}>
         <Switch id="override-timings-toggle" {...register('overrideTimings')} />
       </Field>
       {watch().overrideTimings && (
@@ -268,9 +286,12 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
         </>
       )}
       <Field
-        label="Mute timings"
+        label={t('alerting.am-routes-expanded-form.am-mute-timing-select-label-mute-timings', 'Mute timings')}
         data-testid="am-mute-timing-select"
-        description="Add mute timing to policy"
+        description={t(
+          'alerting.am-routes-expanded-form.am-mute-timing-select-description-add-mute-timing-to-policy',
+          'Add mute timing to policy'
+        )}
         invalid={!!errors.muteTimeIntervals}
       >
         <Controller

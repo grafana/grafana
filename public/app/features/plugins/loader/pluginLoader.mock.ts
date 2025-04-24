@@ -22,6 +22,11 @@ export const mockAmdModule = `define([], function() {
   }
 });`;
 
+const mockTranslation = (value: string) =>
+  `System.register([],function(e){return{execute:function(){e("default",{"testKey":"${value}"})}}})`;
+
+const mockTranslationWithNoDefaultExport = `System.register([],function(e){return{execute:function(){e({"testKey":"unknown"})}}})`;
+
 const server = setupServer(
   http.get(
     '/public/plugins/mockAmdModule/module.js',
@@ -49,7 +54,35 @@ const server = setupServer(
           'Content-Type': 'text/javascript',
         },
       })
-  )
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/en-US/test-panel.json',
+    () =>
+      new HttpResponse(mockTranslation('testValue'), {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/pt-BR/test-panel.json',
+    () =>
+      new HttpResponse(mockTranslation('valorDeTeste'), {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get(
+    '/public/plugins/test-panel/locales/en-US/no-default-export.json',
+    () =>
+      new HttpResponse(mockTranslationWithNoDefaultExport, {
+        headers: {
+          'Content-Type': 'text/javascript',
+        },
+      })
+  ),
+  http.get('/public/plugins/test-panel/locales/en-US/unknown.json', () => HttpResponse.error())
 );
 
 export { server };

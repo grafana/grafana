@@ -5,9 +5,10 @@ import {
   CalculateFieldTransformerOptions,
   WindowOptions,
   WindowSizeMode,
-} from '@grafana/data/src/transformations/transformers/calculateField';
+} from '@grafana/data/internal';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -77,16 +78,19 @@ export const WindowOptionsEditor = (props: {
 
   return (
     <>
-      <InlineField label="Field" labelWidth={LABEL_WIDTH}>
+      <InlineField label={t('transformers.window-options-editor.label-field', 'Field')} labelWidth={LABEL_WIDTH}>
         <Select
-          placeholder="Field"
+          placeholder={t('transformers.window-options-editor.placeholder-field', 'Field')}
           options={selectOptions}
           className="min-width-18"
           value={window?.field}
           onChange={onWindowFieldChange}
         />
       </InlineField>
-      <InlineField label="Calculation" labelWidth={LABEL_WIDTH}>
+      <InlineField
+        label={t('transformers.window-options-editor.label-calculation', 'Calculation')}
+        labelWidth={LABEL_WIDTH}
+      >
         <StatsPicker
           allowMultiple={false}
           className="width-18"
@@ -98,14 +102,17 @@ export const WindowOptionsEditor = (props: {
           }
         />
       </InlineField>
-      <InlineField label="Type" labelWidth={LABEL_WIDTH}>
+      <InlineField label={t('transformers.window-options-editor.label-type', 'Type')} labelWidth={LABEL_WIDTH}>
         <RadioButtonGroup
           value={window?.windowAlignment ?? WindowAlignment.Trailing}
           options={typeOptions}
           onChange={onTypeChange}
         />
       </InlineField>
-      <InlineField label="Window size mode" labelWidth={LABEL_WIDTH}>
+      <InlineField
+        label={t('transformers.window-options-editor.label-window-size-mode', 'Window size mode')}
+        labelWidth={LABEL_WIDTH}
+      >
         <RadioButtonGroup
           value={window?.windowSizeMode ?? WindowSizeMode.Percentage}
           options={windowSizeModeOptions}
@@ -113,16 +120,23 @@ export const WindowOptionsEditor = (props: {
         ></RadioButtonGroup>
       </InlineField>
       <InlineField
-        label={window?.windowSizeMode === WindowSizeMode.Percentage ? 'Window size %' : 'Window size'}
+        label={
+          window?.windowSizeMode === WindowSizeMode.Percentage
+            ? t('transformers.window-options-editor.label-window-size-percent', 'Window size %')
+            : t('transformers.window-options-editor.label-window-size', 'Window size')
+        }
         labelWidth={LABEL_WIDTH}
         tooltip={
           window?.windowSizeMode === WindowSizeMode.Percentage
-            ? 'Set the window size as a percentage of the total data'
-            : 'Window size'
+            ? t(
+                'transformers.window-options-editor.tooltip-window-size-percent',
+                'Set the window size as a percentage of the total data'
+              )
+            : t('transformers.window-options-editor.tooltip-window-size', 'Window size')
         }
       >
         <NumberInput
-          placeholder="Auto"
+          placeholder={t('transformers.window-options-editor.placeholder-auto', 'Auto')}
           min={0.1}
           value={
             window?.windowSize && window.windowSizeMode === WindowSizeMode.Percentage

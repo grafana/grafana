@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../api/alertRuleApi';
 
@@ -19,7 +20,9 @@ const GrafanaMuteTimingsExporterPreview = ({ exportFormat, onClose }: MuteTiming
   const downloadFileName = `mute-timings-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return (
+      <LoadingPlaceholder text={t('alerting.grafana-mute-timings-exporter-preview.text-loading', 'Loading....')} />
+    );
   }
   return (
     <FileExportPreview
@@ -46,7 +49,7 @@ const GrafanaMuteTimingExporterPreview = ({
   const downloadFileName = `mute-timing-${muteTimingName}-${new Date().getTime()}`;
 
   if (isFetching) {
-    return <LoadingPlaceholder text="Loading...." />;
+    return <LoadingPlaceholder text={t('alerting.grafana-mute-timing-exporter-preview.text-loading', 'Loading....')} />;
   }
   return (
     <FileExportPreview

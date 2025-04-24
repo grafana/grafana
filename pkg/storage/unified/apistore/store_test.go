@@ -60,7 +60,7 @@ func GetPodAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("not a pod")
 	}
-	return labels.Set(pod.ObjectMeta.Labels), PodToSelectableFields(pod), nil
+	return labels.Set(pod.Labels), PodToSelectableFields(pod), nil
 }
 
 // PodToSelectableFields returns a field set that represents the object
@@ -117,6 +117,13 @@ func TestCreateWithKeyExist(t *testing.T) {
 	storagetesting.RunTestCreateWithKeyExist(ctx, t, store)
 }
 
+func TestValidUpdate(t *testing.T) {
+	ctx, store, destroyFunc, err := testSetup(t)
+	defer destroyFunc()
+	assert.NoError(t, err)
+	storagetesting.RunTestValidUpdate(ctx, t, store)
+}
+
 func TestGet(t *testing.T) {
 	ctx, store, destroyFunc, err := testSetup(t)
 	defer destroyFunc()
@@ -171,6 +178,7 @@ func TestGRPCtoHTTPStatusMapping(t *testing.T) {
 		s, _, err := apistore.NewStorage(
 			&storagebackend.ConfigForResource{},
 			resourceClientMock{},
+			nil,
 			nil,
 			nil,
 			nil,

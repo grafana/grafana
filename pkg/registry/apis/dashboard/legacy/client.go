@@ -70,11 +70,6 @@ func (d *directResourceClient) Read(ctx context.Context, in *resource.ReadReques
 	return d.server.Read(ctx, in)
 }
 
-// Restore implements ResourceClient.
-func (d *directResourceClient) Restore(ctx context.Context, in *resource.RestoreRequest, opts ...grpc.CallOption) (*resource.RestoreResponse, error) {
-	return d.server.Restore(ctx, in)
-}
-
 // Search implements ResourceClient.
 func (d *directResourceClient) Search(ctx context.Context, in *resource.ResourceSearchRequest, opts ...grpc.CallOption) (*resource.ResourceSearchResponse, error) {
 	return d.server.Search(ctx, in)

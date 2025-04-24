@@ -48,17 +48,17 @@ export function createOnCacheEntryAdded<
           }
           const existingIndex = draft.items.findIndex((item) => item.metadata?.name === event.object.metadata.name);
 
-          if (event.type === 'ADDED') {
-            // Add the new item
+          if (event.type === 'ADDED' && existingIndex === -1) {
             // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
             draft.items.push(event.object as unknown as T);
-          } else if (event.type === 'MODIFIED' && existingIndex !== -1) {
-            // Update the existing item if it exists
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-            draft.items[existingIndex] = event.object as unknown as T;
           } else if (event.type === 'DELETED' && existingIndex !== -1) {
             // Remove the item if it exists
             draft.items.splice(existingIndex, 1);
+          } else if (existingIndex !== -1) {
+            // Could be ADDED or MODIFIED
+            // Update the existing item if it exists
+            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+            draft.items[existingIndex] = event.object as unknown as T;
           }
         });
       });

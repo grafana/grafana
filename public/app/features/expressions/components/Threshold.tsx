@@ -6,7 +6,6 @@ import { FormEvent, useEffect, useReducer } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { InlineField, InlineFieldRow, InlineSwitch, Input, Select, Stack, useStyles2 } from '@grafana/ui';
-import { config } from 'app/core/config';
 import { t } from 'app/core/internationalization';
 import { EvalFunction } from 'app/features/alerting/state/alertDef';
 
@@ -86,14 +85,12 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
     conditionInState.evaluator.type === EvalFunction.IsOutsideRangeIncluded ||
     conditionInState.evaluator.type === EvalFunction.IsWithinRangeIncluded;
 
-  const hysteresisEnabled = Boolean(config.featureToggles?.recoveryThreshold) && useHysteresis;
-
   const id = uniqueId('threshold-');
 
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Input" labelWidth={labelWidth} htmlFor={id}>
+        <InlineField label={t('expressions.threshold.label-input', 'Input')} labelWidth={labelWidth} htmlFor={id}>
           <Select inputId={id} onChange={onRefIdChange} options={refIds} value={query.expression} width={20} />
         </InlineField>
       </InlineFieldRow>
@@ -125,7 +122,7 @@ export const Threshold = ({ labelWidth, onChange, refIds, query, onError, useHys
           />
         )}
       </InlineFieldRow>
-      {hysteresisEnabled && <HysteresisSection isRange={isRange} onError={onError} />}
+      {useHysteresis && <HysteresisSection isRange={isRange} onError={onError} />}
     </>
   );
   interface HysteresisSectionProps {

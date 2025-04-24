@@ -119,8 +119,8 @@ func TestIntegrationAnnotationCleanUp(t *testing.T) {
 
 			t.Cleanup(func() {
 				err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
-					_, deleteAnnotationErr := session.Exec("DELETE FROM annotation")
-					_, deleteAnnotationTagErr := session.Exec("DELETE FROM annotation_tag")
+					_, deleteAnnotationErr := session.Exec("DELETE FROM annotation WHERE true")
+					_, deleteAnnotationTagErr := session.Exec("DELETE FROM annotation_tag WHERE true")
 					return errors.Join(deleteAnnotationErr, deleteAnnotationTagErr)
 				})
 				assert.NoError(t, err)
@@ -157,7 +157,7 @@ func TestIntegrationOldAnnotationsAreDeletedFirst(t *testing.T) {
 
 	t.Cleanup(func() {
 		err := fakeSQL.WithDbSession(context.Background(), func(session *db.Session) error {
-			_, err := session.Exec("DELETE FROM annotation")
+			_, err := session.Exec("DELETE FROM annotation WHERE true")
 			return err
 		})
 		assert.NoError(t, err)

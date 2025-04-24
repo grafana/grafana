@@ -1,4 +1,4 @@
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { ScopesService } from '../ScopesService';
 import { ScopesSelectorService } from '../selector/ScopesSelectorService';
@@ -74,6 +74,7 @@ describe('Tree', () => {
   });
 
   afterEach(async () => {
+    locationService.replace('');
     await resetScenes([fetchNodesSpy, fetchScopeSpy]);
   });
 
@@ -248,7 +249,6 @@ describe('Tree', () => {
 
   it('Shows the proper headline', async () => {
     await openSelector();
-    expectScopesHeadline('Recommended');
 
     await searchScopes('Applications');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(2);
@@ -257,6 +257,13 @@ describe('Tree', () => {
     await searchScopes('unknown');
     expect(fetchNodesSpy).toHaveBeenCalledTimes(3);
     expectScopesHeadline('No results found for your query');
+  });
+
+  it('Should only show Recommended when there are no leaf container nodes visible', async () => {
+    await openSelector();
+    await expandResultApplications();
+    await expandResultApplicationsCloud();
+    expectScopesHeadline('Recommended');
   });
 
   it('Updates the paths for scopes without paths on nodes fetching', async () => {

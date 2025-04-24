@@ -23,12 +23,12 @@ function RowHeaderCheckboxMulti({ model }: { model: RowItems }) {
   let indeterminate = false;
 
   for (let i = 0; i < rows.length; i++) {
-    const { isHeaderHidden } = rows[i].useState();
+    const { hideHeader } = rows[i].useState();
 
     const prevElement = rows[i - 1];
-    indeterminate = indeterminate || (prevElement && !!prevElement.state.isHeaderHidden !== !!isHeaderHidden);
+    indeterminate = indeterminate || (prevElement && !!prevElement.state.hideHeader !== !!hideHeader);
 
-    value = value || !!isHeaderHidden;
+    value = value || !!hideHeader;
   }
 
   return (

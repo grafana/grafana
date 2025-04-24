@@ -7,7 +7,6 @@ import { intrinsics } from '../traceql/traceql';
 
 import {
   filterToQuerySection,
-  generateQueryFromAdHocFilters,
   getAllTags,
   getFilteredTags,
   getIntrinsicTags,
@@ -21,34 +20,6 @@ const datasource: TempoDatasource = {
   },
 } as unknown as TempoDatasource;
 const lp = new TempoLanguageProvider(datasource);
-
-describe('generateQueryFromAdHocFilters generates the correct query for', () => {
-  it('an empty array', () => {
-    expect(generateQueryFromAdHocFilters([], lp)).toBe('{}');
-  });
-
-  it('a filter with values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'footag', operator: '=', value: 'foovalue' }], lp)).toBe(
-      '{footag="foovalue"}'
-    );
-  });
-
-  it('two filters with values', () => {
-    expect(
-      generateQueryFromAdHocFilters(
-        [
-          { key: 'footag', operator: '=', value: 'foovalue' },
-          { key: 'bartag', operator: '=', value: '0' },
-        ],
-        lp
-      )
-    ).toBe('{footag="foovalue" && bartag=0}');
-  });
-
-  it('a filter with intrinsic values', () => {
-    expect(generateQueryFromAdHocFilters([{ key: 'kind', operator: '=', value: 'server' }], lp)).toBe('{kind=server}');
-  });
-});
 
 describe('gets correct tags', () => {
   const datasource: TempoDatasource = {

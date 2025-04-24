@@ -8,11 +8,11 @@ import (
 	"strconv"
 	"strings"
 
+	spannerclient "cloud.google.com/go/spanner"
 	_ "github.com/googleapis/go-sql-spanner"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
-	"xorm.io/core"
-
-	spannerext "github.com/grafana/grafana/pkg/extensions/spanner"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"google.golang.org/grpc/codes"
 )
 
 func init() {
@@ -164,6 +164,8 @@ func (s *spanner) SqlType(col *core.Column) string {
 		if l > 0 {
 			return fmt.Sprintf("STRING(%d)", l)
 		}
+		return "STRING(MAX)"
+	case core.Jsonb:
 		return "STRING(MAX)"
 	case core.Bool, core.TinyInt:
 		return "BOOL"
@@ -381,10 +383,8 @@ func (s *spanner) CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
 		return nil, err
 	}
 
-	if spannerext.UsePlainText(connectorConfig) {
-		// Plain-text means we're either using spannertest or Spanner emulator.
-		// Switch to fake in-memory sequence number generator in that case.
-		//
+	if connectorConfig.Params[strings.ToLower("inMemSequenceGenerator")] == "true" {
+		// Switch to using in-memory sequence number generator.
 		// Using database-based sequence generator doesn't work with emulator, as emulator
 		// only supports single transaction. If there is already another transaction started
 		// generating new ID via database-based sequence generator would always fail.
@@ -392,4 +392,8 @@ func (s *spanner) CreateSequenceGenerator(db *sql.DB) (SequenceGenerator, error)
 	}
 
 	return newSequenceGenerator(db), nil
+}
+
+func (s *spanner) RetryOnError(err error) bool {
+	return err != nil && spannerclient.ErrCode(spannerclient.ToSpannerError(err)) == codes.Aborted
 }

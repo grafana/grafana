@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 
-import { SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { Alert, Input, RadioButtonGroup, Switch, TextLink } from '@grafana/ui';
+import { Alert, Input, Switch, TextLink, Field } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -17,7 +16,7 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
-export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
 
   const rowCategory = useMemo(
@@ -26,13 +25,13 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
         .addItem(
           new OptionsPaneItemDescriptor({
             title: t('dashboard.rows-layout.row-options.row.title', 'Title'),
-            render: () => <RowTitleInput row={model} />,
+            render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
         )
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard.rows-layout.row-options.row.height', 'Height'),
-            render: () => <RowHeightSelect row={model} />,
+            title: t('dashboard.rows-layout.row-options.row.fill-screen', 'Fill screen'),
+            render: () => <FillScreenSwitch row={model} />,
           })
         )
         .addItem(
@@ -41,7 +40,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
             render: () => <RowHeaderSwitch row={model} />,
           })
         ),
-    [model]
+    [model, isNewElement]
   );
 
   const repeatCategory = useMemo(
@@ -65,7 +64,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
 
   const layoutCategory = useLayoutCategory(layout);
 
-  const editOptions = [rowCategory, layoutCategory, repeatCategory];
+  const editOptions = [rowCategory, ...layoutCategory, repeatCategory];
 
   const conditionalRenderingCategory = useMemo(
     () => useConditionalRenderingEditor(model.state.conditionalRendering),
@@ -79,35 +78,38 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   return editOptions;
 }
 
-function RowTitleInput({ row }: { row: RowItem }) {
+function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: boolean }) {
   const { title } = row.useState();
-  const ref = useEditPaneInputAutoFocus();
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
+  const hasUniqueTitle = row.hasUniqueTitle();
 
   return (
-    <Input
-      ref={ref}
-      title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
-      value={title}
-      onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
-    />
+    <Field
+      invalid={!hasUniqueTitle}
+      error={
+        !hasUniqueTitle ? t('dashboard.rows-layout.row-options.title-not-unique', 'Title should be unique') : undefined
+      }
+    >
+      <Input
+        ref={ref}
+        title={t('dashboard.rows-layout.row-options.title-option', 'Title')}
+        value={title}
+        onChange={(e) => row.onChangeTitle(e.currentTarget.value)}
+      />
+    </Field>
   );
 }
 
 function RowHeaderSwitch({ row }: { row: RowItem }) {
-  const { isHeaderHidden = false } = row.useState();
+  const { hideHeader: isHeaderHidden = false } = row.useState();
 
   return <Switch value={isHeaderHidden} onChange={() => row.onHeaderHiddenToggle()} />;
 }
 
-function RowHeightSelect({ row }: { row: RowItem }) {
-  const { height = 'min' } = row.useState();
+function FillScreenSwitch({ row }: { row: RowItem }) {
+  const { fillScreen } = row.useState();
 
-  const options: Array<SelectableValue<'expand' | 'min'>> = [
-    { label: t('dashboard.rows-layout.options.height-expand', 'Expand'), value: 'expand' },
-    { label: t('dashboard.rows-layout.options.height-min', 'Min'), value: 'min' },
-  ];
-
-  return <RadioButtonGroup options={options} value={height} onChange={(option) => row.onChangeHeight(option)} />;
+  return <Switch value={fillScreen} onChange={() => row.onChangeFillScreen(!fillScreen)} />;
 }
 
 function RowRepeatSelect({ row }: { row: RowItem }) {

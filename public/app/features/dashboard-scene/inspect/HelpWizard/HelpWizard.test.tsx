@@ -2,7 +2,7 @@ import userEvent from '@testing-library/user-event';
 import { render, screen } from 'test/test-utils';
 
 import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { config } from '@grafana/runtime';
 import { SceneQueryRunner, SceneTimeRange, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { contextSrv } from 'app/core/services/context_srv';

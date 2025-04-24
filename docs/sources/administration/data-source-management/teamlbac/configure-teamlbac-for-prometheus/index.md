@@ -22,7 +22,7 @@ You cannot configure LBAC rules for Grafana-provisioned data sources from the UI
 
 ## Before you begin
 
-To be able to use LBAC for Prometheus data sources, you need to enable the feature toggle `teamHttpHeadersMimir` on your Grafana instance. Contact support to enable the feature toggle for you.
+To be able to use LBAC for Prometheus data sources, you need to enable the feature toggle `teamHttpHeadersMimir` on your Grafana instance. Go to the feature toggles page in setting to enable the feature.
 
 - Be sure that you have the permission setup to create a Prometheus tenant in Grafana Cloud
 - Be sure that you have admin data source permissions for Grafana.
@@ -57,7 +57,7 @@ For more information on how to setup LBAC for data sources rules for a Prometheu
 
 ## Grafana Enterprise
 
-LBAC for data sources is available in Grafana Enterprise for Prometheus created with basic authentication. Prometheus data sources for LBAC for data sources can only be created.
+LBAC for data sources is available in Grafana Enterprise for Prometheus connected to GEM created with basic authentication.
 
 You cannot configure LBAC rules for Grafana-provisioned data sources from the UI. Alternatively, you can replicate the setting of the provisioned data source in a new data source as described in [LBAC Configuration for new Prometheus data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/teamlbac/configure-teamlbac-for-prometheus/#task-1-lbac-configuration-for-new-prometheus-data-source) and then add the LBAC configuration to the new data source.
 

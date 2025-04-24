@@ -8,7 +8,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -18,7 +18,6 @@ import (
 // Standard dashboard fields
 //------------------------------------------------------------
 
-const DASHBOARD_LEGACY_ID = "legacy_id"
 const DASHBOARD_SCHEMA_VERSION = "schema_version"
 const DASHBOARD_LINK_COUNT = "link_count"
 const DASHBOARD_PANEL_TYPES = "panel_types"
@@ -189,11 +188,6 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 				Filterable: true,
 			},
 		},
-		{
-			Name:        DASHBOARD_LEGACY_ID,
-			Type:        resource.ResourceTableColumnDefinition_INT64,
-			Description: "Deprecated legacy id of the dashboard",
-		},
 	})
 	if namespaced == nil {
 		namespaced = func(ctx context.Context, namespace string, blob resource.BlobSupport) (resource.DocumentBuilder, error) {
@@ -208,7 +202,7 @@ func DashboardBuilder(namespaced resource.NamespacedDocumentSupplier) (resource.
 		}
 	}
 	return resource.DocumentBuilderInfo{
-		GroupResource: v0alpha1.DashboardResourceInfo.GroupResource(),
+		GroupResource: dashV1.DashboardResourceInfo.GroupResource(),
 		Fields:        fields,
 		Namespaced:    namespaced,
 	}, err
@@ -314,9 +308,9 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 	}
 
 	doc.Fields = map[string]any{
-		DASHBOARD_SCHEMA_VERSION: summary.SchemaVersion,
-		DASHBOARD_LINK_COUNT:     summary.LinkCount,
-		DASHBOARD_LEGACY_ID:      summary.ID,
+		DASHBOARD_SCHEMA_VERSION:        summary.SchemaVersion,
+		DASHBOARD_LINK_COUNT:            summary.LinkCount,
+		resource.SEARCH_FIELD_LEGACY_ID: summary.ID,
 	}
 
 	if len(panelTypes) > 0 {
@@ -342,7 +336,6 @@ func (s *DashboardDocumentBuilder) BuildDocument(ctx context.Context, key *resou
 
 func DashboardFields() []string {
 	baseFields := []string{
-		DASHBOARD_LEGACY_ID,
 		DASHBOARD_SCHEMA_VERSION,
 		DASHBOARD_LINK_COUNT,
 		DASHBOARD_PANEL_TYPES,

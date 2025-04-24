@@ -23,6 +23,7 @@ import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, reportInteraction } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { stylesFactory, withTheme2, ToolbarButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { PEER_SERVICE } from '../constants/tag-keys';
 import { CriticalPathSection, SpanBarOptions, SpanLinkFunc, TNil } from '../types';
@@ -655,7 +656,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           <ToolbarButton
             className={styles.scrollToTopButton}
             onClick={this.scrollToTop}
-            title="Scroll to top"
+            title={t('explore.unthemed-virtualized-trace-view.title-scroll-to-top', 'Scroll to top')}
             icon="arrow-up"
           ></ToolbarButton>
         )}

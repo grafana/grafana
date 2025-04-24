@@ -57,7 +57,7 @@ try {
           },
           require: {
             types: cjsTypes.replace('index', aliasName),
-            default: cjsTypes.replace('index', aliasName),
+            default: cjsIndex.replace('index', aliasName),
           },
         },
       },

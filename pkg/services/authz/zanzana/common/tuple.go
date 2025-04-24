@@ -6,7 +6,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -30,6 +30,7 @@ const (
 	TypeFolderPrefix       string = TypeFolder + ":"
 	TypeResourcePrefix     string = TypeResource + ":"
 	TypeGroupResoucePrefix string = TypeGroupResouce + ":"
+	TypeTeamPrefix         string = TypeTeam + ":"
 )
 
 const (
@@ -50,16 +51,16 @@ const (
 	RelationGetPermissions string = "get_permissions"
 	RelationSetPermissions string = "set_permissions"
 
-	RelationFolderResourceSetView  string = "resource_" + RelationSetView
-	RelationFolderResourceSetEdit  string = "resource_" + RelationSetEdit
-	RelationFolderResourceSetAdmin string = "resource_" + RelationSetAdmin
+	RelationSubresourceSetView  string = "resource_" + RelationSetView
+	RelationSubresourceSetEdit  string = "resource_" + RelationSetEdit
+	RelationSubresourceSetAdmin string = "resource_" + RelationSetAdmin
 
-	RelationFolderResourceGet            string = "resource_" + RelationGet
-	RelationFolderResourceUpdate         string = "resource_" + RelationUpdate
-	RelationFolderResourceCreate         string = "resource_" + RelationCreate
-	RelationFolderResourceDelete         string = "resource_" + RelationDelete
-	RelationFolderResourceGetPermissions string = "resource_" + RelationGetPermissions
-	RelationFolderResourceSetPermissions string = "resource_" + RelationSetPermissions
+	RelationSubresourceGet            string = "resource_" + RelationGet
+	RelationSubresourceUpdate         string = "resource_" + RelationUpdate
+	RelationSubresourceCreate         string = "resource_" + RelationCreate
+	RelationSubresourceDelete         string = "resource_" + RelationDelete
+	RelationSubresourceGetPermissions string = "resource_" + RelationGetPermissions
+	RelationSubresourceSetPermissions string = "resource_" + RelationSetPermissions
 )
 
 // RelationsGroupResource are relations that can be added on type "group_resource".
@@ -81,19 +82,19 @@ var RelationsResource = []string{
 	RelationSetPermissions,
 }
 
-// RelationsFolderResource are relations that can be added on type "folder" for child resources.
-var RelationsFolderResource = []string{
-	RelationFolderResourceGet,
-	RelationFolderResourceUpdate,
-	RelationFolderResourceCreate,
-	RelationFolderResourceDelete,
-	RelationFolderResourceGetPermissions,
-	RelationFolderResourceSetPermissions,
+// RelationsSubresource are relations that can be added on typed resources for subresources.
+var RelationsSubresource = []string{
+	RelationSubresourceGet,
+	RelationSubresourceUpdate,
+	RelationSubresourceCreate,
+	RelationSubresourceDelete,
+	RelationSubresourceGetPermissions,
+	RelationSubresourceSetPermissions,
 }
 
-// RelationsFolder are relations that can be added on type "folder".
-var RelationsFolder = append(
-	RelationsFolderResource,
+// RelationsTyped are relations that can be added to typed resources (folders, teams, users, etc).
+var RelationsTyped = append(
+	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
 	RelationCreate,
@@ -130,8 +131,8 @@ func IsGroupResourceRelation(relation string) bool {
 	return isValidRelation(relation, RelationsGroupResource)
 }
 
-func IsFolderResourceRelation(relation string) bool {
-	return isValidRelation(relation, RelationsFolderResource)
+func IsSubresourceRelation(relation string) bool {
+	return isValidRelation(relation, RelationsSubresource)
 }
 
 func isValidRelation(relation string, valid []string) bool {
@@ -143,7 +144,7 @@ func isValidRelation(relation string, valid []string) bool {
 	return false
 }
 
-func FolderResourceRelation(relation string) string {
+func SubresourceRelation(relation string) string {
 	return TypeResource + "_" + relation
 }
 
@@ -193,21 +194,21 @@ func NewResourceTuple(subject, relation, group, resource, subresource, name stri
 	}
 }
 
-func isFolderResourceRelationSet(relation string) bool {
-	return relation == RelationFolderResourceSetView ||
-		relation == RelationFolderResourceSetEdit ||
-		relation == RelationFolderResourceSetAdmin
+func isSubresourceRelationSet(relation string) bool {
+	return relation == RelationSubresourceSetView ||
+		relation == RelationSubresourceSetEdit ||
+		relation == RelationSubresourceSetAdmin
 }
 
 func NewFolderResourceTuple(subject, relation, group, resource, subresource, folder string) *openfgav1.TupleKey {
-	relation = FolderResourceRelation(relation)
+	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
-	if !isFolderResourceRelationSet(relation) {
+	if !isSubresourceRelationSet(relation) {
 		condition = &openfgav1.RelationshipCondition{
-			Name: "folder_group_filter",
+			Name: "subresource_filter",
 			Context: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"group_resources": structpb.NewListValue(&structpb.ListValue{
+					"subresources": structpb.NewListValue(&structpb.ListValue{
 						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, subresource))},
 					}),
 				},
@@ -219,6 +220,30 @@ func NewFolderResourceTuple(subject, relation, group, resource, subresource, fol
 		User:      subject,
 		Relation:  relation,
 		Object:    NewFolderIdent(folder),
+		Condition: condition,
+	}
+}
+
+func NewTypedResourceTuple(subject, relation, typ, group, resource, subresource, name string) *openfgav1.TupleKey {
+	relation = SubresourceRelation(relation)
+	var condition *openfgav1.RelationshipCondition
+	if !isSubresourceRelationSet(relation) {
+		condition = &openfgav1.RelationshipCondition{
+			Name: "subresource_filter",
+			Context: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"subresources": structpb.NewListValue(&structpb.ListValue{
+						Values: []*structpb.Value{structpb.NewStringValue(FormatGroupResource(group, resource, subresource))},
+					}),
+				},
+			},
+		}
+	}
+
+	return &openfgav1.TupleKey{
+		User:      subject,
+		Relation:  relation,
+		Object:    NewTypedIdent(typ, name),
 		Condition: condition,
 	}
 }
@@ -352,8 +377,8 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 		User:     req.TupleKey.User,
 		Relation: RelationSetView,
 		Object: NewGroupResourceIdent(
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+			dashboardV1.DashboardResourceInfo.GroupResource().Group,
+			dashboardV1.DashboardResourceInfo.GroupResource().Resource,
 			"",
 		),
 	})

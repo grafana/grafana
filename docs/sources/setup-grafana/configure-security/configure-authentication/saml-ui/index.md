@@ -131,8 +131,8 @@ http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress
 
 ![image](https://github.com/user-attachments/assets/23910ab8-20ec-4dfd-8ef6-7dbaec51ac90)
 
-You also need to configure the **Groups attribute** field if you want to use group synchronization. Group sync allows you to automatically map users to Grafana teams or role-based access control roles based on their SAML group membership.
-To learn more about how to configure group synchronization, refer to [Configure team sync](../../configure-team-sync/) and [Configure group attribute sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-group-attribute-sync) documentation.
+You also need to configure the **Groups attribute** field if you want to use team sync. Team sync automatically maps users to Grafana teams based on their SAML group membership.
+Learn more about [team sync](../../configure-team-sync) and [configuring team sync for SAML](../saml#configure-team-sync).
 
 1. If you want to automatically assign users' roles based on their SAML roles, complete the **Role mapping** section.
 

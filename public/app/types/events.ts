@@ -28,6 +28,12 @@ export interface ShowModalReactPayload {
   props?: any;
 }
 
+export interface OpenExtensionSidebarPayload {
+  props?: Record<string, unknown>;
+  pluginId: string;
+  componentTitle: string;
+}
+
 export interface ShowConfirmModalPayload {
   title?: string;
   text?: string;
@@ -182,6 +188,10 @@ export class ShowConfirmModalEvent extends BusEventWithPayload<ShowConfirmModalP
 
 export class ShowModalReactEvent extends BusEventWithPayload<ShowModalReactPayload> {
   static type = 'show-react-modal';
+}
+
+export class OpenExtensionSidebarEvent extends BusEventWithPayload<OpenExtensionSidebarPayload> {
+  static type = 'open-extension-sidebar';
 }
 
 /**

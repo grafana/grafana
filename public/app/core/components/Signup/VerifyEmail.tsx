@@ -5,7 +5,7 @@ import { getBackendSrv } from '@grafana/runtime';
 import { Field, Input, Button, Legend, Container, LinkButton, Stack } from '@grafana/ui';
 import { getConfig } from 'app/core/config';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { w3cStandardEmailValidator } from 'app/features/admin/utils';
 
 interface EmailDTO {
@@ -55,8 +55,11 @@ export const VerifyEmail = () => {
         <Trans i18nKey="sign-up.verify.header">Verify email</Trans>
       </Legend>
       <Field
-        label="Email"
-        description="Enter your email address to get a verification link sent to you"
+        label={t('sign-up.verify.email-label', 'Email')}
+        description={t(
+          'sign-up.verify.email-description',
+          'Enter your email address to get a verification link sent to you'
+        )}
         invalid={!!errors.email}
         error={errors.email?.message}
       >
@@ -69,7 +72,6 @@ export const VerifyEmail = () => {
               message: 'Email is invalid',
             },
           })}
-          placeholder="Email"
         />
       </Field>
       <Stack>

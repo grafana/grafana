@@ -8,6 +8,9 @@ package server
 
 import (
 	"github.com/google/wire"
+	"github.com/stretchr/testify/mock"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/trace"
 
 	sdkhttpclient "github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
 
@@ -37,6 +40,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware/loggermw"
 	apiregistry "github.com/grafana/grafana/pkg/registry/apis"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
@@ -183,6 +187,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb/zipkin"
 )
 
+func otelTracer() trace.Tracer {
+	return otel.GetTracerProvider().Tracer("grafana")
+}
+
+var withOTelSet = wire.NewSet(
+	otelTracer,
+	grpcserver.ProvideService,
+	interceptors.ProvideAuthenticator,
+)
+
 var wireBasicSet = wire.NewSet(
 	annotationsimpl.ProvideService,
 	wire.Bind(new(annotations.Repository), new(*annotationsimpl.RepositoryImpl)),
@@ -259,9 +273,11 @@ var wireBasicSet = wire.NewSet(
 	wire.Bind(new(libraryelements.Service), new(*libraryelements.LibraryElementService)),
 	notifications.ProvideService,
 	notifications.ProvideSmtpService,
+	github.ProvideFactory,
 	tracing.ProvideService,
 	tracing.ProvideTracingConfig,
 	wire.Bind(new(tracing.Tracer), new(*tracing.TracingService)),
+	withOTelSet,
 	testdatasource.ProvideService,
 	ldapapi.ProvideService,
 	opentsdb.ProvideService,
@@ -352,10 +368,8 @@ var wireBasicSet = wire.NewSet(
 	orgimpl.ProvideDeletionService,
 	statsimpl.ProvideService,
 	grpccontext.ProvideContextHandler,
-	grpcserver.ProvideService,
 	grpcserver.ProvideHealthService,
 	grpcserver.ProvideReflectionService,
-	interceptors.ProvideAuthenticator,
 	resolver.ProvideEntityReferenceResolver,
 	teamimpl.ProvideService,
 	teamapi.ProvideTeamAPI,
@@ -466,9 +480,12 @@ func Initialize(cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*Ser
 	return &Server{}, nil
 }
 
-func InitializeForTest(t sqlutil.ITestDB, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
+func InitializeForTest(t sqlutil.ITestDB, testingT interface {
+	mock.TestingT
+	Cleanup(func())
+}, cfg *setting.Cfg, opts Options, apiOpts api.ServerOptions) (*TestEnv, error) {
 	wire.Build(wireExtsTestSet)
-	return &TestEnv{Server: &Server{}, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
+	return &TestEnv{Server: &Server{}, TestingT: testingT, SQLStore: &sqlstore.SQLStore{}, Cfg: &setting.Cfg{}}, nil
 }
 
 func InitializeForCLI(cfg *setting.Cfg) (Runner, error) {

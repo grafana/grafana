@@ -64,6 +64,8 @@ type Plugin struct {
 	SkipHostEnvVars bool
 
 	mu sync.Mutex
+
+	Translations map[string]string
 }
 
 var (
@@ -129,6 +131,9 @@ type JSONData struct {
 
 	// App Service Auth Registration
 	IAM *auth.IAM `json:"iam,omitempty"`
+
+	// List of languages supported by the plugin
+	Languages []string `json:"languages,omitempty"`
 }
 
 func ReadPluginJSON(reader io.Reader) (JSONData, error) {

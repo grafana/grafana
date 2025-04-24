@@ -217,6 +217,10 @@
      },
      "type": "object"
     },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
     "noDataState": {
      "enum": [
       "Alerting",
@@ -471,6 +475,9 @@
     "health": {
      "type": "string"
     },
+    "isPaused": {
+     "type": "boolean"
+    },
     "keepFiringFor": {
      "format": "double",
      "type": "number"
@@ -487,6 +494,15 @@
     },
     "name": {
      "type": "string"
+    },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "queriedDatasourceUIDs": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
     },
     "query": {
      "type": "string"
@@ -517,9 +533,7 @@
     }
    },
    "required": [
-    "uid",
     "name",
-    "folderUid",
     "query",
     "health",
     "type",
@@ -1450,6 +1464,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -1630,6 +1650,10 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
+    },
     "namespace_uid": {
      "type": "string"
     },
@@ -1781,26 +1805,6 @@
    ],
    "type": "object"
   },
-  "GettableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1826,6 +1830,9 @@
    "properties": {
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "jira_api_url": {
+     "$ref": "#/definitions/URL"
     },
     "opsgenie_api_key": {
      "$ref": "#/definitions/Secret"
@@ -1874,6 +1881,9 @@
     },
     "smtp_smarthost": {
      "$ref": "#/definitions/HostPort"
+    },
+    "smtp_tls_config": {
+     "$ref": "#/definitions/TLSConfig"
     },
     "telegram_api_url": {
      "$ref": "#/definitions/URL"
@@ -2061,6 +2071,57 @@
       "$ref": "#/definitions/LinkTransformationConfig"
      },
      "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "JiraConfig": {
+   "properties": {
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "custom_fields": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "description": {
+     "type": "string"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "issue_type": {
+     "type": "string"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "priority": {
+     "type": "string"
+    },
+    "project": {
+     "type": "string"
+    },
+    "reopen_duration": {
+     "$ref": "#/definitions/Duration"
+    },
+    "reopen_transition": {
+     "type": "string"
+    },
+    "resolve_transition": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "wont_fix_resolution": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2671,6 +2732,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -2864,6 +2931,12 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+     "example": 3,
+     "format": "int64",
+     "type": "integer"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2932,23 +3005,6 @@
       "type": "string"
      },
      "type": "array"
-    }
-   },
-   "type": "object"
-  },
-  "PostableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
     }
    },
    "type": "object"
@@ -3149,6 +3205,11 @@
       "team": "sre-team-1"
      },
      "type": "object"
+    },
+    "missingSeriesEvalsToResolve": {
+     "example": 2,
+     "format": "int64",
+     "type": "integer"
     },
     "noDataState": {
      "enum": [
@@ -3416,6 +3477,12 @@
     "email_configs": {
      "items": {
       "$ref": "#/definitions/EmailConfig"
+     },
+     "type": "array"
+    },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
      },
      "type": "array"
     },
@@ -3708,6 +3775,9 @@
     "health": {
      "type": "string"
     },
+    "isPaused": {
+     "type": "boolean"
+    },
     "labels": {
      "$ref": "#/definitions/Labels"
     },
@@ -3721,6 +3791,9 @@
     "name": {
      "type": "string"
     },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "query": {
      "type": "string"
     },
@@ -3732,9 +3805,7 @@
     }
    },
    "required": [
-    "uid",
     "name",
-    "folderUid",
     "query",
     "health",
     "type"
@@ -4723,6 +4794,9 @@
     "send_resolved": {
      "type": "boolean"
     },
+    "timeout": {
+     "$ref": "#/definitions/Duration"
+    },
     "url": {
      "$ref": "#/definitions/SecretURL"
     },
@@ -5684,38 +5758,6 @@
     "tags": [
      "alertmanager"
     ]
-   },
-   "post": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RoutePostGrafanaAlertingConfig",
-    "parameters": [
-     {
-      "in": "body",
-      "name": "Body",
-      "schema": {
-       "$ref": "#/definitions/PostableUserConfig"
-      }
-     }
-    ],
-    "responses": {
-     "201": {
-      "description": "Ack",
-      "schema": {
-       "$ref": "#/definitions/Ack"
-      }
-     },
-     "400": {
-      "description": "ValidationError",
-      "schema": {
-       "$ref": "#/definitions/ValidationError"
-      }
-     }
-    },
-    "summary": "sets an Alerting config",
-    "tags": [
-     "alertmanager"
-    ]
    }
   },
   "/alertmanager/grafana/config/api/v1/receivers": {
@@ -6473,6 +6515,34 @@
     "tags": [
      "convert_prometheus"
     ]
+   },
+   "post": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "operationId": "RouteConvertPrometheusCortexPostRuleGroups",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
+    "tags": [
+     "convert_prometheus"
+    ]
    }
   },
   "/convert/api/prom/rules/{NamespaceTitle}": {
@@ -6717,6 +6787,34 @@
      }
     },
     "summary": "Gets all Grafana-managed alert rules that were imported from Prometheus-compatible sources, grouped by namespace.",
+    "tags": [
+     "convert_prometheus"
+    ]
+   },
+   "post": {
+    "consumes": [
+     "application/json",
+     "application/yaml"
+    ],
+    "operationId": "RouteConvertPrometheusPostRuleGroups",
+    "produces": [
+     "application/json"
+    ],
+    "responses": {
+     "202": {
+      "description": "ConvertPrometheusResponse",
+      "schema": {
+       "$ref": "#/definitions/ConvertPrometheusResponse"
+      }
+     },
+     "403": {
+      "description": "ForbiddenError",
+      "schema": {
+       "$ref": "#/definitions/ForbiddenError"
+      }
+     }
+    },
+    "summary": "Converts the submitted rule groups into Grafana-Managed Rules.",
     "tags": [
      "convert_prometheus"
     ]
@@ -8009,155 +8107,6 @@
     "summary": "Get the discovered and dropped Alertmanagers of the user's organization based on the specified configuration.",
     "tags": [
      "configuration"
-    ]
-   }
-  },
-  "/v1/notifications/receivers": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteGetReceivers",
-    "parameters": [
-     {
-      "in": "query",
-      "items": {
-       "type": "string"
-      },
-      "name": "names",
-      "type": "array"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "limit",
-      "type": "integer"
-     },
-     {
-      "format": "int64",
-      "in": "query",
-      "name": "offset",
-      "type": "integer"
-     },
-     {
-      "in": "query",
-      "name": "decrypt",
-      "type": "boolean"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetReceiversResponse"
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     }
-    },
-    "summary": "Get all receivers.",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/receivers/{Name}": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteGetReceiver",
-    "parameters": [
-     {
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string"
-     },
-     {
-      "in": "query",
-      "name": "decrypt",
-      "type": "boolean"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetReceiverResponse"
-     },
-     "403": {
-      "description": "PermissionDenied",
-      "schema": {
-       "$ref": "#/definitions/PermissionDenied"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     }
-    },
-    "summary": "Get a receiver by name.",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/time-intervals": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteNotificationsGetTimeIntervals",
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetAllIntervalsResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     }
-    },
-    "summary": "Get all the time intervals",
-    "tags": [
-     "notifications"
-    ]
-   }
-  },
-  "/v1/notifications/time-intervals/{name}": {
-   "get": {
-    "deprecated": true,
-    "description": "This API is designated to internal use only and can be removed or changed at any time without prior notice.",
-    "operationId": "RouteNotificationsGetTimeInterval",
-    "parameters": [
-     {
-      "description": "Time interval name",
-      "in": "path",
-      "name": "name",
-      "required": true,
-      "type": "string"
-     }
-    ],
-    "responses": {
-     "200": {
-      "$ref": "#/responses/GetIntervalsByNameResponse"
-     },
-     "403": {
-      "description": "ForbiddenError",
-      "schema": {
-       "$ref": "#/definitions/ForbiddenError"
-      }
-     },
-     "404": {
-      "description": "NotFound",
-      "schema": {
-       "$ref": "#/definitions/NotFound"
-      }
-     }
-    },
-    "summary": "Get a time interval by name.",
-    "tags": [
-     "notifications"
     ]
    }
   },
@@ -9540,36 +9489,6 @@
   "application/json"
  ],
  "responses": {
-  "GetAllIntervalsResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableTimeIntervals"
-    },
-    "type": "array"
-   }
-  },
-  "GetIntervalsByNameResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableTimeIntervals"
-   }
-  },
-  "GetReceiverResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableApiReceiver"
-   }
-  },
-  "GetReceiversResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableApiReceiver"
-    },
-    "type": "array"
-   }
-  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

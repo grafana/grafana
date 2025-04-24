@@ -12,8 +12,8 @@ import {
   getFieldDisplayName,
   ScopedVars,
   ValueLinkConfig,
-} from '@grafana/data/src';
-import { ActionModel } from '@grafana/data/src/types/action';
+  ActionModel,
+} from '@grafana/data';
 import { Portal, useStyles2, VizTooltipContainer } from '@grafana/ui';
 import {
   VizTooltipContent,
