@@ -406,7 +406,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3155,6 +3154,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4267,7 +4267,7 @@
       "hide-time-picker": "隐藏时间选择器",
       "now-delay-description": "排除可能不完整的最近数据。",
       "now-delay-label": "现在延迟",
-      "refresh-live-dashboards-description": "连续重新绘制在其中时间范围引用“现在”的面板。",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "刷新直播仪表板",
       "time-options-label": "时间选项",
       "time-zone-label": "时区",
@@ -4717,9 +4717,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4841,8 +4838,6 @@
     "rich-history-utils": {
       "a-week-ago": "一周前",
       "days-ago": "{{num}} 天前",
-      "default-from": "现在-1 小时",
-      "default-to": "现在",
       "today": "今天",
       "two-weeks-ago": "两周前",
       "yesterday": "昨天"
@@ -8494,15 +8489,11 @@
       "apply": "",
       "aria-role": "时间范围选择",
       "default-title": "时间范围",
-      "example": "例如：选择从 10 分钟前到现在的时间范围",
-      "example-details": "从：now-10m 到：now",
       "example-title": "示例时间范围",
       "from-label": "",
       "from-to": "{{timeOptionFrom}} 到 {{timeOptionTo}}",
-      "more-info": "如需了解更多信息，请参阅<2>文档<1></1></2>。",
-      "specify": "指定时间范围 <1></1>",
+      "specify": "",
       "submit-button-label": "TimePicker 提交按钮",
-      "supported-formats": "支持的格式：<1>now-[digit]s/m/h/d/w</1>",
       "to-label": ""
     },
     "zone": {

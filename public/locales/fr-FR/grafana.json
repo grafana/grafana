@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Tableau de bord",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Cacher le sélecteur de temps",
       "now-delay-description": "Exclure les données récentes qui peuvent être incomplètes.",
       "now-delay-label": "Délai actuel",
-      "refresh-live-dashboards-description": "Redessiner en continu les panneaux où la plage de temps indique « maintenant »",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Actualiser les tableaux de bord en direct",
       "time-options-label": "Options de temps",
       "time-zone-label": "Fuseau horaire",
@@ -4738,9 +4738,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4862,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "il y a une semaine",
       "days-ago": "il y a {{num}} jours",
-      "default-from": "il y a 1 h",
-      "default-to": "maintenant",
       "today": "aujourd'hui",
       "two-weeks-ago": "il y a deux semaines",
       "yesterday": "hier"
@@ -8525,15 +8520,11 @@
       "apply": "Appliquer la plage temporelle",
       "aria-role": "Sélection de la plage de temps",
       "default-title": "Plages de temps",
-      "example": "Exemple : pour sélectionner une plage temporelle allant de il y a 10 minutes à maintenant",
-      "example-details": "De : maintenant-10m À : maintenant",
       "example-title": "Exemple de plages de temps",
       "from-label": "De",
       "from-to": "{{timeOptionFrom}} à {{timeOptionTo}}",
-      "more-info": "Pour en savoir plus, consultez les <2>docs <1></1></2>.",
-      "specify": "Spécifiez la plage de temps <1></1>",
+      "specify": "",
       "submit-button-label": "Bouton d'envoi TimePicker",
-      "supported-formats": "Formats pris en charge : <1>maintenant-[chiffre]s/m/h/d/w</1>",
       "to-label": "À"
     },
     "zone": {

@@ -1825,11 +1825,17 @@
           "severity",
           "stepID",
           "item",
+          "itemID",
           "links"
         ],
         "properties": {
           "item": {
             "description": "Human readable identifier of the item that failed",
+            "type": "string",
+            "default": ""
+          },
+          "itemID": {
+            "description": "ID of the item that failed",
             "type": "string",
             "default": ""
           },
