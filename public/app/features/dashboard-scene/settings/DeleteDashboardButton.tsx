@@ -1,11 +1,12 @@
 import { useAsyncFn, useToggle } from 'react-use';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
-import { Button, ConfirmModal, Modal, Space, Text } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { Button, ConfirmModal, Modal, Space, Text, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
 import { useDeleteItemsMutation } from '../../browse-dashboards/api/browseDashboardsAPI';
+import { ProvisionedResourceDeleteModal } from '../saving/provisioned/ProvisionedResourceDeleteModal';
 import { DashboardScene } from '../scene/DashboardScene';
 
 interface ButtonProps {
@@ -33,7 +34,7 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
         dashboard: 1,
       },
       source: 'dashboard_scene_settings',
-      restore_enabled: Boolean(config.featureToggles.dashboardRestore),
+      restore_enabled: false,
     });
     toggleModal();
     if (dashboard.state.uid) {
@@ -51,6 +52,10 @@ export function DeleteDashboardButton({ dashboard }: ButtonProps) {
 
   if (dashboard.state.meta.provisioned && showModal) {
     return <ProvisionedDeleteModal dashboardId={dashboard.state.meta.provisionedExternalId} onClose={toggleModal} />;
+  }
+
+  if (dashboard.isManagedRepository() && showModal) {
+    return <ProvisionedResourceDeleteModal resource={dashboard} onDismiss={toggleModal} />;
   }
 
   return (
@@ -76,7 +81,7 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
       isOpen={true}
       body={
         <>
-          {config.featureToggles.dashboardRestore && (
+          {false && ( // TODO: re-enable when restore is reworked
             <>
               <Text element="p">
                 <Trans i18nKey="dashboard-settings.delete-modal-restore-dashboards-text">
@@ -106,30 +111,37 @@ export function DeleteDashboardModal({ dashboardTitle, onConfirm, onClose }: Del
 
 function ProvisionedDeleteModal({ dashboardId, onClose }: ProvisionedDeleteModalProps) {
   return (
-    <Modal isOpen={true} title="Cannot delete provisioned dashboard" icon="trash-alt" onDismiss={onClose}>
+    <Modal
+      isOpen={true}
+      title={t(
+        'dashboard-scene.provisioned-delete-modal.title-cannot-delete-provisioned-dashboard',
+        'Cannot delete provisioned dashboard'
+      )}
+      icon="trash-alt"
+      onDismiss={onClose}
+    >
       <p>
-        This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config
-        file to delete it.
+        <Trans i18nKey="dashboard-scene.provisioned-delete-modal.cannot-be-deleted">
+          This dashboard is managed by Grafana provisioning and cannot be deleted. Remove the dashboard from the config
+          file to delete it.
+        </Trans>
       </p>
       <p>
         <i>
-          See{' '}
-          <a
-            className="external-link"
-            href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards"
-            target="_blank"
-            rel="noreferrer"
-          >
-            documentation
-          </a>{' '}
-          for more information about provisioning.
+          <Trans i18nKey="dashboard-scene.provisioned-delete-modal.see-docs">
+            See{' '}
+            <TextLink href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards" external>
+              documentation
+            </TextLink>{' '}
+            for more information about provisioning.
+          </Trans>
         </i>
         <br />
-        File path: {dashboardId}
+        <Trans i18nKey="dashboard-scene.provisioned-delete-modal.file-path">File path: {{ dashboardId }}</Trans>
       </p>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onClose}>
-          OK
+          <Trans i18nKey="dashboard-scene.provisioned-delete-modal.ok">OK</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

@@ -1,8 +1,7 @@
 import { useForm } from 'react-hook-form';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { Button, Divider, Field, FieldSet, Icon, Stack, Tooltip } from '@grafana/ui';
-import { Input } from '@grafana/ui/src/components/Input/Input';
+import { Button, Divider, Field, FieldSet, Icon, Input, Stack, Tooltip } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 import { t, Trans } from 'app/core/internationalization';
 import { publicDashboardApi, useAddRecipientMutation } from 'app/features/dashboard/api/publicDashboardApi';

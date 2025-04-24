@@ -3,6 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Alert, Button, ConfirmModal, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   onMigrate: () => void;
@@ -21,26 +22,47 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
       target="_blank"
       rel="noopener noreferrer"
     >
-      Find out more about the migration here.
+      <Trans i18nKey="api-keys.migrate-to-service-accounts-card.docs-link.about-migration">
+        Find out more about the migration here.
+      </Trans>
     </a>
   );
-  const migrationBoxDesc = <span>Migrating all API keys will hide the API keys tab.</span>;
+  const migrationBoxDesc = (
+    <span>
+      <Trans i18nKey="api-keys.migrate-to-service-accounts-card.migration-box-desc.migrating">
+        Migrating all API keys will hide the API keys tab.
+      </Trans>
+    </span>
+  );
 
   return (
     <>
       {apikeysCount > 0 && (
-        <Alert title="Switch from API keys to service accounts" severity="warning">
+        <Alert
+          title={t(
+            'api-keys.migrate-to-service-accounts-card.title-switch-service-accounts',
+            'Switch from API keys to service accounts'
+          )}
+          severity="warning"
+        >
           <div className={styles.text}>
-            API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated into
-            a service account with a token and will continue to work as they were. We encourage you to migrate your API
-            keys to service accounts now. {docsLink}
+            <Trans
+              i18nKey="api-keys.migrate-to-service-accounts-card.body-switch-service-accounts"
+              components={{ docsLink }}
+            >
+              API keys are deprecated and will be removed from Grafana on Jan 31, 2025. Each API key will be migrated
+              into a service account with a token and will continue to work as they were. We encourage you to migrate
+              your API keys to service accounts now. {'<docsLink />'}
+            </Trans>
           </div>
           <div className={styles.actionRow}>
             <Button className={styles.actionButton} onClick={() => setIsModalOpen(true)}>
-              Migrate all service accounts
+              <Trans i18nKey="api-keys.migrate-to-service-accounts-card.migrate-all-service-accounts">
+                Migrate all service accounts
+              </Trans>
             </Button>
             <ConfirmModal
-              title={'Migrate API keys to Service accounts'}
+              title={t('api-keys.migrate-to-service-accounts-card.modal-title', 'Migrate API keys to service accounts')}
               isOpen={isModalOpen}
               body={migrationBoxDesc}
               confirmText={'Yes, migrate now'}
@@ -54,9 +76,14 @@ export const MigrateToServiceAccountsCard = ({ onMigrate, apikeysCount, disabled
       )}
       {apikeysCount === 0 && (
         <>
-          <Alert title="No API keys found" severity="warning">
+          <Alert
+            title={t('api-keys.migrate-to-service-accounts-card.title-no-api-keys-found', 'No API keys found')}
+            severity="warning"
+          >
             <div className={styles.text}>
-              No API keys were found. If you reload the browser, this page will not be available anymore.
+              <Trans i18nKey="api-keys.migrate-to-service-accounts-card.body-no-api-keys-found">
+                No API keys were found. If you reload the browser, this page will not be available anymore.
+              </Trans>
             </div>
           </Alert>
         </>

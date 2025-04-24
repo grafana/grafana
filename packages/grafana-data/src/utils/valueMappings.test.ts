@@ -185,6 +185,40 @@ describe('Format value with value mappings', () => {
   });
 });
 
+describe('Range mapping with null From or null To', () => {
+  expect(
+    getValueMappingResult(
+      [
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: 0,
+            to: null,
+            result: { text: 'pos' },
+          },
+        },
+      ],
+      100
+    )
+  ).toEqual({ text: 'pos' });
+
+  expect(
+    getValueMappingResult(
+      [
+        {
+          type: MappingType.RangeToText,
+          options: {
+            from: null,
+            to: 0,
+            result: { text: 'neg' },
+          },
+        },
+      ],
+      -100
+    )
+  ).toEqual({ text: 'neg' });
+});
+
 describe('Format value with regex mappings', () => {
   it('should return correct regular expression result', () => {
     const value = 'www.foo.com';

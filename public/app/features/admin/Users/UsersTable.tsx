@@ -16,7 +16,7 @@ import {
   Tooltip,
 } from '@grafana/ui';
 import { TagBadge } from 'app/core/components/TagFilter/TagBadge';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { UserDTO } from 'app/types';
 
 import { OrgUnits } from './OrgUnits';
@@ -55,7 +55,12 @@ export const UsersTable = ({
         header: 'Login',
         cell: ({ row: { original } }: Cell<'login'>) => {
           return (
-            <TextLink color="primary" inline={false} href={`/admin/users/edit/${original.uid}`} title="Edit user">
+            <TextLink
+              color="primary"
+              inline={false}
+              href={`/admin/users/edit/${original.uid}`}
+              title={t('admin.users-table.columns.title-edit-user', 'Edit user')}
+            >
               {original.login}
             </TextLink>
           );
@@ -148,6 +153,13 @@ export const UsersTable = ({
         ),
       },
       {
+        id: 'isProvisioned',
+        header: 'Provisioned',
+        cell: ({ cell: { value } }: Cell<'isProvisioned'>) => (
+          <>{value && <Tag colorIndex={14} name={'Provisioned'} />}</>
+        ),
+      },
+      {
         id: 'isDisabled',
         header: '',
         cell: ({ cell: { value } }: Cell<'isDisabled'>) => <>{value && <Tag colorIndex={9} name={'Disabled'} />}</>,
@@ -162,8 +174,8 @@ export const UsersTable = ({
               size="sm"
               icon="pen"
               href={`admin/users/edit/${original.uid}`}
-              aria-label={`Edit user ${original.name}`}
-              tooltip={'Edit user'}
+              aria-label={t('admin.users-table.edit-aria-label', 'Edit user: {{name}}', { name: original.name })}
+              tooltip={t('admin.users-table.edit-tooltip', 'Edit user')}
             />
           );
         },

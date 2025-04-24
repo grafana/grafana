@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/search/sort"
@@ -672,6 +673,42 @@ func TestAlertRuleService(t *testing.T) {
 				name:   "should not be able to update from provenance file to none",
 				from:   models.ProvenanceFile,
 				to:     models.ProvenanceNone,
+				errNil: false,
+			},
+			{
+				name:   "should be able to update from provenance none to 'converted prometheus'",
+				from:   models.ProvenanceNone,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: true,
+			},
+			{
+				name:   "should be able to update from provenance 'converted prometheus' to none",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceNone,
+				errNil: true,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to api",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceAPI,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance 'converted prometheus' to file",
+				from:   models.ProvenanceConvertedPrometheus,
+				to:     models.ProvenanceFile,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance api to 'converted prometheus'",
+				from:   models.ProvenanceAPI,
+				to:     models.ProvenanceConvertedPrometheus,
+				errNil: false,
+			},
+			{
+				name:   "should not be able to update from provenance file to 'converted prometheus'",
+				from:   models.ProvenanceFile,
+				to:     models.ProvenanceConvertedPrometheus,
 				errNil: false,
 			},
 		}
@@ -1957,7 +1994,7 @@ func TestProvisiongWithFullpath(t *testing.T) {
 	fStore := folderimpl.ProvideStore(sqlStore)
 	folderService := folderimpl.ProvideService(
 		fStore, ac, inProcBus, dashboardStore, folderStore,
-		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	ruleService := createAlertRuleService(t, folderService)
 	var orgID int64 = 1
@@ -2067,7 +2104,7 @@ func getDeletedRules(t *testing.T, ruleStore *fakes.RuleStore) []deleteRuleOpera
 			uid = string(*userUID)
 		}
 
-		uids, ok := q.Params[2].([]string)
+		uids, ok := q.Params[3].([]string)
 		require.True(t, ok, "uids parameter should be []string")
 
 		operations = append(operations, deleteRuleOperation{

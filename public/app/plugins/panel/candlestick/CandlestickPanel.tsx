@@ -15,9 +15,7 @@ import {
   usePanelContext,
   useTheme2,
 } from '@grafana/ui';
-import { AxisProps } from '@grafana/ui/src/components/uPlot/config/UPlotAxisBuilder';
-import { ScaleProps } from '@grafana/ui/src/components/uPlot/config/UPlotScaleBuilder';
-import { TimeRange2, TooltipHoverMode } from '@grafana/ui/src/components/uPlot/plugins/TooltipPlugin2';
+import { AxisProps, ScaleProps, TimeRange2, TooltipHoverMode } from '@grafana/ui/internal';
 import { TimeSeries } from 'app/core/components/TimeSeries/TimeSeries';
 import { config } from 'app/core/config';
 

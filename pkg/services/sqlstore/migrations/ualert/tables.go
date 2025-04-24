@@ -195,6 +195,8 @@ func alertInstanceMigration(mg *migrator.Migrator) {
 	}))
 }
 
+var titleUniqueIndex = &migrator.Index{Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex}
+
 func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64) {
 	// DO NOT EDIT
 	alertRule := migrator.Table{
@@ -245,9 +247,7 @@ func addAlertRuleMigrations(mg *migrator.Migrator, defaultIntervalSeconds int64)
 		Cols: []string{"org_id", "title"}, Type: migrator.UniqueIndex,
 	}))
 
-	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, &migrator.Index{
-		Cols: []string{"org_id", "namespace_uid", "title"}, Type: migrator.UniqueIndex,
-	}))
+	mg.AddMigration("add index in alert_rule on org_id, namespase_uid and title columns", migrator.NewAddIndexMigration(alertRule, titleUniqueIndex))
 
 	mg.AddMigration("add dashboard_uid column to alert_rule", migrator.NewAddColumnMigration(
 		migrator.Table{Name: "alert_rule"},
@@ -570,4 +570,9 @@ func (c extractAlertmanagerConfigurationHistory) Exec(sess *xorm.Session, migrat
 		}
 	}
 	return nil
+}
+
+func DropTitleUniqueIndexMigration(mg *migrator.Migrator) {
+	mg.AddMigration("remove title in folder unique index",
+		migrator.NewDropIndexMigration(migrator.Table{Name: "alert_rule"}, titleUniqueIndex))
 }

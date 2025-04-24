@@ -6,6 +6,7 @@ import { useDebounce } from 'react-use';
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { Card, FilterInput, Icon, Pagination, Select, Stack, TagList, useStyles2 } from '@grafana/ui';
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
+import { Trans, t } from 'app/core/internationalization';
 import { getQueryParamValue } from 'app/core/utils/query';
 import { FolderState, useDispatch } from 'app/types';
 import { CombinedRule } from 'app/types/unified-alerting';
@@ -66,7 +67,10 @@ export const AlertsFolderView = ({ folder }: Props) => {
         <FilterInput
           value={nameFilter}
           onChange={setNameFilter}
-          placeholder="Search alert rules by name"
+          placeholder={t(
+            'alerting.alerts-folder-view.name-filter-placeholder-search-alert-rules-by-name',
+            'Search alert rules by name'
+          )}
           data-testid="name-filter"
         />
         <Stack direction="row">
@@ -75,14 +79,17 @@ export const AlertsFolderView = ({ folder }: Props) => {
             onChange={({ value }) => value && setSortOrder(value)}
             options={sortOptions}
             width={25}
-            aria-label="Sort"
-            placeholder={`Sort (Default A-Z)`}
+            aria-label={t('alerting.alerts-folder-view.aria-label-sort', 'Sort')}
+            placeholder={t('alerting.alerts-folder-view.placeholder-sort-default-az', 'Sort (Default A-Z)')}
             prefix={<Icon name={sortOrder === SortOrder.Ascending ? 'sort-amount-up' : 'sort-amount-down'} />}
           />
           <FilterInput
             value={labelFilter}
             onChange={setLabelFilter}
-            placeholder="Search alerts by labels"
+            placeholder={t(
+              'alerting.alerts-folder-view.label-filter-placeholder-search-alerts-by-labels',
+              'Search alerts by labels'
+            )}
             className={styles.filterLabelsInput}
             data-testid="label-filter"
           />
@@ -91,7 +98,7 @@ export const AlertsFolderView = ({ folder }: Props) => {
         <Stack direction="column" gap={1}>
           {pageItems.map((currentRule) => (
             <Card
-              key={currentRule.name}
+              key={Boolean(currentRule.uid) ? currentRule.uid : currentRule.name}
               href={createViewLink('grafana', currentRule, '')}
               className={styles.card}
               data-testid="alert-card-row"
@@ -111,7 +118,11 @@ export const AlertsFolderView = ({ folder }: Props) => {
             </Card>
           ))}
         </Stack>
-        {hasNoResults && <div className={styles.noResults}>No alert rules found</div>}
+        {hasNoResults && (
+          <div className={styles.noResults}>
+            <Trans i18nKey="alerting.alerts-folder-view.no-alert-rules-found">No alert rules found</Trans>
+          </div>
+        )}
         <div className={styles.pagination}>
           <Pagination
             currentPage={page}
@@ -138,13 +149,16 @@ function useAlertsFolderViewParams() {
   const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewParams.labelFilter) ?? '');
 
   const sortParam = searchParams.get(AlertFolderViewParams.sortOrder);
-  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(
-    sortParam === SortOrder.Ascending
-      ? SortOrder.Ascending
-      : sortParam === SortOrder.Descending
-        ? SortOrder.Descending
-        : undefined
-  );
+  const defaultSortOrder = (() => {
+    if (sortParam === SortOrder.Ascending) {
+      return SortOrder.Ascending;
+    }
+    if (sortParam === SortOrder.Descending) {
+      return SortOrder.Descending;
+    }
+    return undefined;
+  })();
+  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(defaultSortOrder);
 
   useDebounce(
     () =>

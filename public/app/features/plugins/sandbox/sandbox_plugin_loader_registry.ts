@@ -1,11 +1,11 @@
 import { PluginSignatureType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { contextSrv } from 'app/core/core';
 
 import { getPluginDetails } from '../admin/api';
 import { getPluginSettings } from '../pluginSettings';
 
 type SandboxEligibilityCheckParams = {
-  isAngular?: boolean;
   pluginId: string;
 };
 
@@ -21,33 +21,22 @@ export function setSandboxEnabledCheck(checker: SandboxEnabledCheck) {
   sandboxEnabledCheck = checker;
 }
 
-export async function shouldLoadPluginInFrontendSandbox({
-  isAngular,
-  pluginId,
-}: SandboxEligibilityCheckParams): Promise<boolean> {
+export async function shouldLoadPluginInFrontendSandbox({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
   // basic check if the plugin is eligible for the sandbox
-  if (!(await isPluginFrontendSandboxEligible({ isAngular, pluginId }))) {
+  if (!(await isPluginFrontendSandboxEligible({ pluginId }))) {
     return false;
   }
 
-  return sandboxEnabledCheck({ isAngular, pluginId });
+  return sandboxEnabledCheck({ pluginId });
 }
 
 /**
  * This is a basic check that checks if the plugin is eligible to run in the sandbox.
  * It does not check if the plugin is actually enabled for the sandbox.
  */
-export async function isPluginFrontendSandboxEligible({
-  isAngular,
-  pluginId,
-}: SandboxEligibilityCheckParams): Promise<boolean> {
+export async function isPluginFrontendSandboxEligible({ pluginId }: SandboxEligibilityCheckParams): Promise<boolean> {
   // Only if the feature is not enabled no support for sandbox
   if (!Boolean(config.featureToggles.pluginsFrontendSandbox)) {
-    return false;
-  }
-
-  // no support for angular plugins
-  if (isAngular) {
     return false;
   }
 
@@ -59,6 +48,10 @@ export async function isPluginFrontendSandboxEligible({
 
   // no sandbox in test mode. it often breaks e2e tests
   if (process.env.NODE_ENV === 'test') {
+    return false;
+  }
+
+  if (!contextSrv.isSignedIn) {
     return false;
   }
 

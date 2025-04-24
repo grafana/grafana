@@ -4,15 +4,10 @@ import { connect, ConnectedProps } from 'react-redux';
 import { Button, Field, Checkbox, LinkButton, Stack, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
+import { Trans } from 'app/core/internationalization';
 import { StoreState } from 'app/types';
 
 import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
-
-const subTitle = (
-  <span>
-    Choose the components for the support bundle. The support bundle will be available for 3 days after creation.
-  </span>
-);
 
 const mapStateToProps = (state: StoreState) => {
   return {
@@ -54,6 +49,14 @@ export const SupportBundlesCreateUnconnected = ({
     return { ...acc, [curr.uid]: curr.default };
   }, {});
 
+  const subTitle = (
+    <span>
+      <Trans i18nKey="support-bundles.support-bundles-create-unconnected.sub-title">
+        Choose the components for the support bundle. The support bundle will be available for 3 days after creation.
+      </Trans>
+    </span>
+  );
+
   return (
     <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>
       <Page.Contents isLoading={isLoading}>
@@ -81,9 +84,11 @@ export const SupportBundlesCreateUnconnected = ({
                       );
                     })}
                   <Stack>
-                    <Button type="submit">Create</Button>
+                    <Button type="submit">
+                      <Trans i18nKey="support-bundles.support-bundles-create-unconnected.create">Create</Trans>
+                    </Button>
                     <LinkButton href="/support-bundles" variant="secondary">
-                      Cancel
+                      <Trans i18nKey="support-bundles.support-bundles-create-unconnected.cancel">Cancel</Trans>
                     </LinkButton>
                   </Stack>
                 </>

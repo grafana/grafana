@@ -1,4 +1,5 @@
 import { render as rtlRender, screen } from '@testing-library/react';
+import { Chance } from 'chance';
 import { http, HttpResponse } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 import { useParams } from 'react-router-dom-v5-compat';
@@ -30,8 +31,10 @@ jest.mock('react-router-dom-v5-compat', () => ({
 const mockFolderName = 'myFolder';
 const mockFolderUid = '12345';
 
-const mockRulerRulesResponse = getRulerRulesResponse(mockFolderName, mockFolderUid);
-const mockPrometheusRulesResponse = getPrometheusRulesResponse(mockFolderName);
+const random = Chance(1);
+const rule_uid = random.guid();
+const mockRulerRulesResponse = getRulerRulesResponse(mockFolderName, mockFolderUid, rule_uid);
+const mockPrometheusRulesResponse = getPrometheusRulesResponse(mockFolderName, mockFolderUid, rule_uid);
 
 describe('browse-dashboards BrowseFolderAlertingPage', () => {
   (useParams as jest.Mock).mockReturnValue({ uid: mockFolderUid });

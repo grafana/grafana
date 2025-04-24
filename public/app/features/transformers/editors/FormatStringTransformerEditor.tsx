@@ -12,13 +12,11 @@ import {
   FieldNamePickerConfigSettings,
   TransformerCategory,
 } from '@grafana/data';
-import {
-  FormatStringOutput,
-  FormatStringTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/formatString';
+import { FormatStringOutput, FormatStringTransformerOptions } from '@grafana/data/internal';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
-import { FieldNamePicker } from '@grafana/ui/src/components/MatchersUI/FieldNamePicker';
+import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+import { t } from 'app/core/internationalization';
 
 const fieldNamePickerSettings: StandardEditorsRegistryItem<string, FieldNamePickerConfigSettings> = {
   settings: {
@@ -84,7 +82,7 @@ function FormatStringTransfomerEditor({
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={'Field'} labelWidth={10}>
+        <InlineField label={t('transformers.format-string-transfomer-editor.label-field', 'Field')} labelWidth={10}>
           <FieldNamePicker
             context={{ data: input }}
             value={options.stringField ?? ''}
@@ -93,14 +91,17 @@ function FormatStringTransfomerEditor({
           />
         </InlineField>
 
-        <InlineField label="Format" labelWidth={10}>
+        <InlineField label={t('transformers.format-string-transfomer-editor.label-format', 'Format')} labelWidth={10}>
           <Select options={ops} value={options.outputFormat} onChange={onFormatChange} width={20} />
         </InlineField>
       </InlineFieldRow>
 
       {options.outputFormat === FormatStringOutput.Substring && (
         <InlineFieldRow>
-          <InlineField label="Substring range" labelWidth={15}>
+          <InlineField
+            label={t('transformers.format-string-transfomer-editor.label-substring-range', 'Substring range')}
+            labelWidth={15}
+          >
             <NumberInput min={0} value={options.substringStart ?? 0} onChange={onSubstringStartChange} width={7} />
           </InlineField>
           <InlineField>

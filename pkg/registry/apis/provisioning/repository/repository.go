@@ -2,15 +2,21 @@ package repository
 
 import (
 	"context"
-	"io/fs"
+	"io"
 	"net/http"
+	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
+// FIXME: the name of the mock is different because there is another generated mock for Repository
+// I don't know how it got generated.
+//
+//go:generate mockery --name Repository --structname MockConfigRepository --inpackage --filename config_repository_mock.go --with-expecter
 type Repository interface {
 	// Config returns the saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -25,7 +31,12 @@ type Repository interface {
 }
 
 // ErrFileNotFound indicates that a path could not be found in the repository.
-var ErrFileNotFound error = fs.ErrNotExist
+var ErrFileNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusNotFound,
+	Reason:  metav1.StatusReasonNotFound,
+	Message: "file not found",
+}}
 
 type FileInfo struct {
 	// Path to the file on disk.
@@ -40,6 +51,47 @@ type FileInfo struct {
 	Hash string
 	// When was the file changed (if known)
 	Modified *metav1.Time
+}
+
+//go:generate mockery --name CloneFn --structname MockCloneFn --inpackage --filename clone_fn_mock.go --with-expecter
+type CloneFn func(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
+
+type CloneOptions struct {
+	// If the branch does not exist, create it
+	CreateIfNotExists bool
+
+	// Push on every write
+	PushOnWrites bool
+
+	// Maximum allowed size for repository clone in bytes (0 means no limit)
+	MaxSize int64
+
+	// Maximum time allowed for clone operation in seconds (0 means no limit)
+	Timeout time.Duration
+
+	// Progress is the writer to report progress to
+	Progress io.Writer
+
+	// BeforeFn is called before the clone operation starts
+	BeforeFn func() error
+}
+
+//go:generate mockery --name ClonableRepository --structname MockClonableRepository --inpackage --filename clonable_repository_mock.go --with-expecter
+type ClonableRepository interface {
+	Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
+}
+
+type PushOptions struct {
+	Timeout  time.Duration
+	Progress io.Writer
+	BeforeFn func() error
+}
+
+//go:generate mockery --name ClonedRepository --structname MockClonedRepository --inpackage --filename cloned_repository_mock.go --with-expecter
+type ClonedRepository interface {
+	ReaderWriter
+	Push(ctx context.Context, opts PushOptions) error
+	Remove(ctx context.Context) error
 }
 
 // An entry in the file tree, as returned by 'ReadFileTree'. Like FileInfo, but contains less information.
@@ -58,7 +110,10 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+//go:generate mockery --name Reader --structname MockReader --inpackage --filename reader_mock.go --with-expecter
 type Reader interface {
+	Repository
+
 	// Read a file from the resource
 	// This data will be parsed and validated before it is shown to end users
 	Read(ctx context.Context, path, ref string) (*FileInfo, error)
@@ -72,6 +127,8 @@ type Reader interface {
 }
 
 type Writer interface {
+	Repository
+
 	// Write a file to the repository.
 	// The data has already been validated and is ready for save
 	Create(ctx context.Context, path, ref string, data []byte, message string) error
@@ -88,8 +145,23 @@ type Writer interface {
 	Delete(ctx context.Context, path, ref, message string) error
 }
 
+type ReaderWriter interface {
+	Reader
+	Writer
+}
+
+// Hooks called after the repository has been created, updated or deleted
+type RepositoryWithURLs interface {
+	Repository
+
+	// Get resource URLs for a file inside a repository
+	ResourceURLs(ctx context.Context, file *FileInfo) (*provisioning.ResourceURLs, error)
+}
+
 // Hooks called after the repository has been created, updated or deleted
 type Hooks interface {
+	Repository
+
 	// For repositories that support webhooks
 	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
@@ -120,6 +192,8 @@ type VersionedFileChange struct {
 
 // Versioned is a repository that supports versioning.
 // This interface may be extended to make the the original Repository interface more agnostic to the underlying storage system.
+//
+//go:generate mockery --name Versioned --structname MockVersioned --inpackage --filename versioned_mock.go --with-expecter
 type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)

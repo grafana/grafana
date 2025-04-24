@@ -9,6 +9,7 @@ import { reportInteraction } from '@grafana/runtime';
 import { SceneVariable } from '@grafana/scenes';
 import { VariableHide, defaultVariableModel } from '@grafana/schema';
 import { Button, LoadingPlaceholder, ConfirmModal, ModalsController, Stack, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { VariableHideSelect } from 'app/features/dashboard-scene/settings/variables/components/VariableHideSelect';
 import { VariableLegend } from 'app/features/dashboard-scene/settings/variables/components/VariableLegend';
 import { VariableTextAreaField } from 'app/features/dashboard-scene/settings/variables/components/VariableTextAreaField';
@@ -17,25 +18,24 @@ import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/var
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
-import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
+import {
+  EditableVariableType,
+  getVariableEditor,
+  hasVariableOptions,
+  isEditableVariableType,
+  validateVariableName,
+} from './utils';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
-  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
-export function VariableEditorForm({
-  variable,
-  onTypeChange,
-  onGoBack,
-  onDelete,
-  onValidateVariableName,
-}: VariableEditorFormProps) {
+export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const { name, type, label, description, hide, key } = variable.useState();
+  const [nameError, setNameError] = useState<string>();
+  const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -48,12 +48,12 @@ export function VariableEditorForm({
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
-      if (nameError !== errorMessage) {
-        setNameError(errorMessage);
+      const result = validateVariableName(variable, e.currentTarget.value);
+      if (result.errorMessage !== nameError) {
+        setNameError(result.errorMessage);
       }
     },
-    [key, nameError, onValidateVariableName]
+    [variable, nameError]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {
@@ -76,14 +76,21 @@ export function VariableEditorForm({
   };
 
   return (
-    <form aria-label="Variable editor Form">
+    <form
+      aria-label={t('dashboard-scene.variable-editor-form.aria-label-variable-editor-form', 'Variable editor form')}
+    >
       <VariableTypeSelect onChange={onVariableTypeChange} type={type} />
 
-      <VariableLegend>General</VariableLegend>
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.variable-editor-form.general">General</Trans>
+      </VariableLegend>
       <VariableTextField
         name="Name"
-        description="The name of the template variable. (Max. 50 characters)"
-        placeholder="Variable name"
+        description={t(
+          'dashboard-scene.variable-editor-form.description-template-variable-characters',
+          'The name of the template variable. (Max. 50 characters)'
+        )}
+        placeholder={t('dashboard-scene.variable-editor-form.placeholder-variable-name', 'Variable name')}
         defaultValue={name ?? ''}
         onChange={onNameChange}
         onBlur={onNameBlur}
@@ -95,8 +102,11 @@ export function VariableEditorForm({
       />
       <VariableTextField
         name="Label"
-        description="Optional display name"
-        placeholder="Label name"
+        description={t(
+          'dashboard-scene.variable-editor-form.description-optional-display-name',
+          'Optional display name'
+        )}
+        placeholder={t('dashboard-scene.variable-editor-form.placeholder-label-name', 'Label name')}
         defaultValue={label ?? ''}
         onBlur={onLabelBlur}
         testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.generalLabelInputV2}
@@ -104,7 +114,7 @@ export function VariableEditorForm({
       <VariableTextAreaField
         name="Description"
         defaultValue={description ?? ''}
-        placeholder="Descriptive text"
+        placeholder={t('dashboard-scene.variable-editor-form.placeholder-descriptive-text', 'Descriptive text')}
         onBlur={onDescriptionBlur}
         width={52}
       />
@@ -133,7 +143,7 @@ export function VariableEditorForm({
                   });
                 }}
               >
-                Delete
+                <Trans i18nKey="dashboard-scene.variable-editor-form.delete">Delete</Trans>
               </Button>
             )}
           </ModalsController>
@@ -142,7 +152,7 @@ export function VariableEditorForm({
             data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.General.applyButton}
             onClick={onGoBack}
           >
-            Back to list
+            <Trans i18nKey="dashboard-scene.variable-editor-form.back-to-list">Back to list</Trans>
           </Button>
 
           {isHasVariableOptions && (
@@ -153,7 +163,10 @@ export function VariableEditorForm({
               onClick={onRunQuery}
             >
               {runQueryState.loading ? (
-                <LoadingPlaceholder className={styles.loadingPlaceHolder} text="Running query..." />
+                <LoadingPlaceholder
+                  className={styles.loadingPlaceHolder}
+                  text={t('dashboard-scene.variable-editor-form.text-running-query', 'Running query...')}
+                />
               ) : (
                 `Run query`
               )}

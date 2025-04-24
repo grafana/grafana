@@ -5,21 +5,24 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { GrafanaRuleLoader } from './GrafanaRuleLoader';
+import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
+import { groups } from '../utils/navigation';
+
+import { GrafanaGroupLoader } from './GrafanaGroupLoader';
 import { DataSourceSection } from './components/DataSourceSection';
 import { LazyPagination } from './components/LazyPagination';
 import { ListGroup } from './components/ListGroup';
 import { ListSection } from './components/ListSection';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
-import { useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
+import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
 
 const GRAFANA_GROUP_PAGE_SIZE = 40;
 
 export function PaginatedGrafanaLoader() {
-  const grafanaGroupsGenerator = useGrafanaGroupsGenerator();
+  const grafanaGroupsGenerator = useGrafanaGroupsGenerator({ populateCache: true });
 
-  const groupsGenerator = useRef(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE));
+  const groupsGenerator = useRef(toIndividualRuleGroups(grafanaGroupsGenerator(GRAFANA_GROUP_PAGE_SIZE)));
 
   useEffect(() => {
     const currentGenerator = groupsGenerator.current;
@@ -82,27 +85,28 @@ interface GrafanaRuleGroupListItemProps {
   group: GrafanaPromRuleGroupDTO;
   namespaceName: string;
 }
+
 export function GrafanaRuleGroupListItem({ group, namespaceName }: GrafanaRuleGroupListItemProps) {
-  const groupIdentifier: GrafanaRuleGroupIdentifier = {
-    groupName: group.name,
-    namespace: {
-      uid: group.folderUid,
-    },
-    groupOrigin: 'grafana',
-  };
+  const groupIdentifier: GrafanaRuleGroupIdentifier = useMemo(
+    () => ({
+      groupName: group.name,
+      namespace: {
+        uid: group.folderUid,
+      },
+      groupOrigin: 'grafana',
+    }),
+    [group.name, group.folderUid]
+  );
 
   return (
-    <ListGroup key={group.name} name={group.name} isOpen={false} actions={<RuleGroupActionsMenu />}>
-      {group.rules.map((rule) => {
-        return (
-          <GrafanaRuleLoader
-            key={rule.uid}
-            rule={rule}
-            namespaceName={namespaceName}
-            groupIdentifier={groupIdentifier}
-          />
-        );
-      })}
+    <ListGroup
+      key={group.name}
+      name={group.name}
+      href={groups.detailsPageLink(GRAFANA_RULES_SOURCE_NAME, group.folderUid, group.name)}
+      isOpen={false}
+      actions={<RuleGroupActionsMenu groupIdentifier={groupIdentifier} />}
+    >
+      <GrafanaGroupLoader groupIdentifier={groupIdentifier} namespaceName={namespaceName} />
     </ListGroup>
   );
 }

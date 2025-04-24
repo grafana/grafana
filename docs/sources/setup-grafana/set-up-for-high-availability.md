@@ -37,13 +37,13 @@ Before you complete the following tasks, configure a MySQL or Postgres database 
 
 ## Configure multiple Grafana servers to use the same database
 
-Once you have a Postgres or MySQL database available, you can configure your multiple Grafana instances to use a shared backend database. Grafana has default and custom configuration files, and you can update the database settings by updating your custom configuration file as described in the [[database]]({{< relref "./configure-grafana#database" >}}). Once configured to use a shared database, your multiple Grafana instances will persist all long-term data in that database.
+Once you have a Postgres or MySQL database available, you can configure your multiple Grafana instances to use a shared backend database. Grafana has default and custom configuration files, and you can update the database settings by updating your custom configuration file as described in the [[database]](../configure-grafana/#database). Once configured to use a shared database, your multiple Grafana instances will persist all long-term data in that database.
 
 ## Alerting high availability
 
 Grafana Alerting provides a high availability mode. It preserves the semantics of legacy dashboard alerting by executing all alerts on every server and by sending notifications only once per alert. Load distribution between servers is not supported at this time.
 
-For further information and instructions on setting up alerting high availability, refer to [Enable alerting high availability]({{< relref "../alerting/set-up/configure-high-availability" >}}).
+For further information and instructions on setting up alerting high availability, refer to [Enable alerting high availability](../../alerting/set-up/configure-high-availability/).
 
 **Legacy dashboard alerts**
 
@@ -51,7 +51,7 @@ Legacy Grafana Alerting supports a limited form of high availability. In this mo
 
 ## Grafana Live
 
-Grafana Live works with limitations in highly available setup. For details, refer to the [Configure Grafana Live HA setup]({{< relref "./set-up-grafana-live#configure-grafana-live-ha-setup" >}}).
+Grafana Live works with limitations in highly available setup. For details, refer to the [Configure Grafana Live HA setup](../set-up-grafana-live/#configure-grafana-live-ha-setup).
 
 ## User sessions
 

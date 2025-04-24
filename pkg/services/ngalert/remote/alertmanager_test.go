@@ -23,6 +23,8 @@ import (
 	"github.com/grafana/alerting/definition"
 	alertingModels "github.com/grafana/alerting/models"
 	"github.com/grafana/alerting/notify"
+	"gopkg.in/yaml.v3"
+
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -39,13 +41,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
-	"gopkg.in/yaml.v3"
 )
 
 const (
 	// Valid Grafana Alertmanager configurations.
-	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
-	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
+	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
+	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
 	testGrafanaDefaultConfigWithDifferentFieldOrder = `{"alertmanager_config":{"route":{"group_by":["alertname","grafana_folder"],"receiver":"grafana-default-email"},"receivers":[{"grafana_managed_receiver_configs":[{"uid":"","name":"email receiver","type":"email","settings":{"addresses":"<example@email.com>"}}],"name":"grafana-default-email"}]}}`
 
 	// Valid Alertmanager state base64 encoded.
@@ -287,14 +288,14 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, `"password":"!"`, 1),
 			NoopAutogenFn,
 			nil,
-			"unable to decrypt the configuration: failed to decode value for key 'password': illegal base64 data at input byte 0",
+			`unable to decrypt settings on receiver "WH" (uid: "dde6ntuob69dtf"): failed to decode value for key 'password': illegal base64 data at input byte 0`,
 		},
 		{
 			"decrypt error",
 			testGrafanaConfigWithSecret,
 			NoopAutogenFn,
 			nil,
-			fmt.Sprintf("unable to decrypt the configuration: failed to decrypt value for key 'password': %s", errTest.Error()),
+			fmt.Sprintf(`unable to decrypt settings on receiver "WH" (uid: "dde6ntuob69dtf"): failed to decrypt value for key 'password': %s`, errTest.Error()),
 		},
 		{
 			"error from autogen function",
@@ -443,7 +444,9 @@ func Test_isDefaultConfiguration(t *testing.T) {
 				defaultConfig:     string(rawDefaultCfg),
 				defaultConfigHash: fmt.Sprintf("%x", md5.Sum(rawDefaultCfg)),
 			}
-			isDefault, _ := am.isDefaultConfiguration(test.config)
+			raw, err := json.Marshal(test.config)
+			require.NoError(tt, err)
+			isDefault, _ := am.isDefaultConfiguration(md5.Sum(raw))
 			require.Equal(tt, test.expected, isDefault)
 		})
 	}

@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,6 +11,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
+	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -20,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/quota/quotatest"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func ptrString(s string) *string {
@@ -439,7 +442,7 @@ func TestUserSync_SyncUserHook(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures())
+			s := ProvideUserSync(tt.fields.userService, userProtection, tt.fields.authInfoService, tt.fields.quotaService, tracing.InitializeTracerForTest(), featuremgmt.WithFeatures(), setting.NewCfg())
 			err := s.SyncUserHook(tt.args.ctx, tt.args.id, nil)
 			if tt.wantErr {
 				require.Error(t, err)
@@ -465,6 +468,7 @@ func TestUserSync_SyncUserRetryFetch(t *testing.T) {
 		&quotatest.FakeQuotaService{},
 		tracing.NewNoopTracerService(),
 		featuremgmt.WithFeatures(),
+		setting.NewCfg(),
 	)
 
 	email := "test@test.com"
@@ -566,6 +570,261 @@ func TestUserSync_EnableDisabledUserHook(t *testing.T) {
 			err := s.EnableUserHook(context.Background(), tt.identity, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tt.enableUser, called)
+		})
+	}
+}
+
+func initUserSyncService() *UserSync {
+	userSvc := usertest.NewUserServiceFake()
+	log := log.New("test")
+	authInfoSvc := &authinfotest.FakeService{
+		ExpectedUserAuth: &login.UserAuth{
+			UserId:     1,
+			AuthModule: login.SAMLAuthModule,
+			AuthId:     "1",
+		},
+	}
+	quotaSvc := &quotatest.FakeQuotaService{}
+	return &UserSync{
+		userService:     userSvc,
+		authInfoService: authInfoSvc,
+		quotaService:    quotaSvc,
+		tracer:          tracing.InitializeTracerForTest(),
+		log:             log,
+	}
+}
+
+func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
+	type testCase struct {
+		desc                 string
+		identity             *authn.Identity
+		userSyncServiceSetup func() *UserSync
+		expectedErr          error
+	}
+
+	tests := []testCase{
+		{
+			desc: "it should skip validation if the user provisioning is disabled",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.isUserProvisioningEnabled = false
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.GenericOAuthModule,
+				AuthID:          "1",
+			},
+		},
+		{
+			desc: "it should skip validation if allowedNonProvisionedUsers is enabled",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = true
+				userSyncService.isUserProvisioningEnabled = true
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.GenericOAuthModule,
+				AuthID:          "1",
+			},
+		},
+		{
+			desc: "it should skip validation if the user is authenticated via GrafanaComAuthModule",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.GrafanaComAuthModule,
+				AuthID:          "1",
+			},
+		},
+		{
+			desc: "it should fail to validate the identity with the provisioned user, unexpected error",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedError: errors.New("random error"),
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "random-external-uid",
+			},
+			expectedErr: errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation"),
+		},
+		{
+			desc: "it should fail to validate the identity with the provisioned user, no user found",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "random-external-uid",
+			},
+			expectedErr: errUnableToRetrieveUser.Errorf("unable to retrieve user for validation"),
+		},
+		{
+			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - empty ExternalUID",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: true,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:     1,
+						AuthModule: login.SAMLAuthModule,
+						AuthId:     "1",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "random-external-uid",
+			},
+			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
+		},
+		{
+			desc: "it should fail to validate the provisioned user.ExternalUID with the identity.ExternalUID - different ExternalUID",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: true,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "different-external-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "random-external-uid",
+			},
+			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
+		},
+		{
+			desc: "it should successfully validate the provisioned user.ExternalUID with the identity.ExternalUID",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: true,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "random-external-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "random-external-uid",
+			},
+		},
+		{
+			desc: "it should failed to validate a non provisioned user when retrieved from the database",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: false,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "random-external-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "random-external-uid",
+			},
+			expectedErr: errUserNotProvisioned.Errorf("user is not provisioned"),
+		},
+		{
+			desc: "it should skip validation if identity is incomplete because it's not from the SAML auth flow",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: true,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "random-external-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "",
+			},
+			expectedErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			userSyncService := tt.userSyncServiceSetup()
+			err := userSyncService.ValidateUserProvisioningHook(context.Background(), tt.identity, nil)
+			require.ErrorIs(t, err, tt.expectedErr)
 		})
 	}
 }

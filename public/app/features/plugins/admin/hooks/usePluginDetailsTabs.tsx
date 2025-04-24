@@ -63,6 +63,16 @@ export const usePluginDetailsTabs = (
       });
     }
 
+    if (isPublished && plugin?.details?.screenshots?.length) {
+      navModelChildren.push({
+        text: PluginTabLabels.SCREENSHOTS,
+        id: PluginTabIds.SCREENSHOTS,
+        icon: 'camera',
+        url: `${pathname}?page=${PluginTabIds.SCREENSHOTS}`,
+        active: PluginTabIds.SCREENSHOTS === currentPageId,
+      });
+    }
+
     if (isPublished && isNarrowScreen && config.featureToggles.pluginsDetailsRightPanel) {
       navModelChildren.push({
         text: PluginTabLabels.PLUGINDETAILS,
@@ -116,16 +126,6 @@ export const usePluginDetailsTabs = (
     }
 
     if (pluginConfig.meta.type === PluginType.app) {
-      if (pluginConfig.angularConfigCtrl) {
-        navModelChildren.push({
-          text: 'Config',
-          icon: 'cog',
-          id: PluginTabIds.CONFIG,
-          url: `${pathname}?page=${PluginTabIds.CONFIG}`,
-          active: PluginTabIds.CONFIG === currentPageId,
-        });
-      }
-
       if (pluginConfig.configPages) {
         for (const configPage of pluginConfig.configPages) {
           navModelChildren.push({
@@ -185,10 +185,6 @@ function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: Grafana
 
   if (!hasAccess || pluginConfig.meta.type !== PluginType.app) {
     return PluginTabIds.OVERVIEW;
-  }
-
-  if (pluginConfig.angularConfigCtrl) {
-    return PluginTabIds.CONFIG;
   }
 
   if (pluginConfig.configPages?.length) {

@@ -13,6 +13,7 @@ export enum GrafanaRuleFormStep {
 
 export const ui = {
   loadingIndicator: byText('Loading rule...'),
+  manualRestoreBanner: byText(/restoring rule manually/i),
   inputs: {
     name: byRole('textbox', { name: 'name' }),
     metric: byRole('textbox', { name: 'metric' }),
@@ -39,13 +40,22 @@ export const ui = {
   },
   buttons: {
     saveAndExit: byRole('button', { name: 'Save rule and exit' }),
-    save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     preview: byRole('button', { name: /^Preview$/ }),
   },
 };
-export function renderRuleEditor(identifier?: string, recording?: 'recording' | 'grafana-recording') {
+export function renderRuleEditor(
+  identifier?: string,
+  recording?: 'recording' | 'grafana-recording',
+  restoreFrom?: string
+) {
+  const isManualRestore = Boolean(restoreFrom);
+  const restoreFromEncoded = restoreFrom ? encodeURIComponent(restoreFrom) : '';
+  const newAlertRuleRoute =
+    `/alerting/new/${recording ?? 'alerting'}` +
+    (isManualRestore ? `?isManualRestore=true&defaults=${restoreFromEncoded}` : '');
+  const initialEntries = [identifier ? `/alerting/${identifier}/edit` : newAlertRuleRoute];
   return render(
     <>
       <AppNotificationList />
@@ -56,7 +66,7 @@ export function renderRuleEditor(identifier?: string, recording?: 'recording' | 
     </>,
     {
       historyOptions: {
-        initialEntries: [identifier ? `/alerting/${identifier}/edit` : `/alerting/new/${recording ?? 'alerting'}`],
+        initialEntries: initialEntries,
       },
     }
   );

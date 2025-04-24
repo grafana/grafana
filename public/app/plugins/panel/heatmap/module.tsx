@@ -8,7 +8,7 @@ import {
   HeatmapCellLayout,
 } from '@grafana/schema';
 import { TooltipDisplayMode } from '@grafana/ui';
-import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/src/options/builder';
+import { addHideFrom, ScaleDistributionEditor } from '@grafana/ui/internal';
 import { ColorScale } from 'app/core/components/ColorScale/ColorScale';
 import { addHeatmapCalculationOptions } from 'app/features/transformers/calculateHeatmap/editor/helper';
 import { readHeatmapRowsCustomMeta } from 'app/features/transformers/calculateHeatmap/heatmap';

@@ -17,7 +17,7 @@ You can use an encryption key from AWS Key Management Service to encrypt secrets
 **Prerequisites:**
 
 - An AWS account with permission to view and create KMS keys and programmatic credentials to access those keys
-- Access to the Grafana [configuration]({{< relref "../../../configure-grafana#configuration-file-location" >}}) file
+- Access to the Grafana [configuration](../../../configure-grafana/#configuration-file-location) file
 
 1. Create a symmetric API key either from the AWS Management Console or by using the AWS KMS API.
    <br><br>For detailed instructions, refer to [Creating keys](https://docs.aws.amazon.com/kms/latest/developerguide/create-keys.html).

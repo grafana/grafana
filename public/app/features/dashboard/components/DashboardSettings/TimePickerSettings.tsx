@@ -106,6 +106,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           <Input
             id="now-delay-input"
             invalid={!this.state.isNowDelayValid}
+            // eslint-disable-next-line @grafana/no-untranslated-strings
             placeholder="0m"
             onChange={this.onNowDelayChange}
             defaultValue={this.props.nowDelay}
@@ -122,7 +123,7 @@ export class TimePickerSettings extends PureComponent<Props, State> {
           label={t('dashboard-settings.time-picker.refresh-live-dashboards-label', 'Refresh live dashboards')}
           description={t(
             'dashboard-settings.time-picker.refresh-live-dashboards-description',
-            "Continuously re-draw panels where the time range references 'now'"
+            'Continuously update panels when the time range includes the current time'
           )}
         >
           <Switch id="refresh-live-dashboards-toggle" value={!!this.props.liveNow} onChange={this.onLiveNowChange} />

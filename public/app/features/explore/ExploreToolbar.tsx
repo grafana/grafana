@@ -14,6 +14,7 @@ import {
   ToolbarButton,
   ButtonGroup,
   useStyles2,
+  Button,
 } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { t, Trans } from 'app/core/internationalization';
@@ -204,16 +205,17 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
   };
 
   const navBarActions = [
-    <ToolbarButton
+    <Button
       key="query-history"
-      variant={drawerOpened ? 'active' : 'canvas'}
+      size="sm"
+      variant={'secondary'}
       aria-label={t('explore.secondary-actions.query-history-button-aria-label', 'Query history')}
       onClick={() => setDrawerOpened(!drawerOpened)}
       data-testid={Components.QueryTab.queryHistoryButton}
       icon="history"
     >
       <Trans i18nKey="explore.secondary-actions.query-history-button">Query history</Trans>
-    </ToolbarButton>,
+    </Button>,
     <ShortLinkButtonMenu key="share" />,
   ];
 
@@ -227,7 +229,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
           <ToolbarButton
             key="content-outline"
             variant="canvas"
-            tooltip="Content outline"
+            tooltip={t('explore.explore-toolbar.tooltip-content-outline', 'Content outline')}
             icon="list-ui-alt"
             iconOnly={splitted}
             onClick={onContentOutlineToogle}
@@ -235,7 +237,7 @@ export function ExploreToolbar({ exploreId, onChangeTime, onContentOutlineToogle
             aria-controls={isContentOutlineOpen ? 'content-outline-container' : undefined}
             className={styles.toolbarButton}
           >
-            Outline
+            <Trans i18nKey="explore.explore-toolbar.outline">Outline</Trans>
           </ToolbarButton>,
           <DataSourcePicker
             key={`${exploreId}-ds-picker`}

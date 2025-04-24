@@ -48,17 +48,6 @@ func TestGetCheck_UnknownType(t *testing.T) {
 	assert.Contains(t, err.Error(), "unknown check type unknownType")
 }
 
-func TestSetStatusAnnotation(t *testing.T) {
-	obj := &advisorv0alpha1.Check{}
-	obj.SetAnnotations(map[string]string{})
-	client := &mockClient{}
-	ctx := context.TODO()
-
-	err := setStatusAnnotation(ctx, client, obj, "processed")
-	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
-}
-
 func TestProcessCheck(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{})

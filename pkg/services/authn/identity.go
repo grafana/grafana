@@ -76,6 +76,8 @@ type Identity struct {
 	Permissions map[int64]map[string][]string
 	// IDToken is a signed token representing the identity that can be forwarded to plugins and external services.
 	IDToken string
+	// ExternalUID is the unique identifier for the entity in the external system.
+	ExternalUID string
 
 	IDTokenClaims     *authn.Claims[authn.IDTokenClaims]
 	AccessTokenClaims *authn.Claims[authn.AccessTokenClaims]

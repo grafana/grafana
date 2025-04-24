@@ -2779,6 +2779,7 @@
       }
     },
     "AnnotationActions": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "canAdd": {
@@ -2853,6 +2854,7 @@
       }
     },
     "AnnotationPermission": {
+      "description": "+k8s:deepcopy-gen=true",
       "type": "object",
       "properties": {
         "dashboard": {
@@ -3206,6 +3208,24 @@
             "type": "string"
           }
         },
+        "InhibitAnyPolicy": {
+          "description": "InhibitAnyPolicy and InhibitAnyPolicyZero indicate the presence and value\nof the inhibitAnyPolicy extension.\n\nThe value of InhibitAnyPolicy indicates the number of additional\ncertificates in the path after this certificate that may use the\nanyPolicy policy OID to indicate a match with any other policy.\n\nWhen parsing a certificate, a positive non-zero InhibitAnyPolicy means\nthat the field was specified, -1 means it was unset, and\nInhibitAnyPolicyZero being true mean that the field was explicitly set to\nzero. The case of InhibitAnyPolicy==0 with InhibitAnyPolicyZero==false\nshould be treated equivalent to -1 (unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "InhibitAnyPolicyZero": {
+          "description": "InhibitAnyPolicyZero indicates that InhibitAnyPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
+        },
+        "InhibitPolicyMapping": {
+          "description": "InhibitPolicyMapping and InhibitPolicyMappingZero indicate the presence\nand value of the inhibitPolicyMapping field of the policyConstraints\nextension.\n\nThe value of InhibitPolicyMapping indicates the number of additional\ncertificates in the path after this certificate that may use policy\nmapping.\n\nWhen parsing a certificate, a positive non-zero InhibitPolicyMapping\nmeans that the field was specified, -1 means it was unset, and\nInhibitPolicyMappingZero being true mean that the field was explicitly\nset to zero. The case of InhibitPolicyMapping==0 with\nInhibitPolicyMappingZero==false should be treated equivalent to -1\n(unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "InhibitPolicyMappingZero": {
+          "description": "InhibitPolicyMappingZero indicates that InhibitPolicyMapping==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
+        },
         "IsCA": {
           "type": "boolean"
         },
@@ -3270,17 +3290,24 @@
           }
         },
         "Policies": {
-          "description": "Policies contains all policy identifiers included in the certificate.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
+          "description": "Policies contains all policy identifiers included in the certificate.\nSee CreateCertificate for context about how this field and the PolicyIdentifiers field\ninteract.\nIn Go 1.22, encoding/gob cannot handle and ignores this field.",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "PolicyIdentifiers": {
-          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.",
+          "description": "PolicyIdentifiers contains asn1.ObjectIdentifiers, the components\nof which are limited to int32. If a certificate contains a policy which\ncannot be represented by asn1.ObjectIdentifier, it will not be included in\nPolicyIdentifiers, but will be present in Policies, which contains all parsed\npolicy OIDs.\nSee CreateCertificate for context about how this field and the Policies field\ninteract.",
           "type": "array",
           "items": {
             "$ref": "#/definitions/ObjectIdentifier"
+          }
+        },
+        "PolicyMappings": {
+          "description": "PolicyMappings contains a list of policy mappings included in the certificate.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/PolicyMapping"
           }
         },
         "PublicKey": {},
@@ -3321,6 +3348,15 @@
             "type": "integer",
             "format": "uint8"
           }
+        },
+        "RequireExplicitPolicy": {
+          "description": "RequireExplicitPolicy and RequireExplicitPolicyZero indicate the presence\nand value of the requireExplicitPolicy field of the policyConstraints\nextension.\n\nThe value of RequireExplicitPolicy indicates the number of additional\ncertificates in the path after this certificate before an explicit policy\nis required for the rest of the path. When an explicit policy is required,\neach subsequent certificate in the path must contain a required policy OID,\nor a policy OID which has been declared as equivalent through the policy\nmapping extension.\n\nWhen parsing a certificate, a positive non-zero RequireExplicitPolicy\nmeans that the field was specified, -1 means it was unset, and\nRequireExplicitPolicyZero being true mean that the field was explicitly\nset to zero. The case of RequireExplicitPolicy==0 with\nRequireExplicitPolicyZero==false should be treated equivalent to -1\n(unset).",
+          "type": "integer",
+          "format": "int64"
+        },
+        "RequireExplicitPolicyZero": {
+          "description": "RequireExplicitPolicyZero indicates that RequireExplicitPolicy==0 should be\ninterpreted as an actual maximum path length of zero. Otherwise, that\ncombination is interpreted as InhibitAnyPolicy not being set.",
+          "type": "boolean"
         },
         "SerialNumber": {
           "type": "string"
@@ -3861,6 +3897,30 @@
         }
       }
     },
+    "CreateSnapshotRequestDTO": {
+      "type": "object",
+      "properties": {
+        "resourceTypes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ]
+          }
+        }
+      }
+    },
     "CreateSnapshotResponseDTO": {
       "type": "object",
       "properties": {
@@ -4046,6 +4106,9 @@
       "properties": {
         "annotationsPermissions": {
           "$ref": "#/definitions/AnnotationPermission"
+        },
+        "apiVersion": {
+          "type": "string"
         },
         "canAdmin": {
           "type": "boolean"
@@ -4737,6 +4800,9 @@
           "type": "integer",
           "format": "int64"
         },
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
+        },
         "orgId": {
           "type": "integer",
           "format": "int64"
@@ -4751,10 +4817,6 @@
           "items": {
             "$ref": "#/definitions/Folder"
           }
-        },
-        "repository": {
-          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
-          "type": "string"
         },
         "title": {
           "type": "string"
@@ -4785,11 +4847,10 @@
           "type": "integer",
           "format": "int64"
         },
-        "parentUid": {
-          "type": "string"
+        "managedBy": {
+          "$ref": "#/definitions/ManagerKind"
         },
-        "repository": {
-          "description": "When the folder belongs to a repository\nNOTE: this is only populated when folders are managed by unified storage",
+        "parentUid": {
           "type": "string"
         },
         "title": {
@@ -5536,6 +5597,11 @@
         }
       }
     },
+    "ManagerKind": {
+      "description": "It can be a user or a tool or a generic API client.\n+enum",
+      "type": "string",
+      "title": "ManagerKind is the type of manager, which is responsible for managing the resource."
+    },
     "MassDeleteAnnotationsCmd": {
       "type": "object",
       "properties": {
@@ -5871,6 +5937,9 @@
         "isExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "lastSeenAt": {
           "type": "string",
           "format": "date-time"
@@ -5991,6 +6060,9 @@
           "type": "string"
         },
         "language": {
+          "type": "string"
+        },
+        "locale": {
           "type": "string"
         },
         "navbar": {
@@ -6175,6 +6247,20 @@
         "$ref": "#/definitions/Playlist"
       }
     },
+    "PolicyMapping": {
+      "type": "object",
+      "title": "PolicyMapping represents a policy mapping entry in the policyMappings extension.",
+      "properties": {
+        "IssuerDomainPolicy": {
+          "description": "IssuerDomainPolicy contains a policy OID the issuing certificate considers\nequivalent to SubjectDomainPolicy in the subject certificate.",
+          "type": "string"
+        },
+        "SubjectDomainPolicy": {
+          "description": "SubjectDomainPolicy contains a OID the issuing certificate considers\nequivalent to IssuerDomainPolicy in the subject certificate.",
+          "type": "string"
+        }
+      }
+    },
     "PostAnnotationsCmd": {
       "type": "object",
       "required": [
@@ -6243,6 +6329,10 @@
         },
         "language": {
           "description": "Selected language (beta)",
+          "type": "string"
+        },
+        "locale": {
+          "description": "Selected locale (beta)",
           "type": "string"
         },
         "navbar": {
@@ -6880,6 +6970,57 @@
         },
         "to": {
           "type": "string"
+        }
+      }
+    },
+    "ResourceDependenciesResponseDTO": {
+      "type": "object",
+      "properties": {
+        "resourceDependencies": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ResourceDependencyDTO"
+          }
+        }
+      }
+    },
+    "ResourceDependencyDTO": {
+      "type": "object",
+      "properties": {
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "DASHBOARD",
+              "DATASOURCE",
+              "FOLDER",
+              "LIBRARY_ELEMENT",
+              "ALERT_RULE",
+              "ALERT_RULE_GROUP",
+              "CONTACT_POINT",
+              "NOTIFICATION_POLICY",
+              "NOTIFICATION_TEMPLATE",
+              "MUTE_TIMING",
+              "PLUGIN"
+            ]
+          }
+        },
+        "resourceType": {
+          "type": "string",
+          "enum": [
+            "DASHBOARD",
+            "DATASOURCE",
+            "FOLDER",
+            "LIBRARY_ELEMENT",
+            "ALERT_RULE",
+            "ALERT_RULE_GROUP",
+            "CONTACT_POINT",
+            "NOTIFICATION_POLICY",
+            "NOTIFICATION_TEMPLATE",
+            "MUTE_TIMING",
+            "PLUGIN"
+          ]
         }
       }
     },
@@ -7623,9 +7764,15 @@
         "email": {
           "type": "string"
         },
+        "externalUID": {
+          "type": "string"
+        },
         "id": {
           "type": "integer",
           "format": "int64"
+        },
+        "isProvisioned": {
+          "type": "boolean"
         },
         "memberCount": {
           "type": "integer",
@@ -7739,6 +7886,9 @@
         "userId": {
           "type": "integer",
           "format": "int64"
+        },
+        "userUID": {
+          "type": "string"
         }
       }
     },
@@ -8320,6 +8470,9 @@
         "language": {
           "type": "string"
         },
+        "locale": {
+          "type": "string"
+        },
         "navbar": {
           "$ref": "#/definitions/NavbarPreference"
         },
@@ -8549,6 +8702,9 @@
         "isGrafanaAdminExternallySynced": {
           "type": "boolean"
         },
+        "isProvisioned": {
+          "type": "boolean"
+        },
         "login": {
           "type": "string"
         },
@@ -8594,6 +8750,9 @@
           "type": "boolean"
         },
         "isDisabled": {
+          "type": "boolean"
+        },
+        "isProvisioned": {
           "type": "boolean"
         },
         "lastSeenAt": {
@@ -9946,6 +10105,12 @@
         "type": "object"
       }
     },
+    "notAcceptableError": {
+      "description": "NotAcceptableError is returned when the server cannot produce a response matching the accepted formats.",
+      "schema": {
+        "$ref": "#/definitions/ErrorResponseBody"
+      }
+    },
     "notFoundError": {
       "description": "NotFoundError is returned when the requested resource was not found.",
       "schema": {
@@ -10081,6 +10246,12 @@
       "description": "",
       "schema": {
         "$ref": "#/definitions/ActiveUserStats"
+      }
+    },
+    "resourceDependenciesResponse": {
+      "description": "",
+      "schema": {
+        "$ref": "#/definitions/ResourceDependenciesResponseDTO"
       }
     },
     "resourcePermissionsDescription": {

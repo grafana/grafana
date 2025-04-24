@@ -7,7 +7,7 @@ import { Field } from '../Forms/Field';
 
 import { Combobox, ComboboxProps } from './Combobox';
 import mdx from './Combobox.mdx';
-import { fakeSearchAPI, generateOptions } from './storyUtils';
+import { fakeSearchAPI, generateGroupingOptions, generateOptions } from './storyUtils';
 import { ComboboxOption } from './types';
 
 type PropsAndCustomArgs<T extends string | number = string> = ComboboxProps<T> & {
@@ -103,6 +103,34 @@ export const AutoSize: Story = {
 export const CustomValue: Story = {
   args: {
     createCustomValue: true,
+  },
+  render: BaseCombobox,
+};
+
+export const GroupsWithMixedLabels: Story = {
+  args: {
+    options: [
+      { label: 'One', value: 'one', group: 'Group 1' },
+      { label: 'Two', value: 'two', group: 'Group 1' },
+      { label: 'Three', value: 'three', group: 'Group 3' },
+      { label: 'Four', value: 'four', group: 'Group 1' },
+      { label: 'Five', value: 'five' },
+      { label: 'Six', value: 'six' },
+      { label: 'Seven', value: 'seven', group: 'Group 2' },
+      { label: 'Eight', value: 'eight', group: 'Group 3' },
+      { label: 'Nine', value: 'nine', group: 'Group 3' },
+      { label: 'Ten', value: 'ten', group: 'Group 3' },
+      { label: 'Eleven', value: 'eleven' },
+    ],
+    value: '',
+  },
+  render: BaseCombobox,
+};
+
+export const Groups: Story = {
+  args: {
+    options: await generateGroupingOptions(500),
+    value: '34',
   },
   render: BaseCombobox,
 };

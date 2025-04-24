@@ -39,6 +39,8 @@ const (
 	InstanceStateNoData InstanceStateType = "NoData"
 	// InstanceStateError is for an erroring alert.
 	InstanceStateError InstanceStateType = "Error"
+	// InstanceStateRecovering is for a recovering alert.
+	InstanceStateRecovering InstanceStateType = "Recovering"
 )
 
 // IsValid checks that the value of InstanceStateType is a valid
@@ -48,7 +50,8 @@ func (i InstanceStateType) IsValid() bool {
 		i == InstanceStateNormal ||
 		i == InstanceStateNoData ||
 		i == InstanceStatePending ||
-		i == InstanceStateError
+		i == InstanceStateError ||
+		i == InstanceStateRecovering
 }
 
 // ListAlertInstancesQuery is the query list alert Instances.

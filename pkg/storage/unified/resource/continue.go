@@ -9,6 +9,7 @@ import (
 type ContinueToken struct {
 	StartOffset     int64 `json:"o"`
 	ResourceVersion int64 `json:"v"`
+	SortAscending   bool  `json:"s"`
 }
 
 func (c ContinueToken) String() string {

@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/secrets"
 	secretskv "github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -241,7 +242,7 @@ func (ss *sqlStore) deleteSnapshot(ctx context.Context, snapshotUid string) erro
 	})
 }
 
-func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUid, uid string, resultPage int, resultLimit int) (*cloudmigration.CloudMigrationSnapshot, error) {
+func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUid, uid string, params cloudmigration.SnapshotResultQueryParams) (*cloudmigration.CloudMigrationSnapshot, error) {
 	// first we check if the session exists, using orgId and sessionUid
 	session, err := ss.GetMigrationSessionByUID(ctx, orgID, sessionUid)
 	if err != nil || session == nil {
@@ -272,7 +273,7 @@ func (ss *sqlStore) GetSnapshotByUID(ctx context.Context, orgID int64, sessionUi
 		snapshot.EncryptionKey = []byte(secret)
 	}
 
-	resources, err := ss.getSnapshotResources(ctx, uid, resultPage, resultLimit)
+	resources, err := ss.getSnapshotResources(ctx, uid, params)
 	if err == nil {
 		snapshot.Resources = resources
 	}
@@ -361,9 +362,12 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	errorIds := make(map[errId][]any)
 
 	for _, r := range resources {
-		if r.Status == cloudmigration.ItemStatusOK {
+		switch r.Status {
+		case cloudmigration.ItemStatusPending:
+			// Do nothing. A pending item should not be updated, as it is still in progress.
+		case cloudmigration.ItemStatusOK:
 			okIds = append(okIds, r.RefID)
-		} else if r.Status == cloudmigration.ItemStatusError {
+		case cloudmigration.ItemStatusError:
 			key := errId{errCode: r.ErrorCode, errStr: r.Error}
 			if ids, ok := errorIds[key]; ok {
 				errorIds[key] = append(ids, r.RefID)
@@ -421,19 +425,23 @@ func (ss *sqlStore) UpdateSnapshotResources(ctx context.Context, snapshotUid str
 	})
 }
 
-func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string, page int, limit int) ([]cloudmigration.CloudMigrationResource, error) {
-	if page < 1 {
-		page = 1
-	}
-	if limit == 0 {
-		limit = 100
-	}
+func (ss *sqlStore) getSnapshotResources(ctx context.Context, snapshotUid string, params cloudmigration.SnapshotResultQueryParams) ([]cloudmigration.CloudMigrationResource, error) {
+	page, limit, col, dir, errorsOnly := int(params.ResultPage), int(params.ResultLimit), string(params.SortColumn), string(params.SortOrder), params.ErrorsOnly
 
 	var resources []cloudmigration.CloudMigrationResource
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
 		offset := (page - 1) * limit
 		sess.Limit(limit, offset)
-		return sess.OrderBy("id ASC").Find(&resources, &cloudmigration.CloudMigrationResource{
+		if errorsOnly {
+			sess.Where("status = ?", cloudmigration.ItemStatusError)
+		}
+		// TODO: It would be better if the query builder supported a case-insensitive flag for the .OrderBy() method
+		orderByClause := fmt.Sprintf("lower(%s) %s", col, dir)
+		if ss.db.GetDBType() == migrator.Postgres || // Postgres does not support lower() in ORDER BY -- sorts by case-insensitive by default
+			params.SortColumn == cloudmigration.SortColumnID { // Don't apply a string sort to a numeric column
+			orderByClause = fmt.Sprintf("%s %s", col, dir)
+		}
+		return sess.OrderBy(orderByClause).Find(&resources, &cloudmigration.CloudMigrationResource{
 			SnapshotUID: snapshotUid,
 		})
 	})

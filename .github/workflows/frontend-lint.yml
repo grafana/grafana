@@ -7,7 +7,7 @@ on:
       - release-*.*.*
 
 jobs:
-  verify-i18n:
+  lint-frontend-verify-i18n:
     name: Verify i18n
     runs-on: ubuntu-latest
     steps:
@@ -29,8 +29,8 @@ jobs:
             echo "${uncommited_error_message}"
             exit 1
         fi
-  prettier:
-    name: Prettier
+  lint-frontend-prettier:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -41,7 +41,8 @@ jobs:
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - run: yarn run prettier:check
-  typecheck:
+    - run: yarn run lint
+  lint-frontend-typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
@@ -53,3 +54,15 @@ jobs:
         cache-dependency-path: 'yarn.lock'
     - run: yarn install --immutable --check-cache
     - run: yarn run typecheck
+  lint-frontend-betterer:
+    name: Betterer
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version-file: '.nvmrc'
+        cache: 'yarn'
+        cache-dependency-path: 'yarn.lock'
+    - run: yarn install --immutable --check-cache
+    - run: yarn run betterer:ci

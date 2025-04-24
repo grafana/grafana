@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/mattn/go-sqlite3"
+
 	"xorm.io/xorm"
 )
 
@@ -15,8 +16,8 @@ type SQLite3 struct {
 
 func NewSQLite3Dialect() Dialect {
 	d := SQLite3{}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = SQLite
+	d.dialect = &d
+	d.driverName = SQLite
 	return &d
 }
 
@@ -30,6 +31,13 @@ func (db *SQLite3) Quote(name string) string {
 
 func (db *SQLite3) AutoIncrStr() string {
 	return "AUTOINCREMENT"
+}
+
+func (db *SQLite3) BooleanValue(value bool) any {
+	if value {
+		return 1
+	}
+	return 0
 }
 
 func (db *SQLite3) BooleanStr(value bool) string {
@@ -95,7 +103,7 @@ func (db *SQLite3) CleanDB(engine *xorm.Engine) error {
 // TruncateDBTables deletes all data from all the tables and resets the sequences.
 // A special case is the dashboard_acl table where we keep the default permissions.
 func (db *SQLite3) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}

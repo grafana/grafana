@@ -479,11 +479,11 @@ func populateSSOSettings(sqlStore db.DB, template models.SSOSettings, providers 
 
 func getSSOSettingsCountByDeleted(sqlStore db.DB) (deleted, notDeleted int64, err error) {
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		deleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(true)).Count()
+		deleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanValue(true)).Count()
 		if err != nil {
 			return err
 		}
-		notDeleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanStr(false)).Count()
+		notDeleted, err = sess.Table("sso_setting").Where("is_deleted = ?", sqlStore.GetDialect().BooleanValue(false)).Count()
 		return err
 	})
 
@@ -495,7 +495,7 @@ func getSSOSettingsByProvider(sqlStore db.DB, provider string, deleted bool) (*m
 	var err error
 
 	err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
-		_, err = sess.Table("sso_setting").Where("provider = ? AND is_deleted = ?", provider, sqlStore.GetDialect().BooleanStr(deleted)).Get(&model)
+		_, err = sess.Table("sso_setting").Where("provider = ? AND is_deleted = ?", provider, sqlStore.GetDialect().BooleanValue(deleted)).Get(&model)
 		return err
 	})
 

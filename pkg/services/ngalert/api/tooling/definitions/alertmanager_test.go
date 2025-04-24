@@ -167,7 +167,7 @@ func Test_Marshaling_Validation(t *testing.T) {
 	require.Nil(t, json.Unmarshal(jsonEncoded, &tmp))
 
 	expected := []model.LabelName{"alertname"}
-	require.Equal(t, expected, tmp.AlertmanagerConfig.Config.Route.GroupBy)
+	require.Equal(t, expected, tmp.AlertmanagerConfig.Route.GroupBy)
 }
 
 func Test_RawMessageMarshaling(t *testing.T) {

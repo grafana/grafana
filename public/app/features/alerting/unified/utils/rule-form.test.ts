@@ -1,10 +1,18 @@
 import { PromQuery } from '@grafana/prometheus';
-import { GrafanaAlertStateDecision, GrafanaRuleDefinition, RulerAlertingRuleDTO } from 'app/types/unified-alerting-dto';
+import {
+  AlertDataQuery,
+  AlertQuery,
+  GrafanaAlertStateDecision,
+  GrafanaRuleDefinition,
+  RulerAlertingRuleDTO,
+} from 'app/types/unified-alerting-dto';
 
+import { mockDataSource } from '../mocks';
 import { getDefaultFormValues } from '../rule-editor/formDefaults';
+import { setupDataSources } from '../testSetup/datasources';
 import { AlertManagerManualRouting, RuleFormType, RuleFormValues } from '../types/rule-form';
 
-import { GRAFANA_RULES_SOURCE_NAME } from './datasource';
+import { DataSourceType, GRAFANA_RULES_SOURCE_NAME } from './datasource';
 import {
   alertingRulerRuleToRuleForm,
   cleanAnnotations,
@@ -12,6 +20,7 @@ import {
   formValuesToRulerGrafanaRuleDTO,
   formValuesToRulerRuleDTO,
   getContactPointsFromDTO,
+  getInstantFromDataQuery,
   getNotificationSettingsForDTO,
 } from './rule-form';
 
@@ -252,5 +261,73 @@ describe('cleanLabels', () => {
   it('should leave empty values', () => {
     const output = cleanLabels([{ key: 'key', value: '' }]);
     expect(output).toStrictEqual([{ key: 'key', value: '' }]);
+  });
+});
+
+describe('getInstantFromDataQuery', () => {
+  const query: AlertQuery<AlertDataQuery> = {
+    refId: 'Q',
+    datasourceUid: 'abc123',
+    queryType: '',
+    relativeTimeRange: {
+      from: 600,
+      to: 0,
+    },
+    model: {
+      refId: 'Q',
+    },
+  };
+
+  it('should return undefined if datasource UID is undefined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'Mimir-cloud', uid: 'mimir-1' }));
+    const result = getInstantFromDataQuery({ ...query });
+    expect(result).toBeUndefined();
+  });
+
+  it('should return undefined if datasource type is not Prometheus or Loki', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Alertmanager, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+    expect(result).toBeUndefined();
+  });
+
+  it('should return true if datasource is Prometheus and instant is not defined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+
+    expect(result).toBe(true);
+  });
+
+  it('should return the value of instant if datasource is Prometheus and instant is defined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Prometheus, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa', model: { refId: 'f', instant: false } });
+    expect(result).toBe(false);
+  });
+
+  it('should return true if datasource is Loki and queryType is not defined', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({ ...query, datasourceUid: 'aa' });
+    expect(result).toBe(true);
+  });
+
+  it('should return true if datasource is Loki and queryType is instant', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({
+      ...query,
+      datasourceUid: 'aa',
+      model: { refId: 'f', queryType: 'instant' },
+    });
+
+    expect(result).toBe(true);
+  });
+
+  it('should return false if datasource is Loki and queryType is not instant', () => {
+    setupDataSources(mockDataSource({ type: DataSourceType.Loki, name: 'aa', uid: 'aa-1' }));
+    const result = getInstantFromDataQuery({
+      ...query,
+      datasourceUid: 'aa',
+      model: { refId: 'f', queryType: 'range' },
+    });
+
+    expect(result).toBe(false);
   });
 });

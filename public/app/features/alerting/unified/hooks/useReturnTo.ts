@@ -1,5 +1,5 @@
 import { textUtil } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 
 import { logWarning } from '../Analytics';
 
@@ -9,6 +9,8 @@ import { useURLSearchParams } from './useURLSearchParams';
  * This hook provides a safe way to obtain the `returnTo` URL from the query string parameter
  * It validates the origin and protocol to ensure the URL is withing the Grafana app
  */
+export function useReturnTo(): { returnTo: string | undefined };
+export function useReturnTo(fallback: string): { returnTo: string };
 export function useReturnTo(fallback?: string): { returnTo: string | undefined } {
   const emptyResult = { returnTo: fallback };
 
@@ -36,6 +38,12 @@ export function useReturnTo(fallback?: string): { returnTo: string | undefined }
   }
 
   return { returnTo: `${pathname}${search}` };
+}
+
+/* Create a "returnTo" URL */
+export function createReturnTo(includeSearch = true): string {
+  const { pathname, search } = locationService.getLocation();
+  return pathname + (includeSearch ? search : '');
 }
 
 // Tries to mimic URL.parse method https://developer.mozilla.org/en-US/docs/Web/API/URL/parse_static

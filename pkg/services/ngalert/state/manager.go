@@ -55,8 +55,7 @@ type Manager struct {
 	historian     Historian
 	externalURL   *url.URL
 
-	applyNoDataAndErrorToAllStates bool
-	rulesPerRuleGroupLimit         int64
+	rulesPerRuleGroupLimit int64
 
 	persister StatePersister
 }
@@ -73,10 +72,8 @@ type ManagerCfg struct {
 	// StatePeriodicSaveBatchSize controls the size of the alert instance batch that is saved periodically when the
 	// alertingSaveStatePeriodic feature flag is enabled.
 	StatePeriodicSaveBatchSize int
-	// ApplyNoDataAndErrorToAllStates makes state manager to apply exceptional results (NoData and Error)
-	// to all states when corresponding execution in the rule definition is set to either `Alerting` or `OK`
-	ApplyNoDataAndErrorToAllStates bool
-	RulesPerRuleGroupLimit         int64
+
+	RulesPerRuleGroupLimit int64
 
 	DisableExecution bool
 
@@ -96,24 +93,19 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	}
 
 	m := &Manager{
-		cache:                          c,
-		ResendDelay:                    ResendDelay, // TODO: make this configurable
-		ResolvedRetention:              cfg.ResolvedRetention,
-		log:                            cfg.Log,
-		metrics:                        cfg.Metrics,
-		instanceStore:                  cfg.InstanceStore,
-		images:                         cfg.Images,
-		historian:                      cfg.Historian,
-		clock:                          cfg.Clock,
-		externalURL:                    cfg.ExternalURL,
-		applyNoDataAndErrorToAllStates: cfg.ApplyNoDataAndErrorToAllStates,
-		rulesPerRuleGroupLimit:         cfg.RulesPerRuleGroupLimit,
-		persister:                      statePersister,
-		tracer:                         cfg.Tracer,
-	}
-
-	if m.applyNoDataAndErrorToAllStates {
-		m.log.Info("Running in alternative execution of Error/NoData mode")
+		cache:                  c,
+		ResendDelay:            ResendDelay, // TODO: make this configurable
+		ResolvedRetention:      cfg.ResolvedRetention,
+		log:                    cfg.Log,
+		metrics:                cfg.Metrics,
+		instanceStore:          cfg.InstanceStore,
+		images:                 cfg.Images,
+		historian:              cfg.Historian,
+		clock:                  cfg.Clock,
+		externalURL:            cfg.ExternalURL,
+		rulesPerRuleGroupLimit: cfg.RulesPerRuleGroupLimit,
+		persister:              statePersister,
+		tracer:                 cfg.Tracer,
 	}
 
 	return m
@@ -255,9 +247,8 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 			startsAt = now
 		}
 		s.SetNormal(reason, startsAt, now)
-		// Set Resolved property so the scheduler knows to send a postable alert
-		// to Alertmanager.
-		if oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData {
+		// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
+		if s.ShouldBeResolved(oldState) {
 			s.ResolvedAt = &now
 		} else {
 			s.ResolvedAt = nil
@@ -358,7 +349,7 @@ func (st *Manager) ProcessEvalResults(
 	}
 
 	logger.Debug("State manager processing evaluation results", "resultCount", len(results))
-	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn)
+	states := st.setNextStateForRule(ctx, alertRule, results, extraLabels, logger, fn, evaluatedAt)
 
 	staleStates := st.deleteStaleStatesFromCache(logger, evaluatedAt, alertRule, fn)
 	span.AddEvent("results processed", trace.WithAttributes(
@@ -402,8 +393,8 @@ func (st *Manager) updateLastSentAt(states StateTransitions, evaluatedAt time.Ti
 	return result
 }
 
-func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger, takeImageFn takeImageFn) []StateTransition {
-	if st.applyNoDataAndErrorToAllStates && results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
+func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.AlertRule, results eval.Results, extraLabels data.Labels, logger log.Logger, takeImageFn takeImageFn, now time.Time) []StateTransition {
+	if results.IsNoData() && (alertRule.NoDataState == ngModels.Alerting || alertRule.NoDataState == ngModels.OK || alertRule.NoDataState == ngModels.KeepLast) { // If it is no data, check the mapping and switch all results to the new state
 		// aggregate UID of datasources that returned NoData into one and provide as auxiliary info via annotationa. See: https://github.com/grafana/grafana/issues/88184
 		var refIds strings.Builder
 		var datasourceUIDs strings.Builder
@@ -430,12 +421,20 @@ func (st *Manager) setNextStateForRule(ctx context.Context, alertRule *ngModels.
 			"datasource_uid": datasourceUIDs.String(),
 			"ref_id":         refIds.String(),
 		}
-		transitions := st.setNextStateForAll(alertRule, results[0], logger, annotations, takeImageFn)
+		result := eval.Result{
+			Instance:    data.Labels{},
+			State:       eval.NoData,
+			EvaluatedAt: now,
+		}
+		if len(results) > 0 {
+			result = results[0]
+		}
+		transitions := st.setNextStateForAll(alertRule, result, logger, annotations, takeImageFn)
 		if len(transitions) > 0 {
 			return transitions // if there are no current states for the rule. Create ones for each result
 		}
 	}
-	if st.applyNoDataAndErrorToAllStates && results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
+	if results.IsError() && (alertRule.ExecErrState == ngModels.AlertingErrState || alertRule.ExecErrState == ngModels.OkErrState || alertRule.ExecErrState == ngModels.KeepLastErrState) {
 		// TODO squash all errors into one, and provide as annotation
 		transitions := st.setNextStateForAll(alertRule, results[0], logger, nil, takeImageFn)
 		if len(transitions) > 0 {
@@ -510,6 +509,8 @@ func translateInstanceState(state ngModels.InstanceStateType) eval.State {
 		return eval.NoData
 	case ngModels.InstanceStatePending:
 		return eval.Pending
+	case ngModels.InstanceStateRecovering:
+		return eval.Recovering
 	default:
 		return eval.Error
 	}
@@ -519,7 +520,7 @@ func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt tim
 	// If we are removing two or more stale series it makes sense to share the resolved image as the alert rule is the same.
 	// TODO: We will need to change this when we support images without screenshots as each series will have a different image
 	staleStates := st.cache.deleteRuleStates(alertRule.GetKey(), func(s *State) bool {
-		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds)
+		return stateIsStale(evaluatedAt, s.LastEvaluationTime, alertRule.IntervalSeconds, alertRule.GetMissingSeriesEvalsToResolve())
 	})
 	resolvedStates := make([]StateTransition, 0, len(staleStates))
 
@@ -533,7 +534,8 @@ func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt tim
 		s.EndsAt = evaluatedAt
 		s.LastEvaluationTime = evaluatedAt
 
-		if oldState == eval.Alerting {
+		// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
+		if s.ShouldBeResolved(oldState) {
 			s.ResolvedAt = &evaluatedAt
 			image := takeImageFn("stale state")
 			if image != nil {
@@ -551,8 +553,18 @@ func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt tim
 	return resolvedStates
 }
 
-func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64) bool {
-	return !lastEval.Add(2 * time.Duration(intervalSeconds) * time.Second).After(evaluatedAt)
+// stateIsStale determines whether the evaluation state is considered stale.
+// A state is considered stale if the data has been missing for at least missingSeriesEvalsToResolve evaluation intervals.
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64, missingSeriesEvalsToResolve int) bool {
+	// If the last evaluation time equals the current evaluation time, the state is not stale.
+	if evaluatedAt.Equal(lastEval) {
+		return false
+	}
+
+	resolveIfMissingDuration := time.Duration(int64(missingSeriesEvalsToResolve)*intervalSeconds) * time.Second
+
+	// timeSinceLastEval >= resolveIfMissingDuration
+	return evaluatedAt.Sub(lastEval) >= resolveIfMissingDuration
 }
 
 func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
@@ -572,6 +584,7 @@ func StatesToRuleStatus(states []*State) ngModels.RuleStatus {
 		case eval.Normal:
 		case eval.Pending:
 		case eval.Alerting:
+		case eval.Recovering:
 		case eval.Error:
 			status.Health = "error"
 		case eval.NoData:

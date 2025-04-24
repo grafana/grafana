@@ -1,4 +1,4 @@
-import { isExpressionReference } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { isExpressionReference } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 
 import { ExpressionQuery, ExpressionQueryType, ReducerType } from './types';

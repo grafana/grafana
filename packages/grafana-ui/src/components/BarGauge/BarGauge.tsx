@@ -527,7 +527,6 @@ export function getBasicAndGradientStyles(props: Props): BasicAndGradientStyles 
   const barStyles: CSSProperties = {
     borderRadius: theme.shape.radius.default,
     position: 'relative',
-    zIndex: 1,
   };
 
   const emptyBar: CSSProperties = {

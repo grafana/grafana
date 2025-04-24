@@ -12,7 +12,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/plugins/backendplugin"
 	"github.com/grafana/grafana/pkg/plugins/backendplugin/pluginextensionv2"
-	"github.com/grafana/grafana/pkg/plugins/backendplugin/secretsmanagerplugin"
 	"github.com/grafana/grafana/pkg/plugins/log"
 )
 
@@ -31,14 +30,13 @@ var handshake = goplugin.HandshakeConfig{
 // pluginSet is list of plugins supported on v2.
 var pluginSet = map[int]goplugin.PluginSet{
 	grpcplugin.ProtocolVersion: {
-		"diagnostics":    &grpcplugin.DiagnosticsGRPCPlugin{},
-		"resource":       &grpcplugin.ResourceGRPCPlugin{},
-		"data":           &grpcplugin.DataGRPCPlugin{},
-		"stream":         &grpcplugin.StreamGRPCPlugin{},
-		"admission":      &grpcplugin.AdmissionGRPCPlugin{},
-		"conversion":     &grpcplugin.ConversionGRPCPlugin{},
-		"renderer":       &pluginextensionv2.RendererGRPCPlugin{},
-		"secretsmanager": &secretsmanagerplugin.SecretsManagerGRPCPlugin{},
+		"diagnostics": &grpcplugin.DiagnosticsGRPCPlugin{},
+		"resource":    &grpcplugin.ResourceGRPCPlugin{},
+		"data":        &grpcplugin.DataGRPCPlugin{},
+		"stream":      &grpcplugin.StreamGRPCPlugin{},
+		"admission":   &grpcplugin.AdmissionGRPCPlugin{},
+		"conversion":  &grpcplugin.ConversionGRPCPlugin{},
+		"renderer":    &pluginextensionv2.RendererGRPCPlugin{},
 	},
 }
 
@@ -84,19 +82,15 @@ func newClientConfig(executablePath string, args []string, env []string, skipHos
 // StartRendererFunc callback function called when a renderer plugin is started.
 type StartRendererFunc func(pluginID string, renderer pluginextensionv2.RendererPlugin, logger log.Logger) error
 
-// StartSecretsManagerFunc callback function called when a secrets manager plugin is started.
-type StartSecretsManagerFunc func(pluginID string, secretsmanager secretsmanagerplugin.SecretsManagerPlugin, logger log.Logger) error
-
 // PluginDescriptor is a descriptor used for registering backend plugins.
 type PluginDescriptor struct {
-	pluginID              string
-	executablePath        string
-	executableArgs        []string
-	skipHostEnvVars       bool
-	managed               bool
-	versionedPlugins      map[int]goplugin.PluginSet
-	startRendererFn       StartRendererFunc
-	startSecretsManagerFn StartSecretsManagerFunc
+	pluginID         string
+	executablePath   string
+	executableArgs   []string
+	skipHostEnvVars  bool
+	managed          bool
+	versionedPlugins map[int]goplugin.PluginSet
+	startRendererFn  StartRendererFunc
 }
 
 // NewBackendPlugin creates a new backend plugin factory used for registering a backend plugin.
@@ -129,16 +123,5 @@ func NewRendererPlugin(pluginID, executablePath string, startFn StartRendererFun
 		managed:          false,
 		versionedPlugins: pluginSet,
 		startRendererFn:  startFn,
-	})
-}
-
-// NewSecretsManagerPlugin creates a new secrets manager plugin factory used for registering a backend secrets manager plugin.
-func NewSecretsManagerPlugin(pluginID, executablePath string, startFn StartSecretsManagerFunc) backendplugin.PluginFactoryFunc {
-	return newPlugin(PluginDescriptor{
-		pluginID:              pluginID,
-		executablePath:        executablePath,
-		managed:               false,
-		versionedPlugins:      pluginSet,
-		startSecretsManagerFn: startFn,
 	})
 }

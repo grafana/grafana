@@ -63,7 +63,7 @@ async function fetchDashboard(
   try {
     switch (args.routeName) {
       case DashboardRoutes.Home: {
-        const stateManager = getDashboardScenePageStateManager();
+        const stateManager = getDashboardScenePageStateManager('v1');
         const cachedDashboard = stateManager.getDashboardFromCache(HOME_DASHBOARD_CACHE_KEY);
 
         if (cachedDashboard) {

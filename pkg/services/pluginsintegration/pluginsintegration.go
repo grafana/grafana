@@ -33,6 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/caching"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/oauthtoken"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angulardetectorsprovider"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularinspector"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/angularpatternsstore"
@@ -53,6 +54,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
 	"github.com/grafana/grafana/pkg/services/rendering"
@@ -69,7 +71,6 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(pluginconfig.PluginRequestConfigProvider), new(*pluginconfig.RequestConfigProvider)),
 	pluginstore.ProvideService,
 	wire.Bind(new(pluginstore.Store), new(*pluginstore.Service)),
-	wire.Bind(new(plugins.SecretsPluginManager), new(*pluginstore.Service)),
 	wire.Bind(new(plugins.StaticRouteResolver), new(*pluginstore.Service)),
 	process.ProvideService,
 	wire.Bind(new(process.Manager), new(*process.Service)),
@@ -129,6 +130,8 @@ var WireSet = wire.NewSet(
 	pluginassets.ProvideService,
 	plugininstaller.ProvidePreinstall,
 	wire.Bind(new(plugininstaller.Preinstall), new(*plugininstaller.PreinstallImpl)),
+	advisor.ProvideService,
+	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be
@@ -144,6 +147,8 @@ var WireExtensionSet = wire.NewSet(
 	wire.Bind(new(plugins.Client), new(*backend.MiddlewareHandler)),
 	managedplugins.NewNoop,
 	wire.Bind(new(managedplugins.Manager), new(*managedplugins.Noop)),
+	provisionedplugins.NewNoop,
+	wire.Bind(new(provisionedplugins.Manager), new(*provisionedplugins.Noop)),
 	sources.ProvideService,
 	wire.Bind(new(sources.Registry), new(*sources.Service)),
 )

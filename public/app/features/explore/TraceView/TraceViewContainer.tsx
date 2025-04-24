@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { DataFrame, SplitOpen, TimeRange } from '@grafana/data';
 import { PanelChrome } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { StoreState, useSelector } from 'app/types';
 
 import { TraceView } from './TraceView';
@@ -29,7 +30,7 @@ export function TraceViewContainer(props: Props) {
   }
 
   return (
-    <PanelChrome padding="none" title="Trace">
+    <PanelChrome padding="none" title={t('explore.trace-view-container.title-trace', 'Trace')}>
       <TraceView
         exploreId={exploreId}
         dataFrames={dataFrames}

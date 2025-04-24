@@ -122,10 +122,9 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     versionSignatureType,
     versionSignedByOrgName,
     url,
-    raiseAnIssueUrl,
   } = plugin;
 
-  const isDisabled = !!error || isDisabledSecretsPlugin(typeCode);
+  const isDisabled = !!error;
   return {
     description,
     downloads,
@@ -161,7 +160,6 @@ export function mapRemoteToCatalog(plugin: RemotePlugin, error?: PluginError): C
     isFullyInstalled: isDisabled,
     latestVersion: plugin.version,
     url,
-    raiseAnIssueUrl,
   };
 }
 
@@ -178,10 +176,9 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     hasUpdate,
     accessControl,
     angularDetected,
-    raiseAnIssueUrl,
   } = plugin;
 
-  const isDisabled = !!error || isDisabledSecretsPlugin(type);
+  const isDisabled = !!error;
   return {
     description,
     downloads: 0,
@@ -213,7 +210,6 @@ export function mapLocalToCatalog(plugin: LocalPlugin, error?: PluginError): Cat
     isFullyInstalled: true,
     iam: plugin.iam,
     latestVersion: plugin.latestVersion,
-    raiseAnIssueUrl,
   };
 }
 
@@ -222,7 +218,7 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const installedVersion = local?.info.version;
   const id = remote?.slug || local?.id || '';
   const type = local?.type || remote?.typeCode;
-  const isDisabled = !!error || isDisabledSecretsPlugin(type);
+  const isDisabled = !!error;
   const keywords = remote?.keywords || local?.info.keywords || [];
 
   let logos = {
@@ -278,7 +274,6 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
     iam: local?.iam,
     latestVersion: local?.latestVersion || remote?.version || '',
     url: remote?.url || '',
-    raiseAnIssueUrl: remote?.raiseAnIssueUrl || local?.raiseAnIssueUrl,
   };
 }
 
@@ -375,7 +370,6 @@ export const hasInstallControlWarning = (
   const isCompatible = Boolean(latestCompatibleVersion);
   return (
     plugin.type === PluginType.renderer ||
-    plugin.type === PluginType.secretsmanager ||
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     plugin.isDev ||
     (!hasPermission && !isExternallyManaged) ||
@@ -406,10 +400,6 @@ export function isPreinstalledPlugin(id: string): { found: boolean; withVersion:
 
   const plugin = pluginCatalogPreinstalledPlugins?.find((p) => p.id === id);
   return { found: !!plugin?.id, withVersion: !!plugin?.version };
-}
-
-function isDisabledSecretsPlugin(type?: PluginType): boolean {
-  return type === PluginType.secretsmanager && !config.secretsManagerPluginEnabled;
 }
 
 export function isLocalCorePlugin(local?: LocalPlugin): boolean {
@@ -474,7 +464,6 @@ export function isPluginUpdatable(plugin: CatalogPlugin) {
 export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   if (
     !isPluginModifiable(plugin) ||
-    plugin.type === PluginType.secretsmanager ||
     (plugin.isEnterprise && !featureEnabled('enterprise.plugins')) ||
     !plugin.isPublished ||
     plugin.isDisabled ||
@@ -484,4 +473,16 @@ export function shouldDisablePluginInstall(plugin: CatalogPlugin) {
   }
 
   return false;
+}
+
+export function isNonAngularVersion(version?: Version) {
+  if (!version) {
+    return false;
+  }
+
+  return version.angularDetected === false;
+}
+
+export function isDisabledAngularPlugin(plugin: CatalogPlugin) {
+  return plugin.isDisabled && plugin.error === PluginErrorCode.angular;
 }

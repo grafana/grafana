@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 	"time"
@@ -94,6 +95,12 @@ func TestSimpleServer(t *testing.T) {
 		require.NoError(t, err)
 		require.Len(t, all.Items, 0)
 
+		// should return 404 if not found
+		found, err := server.Read(ctx, &ReadRequest{Key: key})
+		require.NoError(t, err)
+		require.NotNil(t, found.Error)
+		require.Equal(t, int32(http.StatusNotFound), found.Error.Code)
+
 		created, err := server.Create(ctx, &CreateRequest{
 			Value: raw,
 			Key:   key,
@@ -103,7 +110,7 @@ func TestSimpleServer(t *testing.T) {
 		require.True(t, created.ResourceVersion > 0)
 
 		// The key does not include resource version
-		found, err := server.Read(ctx, &ReadRequest{Key: key})
+		found, err = server.Read(ctx, &ReadRequest{Key: key})
 		require.NoError(t, err)
 		require.Nil(t, found.Error)
 		require.Equal(t, created.ResourceVersion, found.ResourceVersion)
@@ -232,80 +239,5 @@ func TestSimpleServer(t *testing.T) {
 			Value:           raw,
 			ResourceVersion: created.ResourceVersion})
 		require.ErrorIs(t, err, ErrOptimisticLockingFailed)
-	})
-
-	t.Run("playlist restore", func(t *testing.T) {
-		uid := "zzz"
-		raw := []byte(`{
-			"apiVersion": "playlist.grafana.app/v0alpha1",
-			"kind": "Playlist",
-			"metadata": {
-				"name": "fdgsv37qslr0ga",
-				"namespace": "default",
-				"uid": "` + uid + `",
-				"annotations": {
-					"grafana.app/repoName": "elsewhere",
-					"grafana.app/repoPath": "path/to/item",
-					"grafana.app/repoTimestamp": "2024-02-02T00:00:00Z"
-				}
-			},
-			"spec": {
-				"title": "hello",
-				"interval": "5m",
-				"items": [
-					{
-						"type": "dashboard_by_uid",
-						"value": "vmie2cmWz"
-					}
-				]
-			}
-		}`)
-
-		key := &ResourceKey{
-			Group:     "playlist.grafana.app",
-			Resource:  "rrrr",
-			Namespace: "default",
-			Name:      "fdgsv37qslr0ga",
-		}
-
-		// create
-		created, err := server.Create(ctx, &CreateRequest{
-			Value: raw,
-			Key:   key,
-		})
-		require.NoError(t, err)
-
-		// make sure it exists
-		found, err := server.Read(ctx, &ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.Nil(t, found.Error)
-		fmt.Println(found.ResourceVersion)
-
-		// delete it
-		deleted, err := server.Delete(ctx, &DeleteRequest{Key: key, ResourceVersion: created.ResourceVersion})
-		require.NoError(t, err)
-		require.True(t, deleted.ResourceVersion > created.ResourceVersion)
-
-		// restore it
-		restored, err := server.Restore(ctx, &RestoreRequest{
-			Key:             key,
-			ResourceVersion: found.ResourceVersion,
-		})
-		require.NoError(t, err)
-		require.Nil(t, restored.Error)
-		require.True(t, restored.ResourceVersion > deleted.ResourceVersion)
-
-		// ensure it exists now
-		found, err = server.Read(ctx, &ReadRequest{Key: key})
-		require.NoError(t, err)
-		require.Nil(t, found.Error)
-		require.Equal(t, restored.ResourceVersion, found.ResourceVersion)
-		foundUnstructured := &unstructured.Unstructured{}
-		err = foundUnstructured.UnmarshalJSON(found.Value)
-		require.NoError(t, err)
-		foundObj, err := utils.MetaAccessor(foundUnstructured)
-		require.NoError(t, err)
-		// the UID should be different now
-		require.NotEqual(t, uid, string(foundObj.GetUID()))
 	})
 }

@@ -1,6 +1,7 @@
 import * as React from 'react';
 
 import { useTheme2 } from '../../themes';
+import { t } from '../../utils/i18n';
 import { IconButton, Props as IconButtonProps } from '../IconButton/IconButton';
 
 import { getSelectStyles } from './getSelectStyles';
@@ -27,5 +28,13 @@ export type MultiValueRemoveProps = {
 export const MultiValueRemove = ({ children, innerProps }: React.PropsWithChildren<MultiValueRemoveProps>) => {
   const theme = useTheme2();
   const styles = getSelectStyles(theme);
-  return <IconButton {...innerProps} name="times" size="sm" className={styles.multiValueRemove} tooltip="Remove" />;
+  return (
+    <IconButton
+      {...innerProps}
+      name="times"
+      size="sm"
+      className={styles.multiValueRemove}
+      tooltip={t('grafana-ui.select.multi-value-remove', 'Remove')}
+    />
+  );
 };

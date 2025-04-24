@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { DataSourcePluginCategory } from 'app/types';
 
 import { ROUTES } from '../../connections/constants';
@@ -46,7 +47,9 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
       {/* Find more */}
       <div className={styles.more}>
         <LinkButton variant="secondary" href={moreDataSourcesLink} onClick={handleClick} target="_self" rel="noopener">
-          Find more data source plugins
+          <Trans i18nKey="datasources.data-source-categories.find-more-data-source-plugins">
+            Find more data source plugins
+          </Trans>
         </LinkButton>
       </div>
     </>
