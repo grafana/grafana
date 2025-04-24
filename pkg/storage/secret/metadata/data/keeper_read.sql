@@ -16,7 +16,6 @@ FROM
 WHERE 1 = 1 AND
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Name }}
-ORDER BY {{ .Ident "updated" }} DESC
 {{ if .IsForUpdate }}
 {{ .SelectFor "UPDATE" }}
 {{ end }}
