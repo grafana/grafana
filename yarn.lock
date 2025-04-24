@@ -3256,17 +3256,17 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/plugin-e2e@npm:1.17.1":
-  version: 1.17.1
-  resolution: "@grafana/plugin-e2e@npm:1.17.1"
+"@grafana/plugin-e2e@npm:1.20.0-canary.1746.14634339481.0":
+  version: 1.20.0-canary.1746.14634339481.0
+  resolution: "@grafana/plugin-e2e@npm:1.20.0-canary.1746.14634339481.0"
   dependencies:
-    "@grafana/e2e-selectors": "npm:^11.5.0-221187"
+    "@grafana/e2e-selectors": "npm:^12.0.0-235294"
     semver: "npm:^7.5.4"
     uuid: "npm:^11.0.2"
     yaml: "npm:^2.3.4"
   peerDependencies:
-    "@playwright/test": ^1.41.2
-  checksum: 10/d98b06fa04f59e07a8385fd81e8a7b456332d431aa529a0eb748087524f8b7b1bee867e616e01e7d1842b9e3c8dd508e8122fd5fb4d5a0a25162a4657b3dd4c0
+    "@playwright/test": ^1.52.0
+  checksum: 10/7d9179c0a8c7937bdcc3abb7fecdd6a4fff49c4fe81fc7ee3b8dab504c991d1f46b4a2aa9354b49524e29a8c1e2c42ef83041c5d020c278713e8f6f52cfd16ce
   languageName: node
   linkType: hard
 
@@ -17372,7 +17372,7 @@ __metadata:
     "@grafana/llm": "npm:0.13.2"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
-    "@grafana/plugin-e2e": "npm:1.17.1"
+    "@grafana/plugin-e2e": "npm:1.20.0-canary.1746.14634339481.0"
     "@grafana/plugin-ui": "npm:0.10.5"
     "@grafana/prometheus": "workspace:*"
     "@grafana/runtime": "workspace:*"
