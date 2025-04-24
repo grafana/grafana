@@ -319,10 +319,6 @@ const (
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
 
-	// FlagRecoveryThreshold
-	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-	FlagRecoveryThreshold = "recoveryThreshold"
-
 	// FlagLokiStructuredMetadata
 	// Enables the loki data source to request structured metadata from the Loki server
 	FlagLokiStructuredMetadata = "lokiStructuredMetadata"

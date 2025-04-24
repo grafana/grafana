@@ -710,7 +710,7 @@ func TestCreate_HysteresisCommand(t *testing.T) {
 				cache:        cacheService,
 				pluginsStore: store,
 			})
-			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(featuremgmt.FlagRecoveryThreshold), nil, tracing.InitializeTracerForTest()))
+			evaluator := NewEvaluatorFactory(setting.UnifiedAlertingSettings{}, cacheService, expr.ProvideService(&setting.Cfg{ExpressionsEnabled: true}, nil, nil, featuremgmt.WithFeatures(), nil, tracing.InitializeTracerForTest()))
 			evalCtx := NewContextWithPreviousResults(context.Background(), u, testCase.reader)
 
 			eval, err := evaluator.Create(evalCtx, condition)
