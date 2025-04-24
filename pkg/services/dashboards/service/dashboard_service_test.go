@@ -1287,8 +1287,9 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 						UID: "general",
 					},
 				},
-				ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
-				log: log.NewNopLogger(),
+				ac:        actest.FakeAccessControl{ExpectedEvaluate: true},
+				acService: &actest.FakeService{},
+				log:       log.NewNopLogger(),
 			}
 
 			cmd := &folder.CreateFolderCommand{
@@ -2496,6 +2497,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
+					acService:                 &actest.FakeService{},
 				}
 				service.RegisterDashboardPermissions(permService)
 
