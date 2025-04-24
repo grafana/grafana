@@ -190,7 +190,7 @@ The following table describes the options you can set for a row.
 | Group layout             | Select the grouping option, between **Rows** and **Tabs**. Only available when there's a nested grouping and applies to the nested grouping. |
 | Panel layout             | Select whether panels are sized and positioned manually, **Custom**, or automatically, **Auto grid**. Only available when a grouping contains panels. |
 | Repeat options > [Repeat by variable](#configure-repeat-options) | Configure the dashboard to dynamically add rows or tabs based on the value of a variable. |
-| Show / hide rules > [Row/Tab visibility](#configure-show--hide-rules) | Control whether or not rows or tabs are displayed based on variables or a time range. |
+| Show / hide rules > [Row/Tab visibility](#configure-showhide-rules) | Control whether or not rows or tabs are displayed based on variables or a time range. |
 
 <!-- prettier-ignore-end -->
 
