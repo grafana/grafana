@@ -1,7 +1,5 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
-  "{{pageStart}} - {{pageEnd}} of {{numPages}}": "{{pageStart}} - {{pageEnd}} of {{numPages}}",
-  "{{url}} or {{target}} or {{path}}": "{{url}} or {{target}} or {{path}}",
   "access-control": {
     "add-permission": {
       "built-in-aria-label": "Built-in role picker",
@@ -412,7 +410,6 @@
       "action-buttons": {
         "delete": "Delete",
         "edit-yaml": "Edit YAML",
-        "save": "Save rule",
         "save-exit": "Save rule and exit"
       },
       "title-delete-rule": "Delete rule"
@@ -970,7 +967,8 @@
     "expression-result": {
       "aria-label-nextpage": "next-page",
       "aria-label-previouspage": "previous-page",
-      "no-data": "No data"
+      "no-data": "No data",
+      "page-counter": "{{pageStart}} - {{pageEnd}} of {{numPages}}"
     },
     "federated-rule-warning": {
       "experimental": "Federated rule groups are currently an experimental feature.",
@@ -1730,7 +1728,7 @@
       "min-interval": "Min. Interval = {{minInterval}}"
     },
     "query-preview": {
-      "relative-time-range": "{{from}} to now"
+      "relative-time-range": "<0>{{from}}</0> to now"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -2682,9 +2680,6 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
-    "soft-delete": {
-      "success": "Dashboard {{name}} moved to Recently deleted"
-    },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
   "canvas": {
@@ -3174,6 +3169,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
         "multiple-panels": "Multiple panels",
@@ -4289,7 +4285,7 @@
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
-      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
@@ -4739,9 +4735,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
     },
-    "make-datasource-setup": {
-      "aria-label-query": "query"
-    },
     "next": "Next",
     "next-prev-result": {
       "aria-label-next": "Next result button",
@@ -4781,7 +4774,6 @@
       "newest-first": "Newest first",
       "oldest-first": "Oldest first",
       "query-history": "Query history",
-      "query-library": "Query library",
       "settings": "Settings",
       "starred": "Starred"
     },
@@ -4864,8 +4856,6 @@
     "rich-history-utils": {
       "a-week-ago": "a week ago",
       "days-ago": "{{num}} days ago",
-      "default-from": "now-1h",
-      "default-to": "now",
       "today": "today",
       "two-weeks-ago": "two weeks ago",
       "yesterday": "yesterday"
@@ -5002,7 +4992,8 @@
       "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
     },
     "trace-page-header": {
-      "text-partial-trace": "Partial trace"
+      "text-partial-trace": "Partial trace",
+      "tooltip-url": "{{url}} or {{target}} or {{path}}"
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Clear filters button",
@@ -5080,6 +5071,7 @@
     },
     "math": {
       "available-math-functions": "Available math functions",
+      "run-math-operations": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<10></10>Example: <12>{{example}}</12>",
       "tooltip-footer": "See our additional documentation on <2>Math expressions</2>.",
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
@@ -7341,7 +7333,6 @@
     },
     "getting-started": {
       "alert-temporary-outage": "When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend warning your users before starting the process.",
-      "engaging-graphic": "Engaging graphic",
       "modal-description-public-access": "Set up public access to your Grafana instance to enable GitHub integration",
       "modal-description-required-features": "Enable required Grafana features for provisioning",
       "modal-title-set-up-public-access": "Set up public access",
@@ -7896,13 +7887,6 @@
     "error-unexpected-title": "An unexpected error happened",
     "reload-button": "Reload",
     "title": "Unable to find application file"
-  },
-  "Run math operations on one or more queries": {
-    " You reference the query by {{refExample}} ie": {
-      " {{ref1}}, {{ref2}}, {{ref3}}etc": {
-        "<10></10>Example: <12>{{example}}</12>": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<10></10>Example: <12>{{example}}</12>"
-      }
-    }
   },
   "sandbox": {
     "test-stuff-page": {
@@ -8533,15 +8517,11 @@
       "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
-      "example": "Example: to select a time range from 10 minutes ago to now",
-      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
       "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
-      "more-info": "For more information see <2>docs <1></1></2>.",
-      "specify": "Specify time range <1></1>",
+      "specify": "Specify time range",
       "submit-button-label": "TimePicker submit button",
-      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>",
       "to-label": "To"
     },
     "zone": {
@@ -8891,6 +8871,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
+      "auto-revoked": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account.",
       "resume-message": "<0>To resume your session, sign in again.</0>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"
@@ -9021,6 +9002,5 @@
     "data-hover-view": {
       "link": "Link"
     }
-  },
-  "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account."
+  }
 }

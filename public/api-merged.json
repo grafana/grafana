@@ -12858,9 +12858,7 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
-        "uid",
         "name",
-        "folderUid",
         "query",
         "health",
         "type",
@@ -12896,6 +12894,9 @@
         "health": {
           "type": "string"
         },
+        "isPaused": {
+          "type": "boolean"
+        },
         "keepFiringFor": {
           "type": "number",
           "format": "double"
@@ -12912,6 +12913,15 @@
         },
         "name": {
           "type": "string"
+        },
+        "notificationSettings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "queriedDatasourceUIDs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "query": {
           "type": "string"
@@ -20132,9 +20142,7 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
-        "uid",
         "name",
-        "folderUid",
         "query",
         "health",
         "type"
@@ -20150,6 +20158,9 @@
         "health": {
           "type": "string"
         },
+        "isPaused": {
+          "type": "boolean"
+        },
         "labels": {
           "$ref": "#/definitions/Labels"
         },
@@ -20162,6 +20173,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "notificationSettings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
         "query": {
           "type": "string"
@@ -21684,6 +21698,55 @@
         }
       }
     },
+    "TimeIntervalItem": {
+      "type": "object",
+      "properties": {
+        "days_of_month": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "type": "string"
+        },
+        "months": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "times": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeIntervalTimeRange"
+          }
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "years": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "TimeIntervalTimeRange": {
+      "type": "object",
+      "properties": {
+        "end_time": {
+          "type": "string"
+        },
+        "start_time": {
+          "type": "string"
+        }
+      }
+    },
     "TimeRange": {
       "description": "Redefining this to avoid an import cycle",
       "type": "object",
@@ -22973,6 +23036,7 @@
       }
     },
     "gettableAlerts": {
+      "description": "GettableAlerts gettable alerts",
       "type": "array",
       "items": {
         "type": "object",
@@ -23097,6 +23161,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

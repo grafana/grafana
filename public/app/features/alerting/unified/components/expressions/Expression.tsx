@@ -269,7 +269,10 @@ export const ExpressionResult: FC<ExpressionResultProps> = ({ series, isAlertCon
             />
             <Spacer />
             <span className={styles.mutedText}>
-              <Trans i18nKey="" values={{ pageStart, pageEnd, numPages: series.length }}>
+              <Trans
+                i18nKey="alerting.expression-result.page-counter"
+                values={{ pageStart, pageEnd, numPages: series.length }}
+              >
                 {'{{pageStart}}'} - {'{{pageEnd}}'} of {'{{numPages}}'}
               </Trans>
             </span>
