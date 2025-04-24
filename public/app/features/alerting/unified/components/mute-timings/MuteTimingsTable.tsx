@@ -108,24 +108,31 @@ export const TimeIntervalsTable = () => {
         )}
       </Stack>
       {items.length > 0 ? <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} /> : null}
-      {items.length === 0 && !hideActions ? (
-        <EmptyAreaWithCTA
-          text={t(
-            'alerting.time-intervals-table.text-havent-created-time-intervals',
-            "You haven't created any time intervals yet"
+      {items.length === 0 && (
+        <>
+          {!hideActions ? (
+            <EmptyAreaWithCTA
+              text={t(
+                'alerting.time-intervals-table.text-havent-created-time-intervals',
+                "You haven't created any time interval yet"
+              )}
+              buttonLabel="Add time interval"
+              buttonIcon="plus"
+              buttonSize="lg"
+              href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+              showButton={allowedToCreateMuteTiming}
+            />
+          ) : (
+            <EmptyAreaWithCTA
+              text={t(
+                'alerting.time-intervals-table.text-no-time-intervals-configured',
+                'No time intervals configured'
+              )}
+              buttonLabel={''}
+              showButton={false}
+            />
           )}
-          buttonLabel="Add time interval"
-          buttonIcon="plus"
-          buttonSize="lg"
-          href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-          showButton={allowedToCreateMuteTiming}
-        />
-      ) : (
-        <EmptyAreaWithCTA
-          text={t('alerting.time-intervals-table.text-no-time-itervals-configured', 'No time intervals configured')}
-          buttonLabel={''}
-          showButton={false}
-        />
+        </>
       )}
     </div>
   );
