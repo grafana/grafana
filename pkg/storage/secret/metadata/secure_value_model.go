@@ -73,7 +73,8 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 			Decrypters: decrypters,
 		},
 		Status: secretv0alpha1.SecureValueStatus{
-			Phase: secretv0alpha1.SecureValuePhase(sv.Phase),
+			Phase:      secretv0alpha1.SecureValuePhase(sv.Phase),
+			ExternalID: sv.ExternalID,
 		},
 	}
 	if sv.Ref != nil {
