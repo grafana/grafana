@@ -70,7 +70,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	reqKeeperRead := readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   row.Namespace,
-		Name:        row.Keeper,
+		Name:        *row.Keeper,
 		IsForUpdate: true,
 	}
 
