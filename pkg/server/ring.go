@@ -3,7 +3,9 @@ package server
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/grafana/dskit/dns"
@@ -39,10 +41,6 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 
 	if ms.cfg.MemberlistJoinMember == "" {
 		return nil, fmt.Errorf("bad sharding configuration. Missing MemberlistJoinMember")
-	}
-
-	if ms.cfg.RingListenPort == 0 {
-		return nil, fmt.Errorf("bad sharding configuration. Missing RingListenPort")
 	}
 
 	logger := log.New("resource-server-ring")
@@ -196,8 +194,18 @@ func toLifecyclerConfig(cfg *setting.Cfg, logger log.Logger) (ring.BasicLifecycl
 		instanceId = hostname
 	}
 
+	_, grpcPortStr, err := net.SplitHostPort(cfg.GRPCServer.Address)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("could not get grpc port from grpc server address: %s", err)
+	}
+
+	grpcPort, err := strconv.Atoi(grpcPortStr)
+	if err != nil {
+		return ring.BasicLifecyclerConfig{}, fmt.Errorf("error converting grpc address port to int: %s", err)
+	}
+
 	return ring.BasicLifecyclerConfig{
-		Addr:                fmt.Sprintf("%s:%d", instanceAddr, cfg.RingListenPort),
+		Addr:                fmt.Sprintf("%s:%d", instanceAddr, grpcPort),
 		ID:                  instanceId,
 		HeartbeatPeriod:     15 * time.Second,
 		HeartbeatTimeout:    heartbeatTimeout,
