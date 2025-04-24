@@ -97,7 +97,7 @@ For self-managed Grafana (both Enterprise and OSS), the support for versions fol
 - The last minor release of a major version receives extended support for 15 months after its release date
 - Support levels change as new versions are released:
   - **Full Support**: The most recently released major/minor (and the last minor of the previous major) version receive full support including new features, bug fixes, and security patches
-  - **Security & Critical Bugs Only**: Versions that are not the most recently released major/minor (and the last minor of the previous major) version, but still within their support period, receive only security patches and critical bug fixes
+  - **Security & Critical Bugs Only**: Versions that are not the most recently released major/minor (or the last minor of the previous major) version, but still within their support period, receive only security patches and critical bug fixes
   - **Not Supported**: Versions beyond their support period receive no updates
 
 Here is an overview of version support through 2026:
