@@ -16,7 +16,10 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-type versionUpgrader = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
+// FIXME: This is used to make sure we save dashboards in the apiVersion they were original saved in
+// When requesting v0 or v2 dashboards over the v1 api -- the backend tries (and fails!) to convert values
+// The response status indicates the original stored version, so we can then request it in an un-converted form
+type conversionShim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
 func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
 	progress.SetMessage(ctx, "start resource export")
@@ -33,10 +36,10 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 		}
 
 		// When requesting v2 (or v0) dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
-		var upgrader versionUpgrader
+		var shim conversionShim
 		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
 			var v2client dynamic.ResourceInterface
-			upgrader = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+			shim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 				failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
 				if failed {
 					storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
@@ -64,7 +67,7 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 			}
 		}
 
-		if err := exportResource(ctx, options, client, upgrader, repositoryResources, progress); err != nil {
+		if err := exportResource(ctx, options, client, shim, repositoryResources, progress); err != nil {
 			return fmt.Errorf("export %s: %w", kind.Resource, err)
 		}
 	}
@@ -75,10 +78,12 @@ func ExportResources(ctx context.Context, options provisioning.ExportJobOptions,
 func exportResource(ctx context.Context,
 	options provisioning.ExportJobOptions,
 	client dynamic.ResourceInterface,
-	upgrader versionUpgrader,
+	shim conversionShim,
 	repositoryResources resources.RepositoryResources,
 	progress jobs.JobProgressRecorder,
 ) error {
+	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
+	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
 	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
 		gvk := item.GroupVersionKind()
 		result := jobs.JobResourceResult{
@@ -88,8 +93,8 @@ func exportResource(ctx context.Context,
 			Action:   repository.FileActionCreated,
 		}
 
-		if upgrader != nil {
-			item, err = upgrader(ctx, item)
+		if shim != nil {
+			item, err = shim(ctx, item)
 		}
 		if err == nil {
 			result.Path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
