@@ -58,7 +58,7 @@ Use these steps to migrate resources between environments:
 
 ## Back up Grafana resources
 
-This workflow helps you back up all Grafana resources from one instance and later restore them to another. This is useful to replicate a configuration or perform disaster recovery.
+This workflow helps you back up all Grafana resources from one instance and later restore them. This is useful to replicate a configuration or perform disaster recovery.
 
 1. Use `grafanactl` to pull all resources from your target environment:
 
