@@ -418,7 +418,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3209,6 +3208,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Дашборд",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4330,7 +4330,7 @@
       "hide-time-picker": "Скрыть указатель времени",
       "now-delay-description": "Исключите последние данные, которые могут быть неполными.",
       "now-delay-label": "Задержка в текущий момент",
-      "refresh-live-dashboards-description": "Постоянно обновляйте панели, где временной диапазон ссылается на «текущий момент».",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Обновить дашборды в реальном времени",
       "time-options-label": "Параметры времени",
       "time-zone-label": "Часовой пояс",
@@ -4780,9 +4780,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4904,8 +4901,6 @@
     "rich-history-utils": {
       "a-week-ago": "неделю назад",
       "days-ago": "{{num}} дн. назад",
-      "default-from": "текущий момент-1 ч",
-      "default-to": "текущий момент",
       "today": "сегодня",
       "two-weeks-ago": "две недели назад",
       "yesterday": "вчера"
@@ -8587,15 +8582,11 @@
       "apply": "Применить временной диапазон",
       "aria-role": "Выбор временного диапазона",
       "default-title": "Временные диапазоны",
-      "example": "Пример: выберите временной диапазон от 10 минут назад до текущего момента",
-      "example-details": "Время начала: текущий момент-10 м Время окончания: текущий момент",
       "example-title": "Примеры временных диапазонов",
       "from-label": "Время начала",
       "from-to": "{{timeOptionFrom}} до {{timeOptionTo}}",
-      "more-info": "Для получения дополнительной информации см. <2>документацию<1></1></2>.",
-      "specify": "Укажите временной диапазон <1></1>",
+      "specify": "",
       "submit-button-label": "Кнопка отправки указателя времени",
-      "supported-formats": "Поддерживаемые форматы: <1>текущий момент-[цифра] с/м/ч/д/н</1>",
       "to-label": "Время окончания"
     },
     "zone": {
