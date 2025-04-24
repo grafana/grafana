@@ -145,12 +145,6 @@ type BlobConfig struct {
 	Backend BlobSupport
 }
 
-// IndexLatencyObserver is an interface for observing index latency metrics
-// This is used for testing
-type IndexLatencyObserver interface {
-	Observe(evt *WrittenEvent, latency float64)
-}
-
 // Passed as input to the constructor
 type SearchOptions struct {
 	// The raw index backend (eg, bleve, frames, parquet, etc)

@@ -25,7 +25,6 @@ func TestNewIndexQueueProcessor(t *testing.T) {
 func TestIndexQueueProcessor_SingleEvent(t *testing.T) {
 	mockIndex := &MockResourceIndex{}
 	mockBuilder := &MockDocumentBuilder{}
-	// mockObserver := &MockIndexLatencyObserver{}
 	nsr := NamespacedResource{Resource: "test"}
 
 	resChan := make(chan *IndexEvent)
