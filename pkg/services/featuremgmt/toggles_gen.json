@@ -2804,7 +2804,8 @@
       "metadata": {
         "name": "recoveryThreshold",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-10-10T14:51:50Z"
+        "creationTimestamp": "2023-10-10T14:51:50Z",
+        "deletionTimestamp": "2025-04-24T10:29:09Z"
       },
       "spec": {
         "description": "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
