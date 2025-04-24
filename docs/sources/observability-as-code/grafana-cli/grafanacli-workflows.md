@@ -160,7 +160,7 @@ Use this workflow to identify dashboards that reference incorrect or outdated da
 
    ```bash
    grafanactl resources delete dashboards/test-dashboard-from-stg,test-dashboard-from-dev
-   Deleted 2 item(s): ["dashboards/test-dashboard-from-stg","dashboards/test-dashboard-from-dev"]
+   ✔ 2 resources deleted, 0 errors
    ```
 
 ### Find and deprecate dashboards using the old API version
