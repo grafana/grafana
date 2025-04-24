@@ -83,8 +83,9 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 		// Check not processed yet or errored
 		return nil
 	}
-	retry := checks.GetRetryAnnotation(obj)
-	if retry == "" {
+	// Get the item to retry from the annotation
+	itemToRetry := checks.GetRetryAnnotation(obj)
+	if itemToRetry == "" {
 		// No item to retry, nothing to do
 		return nil
 	}
@@ -93,7 +94,7 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
-	item, err := check.Item(ctx, retry)
+	item, err := check.Item(ctx, itemToRetry)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
@@ -113,7 +114,7 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 	}
 	// Pull failures from the report for the items to retry
 	c.CheckStatus.Report.Failures = slices.DeleteFunc(c.CheckStatus.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
-		if f.ItemID == retry {
+		if f.ItemID == itemToRetry {
 			for _, newFailure := range failures {
 				if newFailure.StepID == f.StepID {
 					// Same failure found, keep it

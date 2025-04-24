@@ -63,7 +63,14 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 }
 
 func (c *check) Item(ctx context.Context, id string) (any, error) {
-	return c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{UID: id})
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+		UID:   id,
+		OrgID: requester.GetOrgID(),
+	})
 }
 
 func (c *check) ID() string {
