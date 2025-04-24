@@ -5,6 +5,8 @@
 //go:build go1.8
 // +build go1.8
 
+//nolint
+
 package xorm
 
 import (
