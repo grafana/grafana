@@ -94,7 +94,7 @@ To create a dashboard, follow these steps:
 1. Click **New** and select **New Dashboard**.
 1. In the edit pane, enter the dashboard title and description.
 
-<!-- screenshot here with edit pane highlighted-->
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-new-dashboard-v12.png" max-width="750px" alt="New dashboard" >}}
 
 1. Under **Panel layout**, choose one of the following options:
 
@@ -119,7 +119,7 @@ To create a dashboard, follow these steps:
 1. Click **Refresh** to query the data source.
 1. In the visualization list, select a visualization type.
 
-   ![Visualization selector](/media/docs/grafana/dashboards/screenshot-select-visualization-11-2.png) <!-- update screenshot -->
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-select-visualization-v12.png" max-width="350px" alt="Visualization selector" >}}
 
    Grafana displays a preview of your query results with the visualization applied.
 
@@ -146,7 +146,7 @@ To create a dashboard, follow these steps:
 1. Click **Save**.
 1. To add more panels to the dashboard, click **Back to dashboard** and at the bottom-left corner of the dashboard, click **+ Add panel**.
 
-   ![Add drop-down](/media/docs/grafana/dashboards/screenshot-add-dropdown-11.2.png) <!-- update screenshot -->
+   {{< figure src="/media/docs/grafana/dashboards/screenshot-add-panel-v12.png" max-width="500px" alt="Add panel button" >}}
 
 1. (Optional) In the edit pane, enter a title and description for the panel and set the panel transparency and repeat options, if applicable.
 1. Click **Configure** in either the edit pane or on the panel to the configuration process.
@@ -235,7 +235,7 @@ To configure repeats, follow these steps:
 
 ### Repeating rows and the Dashboard special data source
 
-<!-- is this still true? -->
+<!-- is this next section still true? -->
 
 If a row includes panels using the special [Dashboard data source](ref:built-in-special-data-sources)&mdash;the data source that uses a result set from another panel in the same dashboard&mdash;then corresponding panels in repeated rows will reference the panel in the original row, not the ones in the repeated rows.
 
@@ -291,7 +291,7 @@ To configure show/hide rules, follow these steps:
 When the dashboard is in edit mode, the edit pane that opens displays options associated with the part of the dashboard that it's in focus.
 For example, if you click in the area of a panel, row, or tab, that area comes into focus and the edit pane shows the options for that area:
 
-<!-- screenshot here -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-edit-pane-focus-v12.png" max-width="750px" alt="Dashboard with a panel in focus" >}}
 
 - For rows and tabs, all of the available options are in the edit pane.
 - For panels, high-level options are in the edit pane and further configuration options are in the **Edit panel** view.
@@ -344,7 +344,7 @@ The dashboard **Outline** provides a tree-like structure that shows you all of t
 The outline also lets you quickly navigate the dashboard so that you don't have to spend time finding a particular element in order to work with it.
 By default, the outline is collapsed except for the part that's currently in focus.
 
-<!-- screenshot here -->
+{{< figure src="/media/docs/grafana/dashboards/screenshot-dashboard-outline-v12.png" max-width="750px" alt="Dashboard with outline open showing panel in focus" >}}
 
 To navigate the dashboard using the outline, follow these steps:
 
