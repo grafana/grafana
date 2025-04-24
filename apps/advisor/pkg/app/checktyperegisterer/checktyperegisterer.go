@@ -94,6 +94,10 @@ func (r *Runner) Run(ctx context.Context) error {
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      t.ID(),
 				Namespace: r.namespace,
+				Annotations: map[string]string{
+					// Flag to indicate feature availability
+					checks.RetryAnnotation: "1",
+				},
 			},
 			Spec: advisorv0alpha1.CheckTypeSpec{
 				Name:  t.ID(),

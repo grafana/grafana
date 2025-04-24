@@ -14,6 +14,7 @@ import (
 const (
 	TypeLabel                 = "advisor.grafana.app/type"
 	StatusAnnotation          = "advisor.grafana.app/status"
+	RetryAnnotation           = "advisor.grafana.app/retry"
 	StatusAnnotationError     = "error"
 	StatusAnnotationProcessed = "processed"
 )
@@ -22,12 +23,14 @@ func NewCheckReportFailure(
 	severity advisor.CheckReportFailureSeverity,
 	stepID string,
 	item string,
+	itemID string,
 	links []advisor.CheckErrorLink,
 ) *advisor.CheckReportFailure {
 	return &advisor.CheckReportFailure{
 		Severity: severity,
 		StepID:   stepID,
 		Item:     item,
+		ItemID:   itemID,
 		Links:    links,
 	}
 }
@@ -45,6 +48,10 @@ func GetNamespace(stackID string) (string, error) {
 
 func GetStatusAnnotation(obj resource.Object) string {
 	return obj.GetAnnotations()[StatusAnnotation]
+}
+
+func GetRetryAnnotation(obj resource.Object) string {
+	return obj.GetAnnotations()[RetryAnnotation]
 }
 
 func SetStatusAnnotation(ctx context.Context, client resource.Client, obj resource.Object, status string) error {
