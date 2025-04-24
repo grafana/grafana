@@ -45,7 +45,6 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
@@ -58,14 +57,16 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 	})
 
 	t.Run("store secure value in a non implemented keeper returns error", func(t *testing.T) {
-		testSV.Spec.Keeper = "not-implemented-keeper"
+		keeper := "not-implemented-keeper"
+		testSV.Spec.Keeper = &keeper
 		externalID, err := s.storeInKeeper(ctx, testSV)
 		require.Error(t, err)
 		require.Empty(t, externalID)
 	})
 
 	t.Run("store secure value in a not implemented keeper returns error", func(t *testing.T) {
-		testSV.Spec.Keeper = "not-implemented-keeper"
+		keeper := "not-implemented-keeper"
+		testSV.Spec.Keeper = &keeper
 		externalID, err := s.storeInKeeper(ctx, testSV)
 		require.Error(t, err)
 		require.Empty(t, externalID)
@@ -83,14 +84,12 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
 	testsvDB := &secureValueDB{
 		Namespace: "default",
 		Name:      "name",
-		Keeper:    "kp-default-sql",
 	}
 	s := setupTestService(t).(*secureValueMetadataStorage)
 
@@ -106,8 +105,9 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 		})
 
 		t.Run("updating a secure value keeper returns error", func(t *testing.T) {
+			keeper := "another-keeper"
 			updateSV := testSV.DeepCopy()
-			updateSV.Spec.Keeper = "another-keeper"
+			updateSV.Spec.Keeper = &keeper
 			err := s.updateInKeeper(ctx, testsvDB, updateSV)
 			require.Error(t, err)
 		})
@@ -140,7 +140,6 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 		Spec: secretv0alpha1.SecureValueSpec{
 			Title:      "title",
 			Value:      "value",
-			Keeper:     "kp-default-sql",
 			Decrypters: []string{"group1/*", "group2/name"},
 		},
 	}
