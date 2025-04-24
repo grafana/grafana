@@ -1,4 +1,4 @@
-package v1alpha1
+package v1beta1
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 
 const (
 	GROUP      = "dashboard.grafana.app"
-	VERSION    = "v1alpha1"
+	VERSION    = "v1beta1"
 	APIVERSION = GROUP + "/" + VERSION
 
 	// Resource constants
