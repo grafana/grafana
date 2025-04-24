@@ -268,7 +268,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                     title: 'Test Panel 2',
                     description: 'Test Description 2',
                     fieldConfig: { defaults: {}, overrides: [] },
-                    displayMode: 'transparent',
                     pluginVersion: '7.0.0',
                     $timeRange: new SceneTimeRange({
                       timeZone: 'UTC',
