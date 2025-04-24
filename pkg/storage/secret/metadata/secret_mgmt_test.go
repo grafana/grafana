@@ -224,7 +224,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorage, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(testDB, features, keeperMetadataStorage, keeperService)
 	require.NoError(t, err)
 
 	return secureValueMetadataStorage
