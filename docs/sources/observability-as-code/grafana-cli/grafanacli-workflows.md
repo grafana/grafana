@@ -32,6 +32,10 @@ Using the `config` and `resources` options, you can migrate Grafana resources fr
 The `config` option lets you define the configuration context.
 Using `resources` with `pull`, `push`, and `serve` lets you pull a defined resource from one instance, and push that resource to another instance. `Serve` allows you to preview changes locally before pushing.
 
+{{< admonition type="note" >}}
+Currently, the `serve` command only works with dashboards.
+{{< /admonition >}}
+
 Use these steps to migrate resources between environments:
 
 1. Make changes to dashboards and other resources using the Grafana UI in your **development instance**.
