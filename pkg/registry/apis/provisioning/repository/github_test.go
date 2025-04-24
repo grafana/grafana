@@ -7,9 +7,11 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +27,142 @@ import (
 	pgh "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
+
+func TestNewGitHub(t *testing.T) {
+	tests := []struct {
+		name          string
+		config        *provisioning.Repository
+		setupMock     func(m *secrets.MockService)
+		expectedError string
+		expectedRepo  *githubRepository
+	}{
+		{
+			name: "successful creation with token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Token:  "token123",
+						Branch: "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				// No mock calls expected since we're using the token directly
+			},
+			expectedError: "",
+			expectedRepo: &githubRepository{
+				owner: "grafana",
+				repo:  "grafana",
+			},
+		},
+		{
+			name: "successful creation with encrypted token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:            "https://github.com/grafana/grafana",
+						EncryptedToken: []byte("encrypted-token"),
+						Branch:         "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				m.On("Decrypt", mock.Anything, []byte("encrypted-token")).
+					Return([]byte("decrypted-token"), nil)
+			},
+			expectedError: "",
+			expectedRepo: &githubRepository{
+				owner: "grafana",
+				repo:  "grafana",
+			},
+		},
+		{
+			name: "error decrypting token",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:            "https://github.com/grafana/grafana",
+						EncryptedToken: []byte("encrypted-token"),
+						Branch:         "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				m.On("Decrypt", mock.Anything, []byte("encrypted-token")).
+					Return(nil, fmt.Errorf("decryption error"))
+			},
+			expectedError: "decrypt token: decryption error",
+		},
+		{
+			name: "invalid URL format",
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "invalid-url",
+						Token:  "token123",
+						Branch: "main",
+					},
+				},
+			},
+			setupMock: func(m *secrets.MockService) {
+				// No mock calls expected
+			},
+			expectedError: "parse owner and repo",
+			expectedRepo: &githubRepository{
+				owner: "",
+				repo:  "",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mocks
+			mockSecrets := secrets.NewMockService(t)
+			if tt.setupMock != nil {
+				tt.setupMock(mockSecrets)
+			}
+
+			factory := pgh.ProvideFactory()
+			factory.Client = http.DefaultClient
+
+			// Create a mock clone function
+			cloneFn := func(ctx context.Context, opts CloneOptions) (ClonedRepository, error) {
+				return nil, nil
+			}
+
+			// Call the function under test
+			repo, err := NewGitHub(
+				context.Background(),
+				tt.config,
+				factory,
+				mockSecrets,
+				"https://example.com/webhook",
+				cloneFn,
+			)
+
+			// Check results
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Nil(t, repo)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, repo)
+				assert.Equal(t, tt.expectedRepo.owner, repo.owner)
+				assert.Equal(t, tt.expectedRepo.repo, repo.repo)
+				assert.Equal(t, tt.config, repo.config)
+				assert.Equal(t, mockSecrets, repo.secrets)
+				assert.Equal(t, "https://example.com/webhook", repo.webhookURL)
+				assert.NotNil(t, repo.cloneFn)
+			}
+
+			// Verify all mock expectations were met
+			mockSecrets.AssertExpectations(t)
+		})
+	}
+}
 
 func TestIsValidGitBranchName(t *testing.T) {
 	tests := []struct {
@@ -3261,6 +3399,1385 @@ func TestGitHubRepository_Webhook(t *testing.T) {
 
 			// Verify all mock expectations were met
 			mockSecrets.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_LatestRef(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(mock *pgh.MockClient)
+		expectedRef   string
+		expectedError error
+	}{
+		{
+			name: "successful retrieval of latest ref",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{Sha: "abc123"}, nil)
+			},
+			expectedRef:   "abc123",
+			expectedError: nil,
+		},
+		{
+			name: "error getting branch",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{}, fmt.Errorf("branch not found"))
+			},
+			expectedRef:   "",
+			expectedError: fmt.Errorf("get branch: branch not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh: mockGH,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							Branch: "main",
+						},
+					},
+				},
+				owner: "grafana",
+				repo:  "grafana",
+			}
+
+			// Call the LatestRef method
+			ref, err := repo.LatestRef(context.Background())
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedRef, ref)
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_CompareFiles(t *testing.T) {
+	tests := []struct {
+		name            string
+		setupMock       func(m *pgh.MockClient)
+		base            string
+		ref             string
+		expectedFiles   []VersionedFileChange
+		expectedError   error
+		shouldGetLatest bool
+	}{
+		{
+			name: "successfully compare files",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/test.json")
+				commitFile1.On("GetStatus").Return("added")
+
+				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2.On("GetFilename").Return("dashboards/modified.json")
+				commitFile2.On("GetStatus").Return("modified")
+
+				commitFile3 := pgh.NewMockCommitFile(t)
+				commitFile3.On("GetFilename").Return("dashboards/renamed.json")
+				commitFile3.On("GetStatus").Return("renamed")
+				commitFile3.On("GetPreviousFilename").Return("dashboards/old.json")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+						commitFile2,
+						commitFile3,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "test.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+				{
+					Path:   "modified.json",
+					Ref:    "def456",
+					Action: FileActionUpdated,
+				},
+				{
+					Path:         "renamed.json",
+					Ref:          "def456",
+					Action:       FileActionRenamed,
+					PreviousPath: "old.json",
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error comparing commits",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return(nil, fmt.Errorf("failed to compare commits"))
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: nil,
+			expectedError: fmt.Errorf("compare commits: failed to compare commits"),
+		},
+		{
+			name: "file outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/path.json")
+				commitFile1.On("GetStatus").Return("added")
+
+				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2.On("GetFilename").Return("dashboards/valid.json")
+				commitFile2.On("GetStatus").Return("added")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+						commitFile2,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "valid.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "modified file outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/modified.json")
+				commitFile1.On("GetStatus").Return("modified")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "copied file status",
+			setupMock: func(m *pgh.MockClient) {
+				// File inside configured path
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/copied.json")
+				commitFile1.On("GetStatus").Return("copied")
+
+				// File outside configured path
+				commitFile2 := pgh.NewMockCommitFile(t)
+				commitFile2.On("GetFilename").Return("../outside/copied.json")
+				commitFile2.On("GetStatus").Return("copied")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+						commitFile2,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "copied.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "removed file status - inside path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/removed.json")
+				commitFile1.On("GetStatus").Return("removed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:         "removed.json",
+					PreviousPath: "removed.json",
+					Ref:          "def456",
+					PreviousRef:  "abc123",
+					Action:       FileActionDeleted,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - both paths outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("../outside/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - both paths inside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("dashboards/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:         "renamed.json",
+					PreviousPath: "original.json",
+					Ref:          "def456",
+					PreviousRef:  "abc123",
+					Action:       FileActionRenamed,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - moving out of configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("dashboards/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "original.json",
+					Ref:    "abc123",
+					Action: FileActionDeleted,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "renamed file status - moving into configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/renamed.json")
+				commitFile1.On("GetPreviousFilename").Return("../outside/original.json")
+				commitFile1.On("GetStatus").Return("renamed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base: "abc123",
+			ref:  "def456",
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "renamed.json",
+					Ref:    "def456",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "removed file status - outside path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/removed.json")
+				commitFile1.On("GetStatus").Return("removed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "changed file outside configured path",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("../outside/changed.json")
+				commitFile1.On("GetStatus").Return("changed")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "get latest ref when ref is empty",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/test.json")
+				commitFile1.On("GetStatus").Return("added")
+
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{Sha: "latest123"}, nil)
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "latest123").
+					Return([]pgh.CommitFile{commitFile1}, nil)
+			},
+			base:            "abc123",
+			ref:             "",
+			shouldGetLatest: true,
+			expectedFiles: []VersionedFileChange{
+				{
+					Path:   "test.json",
+					Ref:    "latest123",
+					Action: FileActionCreated,
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "unchanged file status",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetStatus").Return("unchanged")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "unknown file status",
+			setupMock: func(m *pgh.MockClient) {
+				commitFile1 := pgh.NewMockCommitFile(t)
+				commitFile1.On("GetFilename").Return("dashboards/unknown.json")
+				commitFile1.On("GetStatus").Return("unknown_status")
+
+				m.On("CompareCommits", mock.Anything, "grafana", "grafana", "abc123", "def456").
+					Return([]pgh.CommitFile{
+						commitFile1,
+					}, nil)
+			},
+			base:          "abc123",
+			ref:           "def456",
+			expectedFiles: []VersionedFileChange{},
+			expectedError: nil,
+		},
+		{
+			name: "error getting latest ref",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("GetBranch", mock.Anything, "grafana", "grafana", "main").
+					Return(pgh.Branch{}, fmt.Errorf("branch not found"))
+			},
+			base:            "abc123",
+			ref:             "",
+			shouldGetLatest: true,
+			expectedFiles:   nil,
+			expectedError:   fmt.Errorf("get latest ref: get branch: branch not found"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh: mockGH,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							Branch: "main",
+							Path:   "dashboards",
+						},
+					},
+				},
+				owner: "grafana",
+				repo:  "grafana",
+			}
+
+			// Call the CompareFiles method
+			files, err := repo.CompareFiles(context.Background(), tt.base, tt.ref)
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, len(tt.expectedFiles), len(files))
+
+				for i, expectedFile := range tt.expectedFiles {
+					require.Equal(t, expectedFile.Path, files[i].Path)
+					require.Equal(t, expectedFile.Ref, files[i].Ref)
+					require.Equal(t, expectedFile.Action, files[i].Action)
+					require.Equal(t, expectedFile.PreviousPath, files[i].PreviousPath)
+				}
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_CommentPullRequest(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(m *pgh.MockClient)
+		prNumber      int
+		comment       string
+		expectedError error
+	}{
+		{
+			name: "successfully comment on pull request",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 123, "Test comment").
+					Return(nil)
+			},
+			prNumber:      123,
+			comment:       "Test comment",
+			expectedError: nil,
+		},
+		{
+			name: "error commenting on pull request",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CreatePullRequestComment", mock.Anything, "grafana", "grafana", 456, "Error comment").
+					Return(fmt.Errorf("failed to create comment"))
+			},
+			prNumber:      456,
+			comment:       "Error comment",
+			expectedError: fmt.Errorf("failed to create comment"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh: mockGH,
+				config: &provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						GitHub: &provisioning.GitHubRepositoryConfig{
+							Branch: "main",
+						},
+					},
+				},
+				owner: "grafana",
+				repo:  "grafana",
+			}
+
+			// Call the CommentPullRequest method
+			err := repo.CommentPullRequest(context.Background(), tt.prNumber, tt.comment)
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_ResourceURLs(t *testing.T) {
+	tests := []struct {
+		name          string
+		file          *FileInfo
+		config        *provisioning.Repository
+		expectedURLs  *provisioning.ResourceURLs
+		expectedError error
+	}{
+		{
+			name: "file with ref",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.ResourceURLs{
+				RepositoryURL:     "https://github.com/grafana/grafana",
+				SourceURL:         "https://github.com/grafana/grafana/blob/feature-branch/dashboards/test.json",
+				CompareURL:        "https://github.com/grafana/grafana/compare/main...feature-branch",
+				NewPullRequestURL: "https://github.com/grafana/grafana/compare/main...feature-branch?quick_pull=1&labels=grafana",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "file without ref uses default branch",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.ResourceURLs{
+				RepositoryURL: "https://github.com/grafana/grafana",
+				SourceURL:     "https://github.com/grafana/grafana/blob/main/dashboards/test.json",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "file with ref same as branch",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "main",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs: &provisioning.ResourceURLs{
+				RepositoryURL: "https://github.com/grafana/grafana",
+				SourceURL:     "https://github.com/grafana/grafana/blob/main/dashboards/test.json",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "empty path returns nil",
+			file: &FileInfo{
+				Path: "",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						URL:    "https://github.com/grafana/grafana",
+						Branch: "main",
+					},
+				},
+			},
+			expectedURLs:  nil,
+			expectedError: nil,
+		},
+		{
+			name: "nil github config returns nil",
+			file: &FileInfo{
+				Path: "dashboards/test.json",
+				Ref:  "feature-branch",
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: nil,
+				},
+			},
+			expectedURLs:  nil,
+			expectedError: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create repository
+			repo := &githubRepository{
+				config: tt.config,
+				owner:  "grafana",
+				repo:   "grafana",
+			}
+
+			// Call the ResourceURLs method
+			urls, err := repo.ResourceURLs(context.Background(), tt.file)
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.expectedURLs, urls)
+			}
+		})
+	}
+}
+
+func TestGitHubRepository_OnCreate(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(m *pgh.MockClient)
+		config        *provisioning.Repository
+		webhookURL    string
+		expectedHook  *provisioning.WebhookStatus
+		expectedError error
+	}{
+		{
+			name: "successfully create webhook",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(cfg pgh.WebhookConfig) bool {
+					return cfg.URL == "https://example.com/webhook" &&
+						cfg.ContentType == "json" &&
+						cfg.Active == true
+				})).Return(pgh.WebhookConfig{
+					ID:     123,
+					URL:    "https://example.com/webhook",
+					Secret: "test-secret",
+				}, nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			expectedHook: &provisioning.WebhookStatus{
+				ID:     123,
+				URL:    "https://example.com/webhook",
+				Secret: "test-secret",
+			},
+			expectedError: nil,
+		},
+		{
+			name: "no webhook URL",
+			setupMock: func(m *pgh.MockClient) {
+				// No webhook creation expected
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			webhookURL:    "",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
+		{
+			name: "error creating webhook",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+					Return(pgh.WebhookConfig{}, fmt.Errorf("failed to create webhook"))
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: fmt.Errorf("failed to create webhook"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh:         mockGH,
+				config:     tt.config,
+				owner:      "grafana",
+				repo:       "grafana",
+				webhookURL: tt.webhookURL,
+			}
+
+			// Call the OnCreate method
+			hook, err := repo.OnCreate(context.Background())
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+				require.Nil(t, hook)
+			} else {
+				require.NoError(t, err)
+				if tt.expectedHook != nil {
+					require.NotNil(t, hook)
+					require.Equal(t, tt.expectedHook.ID, hook.ID)
+					require.Equal(t, tt.expectedHook.URL, hook.URL)
+					require.NotEmpty(t, hook.Secret) // Secret is randomly generated, so just check it's not empty
+				} else {
+					require.Nil(t, hook)
+				}
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_OnUpdate(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(m *pgh.MockClient)
+		config        *provisioning.Repository
+		webhookURL    string
+		expectedHook  *provisioning.WebhookStatus
+		expectedError error
+	}{
+		{
+			name: "successfully update webhook when webhook exists",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock getting the existing webhook
+				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(pgh.WebhookConfig{
+						ID:     123,
+						URL:    "https://example.com/webhook",
+						Events: []string{"push"},
+					}, nil)
+
+				// Mock editing the webhook
+				m.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook pgh.WebhookConfig) bool {
+					return hook.ID == 123 && hook.URL == "https://example.com/webhook-updated" &&
+						slices.Equal(hook.Events, subscribedEvents)
+				})).Return(nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook-updated",
+			expectedHook: &provisioning.WebhookStatus{
+				ID:               123,
+				URL:              "https://example.com/webhook-updated",
+				SubscribedEvents: subscribedEvents,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "create webhook when it doesn't exist",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock webhook not found
+				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(pgh.WebhookConfig{}, pgh.ErrResourceNotFound)
+
+				// Mock creating a new webhook
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook pgh.WebhookConfig) bool {
+					return hook.URL == "https://example.com/webhook" &&
+						hook.ContentType == "json" &&
+						slices.Equal(hook.Events, subscribedEvents) &&
+						hook.Active == true
+				})).Return(pgh.WebhookConfig{
+					ID:     456,
+					URL:    "https://example.com/webhook",
+					Events: subscribedEvents,
+				}, nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/old-webhook",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			expectedHook: &provisioning.WebhookStatus{
+				ID:               456,
+				URL:              "https://example.com/webhook",
+				SubscribedEvents: subscribedEvents,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "no webhook URL provided",
+			setupMock: func(m *pgh.MockClient) {
+				// No mocks needed
+			},
+			config:        &provisioning.Repository{},
+			webhookURL:    "",
+			expectedHook:  nil,
+			expectedError: nil,
+		},
+		{
+			name: "error getting webhook",
+			setupMock: func(m *pgh.MockClient) {
+				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(pgh.WebhookConfig{}, fmt.Errorf("failed to get webhook"))
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: fmt.Errorf("get webhook: failed to get webhook"),
+		},
+		{
+			name: "error editing webhook",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock getting the existing webhook
+				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(pgh.WebhookConfig{
+						ID:     123,
+						URL:    "https://example.com/webhook",
+						Events: []string{"push"},
+					}, nil)
+
+				// Mock editing the webhook with error
+				m.On("EditWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+					Return(fmt.Errorf("failed to edit webhook"))
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook-updated",
+			expectedHook:  nil,
+			expectedError: fmt.Errorf("edit webhook: failed to edit webhook"),
+		},
+		{
+			name: "create webhook when webhook status is nil",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock creating a new webhook
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+					Return(pgh.WebhookConfig{
+						ID:          456,
+						URL:         "https://example.com/webhook",
+						Events:      subscribedEvents,
+						Active:      true,
+						ContentType: "json",
+					}, nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: nil, // Webhook status is nil
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			expectedHook: &provisioning.WebhookStatus{
+				ID:               456,
+				URL:              "https://example.com/webhook",
+				SubscribedEvents: subscribedEvents,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "create webhook when webhook ID is zero",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock creating a new webhook
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+					Return(pgh.WebhookConfig{
+						ID:          789,
+						URL:         "https://example.com/webhook",
+						Events:      subscribedEvents,
+						Active:      true,
+						ContentType: "json",
+					}, nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  0, // Webhook ID is zero
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			expectedHook: &provisioning.WebhookStatus{
+				ID:               789,
+				URL:              "https://example.com/webhook",
+				SubscribedEvents: subscribedEvents,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error when creating webhook fails",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock webhook creation failure
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.Anything).
+					Return(pgh.WebhookConfig{}, fmt.Errorf("failed to create webhook"))
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: nil, // Webhook status is nil
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: fmt.Errorf("failed to create webhook"),
+		},
+		{
+			name: "creates webhook when ErrResourceNotFound",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock webhook not found
+				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(pgh.WebhookConfig{}, pgh.ErrResourceNotFound)
+
+				// Mock creating a new webhook
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook pgh.WebhookConfig) bool {
+					return hook.URL == "https://example.com/webhook" &&
+						hook.ContentType == "json" &&
+						slices.Equal(hook.Events, subscribedEvents) &&
+						hook.Active == true
+				})).Return(pgh.WebhookConfig{
+					ID:     456,
+					URL:    "https://example.com/webhook",
+					Events: subscribedEvents,
+				}, nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/old-webhook",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			expectedHook: &provisioning.WebhookStatus{
+				ID:               456,
+				URL:              "https://example.com/webhook",
+				SubscribedEvents: subscribedEvents,
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error on create when not found",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock webhook not found
+				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(pgh.WebhookConfig{}, pgh.ErrResourceNotFound)
+
+				// Mock error when creating a new webhook
+				m.On("CreateWebhook", mock.Anything, "grafana", "grafana", mock.MatchedBy(func(hook pgh.WebhookConfig) bool {
+					return hook.URL == "https://example.com/webhook" &&
+						hook.ContentType == "json" &&
+						slices.Equal(hook.Events, subscribedEvents) &&
+						hook.Active == true
+				})).Return(pgh.WebhookConfig{}, fmt.Errorf("failed to create webhook"))
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/old-webhook",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedHook:  nil,
+			expectedError: fmt.Errorf("failed to create webhook"),
+		},
+		{
+			name: "no update needed when URL and events match",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock getting the existing webhook with matching URL and events
+				m.On("GetWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(pgh.WebhookConfig{
+						ID:     123,
+						URL:    "https://example.com/webhook",
+						Events: subscribedEvents,
+					}, nil)
+
+				// No EditWebhook call expected since no changes needed
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:     123,
+						URL:    "https://example.com/webhook",
+						Secret: "secret",
+					},
+				},
+			},
+			webhookURL: "https://example.com/webhook",
+			expectedHook: &provisioning.WebhookStatus{
+				ID:               123,
+				URL:              "https://example.com/webhook",
+				SubscribedEvents: subscribedEvents,
+				Secret:           "secret",
+			},
+			expectedError: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh:         mockGH,
+				config:     tt.config,
+				owner:      "grafana",
+				repo:       "grafana",
+				webhookURL: tt.webhookURL,
+			}
+
+			// Call the OnUpdate method
+			hook, err := repo.OnUpdate(context.Background())
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+				require.Nil(t, hook)
+			} else {
+				require.NoError(t, err)
+				if tt.expectedHook != nil {
+					require.NotNil(t, hook)
+					require.Equal(t, tt.expectedHook.ID, hook.ID)
+					require.Equal(t, tt.expectedHook.URL, hook.URL)
+					if tt.expectedHook.Secret != "" {
+						require.Equal(t, tt.expectedHook.Secret, hook.Secret)
+					} else {
+						require.NotEmpty(t, hook.Secret) // Secret is randomly generated, so just check it's not empty
+					}
+					require.ElementsMatch(t, tt.expectedHook.SubscribedEvents, hook.SubscribedEvents)
+				} else {
+					require.Nil(t, hook)
+				}
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_OnDelete(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(m *pgh.MockClient)
+		config        *provisioning.Repository
+		webhookURL    string
+		expectedError error
+	}{
+		{
+			name: "successfully delete webhook",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock deleting the webhook
+				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedError: nil,
+		},
+		{
+			name: "no webhook URL provided",
+			setupMock: func(m *pgh.MockClient) {
+				// No mocks needed
+			},
+			config:        &provisioning.Repository{},
+			webhookURL:    "",
+			expectedError: nil,
+		},
+		{
+			name: "webhook not found in status",
+			setupMock: func(m *pgh.MockClient) {
+				// No mocks needed
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: nil, // Webhook status is nil
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedError: fmt.Errorf("webhook not found"),
+		},
+		{
+			name: "error deleting webhook",
+			setupMock: func(m *pgh.MockClient) {
+				// Mock webhook deletion failure
+				m.On("DeleteWebhook", mock.Anything, "grafana", "grafana", int64(123)).
+					Return(fmt.Errorf("failed to delete webhook"))
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+				Status: provisioning.RepositoryStatus{
+					Webhook: &provisioning.WebhookStatus{
+						ID:  123,
+						URL: "https://example.com/webhook",
+					},
+				},
+			},
+			webhookURL:    "https://example.com/webhook",
+			expectedError: fmt.Errorf("delete webhook: failed to delete webhook"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup mock GitHub client
+			mockGH := pgh.NewMockClient(t)
+			tt.setupMock(mockGH)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				gh:         mockGH,
+				config:     tt.config,
+				owner:      "grafana",
+				repo:       "grafana",
+				webhookURL: tt.webhookURL,
+			}
+
+			// Call the OnDelete method
+			err := repo.OnDelete(context.Background())
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Verify all mock expectations were met
+			mockGH.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGitHubRepository_Clone(t *testing.T) {
+	tests := []struct {
+		name          string
+		setupMock     func(m *MockCloneFn)
+		config        *provisioning.Repository
+		expectedError error
+	}{
+		{
+			name: "successfully clone repository",
+			setupMock: func(m *MockCloneFn) {
+				m.On("Execute", mock.Anything, CloneOptions{
+					CreateIfNotExists: true,
+					PushOnWrites:      true,
+					MaxSize:           1024 * 1024 * 10, // 10MB
+					Timeout:           10 * time.Second,
+					Progress:          io.Discard,
+					BeforeFn:          nil,
+				}).Return(nil, nil)
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			expectedError: nil,
+		},
+		{
+			name: "error cloning repository",
+			setupMock: func(m *MockCloneFn) {
+				m.On("Execute", mock.Anything, CloneOptions{
+					CreateIfNotExists: true,
+					PushOnWrites:      true,
+					MaxSize:           1024 * 1024 * 10, // 10MB
+					Timeout:           10 * time.Second,
+					Progress:          io.Discard,
+					BeforeFn:          nil,
+				}).Return(nil, fmt.Errorf("failed to clone repository"))
+			},
+			config: &provisioning.Repository{
+				Spec: provisioning.RepositorySpec{
+					GitHub: &provisioning.GitHubRepositoryConfig{
+						Branch: "main",
+					},
+				},
+			},
+			expectedError: fmt.Errorf("failed to clone repository"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCloneFn := NewMockCloneFn(t)
+
+			tt.setupMock(mockCloneFn)
+
+			// Create repository with mock
+			repo := &githubRepository{
+				cloneFn: mockCloneFn.Execute,
+				config:  tt.config,
+				owner:   "grafana",
+				repo:    "grafana",
+			}
+
+			// Call the Clone method with a placeholder directory path
+			_, err := repo.Clone(context.Background(), CloneOptions{
+				CreateIfNotExists: true,
+				PushOnWrites:      true,
+				MaxSize:           1024 * 1024 * 10, // 10MB
+				Timeout:           10 * time.Second,
+				Progress:          io.Discard,
+				BeforeFn:          nil,
+			})
+
+			// Check results
+			if tt.expectedError != nil {
+				require.Error(t, err)
+				require.Equal(t, tt.expectedError.Error(), err.Error())
+			} else {
+				require.NoError(t, err)
+			}
+
+			// Verify all mock expectations were met
+			mockCloneFn.AssertExpectations(t)
 		})
 	}
 }

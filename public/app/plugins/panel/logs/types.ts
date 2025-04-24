@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 
-import { DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
+import { CoreApp, DataFrame, Field, LinkModel, ScopedVars } from '@grafana/data';
+import { LogListControlOptions } from 'app/features/logs/components/panel/LogList';
 
 export type { Options } from './panelcfg.gen';
 
@@ -12,6 +13,7 @@ type isFilterLabelActiveType = (key: string, value: string, refId?: string) => P
 type isOnClickShowFieldType = (value: string) => void;
 type isOnClickHideFieldType = (value: string) => void;
 export type onNewLogsReceivedType = (allLogs: DataFrame[], newLogs: DataFrame[]) => void;
+type onLogOptionsChangeType = (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
 
 export type GetFieldLinksFn = (
   field: Field,
@@ -52,6 +54,15 @@ export function isOnNewLogsReceivedType(callback: unknown): callback is onNewLog
   return typeof callback === 'function';
 }
 
+export function isOnLogOptionsChange(callback: unknown): callback is onLogOptionsChangeType {
+  return typeof callback === 'function';
+}
+
 export function isReactNodeArray(node: unknown): node is ReactNode[] {
   return Array.isArray(node) && node.every(React.isValidElement);
+}
+
+export function isCoreApp(app: unknown): app is CoreApp {
+  const apps = Object.values(CoreApp).map((coreApp) => coreApp.toString());
+  return typeof app === 'string' && apps.includes(app);
 }

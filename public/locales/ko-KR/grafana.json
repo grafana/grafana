@@ -406,7 +406,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3155,6 +3154,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "대시보드",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4267,7 +4267,7 @@
       "hide-time-picker": "시간 선택기 숨기기",
       "now-delay-description": "불완전할 수 있는 최근 데이터를 제외합니다.",
       "now-delay-label": "현재 지연 시간",
-      "refresh-live-dashboards-description": "시간 범위가 '현재'를 참조하는 패널을 계속 업데이트합니다.",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "라이브 대시보드 새로 고침",
       "time-options-label": "시간 옵션",
       "time-zone-label": "시간대",
@@ -4717,9 +4717,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4841,8 +4838,6 @@
     "rich-history-utils": {
       "a-week-ago": "일주일 전",
       "days-ago": "{{num}}일 전",
-      "default-from": "현재-1시간",
-      "default-to": "현재",
       "today": "오늘",
       "two-weeks-ago": "2주 전",
       "yesterday": "어제"
@@ -8494,15 +8489,11 @@
       "apply": "시간 범위 적용",
       "aria-role": "시간 범위 선택",
       "default-title": "시간 범위",
-      "example": "예: 10분 전부터 현재까지의 시간 범위를 선택하려면",
-      "example-details": "시작: 현재-10분, 종료: 현재",
       "example-title": "시간 범위 예시",
       "from-label": "시작 시간",
       "from-to": "{{timeOptionFrom}}~{{timeOptionTo}}",
-      "more-info": "자세한 내용은 <2>문서<1></1></2>를 확인하세요.",
-      "specify": "시간 범위 지정 <1></1>",
+      "specify": "",
       "submit-button-label": "시간 선택기 제출 버튼",
-      "supported-formats": "지원되는 형식: <1>현재-[digit]초/분/시간/일/주</1>",
       "to-label": "종료 시간"
     },
     "zone": {

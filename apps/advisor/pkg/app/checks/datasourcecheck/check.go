@@ -62,6 +62,17 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 	return res, nil
 }
 
+func (c *check) Item(ctx context.Context, id string) (any, error) {
+	requester, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return c.DatasourceSvc.GetDataSource(ctx, &datasources.GetDataSourceQuery{
+		UID:   id,
+		OrgID: requester.GetOrgID(),
+	})
+}
+
 func (c *check) ID() string {
 	return CheckID
 }
@@ -113,6 +124,7 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			fmt.Sprintf("%s (%s)", ds.Name, ds.UID),
+			ds.UID,
 			[]advisor.CheckErrorLink{},
 		), nil
 	}
@@ -181,6 +193,7 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
+			ds.UID,
 			[]advisor.CheckErrorLink{
 				{
 					Message: "Fix me",
@@ -241,6 +254,7 @@ func (s *missingPluginStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
+			ds.UID,
 			links,
 		), nil
 	}
