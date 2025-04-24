@@ -1344,6 +1344,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
+	origin?: FilterOrigin;
 	// @deprecated
 	condition?: string;
 }
@@ -1353,6 +1354,12 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	operator: "",
 	value: "",
 });
+
+// Determine the origin of the adhoc variable filter
+// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
+export type FilterOrigin = "dashboard" | "scope";
+
+export const defaultFilterOrigin = (): FilterOrigin => ("dashboard");
 
 // Define the MetricFindValue type
 export interface MetricFindValue {
