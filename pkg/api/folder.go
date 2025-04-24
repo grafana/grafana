@@ -222,7 +222,7 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if user.IsIdentityType(claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
@@ -246,9 +246,11 @@ func (hs *HTTPServer) setDefaultFolderPermissions(ctx context.Context, orgID int
 		return err
 	}
 
-	// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	hs.accesscontrolService.ClearUserPermissionCache(user)
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		// Clear permission cache for the user who's created the folder, so that new permissions are fetched for their next call
+		// Required for cases when caller wants to immediately interact with the newly created object
+		hs.accesscontrolService.ClearUserPermissionCache(user)
+	}
 
 	return nil
 }

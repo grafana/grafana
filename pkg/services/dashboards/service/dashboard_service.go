@@ -1216,16 +1216,15 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 	if err != nil {
 		return err
 	}
-	var permissions []accesscontrol.SetResourcePermissionCommand
+	permissions := []accesscontrol.SetResourcePermissionCommand{}
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
+			UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
+		})
+	}
+	isNested := obj.GetFolder() != ""
 	if !dr.features.IsEnabledGlobally(featuremgmt.FlagKubernetesDashboards) {
 		// legacy behavior
-		permissions = []accesscontrol.SetResourcePermissionCommand{}
-		if user.IsIdentityType(claims.TypeUser) {
-			permissions = append(permissions, accesscontrol.SetResourcePermissionCommand{
-				UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String(),
-			})
-		}
-		isNested := obj.GetFolder() != ""
 		if !isNested || !dr.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 			permissions = append(permissions, []accesscontrol.SetResourcePermissionCommand{
 				{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_EDIT.String()},
@@ -1233,11 +1232,11 @@ func (dr *DashboardServiceImpl) SetDefaultPermissionsAfterCreate(ctx context.Con
 			}...)
 		}
 	} else {
-		if obj.GetFolder() != "" {
+		// Don't set any permissions for nested dashboards
+		if isNested {
 			return nil
 		}
 		permissions = []accesscontrol.SetResourcePermissionCommand{
-			{UserID: uid, Permission: dashboardaccess.PERMISSION_ADMIN.String()},
 			{BuiltinRole: string(org.RoleEditor), Permission: dashboardaccess.PERMISSION_ADMIN.String()},
 			{BuiltinRole: string(org.RoleViewer), Permission: dashboardaccess.PERMISSION_VIEW.String()},
 		}
