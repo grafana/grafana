@@ -62,6 +62,17 @@ const ui = {
     secretKey: byRole('textbox', { name: /^Secret Key/ }),
     topicArn: byRole('textbox', { name: /^SNS topic ARN/ }),
   },
+  webhook: {
+    url: byRole('textbox', { name: /^URL/ }),
+    tlsConfig: {
+      header: byRole('heading', { name: /TLS/ }),
+      caCertificate: byRole('textbox', { name: /^CA certificate/ }),
+      clientCert: byRole('textbox', { name: /^Client certificate/ }),
+      clientKey: byRole('textbox', { name: /^Client key/ }),
+      deleteButton: byTestId('items.0.settings.tlsConfig.delete-button'),
+    },
+    optionalSettings: byRole('button', { name: /optional webhook settings/i }),
+  },
 };
 
 describe('GrafanaReceiverForm', () => {
@@ -258,7 +269,7 @@ describe('GrafanaReceiverForm', () => {
         .build({ id: 'amazon-sns-id', name: contactPointName, metadata: { name: contactPointName } });
 
       const capture = captureRequests(
-        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPointName}`) && req.method === 'PUT'
+        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
       );
 
       const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
@@ -403,7 +414,64 @@ describe('GrafanaReceiverForm', () => {
       expect(byLabelText('URL').get()).toHaveValue('https://oncall.example.com');
     });
   });
+
+  describe('Webhook contact point', () => {
+    it('should properly remove TLS config when deleted', async () => {
+      const contactPointName = 'webhook-test';
+      const contactPoint = alertingFactory.alertmanager.grafana.contactPoint
+        .withIntegrations((integrationFactory) => [
+          integrationFactory
+            .webhook()
+            .params({
+              settings: {
+                url: 'http://example.com',
+                tlsConfig: {
+                  caCertificate: 'ca-cert',
+                  clientCertificate: 'client-cert',
+                  clientKey: 'client-key',
+                  insecureSkipVerify: false,
+                },
+              },
+            })
+            .build(),
+        ])
+        .build({ id: 'webhook-id', name: contactPointName, metadata: { name: contactPointName } });
+
+      const capture = captureRequests(
+        (req) => req.url.includes(`/v0alpha1/namespaces/default/receivers/${contactPoint.id}`) && req.method === 'PUT'
+      );
+
+      const { user } = renderWithProvider(<GrafanaReceiverForm contactPoint={contactPoint} editMode={true} />);
+
+      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+      // Find and click the delete button next to TLS config
+      await user.click(ui.webhook.optionalSettings.get());
+
+      expect(await ui.webhook.tlsConfig.header.find(undefined)).toBeInTheDocument();
+      await user.click(await ui.webhook.tlsConfig.deleteButton.find());
+
+      await user.click(ui.saveButton.get());
+
+      const requests = await capture;
+      expect(requests).toHaveLength(1);
+
+      const [request] = requests;
+      const postRequestBody = await request.clone().json();
+
+      const integrationPayload = postRequestBody.spec.integrations[0];
+
+      // Verify that TLS config is not present in the settings
+      expect(integrationPayload.settings).not.toHaveProperty('tlsConfig');
+      expect(integrationPayload.secureFields).not.toHaveProperty('tlsConfig.caCertificate');
+      expect(integrationPayload.secureFields).not.toHaveProperty('tlsConfig.clientCert');
+      expect(integrationPayload.secureFields).not.toHaveProperty('tlsConfig.clientKey');
+
+      expect(postRequestBody).toMatchSnapshot();
+    });
+  });
 });
+
 function getAmCortexConfig(configure: (builder: AlertmanagerConfigBuilder) => void): AlertManagerCortexConfig {
   const configBuilder = new AlertmanagerConfigBuilder();
   configure(configBuilder);
