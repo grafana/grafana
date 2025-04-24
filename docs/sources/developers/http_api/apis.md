@@ -27,7 +27,7 @@ Going forward, Grafana's HTTP API will follow a standardized API structure along
 All Grafana APIs follow this standardized format:
 
 ```
-/apis/<group>/<version>/namespaces/<namespace>/<resource>
+/apis/<group>/<version>/namespaces/<namespace>/<resource>[/<name>]
 ```
 
 ## Understanding the Components
@@ -70,8 +70,27 @@ Represents the core resource you want to interact with, such as:
 - `playlists`
 - `folders`
 
-## Example
+### Name (<name>)
 
-Creating a new dashboard:
+The `<name>` is the unique identifier for a specific instance of a resource within its namespace and resource type. `<name>` is distinct from the metadata.uid field. The URL path will always use the metadata.name.
 
-`POST /apis/dashboard.grafana.app/v1beta1/namespaces/:namespace/dashboards`
+For example, to get a dashboard defined as:
+```
+{
+  "kind": "Dashboard",
+  "apiVersion": "dashboard.grafana.app/v1beta1",
+  "metadata": {
+    "name": "production-overview", // This value IS used in the URL path
+    "namespace": "default",
+    "uid": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8" // This value is NOT used in the URL path
+    // ... other metadata
+  },
+  "spec": {
+    // ... dashboard spec
+  }
+}
+```
+
+You would use the following API call:
+
+`GET /apis/dashboard.grafana.app/v1beta1/namespaces/default/dashboards/production-overview`
