@@ -12,7 +12,7 @@ weight: 1
 
 # Strategies for upgrading your self-managed Grafana instance
 
-At Grafana Labs, we believe in shipping features early and often, and in recent years we've increased our commitment to that philosophy.
+At Grafana Labs, we believe in shipping features early and often, and in recent years we’ve increased our commitment to that philosophy.
 
 We no longer wait for the yearly major release to give you access to the next big improvement. Instead, we regularly make new features, bug fixes, and security patches available to our self-managing users ([Grafana OSS](https://grafana.com/oss/grafana/) and [Grafana Enterprise](https://grafana.com/products/enterprise/)) throughout the year.
 
@@ -30,23 +30,23 @@ We split Grafana OSS and Grafana Enterprise releases into three main categories:
 - **Major release (once a year, in April/May)**: These are like a minor release, but accompanied by [GrafanaCON](https://grafana.com/events/grafanacon/) and a comprehensive upgrade guide for users who like to upgrade only once a year.
 - **Patching release (every month)**: These include bug fixes for currently supported versions, as well as any security vulnerability patches.
 
-You can choose your cadence: For frequent self-managed updates, you should follow the minor release (for example, upgrade 11.1 to 11.2), which also gives you access to the latest features. If you need a longer period to review our new releases, you should follow the major releases. Both strategies get patching releases with security fixes (high severity security fixes also result in ad-hoc patch releases). We'll get into additional guidance on upgrade cadences later in this guide.
+You can choose your cadence: For frequent self-managed updates, you should follow the minor release (for example, upgrade 11.1 to 11.2), which also gives you access to the latest features. If you need a longer period to review our new releases, you should follow the major releases. Both strategies get patching releases with security fixes (high severity security fixes also result in ad-hoc patch releases). We’ll get into additional guidance on upgrade cadences later in this guide.
 
 ## How to find the specifics for a release
 
 We love sharing all our great features with you so you can leverage Grafana to its fullest. We also understand that complete release documentation allows you to upgrade with confidence.
-Whether it's knowing that a bug has been fixed, seeing that a security vulnerability is patched, or understanding how to mitigate the impact of breaking changes, proper documentation allows you to make informed decisions about when to upgrade your local Grafana instances.
+Whether it’s knowing that a bug has been fixed, seeing that a security vulnerability is patched, or understanding how to mitigate the impact of breaking changes, proper documentation allows you to make informed decisions about when to upgrade your local Grafana instances.
 
 We provide release documentation in multiple places to address different needs:
 
-- [**What's new**](https://grafana.com/docs/grafana/latest/whatsnew/?pg=blog&plcmt=body-txt) outlines new features debuting in each major and minor release.
+- [**What’s new**](https://grafana.com/docs/grafana/latest/whatsnew/?pg=blog&plcmt=body-txt) outlines new features debuting in each major and minor release.
 - [**Breaking changes**](https://grafana.com/docs/grafana/latest/breaking-changes/?pg=blog&plcmt=body-txt) notify you of updates included in major releases that could impact you and provide mitigation recommendations when needed.
 - [**Upgrade guides**](https://grafana.com/docs/grafana/latest/upgrade-guide/?pg=blog&plcmt=body-txt) instruct you on how to upgrade to a newer minor or major version.
 - And finally, a [**changelog**](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) is generated for every release (major, minor, patching, security) and outlines all changes included in that release.
 
 ## When to expect releases
 
-Currently, Grafana is on a monthly release cycle. Here's a look at scheduled releases for 2025:
+Currently, Grafana is on a monthly release cycle. Here’s a look at scheduled releases for 2025:
 
 | **Release date** | **Grafana versions**      | **Release type** |
 | ---------------- | ------------------------- | ---------------- |
@@ -73,9 +73,9 @@ Currently, Grafana is on a monthly release cycle. Here's a look at scheduled rel
 
 ## Grafana security releases: improved version naming convention
 
-We've enhanced our naming convention for security release versions to make it easier to clearly identify our security releases from our standard patching releases.
+We’ve enhanced our naming convention for security release versions to make it easier to clearly identify our security releases from our standard patching releases.
 
-In the past, critical vulnerabilities triggered unscheduled releases that incremented the patch version (e.g., 10.3.0 to 10.3.1). However, we found that the naming convention for these releases didn't clearly communicate the nature of the update. For example, if there was a version change from 11.3.0 to 11.3.1, there was no indication whether it was a security fix, a bug fix, or a minor feature update. This lack of clarity led to confusion about the urgency and nature of the update. <br>
+In the past, critical vulnerabilities triggered unscheduled releases that incremented the patch version (e.g., 10.3.0 to 10.3.1). However, we found that the naming convention for these releases didn’t clearly communicate the nature of the update. For example, if there was a version change from 11.3.0 to 11.3.1, there was no indication whether it was a security fix, a bug fix, or a minor feature update. This lack of clarity led to confusion about the urgency and nature of the update. <br>
 
 {{< admonition type="note" >}}
 Docker does not allow the plus sign (`+`) in image tag names. A plus sign (`+`) will be a rendered as a dash (`-`) in the docker tag.
@@ -85,11 +85,11 @@ Our new approach directly addresses this issue. Going forward, security releases
 
 **For example**: A release named "11.2.3+security-01" would consist of what was released in 11.2.3 PLUS the indicated security fix. Once released, the security fix will also then be automatically included in all future releases of the impacted version.
 
-This naming convention should make it easier to identify security updates and the Grafana version they're based on, allowing for a better understanding of the importance and urgency of each release.
+This naming convention should make it easier to identify security updates and the Grafana version they’re based on, allowing for a better understanding of the importance and urgency of each release.
 
 ## What to know about version support
 
-Self-managed Grafana users have control over when they upgrade to a new version of Grafana. To help you make an informed decision about whether it's time to upgrade, it's important that you understand the level of support provided for your current version.
+Self-managed Grafana users have control over when they upgrade to a new version of Grafana. To help you make an informed decision about whether it’s time to upgrade, it’s important that you understand the level of support provided for your current version.
 
 For self-managed Grafana (both Enterprise and OSS), the support for versions follows these rules:
 
@@ -153,11 +153,11 @@ A critical feature degradation usually meets one of the following criteria:
 
 ## Self-managing upgrade strategies
 
-Based on your needs, choose your ideal upgrade strategy. Here's what that might look like in practice:
+Based on your needs, choose your ideal upgrade strategy. Here’s what that might look like in practice:
 
 | **Strategy/cadence**                       | **Advantages/disadvantages**                                                                                                                                                                                                                                                                                           | **Example upgrade procedure**                                                                                                                                                                                                                                               |
 | ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Minor / bi-monthly (11.1 to 11.2)**      | Our recommended strategy. It combines up-to-date, secure releases with access to latest features as soon as they're released. <ul><li>Small changelog to review</li><li>Highest compatibility with actively maintained plugins</li><li>Easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul> | <ul><li>**January 2025**: You review the 11.5 changelog and deploy the release to testing</li><li>**February 2025**: You deploy 11.5 to production</li><li>**March 2025**: 11.6 is released</li></ul>                                                                       |
+| **Minor / bi-monthly (11.1 to 11.2)**      | Our recommended strategy. It combines up-to-date, secure releases with access to latest features as soon as they’re released. <ul><li>Small changelog to review</li><li>Highest compatibility with actively maintained plugins</li><li>Easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul> | <ul><li>**January 2025**: You review the 11.5 changelog and deploy the release to testing</li><li>**February 2025**: You deploy 11.5 to production</li><li>**March 2025**: 11.6 is released</li></ul>                                                                       |
 | **Major / yearly (10.0 to 11.0)**          | Yearly upgrade path that still gives access to up-to-date features presented at GrafanaCON.<ul><li>Big changelog to review</li><li>High compatibility with plugins</li><li>Relatively easy migration to [Grafana Cloud](https://grafana.com/products/cloud)</li></ul>                                                  | <ul><li>**May 2024**: 11.0 is released, you start a big changelog review</li><li>**June 2024**: You deploy 11.0 to testing</li><li>**July 2024**: You deploy 11.0 to production</li><li>**May 2025**: 12.0 is released</li></ul>                                            |
 | **Previous major / yearly (10.4 to 11.6)** | Release with extended support timeline<ul><li>Limited compatibility with actively developed plugins</li><li>Big changelog to review</li><li>Migrations to Grafana Cloud might require professional support</li></ul>                                                                                                   | <ul><li>**May 2025**: 12.0 is released, marking the previous minor (11.6.x) with extended support, you start a big changelog review (10.4.x to 11.6.x)</li><li>**June 2025**: You deploy 11.6.x to testing</li><li>**July 2025**: You deploy 11.6.x to production</li></ul> |
 
@@ -186,7 +186,7 @@ Reduce the risk of bugs by staying current and rolling out upgrades across dev o
 
 ### Known breaking changes
 
-As a rule we always seek backward compatibility and migration, and reserve breaking changes for Grafana's once-yearly major release. However occasionally small breaking changes (like updates to API payloads) will ship in minor releases. These are announced in [upgrade guides](https://grafana.com/docs/grafana/latest/upgrade-guide/), [What's New](https://grafana.com/docs/grafana-cloud/whats-new/), and our [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
+As a rule we always seek backward compatibility and migration, and reserve breaking changes for Grafana’s once-yearly major release. However occasionally small breaking changes (like updates to API payloads) will ship in minor releases. These are announced in [upgrade guides](https://grafana.com/docs/grafana/latest/upgrade-guide/), [What’s New](https://grafana.com/docs/grafana-cloud/whats-new/), and our [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md).
 
 Always read the [upgrade guide](https://grafana.com/docs/grafana/latest/upgrade-guide/) and [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md) prior to upgrading to learn about and account for breaking changes.
 
@@ -194,4 +194,4 @@ Always read the [upgrade guide](https://grafana.com/docs/grafana/latest/upgrade-
 
 **Grafana core** ships as a single binary and consists of Dashboards, Alerts, Explore, Authentication and Authorization, Reporting, some core data sources, and other components. However, almost everyone who uses Grafana also uses **plugins**: panels, data sources, and applications that are released independently of Grafana. Every plugin version lists its Grafana version dependencies (you can see them at [https://grafana.com/grafana/plugins/](https://grafana.com/grafana/plugins/)) but different versions of different plugins can also interact with each other - for example you might visualize data from a data source in a panel in Grafana, all three of which are versioned independently of each other. That can create issues that are hard to catch in testing.
 
-To minimize the likelihood of plugin incompatibility issues, run the latest available version of plugins and update them regularly. Always [update plugins](https://grafana.com/docs/grafana/latest/administration/plugin-management/#update-a-plugin) before updating Grafana. Plugins also follow Semver patterns, so review the plugin's changelog for breaking changes before upgrading to a new major version of that plugin.
+To minimize the likelihood of plugin incompatibility issues, run the latest available version of plugins and update them regularly. Always [update plugins](https://grafana.com/docs/grafana/latest/administration/plugin-management/#update-a-plugin) before updating Grafana. Plugins also follow Semver patterns, so review the plugin’s changelog for breaking changes before upgrading to a new major version of that plugin.
