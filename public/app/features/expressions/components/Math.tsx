@@ -42,10 +42,22 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
               content={
                 <div className={styles.documentationContainer}>
                   <div>
-                    Run math operations on one or more queries. You reference the query by {'${refId}'} ie. $A, $B, $C
-                    etc.
-                    <br />
-                    Example: <code>$A + $B</code>
+                    <Trans
+                      i18nKey="expressions.math.run-math-operations"
+                      values={{
+                        refExample: '${refId}',
+                        ref1: '$A',
+                        ref2: '$B',
+                        ref3: '$C',
+                        example: '$A + $B',
+                      }}
+                    >
+                      Run math operations on one or more queries. You reference the query by {'{{refExample}}'} ie.{' '}
+                      {'{{ref1}}'}, {'{{ref2}}'}, {'{{ref3}}'}
+                      etc.
+                      <br />
+                      Example: <code>{'{{example}}'}</code>
+                    </Trans>
                   </div>
                   <header className={styles.documentationHeader}>
                     <Trans i18nKey="expressions.math.available-math-functions">Available math functions</Trans>
@@ -126,26 +138,28 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
               }
               title={
                 <Stack gap={1} direction="row">
-                  <Icon name="book-open" /> Math operator
+                  <Icon name="book-open" /> <Trans i18nKey="expressions.math.tooltip-title">Math operator</Trans>
                 </Stack>
               }
               footer={
                 <div>
-                  See our additional documentation on{' '}
-                  <TextLink
-                    external
-                    href="https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#math"
-                  >
-                    Math expressions
-                  </TextLink>
-                  .
+                  <Trans i18nKey="expressions.math.tooltip-footer">
+                    See our additional documentation on{' '}
+                    <TextLink
+                      external
+                      href="https://grafana.com/docs/grafana/latest/panels/query-a-data-source/use-expressions-to-manipulate-data/about-expressions/#math"
+                    >
+                      Math expressions
+                    </TextLink>
+                    .
+                  </Trans>
                 </div>
               }
               closeButton={true}
               placement="bottom-start"
             >
               <div className={styles.info}>
-                Expression <Icon name="info-circle" />
+                <Trans i18nKey="expressions.math.tooltip-trigger">Expression</Trans> <Icon name="info-circle" />
               </div>
             </Toggletip>
           </InlineLabel>
