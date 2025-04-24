@@ -18,7 +18,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"k8s.io/client-go/rest"
 )
 
 var (
