@@ -32,6 +32,8 @@ export function PanelRenderer<P extends object = {}, F extends object = {}>(prop
     fieldConfig = defaultFieldConfig,
   } = props;
 
+  console.log('PanelRenderer');
+
   const theme = useTheme2();
   const templateSrv = getTemplateSrv();
   const replace = useMemo(() => templateSrv.replace.bind(templateSrv), [templateSrv]);
