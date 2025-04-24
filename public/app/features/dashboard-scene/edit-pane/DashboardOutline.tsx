@@ -162,12 +162,10 @@ function getStyles(theme: GrafanaTheme2) {
     containerSelected: css({
       outline: `1px dashed ${theme.colors.primary.border} !important`,
       outlineOffset: '0px',
-      //background: theme.colors.primary.transparent,
       color: theme.colors.text.primary,
 
       '&:hover': {
         outline: `1px dashed ${theme.colors.primary.border}`,
-        //background: theme.colors.primary.transparent,
         color: theme.colors.text.primary,
       },
     }),
