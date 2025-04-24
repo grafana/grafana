@@ -55,15 +55,15 @@ Enabling CORS via the `grafana.ini` or `custom.ini` file will enable CORS for th
 
 1. In the `grafana.ini` or `custom.ini` file, add your desired headers to `[server.custom_response_headers]`:
 
-```ini
-[server.custom_response_headers]
-Access-Control-Allow-Origin = https://<YOUR_URL>.com
-Access-Control-Allow-Methods = GET, POST
-```
+   ```ini
+   [server.custom_response_headers]
+   Access-Control-Allow-Origin = https://<YOUR_URL>.com
+   Access-Control-Allow-Methods = GET, POST
+   ```
 
-{{< admonition type="note" >}}
-Grafana doesn't recommend using wildcard values (`*`) as header values and recommends using a URL instead.
-{{< /admonition >}}
+   {{< admonition type="note" >}}
+   Grafana doesn't recommend using wildcard values (`*`) as header values and recommends using a URL instead.
+   {{< /admonition >}}
 
 1. Restart Grafana.
 
