@@ -99,7 +99,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorageWrapper, keeperService)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, keeperMetadataStorageWrapper, keeperService)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
@@ -108,7 +108,7 @@ func TestProcessMessage(t *testing.T) {
 			contracts.SQLKeeperType: sqlKeeperWrapper,
 		}
 
-		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, utils.ResourceInfo{})
+		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, accessClient, utils.ResourceInfo{})
 
 		worker := NewWorker(Config{
 			// TODO: randomize
@@ -388,8 +388,8 @@ func (wrapper *secureValueMetadataStorageWrapper) Delete(ctx context.Context, na
 	}
 	return nil
 }
-func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	return wrapper.impl.List(ctx, namespace, options)
+func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error) {
+	return wrapper.impl.List(ctx, namespace)
 }
 
 func (wrapper *secureValueMetadataStorageWrapper) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
