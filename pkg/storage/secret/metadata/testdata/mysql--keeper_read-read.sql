@@ -16,5 +16,4 @@ FROM
 WHERE 1 = 1 AND
   `namespace` = 'ns' AND
   `name` = 'name'
-ORDER BY `updated` DESC
 ;
