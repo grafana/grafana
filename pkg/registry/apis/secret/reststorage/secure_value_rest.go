@@ -9,6 +9,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/admission"
@@ -41,7 +43,10 @@ type SecureValueRest struct {
 }
 
 // NewSecureValueRest is a returns a constructed `*SecureValueRest`.
-func NewSecureValueRest(secretService *service.SecretService, resource utils.ResourceInfo) *SecureValueRest {
+func NewSecureValueRest(
+	secretService *service.SecretService,
+	resource utils.ResourceInfo,
+) *SecureValueRest {
 	return &SecureValueRest{
 		secretService:  secretService,
 		resource:       resource,
@@ -89,7 +94,31 @@ func (s *SecureValueRest) List(ctx context.Context, options *internalversion.Lis
 		return nil, fmt.Errorf("failed to list secure values: %w", err)
 	}
 
-	return secureValueList, nil
+	labelSelector := options.LabelSelector
+	if labelSelector == nil {
+		labelSelector = labels.Everything()
+	}
+
+	fieldSelector := options.FieldSelector
+	if fieldSelector == nil {
+		fieldSelector = fields.Everything()
+	}
+
+	allowedSecureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueList.Items))
+
+	for _, secureValue := range secureValueList.Items {
+		// Filter by label
+		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
+			// Filter by status.phase
+			if fieldSelector.Matches(fields.Set{"status.phase": string(secureValue.Status.Phase)}) {
+				allowedSecureValues = append(allowedSecureValues, secureValue)
+			}
+		}
+	}
+
+	return &secretv0alpha1.SecureValueList{
+		Items: allowedSecureValues,
+	}, nil
 }
 
 // Get calls the inner `store` (persistence) and returns a `securevalue` by `name`. It will NOT return the decrypted `value`.
@@ -228,10 +257,6 @@ func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
 
 	if sv.Spec.Title == "" {
 		errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
-	}
-
-	if sv.Spec.Keeper == "" {
-		errs = append(errs, field.Required(field.NewPath("spec", "keeper"), "a `keeper` is required"))
 	}
 
 	if sv.Spec.Value == "" && sv.Spec.Ref == "" {

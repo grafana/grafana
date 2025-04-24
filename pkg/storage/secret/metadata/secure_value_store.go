@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	claims "github.com/grafana/authlib/types"
-
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -15,17 +12,14 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 func ProvideSecureValueMetadataStorage(
 	db db.DB,
 	features featuremgmt.FeatureToggles,
-	accessClient claims.AccessClient,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keeperService secretkeeper.Service) (contracts.SecureValueMetadataStorage, error) {
+	keeperService secretkeeper.Service,
+) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
@@ -44,7 +38,6 @@ func ProvideSecureValueMetadataStorage(
 
 	return &secureValueMetadataStorage{
 		db:                    db,
-		accessClient:          accessClient,
 		keeperMetadataStorage: keeperMetadataStorage,
 		keepers:               keepers,
 	}, nil
@@ -53,7 +46,6 @@ func ProvideSecureValueMetadataStorage(
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
 	db                    db.DB
-	accessClient          claims.AccessClient
 	keeperMetadataStorage contracts.KeeperMetadataStorage
 	keepers               map[contracts.KeeperType]contracts.Keeper
 }
@@ -69,9 +61,9 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 
 	err = s.db.InTransaction(ctx, func(ctx context.Context) error {
 		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			if row.Keeper != contracts.DefaultSQLKeeper {
+			if row.Keeper != nil {
 				// Validate before inserting that the chosen `keeper` exists.
-				keeperRow := &keeperDB{Name: row.Keeper, Namespace: row.Namespace}
+				keeperRow := &keeperDB{Name: *row.Keeper, Namespace: row.Namespace}
 
 				keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 				if err != nil {
@@ -172,9 +164,9 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	}
 
 	err = s.db.WithTransactionalDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		if newRow.Keeper != contracts.DefaultSQLKeeper {
+		if newRow.Keeper != nil {
 			// Validate before updating that the new `keeper` exists.
-			keeperRow := &keeperDB{Name: newRow.Keeper, Namespace: newRow.Namespace}
+			keeperRow := &keeperDB{Name: *newRow.Keeper, Namespace: newRow.Namespace}
 
 			keeperExists, err := sess.Table(keeperRow.TableName()).ForUpdate().Exist(keeperRow)
 			if err != nil {
@@ -231,34 +223,10 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	return nil
 }
 
-func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-		Group:     secretv0alpha1.GROUP,
-		Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
-		Namespace: namespace.String(),
-		Verb:      utils.VerbGet, // Why not VerbList?
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile checker: %w", err)
-	}
-
-	labelSelector := options.LabelSelector
-	if labelSelector == nil {
-		labelSelector = labels.Everything()
-	}
-	fieldSelector := options.FieldSelector
-	if fieldSelector == nil {
-		fieldSelector = fields.Everything()
-	}
-
+func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error) {
 	secureValueRows := make([]*secureValueDB, 0)
 
-	err = s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 		cond := &secureValueDB{Namespace: namespace.String()}
 
 		if err := sess.Find(&secureValueRows, cond); err != nil {
@@ -274,28 +242,15 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 	secureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueRows))
 
 	for _, row := range secureValueRows {
-		// Check whether the user has permission to access this specific SecureValue in the namespace.
-		if !hasPermissionFor(row.Name, "") {
-			continue
-		}
-
 		secureValue, err := row.toKubernetes()
 		if err != nil {
 			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 		}
 
-		if labelSelector.Matches(labels.Set(secureValue.Labels)) {
-			if fieldSelector.Matches(fields.Set{
-				"status.phase": string(secureValue.Status.Phase),
-			}) {
-				secureValues = append(secureValues, *secureValue)
-			}
-		}
+		secureValues = append(secureValues, *secureValue)
 	}
 
-	return &secretv0alpha1.SecureValueList{
-		Items: secureValues,
-	}, nil
+	return secureValues, nil
 }
 
 func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {

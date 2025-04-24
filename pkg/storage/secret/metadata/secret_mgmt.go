@@ -45,7 +45,9 @@ func (s *secureValueMetadataStorage) updateInKeeper(ctx context.Context, currRow
 		return nil
 	}
 
-	if currRow.Keeper != newSV.Spec.Keeper {
+	if (currRow.Keeper == nil && newSV.Spec.Keeper != nil) ||
+		(currRow.Keeper != nil && newSV.Spec.Keeper == nil) ||
+		(currRow.Keeper != nil && newSV.Spec.Keeper != nil && *currRow.Keeper != *newSV.Spec.Keeper) {
 		return fmt.Errorf("keeper change not allowed")
 	}
 

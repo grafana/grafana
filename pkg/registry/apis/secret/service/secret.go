@@ -40,17 +40,6 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 		return nil, fmt.Errorf("missing auth info in context")
 	}
 
-	// hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-	// 	Group:     secretv0alpha1.GROUP,
-	// 	Resource:  secretv0alpha1.SecureValuesResourceInfo.GetName(),
-	// 	Namespace: namespace.String(),
-	// 	Verb:      utils.VerbGet, // Why not VerbList?
-	// })
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to compile checker: %w", err)
-	// }
-	// if !hasPermissionFor(row.Name, "") {
-
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
@@ -105,11 +94,11 @@ func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace, opt
 		return nil, fmt.Errorf("failed to compile checker: %w", err)
 	}
 
-	secureValuesMetadata, err := s.secureValueMetadataStorage.List(ctx, namespace, options)
+	secureValuesMetadata, err := s.secureValueMetadataStorage.List(ctx, namespace)
 
 	out := make([]secretv0alpha1.SecureValue, 0)
 
-	for _, metadata := range secureValuesMetadata.Items {
+	for _, metadata := range secureValuesMetadata {
 		// Check whether the user has permission to access this specific SecureValue in the namespace.
 		if !hasPermissionFor(metadata.Name, "") {
 			continue

@@ -678,7 +678,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					},
 					"keeper": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Name of the keeper, being the actual storage of the secure value.",
+							Description: "Name of the keeper, being the actual storage of the secure value. If not specified, the default keeper for the namespace will be used.",
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -730,6 +730,12 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 							Description: "A human readable message indicating details about why the `SecureValue` is in this phase. Only applicable if the `phase=Failed`.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"externalId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},
