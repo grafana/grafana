@@ -43,10 +43,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagDisableSecretsCompatibility
-	// Disable duplicated secret storage in legacy tables
-	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
-
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
@@ -690,10 +686,6 @@ const (
 	// FlagTimeRangeProvider
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"
-
-	// FlagPrometheusUsesCombobox
-	// Use new **Combobox** component for Prometheus query editor
-	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
