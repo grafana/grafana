@@ -55,7 +55,6 @@ type SecretAPIBuilder struct {
 	accessClient               claims.AccessClient
 	worker                     *worker.Worker
 	decryptersAllowList        map[string]struct{}
-	isDevMode                  bool // REMOVE ME
 }
 
 func NewSecretAPIBuilder(
@@ -67,7 +66,6 @@ func NewSecretAPIBuilder(
 	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
-	isDevMode bool, // REMOVE ME
 ) (*SecretAPIBuilder, error) {
 	database := database.New(db)
 	keepers, err := keeperService.GetKeepers()
@@ -95,7 +93,6 @@ func NewSecretAPIBuilder(
 			keepers,
 		),
 		decryptersAllowList: decryptersAllowList,
-		isDevMode:           isDevMode,
 	}, nil
 }
 
@@ -118,14 +115,6 @@ func RegisterAPIService(
 		return nil, nil
 	}
 
-	// Check if dev mode is enabled and replace the provided stores with an in-memory stores if so.
-	// TODO: Remove before launch
-	if cfg.SecretsManagement.IsDeveloperMode {
-		fmt.Println("developer mode enabled")
-		secureValueMetadataStorage = reststorage.NewFakeSecureValueMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
-		keeperMetadataStorage = reststorage.NewFakeKeeperMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
-	}
-
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
 		return nil, fmt.Errorf("register secret access control roles: %w", err)
 	}
@@ -139,7 +128,6 @@ func RegisterAPIService(
 		keeperService,
 		accessClient,
 		nil, // OSS does not need an allow list.
-		cfg.SecretsManagement.IsDeveloperMode,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -608,10 +596,6 @@ spec:
 // For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	if b.isDevMode {
-		return nil
-	}
-
 	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 
