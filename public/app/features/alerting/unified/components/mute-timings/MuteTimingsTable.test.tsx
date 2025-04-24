@@ -89,6 +89,7 @@ describe('MuteTimingsTable', () => {
       expect(await screen.findByTestId('dynamic-table')).toBeInTheDocument();
 
       expect(await screen.findByText('Provisioned')).toBeInTheDocument();
+      expect(screen.queryByText(/no mute timings configured/i)).not.toBeInTheDocument();
     });
 
     it('shows error when mute timings cannot load', async () => {
