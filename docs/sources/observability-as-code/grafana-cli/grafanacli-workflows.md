@@ -207,5 +207,5 @@ Use this workflow to locate dashboards using a deprecated API version and mark t
 1. Patch each of these dashboards to add a `deprecated` tag:
 
    ```bash
-   grafanactl resources patch dashboards.v1.dashboard.grafana.app/really-old-dashboard -p '{"spec":{"tags":["deprecated"]}}'
+   grafanactl resources edit dashboards.v1.dashboard.grafana.app/really-old-dashboard -p '{"spec":{"tags":["deprecated"]}}'
    ```
