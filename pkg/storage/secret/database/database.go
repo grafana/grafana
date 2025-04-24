@@ -27,10 +27,6 @@ func ProvideDatabase(db db.DB) *Database {
 	}
 }
 
-func ProvideSecretDatabase(db db.DB) contracts.Database {
-	return ProvideDatabase(db)
-}
-
 func (db *Database) DriverName() string {
 	return db.dbType
 }
