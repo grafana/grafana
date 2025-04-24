@@ -451,7 +451,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 		}
 		if len(ruleVersions) > 0 {
 			if _, err := sess.Insert(&ruleVersions); err != nil {
-				return fmt.Errorf("failed to create new version versions: %w", err)
+				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
 			st.deleteOldAlertRuleVersions(ctx, sess, ruleVersions)
 		}
@@ -478,7 +478,7 @@ func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, sess *db.Sessi
 		logger := logger.New("org_id", rv.RuleOrgID, "rule_uid", rv.RuleUID, "version", rv.Version, "limit", st.Cfg.RulesPerRuleGroupLimit)
 		res, err := sess.Exec(`DELETE FROM alert_rule_version WHERE rule_guid = ? AND version <= ?`, rv.RuleGUID, deleteTo)
 		if err != nil {
-			logger.Error("Failed to delete old alert version versions", "error", err)
+			logger.Error("Failed to delete old alert rule versions", "error", err)
 			return
 		}
 		rows, err := res.RowsAffected()
