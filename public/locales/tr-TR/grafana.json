@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Pano",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Zaman seçiciyi gizle",
       "now-delay-description": "Tamamlanmamış olabilecek en son verileri hariç tutun.",
       "now-delay-label": "Şimdi ertele",
-      "refresh-live-dashboards-description": "Zaman aralığı \"şimdi\"yi referans alan panelleri sürekli olarak yeniden çizin.",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Canlı panoları yenile",
       "time-options-label": "Zaman seçenekleri",
       "time-zone-label": "Zaman dilimi",
@@ -4738,9 +4738,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4862,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "bir hafta önce",
       "days-ago": "{{num}} gün önce",
-      "default-from": "şimdi - 1 saat",
-      "default-to": "şimdi",
       "today": "bugün",
       "two-weeks-ago": "iki hafta önce",
       "yesterday": "dün"
@@ -8525,15 +8520,11 @@
       "apply": "Zaman aralığını uygula",
       "aria-role": "Zaman aralığı seçimi",
       "default-title": "Zaman aralıkları",
-      "example": "Örnek: Şu an ile 10 dakika önce arasındaki zaman aralığını seçmek için",
-      "example-details": "Başlangıç: now-10m Bitiş: now",
       "example-title": "Örnek zaman aralıkları",
       "from-label": "Başlangıç",
       "from-to": "{{timeOptionFrom}} - {{timeOptionTo}}",
-      "more-info": "Daha fazla bilgi için <2>belgelere<1></1></2> bakın.",
-      "specify": "Zaman aralığını belirtin <1></1>",
+      "specify": "",
       "submit-button-label": "TimePicker gönder düğmesi",
-      "supported-formats": "Desteklenen biçimler: <1>now-[rakam]s/m/h/d/w</1>",
       "to-label": "Bitiş"
     },
     "zone": {

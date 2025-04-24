@@ -406,7 +406,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3155,6 +3154,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dasbor",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4267,7 +4267,7 @@
       "hide-time-picker": "Sembunyikan pemilih waktu",
       "now-delay-description": "Kecualikan data terbaru yang mungkin tidak lengkap.",
       "now-delay-label": "Sekarang tunda",
-      "refresh-live-dashboards-description": "Terus menggambar ulang panel ketika rentang waktu mengacu pada 'sekarang'",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Muat ulang dasbor langsung",
       "time-options-label": "Opsi waktu",
       "time-zone-label": "Zona waktu",
@@ -4717,9 +4717,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4841,8 +4838,6 @@
     "rich-history-utils": {
       "a-week-ago": "seminggu yang lalu",
       "days-ago": "{{num}} hari yang lalu",
-      "default-from": "sekarang—1 jam",
-      "default-to": "sekarang",
       "today": "hari ini",
       "two-weeks-ago": "dua minggu yang lalu",
       "yesterday": "kemarin"
@@ -8494,15 +8489,11 @@
       "apply": "Gunakan rentang waktu",
       "aria-role": "Pemilihan rentang waktu",
       "default-title": "Rentang waktu",
-      "example": "Contoh: untuk memilih rentang waktu dari 10 menit yang lalu hingga sekarang",
-      "example-details": "Dari: sekarang-10m Ke: sekarang",
       "example-title": "Contoh rentang waktu",
       "from-label": "Dari",
       "from-to": " {{timeOptionFrom}} hingga{{timeOptionTo}} ",
-      "more-info": "Untuk informasi selengkapnya lihat <2>dokumen <1></1></2>.",
-      "specify": "Sebutkan rentang waktu <1></1>",
+      "specify": "",
       "submit-button-label": "Tombol kirim TimePicker",
-      "supported-formats": "Format yang didukung: <1>sekarang- [digit]d/m/j/h/m</1>",
       "to-label": "Ke"
     },
     "zone": {

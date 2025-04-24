@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Tijdkiezer verbergen",
       "now-delay-description": "Sluit recente gegevens uit die mogelijk onvolledig zijn.",
       "now-delay-label": "Nu uitstellen",
-      "refresh-live-dashboards-description": "Teken voortdurend panelen opnieuw waar het tijdsbereik verwijst naar 'nu'",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Live dashboards vernieuwen",
       "time-options-label": "Tijdopties",
       "time-zone-label": "Tijdzone",
@@ -4738,9 +4738,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4862,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "een week geleden",
       "days-ago": "{{num}} dagen geleden",
-      "default-from": "nu-1 uur",
-      "default-to": "nu",
       "today": "vandaag",
       "two-weeks-ago": "twee weken geleden",
       "yesterday": "gisteren"
@@ -8525,15 +8520,11 @@
       "apply": "Tijdsbereik toepassen",
       "aria-role": "Tijdsbereikselectie",
       "default-title": "Tijdsbereik",
-      "example": "Voorbeeld: om een tijdbereik van 10 minuten geleden tot nu te selecteren",
-      "example-details": "Van: nu-10 min Tot: nu",
       "example-title": "Voorbeeld tijdsbereiken",
       "from-label": "Van",
       "from-to": "{{timeOptionFrom}} tot {{timeOptionTo}}",
-      "more-info": "Zie <2>docs< 1 > </1></2> voor meer informatie.",
-      "specify": "Geef tijdsbereik <1></1>",
+      "specify": "",
       "submit-button-label": "Knop TimePicker verzenden",
-      "supported-formats": "Ondersteunde formaten: <1>now-[digit]s/m/h/d/w</1>",
       "to-label": "Aan"
     },
     "zone": {

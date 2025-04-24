@@ -418,7 +418,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3209,6 +3208,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Pulpit",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4330,7 +4330,7 @@
       "hide-time-picker": "Ukryj selektor czasu",
       "now-delay-description": "Wyklucz najnowsze dane, które mogą być niekompletne.",
       "now-delay-label": "Teraz opóźnij",
-      "refresh-live-dashboards-description": "Generuj panele nieprzerwanie w przypadkach, dla których zakres czasu jest określony jako „teraz”",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Odświeżaj pulpity w czasie rzeczywistym",
       "time-options-label": "Opcje czasu",
       "time-zone-label": "Strefa czasowa",
@@ -4780,9 +4780,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4904,8 +4901,6 @@
     "rich-history-utils": {
       "a-week-ago": "tydzień temu",
       "days-ago": "{{num}} dni temu",
-      "default-from": "teraz – 1 godz.",
-      "default-to": "teraz",
       "today": "dzisiaj",
       "two-weeks-ago": "dwa tygodnie temu",
       "yesterday": "wczoraj"
@@ -8587,15 +8582,11 @@
       "apply": "Zastosuj zakres czasu",
       "aria-role": "Wybór zakresu czasu",
       "default-title": "Zakresy czasu",
-      "example": "Przykład: aby wybrać zakres czasu od 10 minut temu do teraz",
-      "example-details": "Od: now-10m Do: now",
       "example-title": "Przykładowe zakresy czasu",
       "from-label": "Od",
       "from-to": "{{timeOptionFrom}} do {{timeOptionTo}}",
-      "more-info": "Więcej informacji można znaleźć w <2>dokumentacji<1></1></2>.",
-      "specify": "Określ zakres czasu <1></1>",
+      "specify": "",
       "submit-button-label": "Przycisk przesyłania TimePicker",
-      "supported-formats": "Obsługiwane formaty: <1>now-[digit]s/m/h/d/w</1>",
       "to-label": "Do"
     },
     "zone": {

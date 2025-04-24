@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Painel de controlo",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Ocultar seletor de hora",
       "now-delay-description": "Excluir dados recentes que possam estar incompletos.",
       "now-delay-label": "Atraso agora",
-      "refresh-live-dashboards-description": "Redesenhar continuamente os painéis onde o intervalo de tempo faz referência a 'agora'",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Atualizar painéis de controlo ao vivo",
       "time-options-label": "Opções de tempo",
       "time-zone-label": "Fuso horário",
@@ -4738,9 +4738,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4862,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "há uma semana",
       "days-ago": "há {{num}} dias",
-      "default-from": "agora - 1 hora",
-      "default-to": "agora",
       "today": "hoje",
       "two-weeks-ago": "há duas semanas",
       "yesterday": "ontem"
@@ -8525,15 +8520,11 @@
       "apply": "Aplicar intervalo de tempo",
       "aria-role": "Seleção do intervalo de tempo",
       "default-title": "Intervalos de tempo",
-      "example": "Exemplo: para selecionar um intervalo de tempo de 10 minutos atrás até agora",
-      "example-details": "De: agora-10m Até: agora",
       "example-title": "Exemplo de intervalos de tempo",
       "from-label": "De",
       "from-to": "{{timeOptionFrom}} até {{timeOptionTo}}",
-      "more-info": "Para mais informações, consulte <2>docs <1></1></2>.",
-      "specify": "Especifique o intervalo de tempo <1></1>",
+      "specify": "",
       "submit-button-label": "Botão de envio do Seletor de hora",
-      "supported-formats": "Formatos suportados: <1>agora-[dígito]s/m/h/d/s</1>",
       "to-label": "Para"
     },
     "zone": {

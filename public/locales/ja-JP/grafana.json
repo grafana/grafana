@@ -406,7 +406,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3155,6 +3154,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "ダッシュボード",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4267,7 +4267,7 @@
       "hide-time-picker": "時間ピッカーを非表示にする",
       "now-delay-description": "不完全な可能性のある最近のデータを除外します。",
       "now-delay-label": "現在の遅延",
-      "refresh-live-dashboards-description": "時間範囲が「現在」を参照するパネルを継続的に再描画する",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "ライブダッシュボードを更新",
       "time-options-label": "時間オプション",
       "time-zone-label": "タイムゾーン",
@@ -4717,9 +4717,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4841,8 +4838,6 @@
     "rich-history-utils": {
       "a-week-ago": "1週間前",
       "days-ago": "{{num}}日前",
-      "default-from": "1時間前",
-      "default-to": "今",
       "today": "今日",
       "two-weeks-ago": "2週間前",
       "yesterday": "昨日"
@@ -8494,15 +8489,11 @@
       "apply": "時間範囲を適用",
       "aria-role": "時間範囲の選択",
       "default-title": "時間範囲",
-      "example": "例：10分前から現在までの時間範囲を選択するには",
-      "example-details": "開始：10分前 終了：現在",
       "example-title": "時間範囲の例",
       "from-label": "開始月",
       "from-to": "{{timeOptionFrom}}から{{timeOptionTo}}まで",
-      "more-info": "詳細については、<2>ドキュメント<1></1></2>をご覧ください。",
-      "specify": "時間範囲を指定 <1></1>",
+      "specify": "",
       "submit-button-label": "タイムピッカー送信ボタン",
-      "supported-formats": "サポートされている形式：<1>now-[digit]s/m/h/d/w</1>",
       "to-label": "終了月"
     },
     "zone": {

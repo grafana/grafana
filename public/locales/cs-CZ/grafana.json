@@ -418,7 +418,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3209,6 +3208,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Nástěnka",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4330,7 +4330,7 @@
       "hide-time-picker": "Skrýt volič času",
       "now-delay-description": "Vyloučit nedávná data, která mohou být neúplná.",
       "now-delay-label": "Aktuální zpoždění",
-      "refresh-live-dashboards-description": "Průběžně překreslovat panely, kde časový rozsah odkazuje na „teď“",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Obnovit živé nástěnky",
       "time-options-label": "Časové možnosti",
       "time-zone-label": "Časové pásmo",
@@ -4780,9 +4780,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4904,8 +4901,6 @@
     "rich-history-utils": {
       "a-week-ago": "před týdnem",
       "days-ago": "před {{num}} dny",
-      "default-from": "teď až 1 h",
-      "default-to": "teď",
       "today": "dnes",
       "two-weeks-ago": "před dvěma týdny",
       "yesterday": "včera"
@@ -8587,15 +8582,11 @@
       "apply": "Použít časový rozsah",
       "aria-role": "Výběr časového rozsahu",
       "default-title": "Časové rozsahy",
-      "example": "Příklad: pro výběr časového rozsahu od doby před 10 minutami do současnosti",
-      "example-details": "Od: teď–10 m Do: teď",
       "example-title": "Příklad časových rozsahů",
       "from-label": "Od",
       "from-to": "{{timeOptionFrom}} do {{timeOptionTo}}",
-      "more-info": "Další informace najdete v <2>dokumentaci<1></1></2>.",
-      "specify": "Zadejte časový rozsah <1></1>",
+      "specify": "",
       "submit-button-label": "Tlačítko odeslání voliče času",
-      "supported-formats": "Podporované formáty: <1>teď-[číslice]s/m/h/d/w</1>",
       "to-label": "Do"
     },
     "zone": {

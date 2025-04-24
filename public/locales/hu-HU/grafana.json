@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Irányítópult",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Időválasztó elrejtése",
       "now-delay-description": "Kizárja azokat a legutóbbi adatokat, amelyek hiányosak lehetnek.",
       "now-delay-label": "Most késleltetése",
-      "refresh-live-dashboards-description": "Folyamatosan újrarajzolja azokat a paneleket, ahol az időtartomány a „most” értékre hivatkozik",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Élő irányítópultok frissítése",
       "time-options-label": "Időbeállítások",
       "time-zone-label": "Időzóna",
@@ -4738,9 +4738,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4862,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "egy hete",
       "days-ago": "{{num}} napja",
-      "default-from": "most – 1 óra",
-      "default-to": "most",
       "today": "ma",
       "two-weeks-ago": "két héttel ezelőtt",
       "yesterday": "tegnap"
@@ -8525,15 +8520,11 @@
       "apply": "Időtartomány alkalmazása",
       "aria-role": "Időtartomány kijelölése",
       "default-title": "Időtartományok",
-      "example": "Példa: időtartomány kijelölése 10 perccel ezelőttől mostanáig",
-      "example-details": "Kezdés: now-10m Befejezés: now",
       "example-title": "Példa időtartományokra",
       "from-label": "Kezdete",
       "from-to": "{{timeOptionFrom}} – {{timeOptionTo}}",
-      "more-info": "További információért lásd a <2>dokumentációt<1></1></2>.",
-      "specify": "Adja meg az időtartományt <1></1>",
+      "specify": "",
       "submit-button-label": "TimePicker küldés gombja",
-      "supported-formats": "Támogatott formátumok: <1>now-[számjegyek]s/m/h/d/w</1>",
       "to-label": "Vége"
     },
     "zone": {

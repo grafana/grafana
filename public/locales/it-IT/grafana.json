@@ -410,7 +410,6 @@
       "action-buttons": {
         "delete": "",
         "edit-yaml": "",
-        "save": "",
         "save-exit": ""
       },
       "title-delete-rule": ""
@@ -3173,6 +3172,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -4288,7 +4288,7 @@
       "hide-time-picker": "Nascondi selettore tempo",
       "now-delay-description": "Escludi i dati recenti che potrebbero essere incompleti.",
       "now-delay-label": "Ritardo ora",
-      "refresh-live-dashboards-description": "Ridisegna continuamente i pannelli in cui l'intervallo di tempo fa riferimento a \"ora\"",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Aggiorna dashboard in tempo reale",
       "time-options-label": "Opzioni ora",
       "time-zone-label": "Fuso orario",
@@ -4738,9 +4738,6 @@
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
-    },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
@@ -4862,8 +4859,6 @@
     "rich-history-utils": {
       "a-week-ago": "una settimana fa",
       "days-ago": "{{num}} giorni fa",
-      "default-from": "ora-1h",
-      "default-to": "ora",
       "today": "oggi",
       "two-weeks-ago": "due settimane fa",
       "yesterday": "ieri"
@@ -8525,15 +8520,11 @@
       "apply": "Applica intervallo di tempo",
       "aria-role": "Selezione dell'intervallo di tempo",
       "default-title": "Intervalli di tempo",
-      "example": "Esempio: per selezionare un intervallo di tempo da 10 minuti fa a ora",
-      "example-details": "Da: ora-10m A: ora",
       "example-title": "Esempi di intervalli di tempo",
       "from-label": "Da",
       "from-to": "Da {{timeOptionFrom}} a {{timeOptionTo}}",
-      "more-info": "Per ulteriori informazioni, consulta i <2>documenti<1></1></2>.",
-      "specify": "Specifica l'intervallo di tempo <1></1>",
+      "specify": "",
       "submit-button-label": "Pulsante di invio TimePicker",
-      "supported-formats": "Formati supportati: <1>ora-[numero]s/m/h/d/w</1>",
       "to-label": "A"
     },
     "zone": {
