@@ -9,13 +9,7 @@ import { Fill, Stroke, Style, Circle } from 'ol/style';
 import DayNight from 'ol-ext/source/DayNight';
 import { Subscription } from 'rxjs';
 
-import {
-  MapLayerRegistryItem,
-  MapLayerOptions,
-  PanelData,
-  GrafanaTheme2,
-  EventBus
-} from '@grafana/data';
+import { MapLayerRegistryItem, MapLayerOptions, PanelData, GrafanaTheme2, EventBus } from '@grafana/data';
 
 export enum ShowTime {
   From = 'from',
@@ -153,7 +147,6 @@ export const dayNightLayer: MapLayerRegistryItem<DayNightConfig> = {
 
     // Crosshair sharing subscriptions
     const subscriptions = new Subscription();
-
 
     return {
       init: () => layer,

@@ -384,7 +384,9 @@ describe('DashboardModel', () => {
         },
         {},
         // getVariablesFromState stub to return a variable
-        jest.fn().mockImplementation(() => [{}])
+        jest
+          .fn()
+          .mockImplementation(() => [{}])
       );
     });
 

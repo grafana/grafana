@@ -30,17 +30,17 @@ const alertStateSortScore = {
 };
 
 export enum EvalFunction {
-  'IsAbove' = 'gt',
-  'IsBelow' = 'lt',
-  'IsEqual' = 'eq',
-  'IsNotEqual' = 'ne',
-  'IsGreaterThanEqual' = 'gte',
-  'IsLessThanEqual' = 'lte',
-  'IsOutsideRange' = 'outside_range',
-  'IsWithinRange' = 'within_range',
-  'IsWithinRangeIncluded' = 'within_range_included',
-  'IsOutsideRangeIncluded' = 'outside_range_included',
-  'HasNoValue' = 'no_value',
+  IsAbove = 'gt',
+  IsBelow = 'lt',
+  IsEqual = 'eq',
+  IsNotEqual = 'ne',
+  IsGreaterThanEqual = 'gte',
+  IsLessThanEqual = 'lte',
+  IsOutsideRange = 'outside_range',
+  IsWithinRange = 'within_range',
+  IsWithinRangeIncluded = 'within_range_included',
+  IsOutsideRangeIncluded = 'outside_range_included',
+  HasNoValue = 'no_value',
 }
 
 const evalFunctions = [

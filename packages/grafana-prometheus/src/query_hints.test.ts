@@ -621,7 +621,7 @@ describe('ruleInQuery', () => {
   });
 
   it('should return false for escaped ruleName usage', () => {
-    expect(isRuleInQuery('rate(\"http_requests_total\"{job="api"}[5m])', 'http_requests_total')).toBe(false);
+    expect(isRuleInQuery('rate("http_requests_total"{job="api"}[5m])', 'http_requests_total')).toBe(false);
   });
 
   it('should return false when query is empty', () => {

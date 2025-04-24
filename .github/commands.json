@@ -49,7 +49,7 @@
     "name": "bot/close feature request",
     "action": "close",
     "addLabel": "not implemented",
-    "comment": "This feature request has been open for a long time with few received upvotes or comments, so we are closing it. We're trying to limit open GitHub issues in order to better track planned work and features.  \r\n\r\nThis doesn't mean that we'll never ever implement it or that we will never accept a PR for it. A closed issue can still attract upvotes and act as a ticket to track feature demand\/interest. \r\n\r\nThank You to you for taking the time to create this issue!"
+    "comment": "This feature request has been open for a long time with few received upvotes or comments, so we are closing it. We're trying to limit open GitHub issues in order to better track planned work and features.  \r\n\r\nThis doesn't mean that we'll never ever implement it or that we will never accept a PR for it. A closed issue can still attract upvotes and act as a ticket to track feature demand/interest. \r\n\r\nThank You to you for taking the time to create this issue!"
   },
   {
     "type": "label",

@@ -36,7 +36,7 @@ limitations under the License.
 
 .DividerDemo--divider::before {
   bottom: 0;
-  content: ' ';
+  content: " ";
   left: -2px;
   position: absolute;
   right: -2px;

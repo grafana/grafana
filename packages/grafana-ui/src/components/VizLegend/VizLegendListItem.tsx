@@ -29,7 +29,7 @@ export interface Props<T> {
 /**
  * @internal
  */
-export const VizLegendListItem = <T = unknown,>({
+export const VizLegendListItem = <T = unknown>({
   item,
   onLabelClick,
   onLabelMouseOver,
