@@ -69,7 +69,7 @@ func newMapper() mapper {
 		},
 		"query.grafana.app": {
 			"query": translation{
-				resource:  "query",
+				resource:  "datasources",
 				attribute: "uid",
 				verbMapping: map[string]string{
 					utils.VerbCreate: "datasources:query",
