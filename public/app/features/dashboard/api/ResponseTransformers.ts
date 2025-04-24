@@ -513,7 +513,7 @@ function getVariables(vars: TypedVariableModel[]): DashboardV2Spec['variables'] 
             query: {
               kind: 'DataQuery',
               version: defaultDataQueryKind().version,
-              group: v.datasource?.type || getDefaultDatasourceType(),
+              group: v.datasource?.type ?? getDefaultDatasourceType(),
               datasource: {
                 name: v.datasource?.uid,
               },
