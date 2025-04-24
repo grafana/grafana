@@ -34,7 +34,6 @@ type SettingsJSONData struct {
 	} `json:"traceIdTimeParams"`
 }
 
-
 type DependenciesResponse struct {
 	Data   []ServiceDependency `json:"data"`
 	Errors []struct {
