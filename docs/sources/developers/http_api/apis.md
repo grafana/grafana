@@ -30,6 +30,8 @@ All Grafana APIs follow this standardized format:
 /apis/<group>/<version>/namespaces/<namespace>/<resource>[/<name>]
 ```
 
+Where the final `/<name>` segment is used for operations on individual resources (like Get, Update, Delete) and omitted for collection operations (like List, Create).
+
 ## Understanding the Components
 
 ### Group (`<group>`)
