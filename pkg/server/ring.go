@@ -152,10 +152,6 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		return nil
 	}
 
-	stoppingFn := func(failureReason error) error {
-		return nil
-	}
-
 	ms.distributor = &resource.Distributor{
 		ClientPool: pool,
 		Ring:       storageRing,
@@ -164,7 +160,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 
 	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(storageRing)
 
-	svc := services.NewIdleService(startFn, stoppingFn)
+	svc := services.NewIdleService(startFn, nil)
 
 	return svc, nil
 }
@@ -172,7 +168,6 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
 	memberlistKVcfg := &memberlist.KVConfig{}
 	flagext.DefaultValues(memberlistKVcfg)
-	memberlistKVcfg.MetricsNamespace = ringName
 	memberlistKVcfg.Codecs = []codec.Codec{
 		ring.GetCodec(),
 	}
