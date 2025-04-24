@@ -139,6 +139,24 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 		pgxConf.ConnConfig.DialFunc = newPgxDialFunc(dialer)
 	}
 
+	tlsConf, err := tls.GetTLSConfig(dsInfo, os.ReadFile, pgxConf.ConnConfig.Host)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// before we set the TLS config, we need to make sure the `.Fallbacks` attribute is unset, see:
+	// https://github.com/jackc/pgx/discussions/1903#discussioncomment-8430146
+	if len(pgxConf.ConnConfig.Fallbacks) > 0 {
+		return nil, nil, errors.New("tls: fallbacks configured, unable to set up TLS config")
+	}
+	pgxConf.ConnConfig.TLSConfig = tlsConf
+
+	// by default pgx resolves hostnames to ip addresses. we must avoid this.
+	// (certain socks-proxy related functionality relies on the hostname being preserved)
+	pgxConf.ConnConfig.LookupFunc = func(_ context.Context, host string) ([]string, error) {
+		return []string{host}, nil
+	}
+
 	config := sqleng.DataPluginConfiguration{
 		DSInfo:            dsInfo,
 		MetricColumnTypes: []string{"unknown", "text", "varchar", "char", "bpchar"},
@@ -367,24 +385,6 @@ func generateConnectionConfigPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
 	conf, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return "", err
-	}
-
-	tlsConf, err := tls.GetTLSConfig(dsInfo, os.ReadFile, params.host)
-	if err != nil {
-		return "", err
-	}
-
-	// before we set the TLS config, we need to make sure the `.Fallbacks` attribute is unset, see:
-	// https://github.com/jackc/pgx/discussions/1903#discussioncomment-8430146
-	if len(conf.ConnConfig.Fallbacks) > 0 {
-		return "", errors.New("tls: fallbacks configured, unable to set up TLS config")
-	}
-	conf.ConnConfig.TLSConfig = tlsConf
-
-	// by default pgx resolves hostnames to ip addresses. we must avoid this.
-	// (certain socks-proxy related functionality relies on the hostname being preserved)
-	conf.ConnConfig.LookupFunc = func(_ context.Context, host string) ([]string, error) {
-		return []string{host}, nil
 	}
 
 	return conf.ConnString(), nil
