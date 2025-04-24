@@ -47,7 +47,21 @@ Self-hosted reverse proxy options include but are not limited to:
 
 ### Configure CORS
 
-Grafana doesn't natively support CORS. If you want to enable CORS for your Grafana instance, run Grafana behind a reverse proxy and configure the CORS headers in the reverse proxy.
+You can use the `[server.custom_response_headers]` configuration option in your `grafana.ini` or `custom.ini` file to enable CORS in Grafana. 
+
+{{< admonition type="warning" >}}
+Enabling CORS via the `grafana.ini` or `custom.ini` file will enable CORS for the _entire_ Grafana instance.
+{{< /admonition >}}
+
+```ini
+[server.custom_response_headers]
+Access-Control-Allow-Origin = https://<YOUR_URL>.com
+```
+{{< admonition type="note" >}} 
+Grafana doesn't reccomend using wildcard values (`*`). Use a URL instead.
+{{< /admonition >}}
+
+For more granular control when enabling CORS, run Grafana behind a reverse proxy and configure the CORS headers in the reverse proxy for specific endpoints, such as `/api/`.
 
 For more information, refer to [Run Grafana behind a reverse proxy](https://grafana.com/tutorials/run-grafana-behind-a-proxy/).
 
