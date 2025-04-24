@@ -22,7 +22,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
@@ -35,7 +34,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -65,12 +63,11 @@ func NewSecretAPIBuilder(
 	secretService *service.SecretService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
-	db db.DB,
+	database contracts.Database,
 	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
-	database := database.ProvideDatabase(db)
 	keepers, err := keeperService.GetKeepers()
 	if err != nil {
 		return nil, fmt.Errorf("getting map of keepers: %+w", err)
@@ -109,7 +106,7 @@ func RegisterAPIService(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
 	secretService *service.SecretService,
-	db db.DB,
+	database contracts.Database,
 	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
@@ -130,7 +127,7 @@ func RegisterAPIService(
 		secretService,
 		keeperMetadataStorage,
 		outboxQueue,
-		db,
+		database,
 		keeperService,
 		accessClient,
 		nil, // OSS does not need an allow list.
