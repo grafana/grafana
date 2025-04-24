@@ -119,10 +119,6 @@ func TestKeeperQueries(t *testing.T) {
 }
 
 func TestSecureValueQueries(t *testing.T) {
-	//svMessage := "message"
-	//svDecrypters := "decrypters"
-	//svRef := "ref_id"
-
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
 		RootDir: "testdata",
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
