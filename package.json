@@ -63,7 +63,6 @@
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
-    "generate-icons": "nx run grafana-icons:generate",
     "process-specs": "node --experimental-strip-types scripts/process-specs.ts",
     "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
   },
@@ -77,6 +76,7 @@
     "@babel/runtime": "7.27.0",
     "@betterer/betterer": "5.4.0",
     "@betterer/cli": "5.4.0",
+    "@crowdin/crowdin-api-client": "^1.42.0",
     "@cypress/webpack-preprocessor": "6.0.4",
     "@emotion/eslint-plugin": "11.12.0",
     "@grafana/eslint-config": "8.0.0",
@@ -274,7 +274,6 @@
     "@grafana/plugin-ui": "0.10.5",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/saga-icons": "workspace:*",
     "@grafana/scenes": "^6.8.1",
     "@grafana/scenes-react": "^6.8.1",
     "@grafana/schema": "workspace:*",
@@ -435,7 +434,6 @@
   "workspaces": {
     "packages": [
       "packages/*",
-      "packages/!(grafana-icons)/**",
       "public/app/plugins/*/*",
       "e2e/test-plugins/*"
     ]
