@@ -1,4 +1,4 @@
-package receiver
+package v0alpha1
 
 import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"

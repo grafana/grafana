@@ -1,4 +1,4 @@
-package receiver
+package v0alpha1
 
 import (
 	"context"
@@ -76,9 +76,9 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 	q := ngmodels.GetReceiversQuery{
 		OrgID:   orgId,
 		Decrypt: false,
-		//Names:   ctx.QueryStrings("names"), // TODO: Query params.
-		//Limit:   ctx.QueryInt("limit"),
-		//Offset:  ctx.QueryInt("offset"),
+		// Names:   ctx.QueryStrings("names"), // TODO: Query params.
+		// Limit:   ctx.QueryInt("limit"),
+		// Offset:  ctx.QueryInt("offset"),
 	}
 
 	user, err := identity.GetRequester(ctx)

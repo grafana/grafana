@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/ngalert/accesscontrol"
 )
 
@@ -22,7 +23,7 @@ type AccessControlService interface {
 }
 
 func Authorize(ctx context.Context, ac AccessControlService, attr authorizer.Attributes) (authorized authorizer.Decision, reason string, err error) {
-	if attr.GetResource() != ResourceInfo.GroupResource().Resource {
+	if attr.GetResource() != v0alpha1.ResourceInfo.GroupResource().Resource {
 		return authorizer.DecisionNoOpinion, "", nil
 	}
 	user, err := identity.GetRequester(ctx)
