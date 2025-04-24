@@ -199,7 +199,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-
 	// Delete from the keeper.
 	// TODO: here temporary, the moment of deletion will change in the async flow.
 	// TODO: do we care to inform the caller if there is any error?
