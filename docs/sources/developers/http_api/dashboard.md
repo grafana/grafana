@@ -59,7 +59,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   },
   "spec": {
     "title": "New dashboard",
-    "schemaVersion": 41
+    "schemaVersion": 41,
+    ...
   }
 }
 ```
@@ -111,7 +112,8 @@ Content-Length: 485
   "spec": {
     "editable": true,
     "schemaVersion": 41,
-    "title": "New dashboard"
+    "title": "New dashboard",
+    ...
   }
 }
 ```
@@ -162,7 +164,8 @@ Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
   },
   "spec": {
     "title": "New dashboard - updated",
-    "schemaVersion": 41
+    "schemaVersion": 41,
+    ...
   }
 }
 ```
@@ -200,7 +203,8 @@ Content-Length: 485
   },
   "spec": {
     "schemaVersion": 41,
-    "title": "New dashboard - updated"
+    "title": "New dashboard - updated",
+    ...
   }
 }
 ```
@@ -269,7 +273,8 @@ Content-Length: 485
   },
   "spec": {
     "schemaVersion": 41,
-    "title": "New dashboard - updated"
+    "title": "New dashboard - updated",
+    ...
   }
 }
 ```
@@ -346,7 +351,8 @@ Content-Length: 644
         "schemaVersion": 41,
         "title": "New dashboard",
         "uid": "gpqcmf",
-        "version": 1
+        "version": 1,
+        ...
       }
     }
   ]

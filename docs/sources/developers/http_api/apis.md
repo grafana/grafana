@@ -27,7 +27,7 @@ Going forward, Grafana's HTTP API will follow a standardized API structure along
 All Grafana APIs follow this standardized format:
 
 ```
-/apis/<group>/<version>/namespaces/<namespace>/<kind>
+/apis/<group>/<version>/namespaces/<namespace>/<resource>
 ```
 
 ## Understanding the Components
@@ -62,7 +62,7 @@ Namespaces isolate resources within your Grafana instance. The format varies by 
   - Going to grafana.com, clicking on your stack, and selecting "Details" on your Grafana instance
   - Accessing the /swagger page in your cloud instance, where the namespace will be automatically populated on the relevant endpoints
 
-### Kind
+### Resource (`<resource>`)
 
 Represents the core resource you want to interact with, such as:
 
