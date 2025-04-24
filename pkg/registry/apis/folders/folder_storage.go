@@ -140,7 +140,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if user.IsIdentityType(claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
@@ -162,6 +162,9 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 		return err
 	}
 
-	s.acService.ClearUserPermissionCache(user)
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		s.acService.ClearUserPermissionCache(user)
+	}
+
 	return nil
 }
