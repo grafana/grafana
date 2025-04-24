@@ -4,6 +4,7 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2, Icon, Stack } from '@grafana/ui';
 
+import { Trans } from '../../../../core/internationalization';
 import { CatalogPlugin, PluginIconName } from '../types';
 
 type Props = {
@@ -27,7 +28,9 @@ export function PluginDetailsHeaderDependencies({ plugin, grafanaDependency }: P
       {Boolean(grafanaDependency) && (
         <div className={styles.depBadge}>
           <Icon name="grafana" className={styles.icon} />
-          Grafana {grafanaDependency}
+          <Trans i18nKey="plugins.plugin-details-header-dependencies.grafana-dependency">
+            Grafana {{ grafanaDependency }}
+          </Trans>
         </div>
       )}
 
