@@ -81,7 +81,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 
 	element, err := l.createLibraryElement(c.Req.Context(), c.SignedInUser, cmd)
 	if err != nil {
-		return toLibraryElementError(err, "Failed to create library element")
+		return l.toLibraryElementError(err, "Failed to create library element")
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
@@ -118,7 +118,7 @@ func (l *LibraryElementService) createHandler(c *contextmodel.ReqContext) respon
 func (l *LibraryElementService) deleteHandler(c *contextmodel.ReqContext) response.Response {
 	id, err := l.deleteLibraryElement(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
-		return toLibraryElementError(err, "Failed to delete library element")
+		return l.toLibraryElementError(err, "Failed to delete library element")
 	}
 
 	return response.JSON(http.StatusOK, model.DeleteLibraryElementResponse{
@@ -148,7 +148,7 @@ func (l *LibraryElementService) getHandler(c *contextmodel.ReqContext) response.
 		},
 	)
 	if err != nil {
-		return toLibraryElementError(err, "Failed to get library element")
+		return l.toLibraryElementError(err, "Failed to get library element")
 	}
 
 	if l.features.IsEnabled(ctx, featuremgmt.FlagLibraryPanelRBAC) {
@@ -189,13 +189,13 @@ func (l *LibraryElementService) getAllHandler(c *contextmodel.ReqContext) respon
 	}
 	elementsResult, err := l.getAllLibraryElements(c.Req.Context(), c.SignedInUser, query)
 	if err != nil {
-		return toLibraryElementError(err, "Failed to get library elements")
+		return l.toLibraryElementError(err, "Failed to get library elements")
 	}
 
 	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagLibraryPanelRBAC) {
 		filteredPanels, err := l.filterLibraryPanelsByPermission(c, elementsResult.Elements)
 		if err != nil {
-			return toLibraryElementError(err, "Failed to evaluate permissions")
+			return l.toLibraryElementError(err, "Failed to evaluate permissions")
 		}
 		elementsResult.Elements = filteredPanels
 	}
@@ -241,7 +241,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 
 	element, err := l.patchLibraryElement(c.Req.Context(), c.SignedInUser, cmd, web.Params(c.Req)[":uid"])
 	if err != nil {
-		return toLibraryElementError(err, "Failed to update library element")
+		return l.toLibraryElementError(err, "Failed to update library element")
 	}
 
 	metrics.MFolderIDsServiceCount.WithLabelValues(metrics.LibraryElements).Inc()
@@ -276,7 +276,7 @@ func (l *LibraryElementService) patchHandler(c *contextmodel.ReqContext) respons
 func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext) response.Response {
 	connections, err := l.getConnections(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":uid"])
 	if err != nil {
-		return toLibraryElementError(err, "Failed to get connections")
+		return l.toLibraryElementError(err, "Failed to get connections")
 	}
 
 	return response.JSON(http.StatusOK, model.LibraryElementConnectionsResponse{Result: connections})
@@ -296,13 +296,13 @@ func (l *LibraryElementService) getConnectionsHandler(c *contextmodel.ReqContext
 func (l *LibraryElementService) getByNameHandler(c *contextmodel.ReqContext) response.Response {
 	elements, err := l.getLibraryElementsByName(c.Req.Context(), c.SignedInUser, web.Params(c.Req)[":name"])
 	if err != nil {
-		return toLibraryElementError(err, "Failed to get library element")
+		return l.toLibraryElementError(err, "Failed to get library element")
 	}
 
 	if l.features.IsEnabled(c.Req.Context(), featuremgmt.FlagLibraryPanelRBAC) {
 		filteredElements, err := l.filterLibraryPanelsByPermission(c, elements)
 		if err != nil {
-			return toLibraryElementError(err, err.Error())
+			return l.toLibraryElementError(err, err.Error())
 		}
 
 		return response.JSON(http.StatusOK, model.LibraryElementArrayResponse{Result: filteredElements})
@@ -326,7 +326,7 @@ func (l *LibraryElementService) filterLibraryPanelsByPermission(c *contextmodel.
 	return filteredPanels, nil
 }
 
-func toLibraryElementError(err error, message string) response.Response {
+func (l *LibraryElementService) toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, model.ErrLibraryElementAlreadyExists) {
 		return response.Error(http.StatusBadRequest, model.ErrLibraryElementAlreadyExists.Error(), err)
 	}
@@ -354,6 +354,8 @@ func toLibraryElementError(err error, message string) response.Response {
 	if errors.Is(err, model.ErrLibraryElementUIDTooLong) {
 		return response.Error(http.StatusBadRequest, model.ErrLibraryElementUIDTooLong.Error(), err)
 	}
+	// Log errors that cause internal server error status code.
+	l.log.Error(message, "error", err)
 	return response.ErrOrFallback(http.StatusInternalServerError, message, err)
 }
 
