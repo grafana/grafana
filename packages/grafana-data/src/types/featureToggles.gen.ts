@@ -1027,4 +1027,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertRuleUseFiredAtForStartsAt?: boolean;
+  /**
+  * Enables the alerting bulk actions in the UI
+  * @default true
+  */
+  alertingBulkActionsInUI?: boolean;
 }

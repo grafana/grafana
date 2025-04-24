@@ -1768,6 +1768,16 @@ var (
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
 		},
+		{
+			Name:              "alertingBulkActionsInUI",
+			Description:       "Enables the alerting bulk actions in the UI",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
+		},
 	}
 )
 
