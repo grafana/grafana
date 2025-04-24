@@ -77,6 +77,7 @@ Represents the core resource you want to interact with, such as:
 The `<name>` is the unique identifier for a specific instance of a resource within its namespace and resource type. `<name>` is distinct from the metadata.uid field. The URL path will always use the metadata.name.
 
 For example, to get a dashboard defined as:
+
 ```
 {
   "kind": "Dashboard",
