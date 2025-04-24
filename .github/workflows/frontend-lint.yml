@@ -52,7 +52,7 @@ jobs:
   lint-frontend-prettier-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    name: Lint (Enterprise)
+    name: Lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -86,7 +86,7 @@ jobs:
   lint-frontend-typecheck-enterprise:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
-    name: Typecheck (Enterprise)
+    name: Typecheck
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

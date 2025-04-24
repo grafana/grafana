@@ -39,7 +39,7 @@ jobs:
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest-8-cores
-    name: "Unit tests (Enterprise) (${{ matrix.chunk }} / 8)"
+    name: "Unit tests (${{ matrix.chunk }} / 8)"
     strategy:
       fail-fast: false
       matrix:
