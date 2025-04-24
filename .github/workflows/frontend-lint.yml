@@ -6,6 +6,10 @@ on:
       - main
       - release-*.*.*
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   lint-frontend-verify-i18n:
     name: Verify i18n

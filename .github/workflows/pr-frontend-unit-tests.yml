@@ -6,6 +6,10 @@ on:
       - main
       - release-*.*.*
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   frontend-unit-tests:
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
