@@ -11,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/services/sqlstore/session"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -241,20 +240,14 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueDelete.Name(), err)
 	}
 
-	err = s.db.GetSqlxSession().WithTransaction(ctx, func(sess *session.SessionTx) error {
-		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
-		res, err := sess.Exec(ctx, query, req.GetArgs()...)
-		if err != nil {
-			return fmt.Errorf("deleting secure value row: %w", err)
-		}
-
-		if rowsAffected, err := res.RowsAffected(); err != nil || rowsAffected != 1 {
-			return fmt.Errorf("deleting secure value rowsAffected=%d error=%w", rowsAffected, err)
-		}
-		return nil
-	})
+	// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
+	res, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return fmt.Errorf("db failure: %w", err)
+		return fmt.Errorf("deleting secure value row: %w", err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil || rowsAffected != 1 {
+		return fmt.Errorf("deleting secure value rowsAffected=%d error=%w", rowsAffected, err)
 	}
 
 	return nil
