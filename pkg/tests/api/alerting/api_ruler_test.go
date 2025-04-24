@@ -4297,7 +4297,7 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 		DisableAnonymous:             true,
 		AppModeProduction:            true,
 		NGAlertSchedulerBaseInterval: 1 * time.Second,
-		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagRecoveryThreshold},
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)

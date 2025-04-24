@@ -43,10 +43,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagDisableSecretsCompatibility
-	// Disable duplicated secret storage in legacy tables
-	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
-
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
@@ -155,10 +151,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagFrontendSandboxMonitorOnly
-	// Enables monitor only in the plugin frontend sandbox (if enabled)
-	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
-
 	// FlagPluginsDetailsRightPanel
 	// Enables right panel for the plugins details page
 	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
@@ -259,10 +251,6 @@ const (
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
 
-	// FlagPluginsAPIMetrics
-	// Sends metrics of public grafana packages usage by plugins
-	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
-
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
@@ -282,10 +270,6 @@ const (
 	// FlagFormatString
 	// Enable format string transformer
 	FlagFormatString = "formatString"
-
-	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-	FlagKubernetesPlaylists = "kubernetesPlaylists"
 
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
@@ -334,10 +318,6 @@ const (
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
-
-	// FlagRecoveryThreshold
-	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-	FlagRecoveryThreshold = "recoveryThreshold"
 
 	// FlagLokiStructuredMetadata
 	// Enables the loki data source to request structured metadata from the Loki server
@@ -603,10 +583,6 @@ const (
 	// Enables the scopes usage in Metrics Explore
 	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
 
-	// FlagAlertingApiServer
-	// Register Alerting APIs with the K8s API server
-	FlagAlertingApiServer = "alertingApiServer"
-
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
 	FlagCloudWatchRoundUpEndTime = "cloudWatchRoundUpEndTime"
@@ -706,10 +682,6 @@ const (
 	// FlagTimeRangeProvider
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"
-
-	// FlagPrometheusUsesCombobox
-	// Use new **Combobox** component for Prometheus query editor
-	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
@@ -946,4 +918,20 @@ const (
 	// FlagMetricsFromProfiles
 	// Enables creating metrics from profiles and storing them as recording rules
 	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagPluginsAutoUpdate
+	// Enables auto-updating of users installed plugins
+	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
+
+	// FlagAlertingListViewV2PreviewToggle
+	// Enables the alerting list view v2 preview toggle
+	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
+
+	// FlagAlertRuleUseFiredAtForStartsAt
+	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
+	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
+
+	// FlagAlertingBulkActionsInUI
+	// Enables the alerting bulk actions in the UI
+	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
 )

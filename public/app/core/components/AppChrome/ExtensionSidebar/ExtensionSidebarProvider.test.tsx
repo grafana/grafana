@@ -1,9 +1,9 @@
 import { render, screen, act } from '@testing-library/react';
-// import { render } from 'test/test-utils';
 
-import { store } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { store, EventBusSrv, EventBus } from '@grafana/data';
+import { config, getAppEvents, setAppEvents, locationService } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
+import { OpenExtensionSidebarEvent } from 'app/types/events';
 
 import {
   ExtensionSidebarContextProvider,
@@ -12,6 +12,18 @@ import {
   getComponentMetaFromComponentId,
   EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY,
 } from './ExtensionSidebarProvider';
+
+const mockComponent = {
+  title: 'Test Component',
+  description: 'Test Description',
+  targets: [],
+};
+
+const mockPluginMeta = {
+  pluginId: 'grafana-investigations-app',
+  addedComponents: [mockComponent],
+  addedLinks: [],
+};
 
 // Mock the store
 jest.mock('@grafana/data', () => ({
@@ -38,24 +50,59 @@ jest.mock('@grafana/runtime', () => ({
       extensionSidebar: true,
     },
   },
+  locationService: {
+    getLocation: jest.fn().mockReturnValue({ pathname: '/test-path' }),
+    getLocationObservable: jest.fn(),
+  },
+  usePluginLinks: jest.fn().mockImplementation(() => ({
+    links: [
+      {
+        pluginId: mockPluginMeta.pluginId,
+        title: mockComponent.title,
+      },
+    ],
+  })),
 }));
 
-const mockComponent = {
-  title: 'Test Component',
-  description: 'Test Description',
-  targets: [],
-};
-
-const mockPluginMeta = {
-  pluginId: 'grafana-investigations-app',
-  addedComponents: [mockComponent],
-};
-
 describe('ExtensionSidebarProvider', () => {
+  let subscribeSpy: jest.SpyInstance;
+  let originalAppEvents: EventBus;
+  let mockEventBus: EventBusSrv;
+  let locationObservableMock: { callback: jest.Mock | null; subscribe: jest.Mock };
+  const getExtensionPointPluginMetaMock = jest.mocked(getExtensionPointPluginMeta);
+
   beforeEach(() => {
     jest.clearAllMocks();
-    (getExtensionPointPluginMeta as jest.Mock).mockReturnValue(new Map([[mockPluginMeta.pluginId, mockPluginMeta]]));
+
+    originalAppEvents = getAppEvents();
+
+    mockEventBus = new EventBusSrv();
+    subscribeSpy = jest.spyOn(mockEventBus, 'subscribe');
+
+    setAppEvents(mockEventBus);
+
+    getExtensionPointPluginMetaMock.mockReturnValue(new Map([[mockPluginMeta.pluginId, mockPluginMeta]]));
+
     jest.replaceProperty(config.featureToggles, 'extensionSidebar', true);
+
+    locationObservableMock = {
+      subscribe: jest.fn((callback) => {
+        locationObservableMock.callback = callback;
+        return {
+          unsubscribe: jest.fn(),
+        };
+      }),
+      callback: null,
+    };
+    (locationService.getLocationObservable as jest.Mock).mockReturnValue(locationObservableMock);
+
+    (store.get as jest.Mock).mockReturnValue(undefined);
+    (store.set as jest.Mock).mockImplementation(() => {});
+    (store.delete as jest.Mock).mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    setAppEvents(originalAppEvents);
   });
 
   const TestComponent = () => {
@@ -175,14 +222,16 @@ describe('ExtensionSidebarProvider', () => {
     const permittedPluginMeta = {
       pluginId: 'grafana-investigations-app',
       addedComponents: [mockComponent],
+      addedLinks: [],
     };
 
     const prohibitedPluginMeta = {
       pluginId: 'disabled-plugin',
       addedComponents: [mockComponent],
+      addedLinks: [],
     };
 
-    (getExtensionPointPluginMeta as jest.Mock).mockReturnValue(
+    getExtensionPointPluginMetaMock.mockReturnValue(
       new Map([
         [permittedPluginMeta.pluginId, permittedPluginMeta],
         [prohibitedPluginMeta.pluginId, prohibitedPluginMeta],
@@ -198,6 +247,188 @@ describe('ExtensionSidebarProvider', () => {
     // Should only include the enabled plugin
     expect(screen.getByTestId('available-components-size')).toHaveTextContent('1');
     expect(screen.getByTestId('plugin-ids')).toHaveTextContent(permittedPluginMeta.pluginId);
+  });
+
+  it('should subscribe to OpenExtensionSidebarEvent when feature is enabled', async () => {
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(subscribeSpy).toHaveBeenCalledWith(OpenExtensionSidebarEvent, expect.any(Function));
+  });
+
+  it('should not subscribe to OpenExtensionSidebarEvent when feature is disabled', () => {
+    jest.replaceProperty(config.featureToggles, 'extensionSidebar', false);
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(subscribeSpy).not.toHaveBeenCalled();
+  });
+
+  it('should set dockedComponentId and props when receiving a valid OpenExtensionSidebarEvent', () => {
+    const TestComponentWithProps = () => {
+      const context = useExtensionSidebarContext();
+      return (
+        <div>
+          <div data-testid="is-open">{context.isOpen.toString()}</div>
+          <div data-testid="docked-component-id">{context.dockedComponentId || 'undefined'}</div>
+          <div data-testid="props">{context.props ? JSON.stringify(context.props) : 'undefined'}</div>
+        </div>
+      );
+    };
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponentWithProps />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+    expect(screen.getByTestId('props')).toHaveTextContent('undefined');
+
+    expect(subscribeSpy).toHaveBeenCalledWith(OpenExtensionSidebarEvent, expect.any(Function));
+    act(() => {
+      // Get the event subscriber function
+      const [[, subscriberFn]] = subscribeSpy.mock.calls;
+
+      // Call it directly with the test event
+      subscriberFn(
+        new OpenExtensionSidebarEvent({
+          pluginId: 'grafana-investigations-app',
+          componentTitle: 'Test Component',
+          props: { testProp: 'test value' },
+        })
+      );
+    });
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('true');
+    expect(screen.getByTestId('props')).toHaveTextContent('{"testProp":"test value"}');
+    const expectedComponentId = JSON.stringify({
+      pluginId: 'grafana-investigations-app',
+      componentTitle: 'Test Component',
+    });
+    expect(screen.getByTestId('docked-component-id')).toHaveTextContent(expectedComponentId);
+  });
+
+  it('should not open sidebar when receiving an OpenExtensionSidebarEvent with non-permitted plugin', () => {
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+
+    act(() => {
+      // Get the event subscriber function
+      const [[, subscriberFn]] = subscribeSpy.mock.calls;
+
+      // Call it directly with the test event for a non-permitted plugin
+      subscriberFn(
+        new OpenExtensionSidebarEvent({
+          pluginId: 'non-permitted-plugin',
+          componentTitle: 'Test Component',
+        })
+      );
+    });
+
+    expect(screen.getByTestId('is-open')).toHaveTextContent('false');
+  });
+
+  it('should unsubscribe from OpenExtensionSidebarEvent on unmount', () => {
+    const unsubscribeMock = jest.fn();
+    subscribeSpy.mockReturnValue({
+      unsubscribe: unsubscribeMock,
+    });
+
+    const { unmount } = render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    unmount();
+    expect(unsubscribeMock).toHaveBeenCalled();
+  });
+
+  it('should subscribe to location service observable', () => {
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(locationService.getLocationObservable).toHaveBeenCalled();
+    expect(locationObservableMock.subscribe).toHaveBeenCalled();
+  });
+
+  it('should update current path when location changes', () => {
+    const usePluginLinksMock = jest.fn().mockReturnValue({ links: [] });
+    jest.requireMock('@grafana/runtime').usePluginLinks = usePluginLinksMock;
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(usePluginLinksMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          path: '/test-path',
+        }),
+      })
+    );
+
+    act(() => {
+      locationObservableMock.callback?.({ pathname: '/new-path' });
+    });
+
+    expect(usePluginLinksMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        context: expect.objectContaining({
+          path: '/new-path',
+        }),
+      })
+    );
+  });
+
+  it('should unsubscribe from location service on unmount', () => {
+    const unsubscribeMock = jest.fn();
+    locationObservableMock.subscribe.mockReturnValue({
+      unsubscribe: unsubscribeMock,
+    });
+
+    const { unmount } = render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    unmount();
+    expect(unsubscribeMock).toHaveBeenCalled();
+  });
+
+  it('should not include plugins in available components when no links are returned', () => {
+    jest.requireMock('@grafana/runtime').usePluginLinks.mockImplementation(() => ({
+      links: [],
+    }));
+
+    getExtensionPointPluginMetaMock.mockReturnValue(new Map([[mockPluginMeta.pluginId, mockPluginMeta]]));
+
+    render(
+      <ExtensionSidebarContextProvider>
+        <TestComponent />
+      </ExtensionSidebarContextProvider>
+    );
+
+    expect(screen.getByTestId('available-components-size')).toHaveTextContent('0');
   });
 });
 

@@ -200,7 +200,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
       ...state,
       editPane: new DashboardEditPane(),
       scopesBridge: config.featureToggles.scopeFilters ? new SceneScopesBridge({}) : undefined,
-      layoutOrchestrator: config.featureToggles.dashboardNewLayouts ? new DashboardLayoutOrchestrator() : undefined,
+      layoutOrchestrator: new DashboardLayoutOrchestrator(),
     });
 
     this.serializer =
@@ -775,7 +775,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const { meta } = this.state;
     const spec = this.getSaveAsModel(options);
 
-    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2alpha1' : 'v1alpha1'; // get from the dashboard?
+    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2alpha1' : 'v1beta1'; // get from the dashboard?
     return {
       apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',

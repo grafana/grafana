@@ -18,9 +18,9 @@ import (
 	"k8s.io/kube-openapi/pkg/spec3"
 
 	authtypes "github.com/grafana/authlib/types"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -49,6 +49,7 @@ type FolderAPIBuilder struct {
 	namespacer           request.NamespaceMapper
 	folderSvc            folder.Service
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	acService            accesscontrol.Service
 	storage              grafanarest.Storage
 
 	authorizer authorizer.Authorizer
@@ -64,6 +65,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 	folderSvc folder.Service,
 	folderPermissionsSvc accesscontrol.FolderPermissionsService,
 	accessControl accesscontrol.AccessControl,
+	acService accesscontrol.Service,
 	registerer prometheus.Registerer,
 	unified resource.ResourceClient,
 ) *FolderAPIBuilder {
@@ -73,6 +75,7 @@ func RegisterAPIService(cfg *setting.Cfg,
 		namespacer:           request.GetNamespaceMapper(cfg),
 		folderSvc:            folderSvc,
 		folderPermissionsSvc: folderPermissionsSvc,
+		acService:            acService,
 		cfg:                  cfg,
 		authorizer:           newLegacyAuthorizer(accessControl),
 		searcher:             unified,
@@ -155,6 +158,7 @@ func (b *FolderAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	folderStore := &folderStorage{
 		tableConverter:       resourceInfo.TableConverter(),
 		folderPermissionsSvc: b.folderPermissionsSvc,
+		acService:            b.acService,
 		features:             b.features,
 		cfg:                  b.cfg,
 	}

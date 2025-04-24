@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"log/syslog"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 var _ core.ILogger = &SyslogLogger{}
