@@ -114,7 +114,6 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	// TODO LND Check if we need to retrieve the row again or read the response of the create query
 	createdSecureValue, err := row.toKubernetes()
 	if err != nil {
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)

@@ -48,7 +48,6 @@ func mustTemplate(filename string) *template.Template {
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
 
-// TODO LND Should we create a query.go file for each storage?
 /************************/
 /**-- Keeper Queries --**/
 /************************/
