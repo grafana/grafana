@@ -132,6 +132,7 @@ module.exports = [
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
+      'no-constant-condition': 'error',
     },
   },
   {
@@ -268,6 +269,7 @@ module.exports = [
       'react/self-closing-comp': 'error',
       'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
+      'no-nested-ternary': 'error',
     },
   },
   {
@@ -284,6 +286,7 @@ module.exports = [
       '**/*.{test,spec}.{ts,tsx}',
       '**/__mocks__/',
       'public/test',
+      '**/spec/**/*.{ts,tsx}',
     ],
     rules: {
       '@grafana/no-untranslated-strings': 'error',
