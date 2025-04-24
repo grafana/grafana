@@ -12,6 +12,7 @@ import (
 
 // ITestDB is an interface of arguments for testing db
 type ITestDB interface {
+	Name() string
 	Helper()
 	Fatalf(format string, args ...any)
 	Logf(format string, args ...any)

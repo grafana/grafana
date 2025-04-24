@@ -438,6 +438,10 @@ func InitTestDBWithMigration(t sqlutil.ITestDB, migration registry.DatabaseMigra
 
 // InitTestDB initializes the test DB.
 func InitTestDB(t sqlutil.ITestDB, opts ...InitTestDBOpt) (*SQLStore, *setting.Cfg) {
+	if !strings.HasPrefix(t.Name(), "TestIntegration") {
+		t.Fatalf("InitTestDB can only used in an integration test (i.e. named TestIntegration*)")
+	}
+
 	t.Helper()
 	features := getFeaturesForTesting(opts...)
 	cfg := getCfgForTesting(opts...)
