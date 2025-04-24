@@ -15,8 +15,12 @@ type EnhancedHookResult = TypedUseQueryHookResult<
 >;
 
 /**
- * Enhanced hook that returns ContactPoints query result
- * with properly typed data.items as ContactPoint[]
+ * useListContactPoints is a hook that fetches a list of contact points
+ *
+ * This function wraps the alertingAPI.useListReceiverQuery with proper typing
+ * to ensure that the returned ContactPoints are correctly typed in the data.items array.
+ *
+ * It automatically uses the configured namespace for the query.
  */
 function useListContactPoints() {
   return alertingAPI.useListReceiverQuery<EnhancedHookResult>({ namespace });
