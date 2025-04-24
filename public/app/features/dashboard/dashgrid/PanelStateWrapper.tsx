@@ -92,6 +92,8 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
+    console.log('PanelStateWrapper');
+
     // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
     const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
     this.debouncedSetPanelAttention = debounce(this.setPanelAttention.bind(this), 100);
