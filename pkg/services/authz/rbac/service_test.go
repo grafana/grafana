@@ -277,7 +277,9 @@ func TestService_checkPermission(t *testing.T) {
 				Group:    "query.grafana.app",
 				Resource: "query",
 				Name:     "some_datasource",
+				Verb:     utils.VerbCreate,
 			},
+			expected: true,
 		},
 	}
 

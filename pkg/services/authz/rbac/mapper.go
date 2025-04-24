@@ -74,6 +74,7 @@ func newMapper() mapper {
 				verbMapping: map[string]string{
 					utils.VerbCreate: "datasources:query",
 				},
+				folderSupport: false,
 			},
 		},
 	}
