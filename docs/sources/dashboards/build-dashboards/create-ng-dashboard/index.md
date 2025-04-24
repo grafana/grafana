@@ -169,7 +169,7 @@ While grouping is meant for multiple panels, you can start a grouping with just 
 1. At the bottom-left corner of the dashboard, click **Group panels**.
 1. Select **Group into row** or **Group into tab**.
 
-   A dotted line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard. <!-- maybe screenshot here? -->
+   A dotted line surrounds the panels and the **Row** or **Tab** edit pane is displayed on the right side of the dashboard.
 
 1. Set the [grouping configuration options](#grouping-configuration-options).
 1. When you're finished, click **Save** at the top-right corner of the dashboard.
