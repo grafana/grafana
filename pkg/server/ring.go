@@ -152,16 +152,6 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		return nil
 	}
 
-	errChan := make(chan error)
-	runningFn := func(ctx context.Context) error {
-		select {
-		case <-ctx.Done():
-			return nil
-		case err := <-errChan:
-			return err
-		}
-	}
-
 	stoppingFn := func(failureReason error) error {
 		return nil
 	}
@@ -174,7 +164,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 
 	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(storageRing)
 
-	svc := services.NewBasicService(startFn, runningFn, stoppingFn)
+	svc := services.NewIdleService(startFn, stoppingFn)
 
 	return svc, nil
 }
