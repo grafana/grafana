@@ -261,6 +261,26 @@ func TestService_checkPermission(t *testing.T) {
 			},
 			expected: true,
 		},
+		{
+			name: "should return true for datasources if service has permission",
+			permissions: []accesscontrol.Permission{
+				{
+					Action:     "datasources:query",
+					Scope:      "datasources:uid:some_datasource",
+					Kind:       "datasources",
+					Attribute:  "uid",
+					Identifier: "some_datasource",
+				},
+			},
+			check: CheckRequest{
+				Action:   "datasources:query",
+				Group:    "query.grafana.app",
+				Resource: "query",
+				Name:     "some_datasource",
+				Verb:     utils.VerbCreate,
+			},
+			expected: true,
+		},
 	}
 
 	for _, tc := range testCases {

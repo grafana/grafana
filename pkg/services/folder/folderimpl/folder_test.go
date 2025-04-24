@@ -423,7 +423,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 		t.Run("With nested folder feature flag on", func(t *testing.T) {
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, serviceWithFlagOn, nestedFolderStore, nil,
+			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOn, folderPermissions, ac, actest.FakeService{}, serviceWithFlagOn, nil,
 				client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 				kvstore.NewFakeKVStore(),
@@ -504,7 +504,7 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 			publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 			dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, featuresFlagOff,
-				folderPermissions, ac, serviceWithFlagOff, nestedFolderStore, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
+				folderPermissions, ac, actest.FakeService{}, serviceWithFlagOff, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 				serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 				kvstore.NewFakeKVStore(),
 			)
@@ -642,8 +642,8 @@ func TestIntegrationNestedFolderService(t *testing.T) {
 				tc.service.store = nestedFolderStore
 				publicDashboardFakeService.On("DeleteByDashboardUIDs", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
-				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, tc.service,
-					tc.service.store, nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil,
+				dashSrv, err := dashboardservice.ProvideDashboardServiceImpl(cfg, dashStore, folderStore, tc.featuresFlag, folderPermissions, ac, actest.FakeService{}, tc.service,
+					nil, client.MockTestRestConfig{}, nil, quotaService, nil, publicDashboardFakeService, nil,
 					dualwrite.ProvideTestService(), sort.ProvideService(),
 					serverlock.ProvideService(db, tracing.InitializeTracerForTest()),
 					kvstore.NewFakeKVStore(),
@@ -1320,8 +1320,8 @@ func TestIntegrationNestedFolderSharedWithMe(t *testing.T) {
 		featuresFlagOn,
 		acmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{},
+		actest.FakeService{},
 		serviceWithFlagOn,
-		nestedFolderStore,
 		nil,
 		client.MockTestRestConfig{},
 		nil,
