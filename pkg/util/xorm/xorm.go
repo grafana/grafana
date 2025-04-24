@@ -11,7 +11,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math/rand"
+	"math/rand/v2"
 	"os"
 	"reflect"
 	"runtime"
