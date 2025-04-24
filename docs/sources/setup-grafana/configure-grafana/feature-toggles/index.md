@@ -46,7 +46,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                              | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                    | Yes                |
 | `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                              | Yes                |
-| `recoveryThreshold`                    | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                                            | Yes                |
 | `lokiStructuredMetadata`               | Enables the loki data source to request structured metadata from the Loki server                                                    | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |

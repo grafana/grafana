@@ -591,15 +591,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:            "recoveryThreshold",
-			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-		},
-		{
 			Name:         "lokiStructuredMetadata",
 			Description:  "Enables the loki data source to request structured metadata from the Loki server",
 			Stage:        FeatureStageGeneralAvailability,
