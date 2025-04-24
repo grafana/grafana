@@ -132,6 +132,7 @@ module.exports = [
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
+      'no-constant-condition': 'error',
     },
   },
   {
