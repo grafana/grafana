@@ -79,6 +79,8 @@ export function ToolbarActions({ dashboard }: Props) {
     return null;
   }
 
+  console.log({ isEditingPanel });
+
   if (isEditingPanel) {
     dashboard.onEnterEditMode();
   }
@@ -469,23 +471,23 @@ export function ToolbarActions({ dashboard }: Props) {
     ),
   });
 
-  toolbarActions.push({
-    group: 'main-buttons',
-    condition: isEditing && !meta.isNew && isShowingDashboard,
-    render: () => (
-      <Button
-        onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
-        tooltip="Exits edit mode and discards unsaved changes"
-        size="sm"
-        key="discard"
-        fill="text"
-        variant="primary"
-        data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
-      >
-        Exit edit
-      </Button>
-    ),
-  });
+  // toolbarActions.push({
+  //   group: 'main-buttons',
+  //   condition: isEditing && !meta.isNew && isShowingDashboard,
+  //   render: () => (
+  //     <Button
+  //       onClick={() => dashboard.exitEditMode({ skipConfirm: false })}
+  //       tooltip="Exits edit mode and discards unsaved changes"
+  //       size="sm"
+  //       key="discard"
+  //       fill="text"
+  //       variant="primary"
+  //       data-testid={selectors.components.NavToolbar.editDashboard.exitButton}
+  //     >
+  //       Exit edit
+  //     </Button>
+  //   ),
+  // });
 
   toolbarActions.push({
     group: 'main-buttons',
