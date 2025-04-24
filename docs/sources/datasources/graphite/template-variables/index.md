@@ -42,6 +42,14 @@ Grafana refers to such variables as template variables.
 
 For an introduction to templating and template variables, refer to the [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables) documentation.
 
+## Use template variables
+
+Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the data displayed in your dashboard.
+Grafana refers to such variables as template variables.
+
+For details, see the [template variables documentation](template-variables/).
+
 ## Select a query type
 
 There are three query types for Graphite template variables
