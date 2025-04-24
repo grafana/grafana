@@ -215,7 +215,7 @@ export function vizPanelToSchemaV2(
       title: vizPanel.state.title,
       description: vizPanel.state.description ?? '',
       links: getPanelLinks(vizPanel),
-      transparent: vizPanel.state.displayMode === 'transparent',
+      transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
         kind: 'QueryGroup',
         spec: {
