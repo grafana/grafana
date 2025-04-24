@@ -151,6 +151,7 @@ function getStyles(theme: GrafanaTheme2) {
       borderRadius: theme.shape.radius.default,
       position: 'relative',
       marginBottom: theme.spacing(0.25),
+      color: theme.colors.text.secondary,
       '&:hover': {
         color: theme.colors.text.primary,
         outline: `1px dashed ${theme.colors.border.strong}`,
@@ -159,11 +160,15 @@ function getStyles(theme: GrafanaTheme2) {
       },
     }),
     containerSelected: css({
-      color: theme.colors.text.primary,
       outline: `1px dashed ${theme.colors.primary.border} !important`,
       outlineOffset: '0px',
+      //background: theme.colors.primary.transparent,
+      color: theme.colors.text.primary,
+
       '&:hover': {
         outline: `1px dashed ${theme.colors.primary.border}`,
+        //background: theme.colors.primary.transparent,
+        color: theme.colors.text.primary,
       },
     }),
     angleButton: css({
@@ -172,7 +177,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'transparent',
       borderRadius: theme.shape.radius.default,
       padding: 0,
-      color: theme.colors.text.secondary,
+      color: 'inherit',
       lineHeight: 0,
     }),
     nodeName: css({
@@ -181,7 +186,7 @@ function getStyles(theme: GrafanaTheme2) {
       background: 'transparent',
       padding: theme.spacing(0.25, 1, 0.25, 0),
       borderRadius: theme.shape.radius.default,
-      color: theme.colors.text.secondary,
+      color: 'inherit',
       display: 'flex',
       flexGrow: 1,
       alignItems: 'center',
