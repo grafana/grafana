@@ -128,7 +128,7 @@ module.exports = [
           ],
         },
       ],
-      'no-restricted-globals': ['error', 'grafanaBootData'].concat(restrictedGlobals),
+      'no-restricted-globals': ['error'].concat(restrictedGlobals),
 
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
