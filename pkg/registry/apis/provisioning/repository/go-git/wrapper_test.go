@@ -1408,6 +1408,31 @@ func TestClone(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "successful clone with create if not exists",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					GitHub: &v0alpha1.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "non-existent-branch",
+					},
+				},
+			},
+			createRepo: true,
+			opts: repository.CloneOptions{
+				PushOnWrites:      false,
+				CreateIfNotExists: true,
+			},
+			setupMock: func(mockSecrets *secrets.MockService) {
+				mockSecrets.On("Decrypt", mock.Anything, mock.Anything).Return([]byte("test-token"), nil)
+			},
+			expectError: false,
+		},
+		{
 			name: "empty root",
 			root: "",
 			config: &v0alpha1.Repository{
