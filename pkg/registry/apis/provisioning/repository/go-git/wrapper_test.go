@@ -1433,6 +1433,32 @@ func TestClone(t *testing.T) {
 			expectError: false,
 		},
 		{
+			name: "timeout cancellation",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					GitHub: &v0alpha1.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+				},
+			},
+			opts: repository.CloneOptions{
+				Timeout: 1 * time.Millisecond, // Very short timeout to trigger cancellation
+			},
+			setupMock: func(mockSecrets *secrets.MockService) {
+				mockSecrets.On("Decrypt", mock.Anything, mock.Anything).Return([]byte("test-token"), nil)
+				// Simulate a slow operation that will be cancelled by timeout
+				time.Sleep(20 * time.Millisecond)
+			},
+			expectError: true,
+			errorMsg:    "context deadline exceeded",
+		},
+		{
 			name: "empty root",
 			root: "",
 			config: &v0alpha1.Repository{
