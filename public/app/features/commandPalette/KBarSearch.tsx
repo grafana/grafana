@@ -74,9 +74,9 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     input: css({
       label: 'kbar-search-input',
-      fontSize: theme.typography.bodySmall.fontSize,
+      fontSize: theme.typography.body.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
-      lineHeight: theme.typography.bodySmall.lineHeight,
+      lineHeight: theme.typography.body.lineHeight,
       color: theme.colors.text.secondary,
       width: '100%',
       outline: 'none',

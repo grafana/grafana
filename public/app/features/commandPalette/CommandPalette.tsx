@@ -285,9 +285,9 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
     }),
     breadcrumbs: css({
       label: 'breadcrumbs',
-      fontSize: theme.typography.bodySmall.fontSize,
+      fontSize: theme.typography.body.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
-      lineHeight: theme.typography.bodySmall.lineHeight,
+      lineHeight: theme.typography.body.lineHeight,
       color: theme.colors.text.secondary,
       display: 'flex',
       alignItems: 'center',
