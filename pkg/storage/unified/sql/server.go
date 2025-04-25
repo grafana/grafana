@@ -21,7 +21,7 @@ import (
 func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	tracer trace.Tracer, reg prometheus.Registerer, ac types.AccessClient,
 	searchOptions resource.SearchOptions, storageMetrics *resource.StorageMetrics,
-	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles) (resource.ResourceServer, error) {
+	indexMetrics *resource.BleveIndexMetrics, features featuremgmt.FeatureToggles, distributor *resource.Distributor) (resource.ResourceServer, error) {
 	apiserverCfg := cfg.SectionWithEnvOverrides("grafana-apiserver")
 	opts := resource.ResourceServerOptions{
 		Tracer: tracer,
@@ -68,6 +68,7 @@ func NewResourceServer(db infraDB.DB, cfg *setting.Cfg,
 	opts.Lifecycle = store
 	opts.Search = searchOptions
 	opts.IndexMetrics = indexMetrics
+	opts.Distributor = distributor
 
 	rs, err := resource.NewResourceServer(opts)
 	if err != nil {
