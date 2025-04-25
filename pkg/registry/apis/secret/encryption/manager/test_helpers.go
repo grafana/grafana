@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
@@ -21,6 +22,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 
 	// Initialize data key storage with a fake db
 	testDB := db.InitTestDB(tb)
+	database := database.ProvideDatabase(testDB)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	defaultKey := "SdlklWklckeLS"
 	cfg := &setting.Cfg{
@@ -34,7 +36,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, database, features)
 	require.NoError(tb, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}

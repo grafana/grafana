@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
@@ -75,9 +76,10 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
 	testDB := db.InitTestDB(t)
+	database := database.ProvideDatabase(testDB)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, database, features)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -185,7 +187,8 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := db.InitTestDB(t)
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+		database := database.ProvideDatabase(testDB)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, database, features)
 		require.NoError(t, err)
 
 		encMgr, err := ProvideEncryptionManager(
@@ -461,6 +464,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
 			testDB := db.InitTestDB(t)
+			database := database.ProvideDatabase(testDB)
 			features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 			defaultKey := "SdlklWklckeLS"
 
@@ -475,7 +479,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+			store, err := encryptionstorage.ProvideDataKeyStorage(testDB, database, features)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}
