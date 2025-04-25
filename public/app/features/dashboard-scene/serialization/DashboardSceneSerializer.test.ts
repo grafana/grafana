@@ -723,9 +723,14 @@ describe('DashboardSceneSerializer', () => {
               spec: {
                 builtIn: true,
                 name: 'Annotations & Alerts',
-                datasource: {
-                  uid: '-- Grafana --',
-                  type: 'grafana',
+                query: {
+                  kind: 'DataQuery',
+                  version: defaultDataQueryKind().version,
+                  group: 'grafana',
+                  datasource: {
+                    name: '-- Grafana --',
+                  },
+                  spec: {},
                 },
                 enable: true,
                 hide: true,
