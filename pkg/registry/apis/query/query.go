@@ -191,9 +191,9 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 	case 1:
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
-		if err == nil && alertQueryWithoutExpression(req) {
-			b.log.Debug("handling alert query without expression")
-			qdr, err = b.convertQueryWithoutExpression(ctx, req.Requests[0], qdr)
+		if err == nil && isSingleAlertQuery(req) {
+			b.log.Debug("handling alert query with single query")
+			qdr, err = b.convertQueryFromAlerting(ctx, req.Requests[0], qdr)
 		}
 	default:
 		b.log.Debug("executing concurrent queries")
@@ -353,14 +353,14 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	expressionsLogger.Debug("handling expressions")
 	defer func() {
 		var respStatus string
-		switch {
-		case err == nil:
+		switch err {
+		case nil:
 			respStatus = "success"
 		default:
 			respStatus = "failure"
 		}
 		duration := float64(time.Since(start).Nanoseconds()) / float64(time.Millisecond)
-		b.metrics.expressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
+		b.metrics.ExpressionsQuerySummary.WithLabelValues(respStatus).Observe(duration)
 
 		span.End()
 	}()
@@ -381,11 +381,14 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 			if !ok {
 				dr, ok := qdr.Responses[refId]
 				if ok {
-					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames)
+					_, isSqlInput := req.SqlInputs[refId]
+
+					_, res, err := b.converter.Convert(ctx, req.RefIDTypes[refId], dr.Frames, isSqlInput)
 					if err != nil {
 						expressionsLogger.Error("error converting frames for expressions", "error", err)
 						res.Error = err
 					}
+
 					vars[refId] = res
 				} else {
 					expressionsLogger.Error("missing variable in handle expressions", "refId", refId, "expressionRefId", expression.RefID)
@@ -400,7 +403,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 		}
 
 		refId := expression.RefID
-		results, err := expression.Command.Execute(ctx, now, vars, b.tracer)
+		results, err := expression.Command.Execute(ctx, now, vars, b.tracer, b.metrics)
 		if err != nil {
 			expressionsLogger.Error("error executing expression", "error", err)
 			results.Error = err
@@ -413,7 +416,7 @@ func (b *QueryAPIBuilder) handleExpressions(ctx context.Context, req parsedReque
 	return qdr, nil
 }
 
-func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req datasourceRequest,
+func (b *QueryAPIBuilder) convertQueryFromAlerting(ctx context.Context, req datasourceRequest,
 	qdr *backend.QueryDataResponse) (*backend.QueryDataResponse, error) {
 	if len(req.Request.Queries) == 0 {
 		return nil, errors.New("no queries to convert")
@@ -427,7 +430,7 @@ func (b *QueryAPIBuilder) convertQueryWithoutExpression(ctx context.Context, req
 		return nil, fmt.Errorf("refID '%s' does not exist", refID)
 	}
 	frames := qdr.Responses[refID].Frames
-	_, results, err := b.converter.Convert(ctx, req.PluginId, frames)
+	_, results, err := b.converter.Convert(ctx, req.PluginId, frames, false)
 	if err != nil {
 		results.Error = err
 	}
@@ -472,14 +475,14 @@ func (r responderWrapper) Error(err error) {
 	r.wrapped.Error(err)
 }
 
-// Checks if the request only contains a single query and not expression.
-func alertQueryWithoutExpression(req parsedRequestInfo) bool {
+// Checks if the request only contains a single query and is from Alerting
+func isSingleAlertQuery(req parsedRequestInfo) bool {
 	if len(req.Requests) != 1 {
 		return false
 	}
 	headers := req.Requests[0].Headers
 	_, exist := headers[models.FromAlertHeaderName]
-	if exist && len(req.Requests[0].Request.Queries) == 1 && len(req.Expressions) == 0 {
+	if exist && len(req.Requests[0].Request.Queries) == 1 {
 		return true
 	}
 	return false

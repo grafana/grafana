@@ -545,7 +545,7 @@ func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	rowLen, err := resp.Frame.RowLen()
+	rowLen, err := resp.RowLen()
 	require.NoError(t, err)
 	require.Equal(t, 0, rowLen) // nested storage is empty
 
@@ -553,7 +553,7 @@ func TestShadowingExistingFolderByNestedContentRoot(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, resp)
 
-	rowLen, err = resp.Frame.RowLen()
+	rowLen, err = resp.RowLen()
 	require.NoError(t, err)
 	require.Equal(t, 1, rowLen) // just a single "nested" folder
 }

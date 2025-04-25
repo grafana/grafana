@@ -121,36 +121,6 @@ describe('QueryGroup', () => {
     const addExpressionButton = screen.queryByTestId('query-tab-add-expression');
     expect(addExpressionButton).not.toBeInTheDocument();
   });
-
-  describe('Angular deprecation', () => {
-    const deprecationText = /legacy platform based on AngularJS/i;
-
-    const oldAngularDetected = mockDS.meta.angular?.detected ?? false;
-    const oldDatasources = config.datasources;
-
-    afterEach(() => {
-      mockDS.meta.angular = { detected: oldAngularDetected, hideDeprecation: false };
-      config.datasources = oldDatasources;
-    });
-
-    it('Should render angular deprecation notice for angular plugins', async () => {
-      mockDS.meta.angular = { detected: true, hideDeprecation: false };
-      config.datasources[mockDS.name] = mockDS;
-      renderScenario({});
-      await waitFor(async () => {
-        expect(await screen.findByText(deprecationText)).toBeInTheDocument();
-      });
-    });
-
-    it('Should not render angular deprecation notice for non-angular plugins', async () => {
-      mockDS.meta.angular = { detected: false, hideDeprecation: false };
-      config.datasources[mockDS.name] = mockDS;
-      renderScenario({});
-      await waitFor(async () => {
-        expect(await screen.queryByText(deprecationText)).not.toBeInTheDocument();
-      });
-    });
-  });
 });
 
 function renderScenario(overrides: Partial<Props>) {

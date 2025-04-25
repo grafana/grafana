@@ -3,7 +3,7 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -289,28 +289,11 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
-          const response = await getDashboardAPI().deleteDashboard(dashboardUID, true);
+          await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
           // handling success alerts for these feature toggles
           // for legacy response, the success alert will be triggered by showSuccessAlert function in public/app/core/services/backend_srv.ts
-          if (config.featureToggles.dashboardRestore) {
-            const name = response?.title;
-
-            if (name) {
-              const payload = config.featureToggles.kubernetesDashboards
-                ? ['Dashboard moved to Recently deleted']
-                : [
-                    t('browse-dashboards.soft-delete.success', 'Dashboard {{name}} moved to Recently deleted', {
-                      name,
-                    }),
-                  ];
-
-              appEvents.publish({
-                type: AppEvents.alertSuccess.name,
-                payload,
-              });
-            }
-          } else if (config.featureToggles.kubernetesDashboards) {
+          if (config.featureToggles.kubernetesDashboards) {
             appEvents.publish({
               type: AppEvents.alertSuccess.name,
               payload: ['Dashboard deleted'],
@@ -442,5 +425,3 @@ export const {
   useRestoreDashboardMutation,
   useHardDeleteDashboardMutation,
 } = browseDashboardsAPI;
-
-export { skipToken } from '@reduxjs/toolkit/query/react';

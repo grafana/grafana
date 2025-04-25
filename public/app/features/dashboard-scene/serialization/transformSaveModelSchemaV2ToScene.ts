@@ -10,20 +10,19 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneDataLayerControls,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   TextBoxVariable,
-  VariableValueSelectors,
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
+  AnnotationQueryKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
@@ -39,7 +38,8 @@ import {
   PanelKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/src/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -89,11 +89,27 @@ export type TypedVariableModelV2 =
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
   const { spec: dashboard, metadata } = dto;
 
+  // annotations might not come with the builtIn Grafana annotation, we need to add it
+
+  const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
+  if (grafanaBuiltAnnotation) {
+    dashboard.annotations.unshift(grafanaBuiltAnnotation);
+  }
+
   const annotationLayers = dashboard.annotations.map((annotation) => {
+    let annoQuerySpec = annotation.spec;
+    // some annotations will contain in the options properties that need to be
+    // added to the root level annotation spec
+    if (annoQuerySpec?.options) {
+      annoQuerySpec = {
+        ...annoQuerySpec,
+        ...annoQuerySpec.options,
+      };
+    }
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
       query: {
-        ...annotation.spec,
+        ...annoQuerySpec,
         builtIn: annotation.spec.builtIn ? 1 : 0,
       },
       name: annotation.spec.name,
@@ -182,7 +198,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         preserveDashboardSceneStateInLocalStorage,
         addPanelsOnLoadBehavior,
         new DashboardReloadBehavior({
-          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
+          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
           uid: dashboardId?.toString(),
           version: 1,
         }),
@@ -191,7 +207,6 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
         annotationLayers,
       }),
       controls: new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timePicker: new SceneTimePicker({
           quickRanges: dashboard.timeSettings.quickRanges,
         }),
@@ -493,4 +508,24 @@ export function getPanelElement(dashboard: DashboardV2Spec, elementName: string)
 
 export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
   return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
+}
+function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
+  const found = dashboard.annotations.some((item) => item.spec.builtIn);
+  if (found) {
+    return;
+  }
+
+  const grafanaBuiltAnnotation: AnnotationQueryKind = {
+    kind: 'AnnotationQuery',
+    spec: {
+      datasource: { uid: '-- Grafana --', type: 'grafana' },
+      name: 'Annotations & Alerts',
+      iconColor: DEFAULT_ANNOTATION_COLOR,
+      enable: true,
+      hide: true,
+      builtIn: true,
+    },
+  };
+
+  return grafanaBuiltAnnotation;
 }

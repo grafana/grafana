@@ -33,16 +33,15 @@ import { ALERTMANAGER_NAME_QUERY_KEY } from './constants';
 import { getRulesSourceName } from './datasource';
 import { SupportedErrors, getErrorMessageFromCode, isApiMachineryError } from './k8s/errors';
 import { getMatcherQueryParams } from './matchers';
+import { rulesNav } from './navigation';
 import * as ruleId from './rule-id';
 import { createAbsoluteUrl, createRelativeUrl } from './url';
 
 export function createViewLink(ruleSource: RulesSource, rule: CombinedRule, returnTo?: string): string {
   const sourceName = getRulesSourceName(ruleSource);
   const identifier = ruleId.fromCombinedRule(sourceName, rule);
-  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(sourceName);
 
-  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+  return rulesNav.detailsPageLink(sourceName, identifier, returnTo ? { returnTo } : undefined);
 }
 
 export function createViewLinkV2(
@@ -52,10 +51,8 @@ export function createViewLinkV2(
 ): string {
   const ruleSourceName = groupIdentifier.rulesSource.name;
   const identifier = ruleId.fromRule(ruleSourceName, groupIdentifier.namespace.name, groupIdentifier.groupName, rule);
-  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
-  const paramSource = encodeURIComponent(ruleSourceName);
 
-  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`, returnTo ? { returnTo } : {});
+  return rulesNav.detailsPageLink(ruleSourceName, identifier, returnTo ? { returnTo } : undefined);
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {
@@ -209,7 +206,9 @@ const alertStateSortScore = {
   [PromAlertingRuleState.Firing]: 1,
   [GrafanaAlertState.Error]: 1,
   [GrafanaAlertState.Pending]: 2,
+  [GrafanaAlertState.Recovering]: 2,
   [PromAlertingRuleState.Pending]: 2,
+  [PromAlertingRuleState.Recovering]: 2,
   [PromAlertingRuleState.Inactive]: 2,
   [GrafanaAlertState.NoData]: 3,
   [GrafanaAlertState.Normal]: 4,

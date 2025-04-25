@@ -17,7 +17,7 @@ export interface KeyedVariableIdentifier {
   rootStateKey: string;
 }
 
-export interface VariablePayload<T extends any = undefined> extends VariableIdentifier {
+export interface VariablePayload<T = undefined> extends VariableIdentifier {
   data: T;
 }
 

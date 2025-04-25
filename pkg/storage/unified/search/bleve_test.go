@@ -348,6 +348,9 @@ func TestBleveBackend(t *testing.T) {
 					Checksum:        "xxxx",
 					TimestampMillis: 300,
 				},
+				Labels: map[string]string{
+					utils.LabelKeyDeprecatedInternalID: "123",
+				},
 			})
 			_ = index.Write(&resource.IndexableDocument{
 				RV: 2,
@@ -359,7 +362,8 @@ func TestBleveBackend(t *testing.T) {
 				},
 				Title: "yyy (folder)",
 				Labels: map[string]string{
-					"region": "west",
+					"region":                           "west",
+					utils.LabelKeyDeprecatedInternalID: "321",
 				},
 			})
 			return rv, nil

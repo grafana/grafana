@@ -279,12 +279,9 @@ export const toKeyedVariableIdentifier = (variable: VariableModel): KeyedVariabl
   return { type: variable.type, id: variable.id, rootStateKey: variable.rootStateKey };
 };
 
-export function toVariablePayload<T extends any = undefined>(
-  identifier: VariableIdentifier,
-  data?: T
-): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
-export function toVariablePayload<T extends any = undefined>(
+export function toVariablePayload<T = undefined>(identifier: VariableIdentifier, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(model: VariableModel, data?: T): VariablePayload<T>;
+export function toVariablePayload<T = undefined>(
   obj: VariableIdentifier | VariableModel,
   data?: T
 ): VariablePayload<T> {

@@ -1,5 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 import { MultiSelect, MultiSelectCommonProps } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { useSelectableMuteTimings } from 'app/features/alerting/unified/components/mute-timings/useMuteTimings';
 import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks';
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
@@ -22,9 +23,9 @@ const MuteTimingsSelector = ({
 
   return (
     <MultiSelect
-      aria-label="Mute timings"
+      aria-label={t('alerting.mute-timings-selector.aria-label-mute-timings', 'Mute timings')}
       options={muteTimingOptions}
-      placeholder="Select mute timings..."
+      placeholder={t('alerting.mute-timings-selector.placeholder-select-mute-timings', 'Select mute timings...')}
       {...selectProps}
     />
   );

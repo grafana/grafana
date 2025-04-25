@@ -11,7 +11,6 @@ import (
 
 	"github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
-	unifiedbackend "github.com/grafana/grafana/pkg/storage/unified/backend"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/lib/pq"
 	"github.com/mattn/go-sqlite3"
@@ -21,7 +20,8 @@ import (
 	"google.golang.org/protobuf/proto"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -76,7 +76,7 @@ func NewBackend(opts BackendOptions) (Backend, error) {
 		isHA:                    opts.IsHA,
 		done:                    ctx.Done(),
 		cancel:                  cancel,
-		log:                     log.New("sql-resource-server"),
+		log:                     logging.DefaultLogger.With("logger", "sql-resource-server"),
 		tracer:                  opts.Tracer,
 		reg:                     opts.Reg,
 		dbProvider:              opts.DBProvider,
@@ -123,7 +123,7 @@ type backend struct {
 	initErr  error
 
 	// o11y
-	log            log.Logger
+	log            logging.Logger
 	tracer         trace.Tracer
 	reg            prometheus.Registerer
 	storageMetrics *resource.StorageMetrics
@@ -343,7 +343,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			GUID:        guid,
 		}); err != nil {
 			if isRowAlreadyExistsError(err) {
-				return guid, unifiedbackend.ErrResourceAlreadyExists
+				return guid, resource.ErrResourceAlreadyExists
 			}
 			return guid, fmt.Errorf("insert into resource: %w", err)
 		}
@@ -353,6 +353,7 @@ func (b *backend) create(ctx context.Context, event resource.WriteEvent) (int64,
 			SQLTemplate: sqltemplate.New(b.dialect),
 			WriteEvent:  event,
 			Folder:      folder,
+			Generation:  event.Object.GetGeneration(),
 			GUID:        guid,
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
@@ -441,6 +442,7 @@ func (b *backend) update(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  event.Object.GetGeneration(),
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -494,6 +496,7 @@ func (b *backend) delete(ctx context.Context, event resource.WriteEvent) (int64,
 			WriteEvent:  event,
 			Folder:      folder,
 			GUID:        guid,
+			Generation:  0, // object does not exist
 		}); err != nil {
 			return guid, fmt.Errorf("insert into resource history: %w", err)
 		}
@@ -591,9 +594,12 @@ type listIter struct {
 	err error
 
 	// The row
+	guid      string
 	rv        int64
 	value     []byte
 	namespace string
+	resource  string
+	group     string
 	name      string
 	folder    string
 }
@@ -637,7 +643,7 @@ func (l *listIter) Value() []byte {
 func (l *listIter) Next() bool {
 	if l.rows.Next() {
 		l.offset++
-		l.err = l.rows.Scan(&l.rv, &l.namespace, &l.name, &l.folder, &l.value)
+		l.err = l.rows.Scan(&l.guid, &l.rv, &l.namespace, &l.resource, &l.group, &l.name, &l.folder, &l.value)
 		return true
 	}
 	return false

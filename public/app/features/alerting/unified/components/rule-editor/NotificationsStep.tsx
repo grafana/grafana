@@ -4,7 +4,8 @@ import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Icon, RadioButtonGroup, Stack, Text, useStyles2 } from '@grafana/ui';
+import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';
@@ -77,11 +78,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
           },
         }
       : undefined;
-  const title = isRecordingRuleByType(type)
-    ? 'Add labels'
-    : isGrafanaManaged
-      ? 'Configure notifications'
-      : 'Configure labels and notifications';
+
+  const title = (() => {
+    if (isRecordingRuleByType(type)) {
+      return 'Add labels';
+    }
+    if (isGrafanaManaged) {
+      return 'Configure notifications';
+    }
+    return 'Configure labels and notifications';
+  })();
 
   return (
     <RuleEditorSection
@@ -91,12 +97,16 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
         <Stack direction="row" gap={0.5} alignItems="center">
           {isRecordingRuleByType(type) ? (
             <Text variant="bodySmall" color="secondary">
-              Add labels to help you better manage your recording rules.
+              <Trans i18nKey="alerting.notifications-step.labels-better-manage-recording-rules">
+                Add labels to help you better manage your recording rules.
+              </Trans>
             </Text>
           ) : (
             shouldAllowSimplifiedRouting && (
               <Text variant="bodySmall" color="secondary">
-                Select who should receive a notification when an alert rule fires.
+                <Trans i18nKey="alerting.notifications-step.recipient-notification-fires">
+                  Select who should receive a notification when an alert rule fires.
+                </Trans>
               </Text>
             )
           )}
@@ -118,20 +128,18 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
       )}
       {shouldAllowSimplifiedRouting && (
         <div className={styles.configureNotifications}>
-          <Text element="h5">Recipient</Text>
+          <Text element="h5">
+            <Trans i18nKey="alerting.notifications-step.recipient">Recipient</Trans>
+          </Text>
         </div>
       )}
-      {shouldAllowSimplifiedRouting ? ( // when simplified routing is enabled and is grafana rule
-        simplifiedModeInNotificationsStepEnabled ? ( // simplified mode is enabled
-          <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
-        ) : (
-          // simplified mode is disabled
-          <ManualAndAutomaticRouting alertUid={alertUid} />
-        )
-      ) : // when simplified routing is not enabled, render the notification preview as we did before
-      shouldRenderpreview ? (
-        <AutomaticRooting alertUid={alertUid} />
-      ) : null}
+      {shouldAllowSimplifiedRouting && simplifiedModeInNotificationsStepEnabled && (
+        <ManualAndAutomaticRoutingSimplified alertUid={alertUid} />
+      )}
+      {shouldAllowSimplifiedRouting && !simplifiedModeInNotificationsStepEnabled && (
+        <ManualAndAutomaticRouting alertUid={alertUid} />
+      )}
+      {!shouldAllowSimplifiedRouting && shouldRenderpreview && <AutomaticRooting alertUid={alertUid} />}
     </RuleEditorSection>
   );
 };
@@ -240,25 +248,28 @@ function NeedHelpInfoForNotificationPolicy() {
       contentText={
         <Stack gap={1} direction="column">
           <Stack direction="column" gap={0}>
-            Firing alert instances are routed to notification policies based on matching labels. The default
-            notification policy matches all alert instances.
+            <Trans i18nKey="alerting.need-help-info-for-notification-policy.notification-policies">
+              Firing alert instances are routed to notification policies based on matching labels. The default
+              notification policy matches all alert instances.
+            </Trans>
           </Stack>
           <Stack direction="column" gap={0}>
-            Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
-            connect them to your notification policy by adding label matchers.
-            <a
+            <Trans i18nKey="alerting.need-help-info-for-notification-policy.custom-labels">
+              Custom labels change the way your notifications are routed. First, add labels to your alert rule and then
+              connect them to your notification policy by adding label matchers.
+            </Trans>
+            <TextLink
               href={`https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/notification-policies/`}
-              target="_blank"
-              rel="noreferrer"
+              external
             >
-              <Text color="link">
-                Read about notification policies. <Icon name="external-link-alt" />
-              </Text>
-            </a>
+              <Trans i18nKey="alerting.need-help-info-for-notification-policy.read-more">
+                Read about notification policies.
+              </Trans>
+            </TextLink>
           </Stack>
         </Stack>
       }
-      title="Notification routing"
+      title={t('alerting.need-help-info-for-notification-policy.title-notification-routing', 'Notification routing')}
     />
   );
 }
@@ -268,18 +279,27 @@ function NeedHelpInfoForContactpoint() {
     <NeedHelpInfo
       contentText={
         <>
-          Select a contact point to notify all recipients in it.
+          <Trans i18nKey="alerting.need-help-info-for-contactpoint.select-contact-point">
+            Select a contact point to notify all recipients in it.
+          </Trans>
           <br />
-          Muting, grouping, and timings options allow you to customize how notifications are sent.
+          <Trans i18nKey="alerting.need-help-info-for-contactpoint.customize-notifications">
+            Muting, grouping, and timings options allow you to customize how notifications are sent.
+          </Trans>
           <br />
           <br />
-          Alternatively, toggle the <b>Advanced options</b> button to route notifications using notification policies
-          for greater flexibility.
+          <Trans i18nKey="alerting.need-help-info-for-contactpoint.notification-policies">
+            Alternatively, toggle the <b>Advanced options</b> button to route notifications using notification policies
+            for greater flexibility.
+          </Trans>
         </>
       }
       externalLink="https://grafana.com/docs/grafana/latest/alerting/fundamentals/notifications/"
       linkText="Read more about notifications"
-      title="Notify by selecting a contact point"
+      title={t(
+        'alerting.need-help-info-for-contactpoint.title-notify-by-selecting-a-contact-point',
+        'Notify by selecting a contact point'
+      )}
     />
   );
 }
@@ -292,8 +312,14 @@ export const RoutingOptionDescription = ({ manualRouting }: NotificationsStepDes
     <Stack alignItems="center">
       <Text variant="bodySmall" color="secondary">
         {manualRouting
-          ? 'Notifications for firing alerts are routed to a selected contact point.'
-          : 'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'}
+          ? t(
+              'alerting.routing-option-description.manual',
+              'Notifications for firing alerts are routed to a selected contact point.'
+            )
+          : t(
+              'alerting.routing-option-description.matching-labels',
+              'Notifications for firing alerts are routed to contact points based on matching labels and the notification policy tree.'
+            )}
       </Text>
       {manualRouting ? <NeedHelpInfoForContactpoint /> : <NeedHelpInfoForNotificationPolicy />}
     </Stack>

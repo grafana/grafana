@@ -20,7 +20,6 @@ interface HeaderCellProps {
   justifyContent: Property.JustifyContent;
   filter: FilterType;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
-  filterable: boolean;
   onColumnResize?: TableColumnResizeActionCallback;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   crossFilterOrder: React.MutableRefObject<string[]>;
@@ -37,7 +36,6 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   justifyContent,
   filter,
   setFilter,
-  filterable,
   onColumnResize,
   headerCellRefs,
   crossFilterOrder,
@@ -46,6 +44,8 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
 }) => {
   const styles = useStyles2(getStyles, justifyContent);
   const headerRef = useRef<HTMLDivElement>(null);
+
+  const filterable = field.config?.custom?.filterable ?? false;
 
   let isColumnFilterable = filterable;
   if (field.config.custom?.filterable !== filterable) {
@@ -62,7 +62,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
 
   const handleSort = (event: React.MouseEvent<HTMLButtonElement>) => {
     const isMultiSort = event.shiftKey;
-    onSort(column.key as string, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
+    onSort(column.key, direction === 'ASC' ? 'DESC' : 'ASC', isMultiSort);
   };
 
   // collecting header cell refs to handle manual column resize
@@ -82,7 +82,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
       if (lastElement) {
         const handleMouseUp = () => {
           let newWidth = headerCellParent.clientWidth;
-          onColumnResize?.(column.key as string, newWidth);
+          onColumnResize?.(column.key, newWidth);
         };
 
         lastElement.addEventListener('click', handleMouseUp);
