@@ -30,6 +30,9 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		// parse dualWriter periodic data syncer config
 		dualWriterPeriodicDataSyncJobEnabled := section.Key("dualWriterPeriodicDataSyncJobEnabled").MustBool(false)
 
+		// parse dualWriter migration data sync disabled from resource section
+		dualWriterMigrationDataSyncDisabled := section.Key("dualWriterMigrationDataSyncDisabled").MustBool(false)
+
 		// parse dataSyncerRecordsLimit from resource section
 		dataSyncerRecordsLimit := section.Key("dataSyncerRecordsLimit").MustInt(1000)
 
@@ -39,6 +42,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 		storageConfig[resourceName] = UnifiedStorageConfig{
 			DualWriterMode:                       rest.DualWriterMode(dualWriterMode),
 			DualWriterPeriodicDataSyncJobEnabled: dualWriterPeriodicDataSyncJobEnabled,
+			DualWriterMigrationDataSyncDisabled:  dualWriterMigrationDataSyncDisabled,
 			DataSyncerRecordsLimit:               dataSyncerRecordsLimit,
 			DataSyncerInterval:                   dataSyncerInterval,
 		}
