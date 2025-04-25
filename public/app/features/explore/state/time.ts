@@ -49,6 +49,7 @@ export const updateTimeRange = (options: {
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
 }): ThunkResult<void> => {
+  console.log('??');
   return (dispatch, getState) => {
     const { syncedTimes } = getState().explore;
     if (syncedTimes) {
@@ -74,6 +75,7 @@ export const updateTime = (config: {
   rawRange?: RawTimeRange;
   absoluteRange?: AbsoluteTimeRange;
 }): ThunkResult<void> => {
+  console.log('oi?');
   return (dispatch, getState) => {
     const { exploreId, absoluteRange: absRange, rawRange: actionRange } = config;
     const itemState = getState().explore.panes[exploreId]!;
@@ -169,6 +171,7 @@ export function shiftTime(direction: number): ThunkResult<void> {
 }
 
 export function zoomOut(scale: number): ThunkResult<void> {
+  console.log('zoomOut');
   return modifyExplorePanesTimeRange((exploreId, exploreItemState, range, dispatch) => {
     const zoomedRange = getZoomedTimeRange(range, scale);
     dispatch(updateTimeRange({ exploreId, absoluteRange: zoomedRange }));
