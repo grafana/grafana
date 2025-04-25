@@ -201,7 +201,7 @@ export function RecentJobs({ repo }: Props) {
       <InteractiveTable
         data={jobs}
         columns={jobColumns}
-        getRowId={(item) => `${item.metadata?.name}`}
+        getRowId={(item) => `${item.metadata?.uid}`}
         renderExpandedRow={(row) => <ExpandedRow row={row} />}
         pageSize={10}
       />

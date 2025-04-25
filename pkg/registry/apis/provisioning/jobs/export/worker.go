@@ -7,26 +7,36 @@ import (
 	"os"
 	"time"
 
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+//go:generate mockery --name ExportFn --structname MockExportFn --inpackage --filename mock_export_fn.go --with-expecter
+type ExportFn func(ctx context.Context, repoName string, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error
+
+//go:generate mockery --name WrapWithCloneFn --structname MockWrapWithCloneFn --inpackage --filename mock_wrap_with_clone_fn.go --with-expecter
+type WrapWithCloneFn func(ctx context.Context, repo repository.Repository, cloneOptions repository.CloneOptions, pushOptions repository.PushOptions, fn func(repo repository.Repository, cloned bool) error) error
+
 type ExportWorker struct {
 	clientFactory       resources.ClientFactory
 	repositoryResources resources.RepositoryResourcesFactory
+	exportFn            ExportFn
+	wrapWithCloneFn     WrapWithCloneFn
 }
 
 func NewExportWorker(
 	clientFactory resources.ClientFactory,
 	repositoryResources resources.RepositoryResourcesFactory,
+	exportFn ExportFn,
+	wrapWithCloneFn WrapWithCloneFn,
 ) *ExportWorker {
 	return &ExportWorker{
 		clientFactory:       clientFactory,
 		repositoryResources: repositoryResources,
+		exportFn:            exportFn,
+		wrapWithCloneFn:     wrapWithCloneFn,
 	}
 }
 
@@ -52,6 +62,11 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		PushOnWrites: false,
 		BeforeFn: func() error {
 			progress.SetMessage(ctx, "clone target")
+			// :( the branch is now baked into the repo
+			if options.Branch != "" {
+				return fmt.Errorf("branch is not supported for clonable repositories")
+			}
+
 			return nil
 		},
 	}
@@ -65,23 +80,10 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 		},
 	}
 
-	fn := func(repo repository.Repository, cloned bool) error {
-		if cloned {
-			options.Branch = "" // :( the branch is now baked into the repo
-		}
-
-		// Load and write all folders
-		// FIXME: we load the entire tree in memory
-		progress.SetMessage(ctx, "read folder tree from API server")
+	fn := func(repo repository.Repository, _ bool) error {
 		clients, err := r.clientFactory.Clients(ctx, cfg.Namespace)
 		if err != nil {
 			return fmt.Errorf("create clients: %w", err)
-		}
-
-		tree := resources.NewEmptyFolderTree()
-		folderClient, err := clients.Folder()
-		if err != nil {
-			return fmt.Errorf("create folder client: %w", err)
 		}
 
 		rw, ok := repo.(repository.ReaderWriter)
@@ -94,88 +96,8 @@ func (r *ExportWorker) Process(ctx context.Context, repo repository.Repository, 
 			return fmt.Errorf("create repository resource client: %w", err)
 		}
 
-		if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
-			if tree.Count() >= resources.MaxNumberOfFolders {
-				return errors.New("too many folders")
-			}
-
-			return tree.AddUnstructured(item, cfg.Name)
-		}); err != nil {
-			return fmt.Errorf("load folder tree: %w", err)
-		}
-
-		progress.SetMessage(ctx, "write folders to repository")
-		err = repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
-			result := jobs.JobResourceResult{
-				Action:   repository.FileActionCreated,
-				Name:     folder.ID,
-				Resource: resources.FolderResource.Resource,
-				Group:    resources.FolderResource.Group,
-				Path:     folder.Path,
-				Error:    err,
-			}
-
-			if !created {
-				result.Action = repository.FileActionIgnored
-			}
-
-			progress.Record(ctx, result)
-			if err := progress.TooManyErrors(); err != nil {
-				return err
-			}
-
-			return nil
-		})
-
-		if err != nil {
-			return fmt.Errorf("write folders to repository: %w", err)
-		}
-
-		progress.SetMessage(ctx, "start resource export")
-		for _, kind := range resources.SupportedProvisioningResources {
-			// skip from folders as we do them first... so only dashboards
-			if kind == resources.FolderResource {
-				continue
-			}
-
-			progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
-			client, _, err := clients.ForResource(kind)
-			if err != nil {
-				return err
-			}
-
-			if err := resources.ForEach(ctx, client, func(item *unstructured.Unstructured) error {
-				result := jobs.JobResourceResult{
-					Name:     item.GetName(),
-					Resource: kind.Resource,
-					Group:    kind.Group,
-					Action:   repository.FileActionCreated,
-				}
-
-				fileName, err := repositoryResources.CreateResourceFileFromObject(ctx, item, resources.WriteOptions{
-					Path: options.Path,
-					Ref:  options.Branch,
-				})
-				if errors.Is(err, resources.ErrAlreadyInRepository) {
-					result.Action = repository.FileActionIgnored
-				} else if err != nil {
-					result.Action = repository.FileActionIgnored
-					result.Error = err
-				}
-				result.Path = fileName
-				progress.Record(ctx, result)
-
-				if err := progress.TooManyErrors(); err != nil {
-					return err
-				}
-				return nil
-			}); err != nil {
-				return fmt.Errorf("export %s: %w", kind.Resource, err)
-			}
-		}
-
-		return nil
+		return r.exportFn(ctx, cfg.Name, *options, clients, repositoryResources, progress)
 	}
 
-	return repository.WrapWithCloneAndPushIfPossible(ctx, repo, cloneOptions, pushOptions, fn)
+	return r.wrapWithCloneFn(ctx, repo, cloneOptions, pushOptions, fn)
 }

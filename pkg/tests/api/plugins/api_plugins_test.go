@@ -36,7 +36,7 @@ const (
 	defaultPassword  = "password"
 )
 
-var updateSnapshotFlag = true
+var updateSnapshotFlag = false
 
 func TestMain(m *testing.M) {
 	testsuite.Run(m)

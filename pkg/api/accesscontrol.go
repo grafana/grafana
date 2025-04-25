@@ -709,9 +709,9 @@ func getMultiAccessControlMetadata(c *contextmodel.ReqContext,
 		return map[string]ac.Metadata{}
 	}
 
-	if len(c.SignedInUser.GetPermissions()) == 0 {
+	if len(c.GetPermissions()) == 0 {
 		return map[string]ac.Metadata{}
 	}
 
-	return ac.GetResourcesMetadata(c.Req.Context(), c.SignedInUser.GetPermissions(), prefix, resourceIDs)
+	return ac.GetResourcesMetadata(c.Req.Context(), c.GetPermissions(), prefix, resourceIDs)
 }

@@ -1,6 +1,6 @@
 import { e2e } from '../utils';
 
-describe.skip('Migrate to Cloud (On-prem)', () => {
+describe('Migrate to Cloud (On-prem)', () => {
   // Here we are mostly testing the UI flow and can do interesting things with the backend responses to see how the UI behaves.
   describe('with mocked calls to the API backend', () => {
     afterEach(() => {
@@ -96,6 +96,55 @@ describe.skip('Migrate to Cloud (On-prem)', () => {
       // Wait for the token to be created and the migration session list to be fetched to kickstart the UI state machine.
       cy.wait(['@createMigrationToken', '@getMigrationSessionList', '@getSnapshotListInitial']);
 
+      // Check the 'Include all' resources checkbox.
+      cy.get('[data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-include-all"]')
+        .check({ force: true })
+        .should('be.checked');
+
+      // And validate that all resources are indeed checked.
+      for (const resourceType of [
+        'alert_rule',
+        'alert_rule_group',
+        'contact_point',
+        'dashboard',
+        'datasource',
+        'folder',
+        'library_element',
+        'mute_timing',
+        'notification_policy',
+        'notification_template',
+        'plugin',
+      ]) {
+        cy.get(
+          `[data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-${resourceType.toLowerCase()}"]`
+        ).should('be.checked');
+      }
+
+      // Remove one of the resources that has dependencies.
+      // Mute Timings are dependencies of Alert Rules, which are dependencies of Alert Rule Groups.
+      cy.get(`[data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-mute_timing"]`)
+        .uncheck({ force: true })
+        .should('not.be.checked');
+
+      // Validate that those resources are now unchecked.
+      for (const resourceType of ['alert_rule', 'alert_rule_group', 'include-all']) {
+        cy.get(
+          `[data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-${resourceType.toLowerCase()}"]`
+        ).should('not.be.checked');
+      }
+
+      // Check everything again because we can.
+      cy.get('[data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-include-all"]')
+        .check({ force: true })
+        .should('be.checked');
+
+      // Validate that those resources are now checked again.
+      for (const resourceType of ['alert_rule', 'alert_rule_group', 'mute_timing']) {
+        cy.get(
+          `[data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-${resourceType.toLowerCase()}"]`
+        ).should('be.checked');
+      }
+
       cy.intercept('POST', `/api/cloudmigration/migration/${SESSION_UID}/snapshot`, {
         statusCode: 200,
         body: {
@@ -121,7 +170,7 @@ describe.skip('Migrate to Cloud (On-prem)', () => {
       let getSnapshotCalled = false;
       cy.intercept(
         'GET',
-        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50`,
+        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50*`,
         (req) => {
           if (!getSnapshotCalled) {
             getSnapshotCalled = true;
@@ -172,6 +221,13 @@ describe.skip('Migrate to Cloud (On-prem)', () => {
         statusCode: 200,
       }).as('uploadSnapshot');
 
+      // Upload the snapshot.
+      cy.get('[data-testid="migrate-to-cloud-summary-upload-snapshot-button"]')
+        .should('be.visible')
+        .wait(2000)
+        .focus()
+        .trigger('click', { force: true, waitForAnimations: true });
+
       cy.intercept('GET', `/api/cloudmigration/migration/${SESSION_UID}/snapshots?page=1&limit=1*`, {
         statusCode: 200,
         body: {
@@ -187,14 +243,11 @@ describe.skip('Migrate to Cloud (On-prem)', () => {
         },
       }).as('getSnapshotListUploading');
 
-      // Upload the snapshot.
-      cy.get('[data-testid="migrate-to-cloud-summary-upload-snapshot-button"]').should('be.visible').click();
-
       // Simulate the snapshot being uploaded, the frontend will keep polling until the snapshot is either finished or errored.
       let getSnapshotUploadingCalls = 0;
       cy.intercept(
         'GET',
-        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50`,
+        `/api/cloudmigration/migration/${SESSION_UID}/snapshot/${SNAPSHOT_UID1}?resultPage=1&resultLimit=50*`,
         (req) => {
           req.reply((res) => {
             if (getSnapshotUploadingCalls <= 1) {
@@ -243,14 +296,16 @@ describe.skip('Migrate to Cloud (On-prem)', () => {
       // Wait for the request to kickstart the upload and then wait until it is finished.
       cy.wait(['@uploadSnapshot', '@getSnapshotListUploading', '@getSnapshotUploading']);
 
-      // The upload button should now be hidden away.
-      cy.get('[data-testid="migrate-to-cloud-summary-upload-snapshot-button"]').should('be.disabled');
-
-      // And the rebuild button should be visible.
-      cy.get('[data-testid="migrate-to-cloud-summary-rebuild-snapshot-button"]').should('be.visible');
-
       // At least some of the items are marked with "Uploaded to cloud" status.
       cy.contains('Uploaded to cloud').should('be.visible');
+
+      // We can now reconfigure the snapshot.
+      cy.get('[data-testid="migrate-to-cloud-summary-reconfigure-snapshot-button"]').should('be.visible').click();
+
+      // Check the 'Include all' resources checkbox.
+      cy.get('[data-testid="migrate-to-cloud-configure-snapshot-checkbox-resource-include-all"]')
+        .check({ force: true })
+        .should('be.checked');
     });
   });
 
@@ -289,7 +344,7 @@ describe.skip('Migrate to Cloud (On-prem)', () => {
       cy.get('[data-testid="migrate-to-cloud-configure-snapshot-build-snapshot-button"]').should('be.visible').click();
 
       // And the rebuild button should be visible.
-      cy.get('[data-testid="migrate-to-cloud-summary-rebuild-snapshot-button"]').should('be.visible');
+      cy.get('[data-testid="migrate-to-cloud-summary-reconfigure-snapshot-button"]').should('be.visible');
 
       // We don't upload the snapshot yet because we need to create a mock server to validate the uploaded items,
       // similarly to what the SMTP (tester) server does.

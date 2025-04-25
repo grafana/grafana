@@ -7,7 +7,6 @@
       "dependsOn": [
         "swaggerui:build",
         "themes-generate",
-        "grafana-icons:generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
@@ -18,7 +17,6 @@
       "dependsOn": [
         "swaggerui:build",
         "themes-generate",
-        "grafana-icons:generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"

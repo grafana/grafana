@@ -102,7 +102,7 @@ export const HistogramTransformerEditor = ({
           <SuggestionsInput
             suggestions={suggestions}
             value={options.bucketSize}
-            placeholder="auto"
+            placeholder={t('transformers.histogram-transformer-editor.placeholder-auto', 'Auto')}
             onChange={onVariableBucketSizeChanged}
           />
         </InlineField>
@@ -118,7 +118,7 @@ export const HistogramTransformerEditor = ({
           <SuggestionsInput
             suggestions={suggestions}
             value={options.bucketOffset}
-            placeholder="none"
+            placeholder={t('transformers.histogram-transformer-editor.placeholder-none', 'None')}
             onChange={onVariableBucketOffsetChanged}
           />
         </InlineField>

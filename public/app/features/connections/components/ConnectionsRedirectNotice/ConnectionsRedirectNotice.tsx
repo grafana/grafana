@@ -34,8 +34,10 @@ export function ConnectionsRedirectNotice() {
     <Alert severity="info" title="" onRemove={() => setShowNotice(false)}>
       <div className={styles.alertContent}>
         <p className={styles.alertParagraph}>
-          Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
-          page, accessible from the main menu.
+          <Trans i18nKey="connections.connections-redirect-notice.body">
+            Data sources have a new home! You can discover new data sources or manage existing ones in the Connections
+            page, accessible from the main menu.
+          </Trans>
         </p>
         <LinkButton
           aria-label={t(

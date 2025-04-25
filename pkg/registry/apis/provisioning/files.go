@@ -10,7 +10,9 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
@@ -24,12 +26,13 @@ const (
 
 type filesConnector struct {
 	getter  RepoGetter
+	access  authlib.AccessChecker
 	parsers resources.ParserFactory
 	clients resources.ClientFactory
 }
 
-func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory) *filesConnector {
-	return &filesConnector{getter: getter, parsers: parsers, clients: clients}
+func NewFilesConnector(getter RepoGetter, parsers resources.ParserFactory, clients resources.ClientFactory, access authlib.AccessChecker) *filesConnector {
+	return &filesConnector{getter: getter, parsers: parsers, clients: clients, access: access}
 }
 
 func (*filesConnector) New() runtime.Object {
@@ -56,10 +59,10 @@ func (*filesConnector) NewConnectOptions() (runtime.Object, bool, string) {
 }
 
 // TODO: document the synchronous write and delete on the API Spec
-func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
+func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
 	logger := logging.FromContext(ctx).With("logger", "files-connector", "repository_name", name)
 	ctx = logging.Context(ctx, logger)
-	repo, err := s.getter.GetRepository(ctx, name)
+	repo, err := c.getter.GetHealthyRepository(ctx, name)
 	if err != nil {
 		logger.Debug("failed to find repository", "error", err)
 		return nil, err
@@ -70,12 +73,12 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, apierrors.NewBadRequest("repository does not support read-writing")
 	}
 
-	parser, err := s.parsers.GetParser(ctx, readWriter)
+	parser, err := c.parsers.GetParser(ctx, readWriter)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get parser: %w", err)
 	}
 
-	clients, err := s.clients.Clients(ctx, repo.Config().Namespace)
+	clients, err := c.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get clients: %w", err)
 	}
@@ -85,38 +88,42 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		return nil, fmt.Errorf("failed to get folder client: %w", err)
 	}
 	folders := resources.NewFolderManager(readWriter, folderClient, resources.NewEmptyFolderTree())
-	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders)
+	dualReadWriter := resources.NewDualReadWriter(readWriter, parser, folders, c.access)
 
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		ref := query.Get("ref")
-		message := query.Get("message")
-		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
+		opts := resources.DualWriteOptions{
+			Ref:        query.Get("ref"),
+			Message:    query.Get("message"),
+			SkipDryRun: query.Get("skipDryRun") == "true",
+		}
+		logger := logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
 		ctx := logging.Context(r.Context(), logger)
 
-		filePath, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
+		opts.Path, err = pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
 		if err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
 
-		if err := resources.IsPathSupported(filePath); err != nil {
+		if err := resources.IsPathSupported(opts.Path); err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
 
-		isDir := safepath.IsDir(filePath)
+		isDir := safepath.IsDir(opts.Path)
 		if r.Method == http.MethodGet && isDir {
-			files, err := s.listFolderFiles(ctx, filePath, ref, readWriter)
+			files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
 			if err != nil {
 				responder.Error(err)
+				return
 			}
 
 			responder.Object(http.StatusOK, files)
 			return
 		}
 
-		if filePath == "" {
+		if opts.Path == "" {
 			responder.Error(apierrors.NewBadRequest("missing request path"))
 			return
 		}
@@ -131,7 +138,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			resource, err := dualReadWriter.Read(ctx, filePath, ref)
+			resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -139,15 +146,15 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			obj = resource.AsResourceWrapper()
 		case http.MethodPost:
 			if isDir {
-				obj, err = dualReadWriter.CreateFolder(ctx, filePath, ref, message)
+				obj, err = dualReadWriter.CreateFolder(ctx, opts)
 			} else {
-				data, err := readBody(r, filesMaxBodySize)
+				opts.Data, err = readBody(r, filesMaxBodySize)
 				if err != nil {
 					responder.Error(err)
 					return
 				}
 
-				resource, err := dualReadWriter.CreateResource(ctx, filePath, ref, message, data)
+				resource, err := dualReadWriter.CreateResource(ctx, opts)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -159,13 +166,13 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			if isDir {
 				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 			} else {
-				data, err := readBody(r, filesMaxBodySize)
+				opts.Data, err = readBody(r, filesMaxBodySize)
 				if err != nil {
 					responder.Error(err)
 					return
 				}
 
-				resource, err := dualReadWriter.UpdateResource(ctx, filePath, ref, message, data)
+				resource, err := dualReadWriter.UpdateResource(ctx, opts)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -173,7 +180,7 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				obj = resource.AsResourceWrapper()
 			}
 		case http.MethodDelete:
-			resource, err := dualReadWriter.Delete(ctx, filePath, ref, message)
+			resource, err := dualReadWriter.Delete(ctx, opts)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -199,7 +206,18 @@ func (s *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 }
 
 // listFolderFiles returns a list of files in a folder
-func (s *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
+func (c *filesConnector) listFolderFiles(ctx context.Context, filePath string, ref string, readWriter repository.ReaderWriter) (*provisioning.FileList, error) {
+	id, err := identity.GetRequester(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
+
+	// TODO: replace with access check on the repo itself
+	if !id.GetOrgRole().Includes(identity.RoleAdmin) {
+		return nil, apierrors.NewForbidden(resources.DashboardResource.GroupResource(), "",
+			fmt.Errorf("requires admin role"))
+	}
+
 	// TODO: Implement folder navigation
 	if len(filePath) > 0 {
 		return nil, apierrors.NewBadRequest("folder navigation not yet supported")

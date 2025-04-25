@@ -12858,9 +12858,7 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
-        "uid",
         "name",
-        "folderUid",
         "query",
         "health",
         "type",
@@ -12896,6 +12894,9 @@
         "health": {
           "type": "string"
         },
+        "isPaused": {
+          "type": "boolean"
+        },
         "keepFiringFor": {
           "type": "number",
           "format": "double"
@@ -12912,6 +12913,15 @@
         },
         "name": {
           "type": "string"
+        },
+        "notificationSettings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
+        },
+        "queriedDatasourceUIDs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "query": {
           "type": "string"
@@ -15925,6 +15935,12 @@
             "$ref": "#/definitions/GettableGrafanaReceiver"
           }
         },
+        "jira_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JiraConfig"
+          }
+        },
         "msteams_configs": {
           "type": "array",
           "items": {
@@ -16286,6 +16302,9 @@
         "http_config": {
           "$ref": "#/definitions/HTTPClientConfig"
         },
+        "jira_api_url": {
+          "$ref": "#/definitions/URL"
+        },
         "opsgenie_api_key": {
           "$ref": "#/definitions/Secret"
         },
@@ -16333,6 +16352,9 @@
         },
         "smtp_smarthost": {
           "$ref": "#/definitions/HostPort"
+        },
+        "smtp_tls_config": {
+          "$ref": "#/definitions/TLSConfig"
         },
         "telegram_api_url": {
           "$ref": "#/definitions/URL"
@@ -16789,6 +16811,57 @@
         },
         "Use": {
           "description": "Key use, parsed from `use` header.",
+          "type": "string"
+        }
+      }
+    },
+    "JiraConfig": {
+      "type": "object",
+      "properties": {
+        "api_url": {
+          "$ref": "#/definitions/URL"
+        },
+        "custom_fields": {
+          "type": "object",
+          "additionalProperties": {}
+        },
+        "description": {
+          "type": "string"
+        },
+        "http_config": {
+          "$ref": "#/definitions/HTTPClientConfig"
+        },
+        "issue_type": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "priority": {
+          "type": "string"
+        },
+        "project": {
+          "type": "string"
+        },
+        "reopen_duration": {
+          "$ref": "#/definitions/Duration"
+        },
+        "reopen_transition": {
+          "type": "string"
+        },
+        "resolve_transition": {
+          "type": "string"
+        },
+        "send_resolved": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "wont_fix_resolution": {
           "type": "string"
         }
       }
@@ -18281,6 +18354,12 @@
             "$ref": "#/definitions/PostableGrafanaReceiver"
           }
         },
+        "jira_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JiraConfig"
+          }
+        },
         "msteams_configs": {
           "type": "array",
           "items": {
@@ -19322,6 +19401,12 @@
             "$ref": "#/definitions/EmailConfig"
           }
         },
+        "jira_configs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/JiraConfig"
+          }
+        },
         "msteams_configs": {
           "type": "array",
           "items": {
@@ -20057,9 +20142,7 @@
       "description": "adapted from cortex",
       "type": "object",
       "required": [
-        "uid",
         "name",
-        "folderUid",
         "query",
         "health",
         "type"
@@ -20075,6 +20158,9 @@
         "health": {
           "type": "string"
         },
+        "isPaused": {
+          "type": "boolean"
+        },
         "labels": {
           "$ref": "#/definitions/Labels"
         },
@@ -20087,6 +20173,9 @@
         },
         "name": {
           "type": "string"
+        },
+        "notificationSettings": {
+          "$ref": "#/definitions/AlertRuleNotificationSettings"
         },
         "query": {
           "type": "string"
@@ -21609,6 +21698,55 @@
         }
       }
     },
+    "TimeIntervalItem": {
+      "type": "object",
+      "properties": {
+        "days_of_month": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "location": {
+          "type": "string"
+        },
+        "months": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "times": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TimeIntervalTimeRange"
+          }
+        },
+        "weekdays": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "years": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "TimeIntervalTimeRange": {
+      "type": "object",
+      "properties": {
+        "end_time": {
+          "type": "string"
+        },
+        "start_time": {
+          "type": "string"
+        }
+      }
+    },
     "TimeRange": {
       "description": "Redefining this to avoid an import cycle",
       "type": "object",
@@ -22601,6 +22739,9 @@
         "send_resolved": {
           "type": "boolean"
         },
+        "timeout": {
+          "$ref": "#/definitions/Duration"
+        },
         "url": {
           "$ref": "#/definitions/SecretURL"
         },
@@ -22690,6 +22831,7 @@
       }
     },
     "alertGroups": {
+      "description": "AlertGroups alert groups",
       "type": "array",
       "items": {
         "type": "object",
@@ -23019,6 +23161,7 @@
       }
     },
     "gettableSilences": {
+      "description": "GettableSilences gettable silences",
       "type": "array",
       "items": {
         "type": "object",

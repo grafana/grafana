@@ -179,7 +179,10 @@ export const ServiceAccountPageUnconnected = ({
                 disabled={true}
                 name="lock"
                 size="md"
-                tooltip={`This is a managed service account and cannot be modified.`}
+                tooltip={t(
+                  'serviceaccounts.service-account-page-unconnected.tooltip-managed-service-account-cannot-modified',
+                  'This is a managed service account and cannot be modified'
+                )}
               />
             </Stack>
           )}
