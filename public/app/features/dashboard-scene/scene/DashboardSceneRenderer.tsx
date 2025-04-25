@@ -65,8 +65,10 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
     }
 
     if (panelSearch || panelsPerRow) {
+      console.log('aaa');
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
+    console.log('bbb');
 
     return (
       <>
