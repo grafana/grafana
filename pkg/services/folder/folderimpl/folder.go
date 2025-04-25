@@ -768,7 +768,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 	var userID int64
 	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
@@ -918,7 +918,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	var userID int64
 	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
@@ -1441,7 +1441,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	var userID int64
 	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
 	}
 
