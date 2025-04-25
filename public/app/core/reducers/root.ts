@@ -36,6 +36,8 @@ import { reportingAPI } from '../../api/clients/reporting/baseAPI';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
 import { userPreferencesAPI } from '../../features/preferences/api';
 import { cleanUpAction } from '../actions/cleanUp';
+// Used by the API client generator
+// PLOP_INJECT_IMPORT
 
 const rootReducers = {
   ...sharedReducers,
@@ -71,6 +73,8 @@ const rootReducers = {
   [folderAPI.reducerPath]: folderAPI.reducer,
   [advisorAPI.reducerPath]: advisorAPI.reducer,
   [reportingAPI.reducerPath]: reportingAPI.reducer,
+  // PLOP_INJECT_REDUCER
+  // Used by the API client generator
 };
 
 const addedReducers = {};

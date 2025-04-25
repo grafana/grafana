@@ -228,6 +228,7 @@ unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
+multiTenantFrontend,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
