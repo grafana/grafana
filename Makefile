@@ -19,6 +19,7 @@ GO_BUILD_FLAGS += $(if $(GO_BUILD_TAGS),-build-tags=$(GO_BUILD_TAGS))
 GO_BUILD_FLAGS += $(GO_RACE_FLAG)
 GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
+TOOLS := .citools/tools.sh
 
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
@@ -60,13 +61,13 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 $(GO) tool swagger mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	GODEBUG=gotypesalias=0 @$(TOOLS) swagger mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(TOOLS) swagger generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -84,7 +85,7 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(GO) tool swagger generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(TOOLS) swagger generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -98,7 +99,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(GO) tool swagger validate --skip-warnings $(<)
+	GODEBUG=gotypesalias=0$(TOOLS) swagger validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -110,11 +111,11 @@ cleanup-old-git-hooks:
 
 .PHONY: lefthook-install
 lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
-	$(GO) tool lefthook install -f
+	@$(TOOLS) lefthook install -f
 
 .PHONY: lefthook-uninstall
 lefthook-uninstall:
-	$(GO) tool lefthook uninstall
+	@$(TOOLS) lefthook uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
@@ -194,8 +195,8 @@ gen-go:
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	$(GO) tool cue fix kinds/**/*.cue
-	$(GO) tool cue fix public/app/plugins/**/**/*.cue
+	@$(TOOLS) cue fix kinds/**/*.cue
+	@$(TOOLS) cue fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -252,7 +253,7 @@ build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
 run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	$(GO) tool bra run
+	@$(TOOLS) bra run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -344,7 +345,7 @@ test: test-go test-js ## Run all tests.
 .PHONY: golangci-lint
 golangci-lint:
 	@echo "lint via golangci-lint"
-	$(GO) tool golangci-lint run \
+	@$(TOOLS) golangci-lint run \
 		--config .golangci.yml \
 		$(if $(GO_BUILD_TAGS),--build-tags $(GO_BUILD_TAGS)) \
 		$(GO_LINT_FILES)
@@ -359,7 +360,7 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.yml
+		$(XARGSR) @$(TOOLS) golangci-lint run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
@@ -513,3 +514,7 @@ check-tparse:
 .PHONY: help
 help: ## Display this help.
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+
+.PHONY: install
+install:
+	@$(TOOLS) install $(TOOL)

@@ -1,7 +1,7 @@
 #!/bin/bash
 # Usage:
-#   ./.citools/tool.sh <tool_name> [args...]
-#   ./.citools/tool.sh install <import_path>@<version>
+#   ./.citools/tools.sh <tool_name> [args...]
+#   ./.citools/tools.sh install <import_path>@<version>
 
 set -e
 TOOLZ_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -10,18 +10,12 @@ function install_tool() {
   IMPORT_PATH_WITH_VER="$1"
 
   if [[ "$IMPORT_PATH_WITH_VER" != *"@"* ]]; then
-    echo "Error: version must be specified (e.g., github.com/foo/bar@v1.2.3)"
+    echo "Error: tool version must be specified (e.g., github.com/foo/bar@v1.2.3)"
     exit 1
   fi
 
   TOOL_PATH="${IMPORT_PATH_WITH_VER%@*}"
-  TOOL_VERSION="${IMPORT_PATH_WITH_VER##*@}"
   TOOL_NAME="${TOOL_PATH##*/}"
-
-
-  echo "PATH $TOOL_PATH"
-  echo "VER $TOOL_VERSION"
-  echo "NAME $TOOL_NAME"
 
   TOOL_DIR="$TOOLZ_DIR/$TOOL_NAME"
   MOD_FILE="$TOOL_DIR/go.mod"
@@ -34,7 +28,6 @@ function install_tool() {
     go mod init "$TOOL_NAME"
   fi
 
-  # Install the tool using -tool to avoid adding requirements to your main go.work/go.mod
   go get -tool --modfile="$MOD_FILE" "$IMPORT_PATH_WITH_VER"
   echo "Installed $TOOL_NAME into $TOOL_DIR"
 }
