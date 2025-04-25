@@ -19,11 +19,16 @@ export const PrometheusAnnotationSupport = (ds: PrometheusDatasource): Annotatio
   return {
     QueryEditor: AnnotationQueryEditor,
     prepareAnnotation(json: AnnotationQuery<PromQuery>): AnnotationQuery<PromQuery> {
+      // Initialize target if it doesn't exist
+      if (!json.target) {
+        json.target = {} as PromQuery;
+      }
+
       json.target = {
         ...json.target,
-        refId: json.refId ?? 'Anno',
-        expr: json.expr,
-        interval: json.step,
+        refId: json.target.refId || json.refId || 'Anno',
+        expr: json.target.expr || json.expr || json.target.expr,
+        interval: json.target.interval || json.step || json.target.interval,
       };
 
       delete json.expr;
