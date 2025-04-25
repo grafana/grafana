@@ -5,9 +5,9 @@ import { createFetchResponse } from 'test/helpers/createFetchResponse';
 import {
   AbstractLabelMatcher,
   AbstractLabelOperator,
-  getFrameDisplayName,
-  dateTime,
   DataQueryRequest,
+  dateTime,
+  getFrameDisplayName,
   MetricFindValue,
 } from '@grafana/data';
 import { BackendSrvRequest } from '@grafana/runtime';
@@ -373,62 +373,116 @@ describe('graphiteDatasource', () => {
 
   describe('building graphite params', () => {
     it('should return empty array if no targets', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{}],
-      });
+      const originalTargetMap = { A: '' };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{}],
+        },
+        originalTargetMap
+      );
       expect(results.length).toBe(0);
     });
 
     it('should uri escape targets', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
-      });
+      const originalTargetMap = {
+        A: 'prod1.{test,test2}',
+        B: 'prod2.count',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'prod1.{test,test2}' }, { target: 'prod2.count' }],
+        },
+        originalTargetMap
+      );
       expect(results).toContain('target=prod1.%7Btest%2Ctest2%7D');
     });
 
     it('should replace target placeholder', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: 'series2',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'series1' }, { target: 'series2' }, { target: 'asPercent(#A,#B)' }],
+        },
+        originalTargetMap
+      );
       expect(results[2]).toBe('target=asPercent(series1%2Cseries2)');
     });
 
     it('should replace target placeholder for hidden series', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [
-          { target: 'series1', hide: true },
-          { target: 'sumSeries(#A)', hide: true },
-          { target: 'asPercent(#A,#B)' },
-        ],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: 'sumSeries(#A)',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [
+            { target: 'series1', hide: true },
+            { target: 'sumSeries(#A)', hide: true },
+            { target: 'asPercent(#A,#B)' },
+          ],
+        },
+        originalTargetMap
+      );
       expect(results[0]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should replace target placeholder when nesting query references', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: 'sumSeries(#A)',
+        C: 'asPercent(#A,#B)',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'series1' }, { target: 'sumSeries(#A)' }, { target: 'asPercent(#A,#B)' }],
+        },
+        originalTargetMap
+      );
       expect(results[2]).toBe('target=' + encodeURIComponent('asPercent(series1,sumSeries(series1))'));
     });
 
     it('should fix wrong minute interval parameters', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
-      });
+      const originalTargetMap = {
+        A: "summarize(prod.25m.count, '25m', 'sum')",
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: "summarize(prod.25m.count, '25m', 'sum')" }],
+        },
+        originalTargetMap
+      );
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.25m.count, '25min', 'sum')"));
     });
 
     it('should fix wrong month interval parameters', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
-      });
+      const originalTargetMap = {
+        A: "summarize(prod.5M.count, '5M', 'sum')",
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: "summarize(prod.5M.count, '5M', 'sum')" }],
+        },
+        originalTargetMap
+      );
       expect(results[0]).toBe('target=' + encodeURIComponent("summarize(prod.5M.count, '5mon', 'sum')"));
     });
 
     it('should ignore empty targets', () => {
-      const results = ctx.ds.buildGraphiteParams({
-        targets: [{ target: 'series1' }, { target: '' }],
-      });
+      const originalTargetMap = {
+        A: 'series1',
+        B: '',
+      };
+      const results = ctx.ds.buildGraphiteParams(
+        {
+          targets: [{ target: 'series1' }, { target: '' }],
+        },
+        originalTargetMap
+      );
       expect(results.length).toBe(2);
     });
 
@@ -442,9 +496,15 @@ describe('graphiteDatasource', () => {
           },
         ]);
 
-        const results = ctx.ds.buildGraphiteParams({
-          targets: [{ target: 'my.$metric.*' }],
-        });
+        const originalTargetMap = {
+          A: 'my.$metric.*',
+        };
+        const results = ctx.ds.buildGraphiteParams(
+          {
+            targets: [{ target: 'my.$metric.*' }],
+          },
+          originalTargetMap
+        );
         expect(results).toStrictEqual(['target=my.b.*', 'format=json']);
       });
 
@@ -456,10 +516,13 @@ describe('graphiteDatasource', () => {
             current: { value: ['a', 'b'] },
           },
         ]);
-
-        const results = ctx.ds.buildGraphiteParams({
-          targets: [{ target: 'my.[[metric]].*' }],
-        });
+        const originalTargetMap = { A: 'my.[[metric]].*' };
+        const results = ctx.ds.buildGraphiteParams(
+          {
+            targets: [{ target: 'my.[[metric]].*' }],
+          },
+          originalTargetMap
+        );
 
         expect(results).toStrictEqual(['target=my.%7Ba%2Cb%7D.*', 'format=json']);
       });
