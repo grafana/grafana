@@ -20,15 +20,11 @@ type Database struct {
 	sqlx   *sqlx.DB
 }
 
-func New(db db.DB) *Database {
+func ProvideDatabase(db db.DB) *Database {
 	return &Database{
 		dbType: string(db.GetDBType()),
 		sqlx:   sqlx.NewDb(db.GetEngine().DB().DB, db.GetDialect().DriverName()),
 	}
-}
-
-func ProvideSecretDatabase(db db.DB) contracts.Database {
-	return New(db)
 }
 
 func (db *Database) DriverName() string {

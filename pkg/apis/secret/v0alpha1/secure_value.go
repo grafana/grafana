@@ -46,6 +46,9 @@ type SecureValueStatus struct {
 	// Only applicable if the `phase=Failed`.
 	// +optional
 	Message string `json:"message,omitempty"`
+
+	// +optional
+	ExternalID string `json:"externalId,omitempty"`
 }
 
 type SecureValueSpec struct {

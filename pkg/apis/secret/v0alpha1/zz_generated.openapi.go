@@ -787,6 +787,12 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"externalId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
+						},
+					},
 				},
 				Required: []string{"phase"},
 			},

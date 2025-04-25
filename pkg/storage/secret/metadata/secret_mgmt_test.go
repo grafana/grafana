@@ -171,7 +171,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
-	database := database.New(testDB)
+	database := database.ProvideDatabase(testDB)
 
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{

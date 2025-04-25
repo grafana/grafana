@@ -73,7 +73,8 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 			Decrypters:  decrypters,
 		},
 		Status: secretv0alpha1.SecureValueStatus{
-			Phase: secretv0alpha1.SecureValuePhase(sv.Phase),
+			Phase:      secretv0alpha1.SecureValuePhase(sv.Phase),
+			ExternalID: sv.ExternalID,
 		},
 	}
 	if sv.Ref != nil {
@@ -82,6 +83,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	if sv.Message != nil && *sv.Message != "" {
 		resource.Status.Message = *sv.Message
 	}
+	resource.Status.ExternalID = sv.ExternalID
 
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)

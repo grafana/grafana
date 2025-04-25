@@ -156,7 +156,7 @@ func Test_SQLKeeperSetup(t *testing.T) {
 
 func setupTestService(t *testing.T, cfg *setting.Cfg) (*SQLKeeper, error) {
 	testDB := db.InitTestDB(t)
-	database := database.New(testDB)
+	database := database.ProvideDatabase(testDB)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 

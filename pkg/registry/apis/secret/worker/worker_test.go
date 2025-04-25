@@ -22,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -57,7 +58,7 @@ func TestProcessMessage(t *testing.T) {
 		testDB := sqlstore.NewTestStore(t)
 		require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
 
-		database := database.New(testDB)
+		database := database.ProvideDatabase(testDB)
 
 		outboxQueueWrapper := newOutboxQueueWrapper(rng, metadata.ProvideOutboxQueue(testDB))
 
@@ -108,7 +109,9 @@ func TestProcessMessage(t *testing.T) {
 			contracts.SQLKeeperType: sqlKeeperWrapper,
 		}
 
-		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, accessClient, utils.ResourceInfo{})
+		secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueueWrapper)
+
+		secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
 
 		worker := NewWorker(Config{
 			// TODO: randomize

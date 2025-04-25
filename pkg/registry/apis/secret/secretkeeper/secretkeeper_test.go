@@ -53,7 +53,7 @@ func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 func setupTestService(t *testing.T, cfg *setting.Cfg) (OSSKeeperService, error) {
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
-	database := database.New(testDB)
+	database := database.ProvideDatabase(testDB)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)

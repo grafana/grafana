@@ -26,7 +26,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	}))
 
 	testDB := db.InitTestDB(t)
-	database := database.New(testDB)
+	database := database.ProvideDatabase(testDB)
 
 	require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
 
