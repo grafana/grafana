@@ -65,7 +65,7 @@ grafana cli -h
 
 ### Display Grafana server CLI version
 
-`--version` or `-v` prints the version of Grafana CLI currently running.
+`--version` or `-v` prints the version of Grafana server CLI currently running.
 
 **Example:**
 
