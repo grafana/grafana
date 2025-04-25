@@ -134,7 +134,7 @@ steps:
   environment:
     HOST: start-storybook
     PORT: "9001"
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-storybook-suite
 trigger:
   event:
@@ -561,7 +561,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
@@ -570,7 +570,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -579,7 +579,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
@@ -588,7 +588,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -597,7 +597,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
@@ -606,7 +606,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -615,7 +615,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-various-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
@@ -624,7 +624,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/various-suite
 - commands:
   - GITHUB_TOKEN=$(cat /github-app/token)
@@ -1658,7 +1658,7 @@ steps:
   environment:
     HOST: start-storybook
     PORT: "9001"
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-storybook-suite
 trigger:
   branch: main
@@ -1851,7 +1851,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
@@ -1860,7 +1860,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -1869,7 +1869,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
@@ -1878,7 +1878,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -1887,7 +1887,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
@@ -1896,7 +1896,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -1905,7 +1905,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-various-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
@@ -1914,7 +1914,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/various-suite
 - commands:
   - GITHUB_TOKEN=$(cat /github-app/token)
@@ -4923,7 +4923,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.10.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:14.3.2
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
@@ -4961,7 +4961,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
-  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.10.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:14.3.2
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
   - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
@@ -5210,6 +5210,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8e25f1f786b8de4eb21dfbeca8c5fcb9701b1e62ecf98287d9225ecc6e8c29e8
+hmac: 16029e3922ae0a13a31233717aa172c06bf0e6fc8cf01f5148de62147c259ac8
 
 ...
