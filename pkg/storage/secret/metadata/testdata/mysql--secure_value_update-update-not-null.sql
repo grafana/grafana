@@ -11,11 +11,11 @@ SET
   `updated` = 5678,
   `updated_by` = 'user:cameron',
   `status_phase` = 'creating',
-  `status_message` = '{message_test true}',
+  `status_message` = 'message_test',
   `description` = 'description',
-  `keeper` = '{keeper_test true}',
-  `decrypters` = '{decrypters_test true}',
-  `ref` = '{ref_test true}',
+  `keeper` = 'keeper_test',
+  `decrypters` = 'decrypters_test',
+  `ref` = 'ref_test',
   `external_id` = 'extId'
 WHERE 1 = 1 AND
   `namespace` = 'ns' AND
