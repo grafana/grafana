@@ -64,7 +64,8 @@
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
     "process-specs": "node --experimental-strip-types scripts/process-specs.ts",
-    "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts"
+    "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts",
+    "generate:api-client": "NODE_OPTIONS='--experimental-strip-types' plop --plopfile public/app/api/generator/plopfile.ts"
   },
   "grafana": {
     "whatsNewUrl": "https://grafana.com/docs/grafana/next/whatsnew/whats-new-in-v%[1]s-%[2]s/",
@@ -216,6 +217,7 @@
     "nx": "20.7.1",
     "openapi-types": "^12.1.3",
     "pdf-parse": "^1.1.1",
+    "plop": "^4.0.1",
     "postcss": "8.5.1",
     "postcss-loader": "8.1.1",
     "postcss-reporter": "7.1.0",
