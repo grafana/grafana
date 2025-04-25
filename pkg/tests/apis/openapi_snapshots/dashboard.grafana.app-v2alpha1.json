@@ -1087,9 +1087,6 @@
             "type": "string",
             "default": ""
           },
-          "origin": {
-            "type": "string"
-          },
           "value": {
             "type": "string",
             "default": ""
