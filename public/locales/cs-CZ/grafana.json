@@ -2716,9 +2716,6 @@
       "clear": "Vymazat vyhledávání a filtry",
       "text": "Nebyly nalezeny žádné výsledky pro váš dotaz"
     },
-    "soft-delete": {
-      "success": "Nástěnka {{name}} byla přesunuta do Nedávno odstraněné"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {
