@@ -250,11 +250,17 @@ func (s *PluginsService) updateAll(ctx context.Context) {
 	for pluginID, updateVersion := range s.availableUpdates {
 		compatOpts := plugins.NewAddOpts(s.grafanaVersion, runtime.GOOS, runtime.GOARCH, "")
 
-		ctxLogger.Info("Auto updating plugin", "pluginID", pluginID, "version", updateVersion)
+		plugin, exists := s.pluginStore.Plugin(ctx, pluginID)
+		if !exists {
+			ctxLogger.Error("Plugin not found", "pluginID", pluginID)
+			continue
+		}
+
+		ctxLogger.Info("Auto updating plugin", "pluginID", pluginID, "version", plugin.Info.Version, "newVersion", updateVersion)
 
 		err := s.pluginInstaller.Add(ctx, pluginID, updateVersion, compatOpts)
 		if err != nil {
-			ctxLogger.Error("Failed to auto update plugin", "pluginID", pluginID, "error", err)
+			ctxLogger.Error("Failed to auto update plugin", "pluginID", pluginID, "version", plugin.Info.Version, "newVersion", updateVersion, "error", err)
 			failedUpdates[pluginID] = updateVersion
 		}
 	}
