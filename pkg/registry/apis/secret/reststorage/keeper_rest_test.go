@@ -10,7 +10,7 @@ import (
 
 func TestValidateKeeper(t *testing.T) {
 	t.Run("when creating a new keeper", func(t *testing.T) {
-		t.Run("the `title` must be present", func(t *testing.T) {
+		t.Run("the `description` must be present", func(t *testing.T) {
 			keeper := &secretv0alpha1.Keeper{
 				Spec: secretv0alpha1.KeeperSpec{
 					SQL: &secretv0alpha1.SQLKeeperConfig{},
@@ -19,19 +19,19 @@ func TestValidateKeeper(t *testing.T) {
 
 			errs := ValidateKeeper(keeper, admission.Create)
 			require.Len(t, errs, 1)
-			require.Equal(t, "spec.title", errs[0].Field)
+			require.Equal(t, "spec.description", errs[0].Field)
 		})
 	})
 
 	t.Run("only one `keeper` must be present", func(t *testing.T) {
 		keeper := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
-				Title:     "title",
-				SQL:       &secretv0alpha1.SQLKeeperConfig{},
-				AWS:       &secretv0alpha1.AWSKeeperConfig{},
-				Azure:     &secretv0alpha1.AzureKeeperConfig{},
-				GCP:       &secretv0alpha1.GCPKeeperConfig{},
-				HashiCorp: &secretv0alpha1.HashiCorpKeeperConfig{},
+				Description: "short description",
+				SQL:         &secretv0alpha1.SQLKeeperConfig{},
+				AWS:         &secretv0alpha1.AWSKeeperConfig{},
+				Azure:       &secretv0alpha1.AzureKeeperConfig{},
+				GCP:         &secretv0alpha1.GCPKeeperConfig{},
+				HashiCorp:   &secretv0alpha1.HashiCorpKeeperConfig{},
 			},
 		}
 
@@ -43,7 +43,7 @@ func TestValidateKeeper(t *testing.T) {
 	t.Run("at least one `keeper` must be present", func(t *testing.T) {
 		keeper := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
-				Title: "title",
+				Description: "description",
 			},
 		}
 
@@ -55,7 +55,7 @@ func TestValidateKeeper(t *testing.T) {
 	t.Run("aws keeper validation", func(t *testing.T) {
 		validKeeperAWS := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
-				Title: "title",
+				Description: "description",
 				AWS: &secretv0alpha1.AWSKeeperConfig{
 					AWSCredentials: secretv0alpha1.AWSCredentials{
 						AccessKeyID: secretv0alpha1.CredentialValue{
@@ -122,7 +122,7 @@ func TestValidateKeeper(t *testing.T) {
 	t.Run("azure keeper validation", func(t *testing.T) {
 		validKeeperAzure := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
-				Title: "title",
+				Description: "description",
 				Azure: &secretv0alpha1.AzureKeeperConfig{
 					AzureCredentials: secretv0alpha1.AzureCredentials{
 						KeyVaultName: "kv-name",
@@ -191,7 +191,7 @@ func TestValidateKeeper(t *testing.T) {
 	t.Run("gcp keeper validation", func(t *testing.T) {
 		validKeeperGCP := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
-				Title: "title",
+				Description: "description",
 				GCP: &secretv0alpha1.GCPKeeperConfig{
 					GCPCredentials: secretv0alpha1.GCPCredentials{
 						ProjectID:       "project-id",
@@ -223,7 +223,7 @@ func TestValidateKeeper(t *testing.T) {
 	t.Run("hashicorp keeper validation", func(t *testing.T) {
 		validKeeperHashiCorp := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
-				Title: "title",
+				Description: "description",
 				HashiCorp: &secretv0alpha1.HashiCorpKeeperConfig{
 					HashiCorpCredentials: secretv0alpha1.HashiCorpCredentials{
 						Address: "http://address",
@@ -318,8 +318,8 @@ func TestValidateKeeper(t *testing.T) {
 				t.Run("when using credentials for "+tc.name, func(t *testing.T) {
 					keeper := &secretv0alpha1.Keeper{
 						Spec: secretv0alpha1.KeeperSpec{
-							Title: "title",
-							SQL:   &secretv0alpha1.SQLKeeperConfig{Encryption: &tc.enc},
+							Description: "description",
+							SQL:         &secretv0alpha1.SQLKeeperConfig{Encryption: &tc.enc},
 						},
 					}
 

@@ -501,9 +501,9 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
+					"description": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Human friendly name for the keeper.",
+							Description: "Short description for the Keeper.",
 							Default:     "",
 							MinLength:   ptr.To[int64](1),
 							MaxLength:   ptr.To[int64](253),
@@ -567,7 +567,7 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"description"},
 			},
 		},
 		Dependencies: []string{
@@ -700,9 +700,9 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
+					"description": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Human friendly name for the secure value.",
+							Description: "Short description that explains the purpose of this SecureValue.",
 							Default:     "",
 							MinLength:   ptr.To[int64](1),
 							MaxLength:   ptr.To[int64](253),
@@ -759,7 +759,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"description"},
 			},
 		},
 	}

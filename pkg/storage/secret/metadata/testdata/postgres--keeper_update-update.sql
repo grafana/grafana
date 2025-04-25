@@ -10,7 +10,7 @@ SET
   "created_by" = 'user:ryan',
   "updated" = 5678,
   "updated_by" = 'user:cameron',
-  "title" = 'title',
+  "description" = 'description',
   "type" = 'sql',
   "payload" = ''
 WHERE 1 = 1 AND

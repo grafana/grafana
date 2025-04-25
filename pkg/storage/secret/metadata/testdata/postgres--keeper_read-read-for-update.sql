@@ -8,7 +8,7 @@ SELECT
   "created_by",
   "updated",
   "updated_by",
-  "title",
+  "description",
   "type",
   "payload"
 FROM

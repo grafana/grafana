@@ -136,8 +136,8 @@ func TestProcessMessage(t *testing.T) {
 						Namespace: fmt.Sprintf("stack-%d", i),
 					},
 					Spec: secretv0alpha1.SecureValueSpec{
-						Title: fmt.Sprintf("title-%d", i),
-						Value: secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", i)),
+						Description: fmt.Sprintf("description-%d", i),
+						Value:       secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", i)),
 					},
 					Status: secretv0alpha1.SecureValueStatus{
 						Phase: secretv0alpha1.SecureValuePhasePending,

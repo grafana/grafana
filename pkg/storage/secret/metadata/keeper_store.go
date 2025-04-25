@@ -132,7 +132,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	var keeper keeperDB
 	err = res.Scan(
 		&keeper.GUID, &keeper.Name, &keeper.Namespace, &keeper.Annotations, &keeper.Labels, &keeper.Created,
-		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Title, &keeper.Type, &keeper.Payload,
+		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Description, &keeper.Type, &keeper.Payload,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan keeper row: %w", err)
@@ -283,7 +283,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		var row keeperDB
 		err = rows.Scan(
 			&row.GUID, &row.Name, &row.Namespace, &row.Annotations, &row.Labels, &row.Created,
-			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Title, &row.Type, &row.Payload,
+			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Description, &row.Type, &row.Payload,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error reading keeper row: %w", err)

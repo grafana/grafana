@@ -76,7 +76,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 		require.Empty(t, secureValue.Spec.Value)
 		require.Empty(t, secureValue.Spec.Ref)
-		require.NotEmpty(t, secureValue.Spec.Title)
+		require.NotEmpty(t, secureValue.Spec.Description)
 		require.NotEmpty(t, secureValue.Spec.Keeper)
 		require.NotEmpty(t, secureValue.Spec.Decrypters)
 		require.NotEmpty(t, secureValue.Status.Phase)
@@ -114,7 +114,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
-			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["description"] = "New description"
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{}
 			newRaw.Object["spec"].(map[string]any)["keeper"] = keeper.GetName()
@@ -137,7 +137,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
-			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["description"] = "New description"
 			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 
@@ -199,7 +199,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 	t.Run("creating an invalid secure value fails validation and returns an error", func(t *testing.T) {
 		testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-		testData.Object["spec"].(map[string]any)["title"] = ""
+		testData.Object["spec"].(map[string]any)["description"] = ""
 
 		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -329,7 +329,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			// OrgA trying to update securevalue from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			testData.SetName(secureValueOrgB.GetName())
-			testData.Object["spec"].(map[string]any)["title"] = "New title"
+			testData.Object["spec"].(map[string]any)["description"] = "New description"
 
 			raw, err := clientOrgA.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
@@ -340,7 +340,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 			// OrgB trying to update securevalue from OrgA.
 			testData = helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			testData.SetName(secureValueOrgA.GetName())
-			testData.Object["spec"].(map[string]any)["title"] = "New title"
+			testData.Object["spec"].(map[string]any)["description"] = "New description"
 
 			raw, err = clientOrgB.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
@@ -560,7 +560,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		t.Run("UPDATE", func(t *testing.T) {
 			// Update `secureValueName` from the limited client.
 			testSecureValueUpdate := testSecureValue.DeepCopy()
-			testSecureValueUpdate.Object["spec"].(map[string]any)["title"] = "sv-title-1234"
+			testSecureValueUpdate.Object["spec"].(map[string]any)["description"] = "sv-description-1234"
 
 			rawUpdate, err := clientScopedLimited.Resource.Update(ctx, testSecureValueUpdate, metav1.UpdateOptions{})
 			require.NoError(t, err)
@@ -568,7 +568,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 			// Try to update `secureValueNameAnother` from the limited client.
 			testSecureValueAnotherUpdate := testSecureValueAnother.DeepCopy()
-			testSecureValueAnotherUpdate.Object["spec"].(map[string]any)["title"] = "sv-title-5678"
+			testSecureValueAnotherUpdate.Object["spec"].(map[string]any)["description"] = "sv-description-5678"
 
 			rawUpdate, err = clientScopedLimited.Resource.Update(ctx, testSecureValueAnotherUpdate, metav1.UpdateOptions{})
 			require.Error(t, err)
@@ -614,7 +614,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 		require.Empty(t, secureValue.Spec.Value)
 		require.Empty(t, secureValue.Spec.Ref)
-		require.NotEmpty(t, secureValue.Spec.Title)
+		require.NotEmpty(t, secureValue.Spec.Description)
 		require.NotEmpty(t, secureValue.Spec.Keeper)
 		require.NotEmpty(t, secureValue.Spec.Decrypters)
 
@@ -643,7 +643,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 		t.Run("and updating the secure value replaces the spec fields and returns them", func(t *testing.T) {
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
-			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["description"] = "New description"
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 			newRaw.Object["spec"].(map[string]any)["keeper"] = contracts.DefaultSQLKeeper
 			newRaw.Object["spec"].(map[string]any)["decrypters"] = []string{"actor_app1", "actor_app2"}
@@ -666,7 +666,7 @@ func TestIntegrationSecureValue(t *testing.T) {
 
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
 			newRaw.SetName(raw.GetName())
-			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["description"] = "New description"
 			newRaw.Object["spec"].(map[string]any)["keeper"] = newKeeper.GetName()
 			newRaw.Object["spec"].(map[string]any)["value"] = "New secure value"
 
