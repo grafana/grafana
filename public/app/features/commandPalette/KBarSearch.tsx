@@ -80,6 +80,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       color: theme.colors.text.secondary,
       width: '100%',
       outline: 'none',
+      paddingLeft: 0,
     }),
   };
 };

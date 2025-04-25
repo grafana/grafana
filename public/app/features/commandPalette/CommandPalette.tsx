@@ -121,7 +121,7 @@ function AncestorBreadcrumbs() {
     ancestorActions.length > 0 && (
       <span className={styles.breadcrumbs}>
         {ancestorActions.map((action, index) => (
-          <React.Fragment key={action.id || index}>{action.name} / </React.Fragment>
+          <React.Fragment key={action.id || index}>{action.name}&nbsp;/&nbsp;</React.Fragment>
         ))}
       </span>
     )
