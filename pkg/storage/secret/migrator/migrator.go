@@ -52,10 +52,10 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "status_message", Type: migrator.DB_Text, Nullable: true},
 
 			// Spec
-			{Name: "title", Type: migrator.DB_Text, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough for a human friendly name.
 			{Name: "keeper", Type: migrator.DB_NVarchar, Length: 253, Nullable: true}, // Keeper name, if not set, use default keeper.
 			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
-			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
+			{Name: "ref", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // Reference to third-party storage secret path.Chosen arbitrarily, but should be enough.
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 		},
 		Indices: []*migrator.Index{
@@ -78,7 +78,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
 
 			// Spec
-			{Name: "title", Type: migrator.DB_Text, Nullable: false},
+			{Name: "title", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough for a human friendly name.
 			{Name: "type", Type: migrator.DB_Text, Nullable: false},
 			// Each keeper has a different payload so we store the whole thing as a blob.
 			{Name: "payload", Type: migrator.DB_Text, Nullable: true},

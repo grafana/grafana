@@ -12,7 +12,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
+	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
+
+var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 
 func ProvideSecureValueMetadataStorage(
 	db db.DB,
@@ -38,6 +41,7 @@ func ProvideSecureValueMetadataStorage(
 
 	return &secureValueMetadataStorage{
 		db:                    db,
+		dialect:               sqltemplate.DialectForDriver(string(db.GetDBType())),
 		keeperMetadataStorage: keeperMetadataStorage,
 		keepers:               keepers,
 	}, nil
@@ -46,10 +50,12 @@ func ProvideSecureValueMetadataStorage(
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
 	db                    db.DB
+	dialect               sqltemplate.Dialect
 	keeperMetadataStorage contracts.KeeperMetadataStorage
 	keepers               map[contracts.KeeperType]contracts.Keeper
 }
 
+// TODO LND Implement this with sqlx
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
 	sv.Status.Message = ""
@@ -98,32 +104,50 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 }
 
 func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
-
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(row)
-		if err != nil {
-			return fmt.Errorf("could not get row: %w", err)
-		}
-
-		if !found {
-			return contracts.ErrSecureValueNotFound
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+	req := readSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
 	}
 
-	secureValue, err := row.toKubernetes()
+	query, err := sqltemplate.Execute(sqlSecureValueRead, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueRead.Name(), err)
+	}
+
+	res, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("reading row: %w", err)
+	}
+	defer func() { _ = res.Close() }()
+
+	var secureValue secureValueDB
+	if res.Next() {
+		err := res.Scan(&secureValue.GUID,
+			&secureValue.Name, &secureValue.Namespace, &secureValue.Annotations,
+			&secureValue.Labels,
+			&secureValue.Created, &secureValue.CreatedBy,
+			&secureValue.Updated, &secureValue.UpdatedBy,
+			&secureValue.Phase, &secureValue.Message,
+			&secureValue.Title, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan secure value row: %w", err)
+		}
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+
+	secureValueKub, err := secureValue.toKubernetes()
 	if err != nil {
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
-	return secureValue, nil
+	return secureValueKub, nil
 }
 
+// TODO LND Implement this with sqlx
 func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 
@@ -205,42 +229,65 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	_ = s.deleteFromKeeper(ctx, namespace, name)
 
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
+	req := deleteSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
 
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
-		if _, err := sess.Delete(row); err != nil {
-			return fmt.Errorf("delete row: %w", err)
-		}
-
-		return nil
-	})
+	query, err := sqltemplate.Execute(sqlSecureValueDelete, req)
 	if err != nil {
-		return fmt.Errorf("db failure: %w", err)
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueDelete.Name(), err)
+	}
+
+	// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
+	res, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("deleting secure value row: %w", err)
+	}
+
+	if rowsAffected, err := res.RowsAffected(); err != nil || rowsAffected != 1 {
+		return fmt.Errorf("deleting secure value rowsAffected=%d error=%w", rowsAffected, err)
 	}
 
 	return nil
 }
 
 func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error) {
-	secureValueRows := make([]*secureValueDB, 0)
-
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		cond := &secureValueDB{Namespace: namespace.String()}
-
-		if err := sess.Find(&secureValueRows, cond); err != nil {
-			return fmt.Errorf("find rows: %w", err)
-		}
-
-		return nil
-	})
-	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+	req := listSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
 	}
 
-	secureValues := make([]secretv0alpha1.SecureValue, 0, len(secureValueRows))
+	q, err := sqltemplate.Execute(sqlSecureValueList, req)
+	if err != nil {
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueList.Name(), err)
+	}
 
-	for _, row := range secureValueRows {
+	rows, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("listing secure values: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+
+	secureValues := make([]secretv0alpha1.SecureValue, 0)
+	for rows.Next() {
+		row := secureValueDB{}
+
+		err = rows.Scan(&row.GUID,
+			&row.Name, &row.Namespace, &row.Annotations,
+			&row.Labels,
+			&row.Created, &row.CreatedBy,
+			&row.Updated, &row.UpdatedBy,
+			&row.Phase, &row.Message,
+			&row.Title, &row.Keeper, &row.Decrypters,
+			&row.Ref, &row.ExternalID,
+		)
+
+		if err != nil {
+			return nil, fmt.Errorf("error reading secure value row: %w", err)
+		}
+
 		secureValue, err := row.toKubernetes()
 		if err != nil {
 			return nil, fmt.Errorf("convert to kubernetes object: %w", err)
@@ -248,50 +295,69 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 
 		secureValues = append(secureValues, *secureValue)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
 
 	return secureValues, nil
 }
 
 func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID contracts.ExternalID) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
-		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
-				Where("namespace = ? AND name = ?", namespace.String(), name).
-				Cols("external_id").
-				Update(&secureValueDB{ExternalID: externalID.String()})
+	req := updateExternalIdSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+		ExternalID:  externalID.String(),
+	}
 
-			if modifiedCount > 1 {
-				return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
-			}
+	q, err := sqltemplate.Execute(sqlSecureValueUpdateExternalId, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateExternalId.Name(), err)
+	}
 
-			if err != nil {
-				return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
-			}
+	res, err := s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
+	}
 
-			return nil
-		})
-	})
+	// validate modified cound
+	modifiedCount, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting updated rows update external id secure value: %w", err)
+	}
+	if modifiedCount > 1 {
+		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+	}
+	return nil
 }
 
 func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
-	return s.db.InTransaction(ctx, func(ctx context.Context) error {
-		return s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-			modifiedCount, err := sess.Table(migrator.TableNameSecureValue).
-				Where("namespace = ? AND name = ?", namespace.String(), name).
-				Cols("status_phase").
-				Update(&secureValueDB{Phase: string(secretv0alpha1.SecureValuePhaseSucceeded)})
+	req := updateStatusSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+		Phase:       string(secretv0alpha1.SecureValuePhaseSucceeded),
+	}
 
-			if modifiedCount > 1 {
-				return fmt.Errorf("secureValueMetadataStorage.SetStatusSucceeded: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
-			}
+	q, err := sqltemplate.Execute(sqlSecureValueUpdateStatus, req)
+	if err != nil {
+		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateStatus.Name(), err)
+	}
 
-			if err != nil {
-				return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
-			}
+	res, err := s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	if err != nil {
+		return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
+	}
 
-			return nil
-		})
-	})
+	// validate modified cound
+	modifiedCount, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("getting updated rows update status secure value: %w", err)
+	}
+	if modifiedCount > 1 {
+		return fmt.Errorf("secureValueMetadataStorage.SetExternalID: modified more than one secret, this is a bug, check the where condition: modifiedCount=%d", modifiedCount)
+	}
+	return nil
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {

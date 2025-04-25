@@ -8,15 +8,16 @@ SELECT
   {{ .Ident "created_by" }},
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
+  {{ .Ident "status_phase" }},
+  {{ .Ident "status_message" }},
   {{ .Ident "title" }},
-  {{ .Ident "type" }},
-  {{ .Ident "payload" }}
+  {{ .Ident "keeper" }},
+  {{ .Ident "decrypters" }},
+  {{ .Ident "ref" }},
+  {{ .Ident "external_id" }}
 FROM
-  {{ .Ident "secret_keeper" }}
+  {{ .Ident "secret_secure_value" }}
 WHERE 1 = 1 AND
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Name }}
-{{ if .IsForUpdate }}
-{{ .SelectFor "UPDATE" }}
-{{ end }}
 ;

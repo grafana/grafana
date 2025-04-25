@@ -262,4 +262,23 @@ func TestValidateSecureValue(t *testing.T) {
 			require.Empty(t, errs)
 		})
 	})
+
+	t.Run("`decrypters` cannot have more than 64 items", func(t *testing.T) {
+		decrypters := make([]string, 0, 64+1)
+		for i := 0; i < 64+1; i++ {
+			decrypters = append(decrypters, fmt.Sprintf("actor_app%d", i))
+		}
+
+		sv := &secretv0alpha1.SecureValue{
+			Spec: secretv0alpha1.SecureValueSpec{
+				Title: "title", Ref: "ref",
+
+				Decrypters: decrypters,
+			},
+		}
+
+		errs := ValidateSecureValue(sv, nil, admission.Create, nil)
+		require.Len(t, errs, 1)
+		require.Equal(t, "spec.decrypters", errs[0].Field)
+	})
 }

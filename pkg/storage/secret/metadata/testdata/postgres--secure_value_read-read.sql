@@ -8,13 +8,16 @@ SELECT
   "created_by",
   "updated",
   "updated_by",
+  "status_phase",
+  "status_message",
   "title",
-  "type",
-  "payload"
+  "keeper",
+  "decrypters",
+  "ref",
+  "external_id"
 FROM
-  "secret_keeper"
+  "secret_secure_value"
 WHERE 1 = 1 AND
   "namespace" = 'ns' AND
   "name" = 'name'
-FOR UPDATE
 ;

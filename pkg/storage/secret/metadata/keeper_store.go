@@ -275,6 +275,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	if err != nil {
 		return nil, fmt.Errorf("listing keepers %q: %w", sqlKeeperList.Name(), err)
 	}
+	defer func() { _ = rows.Close() }()
 
 	keepers := make([]secretv0alpha1.Keeper, 0)
 
@@ -301,6 +302,9 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		if labelSelector.Matches(labels.Set(keeper.Labels)) {
 			keepers = append(keepers, *keeper)
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
 	return &secretv0alpha1.KeeperList{
