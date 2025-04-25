@@ -108,24 +108,28 @@ export const MuteTimingsTable = () => {
         )}
       </Stack>
       {items.length > 0 ? <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} /> : null}
-      {items.length === 0 && !hideActions ? (
-        <EmptyAreaWithCTA
-          text={t(
-            'alerting.mute-timings-table.text-havent-created-timings',
-            "You haven't created any mute timings yet"
+      {items.length === 0 && (
+        <>
+          {!hideActions ? (
+            <EmptyAreaWithCTA
+              text={t(
+                'alerting.mute-timings-table.text-havent-created-timings',
+                "You haven't created any mute timings yet"
+              )}
+              buttonLabel="Add mute timing"
+              buttonIcon="plus"
+              buttonSize="lg"
+              href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+              showButton={allowedToCreateMuteTiming}
+            />
+          ) : (
+            <EmptyAreaWithCTA
+              text={t('alerting.mute-timings-table.text-no-mute-timings-configured', 'No mute timings configured')}
+              buttonLabel={''}
+              showButton={false}
+            />
           )}
-          buttonLabel="Add mute timing"
-          buttonIcon="plus"
-          buttonSize="lg"
-          href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-          showButton={allowedToCreateMuteTiming}
-        />
-      ) : (
-        <EmptyAreaWithCTA
-          text={t('alerting.mute-timings-table.text-no-mute-timings-configured', 'No mute timings configured')}
-          buttonLabel={''}
-          showButton={false}
-        />
+        </>
       )}
     </div>
   );
