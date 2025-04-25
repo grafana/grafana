@@ -114,7 +114,7 @@ export const TimeIntervalsTable = () => {
             <EmptyAreaWithCTA
               text={t(
                 'alerting.time-intervals-table.text-havent-created-time-intervals',
-                "You haven't created any time interval yet"
+                "You haven't created any time intervals yet"
               )}
               buttonLabel="Add time interval"
               buttonIcon="plus"
