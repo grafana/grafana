@@ -132,6 +132,20 @@ type BlobSupport interface {
 	// TODO? List+Delete?  This is for admin access
 }
 
+// QosQueue is handling the quality of service for all the requests.
+// It will make sure that all tenants get the same amount of bandwidth
+// and a single tenant cannot DOS the server.
+type QosQueue interface {
+	Enqueue(ctx context.Context, tenantID string, runnable func()) error
+}
+
+type noopQosQueue struct{}
+
+func (*noopQosQueue) Enqueue(_ context.Context, _ string, runnable func()) error {
+	runnable()
+	return nil
+}
+
 type BlobConfig struct {
 	// The CDK configuration URL
 	URL string
@@ -190,6 +204,8 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
+
+	QosQueue QosQueue
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -212,6 +228,10 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		opts.Now = func() int64 {
 			return time.Now().UnixMilli()
 		}
+	}
+
+	if opts.QosQueue == nil {
+		opts.QosQueue = &noopQosQueue{}
 	}
 
 	// Initialize the blob storage
@@ -255,6 +275,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
 		indexMetrics:   opts.IndexMetrics,
+		queue:          opts.QosQueue,
 	}
 
 	if opts.Search.Resources != nil {
@@ -299,6 +320,8 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
+
+	queue QosQueue
 }
 
 // Init implements ResourceServer.
@@ -537,15 +560,41 @@ func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Create")
 	defer span.End()
 
-	rsp := &CreateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		rsp.Error = &ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
+		return &CreateResponse{
+			Error: &ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			},
+		}, nil
 	}
+
+	var (
+		wg  sync.WaitGroup
+		res *CreateResponse
+		err error
+	)
+
+	wg.Add(1)
+
+	runnable := func() {
+		res, err = s.create(ctx, user, req)
+		wg.Done()
+	}
+
+	if queueErr := s.queue.Enqueue(ctx, req.Key.Namespace, runnable); queueErr != nil {
+		return nil, queueErr
+	}
+
+	wg.Wait()
+
+	return res, err
+}
+
+func (s *server) create(ctx context.Context, user claims.AuthInfo, req *CreateRequest) (*CreateResponse, error) {
+
+	rsp := &CreateResponse{}
 
 	event, e := s.newEvent(ctx, user, req.Key, req.Value, nil)
 	if e != nil {
@@ -568,20 +617,45 @@ func (s *server) Update(ctx context.Context, req *UpdateRequest) (*UpdateRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Update")
 	defer span.End()
 
-	rsp := &UpdateResponse{}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		rsp.Error = &ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
+		return &UpdateResponse{
+			Error: &ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			},
+		}, nil
 	}
 	if req.ResourceVersion < 0 {
-		rsp.Error = AsErrorResult(apierrors.NewBadRequest("update must include the previous version"))
-		return rsp, nil
+		return &UpdateResponse{
+			Error: AsErrorResult(apierrors.NewBadRequest("update must include the previous version")),
+		}, nil
 	}
 
+	var (
+		wg  sync.WaitGroup
+		res *UpdateResponse
+		err error
+	)
+
+	wg.Add(1)
+
+	runnable := func() {
+		res, err = s.update(ctx, user, req)
+		wg.Done()
+	}
+
+	if queueErr := s.queue.Enqueue(ctx, req.Key.Namespace, runnable); queueErr != nil {
+		return nil, queueErr
+	}
+
+	wg.Wait()
+
+	return res, err
+}
+
+func (s *server) update(ctx context.Context, user claims.AuthInfo, req *UpdateRequest) (*UpdateResponse, error) {
+	rsp := &UpdateResponse{}
 	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
@@ -618,29 +692,54 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 	ctx, span := s.tracer.Start(ctx, "storage_server.Delete")
 	defer span.End()
 
-	rsp := &DeleteResponse{}
 	if req.ResourceVersion < 0 {
 		return nil, apierrors.NewBadRequest("update must include the previous version")
 	}
 	user, ok := claims.AuthInfoFrom(ctx)
 	if !ok || user == nil {
-		rsp.Error = &ErrorResult{
-			Message: "no user found in context",
-			Code:    http.StatusUnauthorized,
-		}
-		return rsp, nil
+		return &DeleteResponse{
+			Error: &ErrorResult{
+				Message: "no user found in context",
+				Code:    http.StatusUnauthorized,
+			},
+		}, nil
 	}
 
+	var (
+		wg  sync.WaitGroup
+		res *DeleteResponse
+		err error
+	)
+
+	wg.Add(1)
+
+	runnable := func() {
+		res, err = s.delete(ctx, user, req)
+		wg.Done()
+	}
+
+	if queueErr := s.queue.Enqueue(ctx, req.Key.Namespace, runnable); queueErr != nil {
+		return nil, queueErr
+	}
+
+	wg.Wait()
+
+	return res, err
+}
+
+func (s *server) delete(ctx context.Context, user claims.AuthInfo, req *DeleteRequest) (*DeleteResponse, error) {
 	latest := s.backend.ReadResource(ctx, &ReadRequest{
 		Key: req.Key,
 	})
 	if latest.Error != nil {
-		rsp.Error = latest.Error
-		return rsp, nil
+		return &DeleteResponse{
+			Error: latest.Error,
+		}, nil
 	}
 	if req.ResourceVersion > 0 && latest.ResourceVersion != req.ResourceVersion {
-		rsp.Error = AsErrorResult(ErrOptimisticLockingFailed)
-		return rsp, nil
+		return &DeleteResponse{
+			Error: AsErrorResult(ErrOptimisticLockingFailed),
+		}, nil
 	}
 
 	access, err := s.access.Check(ctx, user, claims.CheckRequest{
@@ -652,14 +751,16 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 		Folder:    latest.Folder,
 	})
 	if err != nil {
-		rsp.Error = AsErrorResult(err)
-		return rsp, nil
+		return &DeleteResponse{
+			Error: AsErrorResult(err),
+		}, nil
 	}
 	if !access.Allowed {
-		rsp.Error = &ErrorResult{
-			Code: http.StatusForbidden,
-		}
-		return rsp, nil
+		return &DeleteResponse{
+			Error: &ErrorResult{
+				Code: http.StatusForbidden,
+			},
+		}, nil
 	}
 
 	now := metav1.NewTime(time.UnixMilli(s.now()))
@@ -695,6 +796,7 @@ func (s *server) Delete(ctx context.Context, req *DeleteRequest) (*DeleteRespons
 			fmt.Sprintf("unable creating deletion marker, %v", err))
 	}
 
+	rsp := &DeleteResponse{}
 	rsp.ResourceVersion, err = s.backend.WriteEvent(ctx, event)
 	if err != nil {
 		rsp.Error = AsErrorResult(err)
@@ -712,19 +814,37 @@ func (s *server) Read(ctx context.Context, req *ReadRequest) (*ReadResponse, err
 			}}, nil
 	}
 
-	// if req.Key.Group == "" {
-	// 	status, _ := AsErrorResult(apierrors.NewBadRequest("missing group"))
-	// 	return &ReadResponse{Status: status}, nil
-	// }
 	if req.Key.Resource == "" {
 		return &ReadResponse{Error: NewBadRequestError("missing resource")}, nil
 	}
 
+	var (
+		wg  = sync.WaitGroup{}
+		res *ReadResponse
+		err error
+	)
+
+	wg.Add(1)
+
+	runnable := func() {
+		res, err = s.read(ctx, user, req)
+		wg.Done()
+	}
+
+	if queueErr := s.queue.Enqueue(ctx, req.Key.Namespace, runnable); queueErr != nil {
+		return nil, queueErr
+	}
+
+	wg.Wait()
+
+	return res, err
+}
+
+func (s *server) read(ctx context.Context, user claims.AuthInfo, req *ReadRequest) (*ReadResponse, error) {
 	rsp := s.backend.ReadResource(ctx, req)
 	if rsp.Error != nil && rsp.Error.Code == http.StatusNotFound {
 		return &ReadResponse{Error: rsp.Error}, nil
 	}
-
 	a, err := s.access.Check(ctx, user, claims.CheckRequest{
 		Verb:      "get",
 		Group:     req.Key.Group,
