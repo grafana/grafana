@@ -19,8 +19,6 @@ var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 func ProvideSecureValueMetadataStorage(
 	db db.DB,
 	features featuremgmt.FeatureToggles,
-	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keeperService contracts.KeeperService,
 ) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -34,19 +32,15 @@ func ProvideSecureValueMetadataStorage(
 	}
 
 	return &secureValueMetadataStorage{
-		db:                    db,
-		dialect:               sqltemplate.DialectForDriver(string(db.GetDBType())),
-		keeperMetadataStorage: keeperMetadataStorage,
-		keeperService:         keeperService,
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(string(db.GetDBType())),
 	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
-	db                    db.DB
-	dialect               sqltemplate.Dialect
-	keeperMetadataStorage contracts.KeeperMetadataStorage
-	keeperService         contracts.KeeperService
+	db      db.DB
+	dialect sqltemplate.Dialect
 }
 
 // TODO LND Implement this with sqlx
@@ -161,13 +155,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	// Update in keeper.
-	// TODO: here temporary, the moment of update will change in the async flow.
-	err = s.updateInKeeper(ctx, currentRow, newSecureValue)
-	if err != nil {
-		return nil, fmt.Errorf("failed to update in keeper: %w", err)
-	}
-
 	// From this point on, we should not have a need to read value.
 	newSecureValue.Spec.Value = ""
 
@@ -217,11 +204,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	// Delete from the keeper.
-	// TODO: here temporary, the moment of deletion will change in the async flow.
-	// TODO: do we care to inform the caller if there is any error?
-	_ = s.deleteFromKeeper(ctx, namespace, name)
-
 	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),

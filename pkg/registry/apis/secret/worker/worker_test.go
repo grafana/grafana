@@ -13,14 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -28,9 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
@@ -64,43 +56,15 @@ func TestProcessMessage(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-		dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
-		require.NoError(t, err)
-
-		encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
-		require.NoError(t, err)
-
-		encMgr, err := encryptionmanager.ProvideEncryptionManager(
-			tracing.InitializeTracerForTest(),
-			dataKeyStore,
-			&setting.Cfg{
-				SecretsManagement: setting.SecretsManagerSettings{
-					SecretKey:          "sdDkslslld",
-					EncryptionProvider: "secretKey.v1",
-					Encryption: setting.EncryptionSettings{
-						DataKeysCacheTTL:        5 * time.Minute,
-						DataKeysCleanupInterval: 1 * time.Nanosecond,
-						Algorithm:               cipher.AesGcm,
-					},
-				},
-			},
-			&usagestats.UsageStatsMock{},
-			encryption.ProviderMap{},
-		)
-		require.NoError(t, err)
-
 		// Initialize access client + access control
 		accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
 		accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
-
-		keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
-		require.NoError(t, err)
 
 		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features, accessClient)
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, keeperMetadataStorageWrapper, keeperService)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
