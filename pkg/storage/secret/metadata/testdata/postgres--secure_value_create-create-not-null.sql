@@ -26,10 +26,10 @@ INSERT INTO "secret_secure_value" (
   5678,
   'user:cameron',
   'creating',
-  '{message_test true}',
+  'message_test',
   'description',
-  '{keeper_test true}',
-  '{decrypters_test true}',
-  '{ref_test true}',
+  'keeper_test',
+  'decrypters_test',
+  'ref_test',
   'extId'
 );

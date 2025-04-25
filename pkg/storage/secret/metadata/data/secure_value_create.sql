@@ -35,17 +35,17 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ .Arg .Row.UpdatedBy }},
   {{ .Arg .Row.Phase }},
   {{ if .Row.Message.Valid }}
-  {{ .Arg .Row.Message }},
+  {{ .Arg .Row.Message.String }},
   {{ end }}
   {{ .Arg .Row.Description }},
   {{ if .Row.Keeper.Valid }}
-  {{ .Arg .Row.Keeper }},
+  {{ .Arg .Row.Keeper.String }},
   {{ end }}
   {{ if .Row.Decrypters.Valid }}
-  {{ .Arg .Row.Decrypters }},
+  {{ .Arg .Row.Decrypters.String }},
   {{ end }}
   {{ if .Row.Ref.Valid }}
-  {{ .Arg .Row.Ref }},
+  {{ .Arg .Row.Ref.String }},
   {{ end }}
   {{ .Arg .Row.ExternalID }}
 );
