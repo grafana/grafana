@@ -38,7 +38,7 @@ Trace correlations let you define rules that inject context-sensitive links into
 
 1. Go to **Configuration** → **Plugins & data** → **Correlations**.
 
-1. Select **Add new**.
+1. Select **Add correlation** or **Add new**.
 
 1. On step 1, provide a **label** for the correlation, and an optional **description**.
 
@@ -162,5 +162,3 @@ Below are several practical correlation configurations to get you started.
 - **Limit scope**: For high-cardinality fields (like `traceID`), ensure your target system can handle frequent queries.
 
 - **Template wisely:** Use multiple `$variable` tokens if you need to inject more than one field.
-
-- **Test links:** After configuration, verify links on representative traces before rolling out broadly.
