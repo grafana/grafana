@@ -109,7 +109,7 @@ export function TableNG(props: TableNGProps) {
       key: field.name,
       name: field.name,
       width: widths[i],
-      cellClass: field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cell,
+      cellClass: (row: TableRow) => (field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cell),
     }));
   }, [width, scrollbarWidth, data, styles]);
 
@@ -463,8 +463,18 @@ const getStyles2 = (theme: GrafanaTheme2) => ({
   cell: css({
     paddingInline: 6,
     paddingBlock: 6,
+
+    '&:hover': {
+      position: 'absolute',
+      width: '100%',
+      whiteSpace: 'pre-line',
+      wordWrap: 'break-word',
+      zIndex: 1,
+    },
   }),
   cellWrapped: css({
+    paddingInline: 6,
+    paddingBlock: 6,
     // '--rdg-border-color': theme.colors.border.medium,
     // borderLeft: 'none',
     whiteSpace: 'pre-line',
@@ -694,7 +704,7 @@ const useRowHeight = (columns: TableColumn[], data: DataFrame, hasSubTable: bool
     const defaultRowHeight = 35;
 
     if (hasSubTable || wrappedColIdxs.some((v) => v)) {
-      const HPADDING = 8;
+      const HPADDING = 6;
       const BORDER_RIGHT = 0.666667;
       const lineHeight = 22;
       const VPADDING = 6;
