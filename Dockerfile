@@ -70,7 +70,6 @@ COPY .citools/swagger .citools/swagger
 
 # Include vendored dependencies
 COPY pkg/util/xorm pkg/util/xorm
-COPY pkg/apis/folder pkg/apis/folder
 COPY pkg/apis/secret pkg/apis/secret
 COPY pkg/apiserver pkg/apiserver
 COPY pkg/apimachinery pkg/apimachinery
@@ -85,6 +84,7 @@ COPY apps/playlist apps/playlist
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/folder apps/folder
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications

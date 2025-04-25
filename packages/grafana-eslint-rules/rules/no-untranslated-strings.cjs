@@ -11,7 +11,7 @@ const {
   canBeFixed,
   elementIsTrans,
   shouldBeFixed,
-  isStringLiteral,
+  isStringNonAlphanumeric,
 } = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -32,10 +32,12 @@ const noUntranslatedStrings = createRule({
           return;
         }
 
-        const isUntranslatedProp =
-          (node.value.type === 'Literal' && node.value.value !== '') ||
-          (node.value.type === AST_NODE_TYPES.JSXExpressionContainer &&
-            ((isStringLiteral(node.value.expression) && node.value.expression.value !== '') || node.value.expression.type === 'TemplateLiteral'));
+        const nodeValue = getNodeValue(node);
+        const isAlphaNumeric = !isStringNonAlphanumeric(nodeValue);
+        const isTemplateLiteral =
+          node.value.type === AST_NODE_TYPES.JSXExpressionContainer && node.value.expression.type === 'TemplateLiteral';
+
+        const isUntranslatedProp = (nodeValue.trim() && isAlphaNumeric) || isTemplateLiteral;
 
         if (isUntranslatedProp) {
           const errorShouldBeFixed = shouldBeFixed(context);
@@ -55,6 +57,50 @@ const noUntranslatedStrings = createRule({
           });
         }
       },
+      JSXExpressionContainer(node) {
+        const parent = node.parent;
+        const parentType = parent.type;
+
+        const isNotInAttributeOrElement =
+          parentType !== AST_NODE_TYPES.JSXAttribute && parentType !== AST_NODE_TYPES.JSXElement;
+        const isUnsupportedAttribute =
+          parentType === AST_NODE_TYPES.JSXAttribute && !propsToCheck.includes(String(parent.name.name));
+
+        if (isNotInAttributeOrElement || isUnsupportedAttribute) {
+          return;
+        }
+
+        const { expression } = node;
+
+        /**
+         * @param {Node} expr
+         */
+        const isExpressionUntranslated = (expr) => {
+          return expr.type === AST_NODE_TYPES.Literal && typeof expr.value === 'string' && Boolean(expr.value);
+        };
+
+        if (expression.type === AST_NODE_TYPES.ConditionalExpression) {
+          const alternateIsString = isExpressionUntranslated(expression.alternate);
+          const consequentIsString = isExpressionUntranslated(expression.consequent);
+
+          if (alternateIsString || consequentIsString) {
+            const messageId =
+              parentType === AST_NODE_TYPES.JSXAttribute ? 'noUntranslatedStringsProp' : 'noUntranslatedStrings';
+
+            const nodesToReport = [
+              alternateIsString ? expression.alternate : undefined,
+              consequentIsString ? expression.consequent : undefined,
+            ].filter((node) => !!node);
+
+            nodesToReport.forEach((nodeToReport) => {
+              context.report({
+                node: nodeToReport,
+                messageId,
+              });
+            });
+          }
+        }
+      },
       /**
        * @param {JSXElement|JSXFragment} node
        */
@@ -63,8 +109,8 @@ const noUntranslatedStrings = createRule({
         const children = node.children;
         const untranslatedTextNodes = children.filter((child) => {
           if (child.type === AST_NODE_TYPES.JSXText) {
-            const hasValue = child.value.trim();
-            if (!hasValue) {
+            const nodeValue = child.value.trim();
+            if (!nodeValue || isStringNonAlphanumeric(nodeValue)) {
               return false;
             }
             const ancestors = context.sourceCode.getAncestors(node);

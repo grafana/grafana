@@ -20,6 +20,7 @@ import {
   SceneDataQuery,
   SceneQueryRunner,
   sceneUtils,
+  dataLayers,
 } from '@grafana/scenes';
 import {
   DashboardCursorSync as DashboardCursorSyncV1,
@@ -57,6 +58,7 @@ import {
   transformSceneToSaveModelSchemaV2,
   validateDashboardSchemaV2,
   getDataQueryKind,
+  getAutoAssignedDSRef,
 } from './transformSceneToSaveModelSchemaV2';
 
 // Mock dependencies
@@ -69,6 +71,15 @@ jest.mock('../utils/dashboardSceneGraph', () => {
       getElementIdentifierForVizPanel: jest.fn().mockImplementation((panel) => {
         // Return the panel key if it exists, otherwise use panel-1 as default
         return panel?.state?.key || 'panel-1';
+      }),
+      getPanelLinks: jest.fn().mockImplementation(() => {
+        return new VizPanelLinks({
+          rawLinks: [
+            { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+            { title: 'Test Link 2', url: 'http://test2.com' },
+          ],
+          menu: new VizPanelLinksMenu({}),
+        });
       }),
     },
   };
@@ -221,7 +232,13 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                 description: 'Test Description',
                 hoverHeader: true,
                 hoverHeaderOffset: 10,
-                fieldConfig: { defaults: {}, overrides: [] },
+                fieldConfig: {
+                  defaults: {
+                    mappings: [],
+                    max: undefined,
+                  },
+                  overrides: [],
+                },
                 displayMode: 'transparent',
                 pluginVersion: '7.0.0',
                 $timeRange: new SceneTimeRange({
@@ -251,7 +268,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                     title: 'Test Panel 2',
                     description: 'Test Description 2',
                     fieldConfig: { defaults: {}, overrides: [] },
-                    displayMode: 'transparent',
                     pluginVersion: '7.0.0',
                     $timeRange: new SceneTimeRange({
                       timeZone: 'UTC',
@@ -421,8 +437,8 @@ describe('transformSceneToSaveModelSchemaV2', () => {
 
     // Check that the annotation layers are correctly transformed
     expect(result.annotations).toHaveLength(3);
-    // check annotation layer 3 with no datasource has the default datasource defined as type
-    expect(result.annotations?.[2].spec.datasource?.type).toBe('loki');
+    // Check annotation layer 3 without initial data source isn't updated with runtime default
+    expect(result.annotations?.[2].spec.datasource?.type).toBe(undefined);
   });
 
   it('should transform the minimum scene to save model schema v2', () => {
@@ -748,6 +764,58 @@ describe('getElementDatasource', () => {
     expect(result).toBeUndefined();
   });
 
+  it('should handle annotation datasources correctly', () => {
+    // Use the dataLayers.AnnotationsDataLayer directly
+    const annotationLayer = new dataLayers.AnnotationsDataLayer({
+      key: 'annotation-1',
+      name: 'Test Annotation',
+      isEnabled: true,
+      isHidden: false,
+      query: {
+        name: 'Test Annotation',
+        enable: true,
+        hide: false,
+        iconColor: 'red',
+        datasource: { uid: 'prometheus', type: 'prometheus' },
+      },
+    });
+
+    // Create an annotation query without datasource
+    const annotationWithoutDS = {
+      name: 'No DS Annotation',
+      enable: true,
+      hide: false,
+      iconColor: 'blue',
+    };
+
+    // Mock dsReferencesMapping
+    const dsReferencesMapping = {
+      panels: new Map([['panel-1', new Set(['A'])]]),
+      variables: new Set<string>(),
+      annotations: new Set<string>(['No DS Annotation']),
+    };
+
+    // Test with annotation that has datasource defined
+    const resultWithDS = getElementDatasource(
+      annotationLayer,
+      annotationLayer.state.query,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithDS).toEqual({ uid: 'prometheus', type: 'prometheus' });
+
+    // Test with annotation that has no datasource defined
+    const resultWithoutDS = getElementDatasource(
+      annotationLayer,
+      annotationWithoutDS,
+      'annotation',
+      undefined,
+      dsReferencesMapping
+    );
+    expect(resultWithoutDS).toBeUndefined();
+  });
+
   it('should handle invalid input combinations', () => {
     const vizPanel = new VizPanel({
       key: 'panel-1',
@@ -771,6 +839,24 @@ describe('getElementDatasource', () => {
     }
     // Variable set with query
     expect(getElementDatasource(variableSet, query, 'variable')).toBeUndefined();
+  });
+
+  it('should throw error when invalid type is passed to getAutoAssignedDSRef', () => {
+    const vizPanel = new VizPanel({
+      key: 'panel-1',
+      pluginId: 'timeseries',
+    });
+
+    const dsReferencesMapping = {
+      panels: new Map([['panel-1', new Set(['A'])]]),
+      variables: new Set<string>(),
+      annotations: new Set<string>(),
+    };
+
+    expect(() => {
+      // @ts-expect-error - intentionally passing invalid type to test error handling
+      getAutoAssignedDSRef(vizPanel, 'invalid-type', dsReferencesMapping);
+    }).toThrow('Invalid type invalid-type for getAutoAssignedDSRef');
   });
 });
 
