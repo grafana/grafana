@@ -2946,6 +2946,9 @@
           "health": {
             "type": "string"
           },
+          "isPaused": {
+            "type": "boolean"
+          },
           "keepFiringFor": {
             "format": "double",
             "type": "number"
@@ -2962,6 +2965,9 @@
           },
           "name": {
             "type": "string"
+          },
+          "notificationSettings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
           "queriedDatasourceUIDs": {
             "items": {
@@ -10207,6 +10213,9 @@
           "health": {
             "type": "string"
           },
+          "isPaused": {
+            "type": "boolean"
+          },
           "labels": {
             "$ref": "#/components/schemas/Labels"
           },
@@ -10219,6 +10228,9 @@
           },
           "name": {
             "type": "string"
+          },
+          "notificationSettings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
           },
           "query": {
             "type": "string"
