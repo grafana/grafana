@@ -34,6 +34,17 @@ Using `resources` with `pull`, `push`, and `serve` lets you pull a defined resou
 
 Use these steps to migrate resources between environments:
 
+{{< admonition type="note" >}}
+Currently, the `serve` command only works with dashboards.
+{{< /admonition >}}
+
+Use these steps to migrate resources between environments:
+
+{{< admonition type="note" >}}
+Resources are pulled and pushed from the `./resources` directory by default.
+This directory can be configured with the `--directory`/`-d` flags.
+{{< /admonition >}}
+
 1. Make changes to dashboards and other resources using the Grafana UI in your **development instance**.
 1. Pull those resources from the development environment to your local machine:
 
@@ -204,7 +215,7 @@ Use this workflow to locate dashboards using a deprecated API version and mark t
    dashboards   really-old-dashboard                   default
    ```
 
-1. Patch each of these dashboards to add a `deprecated` tag:
+1. Edit each of these dashboards to add a `deprecated` tag:
 
    ```bash
    grafanactl resources edit dashboards.v1.dashboard.grafana.app/really-old-dashboard -p '{"spec":{"tags":["deprecated"]}}'

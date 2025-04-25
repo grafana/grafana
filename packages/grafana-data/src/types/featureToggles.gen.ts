@@ -59,10 +59,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Disable duplicated secret storage in legacy tables
-  */
-  disableSecretsCompatibility?: boolean;
-  /**
   * Logs the path for requests that are instrumented as unknown
   */
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -962,6 +958,7 @@ export interface FeatureToggles {
   alertingMigrationUI?: boolean;
   /**
   * Enables the unified storage history pruner
+  * @default true
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
@@ -1030,4 +1027,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertRuleUseFiredAtForStartsAt?: boolean;
+  /**
+  * Enables the alerting bulk actions in the UI
+  * @default true
+  */
+  alertingBulkActionsInUI?: boolean;
 }

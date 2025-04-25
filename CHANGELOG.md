@@ -1,3 +1,122 @@
+<!-- 11.6.1 START -->
+
+# 11.6.1 (2025-04-23)
+
+### Features and enhancements
+
+- **Chore:** Update JWT library (CVE-2025-30204) [#102727](https://github.com/grafana/grafana/pull/102727), [@grambbledook](https://github.com/grambbledook)
+- **DashboardScenePage:** Correct slug in self referencing data links [#103854](https://github.com/grafana/grafana/pull/103854), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **Dependencies:** Bump github.com/redis/go-redis/v9 to 9.7.3 to address CVE-2025-29923 [#102863](https://github.com/grafana/grafana/pull/102863), [@macabu](https://github.com/macabu)
+- **Go:** Bump to 1.24.2 [#103523](https://github.com/grafana/grafana/pull/103523), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+- **GrafanaUI:** Use safePolygon close handler for interactive tooltips instead of a delay [#102869](https://github.com/grafana/grafana/pull/102869), [@mthorning](https://github.com/mthorning)
+- **Prometheus:** Add support for cloud partners Prometheus data sources [#103941](https://github.com/grafana/grafana/pull/103941), [@kevinwcyu](https://github.com/kevinwcyu)
+
+### Bug fixes
+
+- **Alertmanager:** Add Role-Based Access Control via reqAction Field [#103479](https://github.com/grafana/grafana/pull/103479), [@olegpixel](https://github.com/olegpixel)
+- **GrafanaUI:** Remove blurred background from overlay backdrops to improve performance [#103647](https://github.com/grafana/grafana/pull/103647), [@joshhunt](https://github.com/joshhunt)
+- **InfluxDB:** Fix nested variable interpolation [#104096](https://github.com/grafana/grafana/pull/104096), [@aangelisc](https://github.com/aangelisc)
+- **LDAP test:** Fix page crash [#102684](https://github.com/grafana/grafana/pull/102684), [@ashharrison90](https://github.com/ashharrison90)
+- **Org redirection:** Fix linking between orgs [#102870](https://github.com/grafana/grafana/pull/102870), [@ashharrison90](https://github.com/ashharrison90)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+- **Security:** Fix CVE-2025-3260
+
+<!-- 11.6.1 END -->
+<!-- 11.5.4 START -->
+
+# 11.5.4 (2025-04-23)
+
+### Features and enhancements
+
+- **Azure Monitor:** Filter namespaces by resource group [#103654](https://github.com/grafana/grafana/pull/103654), [@alyssabull](https://github.com/alyssabull)
+- **Azure:** Add support for custom namespace and custom metrics variable queries [#103650](https://github.com/grafana/grafana/pull/103650), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Resource picker improvements [#103638](https://github.com/grafana/grafana/pull/103638), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Support more complex variable interpolation [#103651](https://github.com/grafana/grafana/pull/103651), [@aangelisc](https://github.com/aangelisc)
+- **Azure:** Variable editor and resource picker improvements [#103657](https://github.com/grafana/grafana/pull/103657), [@aangelisc](https://github.com/aangelisc)
+- **Chore:** Update CVE-affected dependencies [#102709](https://github.com/grafana/grafana/pull/102709), [@grambbledook](https://github.com/grambbledook)
+- **DashboardScenePage:** Correct slug in self referencing data links [#103853](https://github.com/grafana/grafana/pull/103853), [@Sergej-Vlasov](https://github.com/Sergej-Vlasov)
+- **Dependencies:** Bump github.com/redis/go-redis/v9 to 9.6.3 to address CVE-2025-29923 [#102865](https://github.com/grafana/grafana/pull/102865), [@macabu](https://github.com/macabu)
+- **Go:** Bump to 1.24.2 [#103525](https://github.com/grafana/grafana/pull/103525), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+- **Prometheus:** Add support for cloud partners Prometheus data sources [#103942](https://github.com/grafana/grafana/pull/103942), [@kevinwcyu](https://github.com/kevinwcyu)
+
+### Bug fixes
+
+- **InfluxDB:** Fix nested variable interpolation [#104095](https://github.com/grafana/grafana/pull/104095), [@aangelisc](https://github.com/aangelisc)
+- **LDAP test:** Fix page crash [#102683](https://github.com/grafana/grafana/pull/102683), [@ashharrison90](https://github.com/ashharrison90)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.5.4 END -->
+<!-- 11.4.4 START -->
+
+# 11.4.4 (2025-04-23)
+
+### Features and enhancements
+
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+### Bug Fixes
+
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.4.4 END -->
+<!-- 11.3.6 START -->
+
+# 11.3.6 (2025-04-22)
+
+### Features and enhancements
+
+- **Chore:** Update libs with CVE in dependencies [#102710](https://github.com/grafana/grafana/pull/102710), [@grambbledook](https://github.com/grambbledook)
+- **Go:** Bump to 1.24.2 [#103528](https://github.com/grafana/grafana/pull/103528), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+### Bug fixes
+
+- **Auth:** Fix SAML user IsExternallySynced not being set correctly [#103101](https://github.com/grafana/grafana/pull/103101), [@volcanonoodle](https://github.com/volcanonoodle)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102983](https://github.com/grafana/grafana/pull/102983), [@kalleep](https://github.com/kalleep)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.3.6 END -->
+<!-- 11.2.9 START -->
+
+# 11.2.9 (2025-04-22)
+
+### Features and enhancements
+
+- **Chore:** Update libs with CVE in dependencies [#102712](https://github.com/grafana/grafana/pull/102712), [@grambbledook](https://github.com/grambbledook)
+- **Go:** Bump to 1.24.2 [#103529](https://github.com/grafana/grafana/pull/103529), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+### Bug fixes
+
+- **Auth:** Fix SAML user IsExternallySynced not being set correctly [#103102](https://github.com/grafana/grafana/pull/103102), [@volcanonoodle](https://github.com/volcanonoodle)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102982](https://github.com/grafana/grafana/pull/102982), [@kalleep](https://github.com/kalleep)
+- **Security:** Fix CVE-2025-3454
+- **Security:** Fix CVE-2025-2703
+
+<!-- 11.2.9 END -->
+<!-- 10.4.18 START -->
+
+# 10.4.18 (2025-04-22)
+
+### Features and enhancements
+
+- **Chore:** Bump golang-jwt/jwt/v4 and golang-jwt/jwt/v5 to address security issues [#102762](https://github.com/grafana/grafana/pull/102762), [@macabu](https://github.com/macabu)
+- **Go:** Bump to 1.24.2 [#103531](https://github.com/grafana/grafana/pull/103531), [@Proximyst](https://github.com/Proximyst)
+- **Go:** Bump to 1.24.2 (Enterprise)
+
+### Bug fixes
+
+- **Auth:** Fix SAML user IsExternallySynced not being set correctly (#98487) [#103177](https://github.com/grafana/grafana/pull/103177), [@volcanonoodle](https://github.com/volcanonoodle)
+- **AuthN:** Refetch user on "ErrUserAlreadyExists" [#102981](https://github.com/grafana/grafana/pull/102981), [@kalleep](https://github.com/kalleep)
+- **Security:** Fix CVE-2025-3454
+
+<!-- 10.4.18 END -->
 <!-- 11.6.0+security-01 START -->
 
 # 11.6.0+security-01 (2025-04-22)
