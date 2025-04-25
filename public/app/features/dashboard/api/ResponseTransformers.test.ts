@@ -660,7 +660,7 @@ describe('ResponseTransformers', () => {
       expect(ResponseTransformers.ensureV1Response(dashboard)).toBe(dashboard);
     });
 
-    it.only('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
+    it('should transform DashboardWithAccessInfo<DashboardV2Spec> to DashboardDTO', () => {
       const dashboardV2: DashboardWithAccessInfo<DashboardV2Spec> = {
         apiVersion: 'v2alpha1',
         kind: 'DashboardWithAccessInfo',
