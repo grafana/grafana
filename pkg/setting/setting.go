@@ -549,6 +549,7 @@ type Cfg struct {
 	IndexMinCount               int
 	EnableSharding              bool
 	MemberlistBindAddr          string
+	MemberlistAdvertiseAddr     string
 	MemberlistJoinMember        string
 	InstanceID                  string
 	SprinklesApiServer          string

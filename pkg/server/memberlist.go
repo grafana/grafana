@@ -1,8 +1,6 @@
 package server
 
 import (
-	"fmt"
-
 	"github.com/grafana/dskit/dns"
 	"github.com/grafana/dskit/flagext"
 	"github.com/grafana/dskit/kv"
@@ -16,18 +14,10 @@ import (
 )
 
 func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
-	if !ms.cfg.EnableSharding {
-		return nil, nil
-	}
-
-	if ms.cfg.MemberlistJoinMember == "" {
-		return nil, fmt.Errorf("bad memberlist configuration. Missing MemberlistJoinMember")
-	}
-
 	logger := log.New("memberlist")
 
 	dnsProviderReg := prometheus.WrapRegistererWithPrefix(
-		"memberlist",
+		"grafana",
 		prometheus.WrapRegistererWith(
 			prometheus.Labels{"component": "memberlist"},
 			ms.registerer,
@@ -40,7 +30,7 @@ func (ms *ModuleServer) initMemberlistKV() (services.Service, error) {
 	memberlistKVsvc := memberlist.NewKVInitService(toMemberlistConfig(ms.cfg), logger, dnsProvider, ms.registerer)
 	KVStore.MemberlistKV = memberlistKVsvc.GetMemberlistKV
 
-	ms.KVStore = KVStore
+	ms.MemberlistKVConfig = KVStore
 
 	return memberlistKVsvc, nil
 }
@@ -52,8 +42,10 @@ func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
 		ring.GetCodec(),
 	}
 	if cfg.MemberlistBindAddr != "" {
-		memberlistKVcfg.AdvertiseAddr = cfg.MemberlistBindAddr
 		memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.MemberlistBindAddr}
+	}
+	if cfg.MemberlistAdvertiseAddr != "" {
+		memberlistKVcfg.AdvertiseAddr = cfg.MemberlistAdvertiseAddr
 	}
 	memberlistKVcfg.JoinMembers = []string{cfg.MemberlistJoinMember}
 

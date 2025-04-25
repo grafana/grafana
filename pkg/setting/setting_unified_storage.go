@@ -52,6 +52,7 @@ func (cfg *Cfg) setUnifiedStorageConfig() {
 	cfg.IndexMaxBatchSize = section.Key("index_max_batch_size").MustInt(100)
 	cfg.EnableSharding = section.Key("enable_sharding").MustBool(false)
 	cfg.MemberlistBindAddr = section.Key("memberlist_bind_addr").String()
+	cfg.MemberlistAdvertiseAddr = section.Key("memberlist_advertise_addr").String()
 	cfg.MemberlistJoinMember = section.Key("memberlist_join_member").String()
 	cfg.InstanceID = section.Key("instance_id").String()
 	cfg.IndexFileThreshold = section.Key("index_file_threshold").MustInt(10)

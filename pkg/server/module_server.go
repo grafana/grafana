@@ -104,9 +104,9 @@ type ModuleServer struct {
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
 
-	KVStore          kv.Config
-	httpServerRouter *mux.Router
-	distributor      *resource.Distributor
+	MemberlistKVConfig kv.Config
+	httpServerRouter   *mux.Router
+	distributor        *resource.Distributor
 }
 
 // init initializes the server and its services.

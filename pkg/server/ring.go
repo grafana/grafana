@@ -44,9 +44,9 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	pool := newClientPool(*grpcclientcfg, logger, reg)
 
 	ringStore, err := kv.NewClient(
-		ms.KVStore,
+		ms.MemberlistKVConfig,
 		ring.GetCodec(),
-		kv.RegistererWithKVName(reg, metricsPrefix),
+		kv.RegistererWithKVName(reg, ringName),
 		logger,
 	)
 	if err != nil {
@@ -78,7 +78,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	}
 
 	storageRing, err := ring.NewWithStoreClientAndStrategy(
-		toRingConfig(ms.cfg, ms.KVStore),
+		toRingConfig(ms.cfg, ms.MemberlistKVConfig),
 		ringName,
 		ringKey,
 		ringStore,
@@ -112,12 +112,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 		}
 		logger.Info("resource server is JOINING in the ring")
 
-		if err := lifecycler.ChangeState(context.Background(), ring.ACTIVE); err != nil {
-			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
-		}
-
-		logger.Info("waiting until resource server is ACTIVE in the ring")
-		if err := ring.WaitInstanceState(context.Background(), storageRing, lifecycler.GetInstanceID(), ring.ACTIVE); err != nil {
+		if err := lifecycler.ChangeState(ctx, ring.ACTIVE); err != nil {
 			return fmt.Errorf("error switching to ACTIVE in the ring: %s", err)
 		}
 		logger.Info("resource server is ACTIVE in the ring")
