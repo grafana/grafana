@@ -58,7 +58,7 @@ export const unaryOperators = new Registry<UnaryOperatorInfo>(() => {
     {
       id: UnaryOperationID.Percent,
       name: 'Percentage',
-      operation: (value: number, total?: number) => (total !== undefined ? value / total : 0),
+      operation: (value: number, total = 1) => value / (total || 1),
       unaryOperationID: UnaryOperationID.Percent,
     },
   ];

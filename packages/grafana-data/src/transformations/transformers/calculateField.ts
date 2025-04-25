@@ -1,4 +1,4 @@
-import { defaults, sum } from 'lodash';
+import { defaults } from 'lodash';
 import { map } from 'rxjs/operators';
 
 import { getTimeField } from '../../dataframe/processDataFrame';
@@ -646,9 +646,19 @@ function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesC
     }
 
     const arr = new Array(value.length);
-    const total = sum(value);
+
+    let sum = 0;
+
+    if (options.operator === UnaryOperationID.Percent) {
+      for (let i = 0; i < value.length; i++) {
+        if (Number.isFinite(value[i])) {
+          sum += value[i];
+        }
+      }
+    }
+
     for (let i = 0; i < arr.length; i++) {
-      arr[i] = operator.operation(value[i], total);
+      arr[i] = operator.operation(value[i], sum);
     }
 
     return arr;
