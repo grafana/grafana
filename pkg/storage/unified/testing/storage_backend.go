@@ -1096,7 +1096,8 @@ func newServer(t *testing.T, b resource.StorageBackend) resource.ResourceServer 
 	t.Helper()
 
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: b,
+		AccessClient: types.FixedAccessClient(true),
+		Backend:      b,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, server)

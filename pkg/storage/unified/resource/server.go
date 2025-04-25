@@ -202,7 +202,7 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 	}
 
 	if opts.AccessClient == nil {
-		opts.AccessClient = claims.FixedAccessClient(true) // everything OK
+		return nil, fmt.Errorf("opts.AccessClient is a required field")
 	}
 
 	if opts.Diagnostics == nil {
