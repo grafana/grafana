@@ -3,7 +3,7 @@
 name: Dispatch check for patch conflicts
 run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -26,7 +26,6 @@ jobs:
           # App needs Actions: Read/Write for the grafana/security-patch-actions repo
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-
       - name: "Dispatch job"
         uses: actions/github-script@v7
         with:
