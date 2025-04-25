@@ -153,6 +153,7 @@ func TestIntegrationPostgresSnapshots(t *testing.T) {
 				MaxIdleConns:        2,
 				ConnMaxLifetime:     14400,
 				Timescaledb:         false,
+				Mode:                "disable",
 				ConfigurationMethod: "file-path",
 			}
 
