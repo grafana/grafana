@@ -125,7 +125,6 @@ describe('PrometheusDatasource', () => {
           prometheusType: PromApplication.Prometheus,
         },
       } as unknown as DataSourceInstanceSettings<PromOptions>;
-      const range = { from: time({ seconds: 63 }), to: time({ seconds: 183 }) };
       const directDs = new PrometheusDatasource(instanceSettings, templateSrvStub);
 
       await expect(
@@ -148,23 +147,6 @@ describe('PrometheusDatasource', () => {
       // Cannot test because some other tests need "./metric_find_query" to be mocked and that prevents this to be
       // tested. Checked manually that this ends up with throwing
       // await expect(directDs.metricFindQuery('label_names(foo)')).rejects.toBeDefined();
-
-      await expect(
-        directDs.annotationQuery({
-          range: { ...range, raw: range },
-          rangeRaw: range,
-          // Should be DataModel but cannot import that here from the main app. Needs to be moved to package first.
-          dashboard: {},
-          annotation: {
-            expr: 'metric',
-            name: 'test',
-            enable: true,
-            iconColor: '',
-          },
-        })
-      ).rejects.toMatchObject({
-        message: expect.stringMatching('Browser access'),
-      });
 
       const errorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
 

@@ -1,4 +1,5 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/AnnotationQueryEditor.tsx
+
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
@@ -15,10 +16,11 @@ type Props = PromQueryEditorProps & {
 };
 
 export function AnnotationQueryEditor(props: Props) {
-  // This is because of problematic typing. See AnnotationQueryEditorProps in grafana-data/annotations.ts.
-  const annotation = props.annotation!;
-  const onAnnotationChange = props.onAnnotationChange!;
-  const query = { expr: annotation.expr, refId: annotation.name, interval: annotation.step };
+  const { annotation, onAnnotationChange, onChange, onRunQuery, query } = props;
+
+  if (!annotation || !onAnnotationChange) {
+    return <h3>annotation data load error!</h3>;
+  }
 
   return (
     <>
@@ -27,12 +29,8 @@ export function AnnotationQueryEditor(props: Props) {
           {...props}
           query={query}
           showExplain={false}
-          onChange={(query) => {
-            onAnnotationChange({
-              ...annotation,
-              expr: query.expr,
-            });
-          }}
+          onRunQuery={onRunQuery}
+          onChange={(q) => onChange(q)}
         />
         <EditorRow>
           <EditorField
@@ -49,13 +47,8 @@ export function AnnotationQueryEditor(props: Props) {
               aria-label="Set lower limit for the step parameter"
               placeholder={'auto'}
               minWidth={10}
-              onCommitChange={(ev) => {
-                onAnnotationChange({
-                  ...annotation,
-                  step: ev.currentTarget.value,
-                });
-              }}
-              defaultValue={query.interval}
+              value={query.interval}
+              onChange={(e) => onChange({ ...query, interval: e.currentTarget.value })}
               id={selectors.components.DataSource.Prometheus.annotations.minStep}
             />
           </EditorField>
