@@ -80,6 +80,7 @@ export function getPrometheusRulesResponse(
               query:
                 '[{"refId":"A","queryType":"","relativeTimeRange":{"from":600,"to":0},"datasourceUid":"gdev-testdata","model":{"hide":false,"intervalMs":1000,"maxDataPoints":43200,"refId":"A"}},{"refId":"B","queryType":"","relativeTimeRange":{"from":0,"to":0},"datasourceUid":"__expr__","model":{"conditions":[{"evaluator":{"params":[0,0],"type":"gt"},"operator":{"type":"and"},"query":{"params":[]},"reducer":{"params":[],"type":"avg"},"type":"query"}],"datasource":{"name":"Expression","type":"__expr__","uid":"__expr__"},"expression":"A","intervalMs":1000,"maxDataPoints":43200,"refId":"B","type":"threshold"}}]',
               duration: 300,
+              isPaused: false,
               health: 'ok',
               type: PromRuleType.Alerting,
               lastEvaluation: '0001-01-01T00:00:00Z',

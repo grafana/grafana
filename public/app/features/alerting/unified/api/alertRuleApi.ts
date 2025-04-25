@@ -329,6 +329,18 @@ export const alertRuleApi = alertingApi.injectEndpoints({
       invalidatesTags: (result, _error, { namespace, payload, rulerConfig }) => {
         const grafanaRulerRules = payload.rules.filter(rulerRuleType.grafana.rule);
 
+        const promTags: Array<{ type: 'GrafanaPrometheusGroups'; id: string }> = [];
+        if (rulerConfig.dataSourceUid === GRAFANA_RULES_SOURCE_NAME) {
+          promTags.push(
+            { type: 'GrafanaPrometheusGroups', id: `grafana/${namespace}/__any__/` },
+            { type: 'GrafanaPrometheusGroups', id: `grafana/${namespace}/${payload.name}/__any__` },
+            ...grafanaRulerRules.map((rule) => ({
+              type: 'GrafanaPrometheusGroups' as const,
+              id: `grafana/${namespace}/${payload.name}/${rule.grafana_alert.title}`,
+            }))
+          );
+        }
+
         return [
           { type: 'RuleNamespace', id: `${rulerConfig.dataSourceUid}/${namespace}` },
           { type: 'RuleGroup', id: `${rulerConfig.dataSourceUid}/${namespace}/${payload.name}` },
@@ -336,6 +348,7 @@ export const alertRuleApi = alertingApi.injectEndpoints({
             { type: 'GrafanaRulerRule', id: rule.grafana_alert.uid } as const,
             { type: 'GrafanaRulerRuleVersion', id: rule.grafana_alert.uid } as const,
           ]),
+          ...promTags,
           'DeletedRules',
         ];
       },

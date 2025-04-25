@@ -164,6 +164,7 @@ function rulerRuleToPromRule(rule: RulerGrafanaRuleDTO): GrafanaPromRuleDTO {
     query: JSON.stringify(rule.grafana_alert.data),
     uid: rule.grafana_alert.uid,
     folderUid: rule.grafana_alert.namespace_uid,
+    isPaused: false,
     health: 'ok',
     state: PromAlertingRuleState.Inactive,
     type: rulerRuleType.grafana.alertingRule(rule) ? PromRuleType.Alerting : PromRuleType.Recording,
