@@ -154,14 +154,17 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </Tooltip>
           )}
           {method && method.length > 0 && (
-            <Tooltip content={'http.method'} interactive={true}>
+            <Tooltip content={t('explore.trace-page-header.content-httpmethod', 'http.method')} interactive={true}>
               <span className={styles.tag}>
                 <Badge text={method[0].value} color="blue" />
               </span>
             </Tooltip>
           )}
           {status && status.length > 0 && (
-            <Tooltip content={'http.status_code'} interactive={true}>
+            <Tooltip
+              content={t('explore.trace-page-header.content-httpstatuscode', 'http.status_code')}
+              interactive={true}
+            >
               <span className={styles.tag}>
                 <Badge text={status[0].value} color={statusColor} />
               </span>

@@ -50,7 +50,12 @@ export const ApiKeysTable = ({ apiKeys, timeZone, onDelete, onMigrate }: Props) 
                   {formatDate(key.expiration, timeZone)}
                   {isExpired && (
                     <span className={styles.tooltipContainer}>
-                      <Tooltip content="This API key has expired.">
+                      <Tooltip
+                        content={t(
+                          'api-keys.api-keys-table.content-this-api-key-has-expired',
+                          'This API key has expired.'
+                        )}
+                      >
                         <Icon name="exclamation-triangle" />
                       </Tooltip>
                     </span>

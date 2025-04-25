@@ -91,7 +91,12 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
     switch (stage) {
       case 'GA':
         return (
-          <Tooltip content={'General availability'}>
+          <Tooltip
+            content={t(
+              'admin.admin-feature-toggles-table.get-stage-cell.content-general-availability',
+              'General availability'
+            )}
+          >
             <div>
               <Trans i18nKey="admin.admin-feature-toggles-table.get-stage-cell.ga">GA</Trans>
             </div>

@@ -124,7 +124,10 @@ export default function Browse() {
               </Field>
             ) : (
               <Tooltip
-                content="This filter has been disabled because the Grafana server cannot access grafana.com"
+                content={t(
+                  'plugins.browse.tooltip-filter-disabled',
+                  'This filter has been disabled because the Grafana server cannot access grafana.com'
+                )}
                 placement="top"
               >
                 <div>

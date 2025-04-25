@@ -143,8 +143,10 @@ function TemplateRow({ notificationTemplate, idx, alertManagerName, onDeleteClic
                   <Trans i18nKey="alerting.templates.misconfigured-warning">This template is misconfigured.</Trans>
                   <br />
                   <Trans i18nKey="alerting.templates.misconfigured-warning-details">
-                    Templates must be defined in both the <CodeText content="template_files" /> and{' '}
-                    <CodeText content="templates" /> sections of your alertmanager configuration.
+                    Templates must be defined in both the{' '}
+                    <CodeText content={t('alerting.template-row.content-templatefiles', 'template_files')} /> and{' '}
+                    <CodeText content={t('alerting.template-row.content-templates', 'templates')} /> sections of your
+                    alertmanager configuration.
                   </Trans>
                 </>
               }
