@@ -43,9 +43,9 @@ func Test_SecretMgmt_StoreInKeeper(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Value:      "value",
-			Decrypters: []string{"group1/*", "group2/name"},
+			Description: "description",
+			Value:       "value",
+			Decrypters:  []string{"group1/*", "group2/name"},
 		},
 	}
 	s := setupTestService(t).(*secureValueMetadataStorage)
@@ -82,9 +82,9 @@ func Test_SecretMgmt_UpdateInKeeper(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Value:      "value",
-			Decrypters: []string{"group1/*", "group2/name"},
+			Description: "description",
+			Value:       "value",
+			Decrypters:  []string{"group1/*", "group2/name"},
 		},
 	}
 	testsvDB := &secureValueDB{
@@ -138,9 +138,9 @@ func Test_SecretMgmt_DeleteInKeeper(t *testing.T) {
 			Namespace: "default",
 		},
 		Spec: secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Value:      "value",
-			Decrypters: []string{"group1/*", "group2/name"},
+			Description: "description",
+			Value:       "value",
+			Decrypters:  []string{"group1/*", "group2/name"},
 		},
 	}
 	s := setupTestService(t).(*secureValueMetadataStorage)
@@ -216,8 +216,8 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
-			Title: "title",
-			SQL:   &secretv0alpha1.SQLKeeperConfig{Encryption: &secretv0alpha1.Encryption{}},
+			Description: "description",
+			SQL:         &secretv0alpha1.SQLKeeperConfig{Encryption: &secretv0alpha1.Encryption{}},
 		},
 	}
 	testKeeper.Name = "kp-test"

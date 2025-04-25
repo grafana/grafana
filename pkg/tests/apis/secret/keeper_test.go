@@ -82,7 +82,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, keeper)
 
-		require.NotEmpty(t, keeper.Spec.Title)
+		require.NotEmpty(t, keeper.Spec.Description)
 		require.NotEmpty(t, keeper.Spec.AWS)
 		require.Empty(t, keeper.Spec.Azure)
 
@@ -119,7 +119,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		t.Run("and updating the keeper replaces the spec fields and returns them", func(t *testing.T) {
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
 			newRaw.SetName(raw.GetName())
-			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["description"] = "New description"
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
@@ -156,7 +156,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 	t.Run("creating an invalid keeper fails validation and returns an error", func(t *testing.T) {
 		testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
-		testData.Object["spec"].(map[string]any)["title"] = ""
+		testData.Object["spec"].(map[string]any)["description"] = ""
 
 		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -252,7 +252,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 		// 1. Create a SQL keeper.
 		keeperSQL := mustGenerateKeeper(t, helper, editor, map[string]any{
-			"title": "SQL Keeper",
+			"description": "SQL Keeper",
 			"sql": map[string]any{
 				"encryption": map[string]any{"envelope": map[string]any{}},
 			},
@@ -263,7 +263,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 		// 3. Create a non-SQL keeper that uses the secureValue.
 		keeperAWS := mustGenerateKeeper(t, helper, editor, map[string]any{
-			"title": "AWS Keeper",
+			"description": "AWS Keeper",
 			"aws": map[string]any{
 				"accessKeyId":     map[string]any{"secureValueName": secureValue.GetName()},
 				"secretAccessKey": map[string]any{"valueFromEnv": "SECRET_ACCESS_KEY_XYZ"},
@@ -377,7 +377,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			// OrgA trying to update securevalue from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 			testData.SetName(keeperOrgB.GetName())
-			testData.Object["spec"].(map[string]any)["title"] = "New title"
+			testData.Object["spec"].(map[string]any)["description"] = "New description"
 
 			raw, err := clientOrgA.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
@@ -388,7 +388,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			// OrgB trying to update keeper from OrgA.
 			testData = helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 			testData.SetName(keeperOrgA.GetName())
-			testData.Object["spec"].(map[string]any)["title"] = "New title"
+			testData.Object["spec"].(map[string]any)["description"] = "New description"
 
 			raw, err = clientOrgB.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
@@ -601,7 +601,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		t.Run("UPDATE", func(t *testing.T) {
 			// Update `keeperName` from the limited client.
 			testKeeperUpdate := testKeeper.DeepCopy()
-			testKeeperUpdate.Object["spec"].(map[string]any)["title"] = "keeper-title-1234"
+			testKeeperUpdate.Object["spec"].(map[string]any)["description"] = "keeper-description-1234"
 
 			rawUpdate, err := clientScopedLimited.Resource.Update(ctx, testKeeperUpdate, metav1.UpdateOptions{})
 			require.NoError(t, err)
@@ -609,7 +609,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 			// Try to update `keeperNameAnother` from the limited client.
 			testKeeperAnotherUpdate := testKeeperAnother.DeepCopy()
-			testKeeperAnotherUpdate.Object["spec"].(map[string]any)["title"] = "keeper-title-5678"
+			testKeeperAnotherUpdate.Object["spec"].(map[string]any)["description"] = "keeper-description-5678"
 
 			rawUpdate, err = clientScopedLimited.Resource.Update(ctx, testKeeperAnotherUpdate, metav1.UpdateOptions{})
 			require.Error(t, err)

@@ -10,7 +10,7 @@ SELECT
   "updated_by",
   "status_phase",
   "status_message",
-  "title",
+  "description",
   "keeper",
   "decrypters",
   "ref",

@@ -10,7 +10,7 @@ SELECT
   {{ .Ident "updated_by" }},
   {{ .Ident "status_phase" }},
   {{ .Ident "status_message" }},
-  {{ .Ident "title" }},
+  {{ .Ident "description" }},
   {{ .Ident "keeper" }},
   {{ .Ident "decrypters" }},
   {{ .Ident "ref" }},

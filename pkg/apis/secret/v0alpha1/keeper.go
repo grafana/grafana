@@ -28,10 +28,10 @@ type KeeperConfig interface {
 }
 
 type KeeperSpec struct {
-	// Human friendly name for the keeper.
+	// Short description for the Keeper.
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=253
-	Title string `json:"title"`
+	Description string `json:"description"`
 
 	// SQL Keeper Configuration.
 	// +structType=atomic

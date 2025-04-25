@@ -227,7 +227,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "SQL XYZ Keeper",
+													Description: "SQL XYZ Keeper",
 													SQL: &secretv0alpha1.SQLKeeperConfig{
 														Encryption: &secretv0alpha1.Encryption{
 															Envelope: &secretv0alpha1.Envelope{},
@@ -243,7 +243,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "AWS XYZ Keeper",
+													Description: "AWS XYZ Keeper",
 													AWS: &secretv0alpha1.AWSKeeperConfig{
 														AWSCredentials: secretv0alpha1.AWSCredentials{
 															AccessKeyID: secretv0alpha1.CredentialValue{
@@ -265,7 +265,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "Azure XYZ Keeper",
+													Description: "Azure XYZ Keeper",
 													Azure: &secretv0alpha1.AzureKeeperConfig{
 														AzureCredentials: secretv0alpha1.AzureCredentials{
 															KeyVaultName: "key-vault-name",
@@ -286,7 +286,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "GCP XYZ Keeper",
+													Description: "GCP XYZ Keeper",
 													GCP: &secretv0alpha1.GCPKeeperConfig{
 														GCPCredentials: secretv0alpha1.GCPCredentials{
 															ProjectID:       "project-id",
@@ -303,7 +303,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "Hashicorp XYZ Keeper",
+													Description: "Hashicorp XYZ Keeper",
 													HashiCorp: &secretv0alpha1.HashiCorpKeeperConfig{
 														HashiCorpCredentials: secretv0alpha1.HashiCorpCredentials{
 															Address: "vault-address",
@@ -337,7 +337,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: SQL XYZ Keeper
+  description: SQL XYZ Keeper
   sql:
     encryption:
       envelope:`,
@@ -353,7 +353,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: AWS XYZ Keeper
+  description: AWS XYZ Keeper
   aws:
     accessKeyId: 
       valueFromEnv: ACCESS_KEY_ID_XYZ
@@ -372,7 +372,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: Azure XYZ Keeper
+  description: Azure XYZ Keeper
   azurekeyvault:
     clientSecret:
       valueFromConfig: "/path/to/file.json"
@@ -391,7 +391,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: GCP XYZ Keeper
+  description: GCP XYZ Keeper
   gcp:
     projectId: project-id 
     credentialsFile: /path/to/file.json`,
@@ -407,7 +407,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: Hashicorp XYZ Keeper
+  description: Hashicorp XYZ Keeper
   hashivault:
     address: vault-address
     token:
@@ -440,9 +440,9 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret in default",
-													Value:      "this is super duper secure",
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "A secret in default",
+													Value:       "this is super duper secure",
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -453,10 +453,10 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret in aws",
-													Value:      "this is super duper secure",
-													Keeper:     &exampleKeeperAWS,
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "A secret in aws",
+													Value:       "this is super duper secure",
+													Keeper:      &exampleKeeperAWS,
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -467,10 +467,10 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret from aws",
-													Ref:        "my-secret-in-aws",
-													Keeper:     &exampleKeeperAWS,
-													Decrypters: []string{"actor_k6"},
+													Description: "A secret from aws",
+													Ref:         "my-secret-in-aws",
+													Keeper:      &exampleKeeperAWS,
+													Decrypters:  []string{"actor_k6"},
 												},
 											},
 										},
@@ -484,9 +484,9 @@ spec:
 													Name: "xyz",
 												},
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "XYZ secret",
-													Value:      "this is super duper secure",
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "XYZ secret",
+													Value:       "this is super duper secure",
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -512,7 +512,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret value
+  description: A secret value
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -531,7 +531,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret value in aws
+  description: A secret value in aws
   keeper: aws-keeper-that-must-already-exist
   value: this is super duper secure
   decrypters:
@@ -551,7 +551,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret from aws
+  description: A secret from aws
   keeper: aws-keeper-that-must-already-exist
   ref: my-secret-in-aws
   decrypters:
@@ -571,7 +571,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: XYZ secret
+  description: XYZ secret
   value: this is super duper secure
   decrypters:
     - actor_k6 

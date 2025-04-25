@@ -49,10 +49,10 @@ type SecureValueStatus struct {
 }
 
 type SecureValueSpec struct {
-	// Human friendly name for the secure value.
+	// Short description that explains the purpose of this SecureValue.
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=253
-	Title string `json:"title"`
+	Description string `json:"description"`
 
 	// The raw value is only valid for write. Read/List will always be empty.
 	// There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.

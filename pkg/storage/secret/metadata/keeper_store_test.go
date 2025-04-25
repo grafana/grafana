@@ -39,8 +39,8 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
-			Title: "title",
-			SQL:   &secretv0alpha1.SQLKeeperConfig{Encryption: &secretv0alpha1.Encryption{}},
+			Description: "description",
+			SQL:         &secretv0alpha1.SQLKeeperConfig{Encryption: &secretv0alpha1.Encryption{}},
 		},
 	}
 	testKeeper.Name = "kp-test"

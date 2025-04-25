@@ -129,7 +129,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 			&secureValue.Created, &secureValue.CreatedBy,
 			&secureValue.Updated, &secureValue.UpdatedBy,
 			&secureValue.Phase, &secureValue.Message,
-			&secureValue.Title, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID)
+			&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan secure value row: %w", err)
 		}
@@ -280,7 +280,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 			&row.Created, &row.CreatedBy,
 			&row.Updated, &row.UpdatedBy,
 			&row.Phase, &row.Message,
-			&row.Title, &row.Keeper, &row.Decrypters,
+			&row.Description, &row.Keeper, &row.Decrypters,
 			&row.Ref, &row.ExternalID,
 		)
 

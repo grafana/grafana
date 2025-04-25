@@ -12,7 +12,7 @@ SET
   {{ .Ident "updated_by" }} = {{ .Arg .Row.UpdatedBy }},
   {{ .Ident "status_phase" }} = {{ .Arg .Row.Phase }},
   {{ .Ident "status_message" }} = {{ .Arg .Row.Message }},
-  {{ .Ident "title" }} = {{ .Arg .Row.Title }},
+  {{ .Ident "description" }} = {{ .Arg .Row.Description }},
   {{ .Ident "keeper" }} = {{ .Arg .Row.Keeper }},
   {{ .Ident "decrypters" }} = {{ .Arg .Row.Decrypters }},
   {{ .Ident "ref" }} = {{ .Arg .Row.Ref }},

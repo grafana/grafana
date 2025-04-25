@@ -213,8 +213,8 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 
 	errs := make(field.ErrorList, 0)
 
-	if keeper.Spec.Title == "" {
-		errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
+	if keeper.Spec.Description == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `description` is required"))
 	}
 
 	// Only one keeper type can be configured. Return early and don't validate the specific keeper fields.
