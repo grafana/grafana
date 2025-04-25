@@ -39,8 +39,8 @@ export function ImportDashboardOverviewV2() {
       ...dashboard,
       title: form.dashboard.title,
       annotations: dashboard.annotations?.map((annotation: AnnotationQueryKind) => {
-        if (annotation.spec.datasource?.type) {
-          const dsType = annotation.spec.datasource.type;
+        if (annotation.spec.query?.kind) {
+          const dsType = annotation.spec.query.kind;
           if (form[`datasource-${dsType}` as keyof typeof form]) {
             const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
             return {
@@ -59,8 +59,8 @@ export function ImportDashboardOverviewV2() {
       }),
       variables: dashboard.variables?.map((variable) => {
         if (variable.kind === 'QueryVariable') {
-          if (variable.spec.datasource?.type) {
-            const dsType = variable.spec.datasource.type;
+          if (variable.spec.query?.kind) {
+            const dsType = variable.spec.query.kind;
             if (form[`datasource-${dsType}` as keyof typeof form]) {
               const ds = form[`datasource-${dsType}` as keyof typeof form] as { uid: string; type: string };
               return {

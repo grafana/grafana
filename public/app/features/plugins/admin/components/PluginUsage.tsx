@@ -8,7 +8,7 @@ import { GrafanaTheme2, PluginMeta, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Alert, Spinner, useStyles2 } from '@grafana/ui';
 import EmptyListCTA from 'app/core/components/EmptyListCTA/EmptyListCTA';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { SearchResultsTable } from 'app/features/search/page/components/SearchResultsTable';
 import { getGrafanaSearcher } from 'app/features/search/service/searcher';
 import { SearchQuery } from 'app/features/search/service/types';
@@ -44,7 +44,12 @@ export function PluginUsage({ plugin }: Props) {
     return (
       <div className={styles.wrap}>
         <div className={styles.info}>
-          {plugin.name} is used <b>{found.totalRows}</b> times.
+          <Trans
+            i18nKey="plugins.plugin-usage.num-usages"
+            values={{ pluginName: plugin.name, numUsages: found.totalRows }}
+          >
+            {'{{pluginName}}'} is used <b>{'{{numUsages}}'}</b> times.
+          </Trans>
         </div>
         <AutoSizer>
           {({ width, height }) => {
@@ -78,7 +83,9 @@ export function PluginUsage({ plugin }: Props) {
         )}
         severity="warning"
       >
-        Plugin usage requires the new search index to find usage across dashboards
+        <Trans i18nKey="plugins.plugin-usage.body-missing-feature-toggle-panel-title-search">
+          Plugin usage requires the new search index to find usage across dashboards. Please enable the feature toggle
+        </Trans>
       </Alert>
     );
   }
