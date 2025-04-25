@@ -2680,9 +2680,6 @@
       "clear": "Effacer la recherche et les filtres",
       "text": "Aucun résultat n'a été trouvé pour votre requête"
     },
-    "soft-delete": {
-      "success": "Le tableau de bord {{name}} a été déplacé vers Récemment supprimé"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

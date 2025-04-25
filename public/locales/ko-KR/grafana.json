@@ -2662,9 +2662,6 @@
       "clear": "검색 및 필터 초기화",
       "text": "쿼리에 대해 찾은 결과 없음"
     },
-    "soft-delete": {
-      "success": "{{name}} 대시보드를 '최근 삭제됨'으로 이동함"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

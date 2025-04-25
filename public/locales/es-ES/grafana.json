@@ -2680,9 +2680,6 @@
       "clear": "Borrar la búsqueda y los filtros",
       "text": "No se han encontrado resultados para tu consulta"
     },
-    "soft-delete": {
-      "success": "El panel de control {{name}} se ha movido a Eliminados recientemente"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

@@ -2680,9 +2680,6 @@
       "clear": "Suche und Filter löschen",
       "text": "Keine Ergebnisse für Ihre Abfrage gefunden"
     },
-    "soft-delete": {
-      "success": "Dashboard {{name}} in „Kürzlich gelöscht“ verschoben"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

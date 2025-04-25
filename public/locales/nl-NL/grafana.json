@@ -2680,9 +2680,6 @@
       "clear": "Zoekopdracht en filters wissen",
       "text": "Geen resultaten gevonden voor je zoekopdracht"
     },
-    "soft-delete": {
-      "success": "Dashboard {{name}} is verplaatst naar Onlangs verwijderd"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

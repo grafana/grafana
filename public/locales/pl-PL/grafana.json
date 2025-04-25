@@ -2716,9 +2716,6 @@
       "clear": "Wyczyść wyszukiwanie i filtry",
       "text": "Nie znaleziono wyników dla tego zapytania"
     },
-    "soft-delete": {
-      "success": "Panel {{name}} przeniesiono do sekcji Ostatnio usunięte"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

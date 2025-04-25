@@ -2662,9 +2662,6 @@
       "clear": "清除搜索和筛选条件",
       "text": "未找到与您的查询相关的结果"
     },
-    "soft-delete": {
-      "success": "数据面板 {{name}} 已移至“最近删除”"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

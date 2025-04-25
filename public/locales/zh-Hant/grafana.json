@@ -2662,9 +2662,6 @@
       "clear": "清除搜尋和篩選條件",
       "text": "未找到您的查詢結果"
     },
-    "soft-delete": {
-      "success": "儀表板「{{name}}」已移至「最近刪除」"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {
