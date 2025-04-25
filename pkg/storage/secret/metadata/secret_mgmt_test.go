@@ -217,7 +217,7 @@ func setupTestService(t *testing.T) contracts.SecureValueMetadataStorage {
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
 			Description: "description",
-			SQL:         &secretv0alpha1.SQLKeeperConfig{Encryption: &secretv0alpha1.Encryption{}},
+			AWS:         &secretv0alpha1.AWSKeeperConfig{},
 		},
 	}
 	testKeeper.Name = "kp-test"

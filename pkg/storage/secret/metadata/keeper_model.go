@@ -8,7 +8,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -29,7 +28,7 @@ type keeperDB struct {
 
 	// Spec
 	Description string
-	Type        contracts.KeeperType
+	Type        string
 	Payload     string
 }
 
@@ -60,10 +59,8 @@ func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 	}
 
 	// Obtain provider configs
-	provider := toProvider(kp.Type, kp.Payload)
+	provider := toProvider(secretv0alpha1.KeeperType(kp.Type), kp.Payload)
 	switch v := provider.(type) {
-	case *secretv0alpha1.SQLKeeperConfig:
-		resource.Spec.SQL = v
 	case *secretv0alpha1.AWSKeeperConfig:
 		resource.Spec.AWS = v
 	case *secretv0alpha1.AzureKeeperConfig:
@@ -192,84 +189,54 @@ func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
 
 		// Spec
 		Description: kp.Spec.Description,
-		Type:        keeperType,
+		Type:        keeperType.String(),
 		Payload:     keeperPayload,
 	}, nil
 }
 
 // toTypeAndPayload obtain keeper type and payload from a Kubernetes Keeper resource.
-func toTypeAndPayload(kp *secretv0alpha1.Keeper) (contracts.KeeperType, string, error) {
-	var keeperType contracts.KeeperType
-	var keeperPayload string
-
-	if kp.Spec.SQL != nil {
-		keeperType = contracts.SQLKeeperType
-		jsonData, err := json.Marshal(kp.Spec.SQL)
-		if err != nil {
-			return "", "", fmt.Errorf("error encoding to json: %w", err)
-		}
-		keeperPayload = string(jsonData)
-	} else if kp.Spec.AWS != nil {
-		keeperType = contracts.AWSKeeperType
-		jsonData, err := json.Marshal(kp.Spec.AWS.AWSCredentials)
-		if err != nil {
-			return "", "", fmt.Errorf("error encoding to json: %w", err)
-		}
-		keeperPayload = string(jsonData)
+// TODO: Move as method of KeeperSpec
+func toTypeAndPayload(kp *secretv0alpha1.Keeper) (secretv0alpha1.KeeperType, string, error) {
+	if kp.Spec.AWS != nil {
+		payload, err := json.Marshal(kp.Spec.AWS.AWSCredentials)
+		return secretv0alpha1.AWSKeeperType, string(payload), err
 	} else if kp.Spec.Azure != nil {
-		keeperType = contracts.AzureKeeperType
-		jsonData, err := json.Marshal(kp.Spec.Azure)
-		if err != nil {
-			return "", "", fmt.Errorf("error encoding to json: %w", err)
-		}
-		keeperPayload = string(jsonData)
+		payload, err := json.Marshal(kp.Spec.Azure)
+		return secretv0alpha1.AzureKeeperType, string(payload), err
 	} else if kp.Spec.GCP != nil {
-		keeperType = contracts.GCPKeeperType
-		jsonData, err := json.Marshal(kp.Spec.GCP)
-		if err != nil {
-			return "", "", fmt.Errorf("error encoding to json: %w", err)
-		}
-		keeperPayload = string(jsonData)
+		payload, err := json.Marshal(kp.Spec.GCP)
+		return secretv0alpha1.GCPKeeperType, string(payload), err
 	} else if kp.Spec.HashiCorp != nil {
-		keeperType = contracts.HashiCorpKeeperType
-		jsonData, err := json.Marshal(kp.Spec.HashiCorp)
-		if err != nil {
-			return "", "", fmt.Errorf("error encoding to json: %w", err)
-		}
-		keeperPayload = string(jsonData)
+		payload, err := json.Marshal(kp.Spec.HashiCorp)
+		return secretv0alpha1.HashiCorpKeeperType, string(payload), err
 	}
 
-	return keeperType, keeperPayload, nil
+	return "", "", fmt.Errorf("no keeper type found")
 }
 
 // toProvider maps a KeeperType and payload into a provider config struct.
-func toProvider(keeperType contracts.KeeperType, payload string) secretv0alpha1.KeeperConfig {
+// TODO: Move as method of KeeperType
+func toProvider(keeperType secretv0alpha1.KeeperType, payload string) secretv0alpha1.KeeperConfig {
 	switch keeperType {
-	case contracts.SQLKeeperType:
-		sql := &secretv0alpha1.SQLKeeperConfig{}
-		if err := json.Unmarshal([]byte(payload), sql); err != nil {
-			return nil
-		}
-		return sql
-	case contracts.AWSKeeperType:
+	case secretv0alpha1.AWSKeeperType:
 		aws := &secretv0alpha1.AWSKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), aws); err != nil {
 			return nil
 		}
 		return aws
-	case contracts.AzureKeeperType:
+	case secretv0alpha1.AzureKeeperType:
 		azure := &secretv0alpha1.AzureKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), azure); err != nil {
 			return nil
 		}
 		return azure
-	case contracts.GCPKeeperType:
+	case secretv0alpha1.GCPKeeperType:
 		gcp := &secretv0alpha1.GCPKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), gcp); err != nil {
 			return nil
 		}
 		return gcp
-	case contracts.HashiCorpKeeperType:
+	case secretv0alpha1.HashiCorpKeeperType:
 		hashicorp := &secretv0alpha1.HashiCorpKeeperConfig{}
 		if err := json.Unmarshal([]byte(payload), hashicorp); err != nil {
 			return nil
@@ -313,26 +280,6 @@ func extractSecureValues(kp *secretv0alpha1.Keeper) map[string]struct{} {
 	}
 
 	switch {
-	case kp.Spec.SQL != nil && kp.Spec.SQL.Encryption != nil:
-		enc := kp.Spec.SQL.Encryption
-
-		switch {
-		case enc.AWS != nil:
-			return secureValuesFromAWS(*enc.AWS)
-
-		case enc.Azure != nil:
-			return secureValuesFromAzure(*enc.Azure)
-
-		// GCP does not reference secureValues.
-		case enc.GCP != nil:
-			return nil
-
-		case enc.HashiCorp != nil:
-			return secureValuesFromHashiCorp(*enc.HashiCorp)
-		}
-
-		return nil
-
 	case kp.Spec.AWS != nil:
 		return secureValuesFromAWS(kp.Spec.AWS.AWSCredentials)
 

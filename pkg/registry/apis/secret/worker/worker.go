@@ -19,7 +19,7 @@ type Worker struct {
 	outboxQueue                contracts.OutboxQueue
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
-	keepers                    map[contracts.KeeperType]contracts.Keeper
+	keeperService              contracts.KeeperService
 }
 
 type Config struct {
@@ -36,7 +36,7 @@ func NewWorker(
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keepers map[contracts.KeeperType]contracts.Keeper,
+	keeperService contracts.KeeperService,
 ) *Worker {
 	return &Worker{
 		config:                     config,
@@ -45,7 +45,7 @@ func NewWorker(
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
-		keepers:                    keepers,
+		keeperService:              keeperService,
 	}
 }
 
@@ -87,14 +87,17 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	keeperType, keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
+	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
 
-	keeper := w.keepers[keeperType]
+	keeper, err := w.keeperService.KeeperForConfig(keeperCfg)
+	if err != nil {
+		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
+	}
 	if keeper == nil {
-		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperType)
+		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperCfg.Type())
 	}
 
 	switch message.Type {

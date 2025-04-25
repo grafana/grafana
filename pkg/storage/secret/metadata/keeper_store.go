@@ -348,7 +348,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	// DTO for `sqlSecureValueListByName` query result, only what we need.
 	type listByNameResult struct {
 		Name   string
-		Keeper string
+		Keeper *string
 	}
 
 	secureValueRows := make([]listByNameResult, 0)
@@ -382,20 +382,29 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	}
 
 	// If all secure values exist, we need to guarantee that the third-party keeper is not referencing another third-party,
-	// it must reference only 'sql' type keepers to keep the dependency tree flat (n=1).
+	// it must reference only the system keeper (when keeper=null) to keep the dependency tree flat (n=1).
 	keeperNames := make([]string, 0, len(secureValueRows))
 	keeperSecureValues := make(map[string][]string, 0)
 
 	for _, svRow := range secureValueRows {
-		keeperNames = append(keeperNames, svRow.Keeper)
-		keeperSecureValues[svRow.Keeper] = append(keeperSecureValues[svRow.Keeper], svRow.Name)
+		// Using the system keeper (null).
+		if svRow.Keeper == nil {
+			continue
+		}
+
+		keeperNames = append(keeperNames, *svRow.Keeper)
+		keeperSecureValues[*svRow.Keeper] = append(keeperSecureValues[*svRow.Keeper], svRow.Name)
+	}
+
+	// We didn't find any secure values that reference third-party keepers.
+	if len(keeperNames) == 0 {
+		return nil
 	}
 
 	reqKeeper := listByNameKeeper{
-		SQLTemplate:      sqltemplate.New(s.dialect),
-		Namespace:        keeper.Namespace,
-		KeeperNames:      keeperNames,
-		ExcludeSQLKeeper: string(contracts.SQLKeeperType),
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   keeper.Namespace,
+		KeeperNames: keeperNames,
 	}
 
 	qKeeper, err := sqltemplate.Execute(sqlKeeperListByName, reqKeeper)
@@ -439,20 +448,20 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
-	// Check if keeper is default sql.
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
+	// Check if keeper is the systemwide one.
 	if name == nil {
-		return contracts.SQLKeeperType, nil, nil
+		return nil, nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
 	kp, err := s.read(ctx, namespace, *name, notForUpdate)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	keeperConfig := toProvider(kp.Type, kp.Payload)
+	keeperConfig := toProvider(secretv0alpha1.KeeperType(kp.Type), kp.Payload)
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
-	return kp.Type, keeperConfig, nil
+	return keeperConfig, nil
 }

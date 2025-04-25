@@ -10,21 +10,22 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
+// TODO: remove when the async flow is ready
 func (s *secureValueMetadataStorage) storeInKeeper(ctx context.Context, sv *secretv0alpha1.SecureValue) (contracts.ExternalID, error) {
 	// TODO: Implement store by ref
 	if sv.Spec.Ref != "" {
 		return "", fmt.Errorf("store by ref in keeper")
 	}
 
-	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
 	if err != nil {
 		return "", fmt.Errorf("get keeper config: %w", err)
 	}
 
 	// Store in keeper.
-	keeper, ok := s.keepers[keeperType]
-	if !ok {
-		return "", fmt.Errorf("could not find keeper: %s", keeperType)
+	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
+	if err != nil {
+		return "", fmt.Errorf("could not find keeper: %s %w", keeperConfig.Type(), err)
 	}
 	externalID, err := keeper.Store(ctx, keeperConfig, sv.Namespace, string(sv.Spec.Value))
 	if err != nil {
@@ -34,6 +35,7 @@ func (s *secureValueMetadataStorage) storeInKeeper(ctx context.Context, sv *secr
 	return externalID, err
 }
 
+// TODO: remove when the async flow is ready
 func (s *secureValueMetadataStorage) updateInKeeper(ctx context.Context, currRow *secureValueDB, newSV *secretv0alpha1.SecureValue) error {
 	// TODO: Implement update by ref
 	if newSV.Spec.Ref != "" {
@@ -51,15 +53,15 @@ func (s *secureValueMetadataStorage) updateInKeeper(ctx context.Context, currRow
 		return fmt.Errorf("keeper change not allowed")
 	}
 
-	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currRow.Namespace, currRow.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, currRow.Namespace, currRow.Keeper)
 	if err != nil {
 		return fmt.Errorf("get keeper config: %w", err)
 	}
 
 	// Update in keeper.
-	keeper, ok := s.keepers[keeperType]
-	if !ok {
-		return fmt.Errorf("could not find keeper: %s", keeperType)
+	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
+	if err != nil {
+		return fmt.Errorf("could not find keeper: %s %w", keeperConfig.Type(), err)
 	}
 
 	err = keeper.Update(ctx, keeperConfig, currRow.Namespace, contracts.ExternalID(currRow.ExternalID), string(newSV.Spec.Value))
@@ -70,6 +72,7 @@ func (s *secureValueMetadataStorage) updateInKeeper(ctx context.Context, currRow
 	return nil
 }
 
+// TODO: remove when the async flow is ready
 func (s *secureValueMetadataStorage) deleteFromKeeper(ctx context.Context, namespace xkube.Namespace, name string) error {
 	sv := &secureValueDB{Namespace: namespace.String(), Name: name}
 	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
@@ -88,16 +91,17 @@ func (s *secureValueMetadataStorage) deleteFromKeeper(ctx context.Context, names
 		return fmt.Errorf("db failure: %w", err)
 	}
 
-	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper)
 	if err != nil {
 		return fmt.Errorf("get keeper config: %w", err)
 	}
 
 	// Delete from keeper.
-	keeper, ok := s.keepers[keeperType]
-	if !ok {
-		return fmt.Errorf("could not find keeper: %s", keeperType)
+	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
+	if err != nil {
+		return fmt.Errorf("could not find keeper: %s %w", keeperConfig.Type(), err)
 	}
+
 	err = keeper.Delete(ctx, keeperConfig, namespace.String(), contracts.ExternalID(sv.ExternalID))
 	if err != nil {
 		return fmt.Errorf("delete in keeper: %w", err)
