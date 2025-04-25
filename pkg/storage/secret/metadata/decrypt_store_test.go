@@ -348,6 +348,7 @@ func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVa
 	require.NoError(t, err)
 
 	keeper, err := keeperService.KeeperForConfig(cfg)
+	require.NoError(t, err)
 
 	externalID, err := keeper.Store(ctx, cfg, sv.Namespace, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
 	require.NoError(t, err)
