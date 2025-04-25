@@ -16,7 +16,7 @@ type Keeper struct {
 	// This is the actual keeper schema.
 	// +patchStrategy=replace
 	// +patchMergeKey=name
-	Spec KeeperSpec `json:"spec,omitempty" patchStrategy:"replace" patchMergeKey:"name"`
+	Spec KeeperSpec `json:"spec" patchStrategy:"replace" patchMergeKey:"name"`
 }
 
 func (k *Keeper) IsSqlKeeper() bool {
@@ -29,13 +29,33 @@ type KeeperConfig interface {
 
 type KeeperSpec struct {
 	// Human friendly name for the keeper.
+	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=253
 	Title string `json:"title"`
 
-	// You can only chose one of the following.
-	SQL       *SQLKeeperConfig       `json:"sql,omitempty"`
-	AWS       *AWSKeeperConfig       `json:"aws,omitempty"`
-	Azure     *AzureKeeperConfig     `json:"azurekeyvault,omitempty"`
-	GCP       *GCPKeeperConfig       `json:"gcp,omitempty"`
+	// SQL Keeper Configuration.
+	// +structType=atomic
+	// +optional
+	SQL *SQLKeeperConfig `json:"sql,omitempty"`
+
+	// AWS Keeper Configuration.
+	// +structType=atomic
+	// +optional
+	AWS *AWSKeeperConfig `json:"aws,omitempty"`
+
+	// Azure Keeper Configuration.
+	// +structType=atomic
+	// +optional
+	Azure *AzureKeeperConfig `json:"azurekeyvault,omitempty"`
+
+	// GCP Keeper Configuration.
+	// +structType=atomic
+	// +optional
+	GCP *GCPKeeperConfig `json:"gcp,omitempty"`
+
+	// HashiCorp Vault Keeper Configuration.
+	// +structType=atomic
+	// +optional
 	HashiCorp *HashiCorpKeeperConfig `json:"hashivault,omitempty"`
 }
 
@@ -99,15 +119,19 @@ type HashiCorpCredentials struct {
 type Envelope struct{}
 
 // Holds the way credentials are obtained.
+// +union
 type CredentialValue struct {
 	// The name of the secure value that holds the actual value.
+	// +optional
 	SecureValueName string `json:"secureValueName,omitempty"`
 
 	// The value is taken from the environment variable.
+	// +optional
 	ValueFromEnv string `json:"valueFromEnv,omitempty"`
 
 	// The value is taken from the Grafana config file.
 	// TODO: how do we explain that this is a path to the config file?
+	// +optional
 	ValueFromConfig string `json:"valueFromConfig,omitempty"`
 }
 
