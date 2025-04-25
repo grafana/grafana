@@ -63,7 +63,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 	}
 
 	// show by default for Grafana Admins -- and for Org Admins if Provisioning is enabled
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAll)) ||
+	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) ||
 		(c.OrgRole == org.RoleAdmin && s.features.IsEnabled(ctx, featuremgmt.FlagProvisioning)) {
 		provisioningNode := &navtree.NavLink{
 			Text:     "Provisioning",
