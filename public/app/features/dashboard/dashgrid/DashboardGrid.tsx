@@ -45,6 +45,7 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private isLayoutInitialized = false;
 
   constructor(props: Props) {
+    console.log('DashboardGrid');
     super(props);
     this.state = {
       panelFilter: undefined,
