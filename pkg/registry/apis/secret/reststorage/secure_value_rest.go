@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	claims "github.com/grafana/authlib/types"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -154,11 +155,15 @@ func (s *SecureValueRest) Create(
 	}
 
 	user, ok := claims.AuthInfoFrom(ctx)
+	if !ok {
+		return nil, fmt.Errorf("missing auth info in context")
+	}
 
 	createdSecureValueMetadata, err := s.secretService.Create(ctx, sv, user.GetUID())
 	if err != nil {
 		return nil, fmt.Errorf("creating secure value %+w", err)
 	}
+
 	return createdSecureValueMetadata, nil
 }
 
@@ -231,9 +236,14 @@ func (s *SecureValueRest) Delete(ctx context.Context, name string, _ rest.Valida
 
 // ValidateSecureValue does basic spec validation of a securevalue.
 func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admission.Operation, decryptersAllowList map[string]struct{}) field.ErrorList {
+	errs := make(field.ErrorList, 0)
 
 	// Operation-specific field validation.
 	switch operation {
+	case admission.Create:
+		errs = validateSecureValueCreate(sv)
+
+	// If we plan to support PATCH-style updates, we shouldn't be requiring fields to be set.
 	case admission.Update:
 		errs = validateSecureValueUpdate(sv, oldSv)
 
