@@ -4,7 +4,7 @@ _build:
 noindex: true
 cascade:
   noindex: true
-description: Installation and configuration guide for Grafana CLI, a command line tool for managing Grafana resources as code.
+description: Configuration guide for Grafana CLI, a command line tool for managing Grafana resources as code.
 keywords:
   - configuration
   - Grafana CLI
