@@ -32,16 +32,14 @@ func ProvideSecureValueMetadataStorage(
 	}
 
 	return &secureValueMetadataStorage{
-		db:      db,
-		newDb:   newDb,
+		db:      newDb,
 		dialect: sqltemplate.DialectForDriver(string(db.GetDBType())),
 	}, nil
 }
 
 // secureValueMetadataStorage is the actual implementation of the secure value (metadata) storage.
 type secureValueMetadataStorage struct {
-	db      db.DB
-	newDb   contracts.Database
+	db      contracts.Database
 	dialect sqltemplate.Dialect
 }
 
@@ -64,7 +62,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueCreate.Name(), err)
 	}
 
-	err = s.newDb.Transaction(ctx, func(ctx context.Context) error {
+	err = s.db.Transaction(ctx, func(ctx context.Context) error {
 		if row.Keeper.Valid {
 			// Validate before inserting that the chosen `keeper` exists.
 
@@ -81,7 +79,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 				return fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 			}
 
-			res, err := s.newDb.QueryContext(ctx, query, req.GetArgs()...)
+			res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 			if err != nil {
 				return fmt.Errorf("getting row: %w", err)
 			}
@@ -92,7 +90,7 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 			}
 		}
 
-		res, err := s.newDb.ExecContext(ctx, query, req.GetArgs()...)
+		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("inserting row: %w", err)
 		}
@@ -154,7 +152,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 		return nil, fmt.Errorf("to update row: %w", err)
 	}
 
-	err = s.newDb.Transaction(ctx, func(ctx context.Context) error {
+	err = s.db.Transaction(ctx, func(ctx context.Context) error {
 		if newRow.Keeper.Valid {
 			// Validate before updating that the new `keeper` exists.
 
@@ -171,7 +169,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 				return fmt.Errorf("execute template %q: %w", sqlKeeperRead.Name(), err)
 			}
 
-			res, err := s.newDb.QueryContext(ctx, query, req.GetArgs()...)
+			res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 			if err != nil {
 				return fmt.Errorf("getting row: %w", err)
 			}
@@ -194,7 +192,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 			return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdate.Name(), err)
 		}
 
-		result, err := s.newDb.ExecContext(ctx, query, req.GetArgs()...)
+		result, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
 			return fmt.Errorf("updating row: %w", err)
 		}
@@ -236,7 +234,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	}
 
 	// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
-	res, err := s.newDb.ExecContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("deleting secure value row: %w", err)
 	}
@@ -259,7 +257,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueList.Name(), err)
 	}
 
-	rows, err := s.newDb.QueryContext(ctx, q, req.GetArgs()...)
+	rows, err := s.db.QueryContext(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("listing secure values: %w", err)
 	}
@@ -310,7 +308,7 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateExternalId.Name(), err)
 	}
 
-	res, err := s.newDb.ExecContext(ctx, q, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
 	}
@@ -339,7 +337,7 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateStatus.Name(), err)
 	}
 
-	res, err := s.newDb.ExecContext(ctx, q, req.GetArgs()...)
+	res, err := s.db.ExecContext(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
 	}
@@ -381,7 +379,7 @@ func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.N
 		return secureValueDB{}, fmt.Errorf("execute template %q: %w", sqlSecureValueRead.Name(), err)
 	}
 
-	res, err := s.newDb.QueryContext(ctx, query, req.GetArgs()...)
+	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return secureValueDB{}, fmt.Errorf("reading row: %w", err)
 	}
