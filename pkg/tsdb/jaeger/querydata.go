@@ -48,7 +48,7 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 
 		// Handle "Search" query type
 		if query.QueryType == "search" {
-			traces, err := dsInfo.JaegerClient.Search(&query)
+			traces, err := dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
 			if err != nil {
 				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 				continue

@@ -114,7 +114,7 @@ func (j *JaegerClient) Operations(s string) ([]string, error) {
 	return operations, err
 }
 
-func (j *JaegerClient) Search(query *JaegerQuery) ([]TraceResponse, error) {
+func (j *JaegerClient) Search(query *JaegerQuery, start, end int64) ([]TraceResponse, error) {
 	jaegerURL, err := url.Parse(j.url)
 	if err != nil {
 		return []TraceResponse{}, fmt.Errorf("failed to parse Jaeger URL: %w", err)
@@ -152,6 +152,13 @@ func (j *JaegerClient) Search(query *JaegerQuery) ([]TraceResponse, error) {
 	urlQuery := jaegerURL.Query()
 	if query.Limit > 0 {
 		urlQuery.Set("limit", fmt.Sprintf("%d", query.Limit))
+	}
+
+	if start > 0 {
+		urlQuery.Set("start", fmt.Sprintf("%d", start))
+	}
+	if end > 0 {
+		urlQuery.Set("end", fmt.Sprintf("%d", end))
 	}
 
 	for key, value := range queryParams {

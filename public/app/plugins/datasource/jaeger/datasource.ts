@@ -80,7 +80,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       return of({ data: [emptyTraceDataFrame] });
     }
 
-    if (config.featureToggles.jaegerBackendMigration) {
+    if (config.featureToggles.jaegerBackendMigration && target.queryType !== 'upload') {
       return super.query({ ...options, targets: [target] }).pipe(
         map((response) => {
           // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response
