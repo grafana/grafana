@@ -121,7 +121,7 @@ export function useGetEssentialsConfiguration(): EssentialsConfigurationData {
 
   function onIntegrationClick(integrationId: string, url: RelativeUrl) {
     const urlToGoWithIntegration = createRelativeUrl(`${url} + ${integrationId}`, {
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
     locationService.push(urlToGoWithIntegration);
   }

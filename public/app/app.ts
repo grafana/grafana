@@ -125,7 +125,7 @@ export class GrafanaApp {
   async init() {
     try {
       // Let iframe container know grafana has started loading
-      parent.postMessage('GrafanaAppInit', '*');
+      window.parent.postMessage('GrafanaAppInit', '*');
 
       const initI18nPromise = initializeI18n(config.bootData.user.language);
       initI18nPromise.then(({ language }) => updateConfig({ language }));

@@ -864,6 +864,7 @@ export class Mousetrap {
   bind = (keys: string | string[], callback: MousetrapCallback, action?: string) => {
     keys = keys instanceof Array ? keys : [keys];
     this._bindMultiple(keys, callback, action);
+    // eslint-disable-next-line no-restricted-globals
     return self;
   };
 

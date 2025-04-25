@@ -141,7 +141,7 @@ export function DataSourceTestingStatus({ testingStatus, exploreUrl, dataSource 
       grafana_version: config.buildInfo.version,
       datasource_uid: dataSource.uid,
       plugin_name: dataSource.typeName,
-      path: location.pathname,
+      path: window.location.pathname,
     });
   };
   const styles = useStyles2(getTestingStatusStyles);

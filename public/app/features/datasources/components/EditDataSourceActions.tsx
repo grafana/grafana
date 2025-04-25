@@ -28,7 +28,7 @@ export function EditDataSourceActions({ uid }: Props) {
               grafana_version: config.buildInfo.version,
               datasource_uid: dataSource.uid,
               plugin_name: dataSource.typeName,
-              path: location.pathname,
+              path: window.location.pathname,
             });
           }}
         >
@@ -45,7 +45,7 @@ export function EditDataSourceActions({ uid }: Props) {
             grafana_version: config.buildInfo.version,
             datasource_uid: dataSource.uid,
             plugin_name: dataSource.typeName,
-            path: location.pathname,
+            path: window.location.pathname,
           });
         }}
       >

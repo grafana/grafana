@@ -113,7 +113,11 @@ export function RuleDetailsMatchingInstances(props: Props) {
 
   // createViewLink returns a link containing the app subpath prefix hence cannot be used
   // in locationService.push as it will result in a double prefix
-  const ruleViewPageLink = createViewLink(namespace.rulesSource, props.rule, location.pathname + location.search);
+  const ruleViewPageLink = createViewLink(
+    namespace.rulesSource,
+    props.rule,
+    window.location.pathname + window.location.search
+  );
   const statsComponents = getComponentsFromStats(instanceTotals);
 
   const resetFilter = () => setAlertState(undefined);

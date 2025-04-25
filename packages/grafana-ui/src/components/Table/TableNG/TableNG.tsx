@@ -156,10 +156,10 @@ export function TableNG(props: TableNGProps) {
       setIsContextMenuOpen(false);
     }
 
-    addEventListener('click', onClick);
+    window.addEventListener('click', onClick);
 
     return () => {
-      removeEventListener('click', onClick);
+      window.removeEventListener('click', onClick);
     };
   }, [isContextMenuOpen]);
 

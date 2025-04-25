@@ -30,7 +30,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
   const enable = () => {
     reportInteraction('plugins_detail_enable_clicked', {
-      path: location.pathname,
+      path: window.location.pathname,
       plugin_id: plugin.id,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
@@ -44,7 +44,7 @@ export function GetStartedWithApp({ plugin }: Props): React.ReactElement | null 
 
   const disable = () => {
     reportInteraction('plugins_detail_disable_clicked', {
-      path: location.pathname,
+      path: window.location.pathname,
       plugin_id: plugin.id,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
