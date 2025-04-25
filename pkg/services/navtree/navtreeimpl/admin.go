@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/correlations"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/navtree"
+	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/serviceaccounts"
 	"github.com/grafana/grafana/pkg/setting"
@@ -60,7 +61,10 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
+
+	// show by default for Grafana Admins -- and for Org Admins if Provisioning is enabled
+	if hasAccess(ac.EvalPermission(ac.ActionSettingsWrite, ac.ScopeSettingsAll)) ||
+		(c.OrgRole == org.RoleAdmin && s.features.IsEnabled(ctx, featuremgmt.FlagProvisioning)) {
 		provisioningNode := &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
