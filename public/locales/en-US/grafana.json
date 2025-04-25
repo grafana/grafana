@@ -2357,7 +2357,7 @@
       },
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
-      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
+      "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
@@ -5053,8 +5053,6 @@
       "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
     },
     "trace-page-header": {
-      "content-httpmethod": "http.method",
-      "content-httpstatuscode": "http.status_code",
       "text-partial-trace": "Partial trace",
       "tooltip-url": "{{url}} or {{target}} or {{path}}"
     },
