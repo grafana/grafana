@@ -113,7 +113,7 @@ export function getDashboardGridStyles(theme: GrafanaTheme2) {
       '&:is(:hover),&:not(:hover)': {
         outline: `2px solid ${theme.colors.primary.border}`,
         outlineOffset: '0px',
-        borderRadius: '2px',
+        borderRadius: theme.shape.radius.default,
       },
     },
 

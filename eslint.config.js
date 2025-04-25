@@ -48,6 +48,7 @@ module.exports = [
       'scripts/grafana-server/tmp',
       '!.betterer.eslint.config.js',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
+      'public/build-swagger', // swagger build output
     ],
   },
   // Conditionally run the betterer rules if enabled in dev's config
