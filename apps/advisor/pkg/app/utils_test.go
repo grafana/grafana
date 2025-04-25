@@ -156,6 +156,7 @@ func TestProcessCheck_IgnoreSteps(t *testing.T) {
 	err = processCheck(ctx, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, "mock", obj.GetAnnotations()[checks.IgnoreStepsAnnotation])
 }
 
 func TestProcessCheckRetry_NoRetry(t *testing.T) {
