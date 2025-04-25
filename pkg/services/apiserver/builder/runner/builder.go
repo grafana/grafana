@@ -71,12 +71,12 @@ func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
 			// Link this group to the internal representation.
 			// This is used for server-side-apply (PATCH), and avoids the error:
 			// "no kind is registered for the type"
-			gvInternal := schema.GroupVersion{
-				Group:   gv.Group,
-				Version: runtime.APIVersionInternal,
-			}
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+			// gvInternal := schema.GroupVersion{
+			// 	Group:   gv.Group,
+			// 	Version: runtime.APIVersionInternal,
+			// }
+			// scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
+			// scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
 
 			if len(kind.SelectableFields()) == 0 {
 				continue
