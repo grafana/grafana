@@ -27,7 +27,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
-  console.log('DashboardEditPaneSplitter');
+  console.log('DashboardEditPaneSplitteraa');
 
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
@@ -72,6 +72,8 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const onBodyRef = (ref: HTMLDivElement) => {
     dashboard.onSetScrollRef(ref);
   };
+
+  console.log({ isEditing });
 
   return (
     <div {...containerProps} style={containerStyle}>
