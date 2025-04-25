@@ -40,7 +40,7 @@ func mustTemplate(filename string) *template.Template {
 }
 
 /*********************************/
-/**-- Encripted Value Queries --**/
+/**-- Encrypted Value Queries --**/
 /*********************************/
 
 // Create Encrypted Value
