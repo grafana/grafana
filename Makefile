@@ -471,6 +471,7 @@ clean: ## Clean up intermediate build artifacts.
 	@echo "cleaning"
 	rm -rf node_modules
 	rm -rf public/build
+	rm -rf public/build-swagger
 
 .PHONY: gen-ts
 gen-ts:
