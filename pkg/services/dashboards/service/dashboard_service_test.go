@@ -1119,6 +1119,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 			},
 			"spec": map[string]any{},
 		}}
+		fakeStore.On("UnprovisionDashboard", mock.Anything, int64(1)).Return(nil).Once()
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": dashboardv0.APIVERSION,
@@ -1169,6 +1170,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		err := service.UnprovisionDashboard(ctx, 1)
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
+		fakeStore.AssertExpectations(t)
 	})
 }
 

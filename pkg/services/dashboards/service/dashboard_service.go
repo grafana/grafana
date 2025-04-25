@@ -1161,8 +1161,11 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 				UpdatedAt: time.Now(),
 				Dashboard: dash.Data,
 			}, nil, true)
+			if err != nil {
+				return err
+			}
 
-			return err
+			return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 		}
 
 		return dashboards.ErrDashboardNotFound
