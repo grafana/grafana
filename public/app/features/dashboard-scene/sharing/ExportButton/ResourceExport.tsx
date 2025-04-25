@@ -42,19 +42,20 @@ export function ResourceExport({
   return (
     <Stack gap={2} direction="column">
       <Stack gap={1} direction="column">
-        <Stack alignItems="center">
-          <Label>{switchExportModeLabel}</Label>
-          <RadioButtonGroup
-            options={[
-              { label: 'Classic', value: ExportMode.Classic },
-              { label: 'V1 Resource', value: ExportMode.V1Resource },
-              { label: 'V2 Resource', value: ExportMode.V2Resource },
-            ]}
-            value={isV2Dashboard ? ExportMode.V2Resource : exportMode}
-            onChange={(value) => onExportModeChange(value)}
-            disabled={isV2Dashboard}
-          />
-        </Stack>
+        {!isV2Dashboard && (
+          <Stack alignItems="center">
+            <Label>{switchExportModeLabel}</Label>
+            <RadioButtonGroup
+              options={[
+                { label: 'Classic', value: ExportMode.Classic },
+                { label: 'V1 Resource', value: ExportMode.V1Resource },
+                { label: 'V2 Resource', value: ExportMode.V2Resource },
+              ]}
+              value={exportMode}
+              onChange={(value) => onExportModeChange(value)}
+            />
+          </Stack>
+        )}
         <Stack gap={1} alignItems="center">
           <Label>{switchExportLabel}</Label>
           <RadioButtonGroup
