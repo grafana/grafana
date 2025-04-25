@@ -21,9 +21,13 @@ export const PrometheusAnnotationSupport = (ds: PrometheusDatasource): Annotatio
     prepareAnnotation(json: AnnotationQuery<PromQuery>): AnnotationQuery<PromQuery> {
       // Initialize target if it doesn't exist
       if (!json.target) {
-        json.target = {} as PromQuery;
+        json.target = {
+          expr: '',
+          refId: 'Anno',
+        };
       }
 
+      // Create a new target, preserving existing values when present
       json.target = {
         ...json.target,
         refId: json.target.refId || json.refId || 'Anno',
@@ -31,6 +35,7 @@ export const PrometheusAnnotationSupport = (ds: PrometheusDatasource): Annotatio
         interval: json.target.interval || json.step || json.target.interval,
       };
 
+      // Remove properties that have been transferred to target
       delete json.expr;
       delete json.step;
 

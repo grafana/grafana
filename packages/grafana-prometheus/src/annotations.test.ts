@@ -48,8 +48,7 @@ describe('PrometheusAnnotationSupport', () => {
   });
 
   describe('prepareAnnotation', () => {
-    it('should set up target object with properties from json', () => {
-      // Create a properly typed object and add custom properties
+    it('should respect existing target values and not override them', () => {
       const annotation: AnnotationQuery<PromQuery> & { expr?: string; step?: string } = {
         expr: 'rate(prometheus_http_requests_total[5m])',
         step: '10s',
@@ -58,8 +57,8 @@ describe('PrometheusAnnotationSupport', () => {
           expr: 'original_expr',
           refId: 'originalRefId',
           legendFormat: 'test',
+          interval: 'original_interval',
         },
-        // Required AnnotationQuery properties
         datasource: { uid: 'prometheus' },
         enable: true,
         name: 'Prometheus Annotation',
@@ -68,9 +67,39 @@ describe('PrometheusAnnotationSupport', () => {
 
       const result = annotationSupport.prepareAnnotation!(annotation);
 
-      // Check target properties are set correctly
+      // Check target properties are preserved when already set
       expect(result.target?.refId).toBe('originalRefId');
       expect(result.target?.expr).toBe('original_expr');
+      expect(result.target?.interval).toBe('original_interval');
+      expect(result.target?.legendFormat).toBe('test');
+
+      // Check the original properties are removed
+      expect(result.expr).toBeUndefined();
+      expect(result.step).toBeUndefined();
+    });
+
+    it('should transfer properties from json to target when target values are not set', () => {
+      const annotation: AnnotationQuery<PromQuery> & { expr?: string; step?: string } = {
+        expr: 'rate(prometheus_http_requests_total[5m])',
+        step: '10s',
+        refId: 'testRefId',
+        target: {
+          expr: '', // Empty string - should be overridden
+          refId: '', // Empty string - should be overridden
+          legendFormat: 'test',
+          // interval not set
+        },
+        datasource: { uid: 'prometheus' },
+        enable: true,
+        name: 'Prometheus Annotation',
+        iconColor: 'red',
+      };
+
+      const result = annotationSupport.prepareAnnotation!(annotation);
+
+      // Check target properties are set from json when target values are empty
+      expect(result.target?.refId).toBe('testRefId');
+      expect(result.target?.expr).toBe('rate(prometheus_http_requests_total[5m])');
       expect(result.target?.interval).toBe('10s');
       expect(result.target?.legendFormat).toBe('test');
 
@@ -79,7 +108,7 @@ describe('PrometheusAnnotationSupport', () => {
       expect(result.step).toBeUndefined();
     });
 
-    it('should use default refId if not provided', () => {
+    it('should use default refId if not provided in either target or json', () => {
       const annotation: AnnotationQuery<PromQuery> & { expr?: string; step?: string } = {
         expr: 'up',
         step: '30s',
@@ -96,6 +125,8 @@ describe('PrometheusAnnotationSupport', () => {
       const result = annotationSupport.prepareAnnotation!(annotation);
 
       expect(result.target?.refId).toBe('Anno');
+      expect(result.target?.expr).toBe('up');
+      expect(result.target?.interval).toBe('30s');
     });
 
     it('should handle undefined target', () => {
@@ -134,15 +165,14 @@ describe('PrometheusAnnotationSupport', () => {
       expect(result.target?.interval).toBeUndefined();
     });
 
-    it('should not override existing values in target', () => {
+    it('should handle empty strings vs undefined values correctly', () => {
       const annotation: AnnotationQuery<PromQuery> & { expr?: string; step?: string } = {
-        expr: 'rate(prometheus_http_requests_total[5m])',
-        step: '10s',
-        refId: 'jsonRefId',
+        expr: 'test_expr',
+        step: '5s',
         target: {
-          expr: 'existing_expr',
-          refId: 'existing_refId',
-          interval: 'existing_interval',
+          expr: '', // Empty string
+          refId: 'target_refId',
+          // interval not set at all
         },
         datasource: { uid: 'prometheus' },
         enable: true,
@@ -152,14 +182,14 @@ describe('PrometheusAnnotationSupport', () => {
 
       const result = annotationSupport.prepareAnnotation!(annotation);
 
-      // Check existing target values are preserved
-      expect(result.target?.refId).toBe('existing_refId');
-      expect(result.target?.expr).toBe('existing_expr');
-      expect(result.target?.interval).toBe('existing_interval');
+      // refId is set in target - should be preserved
+      expect(result.target?.refId).toBe('target_refId');
 
-      // Check the original properties are removed
-      expect(result.expr).toBeUndefined();
-      expect(result.step).toBeUndefined();
+      // expr is empty in target - should be replaced with json.expr
+      expect(result.target?.expr).toBe('test_expr');
+
+      // interval not set in target - should be set from json.step
+      expect(result.target?.interval).toBe('5s');
     });
   });
 
@@ -682,7 +712,7 @@ describe('PrometheusAnnotationSupport', () => {
 });
 
 // Helper function to create fields for testing
-function createField(name: string, type: FieldType, values: any[], labels = {}): Field {
+function createField(name: string, type: FieldType, values: unknown[], labels = {}): Field {
   return {
     name,
     type,
