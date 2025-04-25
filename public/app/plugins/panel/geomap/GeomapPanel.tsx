@@ -15,6 +15,8 @@ import { Subscription } from 'rxjs';
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { VariablesChanged } from 'app/features/variables/types';
 import { PanelEditExitedEvent } from 'app/types/events';
 
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
@@ -68,6 +70,14 @@ export class GeomapPanel extends Component<Props, State> {
     this.subs.add(
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
+          this.initMapRef(this.mapDiv);
+        }
+      })
+    );
+    // Subscribe to variable changes
+    this.subs.add(
+      appEvents.subscribe(VariablesChanged, () => {
+        if (this.mapDiv) {
           this.initMapRef(this.mapDiv);
         }
       })
