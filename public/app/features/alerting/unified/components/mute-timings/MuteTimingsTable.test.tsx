@@ -92,8 +92,8 @@ describe('MuteTimingsTable', () => {
       expect(await screen.findByTestId('dynamic-table')).toBeInTheDocument();
 
       expect(await screen.findByText('Provisioned')).toBeInTheDocument();
-      expect(screen.queryByText(/no mute timings configured/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/you haven't created any mute timings yet/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/no time intervals configured/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/you haven't created any time in intervals yet/i)).not.toBeInTheDocument();
     });
 
     it('shows error when mute timings cannot load', async () => {
@@ -123,7 +123,7 @@ describe('MuteTimingsTable', () => {
     it('shows empty state when no mute timings are configured', async () => {
       setTimeIntervalsListEmpty();
       renderWithProvider();
-      expect(await screen.findByText(/you haven't created any mute timings yet/i)).toBeInTheDocument();
+      expect(await screen.findByText(/you haven't created any time intervals yet/i)).toBeInTheDocument();
     });
   });
 
