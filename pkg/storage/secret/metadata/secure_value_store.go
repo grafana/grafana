@@ -16,8 +16,8 @@ import (
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 
 func ProvideSecureValueMetadataStorage(
-	db db.DB,
-	newDb contracts.Database,
+	oldDb db.DB,
+	db contracts.Database,
 	features featuremgmt.FeatureToggles,
 ) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
@@ -27,13 +27,13 @@ func ProvideSecureValueMetadataStorage(
 
 	// Pass `cfg` as `nil` because it is not used. If it ends up being used, it will panic.
 	// This is intended, as we shouldn't need any configuration settings here for secrets migrations.
-	if err := migrator.MigrateSecretSQL(db.GetEngine(), nil); err != nil {
+	if err := migrator.MigrateSecretSQL(oldDb.GetEngine(), nil); err != nil {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return &secureValueMetadataStorage{
-		db:      newDb,
-		dialect: sqltemplate.DialectForDriver(string(db.GetDBType())),
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 	}, nil
 }
 
