@@ -19,7 +19,7 @@ type Worker struct {
 	outboxQueue                contracts.OutboxQueue
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
-	keepers                    map[contracts.KeeperType]contracts.Keeper
+	keeperService              contracts.KeeperService
 }
 
 type Config struct {
@@ -36,7 +36,7 @@ func NewWorker(
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keepers map[contracts.KeeperType]contracts.Keeper,
+	keeperService contracts.KeeperService,
 ) *Worker {
 	return &Worker{
 		config:                     config,
@@ -45,7 +45,7 @@ func NewWorker(
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
-		keepers:                    keepers,
+		keeperService:              keeperService,
 	}
 }
 
@@ -87,14 +87,17 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	keeperType, keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
+	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
 
-	keeper := w.keepers[keeperType]
+	keeper, err := w.keeperService.KeeperForConfig(keeperCfg)
+	if err != nil {
+		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
+	}
 	if keeper == nil {
-		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperType)
+		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperCfg.Type())
 	}
 
 	switch message.Type {
@@ -111,6 +114,12 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 			return fmt.Errorf("setting secret metadata externalID: externalID=%+v message=%+v %w", externalID, message, err)
 		}
 
+		// Setting the status to Succeeded must be the last action
+		// since it acts as a fence to clients.
+		if err := w.secureValueMetadataStorage.SetStatusSucceeded(ctx, xkube.Namespace(message.Namespace), message.Name); err != nil {
+			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
+		}
+
 	case contracts.UpdateSecretOutboxMessage:
 		// TODO: DECRYPT HERE
 		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
@@ -119,22 +128,25 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 			return fmt.Errorf("calling keeper to update secret: %w", err)
 		}
 
+		// Setting the status to Succeeded must be the last action
+		// since it acts as a fence to clients.
+		if err := w.secureValueMetadataStorage.SetStatusSucceeded(ctx, xkube.Namespace(message.Namespace), message.Name); err != nil {
+			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
+		}
+
 	case contracts.DeleteSecretOutboxMessage:
 		if err := keeper.Delete(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID)); err != nil {
 			return fmt.Errorf("calling keeper to delete secret: %w", err)
+		}
+		if err := w.secureValueMetadataStorage.Delete(ctx, xkube.Namespace(message.Namespace), message.Name); err != nil {
+			return fmt.Errorf("deleting secure value metadata: %+w", err)
 		}
 
 	default:
 		return fmt.Errorf("unhandled message type: %s", message.Type)
 	}
 
-	// Setting the status to Succeeded must be the last action
-	// since it acts as a fence to clients.
-	if err := w.secureValueMetadataStorage.SetStatusSucceeded(ctx, xkube.Namespace(message.Namespace), message.Name); err != nil {
-		return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
-	}
-
-	// Delete the message from the queue after setting the status because
+	// Delete the message from the queue after completing all operations because
 	// if the message is deleted first, the response may be lost,
 	// resulting in an error, but since the message was actually deleted
 	// the worker would never retry.

@@ -120,7 +120,7 @@ func mustCreateUsers(t *testing.T, helper *apis.K8sTestHelper, permissionMap map
 	return mustCreateUsersWithOrg(t, helper, orgID, permissionMap)
 }
 
-func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName string) *unstructured.Unstructured {
+func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis.User, keeperName ...string) *unstructured.Unstructured {
 	t.Helper()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -132,7 +132,9 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 	})
 
 	testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
-	testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeperName
+	if len(keeperName) == 1 {
+		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeperName[0]
+	}
 
 	raw, err := secureValueClient.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
 	require.NoError(t, err)
@@ -148,6 +150,8 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User, specType map[string]any, testFile string) *unstructured.Unstructured {
 	t.Helper()
 
+	require.NotEmpty(t, testFile, "testFile must not be empty")
+
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 
@@ -156,9 +160,6 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User
 		GVR:  gvrKeepers,
 	})
 
-	if testFile == "" {
-		testFile = "testdata/keeper-sql-generate.yaml"
-	}
 	testKeeper := helper.LoadYAMLOrJSONFile(testFile)
 	if specType != nil {
 		testKeeper.Object["spec"] = specType

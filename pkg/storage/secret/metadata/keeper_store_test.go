@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -40,7 +39,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
 			Description: "description",
-			SQL:         &secretv0alpha1.SQLKeeperConfig{Encryption: &secretv0alpha1.Encryption{}},
+			AWS:         &secretv0alpha1.AWSKeeperConfig{},
 		},
 	}
 	testKeeper.Name = "kp-test"
@@ -48,18 +47,17 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	_, err = keeperMetadataStorage.Create(ctx, testKeeper)
 	require.NoError(t, err)
 
-	t.Run("get default sql keeper config", func(t *testing.T) {
-		keeperType, keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", nil)
+	t.Run("get the system keeper config", func(t *testing.T) {
+		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", nil)
 		require.NoError(t, err)
-		require.Equal(t, contracts.SQLKeeperType, keeperType)
 		require.Nil(t, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
-		keeper := "kp-test"
-		keeperType, keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", &keeper)
+		keeperTest := "kp-test"
+		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", &keeperTest)
 		require.NoError(t, err)
-		require.Equal(t, contracts.SQLKeeperType, keeperType)
 		require.NotNil(t, keeperConfig)
+		require.NotEmpty(t, keeperConfig.Type())
 	})
 }

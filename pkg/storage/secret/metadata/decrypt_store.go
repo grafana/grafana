@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
@@ -17,7 +16,7 @@ import (
 // TODO: this should be a "decrypt" service rather, so that other services can wire and call it.
 func ProvideDecryptStorage(
 	features featuremgmt.FeatureToggles,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	decryptAuthorizer contracts.DecryptAuthorizer,
@@ -27,18 +26,13 @@ func ProvideDecryptStorage(
 		return &decryptStorage{}, nil
 	}
 
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("failed to get keepers: %w", err)
-	}
-
 	if decryptAuthorizer == nil {
 		return nil, fmt.Errorf("a decrypt authorizer is required")
 	}
 
 	return &decryptStorage{
 		keeperMetadataStorage:      keeperMetadataStorage,
-		keepers:                    keepers,
+		keeperService:              keeperService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		decryptAuthorizer:          decryptAuthorizer,
 	}, nil
@@ -47,7 +41,7 @@ func ProvideDecryptStorage(
 // decryptStorage is the actual implementation of the decrypt storage.
 type decryptStorage struct {
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
-	keepers                    map[contracts.KeeperType]contracts.Keeper
+	keeperService              contracts.KeeperService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	decryptAuthorizer          contracts.DecryptAuthorizer
 }
@@ -72,13 +66,13 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotAuthorized
 	}
 
-	keeperType, keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper)
 	if err != nil {
 		return "", contracts.ErrDecryptFailed
 	}
 
-	keeper, ok := s.keepers[keeperType]
-	if !ok {
+	keeper, err := s.keeperService.KeeperForConfig(keeperConfig)
+	if err != nil {
 		return "", contracts.ErrDecryptFailed
 	}
 
