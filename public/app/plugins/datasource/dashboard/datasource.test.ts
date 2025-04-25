@@ -103,7 +103,7 @@ describe('DashboardDatasource', () => {
     expect(first).not.toHaveBeenCalled();
   });
 
-  it('Should clone series so it doesnt mutate the original dataframe', () => {
+  it('Should not mutate field state in dataframe', () => {
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     let rsp: DataQueryResponse | undefined;
