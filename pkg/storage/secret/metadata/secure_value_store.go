@@ -132,7 +132,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueRead.Name(), err)
 	}
 
-	res, err := s.db.GetSqlxSession().Query(ctx, query, req.GetArgs()...)
+	res, err := s.newDb.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("reading row: %w", err)
 	}
@@ -267,7 +267,7 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 	}
 
 	// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
-	res, err := s.db.GetSqlxSession().Exec(ctx, query, req.GetArgs()...)
+	res, err := s.newDb.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("deleting secure value row: %w", err)
 	}
@@ -290,7 +290,7 @@ func (s *secureValueMetadataStorage) List(ctx context.Context, namespace xkube.N
 		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueList.Name(), err)
 	}
 
-	rows, err := s.db.GetSqlxSession().Query(ctx, q, req.GetArgs()...)
+	rows, err := s.newDb.QueryContext(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return nil, fmt.Errorf("listing secure values: %w", err)
 	}
@@ -341,7 +341,7 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateExternalId.Name(), err)
 	}
 
-	res, err := s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	res, err := s.newDb.ExecContext(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("setting secure value external id: namespace=%+v name=%+v externalID=%+v %w", namespace, name, externalID, err)
 	}
@@ -370,7 +370,7 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueUpdateStatus.Name(), err)
 	}
 
-	res, err := s.db.GetSqlxSession().Exec(ctx, q, req.GetArgs()...)
+	res, err := s.newDb.ExecContext(ctx, q, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("setting secure value status to Succeeded id: namespace=%+v name=%+v %w", namespace, name, err)
 	}
