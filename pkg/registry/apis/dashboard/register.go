@@ -28,7 +28,6 @@ import (
 	dashboardv2alpha1 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -51,8 +50,7 @@ var (
 
 // This is used just so wire has something unique to return
 type DashboardsAPIBuilder struct {
-	dashboardService dashboards.DashboardService
-	features         featuremgmt.FeatureToggles
+	features featuremgmt.FeatureToggles
 
 	accessControl                accesscontrol.AccessControl
 	legacy                       *DashboardStorage
@@ -61,7 +59,6 @@ type DashboardsAPIBuilder struct {
 	scheme                       *runtime.Scheme
 	search                       *SearchHandler
 
-	log log.Logger
 	reg prometheus.Registerer
 }
 
@@ -69,7 +66,6 @@ func RegisterAPIService(
 	cfg *setting.Cfg,
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
-	dashboardService dashboards.DashboardService,
 	provisioningDashboardService dashboards.DashboardProvisioningService,
 	accessControl accesscontrol.AccessControl,
 	provisioning provisioning.ProvisioningService,
