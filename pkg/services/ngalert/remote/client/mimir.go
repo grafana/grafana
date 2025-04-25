@@ -47,6 +47,7 @@ type Mimir struct {
 	metrics       *metrics.RemoteAlertmanager
 	promoteConfig bool
 	externalURL   string
+	smtpFrom      string
 	staticHeaders map[string]string
 }
 
@@ -58,6 +59,7 @@ type Config struct {
 	Logger        log.Logger
 	PromoteConfig bool
 	ExternalURL   string
+	SmtpFrom      string
 	StaticHeaders map[string]string
 }
 
@@ -102,6 +104,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 		metrics:       metrics,
 		promoteConfig: cfg.PromoteConfig,
 		externalURL:   cfg.ExternalURL,
+		smtpFrom:      cfg.SmtpFrom,
 		staticHeaders: cfg.StaticHeaders,
 	}, nil
 }

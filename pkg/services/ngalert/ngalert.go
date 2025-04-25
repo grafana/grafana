@@ -216,6 +216,7 @@ func (ng *AlertNG) init() error {
 						PromoteConfig:     true,
 						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 						ExternalURL:       ng.Cfg.AppURL,
+						SmtpFrom:          ng.Cfg.Smtp.FromAddress,
 						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
@@ -252,6 +253,7 @@ func (ng *AlertNG) init() error {
 						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 						ExternalURL:       ng.Cfg.AppURL,
+						SmtpFrom:          ng.Cfg.Smtp.FromAddress,
 						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
@@ -290,6 +292,7 @@ func (ng *AlertNG) init() error {
 						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
 						ExternalURL:       ng.Cfg.AppURL,
+						SmtpFrom:          ng.Cfg.Smtp.FromAddress,
 						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 					}
 					remoteAM, err := createRemoteAlertmanager(cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)

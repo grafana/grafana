@@ -178,6 +178,7 @@ func TestApplyConfig(t *testing.T) {
 		PromoteConfig: true,
 		SyncInterval:  1 * time.Hour,
 		ExternalURL:   "https://test.grafana.com",
+		SmtpFrom:      "test-instance@grafana.net",
 		StaticHeaders: map[string]string{"Header-1": "Value-1", "Header-2": "Value-2"},
 	}
 
@@ -209,8 +210,9 @@ func TestApplyConfig(t *testing.T) {
 	require.JSONEq(t, testGrafanaConfigWithSecret, string(amCfg))
 	require.True(t, configSent.Promoted)
 
-	// Grafana's URL and static headers should be sent alongside the configuration.
+	// Grafana's URL, email "from" address, and static headers should be sent alongside the configuration.
 	require.Equal(t, cfg.ExternalURL, configSent.ExternalURL)
+	require.Equal(t, cfg.SmtpFrom, configSent.SmtpFrom)
 	require.Equal(t, cfg.StaticHeaders, configSent.StaticHeaders)
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,

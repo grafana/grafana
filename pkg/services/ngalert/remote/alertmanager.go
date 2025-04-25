@@ -86,7 +86,8 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
-	// StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	SmtpFrom      string
 	StaticHeaders map[string]string
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
@@ -126,6 +127,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
+		SmtpFrom:      cfg.SmtpFrom,
 		StaticHeaders: cfg.StaticHeaders,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
