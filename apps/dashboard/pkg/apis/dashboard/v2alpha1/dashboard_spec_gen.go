@@ -73,7 +73,7 @@ type DashboardAnnotationPanelFilter struct {
 	// Should the specified panels be included or excluded
 	Exclude *bool `json:"exclude,omitempty"`
 	// Panel IDs that should be included or excluded
-	Ids []uint8 `json:"ids"`
+	Ids []uint32 `json:"ids"`
 }
 
 // NewDashboardAnnotationPanelFilter creates a new DashboardAnnotationPanelFilter object.
