@@ -165,7 +165,7 @@ func (s *ModuleServer) Run() error {
 	})
 
 	m.RegisterModule(modules.FrontendServer, func() (services.Service, error) {
-		return frontend.ProvideFrontendService(s.cfg, s.promGatherer, nil) // FIXME? include license for CDN?
+		return frontend.ProvideFrontendService(s.cfg, s.promGatherer, s.license)
 	})
 
 	m.RegisterModule(modules.All, nil)
