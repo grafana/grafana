@@ -36,7 +36,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
     const json = await model.getExportableDashboardJson();
 
     return json;
-  }, [isSharingExternally]);
+  }, [isSharingExternally, exportMode]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
   const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {

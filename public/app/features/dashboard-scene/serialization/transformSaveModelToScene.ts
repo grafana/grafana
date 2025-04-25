@@ -22,6 +22,7 @@ import {
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
@@ -69,7 +70,12 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
 
   const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
-  scene.setInitialSaveModel(rsp.dashboard);
+
+  const apiVersion = config.featureToggles.kubernetesDashboards
+    ? `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`
+    : undefined;
+
+  scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 
   return scene;
 }

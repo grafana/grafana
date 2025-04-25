@@ -2,7 +2,7 @@ import { AsyncState } from 'react-use/lib/useAsync';
 
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import { Alert, Label, RadioButtonGroup, Stack, TextLink } from '@grafana/ui';
+import { Alert, Label, RadioButtonGroup, Stack, Switch, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
@@ -12,6 +12,7 @@ interface Props {
   dashboardJson: AsyncState<{
     json: Dashboard | DashboardJson | DashboardV2Spec | ExportableResource | { error: unknown };
     hasLibraryPanels?: boolean;
+    initialSaveModelVersion: 'v1' | 'v2';
   }>;
   isSharingExternally: boolean;
   exportMode: ExportMode;
@@ -31,6 +32,7 @@ export function ResourceExport({
   onViewYAML,
 }: Props) {
   const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
+  const initialSaveModelVersion = dashboardJson.value?.initialSaveModelVersion;
   const isV2Dashboard =
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
@@ -42,7 +44,7 @@ export function ResourceExport({
   return (
     <Stack gap={2} direction="column">
       <Stack gap={1} direction="column">
-        {!isV2Dashboard && (
+        {initialSaveModelVersion === 'v1' && (
           <Stack alignItems="center">
             <Label>{switchExportModeLabel}</Label>
             <RadioButtonGroup
@@ -57,17 +59,6 @@ export function ResourceExport({
           </Stack>
         )}
         <Stack gap={1} alignItems="center">
-          <Label>{switchExportLabel}</Label>
-          <RadioButtonGroup
-            options={[
-              { label: 'Internal', value: 'internal' },
-              { label: 'External', value: 'external' },
-            ]}
-            value={isSharingExternally ? 'external' : 'internal'}
-            onChange={onShareExternallyChange}
-          />
-        </Stack>
-        <Stack gap={1} alignItems="center">
           <Label>{switchExportFormatLabel}</Label>
           <RadioButtonGroup
             options={[
@@ -79,6 +70,12 @@ export function ResourceExport({
             disabled={exportMode === ExportMode.Classic}
           />
         </Stack>
+        {(isV2Dashboard || exportMode === ExportMode.V2Resource) && (
+          <Stack gap={1} alignItems="center">
+            <Label>{switchExportLabel}</Label>
+            <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />
+          </Stack>
+        )}
       </Stack>
 
       {showV2LibPanelAlert && (

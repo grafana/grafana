@@ -19,13 +19,18 @@ import {
   TextLink,
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';
+import { K8S_V2_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v2';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
-import { DashboardMeta } from 'app/types';
 
+import { DashboardScene } from '../scene/DashboardScene';
+import { makeExportableV2 } from '../scene/export/exporters';
+import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
+import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
@@ -37,10 +42,13 @@ export enum ExportMode {
   V2Resource = 'v2-resource',
 }
 
-interface ExportableResource {
+export interface ExportableResource {
   kind: 'Dashboard';
-  spec: DashboardModel | DashboardV2Spec;
-  metadata: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'];
+  spec: Dashboard | DashboardModel | DashboardV2Spec | { error: unknown };
+  metadata: DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta>;
+  apiVersion: string;
+  // A placeholder for now because as code tooling expects it
+  status: {};
 }
 
 export interface ShareExportTabState extends SceneShareTabState {
@@ -104,63 +112,84 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
   public getExportableDashboardJson = async (): Promise<{
     json: Dashboard | DashboardJson | DashboardV2Spec | ExportableResource | { error: unknown };
     hasLibraryPanels?: boolean;
+    initialSaveModelVersion: 'v1' | 'v2';
   }> => {
     const { isSharingExternally, exportMode } = this.state;
 
     const scene = getDashboardSceneFor(this);
     const exportableDashboard = await scene.serializer.makeExportableExternally(scene);
+    const initialSaveModel = scene.getInitialSaveModel();
+    const initialSaveModelVersion = initialSaveModel && isDashboardV2Spec(initialSaveModel) ? 'v2' : 'v1';
     const origDashboard = scene.serializer.getSaveModel(scene);
     const exportable = isSharingExternally ? exportableDashboard : origDashboard;
+    const metadata = getMetadata(scene);
 
     if (isDashboardV2Spec(origDashboard) && 'elements' in exportable) {
       this.setState({
         exportMode: ExportMode.V2Resource,
       });
 
-      const metadata = scene.serializer.metadata ?? {};
-
       return {
         json: {
           kind: 'Dashboard',
           metadata,
           spec: exportable,
+          status: {},
+          apiVersion: scene.serializer.apiVersion ?? '',
         },
+        initialSaveModelVersion,
         hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),
       };
     }
 
     if (exportMode === ExportMode.V1Resource) {
-      // need to check if the dashboard is v1 or v2
-      // TODO:if v1, need to get v1 serializer - just scene.serializer will work
-      // also external export for v1 won't work because we don't support stateless v1 exports
-      const metadata = scene.serializer.metadata ?? {};
+      const spec = transformSceneToSaveModel(scene);
+
       return {
         json: {
           kind: 'Dashboard',
           metadata,
-          spec: exportable,
+          spec,
+          status: {},
+          apiVersion: scene.serializer.apiVersion ?? '',
         },
+        initialSaveModelVersion,
         hasLibraryPanels: undefined,
       };
     }
 
     if (exportMode === ExportMode.V2Resource) {
-      const metadata = scene.serializer.metadata ?? {};
-      // transform the exportable to v2
+      const spec = transformSceneToSaveModelSchemaV2(scene);
+      const specCopy = JSON.parse(JSON.stringify(spec));
+      const statelessSpec = await makeExportableV2(specCopy);
+      const exportableV2 = isSharingExternally ? statelessSpec : spec;
 
       return {
         json: {
           kind: 'Dashboard',
           metadata,
-          spec: exportable,
+          spec: exportableV2,
+          status: {},
+          // Forcing V2 version here because in this case we have v1 serializer
+          apiVersion: `${K8S_V2_DASHBOARD_API_CONFIG.group}/${K8S_V2_DASHBOARD_API_CONFIG.version}`,
         },
+        initialSaveModelVersion,
       };
     }
 
-    // Classic (legacy) mode
+    if (exportMode === ExportMode.Classic) {
+      return {
+        json: origDashboard,
+        hasLibraryPanels: undefined,
+        initialSaveModelVersion,
+      };
+    }
+
+    // legacy mode
     return {
       json: exportable,
       hasLibraryPanels: undefined,
+      initialSaveModelVersion,
     };
   };
 
@@ -184,6 +213,19 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       externally: isSharingExternally,
     });
   };
+}
+
+function getMetadata(
+  scene: DashboardScene
+): DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta> {
+  if (scene.serializer.metadata) {
+    if ('k8s' in scene.serializer.metadata) {
+      return scene.serializer.metadata.k8s ?? {};
+    } else if ('annotations' in scene.serializer.metadata) {
+      return scene.serializer.metadata;
+    }
+  }
+  return {};
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
