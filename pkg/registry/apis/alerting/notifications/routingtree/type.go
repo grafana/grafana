@@ -6,7 +6,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/routingtree/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
