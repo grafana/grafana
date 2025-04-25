@@ -294,6 +294,8 @@ export class TimeSrv {
   setTime(time: RawTimeRange, updateUrl = true) {
     extend(this.time, time);
 
+    console.log({ time });
+
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
       this.oldRefresh = this.timeModel?.refresh || this.oldRefresh;
