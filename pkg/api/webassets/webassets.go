@@ -60,7 +60,11 @@ func GetWebAssets(ctx context.Context, cfg *setting.Cfg, license licensing.Licen
 	if result == nil {
 		result, err = readWebAssetsFromFile(filepath.Join(cfg.StaticRootPath, "build", "assets-manifest.json"))
 		if err == nil {
-			cdn, _ = cfg.GetContentDeliveryURL(license.ContentDeliveryPrefix())
+			cdnprefix := "grafana"
+			if license != nil {
+				cdnprefix = license.ContentDeliveryPrefix()
+			}
+			cdn, _ = cfg.GetContentDeliveryURL(cdnprefix)
 			if cdn != "" {
 				result.SetContentDeliveryURL(cdn)
 			}
