@@ -250,7 +250,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 	// TODO: add more tests for keeper failure scenarios, lets see how the async work will change this though.
 }
 
-func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decryptStorage, contracts.SecureValueMetadataStorage, secretkeeper.OSSKeeperService, contracts.KeeperMetadataStorage) {
+func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decryptStorage, contracts.SecureValueMetadataStorage, *secretkeeper.OSSKeeperService, contracts.KeeperMetadataStorage) {
 	t.Helper()
 
 	// Initialize infra dependencies
@@ -335,19 +335,19 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 }
 
 // This helper will also delete the secureValue from the db when the test is done.
-func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, keeperService secretkeeper.OSSKeeperService, keeperMetdataStorage contracts.KeeperMetadataStorage, sv *secretv0alpha1.SecureValue, actorUID string) {
+func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, keeperService *secretkeeper.OSSKeeperService, keeperMetadataStorage contracts.KeeperMetadataStorage, sv *secretv0alpha1.SecureValue, actorUID string) {
 	t.Helper()
 
 	_, err := db.Create(ctx, sv, actorUID)
 	require.NoError(t, err)
 
-	keepers, err := keeperService.GetKeepers()
 	require.NoError(t, err)
 
 	// Since creating secrets is async, store the secret in the keeper synchronously to make testing easier
-	keeper := keepers[contracts.KeeperType(*sv.Spec.Keeper)]
-	_, cfg, err := keeperMetdataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
+	cfg, err := keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
 	require.NoError(t, err)
+
+	keeper, err := keeperService.KeeperForConfig(cfg)
 
 	externalID, err := keeper.Store(ctx, cfg, sv.Namespace, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
 	require.NoError(t, err)
