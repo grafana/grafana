@@ -1,11 +1,4 @@
-export interface ModifyActionConfig {
-  type: 'modify';
-  path: string;
-  pattern: string;
-  template?: string;
-  templateFile?: string;
-  data?: Record<string, unknown>;
-}
+import type { AddActionConfig, ModifyActionConfig } from 'plop';
 
 export interface FormatFilesActionConfig {
   type: 'formatFiles';
@@ -18,11 +11,7 @@ export interface RunGenerateApisActionConfig {
 }
 
 // Union type of all possible action configs
-export type ActionConfig =
-  | { type: 'add'; path: string; templateFile: string; data?: Record<string, unknown> }
-  | ModifyActionConfig
-  | FormatFilesActionConfig
-  | RunGenerateApisActionConfig;
+export type ActionConfig = AddActionConfig | ModifyActionConfig | FormatFilesActionConfig | RunGenerateApisActionConfig;
 
 export interface PlopData {
   groupName: string;
