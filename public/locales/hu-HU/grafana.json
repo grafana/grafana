@@ -2680,9 +2680,6 @@
       "clear": "Keresés és szűrők törlése",
       "text": "Nincs találat a lekérdezésre"
     },
-    "soft-delete": {
-      "success": "A(z) {{name}} irányítópult áthelyezve a Nemrég töröltek közé"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {
