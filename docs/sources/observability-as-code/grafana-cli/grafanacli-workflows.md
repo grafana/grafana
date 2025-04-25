@@ -38,6 +38,11 @@ Currently, the `serve` command only works with dashboards.
 
 Use these steps to migrate resources between environments:
 
+{{< admonition type="note" >}}
+Resources are pulled and pushed from the `./resources` directory by default.
+This directory can be configured with the `--directory`/`-d` flags.
+{{< /admonition >}}
+
 1. Make changes to dashboards and other resources using the Grafana UI in your **development instance**.
 1. Pull those resources from the development environment to your local machine:
 
@@ -59,7 +64,7 @@ Use these steps to migrate resources between environments:
    grafanactl config use-context YOUR_CONTEXT  # for example "prod"
    grafanactl resources push -d ./resources/
    ```
-
+   
 ## Back up Grafana resources
 
 This workflow helps you back up all Grafana resources from one instance and later restore them. This is useful to replicate a configuration or perform disaster recovery.
