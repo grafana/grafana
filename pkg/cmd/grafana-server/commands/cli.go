@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+// ServerCommand remains unchanged
 func ServerCommand(version, commit, enterpriseCommit, buildBranch, buildstamp string) *cli.Command {
 	return &cli.Command{
 		Name:  "server",
@@ -64,43 +65,49 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 	logger := log.New("cli")
 	defer func() {
 		if err := log.Close(); err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to close log: %s\n", err)
+			logger.Error("Failed to close log", "error", err)
 		}
 	}()
 
-	if err := setupProfiling(Profile, ProfileAddr, ProfilePort, ProfileBlockRate, ProfileMutexFraction); err != nil {
-		return err
+	// Check for elevated privileges first
+	if err := checkPrivileges(); err != nil {
+		return fmt.Errorf("privilege check failed: %w", err)
 	}
+
+	// Enable profiling only if explicitly requested and default to localhost
+	if Profile {
+		if ProfileAddr == "" {
+			ProfileAddr = "localhost" // Default to localhost for security
+		}
+		if err := setupProfiling(Profile, ProfileAddr, ProfilePort, ProfileBlockRate, ProfileMutexFraction); err != nil {
+			return fmt.Errorf("failed to setup profiling: %w", err)
+		}
+	}
+
 	if err := setupTracing(Tracing, TracingFile, logger); err != nil {
-		return err
+		return fmt.Errorf("failed to setup tracing: %w", err)
 	}
 
 	defer func() {
-		// If we've managed to initialize them, this is the last place
-		// where we're able to log anything that'll end up in Grafana's
-		// log files.
-		// Since operators are not always looking at stderr, we'll try
-		// to log any and all panics that are about to crash Grafana to
-		// our regular log locations before exiting.
 		if r := recover(); r != nil {
 			reason := fmt.Sprintf("%v", r)
-			logger.Error("Critical error", "reason", reason, "stackTrace", string(debug.Stack()))
-			panic(r)
+			// Sanitize stack trace to remove sensitive information
+			safeStack := sanitizeStackTrace(string(debug.Stack()))
+			logger.Error("Critical error", "reason", reason, "stackTrace", safeStack)
+			os.Exit(1) // Safe termination instead of re-throwing panic
 		}
 	}()
 
 	SetBuildInfo(opts)
-	checkPrivileges()
 
 	configOptions := strings.Split(ConfigOverrides, " ")
 	cfg, err := setting.NewCfgFromArgs(setting.CommandLineArgs{
 		Config:   ConfigFile,
 		HomePath: HomePath,
-		// tailing arguments have precedence over the options string
-		Args: append(configOptions, cli.Args().Slice()...),
+		Args:     append(configOptions, cli.Args().Slice()...),
 	})
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load configuration: %w", err)
 	}
 
 	metrics.SetBuildInformation(metrics.ProvideRegisterer(), opts.Version, opts.Commit, opts.BuildBranch, getBuildstamp(opts))
@@ -116,12 +123,25 @@ func RunServer(opts standalone.BuildInfo, cli *cli.Context) error {
 		api.ServerOptions{},
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to initialize server: %w", err)
 	}
 
 	ctx := context.Background()
 	go listenToSystemSignals(ctx, s)
 	return s.Run()
+}
+
+// sanitizeStackTrace removes sensitive information from stack traces
+func sanitizeStackTrace(stack string) string {
+	lines := strings.Split(stack, "\n")
+	var safeLines []string
+	for _, line := range lines {
+		// Example: Filter out sensitive paths or keywords
+		if !strings.Contains(line, "/etc/") && !strings.Contains(line, "password") {
+			safeLines = append(safeLines, line)
+		}
+	}
+	return strings.Join(safeLines, "\n")
 }
 
 func validPackaging(packaging string) string {
@@ -134,7 +154,6 @@ func validPackaging(packaging string) string {
 	return "unknown"
 }
 
-// a small interface satisfied by the server and moduleserver
 type gserver interface {
 	Shutdown(context.Context, string) error
 }
@@ -150,25 +169,27 @@ func listenToSystemSignals(ctx context.Context, s gserver) {
 		select {
 		case <-sighupChan:
 			if err := log.Reload(); err != nil {
-				fmt.Fprintf(os.Stderr, "Failed to reload loggers: %s\n", err)
+				log.New("cli").Error("Failed to reload loggers", "error", err)
 			}
 		case sig := <-signalChan:
 			ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 			defer cancel()
 			if err := s.Shutdown(ctx, fmt.Sprintf("System signal: %s", sig)); err != nil {
-				fmt.Fprintf(os.Stderr, "Timed out waiting for server to shut down\n")
+				log.New("cli").Error("Timed out waiting for server to shut down", "error", err)
 			}
 			return
 		}
 	}
 }
 
-func checkPrivileges() {
+// checkPrivileges enforces non-root execution
+func checkPrivileges() error {
 	elevated, err := process.IsRunningWithElevatedPrivileges()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error checking server process execution privilege. error: %s\n", err.Error())
+		return fmt.Errorf("error checking execution privileges: %w", err)
 	}
 	if elevated {
-		fmt.Println("Grafana server is running with elevated privileges. This is not recommended")
+		return fmt.Errorf("grafana server cannot run with elevated privileges (e.g., as root). Please run as a non-root user")
 	}
+	return nil
 }
