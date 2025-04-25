@@ -31,7 +31,7 @@ func ContentSecurityPolicy(cfg *setting.Cfg, logger log.Logger) func(http.Handle
 func nonceMiddleware(next http.Handler, logger log.Logger) http.Handler {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
 		ctx := contexthandler.FromContext(req.Context())
-		nonce, err := generateNonce()
+		nonce, err := GenerateNonce()
 		if err != nil {
 			logger.Error("Failed to generate CSP nonce", "err", err)
 			ctx.JsonApiErr(500, "Failed to generate CSP nonce", err)
@@ -68,7 +68,7 @@ func ReplacePolicyVariables(policyTemplate, appURL, nonce string) string {
 	return policy
 }
 
-func generateNonce() (string, error) {
+func GenerateNonce() (string, error) {
 	var buf [16]byte
 	if _, err := io.ReadFull(rand.Reader, buf[:]); err != nil {
 		return "", err

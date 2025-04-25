@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/grafana/dskit/services"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/licensing"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type frontendService struct {
@@ -20,13 +22,21 @@ type frontendService struct {
 	log          log.Logger
 	errChan      chan error
 	promGatherer prometheus.Gatherer
+
+	index *IndexProvider
 }
 
-func ProvideFrontendService(cfg *setting.Cfg, promGatherer prometheus.Gatherer) (*frontendService, error) {
+func ProvideFrontendService(cfg *setting.Cfg, promGatherer prometheus.Gatherer, license licensing.Licensing) (*frontendService, error) {
+	index, err := NewIndexProvider(cfg, license)
+	if err != nil {
+		return nil, err
+	}
+
 	s := &frontendService{
 		cfg:          cfg,
 		log:          log.New("frontend-server"),
 		promGatherer: promGatherer,
+		index:        index,
 	}
 	s.BasicService = services.NewBasicService(s.start, s.running, s.stop)
 	return s, nil
@@ -64,7 +74,7 @@ func (s *frontendService) newFrontendServer(ctx context.Context) *http.Server {
 
 	router := http.NewServeMux()
 	router.Handle("/metrics", promhttp.HandlerFor(s.promGatherer, promhttp.HandlerOpts{EnableOpenMetrics: true}))
-	router.HandleFunc("/", s.handleRequest)
+	router.HandleFunc("/", s.index.HandleRequest)
 
 	server := &http.Server{
 		// 5s timeout for header reads to avoid Slowloris attacks (https://thetooth.io/blog/slowloris-attack/)
@@ -75,35 +85,4 @@ func (s *frontendService) newFrontendServer(ctx context.Context) *http.Server {
 	}
 
 	return server
-}
-
-func (s *frontendService) handleRequest(writer http.ResponseWriter, request *http.Request) {
-	// This should:
-	// - get correct asset urls from fs or cdn
-	// - generate a nonce
-	// - render them into the index.html
-	// - and return it to the user!
-
-	s.log.Info("handling request", "method", request.Method, "url", request.URL.String())
-	htmlContent := `<!DOCTYPE html>
-<html>
-<head>
-    <title>Grafana Frontend Server</title>
-    <style>
-        body {
-            font-family: sans-serif;
-        }
-    </style>
-</head>
-<body>
-    <h1>Grafana Frontend Server</h1>
-    <p>This is a simple static HTML page served by the Grafana frontend server module.</p>
-</body>
-</html>`
-
-	writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-	_, err := writer.Write([]byte(htmlContent))
-	if err != nil {
-		s.log.Error("could not write to response", "err", err)
-	}
 }

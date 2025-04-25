@@ -1978,6 +1978,18 @@
     },
     {
       "metadata": {
+        "name": "multiTenantFrontend",
+        "resourceVersion": "1745438197175",
+        "creationTimestamp": "2025-04-23T19:56:37Z"
+      },
+      "spec": {
+        "description": "Register MT frontend",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
+      }
+    },
+    {
+      "metadata": {
         "name": "multiTenantTempCredentials",
         "resourceVersion": "1745491786560",
         "creationTimestamp": "2025-04-02T20:25:50Z"
@@ -1987,6 +1999,19 @@
         "stage": "experimental",
         "codeowner": "@grafana/aws-datasources",
         "hideFromDocs": true
+      }
+    },
+    {
+      "metadata": {
+        "name": "multitenantFrontend",
+        "resourceVersion": "1745438122785",
+        "creationTimestamp": "2025-04-23T19:55:22Z",
+        "deletionTimestamp": "2025-04-23T19:56:37Z"
+      },
+      "spec": {
+        "description": "Register MT frontend",
+        "stage": "experimental",
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
