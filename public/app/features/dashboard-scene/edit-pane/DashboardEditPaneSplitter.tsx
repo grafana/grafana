@@ -27,6 +27,8 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
   const styles = useStyles2(getStyles, headerHeight ?? 0);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
+  console.log('DashboardEditPaneSplitter');
+
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
       <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
