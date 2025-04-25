@@ -62,7 +62,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func TestDeleteLibraryPanelsInFolder(t *testing.T) {
+func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains connected library elements, it should fail",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -137,7 +137,7 @@ func TestDeleteLibraryPanelsInFolder(t *testing.T) {
 		})
 }
 
-func TestGetLibraryPanelConnections(t *testing.T) {
+func TestIntegration_GetLibraryPanelConnections(t *testing.T) {
 	scenarioWithPanel(t, "When an admin tries to get connections of library panel, it should succeed and return correct result",
 		func(t *testing.T, sc scenarioContext) {
 			dashJSON := map[string]any{
@@ -358,8 +358,8 @@ func createDashboard(t *testing.T, sqlStore db.DB, user user.SignedInUser, dash 
 	service, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features, folderPermissions, ac,
+		actest.FakeService{},
 		folderSvc,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,
@@ -461,8 +461,7 @@ func scenarioWithPanel(t *testing.T, desc string, fn func(t *testing.T, sc scena
 		nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 	dashboardService, svcErr := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
-		features, folderPermissions, ac,
-		folderSvc, fStore,
+		features, folderPermissions, ac, actest.FakeService{}, folderSvc,
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 		kvstore.NewFakeKVStore(),
@@ -536,8 +535,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 		require.NoError(t, err)
 		dashService, dashSvcErr := dashboardservice.ProvideDashboardServiceImpl(
 			cfg, dashboardStore, folderStore,
-			features, folderPermissions, ac,
-			folderSvc, fStore,
+			features, folderPermissions, ac, actest.FakeService{}, folderSvc,
 			nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil, dualwrite.ProvideTestService(), sort.ProvideService(),
 			serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
 			kvstore.NewFakeKVStore(),
@@ -551,6 +549,7 @@ func testScenario(t *testing.T, desc string, fn func(t *testing.T, sc scenarioCo
 			SQLStore:          sqlStore,
 			folderService:     folderSvc,
 			dashboardsService: dashService,
+			log:               log.NewNopLogger(),
 		}
 
 		// deliberate difference between signed in user and user in db to make it crystal clear
