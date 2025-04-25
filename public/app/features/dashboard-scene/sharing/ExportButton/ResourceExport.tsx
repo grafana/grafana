@@ -1,24 +1,35 @@
-import { useAsync } from 'react-use';
+import { AsyncState } from 'react-use/lib/useAsync';
 
-import { SceneComponentProps } from '@grafana/scenes';
+import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
+import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Alert, Label, RadioButtonGroup, Stack, TextLink } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
+import { DashboardJson } from 'app/features/manage-dashboards/types';
 
-import { ExportMode, ShareExportTab } from '../ShareExportTab';
+import { ExportMode, ExportableResource } from '../ShareExportTab';
 
-export class ResourceExport extends ShareExportTab {
-  static Component = ResourceExportRenderer;
+interface Props {
+  dashboardJson: AsyncState<{
+    json: Dashboard | DashboardJson | DashboardV2Spec | ExportableResource | { error: unknown };
+    hasLibraryPanels?: boolean;
+  }>;
+  isSharingExternally: boolean;
+  exportMode: ExportMode;
+  isViewingYAML: boolean;
+  onExportModeChange: (mode: ExportMode) => void;
+  onShareExternallyChange: () => void;
+  onViewYAML: () => void;
 }
 
-function ResourceExportRenderer({ model }: SceneComponentProps<ResourceExport>) {
-  const { isSharingExternally, isViewingYAML, exportMode } = model.useState();
-
-  const dashboardJson = useAsync(async () => {
-    const json = await model.getExportableDashboardJson();
-
-    return json;
-  }, [isSharingExternally]);
-
+export function ResourceExport({
+  dashboardJson,
+  isSharingExternally,
+  exportMode,
+  isViewingYAML,
+  onExportModeChange,
+  onShareExternallyChange,
+  onViewYAML,
+}: Props) {
   const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
   const isV2Dashboard =
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
@@ -40,7 +51,7 @@ function ResourceExportRenderer({ model }: SceneComponentProps<ResourceExport>) 
               { label: 'V2 Resource', value: ExportMode.V2Resource },
             ]}
             value={isV2Dashboard ? ExportMode.V2Resource : exportMode}
-            onChange={(value) => model.onExportModeChange(value)}
+            onChange={(value) => onExportModeChange(value)}
             disabled={isV2Dashboard}
           />
         </Stack>
@@ -52,7 +63,7 @@ function ResourceExportRenderer({ model }: SceneComponentProps<ResourceExport>) 
               { label: 'External', value: 'external' },
             ]}
             value={isSharingExternally ? 'external' : 'internal'}
-            onChange={model.onShareExternallyChange}
+            onChange={onShareExternallyChange}
           />
         </Stack>
         <Stack gap={1} alignItems="center">
@@ -63,7 +74,7 @@ function ResourceExportRenderer({ model }: SceneComponentProps<ResourceExport>) 
               { label: 'YAML', value: 'yaml' },
             ]}
             value={isViewingYAML && exportMode !== ExportMode.Classic ? 'yaml' : 'json'}
-            onChange={model.onViewYAML}
+            onChange={onViewYAML}
             disabled={exportMode === ExportMode.Classic}
           />
         </Stack>

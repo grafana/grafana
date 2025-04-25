@@ -14,7 +14,7 @@ import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { ShareExportTab } from '../ShareExportTab';
+import { ExportMode, ShareExportTab } from '../ShareExportTab';
 
 import { ResourceExport } from './ResourceExport';
 
@@ -30,7 +30,7 @@ export class ExportAsJson extends ShareExportTab {
 
 function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   const styles = useStyles2(getStyles);
-  const { isSharingExternally, isViewingYAML } = model.useState();
+  const { isSharingExternally, isViewingYAML, exportMode } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
@@ -39,7 +39,9 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   }, [isSharingExternally]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
-  const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json);
+  const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
+    skipInvalid: true,
+  });
   const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
 
   const onClickDownload = async () => {
@@ -59,7 +61,15 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
       </p>
 
       {config.featureToggles.kubernetesDashboards ? (
-        <ResourceExport.Component model={model} />
+        <ResourceExport
+          dashboardJson={dashboardJson}
+          isSharingExternally={isSharingExternally ?? false}
+          exportMode={exportMode ?? ExportMode.Classic}
+          isViewingYAML={isViewingYAML ?? false}
+          onExportModeChange={model.onExportModeChange}
+          onShareExternallyChange={model.onShareExternallyChange}
+          onViewYAML={model.onViewYAML}
+        />
       ) : (
         <Stack gap={1} alignItems="start">
           <Switch
