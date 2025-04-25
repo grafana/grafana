@@ -288,7 +288,7 @@ const getSearchStyles = (theme: GrafanaTheme2, lateralSpace: number) => {
       fontSize: theme.typography.body.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       lineHeight: theme.typography.body.lineHeight,
-      color: theme.colors.text.secondary,
+      color: theme.colors.text.primary,
       display: 'flex',
       alignItems: 'center',
       whiteSpace: 'nowrap',
