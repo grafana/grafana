@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -121,39 +120,9 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 }
 
 func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	req := readSecureValue{
-		SQLTemplate: sqltemplate.New(s.dialect),
-		Namespace:   namespace.String(),
-		Name:        name,
-	}
-
-	query, err := sqltemplate.Execute(sqlSecureValueRead, req)
+	secureValue, err := s.read(ctx, namespace, name)
 	if err != nil {
-		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueRead.Name(), err)
-	}
-
-	res, err := s.newDb.QueryContext(ctx, query, req.GetArgs()...)
-	if err != nil {
-		return nil, fmt.Errorf("reading row: %w", err)
-	}
-	defer func() { _ = res.Close() }()
-
-	var secureValue secureValueDB
-	if res.Next() {
-		err := res.Scan(&secureValue.GUID,
-			&secureValue.Name, &secureValue.Namespace, &secureValue.Annotations,
-			&secureValue.Labels,
-			&secureValue.Created, &secureValue.CreatedBy,
-			&secureValue.Updated, &secureValue.UpdatedBy,
-			&secureValue.Phase, &secureValue.Message,
-			&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to scan secure value row: %w", err)
-		}
-	}
-
-	if err := res.Err(); err != nil {
-		return nil, fmt.Errorf("read rows error: %w", err)
+		return nil, err
 	}
 
 	secureValueKub, err := secureValue.toKubernetes()
@@ -387,21 +356,9 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	row := &secureValueDB{Name: name, Namespace: namespace.String()}
-	err := s.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		found, err := sess.Get(row)
-		if err != nil {
-			return fmt.Errorf("could not get row: %w", err)
-		}
-
-		if !found {
-			return contracts.ErrSecureValueNotFound
-		}
-
-		return nil
-	})
+	row, err := s.read(ctx, namespace, name)
 	if err != nil {
-		return nil, fmt.Errorf("db failure: %w", err)
+		return nil, err
 	}
 
 	secureValue, err := row.toDecrypt()
@@ -409,5 +366,49 @@ func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespa
 		return nil, fmt.Errorf("convert to kubernetes object: %w", err)
 	}
 
+	return secureValue, nil
+}
+
+func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.Namespace, name string) (secureValueDB, error) {
+	req := readSecureValue{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueRead, req)
+	if err != nil {
+		return secureValueDB{}, fmt.Errorf("execute template %q: %w", sqlSecureValueRead.Name(), err)
+	}
+
+	res, err := s.newDb.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return secureValueDB{}, fmt.Errorf("reading row: %w", err)
+	}
+	defer func() { _ = res.Close() }()
+
+	var secureValue secureValueDB
+	found := false
+	if res.Next() {
+		found = true
+		err := res.Scan(&secureValue.GUID,
+			&secureValue.Name, &secureValue.Namespace, &secureValue.Annotations,
+			&secureValue.Labels,
+			&secureValue.Created, &secureValue.CreatedBy,
+			&secureValue.Updated, &secureValue.UpdatedBy,
+			&secureValue.Phase, &secureValue.Message,
+			&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID)
+		if err != nil {
+			return secureValueDB{}, fmt.Errorf("failed to scan secure value row: %w", err)
+		}
+	}
+
+	if err := res.Err(); err != nil {
+		return secureValueDB{}, fmt.Errorf("read rows error: %w", err)
+	}
+
+	if !found {
+		return secureValueDB{}, contracts.ErrSecureValueNotFound
+	}
 	return secureValue, nil
 }
