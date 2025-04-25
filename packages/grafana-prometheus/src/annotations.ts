@@ -18,14 +18,19 @@ const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 export const PrometheusAnnotationSupport = (ds: PrometheusDatasource): AnnotationSupport<PromQuery> => {
   return {
     QueryEditor: AnnotationQueryEditor,
-    // prepareAnnotation(json: AnnotationQuery<PromQuery>): AnnotationQuery<PromQuery> {
-    //   // TODO migrate old annotations to new one. json is the object
-    //   // For instance add maxDataPoints to them if there isn't
-    //   console.log('prepare annotation');
-    //   console.log(json);
-    //   json.annotations = json.annotations || {};
-    //   return json;
-    // },
+    prepareAnnotation(json: AnnotationQuery<PromQuery>): AnnotationQuery<PromQuery> {
+      json.target = {
+        ...json.target,
+        refId: json.refId ?? 'Anno',
+        expr: json.expr,
+        interval: json.step,
+      };
+
+      delete json.expr;
+      delete json.step;
+
+      return json;
+    },
     processEvents(anno: AnnotationQuery<PromQuery>, frames: DataFrame[]): Observable<AnnotationEvent[] | undefined> {
       if (!frames.length) {
         return new Observable<undefined>();

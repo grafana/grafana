@@ -47,6 +47,94 @@ describe('PrometheusAnnotationSupport', () => {
     jest.restoreAllMocks();
   });
 
+  describe('prepareAnnotation', () => {
+    it('should set up target object with properties from json', () => {
+      // Create a properly typed object and add custom properties
+      const annotation: AnnotationQuery<PromQuery> & { expr?: string; step?: string } = {
+        expr: 'rate(prometheus_http_requests_total[5m])',
+        step: '10s',
+        refId: 'testRefId',
+        target: {
+          expr: 'original_expr',
+          refId: 'originalRefId',
+          legendFormat: 'test',
+        },
+        // Required AnnotationQuery properties
+        datasource: { uid: 'prometheus' },
+        enable: true,
+        name: 'Prometheus Annotation',
+        iconColor: 'red',
+      };
+
+      const result = annotationSupport.prepareAnnotation!(annotation);
+
+      // Check target properties are set correctly
+      expect(result.target?.refId).toBe('testRefId');
+      expect(result.target?.expr).toBe('rate(prometheus_http_requests_total[5m])');
+      expect(result.target?.interval).toBe('10s');
+      expect(result.target?.legendFormat).toBe('test');
+
+      // Check the original properties are removed
+      expect(result.expr).toBeUndefined();
+      expect(result.step).toBeUndefined();
+    });
+
+    it('should use default refId if not provided', () => {
+      const annotation: AnnotationQuery<PromQuery> & { expr?: string; step?: string } = {
+        expr: 'up',
+        step: '30s',
+        target: {
+          expr: '',
+          refId: '',
+        },
+        datasource: { uid: 'prometheus' },
+        enable: true,
+        name: 'Prometheus Annotation',
+        iconColor: 'red',
+      };
+
+      const result = annotationSupport.prepareAnnotation!(annotation);
+
+      expect(result.target?.refId).toBe('Anno');
+    });
+
+    it('should handle undefined target', () => {
+      const annotation: AnnotationQuery<PromQuery> & { expr?: string; step?: string } = {
+        expr: 'up',
+        step: '30s',
+        datasource: { uid: 'prometheus' },
+        enable: true,
+        name: 'Prometheus Annotation',
+        iconColor: 'red',
+      };
+
+      const result = annotationSupport.prepareAnnotation!(annotation);
+
+      expect(result.target?.refId).toBe('Anno');
+      expect(result.target?.expr).toBe('up');
+      expect(result.target?.interval).toBe('30s');
+    });
+
+    it('should handle undefined expr and step', () => {
+      const annotation: AnnotationQuery<PromQuery> = {
+        target: {
+          expr: '',
+          refId: '',
+        },
+        datasource: { uid: 'prometheus' },
+        enable: true,
+        name: 'Prometheus Annotation',
+        iconColor: 'red',
+      };
+
+      const result = annotationSupport.prepareAnnotation!(annotation);
+
+      expect(result.target?.refId).toBe('Anno');
+      expect(result.target?.expr).toBeUndefined();
+      expect(result.target?.interval).toBeUndefined();
+    });
+  });
+
   describe('processEvents', () => {
     it('should return empty observable when no frames are provided', () => {
       const annotation = {
