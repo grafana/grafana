@@ -5,19 +5,9 @@ import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
-import {
-  Alert,
-  Button,
-  ClipboardButton,
-  CodeEditor,
-  Label,
-  Spinner,
-  Stack,
-  Switch,
-  TextLink,
-  useStyles2,
-} from '@grafana/ui';
+import { Button, ClipboardButton, CodeEditor, Label, Spinner, Stack, Switch, useStyles2 } from '@grafana/ui';
 import { notifyApp } from 'app/core/actions';
 import { createSuccessNotification } from 'app/core/copy/appNotification';
 import { t, Trans } from 'app/core/internationalization';
@@ -25,6 +15,8 @@ import { dispatch } from 'app/store/store';
 
 import { DashboardInteractions } from '../../utils/interactions';
 import { ShareExportTab } from '../ShareExportTab';
+
+import { ResourceExport } from './ResourceExport';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
@@ -47,11 +39,8 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   }, [isSharingExternally]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
-  const stringifiedDashboardYaml = yaml.dump(dashboardJson.value?.json);
-  const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYaml : stringifiedDashboardJson;
-  const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
-  const isV2Dashboard = dashboardJson.value?.json && 'elements' in dashboardJson.value.json;
-  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
+  const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json);
+  const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
 
   const onClickDownload = async () => {
     await model.onSaveAsFile();
@@ -60,7 +49,6 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
   };
 
   const switchExportLabel = t('export.json.export-externally-label', 'Export the dashboard to use in another instance');
-  const switchYamlLabel = t('export.json.export-yaml', 'Export YAML');
 
   return (
     <div data-testid={selector.container} className={styles.container}>
@@ -70,55 +58,25 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
         </Trans>
       </p>
 
-      <Stack gap={2} direction="column">
-        <Stack gap={1} direction="column">
-          <Stack gap={1} alignItems="start">
-            <Switch
-              label={switchExportLabel}
-              data-testid={selector.exportExternallyToggle}
-              id="export-externally-toggle"
-              value={Boolean(isSharingExternally)}
-              onChange={model.onShareExternallyChange}
-            />
-            <Label>{switchExportLabel}</Label>
-          </Stack>
-          <Stack gap={1} alignItems="start">
-            <Switch
-              label={switchYamlLabel}
-              data-testid={selector.exportExternallyToggle}
-              id="export-yaml-toggle"
-              value={Boolean(isViewingYAML)}
-              onChange={model.onViewYAML}
-            />
-            <Label>{switchYamlLabel}</Label>
-          </Stack>
+      {config.featureToggles.kubernetesDashboards ? (
+        <ResourceExport.Component model={model} />
+      ) : (
+        <Stack gap={1} alignItems="start">
+          <Switch
+            label={switchExportLabel}
+            data-testid={selector.exportExternallyToggle}
+            id="export-externally-toggle"
+            value={Boolean(isSharingExternally)}
+            onChange={model.onShareExternallyChange}
+          />
+          <Label>{switchExportLabel}</Label>
         </Stack>
+      )}
 
-        {showV2LibPanelAlert && (
-          <Alert
-            title={t(
-              'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
-              'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
-            )}
-            severity="warning"
-          >
-            <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
-              The dynamic dashboard functionality is experimental, and has not full feature parity with current
-              dashboards behaviour. It is based on a new schema format, that does not support library panels. This means
-              that when exporting the dashboard to use it in another instance, we will not include library panels. We
-              intend to support them as we progress in the feature{' '}
-              <TextLink external href="https://grafana.com/docs/release-life-cycle/">
-                life cycle
-              </TextLink>
-              .
-            </Trans>
-          </Alert>
-        )}
-      </Stack>
       <div className={styles.codeEditorBox}>
         <AutoSizer data-testid={selector.codeEditor}>
           {({ width, height }) => {
-            if (stringifiedDashboardJson) {
+            if (stringifiedDashboard) {
               return (
                 <CodeEditor
                   value={stringifiedDashboard}
@@ -151,7 +109,7 @@ function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
             variant="secondary"
             icon="copy"
             disabled={dashboardJson.loading}
-            getText={() => stringifiedDashboard ?? ''}
+            getText={() => stringifiedDashboardJson ?? ''}
             onClipboardCopy={() => {
               DashboardInteractions.exportCopyJsonClicked();
             }}
