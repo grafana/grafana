@@ -26,8 +26,13 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type availableUpdate struct {
+	localVersion     string
+	availableVersion string
+}
+
 type PluginsService struct {
-	availableUpdates map[string]string
+	availableUpdates map[string]availableUpdate
 
 	enabled         bool
 	grafanaVersion  string
@@ -77,7 +82,7 @@ func ProvidePluginsService(cfg *setting.Cfg,
 		log:              logger,
 		tracer:           tracer,
 		pluginStore:      pluginStore,
-		availableUpdates: make(map[string]string),
+		availableUpdates: make(map[string]availableUpdate),
 		updateCheckURL:   parsedUpdateCheckURL,
 		pluginInstaller:  pluginInstaller,
 		features:         features,
@@ -115,7 +120,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 
 func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string, bool) {
 	s.mutex.RLock()
-	updateVers, updateAvailable := s.availableUpdates[pluginID]
+	update, updateAvailable := s.availableUpdates[pluginID]
 	s.mutex.RUnlock()
 	if updateAvailable {
 		// check if plugin has already been updated since the last invocation of `checkForUpdates`
@@ -124,8 +129,8 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 			return "", false
 		}
 
-		if s.canUpdate(ctx, plugin, updateVers) {
-			return updateVers, true
+		if s.canUpdate(ctx, plugin, update.availableVersion) {
+			return update.availableVersion, true
 		}
 	}
 
@@ -187,11 +192,15 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 		return fmt.Errorf("failed to unmarshal plugin repo, reading response from grafana.com: %w", err)
 	}
 
-	availableUpdates := map[string]string{}
+	availableUpdates := make(map[string]availableUpdate)
+
 	for _, gcomP := range gcomPlugins {
 		if localP, exists := localPlugins[gcomP.Slug]; exists {
 			if s.canUpdate(ctx, localP, gcomP.Version) {
-				availableUpdates[localP.ID] = gcomP.Version
+				availableUpdates[localP.ID] = availableUpdate{
+					localVersion:     localP.Info.Version,
+					availableVersion: gcomP.Version,
+				}
 			}
 		}
 	}
@@ -245,23 +254,17 @@ func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map
 func (s *PluginsService) updateAll(ctx context.Context) {
 	ctxLogger := s.log.FromContext(ctx)
 
-	failedUpdates := map[string]string{}
+	failedUpdates := make(map[string]availableUpdate)
 
-	for pluginID, updateVersion := range s.availableUpdates {
+	for pluginID, availableUpdate := range s.availableUpdates {
 		compatOpts := plugins.NewAddOpts(s.grafanaVersion, runtime.GOOS, runtime.GOARCH, "")
 
-		plugin, exists := s.pluginStore.Plugin(ctx, pluginID)
-		if !exists {
-			ctxLogger.Error("Plugin not found", "pluginID", pluginID)
-			continue
-		}
+		ctxLogger.Info("Auto updating plugin", "pluginID", pluginID, "from", availableUpdate.localVersion, "to", availableUpdate.availableVersion)
 
-		ctxLogger.Info("Auto updating plugin", "pluginID", pluginID, "version", plugin.Info.Version, "newVersion", updateVersion)
-
-		err := s.pluginInstaller.Add(ctx, pluginID, updateVersion, compatOpts)
+		err := s.pluginInstaller.Add(ctx, pluginID, availableUpdate.availableVersion, compatOpts)
 		if err != nil {
-			ctxLogger.Error("Failed to auto update plugin", "pluginID", pluginID, "version", plugin.Info.Version, "newVersion", updateVersion, "error", err)
-			failedUpdates[pluginID] = updateVersion
+			ctxLogger.Error("Failed to auto update plugin", "pluginID", pluginID, "from", availableUpdate.localVersion, "to", availableUpdate.availableVersion, "error", err)
+			failedUpdates[pluginID] = availableUpdate
 		}
 	}
 

@@ -34,8 +34,11 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
-			availableUpdates: map[string]string{
-				"test-ds": "1.0.0",
+			availableUpdates: map[string]availableUpdate{
+				"test-ds": {
+					localVersion:     "0.9.0",
+					availableVersion: "1.0.0",
+				},
 			},
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
@@ -60,9 +63,15 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
-			availableUpdates: map[string]string{
-				"test-panel": "0.9.0",
-				"test-app":   "0.0.1",
+			availableUpdates: map[string]availableUpdate{
+				"test-panel": {
+					localVersion:     "0.9.0",
+					availableVersion: "0.9.0",
+				},
+				"test-app": {
+					localVersion:     "0.9.0",
+					availableVersion: "0.9.0",
+				},
 			},
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
@@ -107,8 +116,11 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
-			availableUpdates: map[string]string{
-				"test-panel": "0.9.0",
+			availableUpdates: map[string]availableUpdate{
+				"test-panel": {
+					localVersion:     "0.9.0",
+					availableVersion: "0.9.0",
+				},
 			},
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
@@ -153,8 +165,11 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 		updateCheckURL, _ := url.Parse("https://grafana.com/api/plugins/versioncheck")
 
 		svc := PluginsService{
-			availableUpdates: map[string]string{
-				"test-app": "1.0.0",
+			availableUpdates: map[string]availableUpdate{
+				"test-app": {
+					localVersion:     "0.5.0",
+					availableVersion: "1.0.0",
+				},
 			},
 			pluginStore: &pluginstore.FakePluginStore{
 				PluginList: []pluginstore.Plugin{
@@ -205,7 +220,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 
 		require.Equal(t, 1, len(svc.availableUpdates))
 
-		require.Equal(t, "1.0.12", svc.availableUpdates["test-ds"])
+		require.Equal(t, "1.0.12", svc.availableUpdates["test-ds"].availableVersion)
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
 		require.True(t, exists)
 		require.Equal(t, "1.0.12", update)
@@ -226,10 +241,19 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 func TestPluginUpdateChecker_updateAll(t *testing.T) {
 	t.Run("update is available", func(t *testing.T) {
 		pluginsFakeStore := map[string]string{}
-		availableUpdates := map[string]string{
-			"test-app-0": "1.0.0",
-			"test-app-1": "1.0.0",
-			"test-app-2": "1.0.0",
+		availableUpdates := map[string]availableUpdate{
+			"test-app-0": {
+				localVersion:     "0.9.0",
+				availableVersion: "1.0.0",
+			},
+			"test-app-1": {
+				localVersion:     "0.9.0",
+				availableVersion: "1.0.0",
+			},
+			"test-app-2": {
+				localVersion:     "0.9.0",
+				availableVersion: "1.0.0",
+			},
 		}
 
 		svc := PluginsService{
@@ -253,8 +277,8 @@ func TestPluginUpdateChecker_updateAll(t *testing.T) {
 		require.Equal(t, 0, len(svc.availableUpdates))
 		require.Equal(t, len(availableUpdates), len(pluginsFakeStore))
 
-		for pluginID, version := range availableUpdates {
-			require.Equal(t, version, pluginsFakeStore[pluginID])
+		for pluginID, availableUpdate := range availableUpdates {
+			require.Equal(t, availableUpdate.availableVersion, pluginsFakeStore[pluginID])
 		}
 	})
 }
