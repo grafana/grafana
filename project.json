@@ -5,8 +5,8 @@
   "targets": {
     "start": {
       "dependsOn": [
+        "swaggerui:build",
         "themes-generate",
-        "grafana-icons:generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
@@ -15,8 +15,8 @@
     },
     "build": {
       "dependsOn": [
+        "swaggerui:build",
         "themes-generate",
-        "grafana-icons:generate",
         {
           "projects": ["tag:scope:plugin"],
           "target": "build"
@@ -36,6 +36,15 @@
         "{workspaceRoot}/public/sass/_variables.dark.generated.scss",
         "{workspaceRoot}/public/sass/_variables.light.generated.scss"
       ],
+      "cache": true
+    },
+    "swaggerui:build": {
+      "inputs": [
+        "{workspaceRoot}/packages/grafana-ui/src/themes/**",
+        "{workspaceRoot}/public/app/core/trustedTypePolicies.ts",
+        "{workspaceRoot}/public/swagger/**"
+      ],
+      "outputs": ["{workspaceRoot}/public/build-swagger"],
       "cache": true
     }
   }

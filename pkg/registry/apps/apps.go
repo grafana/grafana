@@ -2,6 +2,7 @@ package appregistry
 
 import (
 	"context"
+	"slices"
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -13,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder/runner"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/setting"
 	"k8s.io/client-go/rest"
 )
 
@@ -33,6 +35,7 @@ func ProvideRegistryServiceSink(
 	playlistAppProvider *playlist.PlaylistAppProvider,
 	investigationAppProvider *investigations.InvestigationsAppProvider,
 	advisorAppProvider *advisor.AdvisorAppProvider,
+	grafanaCfg *setting.Cfg,
 ) (*Service, error) {
 	cfgWrapper := func(ctx context.Context) (*rest.Config, error) {
 		cfg, err := restConfigProvider.GetRestConfig(ctx)
@@ -55,7 +58,8 @@ func ProvideRegistryServiceSink(
 		logger.Debug("Investigations backend is enabled")
 		providers = append(providers, investigationAppProvider)
 	}
-	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) {
+	if features.IsEnabledGlobally(featuremgmt.FlagGrafanaAdvisor) &&
+		!slices.Contains(grafanaCfg.DisablePlugins, "grafana-advisor-app") {
 		providers = append(providers, advisorAppProvider)
 	}
 	apiGroupRunner, err = runner.NewAPIGroupRunner(cfg, providers...)
