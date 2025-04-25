@@ -18,7 +18,6 @@ import {
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
-import { shouldUseAlertingListViewV2 } from '../../../featureToggles';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
@@ -43,10 +42,8 @@ const RuleHealthOptions: SelectableValue[] = [
 
 // Contact point selector is not supported in Alerting ListView V2 yet
 const canRenderContactPointSelector =
-  (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-    config.featureToggles.alertingSimplifiedRouting &&
-    shouldUseAlertingListViewV2() === false) ??
-  false;
+  contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
+  config.featureToggles.alertingSimplifiedRouting;
 
 interface RulesFilerProps {
   onClear?: () => void;

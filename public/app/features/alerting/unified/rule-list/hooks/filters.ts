@@ -85,6 +85,20 @@ export function ruleFilter(rule: PromRuleDTO, filterState: RulesFilter) {
     return false;
   }
 
+  if (filterState.contactPoint) {
+    if (!prometheusRuleType.grafana.alertingRule(rule)) {
+      return false;
+    }
+
+    if (!rule.notificationSettings) {
+      return false;
+    }
+
+    if (filterState.contactPoint !== rule.notificationSettings.receiver) {
+      return false;
+    }
+  }
+
   // Dashboard UID filter
   if (filterState.dashboardUid) {
     if (!prometheusRuleType.alertingRule(rule)) {
