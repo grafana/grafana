@@ -3606,7 +3606,10 @@
         "export": {
           "arrow": "Export",
           "title": "Export",
-          "tooltip": "Export as file"
+          "tooltip": {
+            "as-code": "Export as code",
+            "json": "Export as JSON"
+          }
         },
         "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
@@ -5035,7 +5038,9 @@
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
-      "export-yaml": "Export YAML",
+      "export-format": "Export format",
+      "export-mode": "Export mode",
+      "export-remove-ds-refs": "Remove datasource references",
       "info-text": "Copy or download a file containing the definition of your dashboard",
       "title": "Export dashboard"
     },

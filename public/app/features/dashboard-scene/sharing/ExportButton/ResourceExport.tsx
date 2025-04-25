@@ -37,7 +37,7 @@ export function ResourceExport({
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
-  const switchExportLabel = t('export.json.export-target-label', 'Export target');
+  const switchExportLabel = t('export.json.export-remove-ds-refs', 'Remove datasource references');
   const switchExportModeLabel = t('export.json.export-mode', 'Export mode');
   const switchExportFormatLabel = t('export.json.export-format', 'Export format');
 
@@ -71,7 +71,7 @@ export function ResourceExport({
           />
         </Stack>
         {(isV2Dashboard || exportMode === ExportMode.V2Resource) && (
-          <Stack gap={1} alignItems="center">
+          <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
             <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />
           </Stack>
