@@ -1,14 +1,5 @@
 import { css } from '@emotion/css';
-import {
-  autoUpdate,
-  flip,
-  ReferenceElement,
-  shift,
-  useClick,
-  useDismiss,
-  useFloating,
-  useInteractions,
-} from '@floating-ui/react';
+import { autoUpdate, flip, shift, useClick, useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { ChangeEvent, forwardRef, useImperativeHandle, useState } from 'react';
 
 import { GrafanaTheme2, dateTime } from '@grafana/data';
@@ -36,7 +27,7 @@ export interface DatePickerWithInputProps extends Omit<InputProps, 'value' | 'on
 }
 
 /** @public */
-export const DatePickerWithInput = forwardRef<ReferenceElement, DatePickerWithInputProps>(
+export const DatePickerWithInput = forwardRef<HTMLInputElement, DatePickerWithInputProps>(
   ({ value, minDate, maxDate, onChange, closeOnSelect, placeholder = 'Date', ...rest }, ref) => {
     const [open, setOpen] = useState(false);
     const styles = useStyles2(getStyles);
@@ -52,7 +43,7 @@ export const DatePickerWithInput = forwardRef<ReferenceElement, DatePickerWithIn
       shift(),
     ];
 
-    const { context, refs, floatingStyles } = useFloating<ReferenceElement>({
+    const { context, refs, floatingStyles } = useFloating<HTMLInputElement>({
       open,
       placement: 'bottom-start',
       onOpenChange: setOpen,
@@ -65,7 +56,9 @@ export const DatePickerWithInput = forwardRef<ReferenceElement, DatePickerWithIn
     const dismiss = useDismiss(context);
     const { getReferenceProps, getFloatingProps } = useInteractions([dismiss, click]);
 
-    useImperativeHandle(ref, () => refs.reference.current!, [refs.reference]);
+    useImperativeHandle<HTMLInputElement | null, HTMLInputElement | null>(ref, () => refs.domReference.current, [
+      refs.domReference,
+    ]);
 
     return (
       <div className={styles.container}>
