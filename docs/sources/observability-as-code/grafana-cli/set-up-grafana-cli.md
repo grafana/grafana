@@ -77,7 +77,7 @@ In these examples, `default` and `staging` are the names of the contexts.
 
 ## Configuration file
 
-Grafana CLI stores its configuration in a YAML file. The CLI determines the configuration file location in the following order
+Grafana CLI stores its configuration in a YAML file. The CLI determines the configuration file location in the following order:
 
 1. If the `--config` flag is provided, the specified file is used.
 2. If `$XDG_CONFIG_HOME` is set:  
