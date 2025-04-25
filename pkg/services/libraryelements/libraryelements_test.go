@@ -108,7 +108,7 @@ func TestIntegration_DeleteLibraryPanelsInFolder(t *testing.T) {
 			sc.service.AccessControl = acimpl.ProvideAccessControl(featuremgmt.WithFeatures())
 			sc.service.AccessControl.RegisterScopeAttributeResolver(dashboards.NewFolderUIDScopeResolver(sc.service.folderService))
 			err := sc.service.DeleteLibraryElementsInFolder(sc.reqContext.Req.Context(), sc.reqContext.SignedInUser, sc.folder.UID+"xxxx")
-			require.ErrorIs(t, err, dashboards.ErrFolderNotFound)
+			require.ErrorIs(t, err, dashboards.ErrFolderAccessDenied)
 		})
 
 	scenarioWithPanel(t, "When an admin tries to delete a folder that contains disconnected elements, it should delete all disconnected elements too",
