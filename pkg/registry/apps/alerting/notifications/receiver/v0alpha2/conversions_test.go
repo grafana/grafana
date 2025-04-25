@@ -37,7 +37,7 @@ func TestConvertToK8sResource(t *testing.T) {
 				Version:    "1234",
 			}
 
-			result, err := convertToK8sResource(1, recCfg, &models.ReceiverPermissionSet{}, &models.ReceiverMetadata{}, request.GetNamespaceMapper(nil))
+			result, err := convertToK8sResource(1, recCfg, &models.ReceiverPermissionSet{}, &models.ReceiverMetadata{}, request.GetNamespaceMapper(nil), true)
 			require.NoError(t, err)
 
 			back, err := convertToDomainModel(result)

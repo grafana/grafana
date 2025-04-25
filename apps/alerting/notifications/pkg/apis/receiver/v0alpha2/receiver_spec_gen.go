@@ -18,7 +18,20 @@ func NewAlertmanagerIntegration() *AlertmanagerIntegration {
 
 // A string that contain sensitive information.
 // +k8s:openapi-gen=true
-type Secret string
+type Secret interface{}
+
+// +k8s:openapi-gen=true
+type SecretString string
+
+// +k8s:openapi-gen=true
+type RedactedSecret struct {
+	Specified bool `json:"specified"`
+}
+
+// NewRedactedSecret creates a new RedactedSecret object.
+func NewRedactedSecret() *RedactedSecret {
+	return &RedactedSecret{}
+}
 
 // +k8s:openapi-gen=true
 type DingdingIntegration struct {

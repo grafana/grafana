@@ -45,7 +45,7 @@ func convertToK8sResources(
 				metadata = &m
 			}
 		}
-		k8sResource, err := convertToK8sResource(orgID, receiver, access, metadata, namespacer)
+		k8sResource, err := convertToK8sResource(orgID, receiver, access, metadata, namespacer, false)
 		if err != nil {
 			return nil, err
 		}
@@ -63,8 +63,9 @@ func convertToK8sResource(
 	access *ngmodels.ReceiverPermissionSet,
 	metadata *ngmodels.ReceiverMetadata,
 	namespacer request.NamespaceMapper,
+	keepSecrets bool,
 ) (*model.Receiver, error) {
-	spec, err := specFromDomainReceiver(receiver)
+	spec, err := specFromDomainReceiver(receiver, keepSecrets)
 	if err != nil {
 		return nil, err
 	}
@@ -111,9 +112,11 @@ var permissionMapper = map[ngmodels.ReceiverPermission]string{
 
 // ContactPointFromContactPointExport parses the database model of the contact point (group of integrations) where settings are represented in JSON,
 // to strongly typed ContactPoint.
-func specFromDomainReceiver(domain *ngmodels.Receiver) (model.Spec, error) {
+func specFromDomainReceiver(domain *ngmodels.Receiver, secrets bool) (model.Spec, error) {
 	j := jsoniter.ConfigCompatibleWithStandardLibrary
-	j.RegisterExtension(&contactPointsExtension{})
+	j.RegisterExtension(&contactPointsExtension{
+		KeepSecret: secrets,
+	})
 
 	result := model.Spec{
 		Title: domain.Name,
@@ -492,9 +495,28 @@ func parseIntegration(json jsoniter.API, result *model.Spec, integration *ngmode
 // contactPointsExtension extends jsoniter with special codecs for some integrations' fields that are encoded differently in the legacy configuration.
 type contactPointsExtension struct {
 	jsoniter.DummyExtension
+	KeepSecret bool
 }
 
-func (c contactPointsExtension) UpdateStructDescriptor(structDescriptor *jsoniter.StructDescriptor) {
+// CreateEncoder creates a custom encoder for MyInterface
+func (c *contactPointsExtension) CreateEncoder(typ reflect2.Type) jsoniter.ValEncoder {
+	if typ == reflect2.TypeOfPtr((*model.Secret)(nil)).Elem() {
+		return &SecretEncoder{}
+	}
+	return nil
+}
+
+// CreateDecoder creates a custom decoder for MyInterface
+func (c *contactPointsExtension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
+	if typ == reflect2.TypeOfPtr((*model.Secret)(nil)).Elem() {
+		return &SecretDecoder{
+			KeepSecret: c.KeepSecret,
+		}
+	}
+	return nil
+}
+
+func (c *contactPointsExtension) UpdateStructDescriptor(structDescriptor *jsoniter.StructDescriptor) {
 	if structDescriptor.Type == reflect2.TypeOf(model.EmailIntegration{}) {
 		bind := structDescriptor.GetField("Addresses")
 		codec := &emailAddressCodec{}
@@ -608,4 +630,68 @@ func (d *numberAsStringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator
 		iter.ReportError("numberAsStringCodec", "not number or string")
 	}
 	*((*(*int64))(ptr)) = &value
+}
+
+type SecretEncoder struct{}
+
+func (encoder *SecretEncoder) IsEmpty(ptr unsafe.Pointer) bool {
+	return *(*model.Secret)(ptr) == nil
+}
+
+func (encoder *SecretEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
+	val := *(*model.Secret)(ptr)
+	if val == nil {
+		stream.WriteNil()
+		return
+	}
+
+	switch v := val.(type) {
+	case string:
+		// If it's a raw string, write it as-is
+		stream.WriteString(v)
+	case model.SecretString:
+		// If it's a SecretString, write it as a string
+		stream.WriteString(string(v))
+	case *model.RedactedSecret:
+		// If it's a RedactedSecret (has "specified" field), write null
+		stream.WriteNil()
+	default:
+		stream.Error = fmt.Errorf("unsupported Secret type: %T", val)
+	}
+}
+
+type SecretDecoder struct {
+	KeepSecret bool
+}
+
+func (decoder *SecretDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
+	// Peek at the next token to determine the JSON type
+	switch iter.WhatIsNext() {
+	case jsoniter.StringValue:
+		// If it's a string, decode as SecretString
+		str := iter.ReadString()
+		if decoder.KeepSecret {
+			*(*model.Secret)(ptr) = model.SecretString(str)
+			return
+		}
+		*(*model.Secret)(ptr) = &model.RedactedSecret{
+			Specified: len(str) > 0,
+		}
+	// case jsoniter.NilValue:
+	// 	// If it's a string, decode as SecretString
+	// 	_ = iter.ReadNil()
+	// 	if !decoder.KeepSecret {
+	// 		// If it's an object, decode as RedactedSecret
+	// 		redacted := &model.RedactedSecret{
+	// 			Specified: len(str) > 0,
+	// 		}
+	// 		iter.ReadVal(redacted)
+	// 		if iter.Error != nil {
+	// 			return
+	// 		}
+	// 		*(*model.Secret)(ptr) = redacted
+	// 	}
+	default:
+		iter.Error = fmt.Errorf("invalid JSON type for Secret; expected string or object")
+	}
 }

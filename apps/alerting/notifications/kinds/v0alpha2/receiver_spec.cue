@@ -5,8 +5,14 @@ BaseIntegration: {
 	disable_resolve_message?: bool
 }
 
+#SecretString: string
+
+#RedactedSecret: {
+	specified: bool
+}
+
 // A string that contain sensitive information.
-#Secret: string
+#Secret: #SecretString | #RedactedSecret
 
 AlertmanagerIntegration: BaseIntegration & {
 	url:			string
