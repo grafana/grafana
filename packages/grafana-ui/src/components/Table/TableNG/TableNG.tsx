@@ -780,7 +780,7 @@ export function mapFrameToDataGrid({
       field,
       cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-        const { row, rowIdx } = props;
+        const { row } = props;
         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
         const value = row[key];
         // Cell level rendering here
@@ -794,7 +794,7 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={sortedRows[rowIdx].__index}
+            rowIdx={row.__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
