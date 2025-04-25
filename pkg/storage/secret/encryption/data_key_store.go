@@ -75,7 +75,7 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
 		return nil, ErrDataKeyNotFound
@@ -117,7 +117,7 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	if !rows.Next() {
 		return nil, ErrDataKeyNotFound
@@ -157,7 +157,7 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	for rows.Next() {
 		var dataKey SecretDataKey
@@ -177,7 +177,7 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 		dataKeys = append(dataKeys, &dataKey)
 	}
 
-	if err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("failed getting all data keys: %w", err)
 	}
 
