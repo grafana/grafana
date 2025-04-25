@@ -9,7 +9,7 @@ import (
 	"io"
 	"log"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 // default log options

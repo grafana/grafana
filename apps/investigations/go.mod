@@ -4,7 +4,10 @@ go 1.24.2
 
 require (
 	github.com/grafana/grafana-app-sdk v0.35.1
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250425155047-72ea92f275c7
+	github.com/stretchr/testify v1.10.0
 	k8s.io/apimachinery v0.32.3
+	k8s.io/apiserver v0.32.3
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
 )
@@ -19,6 +22,7 @@ require (
 	github.com/evanphx/json-patch v5.6.0+incompatible // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
 	github.com/getkin/kin-openapi v0.131.0 // indirect
+	github.com/go-jose/go-jose/v3 v3.0.4 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
@@ -30,6 +34,8 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
+	github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a // indirect
+	github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d // indirect
 	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -46,13 +52,14 @@ require (
 	github.com/oasdiff/yaml3 v0.0.0-20250309153720-d2182401db90 // indirect
 	github.com/onsi/ginkgo/v2 v2.22.2 // indirect
 	github.com/onsi/gomega v1.36.2 // indirect
+	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/perimeterx/marshmallow v1.1.5 // indirect
+	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.21.1 // indirect
 	github.com/prometheus/client_model v0.6.1 // indirect
 	github.com/prometheus/common v0.63.0 // indirect
 	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
@@ -64,6 +71,7 @@ require (
 	go.opentelemetry.io/otel/sdk v1.35.0 // indirect
 	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
+	golang.org/x/crypto v0.37.0 // indirect
 	golang.org/x/net v0.39.0 // indirect
 	golang.org/x/oauth2 v0.29.0 // indirect
 	golang.org/x/sync v0.13.0 // indirect

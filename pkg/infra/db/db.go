@@ -4,7 +4,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 
 	"xorm.io/xorm"
 

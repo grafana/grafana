@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 // Rows rows wrapper a rows to

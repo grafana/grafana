@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
@@ -29,7 +28,7 @@ func TestGetAuthorizer(t *testing.T) {
 		},
 		{
 			name:             "user has datasources:explore permission",
-			ctx:              identity.WithRequester(context.TODO(), &mockUser{permissions: map[string][]string{accesscontrol.ActionDatasourcesExplore: {}}}),
+			ctx:              identity.WithRequester(context.TODO(), &mockUser{permissions: map[string][]string{ActionDatasourcesExplore: {}}}),
 			attr:             &mockAttributes{resourceRequest: true},
 			expectedDecision: authorizer.DecisionAllow,
 			expectedReason:   "",

@@ -21,7 +21,7 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 type SpannerDialect struct {

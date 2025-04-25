@@ -138,10 +138,10 @@ github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aN
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grafana/grafana-plugin-sdk-go v0.277.0 h1:VDU2F4Y5NeRS//ejctdZtsAshrGaEdbtW33FsK0EQss=
 github.com/grafana/grafana-plugin-sdk-go v0.277.0/go.mod h1:mAUWg68w5+1f5TLDqagIr8sWr1RT9h7ufJl5NMcWJAU=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2 h1:kvG92f3XbJlQPUcZfXlTNLziI4e8LYeA9Jv2ixmM5Ic=
-github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2/go.mod h1:ll14OJrUGYgXApz3YX6zmxYjRMZHL+pgQjoKBuRzaRs=
-github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 h1:uKOBkqzjMwimPJvTOjlo0bFrrR17w8U5l3HtDETPacQ=
-github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2/go.mod h1:w5oIOh8JhAEY/GwiIrLGBBRv2w0D7Ngv+dznv4k8Tek=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250425145542-be15e854342a h1:gpN+lXxqAllEDnpHrBaETy57xRrHM7LSsWm71QpgR08=
+github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250425145542-be15e854342a/go.mod h1:3MwgP0ISxGviTy3ZUJZsNz/56NNtHztMlH+gcxDt6Tw=
+github.com/grafana/grafana/pkg/semconv v0.0.0-20250425145542-be15e854342a h1:YBKKcTg2v8eVcu087HyhTLwG0+qvGXeSAMWICh/C1aE=
+github.com/grafana/grafana/pkg/semconv v0.0.0-20250425145542-be15e854342a/go.mod h1:w5oIOh8JhAEY/GwiIrLGBBRv2w0D7Ngv+dznv4k8Tek=
 github.com/grafana/otel-profiling-go v0.5.1 h1:stVPKAFZSa7eGiqbYuG25VcqYksR6iWvF3YH66t4qL8=
 github.com/grafana/otel-profiling-go v0.5.1/go.mod h1:ftN/t5A/4gQI19/8MoWurBEtC6gFw8Dns1sJZ9W4Tls=
 github.com/grafana/pyroscope-go/godeltaprof v0.1.8 h1:iwOtYXeeVSAeYefJNaxDytgjKtUuKQbJqgAIjlnicKg=

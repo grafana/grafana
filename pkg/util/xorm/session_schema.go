@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 // Ping test if database is ok

@@ -4,10 +4,11 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
 
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 )
+
+const ActionDatasourcesExplore = "datasources:explore"
 
 func GetAuthorizer() authorizer.Authorizer {
 	return authorizer.AuthorizerFunc(func(
@@ -27,7 +28,7 @@ func GetAuthorizer() authorizer.Authorizer {
 			return authorizer.DecisionDeny, "no permissions", nil
 		}
 
-		_, ok := p[accesscontrol.ActionDatasourcesExplore]
+		_, ok := p[ActionDatasourcesExplore]
 		if !ok {
 			// defer to the default authorizer if datasources:explore is not present
 			return authorizer.DecisionNoOpinion, "", nil

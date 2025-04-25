@@ -9,7 +9,10 @@ require (
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.71.1
 	xorm.io/builder v0.3.6
+	xorm.io/core v0.7.3
 )
+
+replace xorm.io/core => ./core
 
 require (
 	cel.dev/expr v0.19.1 // indirect

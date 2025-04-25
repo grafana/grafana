@@ -7,7 +7,7 @@ package xorm
 import (
 	"reflect"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 )
 
 func getTableName(mapper core.IMapper, v reflect.Value) string {

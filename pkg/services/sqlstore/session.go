@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/core"
 	"xorm.io/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"

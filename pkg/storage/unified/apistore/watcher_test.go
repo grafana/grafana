@@ -136,6 +136,8 @@ func testSetup(t testing.TB, opts ...setupOption) (context.Context, storage.Inte
 		if testing.Short() {
 			t.Skip("skipping integration test")
 		}
+
+		// TODO: Apistore shouldnt import grafana/pkg/infra/db
 		dbstore := infraDB.InitTestDB(t)
 		cfg := setting.NewCfg()
 
