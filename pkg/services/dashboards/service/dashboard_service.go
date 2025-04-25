@@ -751,7 +751,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	var userID int64
 	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		dr.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
 	}
 
@@ -1161,8 +1161,11 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 				UpdatedAt: time.Now(),
 				Dashboard: dash.Data,
 			}, nil, true)
+			if err != nil {
+				return err
+			}
 
-			return err
+			return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 		}
 
 		return dashboards.ErrDashboardNotFound
