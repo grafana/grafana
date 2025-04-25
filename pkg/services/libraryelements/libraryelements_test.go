@@ -596,6 +596,6 @@ func getCompareOptions() []cmp.Option {
 }
 
 func mockRequestBody(v any) io.ReadCloser {
-	b, err := json.Marshal(v)
+	b, _ := json.Marshal(v)
 	return io.NopCloser(bytes.NewReader(b))
 }
