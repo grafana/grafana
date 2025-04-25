@@ -26,8 +26,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
@@ -45,27 +45,28 @@ var (
 )
 
 type SecretAPIBuilder struct {
-	tracer                tracing.Tracer
-	log                   *log.ConcreteLogger
-	secretService         *secret.SecretService
-	keeperMetadataStorage contracts.KeeperMetadataStorage
-	accessClient          claims.AccessClient
-	worker                *worker.Worker
-	decryptersAllowList   map[string]struct{}
-	isDevMode             bool // REMOVE ME
+	tracer                     tracing.Tracer
+	log                        *log.ConcreteLogger
+	secretService              *service.SecretService
+	secureValueMetadataStorage contracts.SecureValueMetadataStorage
+	keeperMetadataStorage      contracts.KeeperMetadataStorage
+	secretsOutboxQueue         contracts.OutboxQueue
+	database                   contracts.Database
+	accessClient               claims.AccessClient
+	worker                     *worker.Worker
+	decryptersAllowList        map[string]struct{}
 }
 
 func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
-	secretService *secret.SecretService,
+	secretService *service.SecretService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
 	database contracts.Database,
 	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
-	isDevMode bool, // REMOVE ME
 ) (*SecretAPIBuilder, error) {
 	keepers, err := keeperService.GetKeepers()
 	if err != nil {
@@ -73,11 +74,14 @@ func NewSecretAPIBuilder(
 	}
 
 	return &SecretAPIBuilder{
-		tracer:                tracer,
-		log:                   log.New("secret.SecretAPIBuilder"),
-		secretService:         secretService,
-		keeperMetadataStorage: keeperMetadataStorage,
-		accessClient:          accessClient,
+		tracer:                     tracer,
+		log:                        log.New("secret.SecretAPIBuilder"),
+		secretService:              secretService,
+		secureValueMetadataStorage: secureValueMetadataStorage,
+		keeperMetadataStorage:      keeperMetadataStorage,
+		secretsOutboxQueue:         secretsOutboxQueue,
+		database:                   database,
+		accessClient:               accessClient,
 		worker: worker.NewWorker(worker.Config{
 			BatchSize:      1,
 			ReceiveTimeout: 5 * time.Second,
@@ -90,7 +94,6 @@ func NewSecretAPIBuilder(
 			keepers,
 		),
 		decryptersAllowList: decryptersAllowList,
-		isDevMode:           isDevMode,
 	}, nil
 }
 
@@ -102,7 +105,7 @@ func RegisterAPIService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
-	secretService *secret.SecretService,
+	secretService *service.SecretService,
 	database contracts.Database,
 	keeperService secretkeeper.Service,
 	accessClient claims.AccessClient,
@@ -112,14 +115,6 @@ func RegisterAPIService(
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return nil, nil
-	}
-
-	// Check if dev mode is enabled and replace the provided stores with an in-memory stores if so.
-	// TODO: Remove before launch
-	if cfg.SecretsManagement.IsDeveloperMode {
-		fmt.Println("developer mode enabled")
-		secureValueMetadataStorage = reststorage.NewFakeSecureValueMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
-		keeperMetadataStorage = reststorage.NewFakeKeeperMetadataStore(cfg.SecretsManagement.DeveloperStubLatency)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
@@ -136,7 +131,6 @@ func RegisterAPIService(
 		keeperService,
 		accessClient,
 		nil, // OSS does not need an allow list.
-		cfg.SecretsManagement.IsDeveloperMode,
 	)
 	if err != nil {
 		return builder, fmt.Errorf("calling NewSecretAPIBuilder: %+w", err)
@@ -234,7 +228,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "SQL XYZ Keeper",
+													Description: "SQL XYZ Keeper",
 													SQL: &secretv0alpha1.SQLKeeperConfig{
 														Encryption: &secretv0alpha1.Encryption{
 															Envelope: &secretv0alpha1.Envelope{},
@@ -250,7 +244,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "AWS XYZ Keeper",
+													Description: "AWS XYZ Keeper",
 													AWS: &secretv0alpha1.AWSKeeperConfig{
 														AWSCredentials: secretv0alpha1.AWSCredentials{
 															AccessKeyID: secretv0alpha1.CredentialValue{
@@ -272,7 +266,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "Azure XYZ Keeper",
+													Description: "Azure XYZ Keeper",
 													Azure: &secretv0alpha1.AzureKeeperConfig{
 														AzureCredentials: secretv0alpha1.AzureCredentials{
 															KeyVaultName: "key-vault-name",
@@ -293,7 +287,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "GCP XYZ Keeper",
+													Description: "GCP XYZ Keeper",
 													GCP: &secretv0alpha1.GCPKeeperConfig{
 														GCPCredentials: secretv0alpha1.GCPCredentials{
 															ProjectID:       "project-id",
@@ -310,7 +304,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "Hashicorp XYZ Keeper",
+													Description: "Hashicorp XYZ Keeper",
 													HashiCorp: &secretv0alpha1.HashiCorpKeeperConfig{
 														HashiCorpCredentials: secretv0alpha1.HashiCorpCredentials{
 															Address: "vault-address",
@@ -344,7 +338,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: SQL XYZ Keeper
+  description: SQL XYZ Keeper
   sql:
     encryption:
       envelope:`,
@@ -360,7 +354,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: AWS XYZ Keeper
+  description: AWS XYZ Keeper
   aws:
     accessKeyId: 
       valueFromEnv: ACCESS_KEY_ID_XYZ
@@ -379,7 +373,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: Azure XYZ Keeper
+  description: Azure XYZ Keeper
   azurekeyvault:
     clientSecret:
       valueFromConfig: "/path/to/file.json"
@@ -398,7 +392,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: GCP XYZ Keeper
+  description: GCP XYZ Keeper
   gcp:
     projectId: project-id 
     credentialsFile: /path/to/file.json`,
@@ -414,7 +408,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: Hashicorp XYZ Keeper
+  description: Hashicorp XYZ Keeper
   hashivault:
     address: vault-address
     token:
@@ -428,6 +422,8 @@ spec:
 			},
 		}
 	}
+
+	exampleKeeperAWS := "{aws-keeper-that-must-already-exist}"
 
 	sub = oas.Paths.Paths[smprefix+"/securevalues"]
 	if sub != nil {
@@ -445,10 +441,9 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret in default",
-													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "A secret in default",
+													Value:       "this is super duper secure",
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -459,10 +454,10 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret in aws",
-													Value:      "this is super duper secure",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "A secret in aws",
+													Value:       "this is super duper secure",
+													Keeper:      &exampleKeeperAWS,
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -473,10 +468,10 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret from aws",
-													Ref:        "my-secret-in-aws",
-													Keeper:     "{aws-keeper-that-must-already-exist}",
-													Decrypters: []string{"actor_k6"},
+													Description: "A secret from aws",
+													Ref:         "my-secret-in-aws",
+													Keeper:      &exampleKeeperAWS,
+													Decrypters:  []string{"actor_k6"},
 												},
 											},
 										},
@@ -490,10 +485,9 @@ spec:
 													Name: "xyz",
 												},
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "XYZ secret",
-													Value:      "this is super duper secure",
-													Keeper:     "kp-default-sql",
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "XYZ secret",
+													Value:       "this is super duper secure",
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -519,8 +513,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret value
-  keeper: kp-default-sql
+  description: A secret value
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -539,7 +532,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret value in aws
+  description: A secret value in aws
   keeper: aws-keeper-that-must-already-exist
   value: this is super duper secure
   decrypters:
@@ -559,7 +552,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret from aws
+  description: A secret from aws
   keeper: aws-keeper-that-must-already-exist
   ref: my-secret-in-aws
   decrypters:
@@ -579,8 +572,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: XYZ secret
-  keeper: kp-default-sql
+  description: XYZ secret
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -605,10 +597,6 @@ spec:
 // For Secrets, this is not the case, but if we want to make it so, we need to update this ResourceAuthorizer to check the containing folder.
 // If we ever want to do that, get guidance from IAM first as well.
 func (b *SecretAPIBuilder) GetAuthorizer() authorizer.Authorizer {
-	if b.isDevMode {
-		return nil
-	}
-
 	return authsvc.NewResourceAuthorizer(b.accessClient)
 }
 

@@ -26,7 +26,7 @@ func TestKeeperQueries(t *testing.T) {
 							CreatedBy:   "user:ryan",
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
-							Title:       "title",
+							Description: "description",
 							Type:        "sql",
 							Payload:     "",
 						},
@@ -86,7 +86,7 @@ func TestKeeperQueries(t *testing.T) {
 							CreatedBy:   "user:ryan",
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
-							Title:       "title",
+							Description: "description",
 							Type:        "sql",
 							Payload:     "",
 						},
@@ -111,6 +111,123 @@ func TestKeeperQueries(t *testing.T) {
 						SQLTemplate:      mocks.NewTestingSQLTemplate(),
 						Namespace:        "ns",
 						UsedSecureValues: []string{"a", "b"},
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestSecureValueQueries(t *testing.T) {
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
+		RootDir: "testdata",
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlSecureValueRead: {
+				{
+					Name: "read",
+					Data: &readSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+			},
+			sqlSecureValueList: {
+				{
+					Name: "list",
+					Data: &listSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Namespace:   "ns",
+					},
+				},
+			},
+			/** Not yet implemented
+			sqlSecureValueCreate: {
+				{
+					Name: "create",
+					Data: &createSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &secureValueDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Phase:       "creating",
+							Message:     nil,
+							Description: "description",
+							Keeper:      ptr.To("keeper"),
+							Decrypters:  nil,
+							Ref:         nil,
+							ExternalID:  "extId",
+						},
+					},
+				},
+			},
+			*/
+			sqlSecureValueDelete: {
+				{
+					Name: "delete",
+					Data: &deleteSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+					},
+				},
+			},
+			/** Not yet implemented
+				sqlSecureValueUpdate: {
+				{
+					Name: "update",
+					Data: &updateSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						Row: &secureValueDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Phase:       "creating",
+							Message:     nil,
+							Description: "description",
+							Keeper:      ptr.To("keeper"),
+							Decrypters:  nil,
+							Ref:         nil,
+							ExternalID:  "extId",
+						},
+					},
+				},
+			},
+			*/
+			sqlSecureValueUpdateExternalId: {
+				{
+					Name: "updateExternalId",
+					Data: &updateExternalIdSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						ExternalID:  "extId",
+					},
+				},
+			},
+			sqlSecureValueUpdateStatus: {
+				{
+					Name: "updateStatus",
+					Data: &updateStatusSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						Phase:       "Succeeded",
 					},
 				},
 			},

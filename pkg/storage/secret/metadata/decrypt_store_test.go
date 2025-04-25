@@ -25,6 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 )
 
@@ -81,16 +82,15 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a secure value that is not in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
-			Decrypters: []string{"unlisted-group"},
-			Value:      secretv0alpha1.NewExposedSecureValue("value"),
+			Description: "description",
+			Decrypters:  []string{"unlisted-group"},
+			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -114,16 +114,15 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a secure value that is in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
-			Decrypters: []string{"group1"},
-			Value:      secretv0alpha1.NewExposedSecureValue("value"),
+			Description: "description",
+			Decrypters:  []string{"group1"},
+			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.NoError(t, err)
@@ -145,16 +144,15 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
-			Decrypters: []string{"group1"},
-			Value:      secretv0alpha1.NewExposedSecureValue("value"),
+			Description: "description",
+			Decrypters:  []string{"group1"},
+			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -175,16 +173,15 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
-			Decrypters: []string{"group1"},
-			Value:      secretv0alpha1.NewExposedSecureValue("value"),
+			Description: "description",
+			Decrypters:  []string{"group1"},
+			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -205,16 +202,15 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
-			Decrypters: []string{"group1"},
-			Value:      secretv0alpha1.NewExposedSecureValue("value"),
+			Description: "description",
+			Decrypters:  []string{"group1"},
+			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -235,16 +231,15 @@ func TestIntegrationDecrypt(t *testing.T) {
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
-			Title:      "title",
-			Keeper:     contracts.DefaultSQLKeeper,
-			Decrypters: []string{"group1"},
-			Value:      secretv0alpha1.NewExposedSecureValue("value"),
+			Description: "description",
+			Decrypters:  []string{"group1"},
+			Value:       secretv0alpha1.NewExposedSecureValue("value"),
 		}
 		sv := &secretv0alpha1.SecureValue{Spec: spec}
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		createSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
@@ -277,6 +272,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	)
 
 	db := sqlstore.NewTestStore(t)
+	database := database.ProvideDatabase(db)
 
 	tracer := tracing.InitializeTracerForTest()
 
@@ -284,7 +280,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(db, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(db, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
 	encryptionManager, err := encryptionmanager.ProvideEncryptionManager(
@@ -304,11 +300,11 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
 	require.NoError(t, err)
 
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(db, features, accessClient, keeperMetadataStorage, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(db, features, keeperMetadataStorage, keeperService)
 	require.NoError(t, err)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(allowList)
@@ -339,7 +335,7 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 }
 
 // This helper will also delete the secureValue from the db when the test is done.
-func createSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, sv *secretv0alpha1.SecureValue, actorUID string) {
+func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, sv *secretv0alpha1.SecureValue, actorUID string) {
 	t.Helper()
 
 	_, err := db.Create(ctx, sv, actorUID)

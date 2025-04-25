@@ -14,31 +14,24 @@ import (
 
 func TestValidateSecureValue(t *testing.T) {
 	t.Run("when creating a new securevalue", func(t *testing.T) {
+		keeper := "keeper"
+
 		validSecureValue := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
-				Title:      "title",
-				Value:      "value",
-				Keeper:     "keeper",
-				Decrypters: []string{"actor_app1", "actor_app2"},
+				Description: "description",
+				Value:       "value",
+				Keeper:      &keeper,
+				Decrypters:  []string{"actor_app1", "actor_app2"},
 			},
 		}
 
-		t.Run("the `title` must be present", func(t *testing.T) {
+		t.Run("the `description` must be present", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
-			sv.Spec.Title = ""
+			sv.Spec.Description = ""
 
 			errs := ValidateSecureValue(sv, nil, admission.Create, nil)
 			require.Len(t, errs, 1)
-			require.Equal(t, "spec.title", errs[0].Field)
-		})
-
-		t.Run("the `keeper` must be present", func(t *testing.T) {
-			sv := validSecureValue.DeepCopy()
-			sv.Spec.Keeper = ""
-
-			errs := ValidateSecureValue(sv, nil, admission.Create, nil)
-			require.Len(t, errs, 1)
-			require.Equal(t, "spec.keeper", errs[0].Field)
+			require.Equal(t, "spec.description", errs[0].Field)
 		})
 
 		t.Run("either a `value` or `ref` must be present but not both", func(t *testing.T) {
@@ -128,13 +121,13 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("when no changes are made, it returns no errors", func(t *testing.T) {
 			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "old-title",
+					Description: "old-description",
 				},
 			}
 
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "new-title",
+					Description: "new-description",
 				},
 			}
 
@@ -151,15 +144,18 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("when trying to change the `keeper`, it returns an error", func(t *testing.T) {
+			keeperA := "a-keeper"
+			keeperAnother := "another-keeper"
+
 			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Keeper: "a-keeper",
+					Keeper: &keeperA,
 				},
 			}
 
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Keeper: "another-keeper",
+					Keeper: &keeperAnother,
 				},
 			}
 
@@ -172,7 +168,7 @@ func TestValidateSecureValue(t *testing.T) {
 	t.Run("`decrypters` must have unique items", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
-				Title: "title", Keeper: "keeper", Ref: "ref",
+				Description: "description", Ref: "ref",
 
 				Decrypters: []string{
 					"actor_app1",
@@ -189,7 +185,7 @@ func TestValidateSecureValue(t *testing.T) {
 	t.Run("`decrypters` must match the expected format", func(t *testing.T) {
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
-				Title: "title", Keeper: "keeper", Ref: "ref",
+				Description: "description", Ref: "ref",
 
 				Decrypters: []string{
 					"app1",
@@ -217,7 +213,7 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("no matches, returns an error", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "title", Keeper: "keeper", Ref: "ref",
+					Description: "description", Ref: "ref",
 
 					Decrypters: []string{"actor_app3"},
 				},
@@ -230,7 +226,7 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("no decrypters, returns no error", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "title", Keeper: "keeper", Ref: "ref",
+					Description: "description", Ref: "ref",
 
 					Decrypters: []string{},
 				},
@@ -243,7 +239,7 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("one match, returns no errors", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "title", Keeper: "keeper", Ref: "ref",
+					Description: "description", Ref: "ref",
 
 					Decrypters: []string{decrypters[0]},
 				},
@@ -256,7 +252,7 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("all matches, returns no errors", func(t *testing.T) {
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Title: "title", Keeper: "keeper", Ref: "ref",
+					Description: "description", Ref: "ref",
 
 					Decrypters: decrypters,
 				},
@@ -265,5 +261,24 @@ func TestValidateSecureValue(t *testing.T) {
 			errs := ValidateSecureValue(sv, nil, admission.Create, allowList)
 			require.Empty(t, errs)
 		})
+	})
+
+	t.Run("`decrypters` cannot have more than 64 items", func(t *testing.T) {
+		decrypters := make([]string, 0, 64+1)
+		for i := 0; i < 64+1; i++ {
+			decrypters = append(decrypters, fmt.Sprintf("actor_app%d", i))
+		}
+
+		sv := &secretv0alpha1.SecureValue{
+			Spec: secretv0alpha1.SecureValueSpec{
+				Description: "description", Ref: "ref",
+
+				Decrypters: decrypters,
+			},
+		}
+
+		errs := ValidateSecureValue(sv, nil, admission.Create, nil)
+		require.Len(t, errs, 1)
+		require.Equal(t, "spec.decrypters", errs[0].Field)
 	})
 }

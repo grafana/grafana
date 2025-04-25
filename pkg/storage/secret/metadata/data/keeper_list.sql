@@ -8,7 +8,7 @@ SELECT
   {{ .Ident "created_by" }},
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
-  {{ .Ident "title" }},
+  {{ .Ident "description" }},
   {{ .Ident "type" }},
   {{ .Ident "payload" }}
 FROM

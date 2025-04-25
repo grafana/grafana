@@ -10,7 +10,7 @@ SET
   {{ .Ident "created_by" }} = {{ .Arg .Row.CreatedBy }},
   {{ .Ident "updated" }} = {{ .Arg .Row.Updated }},
   {{ .Ident "updated_by" }} = {{ .Arg .Row.UpdatedBy }},
-  {{ .Ident "title" }} = {{ .Arg .Row.Title }},
+  {{ .Ident "description" }} = {{ .Arg .Row.Description }},
   {{ .Ident "type" }} = {{ .Arg .Row.Type }},
   {{ .Ident "payload" }} = {{ .Arg .Row.Payload }}
 WHERE 1 = 1 AND

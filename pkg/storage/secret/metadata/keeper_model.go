@@ -17,20 +17,20 @@ import (
 
 type keeperDB struct {
 	// Kubernetes Metadata
-	GUID        string `xorm:"pk 'guid'"`
-	Name        string `xorm:"name"`
-	Namespace   string `xorm:"namespace"`
-	Annotations string `xorm:"annotations"` // map[string]string
-	Labels      string `xorm:"labels"`      // map[string]string
-	Created     int64  `xorm:"created"`
-	CreatedBy   string `xorm:"created_by"`
-	Updated     int64  `xorm:"updated"`
-	UpdatedBy   string `xorm:"updated_by"`
+	GUID        string
+	Name        string
+	Namespace   string
+	Annotations string // map[string]string
+	Labels      string // map[string]string
+	Created     int64
+	CreatedBy   string
+	Updated     int64
+	UpdatedBy   string
 
 	// Spec
-	Title   string               `xorm:"title"`
-	Type    contracts.KeeperType `xorm:"type"`
-	Payload string               `xorm:"payload"`
+	Description string
+	Type        contracts.KeeperType
+	Payload     string
 }
 
 func (*keeperDB) TableName() string {
@@ -55,7 +55,7 @@ func (kp *keeperDB) toKubernetes() (*secretv0alpha1.Keeper, error) {
 
 	resource := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
-			Title: kp.Title,
+			Description: kp.Description,
 		},
 	}
 
@@ -191,9 +191,9 @@ func toKeeperRow(kp *secretv0alpha1.Keeper) (*keeperDB, error) {
 		UpdatedBy:   meta.GetUpdatedBy(),
 
 		// Spec
-		Title:   kp.Spec.Title,
-		Type:    keeperType,
-		Payload: keeperPayload,
+		Description: kp.Spec.Description,
+		Type:        keeperType,
+		Payload:     keeperPayload,
 	}, nil
 }
 

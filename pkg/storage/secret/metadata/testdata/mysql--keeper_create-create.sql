@@ -8,7 +8,7 @@ INSERT INTO `secret_keeper` (
   `created_by`,
   `updated`,
   `updated_by`,
-  `title`,
+  `description`,
   `type`,
   `payload`
 ) VALUES (
@@ -21,7 +21,7 @@ INSERT INTO `secret_keeper` (
   'user:ryan',
   5678,
   'user:cameron',
-  'title',
+  'description',
   'sql',
   ''
 );

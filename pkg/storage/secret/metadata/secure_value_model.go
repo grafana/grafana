@@ -32,11 +32,11 @@ type secureValueDB struct {
 	Message *string `xorm:"status_message"`
 
 	// Spec
-	Title      string  `xorm:"title"`
-	Keeper     string  `xorm:"keeper"`
-	Decrypters *string `xorm:"decrypters"`
-	Ref        *string `xorm:"ref"`
-	ExternalID string  `xorm:"external_id"`
+	Description string  `xorm:"description"`
+	Keeper      *string `xorm:"keeper"`
+	Decrypters  *string `xorm:"decrypters"`
+	Ref         *string `xorm:"ref"`
+	ExternalID  string  `xorm:"external_id"`
 }
 
 func (*secureValueDB) TableName() string {
@@ -68,9 +68,9 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 
 	resource := &secretv0alpha1.SecureValue{
 		Spec: secretv0alpha1.SecureValueSpec{
-			Title:      sv.Title,
-			Keeper:     sv.Keeper,
-			Decrypters: decrypters,
+			Description: sv.Description,
+			Keeper:      sv.Keeper,
+			Decrypters:  decrypters,
 		},
 		Status: secretv0alpha1.SecureValueStatus{
 			Phase:      secretv0alpha1.SecureValuePhase(sv.Phase),
@@ -83,6 +83,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	if sv.Message != nil && *sv.Message != "" {
 		resource.Status.Message = *sv.Message
 	}
+	resource.Status.ExternalID = sv.ExternalID
 
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)
@@ -218,11 +219,11 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Phase:   string(sv.Status.Phase),
 		Message: statusMessage,
 
-		Title:      sv.Spec.Title,
-		Keeper:     sv.Spec.Keeper,
-		Decrypters: decrypters,
-		Ref:        ref,
-		ExternalID: externalID,
+		Description: sv.Spec.Description,
+		Keeper:      sv.Spec.Keeper,
+		Decrypters:  decrypters,
+		Ref:         ref,
+		ExternalID:  externalID,
 	}, nil
 }
 

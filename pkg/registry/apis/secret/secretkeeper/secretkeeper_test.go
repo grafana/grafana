@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 )
@@ -52,12 +53,13 @@ func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 func setupTestService(t *testing.T, cfg *setting.Cfg) (OSSKeeperService, error) {
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
+	database := database.ProvideDatabase(testDB)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 	require.NoError(t, err)
 
-	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
+	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
 	require.NoError(t, err)
 
 	encryptionManager, err := manager.ProvideEncryptionManager(tracing.InitializeTracerForTest(), dataKeyStore, cfg, &usagestats.UsageStatsMock{T: t}, nil)

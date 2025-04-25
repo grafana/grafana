@@ -45,7 +45,7 @@ import (
 	secretdecrypt "github.com/grafana/grafana/pkg/registry/apis/secret/decrypt"
 	gsmEncryption "github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	encryptionManager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
-	secretservice "github.com/grafana/grafana/pkg/registry/apis/secret/secret"
+	secretservice "github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	appregistry "github.com/grafana/grafana/pkg/registry/apps"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
