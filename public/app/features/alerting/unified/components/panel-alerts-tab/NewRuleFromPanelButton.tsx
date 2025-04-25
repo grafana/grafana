@@ -56,7 +56,7 @@ export const NewRuleFromPanelButton = ({ dashboard, panel, className }: Props) =
 
   const ruleFormUrl = urlUtil.renderUrl('alerting/new', {
     defaults: JSON.stringify(formValues),
-    returnTo: window.location.pathname + window.location.search,
+    returnTo: location.pathname + location.search,
   });
 
   return (

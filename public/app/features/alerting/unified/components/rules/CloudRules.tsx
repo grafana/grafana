@@ -153,7 +153,7 @@ export function CreateRecordingRuleButton() {
       <LinkButton
         key="new-recording-rule"
         href={urlUtil.renderUrl(`alerting/new/recording`, {
-          returnTo: window.location.pathname + window.location.search,
+          returnTo: location.pathname + location.search,
         })}
         icon="plus"
         variant="secondary"

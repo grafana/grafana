@@ -49,7 +49,7 @@ export const ScenesNewRuleFromPanelButton = ({ panel, className }: ScenesNewRule
 
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(updateToDateFormValues),
-      returnTo: window.location.pathname + window.location.search,
+      returnTo: location.pathname + location.search,
     });
 
     locationService.push(ruleFormUrl);
