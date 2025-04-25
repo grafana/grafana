@@ -900,16 +900,6 @@ func (l *LibraryElementService) disconnectElementsFromDashboardID(c context.Cont
 // deleteLibraryElementsInFolderUID deletes all Library Elements in a folder.
 func (l *LibraryElementService) deleteLibraryElementsInFolderUID(c context.Context, signedInUser identity.Requester, folderUID string) error {
 	return l.SQLStore.WithTransactionalDbSession(c, func(session *db.Session) error {
-		// Try to fetch the folder before deleting the elements, this ensures that we return folder not found error if the folder does not exist
-		_, err := l.folderService.Get(c, &folder.GetFolderQuery{
-			OrgID:        signedInUser.GetOrgID(),
-			UID:          &folderUID,
-			SignedInUser: signedInUser,
-		})
-		if err != nil {
-			return err
-		}
-
 		evaluator := ac.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderUID))
 		canEdit, err := l.AccessControl.Evaluate(c, signedInUser, evaluator)
 		if err != nil {
