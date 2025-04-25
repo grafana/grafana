@@ -139,7 +139,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
     // Variables
     const variables = scene.state?.$variables;
     expect(variables?.state.variables).toHaveLength(dash.variables.length);
-    console.log('variables', dash.variables[0]);
+
     validateVariable({
       sceneVariable: variables?.state.variables[0],
       variableKind: dash.variables[0] as QueryVariableKind,
@@ -771,9 +771,28 @@ describe('transformSaveModelSchemaV2ToScene', () => {
       // Get the annotation layers
       const dataLayerSet = scene.state.$data as DashboardDataLayerSet;
       expect(dataLayerSet).toBeDefined();
-      expect(dataLayerSet.state.annotationLayers.length).toBe(1);
+      expect(dataLayerSet.state.annotationLayers.length).toBe(2);
+      const defaultAnnotationLayer = dataLayerSet.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
 
-      const annotationLayer = dataLayerSet.state.annotationLayers[0] as DashboardAnnotationsDataLayer;
+      // Verify that the default annotation layer has been correctly initialized
+      expect(defaultAnnotationLayer.state.query).toEqual({
+        builtIn: 1,
+        enable: true,
+        hide: true,
+        iconColor: 'rgba(0, 211, 255, 1)',
+        name: 'Annotations & Alerts',
+        query: {
+          datasource: {
+            name: '-- Grafana --',
+          },
+          group: 'grafana',
+          kind: 'DataQuery',
+          spec: {},
+          version: 'v0',
+        },
+      });
+
+      const annotationLayer = dataLayerSet.state.annotationLayers[1] as DashboardAnnotationsDataLayer;
 
       // Verify that the options have been merged into the query object
       expect(annotationLayer.state.query).toMatchObject({
