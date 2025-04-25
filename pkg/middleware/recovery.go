@@ -138,7 +138,7 @@ func Recovery(cfg *setting.Cfg, license licensing.Licensing) web.Middleware {
 						return
 					}
 
-					assets, _ := webassets.GetWebAssets(req.Context(), "build", cfg, license)
+					assets, _ := webassets.GetWebAssets(req.Context(), cfg, license)
 					if assets == nil {
 						assets = &dtos.EntryPointAssets{JSFiles: []dtos.EntryPointAsset{}}
 					}

@@ -7,7 +7,6 @@ awsconfig
 /.awcache
 /dist
 /public/build
-/public/build-swagger
 /emails/dist
 /reports
 /e2e/tmp
