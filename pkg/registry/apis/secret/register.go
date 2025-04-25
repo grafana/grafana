@@ -26,7 +26,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -64,15 +63,10 @@ func NewSecretAPIBuilder(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
 	database contracts.Database,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("getting map of keepers: %+w", err)
-	}
-
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
 		log:                        log.New("secret.SecretAPIBuilder"),
@@ -91,7 +85,7 @@ func NewSecretAPIBuilder(
 			secretsOutboxQueue,
 			secureValueMetadataStorage,
 			keeperMetadataStorage,
-			keepers,
+			keeperService,
 		),
 		decryptersAllowList: decryptersAllowList,
 	}, nil
@@ -107,7 +101,7 @@ func RegisterAPIService(
 	outboxQueue contracts.OutboxQueue,
 	secretService *service.SecretService,
 	database contracts.Database,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
 ) (*SecretAPIBuilder, error) {
@@ -223,22 +217,6 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Examples: map[string]*spec3.Example{
-								"a sql keeper": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": &secretv0alpha1.KeeperSpec{
-													Description: "SQL XYZ Keeper",
-													SQL: &secretv0alpha1.SQLKeeperConfig{
-														Encryption: &secretv0alpha1.Encryption{
-															Envelope: &secretv0alpha1.Envelope{},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
 								"an aws keeper": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{

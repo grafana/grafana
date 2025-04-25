@@ -7,7 +7,6 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
@@ -21,7 +20,7 @@ func ProvideSecureValueMetadataStorage(
 	db db.DB,
 	features featuremgmt.FeatureToggles,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 ) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
@@ -34,16 +33,11 @@ func ProvideSecureValueMetadataStorage(
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("getting keepers from keeper service: %+w", err)
-	}
-
 	return &secureValueMetadataStorage{
 		db:                    db,
 		dialect:               sqltemplate.DialectForDriver(string(db.GetDBType())),
 		keeperMetadataStorage: keeperMetadataStorage,
-		keepers:               keepers,
+		keeperService:         keeperService,
 	}, nil
 }
 
@@ -52,7 +46,7 @@ type secureValueMetadataStorage struct {
 	db                    db.DB
 	dialect               sqltemplate.Dialect
 	keeperMetadataStorage contracts.KeeperMetadataStorage
-	keepers               map[contracts.KeeperType]contracts.Keeper
+	keeperService         contracts.KeeperService
 }
 
 // TODO LND Implement this with sqlx

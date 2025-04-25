@@ -105,9 +105,7 @@ func TestProcessMessage(t *testing.T) {
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
 		sqlKeeperWrapper := newKeeperWrapper(rng, fakes.NewFakeKeeper())
-		keepers := map[contracts.KeeperType]contracts.Keeper{
-			contracts.SQLKeeperType: sqlKeeperWrapper,
-		}
+		keeperServiceWrapper := newKeeperServiceWrapper(rng, sqlKeeperWrapper)
 
 		secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueueWrapper)
 
@@ -123,7 +121,7 @@ func TestProcessMessage(t *testing.T) {
 			outboxQueueWrapper,
 			secureValueMetadataStorageWrapper,
 			keeperMetadataStorageWrapper,
-			keepers,
+			keeperServiceWrapper,
 		)
 
 		for i := range 1000 {
@@ -424,6 +422,24 @@ func (wrapper *secureValueMetadataStorageWrapper) ReadForDecrypt(ctx context.Con
 	return wrapper.impl.ReadForDecrypt(ctx, namespace, name)
 }
 
+type keeperServiceWrapper struct {
+	rng    *rand.Rand
+	keeper contracts.Keeper
+}
+
+func newKeeperServiceWrapper(rng *rand.Rand, keeper contracts.Keeper) *keeperServiceWrapper {
+	return &keeperServiceWrapper{rng: rng, keeper: keeper}
+}
+
+func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+	// Maybe return an error before calling the real implementation
+	if wrapper.rng.Float32() <= 0.2 {
+		return nil, context.DeadlineExceeded
+	}
+
+	return wrapper.keeper, nil
+}
+
 type keeperWrapper struct {
 	rng    *rand.Rand
 	keeper contracts.Keeper
@@ -520,18 +536,18 @@ func (wrapper *keeperMetadataStorageWrapper) Delete(_ context.Context, _ xkube.N
 func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace, _ *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
-		return "", nil, context.DeadlineExceeded
+		return nil, context.DeadlineExceeded
 	}
-	keeperType, cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name)
+	cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name)
 	if err != nil {
-		return keeperType, cfg, err
+		return cfg, err
 	}
 	// Maybe return an error after calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
-		return keeperType, cfg, context.DeadlineExceeded
+		return cfg, context.DeadlineExceeded
 	}
-	return keeperType, cfg, nil
+	return cfg, nil
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/infra/usagestats"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/sqlkeeper"
@@ -25,7 +24,7 @@ func TestMain(m *testing.M) {
 	testsuite.Run(m)
 }
 
-func Test_OSSKeeperService_GetKeepers(t *testing.T) {
+func Test_OSSKeeperService(t *testing.T) {
 	cfg := &setting.Cfg{
 		SecretsManagement: setting.SecretsManagerSettings{
 			SecretKey:          "sdDkslslld",
@@ -40,17 +39,16 @@ func Test_OSSKeeperService_GetKeepers(t *testing.T) {
 	keeperService, err := setupTestService(t, cfg)
 	require.NoError(t, err)
 
-	t.Run("GetKeepers should return a map with a sql keeper", func(t *testing.T) {
-		keeperMap, err := keeperService.GetKeepers()
+	t.Run("KeeperForConfig should return the system keeper", func(t *testing.T) {
+		keeper, err := keeperService.KeeperForConfig(nil)
 		require.NoError(t, err)
 
-		assert.NotNil(t, keeperMap)
-		assert.Equal(t, 1, len(keeperMap))
-		assert.IsType(t, &sqlkeeper.SQLKeeper{}, keeperMap[contracts.SQLKeeperType])
+		assert.NotNil(t, keeper)
+		assert.IsType(t, &sqlkeeper.SQLKeeper{}, keeper)
 	})
 }
 
-func setupTestService(t *testing.T, cfg *setting.Cfg) (OSSKeeperService, error) {
+func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error) {
 	// Initialize data key storage and encrypted value storage with a fake db
 	testDB := db.InitTestDB(t)
 	database := database.ProvideDatabase(testDB)

@@ -6,7 +6,6 @@ FROM
   {{ .Ident "secret_keeper" }}
 WHERE 1 = 1 AND
   {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
-  {{ .Ident "type" }} != {{ .Arg .ExcludeSQLKeeper }} AND
   {{ .Ident "name" }} IN ({{ .ArgList .KeeperNames }})
 {{ .SelectFor "UPDATE" }}
 ;
