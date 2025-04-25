@@ -2,6 +2,7 @@ package login
 
 import (
 	"context"
+	"strings"
 )
 
 type AuthInfoService interface {
@@ -56,22 +57,23 @@ const (
 	OktaLabel         = "Okta"
 )
 
-// used for frontend to display a more user friendly label
+// GetAuthProviderLabel returns the label for the given auth module.
+// Used for frontend to display a more user friendly label.
 func GetAuthProviderLabel(authModule string) string {
 	switch authModule {
-	case GithubAuthModule:
+	case GithubAuthModule, strings.TrimPrefix(GithubAuthModule, "oauth_"):
 		return GithubLabel
-	case GoogleAuthModule:
+	case GoogleAuthModule, strings.TrimPrefix(GoogleAuthModule, "oauth_"):
 		return GoogleLabel
-	case AzureADAuthModule:
+	case AzureADAuthModule, strings.TrimPrefix(AzureADAuthModule, "oauth_"):
 		return AzureADLabel
-	case GitLabAuthModule:
+	case GitLabAuthModule, strings.TrimPrefix(GitLabAuthModule, "oauth_"):
 		return GitLabLabel
-	case OktaAuthModule:
+	case OktaAuthModule, strings.TrimPrefix(OktaAuthModule, "oauth_"):
 		return OktaLabel
-	case GrafanaComAuthModule, GrafanaNetAuthModule:
+	case GrafanaComAuthModule, GrafanaNetAuthModule, strings.TrimPrefix(GrafanaComAuthModule, "oauth_"), strings.TrimPrefix(GrafanaNetAuthModule, "oauth_"):
 		return GrafanaComLabel
-	case SAMLAuthModule:
+	case SAMLAuthModule, strings.TrimPrefix(SAMLAuthModule, "auth."):
 		return SAMLLabel
 	case LDAPAuthModule, "": // FIXME: verify this situation doesn't exist anymore
 		return LDAPLabel
@@ -79,7 +81,7 @@ func GetAuthProviderLabel(authModule string) string {
 		return JWTLabel
 	case AuthProxyAuthModule:
 		return AuthProxyLabel
-	case GenericOAuthModule:
+	case GenericOAuthModule, strings.TrimPrefix(GenericOAuthModule, "oauth_"):
 		return GenericOAuthLabel
 	default:
 		return "Unknown"

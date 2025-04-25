@@ -10,7 +10,10 @@ import (
 )
 
 const (
-	CheckID = "ssosetting"
+	CheckID                              = "ssosetting"
+	AllowedOrgsFormatValidationStepID    = "allowed-organizations-format-validation"
+	AllowedGroupsFormatValidationStepID  = "allowed-groups-format-validation"
+	AllowedDomainsFormatValidationStepID = "allowed-domains-format-validation"
 )
 
 var _ checks.Check = (*check)(nil)
@@ -33,8 +36,9 @@ func (c *check) ID() string {
 
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
-		&allowedOrganizationsFormatValidation{},
-		&allowedGroupsFormatValidation{},
+		NewListFormatValidation(AllowedDomainsFormatValidationStepID, "allowed_domains", "Allowed Domains format validation"),
+		NewListFormatValidation(AllowedGroupsFormatValidationStepID, "allowed_groups", "Allowed Groups format validation"),
+		NewListFormatValidation(AllowedOrgsFormatValidationStepID, "allowed_organizations", "Allowed Organizations format validation"),
 	}
 }
 
