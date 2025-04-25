@@ -139,6 +139,7 @@ func (du *DashboardUpdater) syncPluginDashboards(ctx context.Context, plugin plu
 
 func (du *DashboardUpdater) handlePluginStateChanged(ctx context.Context, event *pluginsettings.PluginStateChangedEvent) error {
 	du.logger.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+	ctx, _ = identity.WithServiceIdentity(ctx, event.OrgId)
 
 	if event.Enabled {
 		p, exists := du.pluginStore.Plugin(ctx, event.PluginId)
