@@ -84,6 +84,8 @@ export function ExploreGraph({
 }: Props) {
   const theme = useTheme2();
 
+  console.log('ExploreGraph');
+
   const fieldConfigRegistry = useMemo(
     () => createFieldConfigRegistry(getGraphFieldConfig(defaultGraphConfig), 'Explore'),
     []
