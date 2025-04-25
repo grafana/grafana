@@ -2,7 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useState 
 import { useLocalStorage } from 'react-use';
 
 import { store, type ExtensionInfo } from '@grafana/data';
-import { config, getAppEvents, usePluginLinks, locationService } from '@grafana/runtime';
+import { config, getAppEvents, reportInteraction, usePluginLinks, locationService } from '@grafana/runtime';
 import { ExtensionPointPluginMeta, getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 import { OpenExtensionSidebarEvent } from 'app/types/events';
 
@@ -173,6 +173,19 @@ export const ExtensionSidebarContextProvider = ({ children }: ExtensionSidebarCo
 
   // update the stored docked component id when it changes
   useEffect(() => {
+    const componentMeta = getComponentMetaFromComponentId(dockedComponentId ?? '');
+    const storedComponentId = store.get(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY);
+    const storedComponentMeta = getComponentMetaFromComponentId(storedComponentId ?? '');
+    const opened = dockedComponentId !== undefined;
+    // we either want to track opened events, or closed events when we have a previous component
+    if (opened || storedComponentMeta) {
+      reportInteraction('grafana_extension_sidebar_changed', {
+        opened: opened,
+        componentTitle: (opened ? componentMeta : storedComponentMeta)?.componentTitle,
+        pluginId: (opened ? componentMeta : storedComponentMeta)?.pluginId,
+        fromLocalstorage: storedComponentId === dockedComponentId,
+      });
+    }
     if (dockedComponentId) {
       store.set(EXTENSION_SIDEBAR_DOCKED_LOCAL_STORAGE_KEY, dockedComponentId);
     } else {
