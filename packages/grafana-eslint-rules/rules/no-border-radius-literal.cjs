@@ -7,7 +7,7 @@ const createRule = ESLintUtils.RuleCreator(
 const borderRadiusRule = createRule({
   create(context) {
     return {
-      [`${AST_NODE_TYPES.CallExpression}[callee.name="css"] ${AST_NODE_TYPES.Property}`]: function(node) {
+      [`${AST_NODE_TYPES.CallExpression}[callee.name="css"] ${AST_NODE_TYPES.Property}`]: function (node) {
         if (
           node.type === AST_NODE_TYPES.Property &&
           node.key.type === AST_NODE_TYPES.Identifier &&
