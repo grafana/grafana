@@ -12,9 +12,10 @@
 
     <title>Grafana API Reference</title>
 
-    [[range $asset := .Assets.CSSFiles]]
+    [[range $asset := .Assets.SwaggerCSSFiles]]
     <link rel="stylesheet" href="[[$asset.FilePath]]" />
     [[end]]
+
     <link rel="stylesheet" href="[[.Assets.Light]]" />
 
     <link rel="icon" type="image/png" href="[[.FavIcon]]" />
@@ -26,11 +27,11 @@
     <noscript> You need to enable JavaScript to run this app. </noscript>
     <script nonce="[[$.Nonce]]">
       [[if .Assets.ContentDeliveryURL]]
-          window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build-swagger/';
+          window.public_cdn_path = '[[.Assets.ContentDeliveryURL]]public/build/';
       [[end]]
     </script>
     <div id="root"></div>
-    [[range $asset := .Assets.JSFiles]]
+    [[range $asset := .Assets.Swagger]]
     <script nonce="[[$.Nonce]]" src="[[$asset.FilePath]]" type="text/javascript"></script>
     [[end]]
     <script></script>
