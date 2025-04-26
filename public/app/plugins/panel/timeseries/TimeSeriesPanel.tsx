@@ -61,8 +61,6 @@ export const TimeSeriesPanel = ({
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
-  console.log('TimeSeriesPanel');
-
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
@@ -104,7 +102,10 @@ export const TimeSeriesPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                queryZoom={onChangeTimeRange}
+                queryZoom={(e) => {
+                  console.log('queryZoom');
+                  onChangeTimeRange(e);
+                }}
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
@@ -154,7 +155,10 @@ export const TimeSeriesPanel = ({
                   newRange={newAnnotationRange}
                   setNewRange={setNewAnnotationRange}
                 />
-                <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
+                <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={(e) => {
+                  console.log('OutsideRangePlugin')
+                  onChangeTimeRange(e)
+                }} />
                 {data.annotations && (
                   <ExemplarsPlugin
                     visibleSeries={getVisibleLabels(uplotConfig, frames)}

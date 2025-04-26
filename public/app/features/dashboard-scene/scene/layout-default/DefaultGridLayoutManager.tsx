@@ -207,17 +207,21 @@ export class DefaultGridLayoutManager
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
 
+    console.log('getVizPanels');
+
     this.state.grid.forEachChild((child) => {
       if (!(child instanceof DashboardGridItem) && !(child instanceof SceneGridRow)) {
         throw new Error('Child is not a DashboardGridItem or SceneGridRow, invalid scene');
       }
 
       if (child instanceof DashboardGridItem) {
+        console.log('DashboardGridItem');
         if (child.state.body instanceof VizPanel) {
           panels.push(child.state.body);
         }
       } else if (child instanceof SceneGridRow) {
         child.forEachChild((child) => {
+          console.log('DashboardGridItem');
           if (child instanceof DashboardGridItem) {
             if (child.state.body instanceof VizPanel) {
               panels.push(child.state.body);
