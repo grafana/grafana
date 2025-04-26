@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
-	"xorm.io/builder"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/builder"
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
@@ -134,9 +134,6 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 		}
 		fieldValue := *ptrFieldValue
 		if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
-			continue
-		}
-		if col.MapType == core.ONLYFROMDB {
 			continue
 		}
 		if col.IsDeleted {
@@ -564,10 +561,6 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 	args := make([]any, 0, len(table.ColumnsSeq()))
 
 	for _, col := range table.Columns() {
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		if col.IsDeleted {
 			continue
 		}

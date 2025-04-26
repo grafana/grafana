@@ -3,7 +3,6 @@ package resources
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -54,7 +53,7 @@ func NewResourcesManager(repo repository.ReaderWriter, folders *FolderManager, p
 }
 
 // CreateResource writes an object to the repository
-func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
+func (r *ResourcesManager) WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", fmt.Errorf("context error: %w", err)
 	}
@@ -81,7 +80,7 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 	}
 
 	manager, _ := meta.GetManagerProperties()
-	// TODO: how we should handle this?
+	// TODO: how should we handle this?
 	if manager.Identity == r.repo.Config().GetName() {
 		// If it's already in the repository, we don't need to write it
 		return "", ErrAlreadyInRepository
@@ -100,23 +99,24 @@ func (r *ResourcesManager) CreateResourceFileFromObject(ctx context.Context, obj
 		return "", fmt.Errorf("folder not found in tree: %s", folder)
 	}
 
-	// Clear the metadata
-	delete(obj.Object, "metadata")
-
-	// Always write the identifier
-	meta.SetName(name)
-
-	body, err := json.MarshalIndent(obj.Object, "", "  ")
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal dashboard: %w", err)
-	}
-
 	fileName := slugify.Slugify(title) + ".json"
 	if fid.Path != "" {
 		fileName = safepath.Join(fid.Path, fileName)
 	}
 	if options.Path != "" {
 		fileName = safepath.Join(options.Path, fileName)
+	}
+
+	parsed := ParsedResource{
+		Info: &repository.FileInfo{
+			Path: fileName,
+			Ref:  options.Ref,
+		},
+		Obj: obj,
+	}
+	body, err := parsed.ToSaveBytes()
+	if err != nil {
+		return "", err
 	}
 
 	err = r.repo.Write(ctx, fileName, options.Ref, body, commitMessage)
