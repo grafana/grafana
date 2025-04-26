@@ -87,13 +87,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "disableSecretsCompatibility",
-			Description:     "Disable duplicated secret storage in legacy tables",
-			Stage:           FeatureStageExperimental,
-			RequiresRestart: true,
-			Owner:           hostedGrafanaTeam,
-		},
-		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			Stage:       FeatureStageExperimental,
@@ -567,21 +560,21 @@ var (
 			Name:            "queryService",
 			Description:     "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:         "queryServiceFromUI",
 			Description:  "Routes requests to the new query service",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
 			FrontendOnly: true, // and can change at startup
 		},
 		{
@@ -596,15 +589,6 @@ var (
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:            "recoveryThreshold",
-			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
 		},
 		{
 			Name:         "lokiStructuredMetadata",
@@ -1653,10 +1637,11 @@ var (
 		{
 			Name:              "unifiedStorageHistoryPruner",
 			Description:       "Enables the unified storage history pruner",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			Expression:        "true", // will be removed soon
 		},
 		{
 			Name:        "azureMonitorLogsBuilderEditor",
@@ -1753,12 +1738,18 @@ var (
 			FrontendOnly: true,
 		},
 		{
-
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "multiTenantFrontend",
+			Description:  "Register MT frontend",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "alertingListViewV2PreviewToggle",
@@ -1773,6 +1764,16 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
+		},
+		{
+			Name:              "alertingBulkActionsInUI",
+			Description:       "Enables the alerting bulk actions in the UI",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 	}
 )

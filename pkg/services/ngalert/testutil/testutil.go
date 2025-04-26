@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
+	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	acmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -67,7 +68,7 @@ func SetupDashboardService(tb testing.TB, sqlStore db.DB, fs *folderimpl.Dashboa
 	dashboardService, err := dashboardservice.ProvideDashboardServiceImpl(
 		cfg, dashboardStore, fs,
 		features, folderPermissions, ac,
-		foldertest.NewFakeService(), folder.NewFakeStore(),
+		&actest.FakeService{}, foldertest.NewFakeService(),
 		nil, client.MockTestRestConfig{}, nil, quotaService, nil, nil, nil,
 		dualwrite.ProvideTestService(), sort.ProvideService(),
 		serverlock.ProvideService(sqlStore, tracing.InitializeTracerForTest()),
