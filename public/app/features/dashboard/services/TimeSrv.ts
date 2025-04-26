@@ -189,6 +189,7 @@ export class TimeSrv {
   }
 
   updateTimeRangeFromUrl() {
+    console.log('updateTimeRangeFromUrl')
     const params = locationService.getSearch();
 
     if (params.get('left')) {
