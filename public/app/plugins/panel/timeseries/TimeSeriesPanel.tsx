@@ -61,6 +61,8 @@ export const TimeSeriesPanel = ({
   const [newAnnotationRange, setNewAnnotationRange] = useState<TimeRange2 | null>(null);
   const cursorSync = sync?.() ?? DashboardCursorSync.Off;
 
+  console.log('TimeSeriesPanel');
+
   if (!frames || suggestions) {
     return (
       <PanelDataErrorView
