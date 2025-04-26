@@ -354,6 +354,7 @@ export class TimeSrv {
   }
 
   zoomOut(factor: number, updateUrl = true) {
+    console.log('zoomOut2');
     const range = this.timeRange();
     const { from, to } = getZoomedTimeRange(range, factor);
 

@@ -249,6 +249,7 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
 }
 
 function handleZoomOut(scene: DashboardScene) {
+  console.log('handleZoomOut')
   const timePicker = dashboardSceneGraph.getTimePicker(scene);
   timePicker?.onZoom();
 }

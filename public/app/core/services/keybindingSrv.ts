@@ -203,6 +203,7 @@ export class KeybindingSrv {
     });
 
     this.bind('t z', () => {
+      console.log('ZoomOutEvent');
       appEvents.publish(new ZoomOutEvent({ scale: 2, updateUrl }));
     });
 
