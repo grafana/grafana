@@ -44,6 +44,7 @@ export class TimeSrv {
   private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
+    console.log('TimeSrv');
     // default time
     this.time = getDefaultTimeRange().raw;
     this.timeAtLoad = getDefaultTimeRange().raw;
@@ -189,7 +190,7 @@ export class TimeSrv {
   }
 
   updateTimeRangeFromUrl() {
-    console.log('updateTimeRangeFromUrl')
+    console.log('updateTimeRangeFromUrl');
     const params = locationService.getSearch();
 
     if (params.get('left')) {
@@ -293,6 +294,7 @@ export class TimeSrv {
   }
 
   setTime(time: RawTimeRange, updateUrl = true) {
+    console.log({ time });
     extend(this.time, time);
 
     console.log({ time });
