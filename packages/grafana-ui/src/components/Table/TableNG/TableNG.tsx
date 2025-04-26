@@ -120,6 +120,7 @@ export function TableNG(props: TableNGProps) {
 
   return (
     <DataGrid
+      className={styles.grid}
       ref={gridHandle}
       columns={columns}
       rows={renderedRows}
@@ -130,7 +131,6 @@ export function TableNG(props: TableNGProps) {
         // draggable: true,
       }}
       onColumnResize={_onColumnResize}
-      style={{ blockSize: '100%', scrollbarWidth: 'thin' }}
       rowHeight={rowHeight}
     />
   );
@@ -228,6 +228,7 @@ export function mapFrameToDataGrid({
         // TODO add renderHeaderCell HeaderCell's here and handle all features
         return (
           <DataGrid<TableRow, TableSummaryRow>
+            className="rdg-dark"
             rows={expandedRecords}
             columns={expandedColumns}
             rowHeight={defaultRowHeight}
@@ -458,32 +459,55 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
 
   panelContext.eventBus.publish(new DataHoverClearEvent());
 }
-
+// rdg-cell:first-child
 const getStyles2 = (theme: GrafanaTheme2) => ({
-  cell: css({
-    paddingInline: 6,
-    paddingBlock: 6,
+  grid: css({
+    '--rdg-background-color': theme.colors.background.primary,
+    '--rdg-header-background-color': theme.colors.background.primary,
+    '--rdg-border-color': theme.isDark ? '#282b30' : '#ebebec',
+    '--rdg-color': theme.colors.text.primary,
 
+    // note: this cannot have any transparency since default cells that
+    // overlay/overflow on hover inherit this background and need to occlude cells below
+    '--rdg-row-hover-background-color': theme.isDark ? '#212428' : '#f4f5f5',
+
+    blockSize: '100%',
+    scrollbarWidth: 'thin',
+    scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
+
+    // kill outer borders
+    border: 'none',
+    '.rdg-cell': {
+      paddingInline: 6,
+      paddingBlock: 6,
+
+      '&:last-child': {
+        borderInlineEnd: 'none',
+      }
+    },
+
+    '.rdg-header-row': {
+      fontWeight: 'normal',
+
+      // kill header borders
+      '.rdg-cell': {
+        borderInlineEnd: 'none',
+      },
+    },
+  }),
+  cell: css({
     '&:hover': {
       position: 'absolute',
       width: '100%',
       whiteSpace: 'pre-line',
-      wordWrap: 'break-word',
       zIndex: 1,
+
+      // this prevents cells with empty content from collapsing to a few px
+      minHeight: 35, // defaultRowHeight
     },
   }),
   cellWrapped: css({
-    paddingInline: 6,
-    paddingBlock: 6,
-    // '--rdg-border-color': theme.colors.border.medium,
-    // borderLeft: 'none',
     whiteSpace: 'pre-line',
-    wordWrap: 'break-word',
-    // overflow: 'hidden',
-    // textOverflow: 'ellipsis',
-
-    // Reset default cell styles for custom cell component styling
-    // paddingInline: '0',
   }),
 });
 
@@ -493,9 +517,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '--rdg-header-background-color': theme.colors.background.primary,
     '--rdg-border-color': 'transparent',
     '--rdg-color': theme.colors.text.primary,
-    '&:hover': {
-      '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
-    },
+    '--rdg-row-hover-background-color': theme.colors.emphasize(theme.colors.action.hover, 0.6),
 
     // If we rely solely on borderInlineEnd which is added from data grid, we
     // get a small gap where the gridCell borders meet the column header borders.
