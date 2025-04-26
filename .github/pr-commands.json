@@ -243,13 +243,12 @@
   {
     "type": "changedfiles",
     "matches": [
-      "/pkg/services/ngalert/**/*",
-      "/pkg/services/sqlstore/migrations/ualert/**/*",
-      "/pkg/services/alerting/**/*",
-      "/public/app/features/alerting/**/*",
-      "/pkg/tests/api/alerting/**/*",
-      "/pkg/tests/alertmanager/**/*",
-      "/public/app/features/alerting/**/*"
+      "pkg/services/ngalert/**/*",
+      "pkg/services/sqlstore/migrations/ualert/**/*",
+      "pkg/services/alerting/**/*",
+      "public/app/features/alerting/**/*",
+      "pkg/tests/api/alerting/**/*",
+      "pkg/tests/alertmanager/**/*"
     ],
     "action": "updateLabel",
     "addLabel": "area/alerting"

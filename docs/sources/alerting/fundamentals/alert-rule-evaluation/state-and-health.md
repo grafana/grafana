@@ -29,6 +29,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+  keep-firing:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
   notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
@@ -49,12 +54,13 @@ An alert instance can be in either of the following states:
 | **Normal**               | The state of an alert when the condition (threshold) is not met.                                                                                                                                                                                                                  |
 | **Pending**              | The state of an alert that has breached the threshold but for less than the [pending period](ref:pending-period).                                                                                                                                                                 |
 | **Alerting**             | The state of an alert that has breached the threshold for longer than the [pending period](ref:pending-period).                                                                                                                                                                   |
+| **Recovering**           | The state of an alert that has been configured to keep [firing for a duration after it is triggered](ref:keep-firing).                                                                                                                                                            |
 | **No Data<sup>\*</sup>** | The state of an alert whose query returns no data or all values are null. <br/> An alert in this state generates a new [DatasourceNoData alert](#no-data-and-error-alerts). You can [modify the default behavior of the no data state](#modify-the-no-data-or-error-state).       |
 | **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurred evaluating the alert rule. <br/> An alert in this state generates a new [DatasourceError alert](#no-data-and-error-alerts). You can [modify the default behavior of the error state](#modify-the-no-data-or-error-state). |
 
 If an alert rule changes (except for updates to annotations, the evaluation interval, or other internal fields), its alert instances reset to the `Normal` state. The alert instance state then updates accordingly during the next evaluation.
 
-{{< figure src="/media/docs/alerting/alert-instance-states-v3.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
+{{< figure src="/media/docs/alerting/alert-state-diagram2.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
 {{< admonition type="note" >}}
 

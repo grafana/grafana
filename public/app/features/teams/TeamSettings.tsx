@@ -70,7 +70,10 @@ export const TeamSettings = ({ team, updateTeam }: Props) => {
 
           <Field
             label={t('teams.team-settings.label-email', 'Email')}
-            description="This is optional and is primarily used to set the team profile avatar (via gravatar service)."
+            description={t(
+              'teams.team-settings.description-email',
+              'This is optional and is primarily used to set the team profile avatar (via gravatar service)'
+            )}
             disabled={!canWriteTeamSettings}
           >
             {/* eslint-disable-next-line @grafana/no-untranslated-strings */}

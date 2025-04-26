@@ -9,17 +9,19 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { RowsLayoutRowKind } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import appEvents from 'app/core/app_events';
 import { LS_ROW_COPY_KEY } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import store from 'app/core/store';
 import kbn from 'app/core/utils/kbn';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
+import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { ConditionalRendering } from '../../conditional-rendering/ConditionalRendering';
 import { serializeRow } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { getElements } from '../../serialization/layoutSerializers/utils';
 import { getDashboardSceneFor, getDefaultVizPanel } from '../../utils/utils';
-import { AutoGridLayoutManager } from '../layout-responsive-grid/ResponsiveGridLayoutManager';
+import { AutoGridLayoutManager } from '../layout-auto-grid/AutoGridLayoutManager';
 import { LayoutRestorer } from '../layouts-shared/LayoutRestorer';
 import { clearClipboard } from '../layouts-shared/paste';
 import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
@@ -29,7 +31,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../types/EditableDashboardElement';
 import { LayoutParent } from '../types/LayoutParent';
 
-import { getEditOptions } from './RowItemEditor';
+import { useEditOptions } from './RowItemEditor';
 import { RowItemRenderer } from './RowItemRenderer';
 import { RowItemRepeaterBehavior } from './RowItemRepeaterBehavior';
 import { RowItems } from './RowItems';
@@ -43,7 +45,6 @@ export interface RowItemState extends SceneObjectState {
   fillScreen?: boolean;
   isDropTarget?: boolean;
   conditionalRendering?: ConditionalRendering;
-  isNew?: boolean;
 }
 
 export class RowItem
@@ -87,6 +88,7 @@ export class RowItem
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
+      isContainer: true,
     };
   }
 
@@ -102,12 +104,38 @@ export class RowItem
     this.setState({ layout: this._layoutRestorer.getLayout(layout, this.state.layout) });
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
-    return getEditOptions(this);
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
+    return useEditOptions(this, isNewElement);
   }
 
   public onDelete() {
     this.getParentLayout().removeRow(this);
+  }
+
+  public onConfirmDelete() {
+    if (this.getLayout().getVizPanels().length === 0) {
+      this.onDelete();
+      return;
+    }
+
+    if (this.getParentLayout().shouldUngroup()) {
+      this.onDelete();
+      return;
+    }
+
+    appEvents.publish(
+      new ShowConfirmModalEvent({
+        title: t('dashboard.rows-layout.delete-row-title', 'Delete row?'),
+        text: t(
+          'dashboard.rows-layout.delete-row-text',
+          'Deleting this row will also remove all panels. Are you sure you want to continue?'
+        ),
+        yesText: t('dashboard.rows-layout.delete-row-yes', 'Delete'),
+        onConfirm: () => {
+          this.onDelete();
+        },
+      })
+    );
   }
 
   public createMultiSelectedElement(items: SceneObject[]): RowItems {
@@ -159,7 +187,11 @@ export class RowItem
   }
 
   public onChangeTitle(title: string) {
-    this.setState({ title, isNew: false });
+    this.setState({ title });
+  }
+
+  public onChangeName(name: string) {
+    this.onChangeTitle(name);
   }
 
   public onHeaderHiddenToggle(hideHeader = !this.state.hideHeader) {

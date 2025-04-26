@@ -34,11 +34,6 @@ export const FeaturesList = ({ repos, hasRequiredFeatures, onSetupFeatures }: Fe
             Store dashboards in version-controlled storage for better organization and history tracking
           </Trans>
         </li>
-        <li>
-          <Trans i18nKey="provisioning.features-list.migrate-existing-dashboards-storage-provisioning">
-            Migrate existing dashboards to GitHub for provisioning
-          </Trans>
-        </li>
       </ul>
       {!hasRequiredFeatures ? (
         <Box>

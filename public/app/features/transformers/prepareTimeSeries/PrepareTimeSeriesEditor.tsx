@@ -49,7 +49,11 @@ const multiInfo = {
       <li>
         <Trans i18nKey="transformers.multi-info.multiple-frames">Multiple frames</Trans>
       </li>
-      <li>Each frame has two fields: time, value</li>
+      <li>
+        <Trans i18nKey="transformers.multi-info.frame-fields-value" values={{ field1: 'time', field2: 'value' }}>
+          Each frame has two fields: {'{{field1}}'}, {'{{field2}}'}
+        </Trans>
+      </li>
       <li>
         <Trans i18nKey="transformers.multi-info.time-in-ascending-order">Time in ascending order</Trans>
       </li>
@@ -82,7 +86,11 @@ const longInfo = {
           Time in ascending order, but may have duplicates
         </Trans>
       </li>
-      <li>String values are represented as separate fields rather than as labels</li>
+      <li>
+        <Trans i18nKey="transformers.long-info.string-values-separate">
+          String values are represented as separate fields rather than as labels
+        </Trans>
+      </li>
       <li>
         <Trans i18nKey="transformers.long-info.multiple-value-fields-may-exist">Multiple value fields may exist</Trans>
       </li>

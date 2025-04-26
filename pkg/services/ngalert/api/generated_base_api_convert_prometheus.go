@@ -177,13 +177,13 @@ func (api *API) RegisterConvertPrometheusApiEndpoints(srv ConvertPrometheusApi, 
 			),
 		)
 		group.Post(
-			toMacaronPath("/api/convert/api/prom/config/v1/rules"),
+			toMacaronPath("/api/convert/api/prom/rules"),
 			requestmeta.SetOwner(requestmeta.TeamAlerting),
 			requestmeta.SetSLOGroup(requestmeta.SLOGroupHighSlow),
-			api.authorize(http.MethodPost, "/api/convert/api/prom/config/v1/rules"),
+			api.authorize(http.MethodPost, "/api/convert/api/prom/rules"),
 			metrics.Instrument(
 				http.MethodPost,
-				"/api/convert/api/prom/config/v1/rules",
+				"/api/convert/api/prom/rules",
 				api.Hooks.Wrap(srv.RouteConvertPrometheusCortexPostRuleGroups),
 				m,
 			),

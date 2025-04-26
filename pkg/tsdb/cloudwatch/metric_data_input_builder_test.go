@@ -5,9 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
-
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,9 +20,9 @@ func TestMetricDataInputBuilder(t *testing.T) {
 	tests := []struct {
 		name                 string
 		timezoneUTCOffset    string
-		expectedLabelOptions *cloudwatchtypes.LabelOptions
+		expectedLabelOptions *cloudwatch.LabelOptions
 	}{
-		{name: "when timezoneUTCOffset is provided", timezoneUTCOffset: "+1234", expectedLabelOptions: &cloudwatchtypes.LabelOptions{Timezone: aws.String("+1234")}},
+		{name: "when timezoneUTCOffset is provided", timezoneUTCOffset: "+1234", expectedLabelOptions: &cloudwatch.LabelOptions{Timezone: aws.String("+1234")}},
 		{name: "when timezoneUTCOffset is not provided", timezoneUTCOffset: "", expectedLabelOptions: nil},
 	}
 

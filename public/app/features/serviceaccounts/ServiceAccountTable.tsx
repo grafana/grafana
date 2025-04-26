@@ -228,7 +228,11 @@ const getActionsCell = (
         {contextSrv.hasPermissionInMetadata(AccessControlAction.ServiceAccountsDelete, original) && (
           <IconButton
             name="trash-alt"
-            aria-label={`Delete service account ${original.name}`}
+            aria-label={t(
+              'serviceaccounts.get-actions-cell.aria-label-delete-button',
+              'Delete service account {{serviceAccountName}}',
+              { serviceAccountName: original.name }
+            )}
             variant="secondary"
             onClick={() => onRemoveButtonClick(original)}
           />
@@ -240,7 +244,10 @@ const getActionsCell = (
           disabled={true}
           name="lock"
           size="md"
-          tooltip={`This is a managed service account and cannot be modified.`}
+          tooltip={t(
+            'serviceaccounts.get-actions-cell.tooltip-managed-service-account-cannot-modified',
+            'This is a managed service account and cannot be modified'
+          )}
         />
       </Stack>
     );

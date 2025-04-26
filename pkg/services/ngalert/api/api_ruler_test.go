@@ -81,6 +81,24 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 	t.Run("when fine-grained access is enabled", func(t *testing.T) {
 		t.Run("and group argument is empty", func(t *testing.T) {
+			t.Run("allow deleting without access to datasource", func(t *testing.T) {
+				ruleStore := initFakeRuleStore(t)
+				provisioningStore := fakes.NewFakeProvisioningStore()
+
+				folderGen := gen.With(gen.WithNamespace(folder.ToFolderReference()))
+
+				authorizedRulesInFolder := folderGen.With(gen.WithGroupPrefix("authz-")).GenerateManyRef(1, 5)
+
+				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
+
+				permissions := createPermissionsForRulesWithoutDS(authorizedRulesInFolder, orgID)
+				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
+
+				response := createServiceWithProvenanceStore(ruleStore, provisioningStore).RouteDeleteAlertRules(requestCtx, folder.UID, "")
+
+				require.Equalf(t, 202, response.Status(), "Expected 202 but got %d: %v", response.Status(), string(response.Body()))
+				assertRulesDeleted(t, authorizedRulesInFolder, ruleStore)
+			})
 			t.Run("return Forbidden if user is not authorized to access any group in the folder", func(t *testing.T) {
 				ruleStore := initFakeRuleStore(t)
 				ruleStore.PutRule(context.Background(), gen.With(gen.WithNamespace(folder.ToFolderReference())).GenerateManyRef(1, 5)...)
@@ -108,8 +126,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				ruleStore.PutRule(context.Background(), authorizedRulesInFolder...)
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
-				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithGroupPrefix("unauthz")).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(append(authorizedRulesInFolder, provisionedRulesInFolder...), orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -130,8 +146,6 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 				require.NoError(t, err)
 
 				ruleStore.PutRule(context.Background(), provisionedRulesInFolder...)
-				// more rules in the same namespace but user does not have access to them
-				ruleStore.PutRule(context.Background(), folderGen.With(gen.WithSameGroup()).GenerateManyRef(1, 5)...)
 
 				permissions := createPermissionsForRules(provisionedRulesInFolder, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
@@ -159,10 +173,8 @@ func TestRouteDeleteAlertRules(t *testing.T) {
 
 				authorizedRulesInGroup := groupGen.GenerateManyRef(1, 5)
 				ruleStore.PutRule(context.Background(), authorizedRulesInGroup...)
-				// more rules in the same group but user is not authorized to access them
-				ruleStore.PutRule(context.Background(), groupGen.GenerateManyRef(1, 5)...)
 
-				permissions := createPermissionsForRules(authorizedRulesInGroup, orgID)
+				permissions := createPermissionsForRules([]*models.AlertRule{}, orgID)
 				requestCtx := createRequestContextWithPerms(orgID, permissions, nil)
 
 				response := createService(ruleStore, nil).RouteDeleteAlertRules(requestCtx, folder.UID, authorizedRulesInGroup[0].RuleGroup)
@@ -323,7 +335,10 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		expectedRules := make([]*models.AlertRule, 0)
+		for i := 0; i < 10; i++ {
+			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(util.Pointer(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
+		}
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -654,8 +669,10 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			group2Key := models.GenerateGroupKey(orgID)
 			group2Key.NamespaceUID = folder2.UID
 
-			group1 := gen.With(gen.WithGroupKey(group1Key)).GenerateManyRef(2, 6)
-			group2 := gen.With(gen.WithGroupKey(group2Key)).GenerateManyRef(2, 6)
+			ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+			group1 := gen.With(gen.WithGroupKey(group1Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
+			group2 := gen.With(gen.WithGroupKey(group2Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), append(group1, group2...)...)
 
 			t.Run("and do not return group if user does not have access to one of rules", func(t *testing.T) {
@@ -692,7 +709,9 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -741,7 +760,9 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -1010,6 +1031,20 @@ func createPermissionsForRules(rules []*models.AlertRule, orgID int64) map[int64
 		}
 		for _, query := range rule.Data {
 			permissions[datasources.ActionQuery] = append(permissions[datasources.ActionQuery], datasources.ScopeProvider.GetResourceScopeUID(query.DatasourceUID))
+		}
+	}
+	return map[int64]map[string][]string{orgID: permissions}
+}
+
+func createPermissionsForRulesWithoutDS(rules []*models.AlertRule, orgID int64) map[int64]map[string][]string {
+	ns := map[string]any{}
+	permissions := map[string][]string{}
+	for _, rule := range rules {
+		if _, ok := ns[rule.NamespaceUID]; !ok {
+			scope := dashboards.ScopeFoldersProvider.GetResourceScopeUID(rule.NamespaceUID)
+			permissions[dashboards.ActionFoldersRead] = append(permissions[dashboards.ActionFoldersRead], scope)
+			permissions[ac.ActionAlertingRuleRead] = append(permissions[ac.ActionAlertingRuleRead], scope)
+			ns[rule.NamespaceUID] = struct{}{}
 		}
 	}
 	return map[int64]map[string][]string{orgID: permissions}
