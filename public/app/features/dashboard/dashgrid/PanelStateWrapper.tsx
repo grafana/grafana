@@ -525,6 +525,7 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     return (
       <>
+        {console.log('aaaaaaaaaaaaaa')}
         <PanelContextProvider value={this.state.context}>
           <PanelComponent
             id={panel.id}
