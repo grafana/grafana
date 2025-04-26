@@ -109,7 +109,23 @@ export function TableNG(props: TableNGProps) {
       key: field.name,
       name: field.name,
       width: widths[i],
-      cellClass: (row: TableRow) => (field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cell),
+      headerCellClass: field.type === FieldType.number ? styles.cellRight : null,
+      cellClass:
+        field.type === FieldType.number
+          ? styles.cellRight
+          : () => {
+              const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
+
+              switch (cellType) {
+                case TableCellDisplayMode.Auto:
+                case TableCellDisplayMode.ColorBackground:
+                case TableCellDisplayMode.ColorBackgroundSolid:
+                case TableCellDisplayMode.ColorText:
+                  return field.config.custom?.cellOptions.wrapText ? styles.cellWrapped : styles.cellText;
+                default:
+                  return null;
+              }
+            },
     }));
   }, [width, scrollbarWidth, data, styles]);
 
@@ -475,27 +491,29 @@ const getStyles2 = (theme: GrafanaTheme2) => ({
     scrollbarWidth: 'thin',
     scrollbarColor: theme.isDark ? '#fff5 #fff1' : '#0005 #0001',
 
-    // kill outer borders
     border: 'none',
+
     '.rdg-cell': {
       paddingInline: 6,
       paddingBlock: 6,
 
+      // this was OG, but leaving ellipsis is better
+      // textOverflow: 'initial',
+
       '&:last-child': {
         borderInlineEnd: 'none',
-      }
+      },
     },
 
     '.rdg-header-row': {
       fontWeight: 'normal',
 
-      // kill header borders
       '.rdg-cell': {
         borderInlineEnd: 'none',
       },
     },
   }),
-  cell: css({
+  cellText: css({
     '&:hover': {
       position: 'absolute',
       width: '100%',
@@ -508,6 +526,9 @@ const getStyles2 = (theme: GrafanaTheme2) => ({
   }),
   cellWrapped: css({
     whiteSpace: 'pre-line',
+  }),
+  cellRight: css({
+    textAlign: 'right',
   }),
 });
 
