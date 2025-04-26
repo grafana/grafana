@@ -1,6 +1,6 @@
 import { ReducerID } from '@grafana/data';
 import { CalculateFieldTransformerOptions, ReduceOptions } from '@grafana/data/internal';
-import { FilterPill, HorizontalGroup, InlineField, StatsPicker } from '@grafana/ui';
+import { FilterPill, InlineField, Stack, StatsPicker } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
@@ -48,9 +48,9 @@ export const ReduceRowOptionsEditor = (props: {
       <InlineField
         label={t('transformers.reduce-row-options-editor.label-operation', 'Operation')}
         labelWidth={LABEL_WIDTH}
-        grow={true}
+        shrink={true}
       >
-        <HorizontalGroup spacing="xs" align="flex-start" wrap>
+        <Stack gap={0.5} direction="row" alignItems="flex-start" wrap>
           {names.map((o, i) => {
             return (
               <FilterPill
@@ -63,7 +63,7 @@ export const ReduceRowOptionsEditor = (props: {
               />
             );
           })}
-        </HorizontalGroup>
+        </Stack>
       </InlineField>
       <InlineField
         label={t('transformers.reduce-row-options-editor.label-calculation', 'Calculation')}

@@ -2946,6 +2946,9 @@
           "health": {
             "type": "string"
           },
+          "isPaused": {
+            "type": "boolean"
+          },
           "keepFiringFor": {
             "format": "double",
             "type": "number"
@@ -2962,6 +2965,15 @@
           },
           "name": {
             "type": "string"
+          },
+          "notificationSettings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
+          "queriedDatasourceUIDs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "query": {
             "type": "string"
@@ -2992,9 +3004,7 @@
           }
         },
         "required": [
-          "uid",
           "name",
-          "folderUid",
           "query",
           "health",
           "type",
@@ -10203,6 +10213,9 @@
           "health": {
             "type": "string"
           },
+          "isPaused": {
+            "type": "boolean"
+          },
           "labels": {
             "$ref": "#/components/schemas/Labels"
           },
@@ -10216,6 +10229,9 @@
           "name": {
             "type": "string"
           },
+          "notificationSettings": {
+            "$ref": "#/components/schemas/AlertRuleNotificationSettings"
+          },
           "query": {
             "type": "string"
           },
@@ -10227,9 +10243,7 @@
           }
         },
         "required": [
-          "uid",
           "name",
-          "folderUid",
           "query",
           "health",
           "type"
@@ -11745,6 +11759,55 @@
         "title": "TimeInterval represents a named set of time intervals for which a route should be muted.",
         "type": "object"
       },
+      "TimeIntervalItem": {
+        "properties": {
+          "days_of_month": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "location": {
+            "type": "string"
+          },
+          "months": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "times": {
+            "items": {
+              "$ref": "#/components/schemas/TimeIntervalTimeRange"
+            },
+            "type": "array"
+          },
+          "weekdays": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "years": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "TimeIntervalTimeRange": {
+        "properties": {
+          "end_time": {
+            "type": "string"
+          },
+          "start_time": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "TimeRange": {
         "description": "Redefining this to avoid an import cycle",
         "properties": {
@@ -13033,6 +13096,7 @@
         "type": "object"
       },
       "gettableAlerts": {
+        "description": "GettableAlerts gettable alerts",
         "items": {
           "$ref": "#/components/schemas/gettableAlert"
         },
@@ -13156,6 +13220,7 @@
         "type": "object"
       },
       "gettableSilences": {
+        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
