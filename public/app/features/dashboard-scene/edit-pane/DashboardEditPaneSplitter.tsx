@@ -29,6 +29,8 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
 
   console.log('DashboardEditPaneSplitteraa');
 
+  console.log({ dashboard, isEditing, body, controls });
+
   if (!config.featureToggles.dashboardNewLayouts) {
     return (
       <NativeScrollbar onSetScrollRef={dashboard.onSetScrollRef}>
