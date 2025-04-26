@@ -354,11 +354,6 @@ export interface FeatureToggles {
   */
   cloudWatchBatchQueries?: boolean;
   /**
-  * Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-  * @default true
-  */
-  recoveryThreshold?: boolean;
-  /**
   * Enables the loki data source to request structured metadata from the Loki server
   * @default true
   */
@@ -958,6 +953,7 @@ export interface FeatureToggles {
   alertingMigrationUI?: boolean;
   /**
   * Enables the unified storage history pruner
+  * @default true
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
@@ -1018,6 +1014,10 @@ export interface FeatureToggles {
   */
   pluginsAutoUpdate?: boolean;
   /**
+  * Register MT frontend
+  */
+  multiTenantFrontend?: boolean;
+  /**
   * Enables the alerting list view v2 preview toggle
   */
   alertingListViewV2PreviewToggle?: boolean;
@@ -1026,4 +1026,9 @@ export interface FeatureToggles {
   * @default false
   */
   alertRuleUseFiredAtForStartsAt?: boolean;
+  /**
+  * Enables the alerting bulk actions in the UI
+  * @default true
+  */
+  alertingBulkActionsInUI?: boolean;
 }
