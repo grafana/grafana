@@ -475,7 +475,7 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
 
   panelContext.eventBus.publish(new DataHoverClearEvent());
 }
-// rdg-cell:first-child
+
 const getStyles2 = (theme: GrafanaTheme2) => ({
   grid: css({
     '--rdg-background-color': theme.colors.background.primary,
@@ -497,8 +497,8 @@ const getStyles2 = (theme: GrafanaTheme2) => ({
       paddingInline: 6,
       paddingBlock: 6,
 
-      // this was OG, but leaving ellipsis is better
-      // textOverflow: 'initial',
+      // clip the overflow (like OG), without this the default is ellipsis
+      textOverflow: 'initial',
 
       '&:last-child': {
         borderInlineEnd: 'none',
