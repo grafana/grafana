@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@fa48192dac470ae356b3f7007229f3ac28c48a25 # main
         with:
           # Vault secret paths:
           # - ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot
@@ -42,7 +42,7 @@ jobs:
 
       - name: Generate token
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92 # b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
           app_id: ${{ env.GH_APP_ID }}
           private_key: ${{ env.GH_APP_PEM }}
@@ -50,14 +50,15 @@ jobs:
       # Check if the user is in the list from the secret
       - name: Check if user is allowed
         id: check_user
+        env:
+          GH_USERNAME: ${{ github.event.sender.login }}
         run: |
           # Convert the comma-separated list to an array
           IFS=',' read -ra ALLOWED_USERS <<< "${{ env.ALLOWED_USERS }}"
-          USERNAME="${{ github.event.sender.login }}"
 
           # Check if user is in the allowed list
           for allowed_user in "${ALLOWED_USERS[@]}"; do
-            if [ "$allowed_user" = "$USERNAME" ]; then
+            if [ "$allowed_user" = "$GH_USERNAME" ]; then
               echo "user_allowed=true" >> $GITHUB_OUTPUT
               exit 0
             fi
@@ -68,7 +69,7 @@ jobs:
       - name: Get node ID for item
         if: steps.check_user.outputs.user_allowed == 'true'
         id: get_node_id
-        uses: octokit/graphql-action@v2.x
+        uses: octokit/graphql-action@51bf543c240dcd14761320e2efc625dc32ec0d32 # v2.x
         with:
           query: |
             query getNodeId($owner: String!, $repo: String!, $number: Int!) {
@@ -89,7 +90,7 @@ jobs:
       # Finally, add the issue/PR to the project board
       - name: Add to project board
         if: steps.check_user.outputs.user_allowed == 'true'
-        uses: octokit/graphql-action@v2.x
+        uses: octokit/graphql-action@51bf543c240dcd14761320e2efc625dc32ec0d32 # v2.x
         with:
           query: |
             mutation addItem($projectid: ID!, $itemid: ID!) {
