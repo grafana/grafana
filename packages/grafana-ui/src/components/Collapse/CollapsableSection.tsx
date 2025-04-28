@@ -52,9 +52,9 @@ export const CollapsableSection = ({
     e.preventDefault();
     e.stopPropagation();
 
-    if (isControlled) {
-      onToggle?.(!isOpen);
-    } else {
+    onToggle?.(!isOpen);
+
+    if (!isControlled) {
       toggleInternalOpenState(!internalOpenState);
     }
   };
