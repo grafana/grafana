@@ -171,9 +171,9 @@ export class DashboardSceneChangeTracker {
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
         if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
-          const e = event as any;
-          if (e?.payload?.partialUpdate?.from && e?.payload?.partialUpdate?.to) {
-            console.log({ event });
+          const eventPayload = (event as any)?.payload?.partialUpdate;
+          if (eventPayload?.from && eventPayload?.to) {
+            window.parent.postMessage({ source: 'grafana-dashboard-time-range-changed', payload: eventPayload }, '*');
           }
           performSaveModelDiff();
         }
