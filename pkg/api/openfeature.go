@@ -2,11 +2,13 @@ package api
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
 	contextmodel "github.com/grafana/grafana/pkg/services/contexthandler/model"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/proxyutil"
 	"github.com/grafana/grafana/pkg/web"
 )
 
@@ -15,6 +17,11 @@ func (hs *HTTPServer) registerOpenFeatureRoutes(apiRoute routing.RouteRegister) 
 		apiRoute.Group("/ofrep/v1", func(apiRoute routing.RouteRegister) {
 			apiRoute.Post("/evaluate/flags", hs.allFlagsStaticProvider)
 			apiRoute.Post("/evaluate/flags/:flagKey", hs.evalFlagStaticProvider)
+		})
+	} else {
+		apiRoute.Group("/ofrep/v1", func(apiRoute routing.RouteRegister) {
+			apiRoute.Post("/evaluate/flags", hs.handleProxyRequest)
+			apiRoute.Post("/evaluate/flags/:flagKey", hs.handleProxyRequest)
 		})
 	}
 }
@@ -40,4 +47,23 @@ func (hs *HTTPServer) allFlagsStaticProvider(c *contextmodel.ReqContext) respons
 	}
 
 	return response.JSON(http.StatusOK, flags)
+}
+
+func (hs *HTTPServer) handleProxyRequest(c *contextmodel.ReqContext) {
+	proxyPath := c.Req.URL.Path
+	if proxyPath == "" {
+		c.JsonApiErr(http.StatusBadRequest, "proxy path is required", nil)
+		return
+	}
+
+	u, _ := url.Parse(hs.Cfg.OpenFeature.URL)
+	director := func(req *http.Request) {
+		req.URL.Scheme = u.Scheme
+		req.URL.Host = u.Host
+		req.URL.Path = proxyPath
+	}
+
+	c.Logger.Debug("Proxying request to Open Feature provider", "path", proxyPath)
+	proxy := proxyutil.NewReverseProxy(c.Logger, director)
+	proxy.ServeHTTP(c.Resp, c.Req)
 }
