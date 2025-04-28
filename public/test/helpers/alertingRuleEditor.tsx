@@ -40,7 +40,6 @@ export const ui = {
   },
   buttons: {
     saveAndExit: byRole('button', { name: 'Save rule and exit' }),
-    save: byRole('button', { name: 'Save rule' }),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     preview: byRole('button', { name: /^Preview$/ }),
