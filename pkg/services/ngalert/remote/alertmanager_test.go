@@ -137,20 +137,24 @@ func TestApplyConfig(t *testing.T) {
 	})
 
 	var configSent client.UserGrafanaConfig
-	var lastConfigSync, lastStateSync time.Time
+	var configSyncs, stateSyncs int
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
+		var res = map[string]any{"status": "success"}
+
 		if r.Method == http.MethodPost {
 			if strings.Contains(r.URL.Path, "/config") {
 				require.NoError(t, json.NewDecoder(r.Body).Decode(&configSent))
-				lastConfigSync = time.Now()
+				configSyncs++
 			} else {
-				lastStateSync = time.Now()
+				stateSyncs++
 			}
+		} else {
+			res["data"] = &configSent
 		}
 		w.Header().Add("content-type", "application/json")
-		require.NoError(t, json.NewEncoder(w).Encode(map[string]string{"status": "success"}))
+		require.NoError(t, json.NewEncoder(w).Encode(res))
 	})
 
 	// Encrypt receivers to save secrets in the database.
@@ -198,11 +202,15 @@ func TestApplyConfig(t *testing.T) {
 	}
 	require.Error(t, am.ApplyConfig(ctx, config))
 	require.False(t, am.Ready())
+	require.Equal(t, 0, stateSyncs)
+	require.Equal(t, 0, configSyncs)
 
 	// A 200 status code response should make the check succeed.
 	server.Config.Handler = okHandler
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.True(t, am.Ready())
+	require.Equal(t, 1, stateSyncs)
+	require.Equal(t, 1, configSyncs)
 
 	// The sent configuration should be unencrypted and promoted.
 	amCfg, err := json.Marshal(configSent.GrafanaAlertmanagerConfig)
@@ -217,22 +225,39 @@ func TestApplyConfig(t *testing.T) {
 
 	// If we already got a 200 status code response and the sync interval hasn't elapsed,
 	// we shouldn't send the state/configuration again.
-	expStateSync := lastStateSync
-	expConfigSync := lastConfigSync
 	require.NoError(t, am.ApplyConfig(ctx, config))
-	require.Equal(t, expStateSync, lastStateSync)
-	require.Equal(t, expConfigSync, lastConfigSync)
+	require.Equal(t, 1, stateSyncs)
+	require.Equal(t, 1, configSyncs)
 
-	// Changing the sync interval and calling ApplyConfig again
+	// Changing the sync interval and calling ApplyConfig again with a new config
 	// should result in us sending the configuration but not the state.
 	am.syncInterval = 0
+	config = &ngmodels.AlertConfiguration{
+		AlertmanagerConfiguration: string(testGrafanaConfig),
+	}
 	require.NoError(t, am.ApplyConfig(ctx, config))
-	require.Equal(t, lastStateSync, expStateSync)
-	require.Greater(t, lastConfigSync, expConfigSync)
+	require.Equal(t, 2, configSyncs)
+	require.Equal(t, 1, stateSyncs)
 
 	// Failing to add the auto-generated routes should result in an error.
-	am.autogenFn = errAutogenFn
+	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
 	require.ErrorIs(t, am.ApplyConfig(ctx, config), errTest)
+	require.Equal(t, 2, configSyncs)
+
+	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
+	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.Equal(t, 2, configSyncs)
+
+	// Changing the "from" address should result in the configuration being updated.
+	cfg.SmtpFrom = "new-address@test.com"
+	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	require.NoError(t, am.ApplyConfig(ctx, config))
+	require.Equal(t, 3, configSyncs)
+	require.Equal(t, am.smtpFrom, configSent.SmtpFrom)
+
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
@@ -303,9 +328,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			"error from autogen function",
 			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
 			errAutogenFn,
-			&client.UserGrafanaConfig{
-				GrafanaAlertmanagerConfig: cfgWithSecret,
-			},
+			nil,
 			errTest.Error(),
 		},
 		{
