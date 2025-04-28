@@ -49,7 +49,7 @@ jobs:
           persist-credentials: false
           repository: grafana/ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}
-          ref: main
+          ref: 04271ae864dd4c02ab29bc71e0e3f792a84cd958 # v1.0.0
           path: ephemeral
 
       - name: build and deploy ephemeral instance
