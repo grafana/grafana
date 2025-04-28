@@ -36,9 +36,10 @@ runs:
       shell: bash
       env:
         GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+        BRANCH: ${{ inputs.branch }}
       run: |
         git clone https://x-access-token:${GH_TOKEN}@github.com/grafana/grafana-bench.git ../grafana-bench
 
         cd ../grafana-bench
-        git switch ${{ inputs.branch }}
+        git switch "$BRANCH"
         go install .
