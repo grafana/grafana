@@ -441,7 +441,7 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   /* ----------------------------- EVENT HANDLERS ----------------------------- */
   // Right click
   scene.viewerDiv!.addEventListener('contextmenu', (e) => {
-    if (e.ctrlKey) {
+    if (e.ctrlKey && e.button === 2) {
       // Enable panning with Ctrl+right-click
       e.preventDefault();
 
