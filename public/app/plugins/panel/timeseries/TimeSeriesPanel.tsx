@@ -102,9 +102,10 @@ export const TimeSeriesPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                queryZoom={(e) => {
+                queryZoom={(e, a) => {
                   console.log(onChangeTimeRange);
                   console.log('queryZoom');
+                  console.log({ e, a });
                   onChangeTimeRange(e);
                 }}
                 clientZoom={true}
