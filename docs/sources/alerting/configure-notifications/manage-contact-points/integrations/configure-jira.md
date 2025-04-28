@@ -45,7 +45,7 @@ To create a contact point with a Jira integration, complete the following steps:
 5. Set up the required [settings](#required-settings) for your Jira configuration.
 6. Click **Save contact point**.
 
-For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](/docs/grafana/latest/alerting/configure-notifications/manage-contact-points/).
+For more details on contact points, including how to test them and enable notifications, refer to [Configure contact points](ref:configure-contact-points).
 
 ### Required Settings
 

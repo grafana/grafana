@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { DataFrame, DataTransformerConfig, GrafanaTheme2 } from '@grafana/data';
 import { DataTopic } from '@grafana/schema';
 import { Field, Select, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { FrameMultiSelectionEditor } from 'app/plugins/panel/geomap/editor/FrameSelectionEditor';
 
 interface TransformationFilterProps {
@@ -33,7 +34,7 @@ export const TransformationFilter = ({ index, annotations, config, onChange, dat
 
   return (
     <div className={styles.wrapper}>
-      <Field label="Apply transformation to">
+      <Field label={t('dashboard.transformation-filter.label-apply-transformation-to', 'Apply transformation to')}>
         <>
           {opts.showTopic && (
             <Select

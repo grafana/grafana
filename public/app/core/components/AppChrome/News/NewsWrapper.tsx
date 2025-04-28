@@ -7,6 +7,8 @@ import { useStyles2 } from '@grafana/ui';
 import { News } from 'app/plugins/panel/news/component/News';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
 
+import { t } from '../../../internationalization';
+
 interface NewsWrapperProps {
   feedUrl: string;
 }
@@ -42,7 +44,12 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
         </>
       )}
       <div className={styles.grot}>
-        <a href="https://grafana.com/blog/" target="_blank" rel="noreferrer" title="Go to Grafana labs blog">
+        <a
+          href="https://grafana.com/blog/"
+          target="_blank"
+          rel="noreferrer"
+          title={t('news.link-title', 'Go to Grafana labs blog')}
+        >
           <img src="public/img/grot-news.svg" alt="Grot reading news" />
         </a>
       </div>

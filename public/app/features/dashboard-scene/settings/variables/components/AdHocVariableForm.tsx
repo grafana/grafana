@@ -4,6 +4,7 @@ import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/d
 import { selectors } from '@grafana/e2e-selectors';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { VariableCheckboxField } from './VariableCheckboxField';
@@ -43,8 +44,13 @@ export function AdHocVariableForm({
 
   return (
     <>
-      <VariableLegend>Ad-hoc options</VariableLegend>
-      <Field label="Data source" htmlFor="data-source-picker">
+      <VariableLegend>
+        <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
+      </VariableLegend>
+      <Field
+        label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
+        htmlFor="data-source-picker"
+      >
         <DataSourcePicker current={datasource} onChange={onDataSourceChange} width={30} variables={true} noDefault />
       </Field>
 
@@ -58,7 +64,17 @@ export function AdHocVariableForm({
 
       {onDefaultKeysChange && (
         <>
-          <Field label="Use static key dimensions" description="Provide dimensions as CSV: dimensionName, dimensionId">
+          <Field
+            label={t(
+              'dashboard-scene.ad-hoc-variable-form.label-use-static-key-dimensions',
+              'Use static key dimensions'
+            )}
+            description={t(
+              'dashboard-scene.ad-hoc-variable-form.description-provide-dimensions-as-csv-dimension-name-dimension-id',
+              'Provide dimensions as CSV: {{name}}, {{value}}',
+              { name: 'dimensionName', value: 'dimensionId' }
+            )}
+          >
             <Switch
               data-testid={selectors.pages.Dashboard.Settings.Variables.Edit.AdHocFiltersVariable.modeToggle}
               value={defaultKeys !== undefined}
@@ -90,7 +106,10 @@ export function AdHocVariableForm({
         <VariableCheckboxField
           value={allowCustomValue ?? true}
           name="Allow custom values"
-          description="Enables users to add custom values to the list"
+          description={t(
+            'dashboard-scene.ad-hoc-variable-form.description-enables-users-custom-values',
+            'Enables users to add custom values to the list'
+          )}
           onChange={onAllowCustomValueChange}
           testId={selectors.pages.Dashboard.Settings.Variables.Edit.General.selectionOptionsAllowCustomValueSwitch}
         />

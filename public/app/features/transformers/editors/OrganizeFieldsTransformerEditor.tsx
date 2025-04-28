@@ -32,7 +32,7 @@ import {
   InlineFieldRow,
   RadioButtonGroup,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { getDistinctLabels, useAllFieldNamesFromDataFrames } from '../utils';
@@ -188,8 +188,10 @@ const OrganizeFieldsTransformerEditor = ({ options, input, onChange }: OrganizeF
   if (input.length > 1) {
     return (
       <FieldValidationMessage>
-        Organize fields only works with a single frame. Consider applying a join transformation or filtering the input
-        first.
+        <Trans i18nKey="transformers.organize-fields-transformer-editor.first-frame-warning">
+          Organize fields only works with a single frame. Consider applying a join transformation or filtering the input
+          first.
+        </Trans>
       </FieldValidationMessage>
     );
   }
@@ -320,7 +322,11 @@ const DraggableFieldName = ({
                 size="md"
                 name={visible ? 'eye' : 'eye-slash'}
                 onClick={() => onToggleVisibility(fieldName, visible)}
-                tooltip={visible ? 'Disable' : 'Enable'}
+                tooltip={
+                  visible
+                    ? t('transformers.draggable-field-name.tooltip-disable', 'Disable')
+                    : t('transformers.draggable-field-name.tooltip-enable', 'Enable')
+                }
               />
               <Text truncate={true} element="p" variant="bodySmall" weight="bold">
                 {fieldName}
@@ -329,7 +335,9 @@ const DraggableFieldName = ({
           </InlineLabel>
           <Input
             defaultValue={renamedFieldName || ''}
-            placeholder={`Rename ${fieldName}`}
+            placeholder={t('transformers.draggable-field-name.rename-placeholder', 'Rename {{fieldName}}', {
+              fieldName,
+            })}
             onBlur={(event) => onRenameField(fieldName, event.currentTarget.value)}
           />
         </Box>

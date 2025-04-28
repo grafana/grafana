@@ -11,14 +11,6 @@ const (
 	// Disable envelope encryption (emergency only)
 	FlagDisableEnvelopeEncryption = "disableEnvelopeEncryption"
 
-	// FlagLiveServiceWebWorker
-	// This will use a webworker thread to processes events rather than the main thread
-	FlagLiveServiceWebWorker = "live-service-web-worker"
-
-	// FlagQueryOverLive
-	// Use Grafana Live WebSocket to execute backend queries
-	FlagQueryOverLive = "queryOverLive"
-
 	// FlagPanelTitleSearch
 	// Search for dashboards using panel title
 	FlagPanelTitleSearch = "panelTitleSearch"
@@ -47,41 +39,9 @@ const (
 	// Correlations page
 	FlagCorrelations = "correlations"
 
-	// FlagAutoMigrateOldPanels
-	// Migrate old angular panels to supported versions (graph, table-old, worldmap, etc)
-	FlagAutoMigrateOldPanels = "autoMigrateOldPanels"
-
-	// FlagAutoMigrateGraphPanel
-	// Migrate old graph panel to supported time series panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateGraphPanel = "autoMigrateGraphPanel"
-
-	// FlagAutoMigrateTablePanel
-	// Migrate old table panel to supported table panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateTablePanel = "autoMigrateTablePanel"
-
-	// FlagAutoMigratePiechartPanel
-	// Migrate old piechart panel to supported piechart panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigratePiechartPanel = "autoMigratePiechartPanel"
-
-	// FlagAutoMigrateWorldmapPanel
-	// Migrate old worldmap panel to supported geomap panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateWorldmapPanel = "autoMigrateWorldmapPanel"
-
-	// FlagAutoMigrateStatPanel
-	// Migrate old stat panel to supported stat panel - broken out from autoMigrateOldPanels to enable granular tracking
-	FlagAutoMigrateStatPanel = "autoMigrateStatPanel"
-
-	// FlagDisableAngular
-	// Dynamic flag to disable angular at runtime. The preferred method is to set `angular_support_enabled` to `false` in the [security] settings, which allows you to change the state at runtime.
-	FlagDisableAngular = "disableAngular"
-
 	// FlagCanvasPanelNesting
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
-
-	// FlagDisableSecretsCompatibility
-	// Disable duplicated secret storage in legacy tables
-	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
 
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
@@ -147,10 +107,6 @@ const (
 	// Enables running InfluxDB Influxql queries in parallel
 	FlagInfluxdbRunQueriesInParallel = "influxdbRunQueriesInParallel"
 
-	// FlagPrometheusRunQueriesInParallel
-	// Enables running Prometheus queries in parallel
-	FlagPrometheusRunQueriesInParallel = "prometheusRunQueriesInParallel"
-
 	// FlagLokiLogsDataplane
 	// Changes logs responses from Loki to be compliant with the dataplane specification.
 	FlagLokiLogsDataplane = "lokiLogsDataplane"
@@ -162,18 +118,6 @@ const (
 	// FlagDisableSSEDataplane
 	// Disables dataplane specific processing in server side expressions.
 	FlagDisableSSEDataplane = "disableSSEDataplane"
-
-	// FlagAlertStateHistoryLokiSecondary
-	// Enable Grafana to write alert state history to an external Loki instance in addition to Grafana annotations.
-	FlagAlertStateHistoryLokiSecondary = "alertStateHistoryLokiSecondary"
-
-	// FlagAlertStateHistoryLokiPrimary
-	// Enable a remote Loki instance as the primary source for state history reads.
-	FlagAlertStateHistoryLokiPrimary = "alertStateHistoryLokiPrimary"
-
-	// FlagAlertStateHistoryLokiOnly
-	// Disable Grafana alerts from emitting annotations when a remote Loki instance is available.
-	FlagAlertStateHistoryLokiOnly = "alertStateHistoryLokiOnly"
 
 	// FlagUnifiedRequestLog
 	// Writes error logs to the request logger
@@ -207,10 +151,6 @@ const (
 	// Enables the plugins frontend sandbox
 	FlagPluginsFrontendSandbox = "pluginsFrontendSandbox"
 
-	// FlagFrontendSandboxMonitorOnly
-	// Enables monitor only in the plugin frontend sandbox (if enabled)
-	FlagFrontendSandboxMonitorOnly = "frontendSandboxMonitorOnly"
-
 	// FlagPluginsDetailsRightPanel
 	// Enables right panel for the plugins details page
 	FlagPluginsDetailsRightPanel = "pluginsDetailsRightPanel"
@@ -238,10 +178,6 @@ const (
 	// FlagMlExpressions
 	// Enable support for Machine Learning in server-side expressions
 	FlagMlExpressions = "mlExpressions"
-
-	// FlagTraceQLStreaming
-	// Enables response streaming of TraceQL queries of the Tempo data source
-	FlagTraceQLStreaming = "traceQLStreaming"
 
 	// FlagDatasourceAPIServers
 	// Expose some datasources as apiservers.
@@ -315,10 +251,6 @@ const (
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
 
-	// FlagPluginsAPIMetrics
-	// Sends metrics of public grafana packages usage by plugins
-	FlagPluginsAPIMetrics = "pluginsAPIMetrics"
-
 	// FlagExternalServiceAccounts
 	// Automatic service account and token setup for plugins
 	FlagExternalServiceAccounts = "externalServiceAccounts"
@@ -339,10 +271,6 @@ const (
 	// Enable format string transformer
 	FlagFormatString = "formatString"
 
-	// FlagKubernetesPlaylists
-	// Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-	FlagKubernetesPlaylists = "kubernetesPlaylists"
-
 	// FlagKubernetesSnapshots
 	// Routes snapshot requests from /api to the /apis endpoint
 	FlagKubernetesSnapshots = "kubernetesSnapshots"
@@ -354,6 +282,18 @@ const (
 	// FlagKubernetesClientDashboardsFolders
 	// Route the folder and dashboard service requests to k8s
 	FlagKubernetesClientDashboardsFolders = "kubernetesClientDashboardsFolders"
+
+	// FlagDashboardDisableSchemaValidationV1
+	// Disable schema validation for dashboards/v1
+	FlagDashboardDisableSchemaValidationV1 = "dashboardDisableSchemaValidationV1"
+
+	// FlagDashboardDisableSchemaValidationV2
+	// Disable schema validation for dashboards/v2
+	FlagDashboardDisableSchemaValidationV2 = "dashboardDisableSchemaValidationV2"
+
+	// FlagDashboardSchemaValidationLogging
+	// Log schema validation errors so they can be analyzed later
+	FlagDashboardSchemaValidationLogging = "dashboardSchemaValidationLogging"
 
 	// FlagDatasourceQueryTypes
 	// Show query type endpoints in datasource API servers (currently hardcoded for testdata, expressions, and prometheus)
@@ -371,13 +311,13 @@ const (
 	// Routes requests to the new query service
 	FlagQueryServiceFromUI = "queryServiceFromUI"
 
+	// FlagQueryServiceFromExplore
+	// Routes explore requests to the new query service
+	FlagQueryServiceFromExplore = "queryServiceFromExplore"
+
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
-
-	// FlagRecoveryThreshold
-	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-	FlagRecoveryThreshold = "recoveryThreshold"
 
 	// FlagLokiStructuredMetadata
 	// Enables the loki data source to request structured metadata from the Loki server
@@ -451,10 +391,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagExploreMetrics
-	// Enables the new Grafana Metrics Drilldown core app
-	FlagExploreMetrics = "exploreMetrics"
-
 	// FlagAlertingSimplifiedRouting
 	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
 	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
@@ -496,11 +432,11 @@ const (
 	FlagNewFolderPicker = "newFolderPicker"
 
 	// FlagJitterAlertRulesWithinGroups
-	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group
+	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
 
 	// FlagOnPremToCloudMigrations
-	// Enable the Grafana Migration Assistant, which helps you easily migrate on-prem resources, such as dashboards, folders, and data source configurations, to your Grafana Cloud stack.
+	// Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.
 	FlagOnPremToCloudMigrations = "onPremToCloudMigrations"
 
 	// FlagSecretsManagementAppPlatform
@@ -530,10 +466,6 @@ const (
 	// FlagSqlExpressions
 	// Enables SQL Expressions, which can execute SQL queries against data source results.
 	FlagSqlExpressions = "sqlExpressions"
-
-	// FlagNodeGraphDotLayout
-	// Changed the layout algorithm for the node graph
-	FlagNodeGraphDotLayout = "nodeGraphDotLayout"
 
 	// FlagGroupToNestedTableTransformation
 	// Enables the group to nested table transformation
@@ -603,10 +535,6 @@ const (
 	// Enables the new alert list view design
 	FlagAlertingListViewV2 = "alertingListViewV2"
 
-	// FlagDashboardRestore
-	// Enables deleted dashboard restore feature
-	FlagDashboardRestore = "dashboardRestore"
-
 	// FlagAlertingDisableSendAlertsExternal
 	// Disables the ability to send alerts to an external Alertmanager datasource.
 	FlagAlertingDisableSendAlertsExternal = "alertingDisableSendAlertsExternal"
@@ -654,10 +582,6 @@ const (
 	// FlagEnableScopesInMetricsExplore
 	// Enables the scopes usage in Metrics Explore
 	FlagEnableScopesInMetricsExplore = "enableScopesInMetricsExplore"
-
-	// FlagAlertingApiServer
-	// Register Alerting APIs with the K8s API server
-	FlagAlertingApiServer = "alertingApiServer"
 
 	// FlagCloudWatchRoundUpEndTime
 	// Round up end time for metric queries to the next minute to avoid missing data
@@ -711,10 +635,6 @@ const (
 	// Enables the gRPC client to authenticate with the App Platform by using ID &amp; access tokens
 	FlagAppPlatformGrpcClientAuth = "appPlatformGrpcClientAuth"
 
-	// FlagAppSidecar
-	// Enable the app sidecar feature that allows rendering 2 apps at the same time
-	FlagAppSidecar = "appSidecar"
-
 	// FlagGroupAttributeSync
 	// Enable the groupsync extension for managing Group Attribute Sync feature
 	FlagGroupAttributeSync = "groupAttributeSync"
@@ -762,10 +682,6 @@ const (
 	// FlagTimeRangeProvider
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"
-
-	// FlagPrometheusUsesCombobox
-	// Use new **Combobox** component for Prometheus query editor
-	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
 
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
@@ -883,10 +799,6 @@ const (
 	// Enables less memory intensive Elasticsearch result parsing
 	FlagElasticsearchImprovedParsing = "elasticsearchImprovedParsing"
 
-	// FlagExploreMetricsUseExternalAppPlugin
-	// Use the externalized Grafana Metrics Drilldown (formerly known as Explore Metrics) app plugin
-	FlagExploreMetricsUseExternalAppPlugin = "exploreMetricsUseExternalAppPlugin"
-
 	// FlagDatasourceConnectionsTab
 	// Shows defined connections for a data source in the plugins detail page
 	FlagDatasourceConnectionsTab = "datasourceConnectionsTab"
@@ -894,10 +806,6 @@ const (
 	// FlagFetchRulesUsingPost
 	// Use a POST request to list rules by passing down the namespaces user has access to
 	FlagFetchRulesUsingPost = "fetchRulesUsingPost"
-
-	// FlagAlertingConversionAPI
-	// Enable the alerting conversion API
-	FlagAlertingConversionAPI = "alertingConversionAPI"
 
 	// FlagNewLogsPanel
 	// Enables the new logs panel in Explore
@@ -908,7 +816,7 @@ const (
 	FlagGrafanaconThemes = "grafanaconThemes"
 
 	// FlagPluginsCDNSyncLoader
-	// Load plugins from CDN synchronously
+	// Loads plugins from CDN synchronously
 	FlagPluginsCDNSyncLoader = "pluginsCDNSyncLoader"
 
 	// FlagAlertingJiraIntegration
@@ -918,6 +826,10 @@ const (
 	// FlagUseScopesNavigationEndpoint
 	// Use the scopes navigation endpoint instead of the dashboardbindings endpoint
 	FlagUseScopesNavigationEndpoint = "useScopesNavigationEndpoint"
+
+	// FlagScopeSearchAllLevels
+	// Enable scope search to include all levels of the scope node tree
+	FlagScopeSearchAllLevels = "scopeSearchAllLevels"
 
 	// FlagAlertingRuleVersionHistoryRestore
 	// Enables the alert rule version history restore feature
@@ -951,10 +863,6 @@ const (
 	// Renders invite user button along the app
 	FlagInviteUserExperimental = "inviteUserExperimental"
 
-	// FlagNoBackdropBlur
-	// Disables backdrop blur
-	FlagNoBackdropBlur = "noBackdropBlur"
-
 	// FlagAlertingMigrationUI
 	// Enables the alerting migration UI, to migrate datasource-managed rules to Grafana-managed rules
 	FlagAlertingMigrationUI = "alertingMigrationUI"
@@ -963,13 +871,25 @@ const (
 	// Enables the unified storage history pruner
 	FlagUnifiedStorageHistoryPruner = "unifiedStorageHistoryPruner"
 
+	// FlagAzureMonitorLogsBuilderEditor
+	// Enables the logs builder mode for the Azure Monitor data source
+	FlagAzureMonitorLogsBuilderEditor = "azureMonitorLogsBuilderEditor"
+
 	// FlagLocaleFormatPreference
-	// Specify the locale so we can show the correct format for numbers and dates
+	// Specifies the locale so the correct format for numbers and dates can be shown
 	FlagLocaleFormatPreference = "localeFormatPreference"
 
 	// FlagUnifiedStorageGrpcConnectionPool
 	// Enables the unified storage grpc connection pool
 	FlagUnifiedStorageGrpcConnectionPool = "unifiedStorageGrpcConnectionPool"
+
+	// FlagExtensionSidebar
+	// Enables the extension sidebar
+	FlagExtensionSidebar = "extensionSidebar"
+
+	// FlagAlertingRulePermanentlyDelete
+	// Enables UI functionality to permanently delete alert rules
+	FlagAlertingRulePermanentlyDelete = "alertingRulePermanentlyDelete"
 
 	// FlagAlertingRuleRecoverDeleted
 	// Enables the UI functionality to recover and view deleted alert rules
@@ -979,7 +899,43 @@ const (
 	// Support Application Signals queries in the X-Ray datasource
 	FlagXrayApplicationSignals = "xrayApplicationSignals"
 
+	// FlagMultiTenantTempCredentials
+	// use multi-tenant path for awsTempCredentials
+	FlagMultiTenantTempCredentials = "multiTenantTempCredentials"
+
 	// FlagLocalizationForPlugins
 	// Enables localization for plugins
 	FlagLocalizationForPlugins = "localizationForPlugins"
+
+	// FlagUnifiedNavbars
+	// Enables unified navbars
+	FlagUnifiedNavbars = "unifiedNavbars"
+
+	// FlagLogsPanelControls
+	// Enables a control component for the logs panel in Explore
+	FlagLogsPanelControls = "logsPanelControls"
+
+	// FlagMetricsFromProfiles
+	// Enables creating metrics from profiles and storing them as recording rules
+	FlagMetricsFromProfiles = "metricsFromProfiles"
+
+	// FlagPluginsAutoUpdate
+	// Enables auto-updating of users installed plugins
+	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
+
+	// FlagMultiTenantFrontend
+	// Register MT frontend
+	FlagMultiTenantFrontend = "multiTenantFrontend"
+
+	// FlagAlertingListViewV2PreviewToggle
+	// Enables the alerting list view v2 preview toggle
+	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
+
+	// FlagAlertRuleUseFiredAtForStartsAt
+	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
+	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
+
+	// FlagAlertingBulkActionsInUI
+	// Enables the alerting bulk actions in the UI
+	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
 )

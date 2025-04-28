@@ -48,6 +48,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/frontend"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	publicdashboardsapi "github.com/grafana/grafana/pkg/services/publicdashboards/api"
@@ -84,6 +85,17 @@ func (hs *HTTPServer) registerRoutes() {
 
 	r.Get("/login", hs.LoginView)
 	r.Get("/invite/:code", hs.Index)
+
+	if hs.Features.IsEnabledGlobally(featuremgmt.FlagMultiTenantFrontend) {
+		index, err := frontend.NewIndexProvider(hs.Cfg, hs.License)
+		if err != nil {
+			panic(err) // ???
+		}
+		r.Get("/mtfe", index.HandleRequest)
+
+		// Temporarily expose the full bootdata via API
+		r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
+	}
 
 	// authed views
 	r.Get("/", reqSignedIn, hs.Index)
@@ -179,10 +191,6 @@ func (hs *HTTPServer) registerRoutes() {
 			publicdashboardsapi.CountPublicDashboardRequest(),
 			hs.Index,
 		)
-	}
-
-	if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-		r.Get("/dashboard/recently-deleted", reqOrgAdmin, hs.Index)
 	}
 
 	r.Get("/explore", authorize(ac.EvalPermission(ac.ActionDatasourcesExplore)), hs.Index)
@@ -466,22 +474,12 @@ func (hs *HTTPServer) registerRoutes() {
 			dashUIDScope := dashboards.ScopeDashboardsProvider.GetResourceScopeUID(ac.Parameter(":uid"))
 
 			dashboardRoute.Get("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsRead, dashUIDScope)), routing.Wrap(hs.GetDashboard))
-
-			if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.SoftDeleteDashboard))
-			} else {
-				dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.DeleteDashboardByUID))
-			}
+			dashboardRoute.Delete("/uid/:uid", authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.DeleteDashboardByUID))
 
 			dashboardRoute.Group("/uid/:uid", func(dashUidRoute routing.RouteRegister) {
 				dashUidRoute.Get("/versions", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.GetDashboardVersions))
 				dashUidRoute.Post("/restore", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.RestoreDashboardVersion))
 				dashUidRoute.Get("/versions/:id", authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.GetDashboardVersion))
-
-				if hs.Features.IsEnabledGlobally(featuremgmt.FlagDashboardRestore) {
-					dashUidRoute.Patch("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsWrite, dashUIDScope)), routing.Wrap(hs.RestoreDeletedDashboard))
-					dashUidRoute.Delete("/trash", reqOrgAdmin, authorize(ac.EvalPermission(dashboards.ActionDashboardsDelete, dashUIDScope)), routing.Wrap(hs.HardDeleteDashboardByUID))
-				}
 
 				dashUidRoute.Group("/permissions", func(dashboardPermissionRoute routing.RouteRegister) {
 					dashboardPermissionRoute.Get("/", authorize(ac.EvalPermission(dashboards.ActionDashboardsPermissionsRead)), routing.Wrap(hs.GetDashboardPermissionList))

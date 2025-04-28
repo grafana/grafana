@@ -8,7 +8,7 @@ import { locationService } from '@grafana/runtime';
 import { Button, Stack, Text, ToolbarButtonRow } from '@grafana/ui';
 import { AppChromeUpdate } from 'app/core/components/AppChrome/AppChromeUpdate';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 import { DashboardMetaChangedEvent } from 'app/types/events';
@@ -65,7 +65,7 @@ export function DashboardSettings({ dashboard, editview, pageNav, sectionNav }: 
       size={size}
       onClick={onClose}
     >
-      Close
+      <Trans i18nKey="dashboard.dashboard-settings.actions.close">Close</Trans>
     </Button>,
     canSaveAs && (
       <SaveDashboardAsButton
@@ -213,9 +213,11 @@ function MakeEditable({ dashboard, sectionNav }: SettingsPageProps) {
   return (
     <Page navModel={sectionNav}>
       <Stack direction="column" gap={2} alignItems="flex-start">
-        <Text variant="h3">Dashboard not editable</Text>
+        <Text variant="h3">
+          <Trans i18nKey="dashboard.make-editable.dashboard-not-editable">Dashboard not editable</Trans>
+        </Text>
         <Button type="submit" onClick={() => dashboard.makeEditable()}>
-          Make editable
+          <Trans i18nKey="dashboard.make-editable.make-editable">Make editable</Trans>
         </Button>
       </Stack>
     </Page>

@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/prometheus/alertmanager/config"
-	"github.com/prometheus/alertmanager/pkg/labels"
 	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 
@@ -353,50 +351,4 @@ func TestIntegrationAdminConfiguration_SendingToExternalAlertmanagers(t *testing
 			return len(alertmanagers.Data.Active) == 0
 		}, 16*time.Second, 8*time.Second) // the sync interval is 2s so after 8s all alertmanagers (if any) most probably are started
 	}
-}
-
-func TestIntegrationAdminConfiguration_CannotCreateInhibitionRules(t *testing.T) {
-	testinfra.SQLiteIntegrationTest(t)
-	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
-		DisableLegacyAlerting: true,
-		EnableUnifiedAlerting: true,
-		AppModeProduction:     true,
-	})
-	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, path)
-	createUser(t, env.SQLStore, env.Cfg, user.CreateUserCommand{
-		DefaultOrgRole: string(org.RoleAdmin),
-		Password:       "admin",
-		Login:          "admin",
-	})
-	client := newAlertingApiClient(grafanaListedAddr, "admin", "admin")
-
-	cfg := apimodels.PostableUserConfig{
-		AlertmanagerConfig: apimodels.PostableApiAlertingConfig{
-			Config: apimodels.Config{
-				Route: &apimodels.Route{
-					Receiver: "test",
-				},
-				InhibitRules: []config.InhibitRule{{
-					SourceMatchers: config.Matchers{{
-						Type:  labels.MatchEqual,
-						Name:  "foo",
-						Value: "bar",
-					}},
-					TargetMatchers: config.Matchers{{
-						Type:  labels.MatchEqual,
-						Name:  "bar",
-						Value: "baz",
-					}},
-				}},
-			},
-			Receivers: []*apimodels.PostableApiReceiver{{
-				Receiver: config.Receiver{
-					Name: "test",
-				},
-			}},
-		},
-	}
-	ok, err := client.PostConfiguration(t, cfg)
-	require.False(t, ok)
-	require.EqualError(t, err, "inhibition rules are not supported")
 }

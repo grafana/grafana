@@ -268,19 +268,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
 
   const actionButtons = (
     <Stack justifyContent="flex-end" alignItems="center">
-      {existing && (
-        <Button
-          data-testid="save-rule"
-          variant="primary"
-          type="button"
-          size="sm"
-          onClick={handleSubmit((values) => submit(values, false), onInvalid)}
-          disabled={isSubmitting}
-        >
-          {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-          Save rule
-        </Button>
-      )}
       <Button
         data-testid="save-rule-and-exit"
         variant="primary"
@@ -290,14 +277,14 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
         disabled={isSubmitting}
       >
         {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
-        Save rule and exit
+        <Trans i18nKey="alerting.alert-rule-form.action-buttons.save-exit">Save rule and exit</Trans>
       </Button>
       <Button variant="secondary" disabled={isSubmitting} type="button" onClick={cancelRuleCreation} size="sm">
         <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
       </Button>
       {existing ? (
         <Button fill="outline" variant="destructive" type="button" onClick={() => setShowDeleteModal(true)} size="sm">
-          Delete
+          <Trans i18nKey="alerting.alert-rule-form.action-buttons.delete">Delete</Trans>
         </Button>
       ) : null}
       {existing && isCortexLokiOrRecordingRule(watch) && (
@@ -308,7 +295,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           disabled={isSubmitting}
           size="sm"
         >
-          Edit YAML
+          <Trans i18nKey="alerting.alert-rule-form.action-buttons.edit-yaml">Edit YAML</Trans>
         </Button>
       )}
     </Stack>
@@ -367,7 +354,7 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
       {showDeleteModal ? (
         <ConfirmModal
           isOpen={true}
-          title="Delete rule"
+          title={t('alerting.alert-rule-form.title-delete-rule', 'Delete rule')}
           body="Deleting this rule will permanently remove it. Are you sure you want to delete this rule?"
           confirmText="Yes, delete"
           icon="exclamation-triangle"
@@ -375,13 +362,15 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
           onDismiss={() => setShowDeleteModal(false)}
         />
       ) : null}
-      {showEditYaml ? (
-        isGrafanaManagedRuleByType(type) ? (
-          <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
-        ) : (
-          <RuleInspector onClose={() => setShowEditYaml(false)} />
-        )
-      ) : null}
+      {showEditYaml && (
+        <>
+          {isGrafanaManagedRuleByType(type) && (
+            <GrafanaRuleExporter alertUid={uidFromParams} onClose={() => setShowEditYaml(false)} />
+          )}
+
+          {!isGrafanaManagedRuleByType(type) && <RuleInspector onClose={() => setShowEditYaml(false)} />}
+        </>
+      )}
     </FormProvider>
   );
 };

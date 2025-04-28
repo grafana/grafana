@@ -67,7 +67,7 @@ func (hs *HTTPServer) GetPluginList(c *contextmodel.ReqContext) response.Respons
 		ac.EvalPermission(pluginaccesscontrol.ActionInstall),
 	))
 
-	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.SignedInUser.GetOrgID())
+	pluginSettingsMap, err := hs.pluginSettings(c.Req.Context(), c.GetOrgID())
 	if err != nil {
 		return response.Error(http.StatusInternalServerError, "Failed to get list of plugins", err)
 	}
@@ -221,7 +221,7 @@ func (hs *HTTPServer) GetPluginSettingByID(c *contextmodel.ReqContext) response.
 
 	ps, err := hs.PluginSettings.GetPluginSettingByPluginID(c.Req.Context(), &pluginsettings.GetByPluginIDArgs{
 		PluginID: pluginID,
-		OrgID:    c.SignedInUser.GetOrgID(),
+		OrgID:    c.GetOrgID(),
 	})
 	if err != nil {
 		if !errors.Is(err, pluginsettings.ErrPluginSettingNotFound) {
@@ -263,7 +263,7 @@ func (hs *HTTPServer) UpdatePluginSetting(c *contextmodel.ReqContext) response.R
 		return response.Error(http.StatusBadRequest, "Cannot disable auto-enabled plugin", nil)
 	}
 
-	cmd.OrgId = c.SignedInUser.GetOrgID()
+	cmd.OrgId = c.GetOrgID()
 	cmd.PluginId = pluginID
 	if err := hs.PluginSettings.UpdatePluginSetting(c.Req.Context(), &pluginsettings.UpdateArgs{
 		Enabled:                 cmd.Enabled,
@@ -418,7 +418,7 @@ func (hs *HTTPServer) redirectCDNPluginAsset(c *contextmodel.ReqContext, plugin 
 // /api/plugins/:pluginId/health
 func (hs *HTTPServer) CheckHealth(c *contextmodel.ReqContext) response.Response {
 	pluginID := web.Params(c.Req)[":pluginId"]
-	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.SignedInUser.GetOrgID())
+	pCtx, err := hs.pluginContextProvider.Get(c.Req.Context(), pluginID, c.SignedInUser, c.GetOrgID())
 	if err != nil {
 		return response.ErrOrFallback(http.StatusInternalServerError, "Failed to get plugin settings", err)
 	}
@@ -559,13 +559,13 @@ func (hs *HTTPServer) hasPluginRequestedPermissions(c *contextmodel.ReqContext, 
 	}
 
 	// No registration => Early return
-	if plugin.JSONData.IAM == nil || len(plugin.JSONData.IAM.Permissions) == 0 {
+	if plugin.IAM == nil || len(plugin.IAM.Permissions) == 0 {
 		hs.log.Debug("plugin did not request permissions on Grafana", "pluginID", pluginID)
 		return
 	}
 
 	hs.log.Debug("check installer's permissions, plugin wants to register an external service")
-	evaluator := evalAllPermissions(plugin.JSONData.IAM.Permissions)
+	evaluator := evalAllPermissions(plugin.IAM.Permissions)
 	hasAccess := ac.HasGlobalAccess(hs.AccessControl, hs.authnService, c)
 	if hs.Cfg.RBAC.SingleOrganization {
 		// In a single organization setup, no need for a global check

@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	pc "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -54,6 +56,8 @@ type NavigationAppConfig struct {
 	SortWeight int64
 	Text       string
 	Icon       string
+	SubTitle   string
+	IsNew      bool
 }
 
 func ProvideService(cfg *setting.Cfg, accessControl ac.AccessControl, pluginStore pluginstore.Store, pluginSettings pluginsettings.Service, starService star.Service,
@@ -137,7 +141,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
-		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
 			Id:         navtree.NavIDDrilldown,
@@ -146,7 +149,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
-			Children:   drilldownChildNavLinks,
 		})
 	}
 
@@ -154,12 +156,16 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 		treeRoot.AddSection(s.getProfileNode(c))
 	}
 
-	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.SignedInUser.GetOrgID()]
+	_, uaIsDisabledForOrg := s.cfg.UnifiedAlerting.DisabledOrgs[c.GetOrgID()]
 	uaVisibleForOrg := s.cfg.UnifiedAlerting.IsEnabled() && !uaIsDisabledForOrg
 
 	if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
 			treeRoot.AddSection(alertingSection)
+		}
+
+		if aimlSection := s.buildAIMLNavLinks(c); aimlSection != nil {
+			treeRoot.AddSection(aimlSection)
 		}
 	}
 
@@ -281,10 +287,10 @@ func (s *ServiceImpl) addHelpLinks(treeRoot *navtree.NavTreeRoot, c *contextmode
 func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLink {
 	// Only set login if it's different from the name
 	var login string
-	if c.SignedInUser.GetLogin() != c.SignedInUser.GetName() {
-		login = c.SignedInUser.GetLogin()
+	if c.GetLogin() != c.GetName() {
+		login = c.GetLogin()
 	}
-	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.SignedInUser.GetEmail())
+	gravatarURL := dtos.GetGravatarUrl(s.cfg, c.GetEmail())
 
 	children := []*navtree.NavLink{
 		{
@@ -304,7 +310,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 	}
 
 	return &navtree.NavLink{
-		Text:       c.SignedInUser.GetName(),
+		Text:       c.GetName(),
 		SubTitle:   login,
 		Id:         "profile",
 		Img:        gravatarURL,
@@ -318,7 +324,7 @@ func (s *ServiceImpl) getProfileNode(c *contextmodel.ReqContext) *navtree.NavLin
 func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*navtree.NavLink, error) {
 	starredItemsChildNavs := []*navtree.NavLink{}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, _ := identity.UserIdentifier(c.GetID())
 	query := star.GetUserStarsQuery{
 		UserID: userID,
 	}
@@ -336,7 +342,7 @@ func (s *ServiceImpl) buildStarredItemsNavLinks(c *contextmodel.ReqContext) ([]*
 		starredDashboards, err := s.dashboardService.SearchDashboards(c.Req.Context(), &dashboards.FindPersistedDashboardsQuery{
 			DashboardUIDs: uids,
 			Type:          searchstore.TypeDashboard,
-			OrgId:         c.SignedInUser.GetOrgID(),
+			OrgId:         c.GetOrgID(),
 			SignedInUser:  c.SignedInUser,
 		})
 		if err != nil {
@@ -368,7 +374,7 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	dashboardChildNavs := []*navtree.NavLink{}
 
 	if c.IsSignedIn {
-		if c.SignedInUser.HasRole(org.RoleViewer) {
+		if c.HasRole(org.RoleViewer) {
 			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
 				Text: "Playlists", SubTitle: "Groups of dashboards that are displayed in a sequence", Id: "dashboards/playlists", Url: s.cfg.AppSubURL + "/playlists", Icon: "presentation-play",
 			})
@@ -400,15 +406,6 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 				Icon: "library-panel",
 			})
 		}
-
-		if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagDashboardRestore) && (c.SignedInUser.GetOrgRole() == org.RoleAdmin || c.IsGrafanaAdmin) {
-			dashboardChildNavs = append(dashboardChildNavs, &navtree.NavLink{
-				Text:     "Recently deleted",
-				SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
-				Id:       "dashboards/recently-deleted",
-				Url:      s.cfg.AppSubURL + "/dashboard/recently-deleted",
-			})
-		}
 	}
 
 	if hasAccess(ac.EvalPermission(dashboards.ActionDashboardsCreate)) {
@@ -425,6 +422,80 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	return dashboardChildNavs
 }
 
+func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
+	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
+	if err != nil {
+		s.log.Error("Failed to get plugin settings", "error", err)
+		return nil
+	}
+
+	// Check if ML plugin is enabled
+	isMLPluginEnabled := false
+	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
+		if plugin.ID == "grafana-ml-app" {
+			// Check if plugin is enabled in settings
+			if plugin.AutoEnabled {
+				isMLPluginEnabled = true
+				break
+			}
+			for _, ps := range pss {
+				if ps.PluginID == plugin.ID && ps.Enabled {
+					isMLPluginEnabled = true
+					break
+				}
+			}
+			break
+		}
+	}
+
+	// Return nil if plugin is not enabled
+	if !isMLPluginEnabled {
+		return nil
+	}
+
+	// Check if user has access to the plugin
+	if !hasAccess(ac.EvalPermission(pc.ActionAppAccess, "grafana-ml-app")) {
+		return nil
+	}
+
+	var aimlChildNavs []*navtree.NavLink
+
+	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
+		Text:     "Metric forecasting",
+		SubTitle: "Create a forecast",
+		Id:       "ai-ml-metric-forecast",
+		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/metric-forecast",
+	})
+
+	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
+		Text:     "Outlier detection",
+		SubTitle: "Create an outlier detector",
+		Id:       "ai-ml-outlier-detection",
+		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/outlier-detector",
+	})
+
+	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
+		Text:     "Sift investigations",
+		SubTitle: "View and create investigations",
+		Id:       "ai-ml-sift-investigations",
+		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/investigations",
+	})
+
+	var aimlNav = navtree.NavLink{
+		Text:       "AI & Machine Learning",
+		SubTitle:   "Explore AI and machine learning features",
+		Id:         "ai-ml-home",
+		Icon:       "gf-ml-alt",
+		Children:   aimlChildNavs,
+		SortWeight: navtree.WeightAIAndML,
+		Url:        s.cfg.AppSubURL + "/a/grafana-ml-app/home",
+	}
+
+	return &aimlNav
+}
+
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
@@ -438,20 +509,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	contactPointsPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
-	}
 
-	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
-	// alerting API to maintain backwards compatibility.
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
-		contactPointsPerms = append(contactPointsPerms,
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		ac.EvalPermission(ac.ActionAlertingReceiversRead),
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),
 
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
-		)
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 	}
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
@@ -495,7 +560,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 			})
 		}
 	}
-	if c.SignedInUser.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
+	if c.GetOrgRole() == org.RoleAdmin && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertRuleRestore) && s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingRuleRecoverDeleted) {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text:     "Recently deleted",
 			SubTitle: "Any items listed here for more than 30 days will be automatically deleted.",
@@ -504,7 +569,7 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 		})
 	}
 
-	if c.SignedInUser.GetOrgRole() == org.RoleAdmin {
+	if c.GetOrgRole() == org.RoleAdmin {
 		alertChildNavs = append(alertChildNavs, &navtree.NavLink{
 			Text: "Settings", Id: "alerting-admin", Url: s.cfg.AppSubURL + "/alerting/admin",
 			Icon: "cog",
@@ -578,18 +643,4 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
-}
-
-func (s *ServiceImpl) buildDrilldownNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
-	drilldownChildNavs := []*navtree.NavLink{}
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) && !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		drilldownChildNavs = append(drilldownChildNavs, &navtree.NavLink{
-			Text:     "Metrics",
-			SubTitle: "Queryless exploration of your metrics",
-			Id:       "explore/metrics",
-			Url:      s.cfg.AppSubURL + "/explore/metrics",
-			Icon:     "code-branch",
-		})
-	}
-	return drilldownChildNavs
 }

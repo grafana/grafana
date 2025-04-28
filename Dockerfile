@@ -6,7 +6,7 @@
 ARG BASE_IMAGE=alpine:3.21
 ARG JS_IMAGE=node:22-alpine
 ARG JS_PLATFORM=linux/amd64
-ARG GO_IMAGE=golang:1.24.1-alpine
+ARG GO_IMAGE=golang:1.24.2-alpine
 
 # Default to building locally
 ARG GO_SRC=go-builder
@@ -84,6 +84,7 @@ COPY apps/playlist apps/playlist
 COPY apps/investigations apps/investigations
 COPY apps/advisor apps/advisor
 COPY apps/dashboard apps/dashboard
+COPY apps/folder apps/folder
 COPY apps apps
 COPY kindsv2 kindsv2
 COPY apps/alerting/notifications apps/alerting/notifications

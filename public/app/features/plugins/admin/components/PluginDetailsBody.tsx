@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
-import { AppPlugin, GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
+import { GrafanaTheme2, PluginContextProvider, UrlQueryMap, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { PageInfoItem } from '@grafana/runtime/internal';
 import { CellProps, Column, InteractiveTable, Stack, useStyles2, Carousel } from '@grafana/ui';
@@ -14,7 +14,6 @@ import { shouldDisablePluginInstall } from '../helpers';
 import { usePluginConfig } from '../hooks/usePluginConfig';
 import { CatalogPlugin, Permission, PluginTabIds, Screenshots } from '../types';
 
-import { AppConfigCtrlWrapper } from './AppConfigWrapper';
 import Connections from './ConnectionsTab';
 import { PluginDashboards } from './PluginDashboards';
 import { PluginUsage } from './PluginUsage';
@@ -88,14 +87,6 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return <Carousel images={carouselImages} />;
   }
 
-  if (pageId === PluginTabIds.CONFIG && pluginConfig?.angularConfigCtrl) {
-    return (
-      <div>
-        <AppConfigCtrlWrapper app={pluginConfig as AppPlugin} />
-      </div>
-    );
-  }
-
   if (pageId === PluginTabIds.PLUGINDETAILS && config.featureToggles.pluginsDetailsRightPanel && showDetails) {
     return (
       <div>
@@ -129,8 +120,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return (
       <>
         <Stack direction="row">
-          The {plugin.name} plugin needs a service account to be able to query Grafana. The following list contains the
-          permissions available to the service account:
+          <Trans i18nKey="plugins.plugin-details-body.needs-service-account" values={{ pluginName: plugin.name }}>
+            The {'{{pluginName}}'} plugin needs a service account to be able to query Grafana. The following list
+            contains the permissions available to the service account:
+          </Trans>
         </Stack>
         <InteractiveTable
           columns={columns}

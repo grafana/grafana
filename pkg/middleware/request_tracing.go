@@ -77,7 +77,8 @@ func RequestTracing(tracer tracing.Tracer) web.Middleware {
 			// skip tracing for a few endpoints
 			if strings.HasPrefix(req.URL.Path, "/public/") ||
 				req.URL.Path == "/robots.txt" ||
-				req.URL.Path == "/favicon.ico" {
+				req.URL.Path == "/favicon.ico" ||
+				req.URL.Path == "/api/health" {
 				next.ServeHTTP(w, req)
 				return
 			}

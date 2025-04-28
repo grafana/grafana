@@ -1,4 +1,3 @@
-import { skipToken } from '@reduxjs/toolkit/query';
 import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -6,15 +5,15 @@ import { useNavigate } from 'react-router-dom-v5-compat';
 import { AppEvents } from '@grafana/data';
 import { getAppEvents } from '@grafana/runtime';
 import { Alert, Button, Field, Input, RadioButtonGroup, Spinner, Stack, TextArea } from '@grafana/ui';
-import { useGetFolderQuery } from 'app/api/clients/folder';
 import { useCreateRepositoryFilesWithPathMutation } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
-import { AnnoKeyManagerIdentity, AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
+import { AnnoKeySourcePath, Resource } from 'app/features/apiserver/types';
 import { getDefaultWorkflow, getWorkflowOptions } from 'app/features/dashboard-scene/saving/provisioned/defaults';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 import { BranchValidationError } from 'app/features/provisioning/Shared/BranchValidationError';
 import { PROVISIONING_URL } from 'app/features/provisioning/constants';
-import { usePullRequestParam, useRepositoryList } from 'app/features/provisioning/hooks';
+import { useGetResourceRepositoryView } from 'app/features/provisioning/hooks/useGetResourceRepositoryView';
+import { usePullRequestParam } from 'app/features/provisioning/hooks/usePullRequestParam';
 import { WorkflowOption } from 'app/features/provisioning/types';
 import { validateBranchName } from 'app/features/provisioning/utils/git';
 import { FolderDTO } from 'app/types';
@@ -41,26 +40,12 @@ const initialFormValues: Partial<FormData> = {
 };
 
 export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: Props) {
-  const [items, isLoading] = useRepositoryList();
+  const { repository, folder, isLoading } = useGetResourceRepositoryView({ folderName: parentFolder?.uid });
   const prURL = usePullRequestParam();
   const navigate = useNavigate();
   const [create, request] = useCreateRepositoryFilesWithPathMutation();
 
-  // Get k8s folder data, necessary to get parent folder path
-  const folderQuery = useGetFolderQuery(parentFolder ? { name: parentFolder.uid } : skipToken);
-  const repositoryName = folderQuery.data?.metadata?.annotations?.[AnnoKeyManagerIdentity];
-  if (!items && !isLoading) {
-    return (
-      <Alert
-        title={t('browse-dashboards.new-provisioned-folder-form.title-repository-not-found', 'Repository not found')}
-        severity="error"
-      />
-    );
-  }
-
-  const repository = repositoryName ? items?.find((item) => item?.metadata?.name === repositoryName) : items?.[0];
-  const repositoryConfig = repository?.spec;
-  const isGitHub = Boolean(repositoryConfig?.github);
+  const isGitHub = Boolean(repository?.type === 'github');
 
   const {
     register,
@@ -69,17 +54,17 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
     formState: { errors },
     control,
     setValue,
-  } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repositoryConfig) } });
+  } = useForm<FormData>({ defaultValues: { ...initialFormValues, workflow: getDefaultWorkflow(repository) } });
 
   const [workflow, ref] = watch(['workflow', 'ref']);
 
   useEffect(() => {
-    setValue('workflow', getDefaultWorkflow(repositoryConfig));
-  }, [repositoryConfig, setValue]);
+    setValue('workflow', getDefaultWorkflow(repository));
+  }, [repository, setValue]);
 
   useEffect(() => {
     const appEvents = getAppEvents();
-    if (request.isSuccess) {
+    if (request.isSuccess && repository) {
       onSubmit();
 
       appEvents.publish({
@@ -100,7 +85,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
         return;
       }
 
-      let url = `${PROVISIONING_URL}/${repositoryName}/file/${request.data.path}`;
+      let url = `${PROVISIONING_URL}/${repository.name}/file/${request.data.path}`;
       if (request.data.ref?.length) {
         url += '?ref=' + request.data.ref;
       }
@@ -114,20 +99,19 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
         ],
       });
     }
-  }, [
-    request.isSuccess,
-    request.isError,
-    request.error,
-    onSubmit,
-    ref,
-    request.data,
-    workflow,
-    navigate,
-    repositoryName,
-  ]);
+  }, [request.isSuccess, request.isError, request.error, onSubmit, ref, request.data, workflow, navigate, repository]);
 
-  if (isLoading || folderQuery.isLoading) {
+  if (isLoading) {
     return <Spinner />;
+  }
+
+  if (!repository) {
+    return (
+      <Alert
+        title={t('browse-dashboards.new-provisioned-folder-form.title-repository-not-found', 'Repository not found')}
+        severity="error"
+      />
+    );
   }
 
   const validateFolderName = async (folderName: string) => {
@@ -143,11 +127,11 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   };
 
   const doSave = async ({ ref, title, workflow, comment }: FormData) => {
-    const repoName = repository?.metadata?.name;
+    const repoName = repository?.name;
     if (!title || !repoName) {
       return;
     }
-    const basePath = folderQuery.data?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
+    const basePath = folder?.metadata?.annotations?.[AnnoKeySourcePath] ?? '';
 
     // Convert folder title to filename format (lowercase, replace spaces with hyphens)
     const titleInFilenameFormat = title
@@ -179,7 +163,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
   return (
     <form onSubmit={handleSubmit(doSave)}>
       <Stack direction="column" gap={2}>
-        {!repositoryConfig?.workflows.length && (
+        {!repository?.workflows?.length && (
           <Alert
             title={t(
               'browse-dashboards.new-provisioned-folder-form.title-this-repository-is-read-only',
@@ -229,7 +213,7 @@ export function NewProvisionedFolderForm({ onSubmit, onCancel, parentFolder }: P
                 control={control}
                 name="workflow"
                 render={({ field: { ref, ...field } }) => (
-                  <RadioButtonGroup {...field} options={getWorkflowOptions(repositoryConfig)} id={'folder-workflow'} />
+                  <RadioButtonGroup {...field} options={getWorkflowOptions(repository)} id={'folder-workflow'} />
                 )}
               />
             </Field>

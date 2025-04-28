@@ -20,6 +20,7 @@ function render(props: Partial<ResourcesTableProps>) {
   rtlRender(
     <TestProvider>
       <ResourcesTable
+        onChangeSort={() => {}}
         onChangePage={() => {}}
         numberOfPages={10}
         page={0}

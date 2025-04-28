@@ -1,7 +1,6 @@
 .git
 .github
 .yarn
-.bingo
 build
 compiled
 data
@@ -37,3 +36,6 @@ public/mockServiceWorker.js
 
 # Crowdin files
 public/locales/**/*.json
+
+/.nx/cache
+/.nx/workspace-data
