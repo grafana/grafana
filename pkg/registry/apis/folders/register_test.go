@@ -9,8 +9,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apiserver/pkg/admission"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -31,14 +31,14 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 	folderValidationRules.maxDepth = 2
 	defer func() { folderValidationRules.maxDepth = initialMaxDepth }()
 	deepFolder := &folders.Folder{
-		Spec: folders.Spec{
+		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
 	}
 	deepFolder.Name = "valid-parent"
 	deepFolder.Annotations = map[string]string{"grafana.app/folder": "valid-grandparent"}
 	parentFolder := &folders.Folder{
-		Spec: folders.Spec{
+		Spec: folders.FolderSpec{
 			Title: "foo-grandparent",
 		},
 	}
@@ -54,7 +54,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			name: "should return error when name is invalid",
 			input: input{
 				obj: &folders.Folder{
-					Spec: folders.Spec{
+					Spec: folders.FolderSpec{
 						Title: "foo",
 					},
 				},
@@ -66,7 +66,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			name: "should return no error if every validation passes",
 			input: input{
 				obj: &folders.Folder{
-					Spec: folders.Spec{
+					Spec: folders.FolderSpec{
 						Title: "foo",
 					},
 				},
@@ -77,7 +77,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			name: "should not allow creating a folder in a tree that is too deep",
 			input: input{
 				obj: &folders.Folder{
-					Spec: folders.Spec{
+					Spec: folders.FolderSpec{
 						Title: "foo",
 					},
 				},
@@ -98,7 +98,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			name: "should return error when title is empty",
 			input: input{
 				obj: &folders.Folder{
-					Spec: folders.Spec{
+					Spec: folders.FolderSpec{
 						Title: "",
 					},
 				},
@@ -111,7 +111,7 @@ func TestFolderAPIBuilder_Validate_Create(t *testing.T) {
 			input: input{
 				annotations: map[string]string{utils.AnnoKeyFolder: "myself"},
 				obj: &folders.Folder{
-					Spec: folders.Spec{
+					Spec: folders.FolderSpec{
 						Title: "title",
 					},
 				},
@@ -189,7 +189,7 @@ func TestFolderAPIBuilder_Validate_Delete(t *testing.T) {
 	sm := searcherMock{Mock: m}
 
 	obj := &folders.Folder{
-		Spec: folders.Spec{
+		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -261,7 +261,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		{
 			name: "should allow updating a folder spec",
 			updatedObj: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "different title",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -271,7 +271,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 				},
 			},
 			expected: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "different title",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -284,7 +284,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		{
 			name: "updated title should not be empty",
 			updatedObj: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -298,7 +298,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		{
 			name: "should allow moving to a valid parent",
 			updatedObj: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -316,7 +316,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		{
 			name: "should not allow moving to a k6 folder",
 			updatedObj: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -335,7 +335,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 		{
 			name: "should not allow moving to a folder that is too deep",
 			updatedObj: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				ObjectMeta: metav1.ObjectMeta{
@@ -359,7 +359,7 @@ func TestFolderAPIBuilder_Validate_Update(t *testing.T) {
 	sm := searcherMock{Mock: m}
 
 	obj := &folders.Folder{
-		Spec: folders.Spec{
+		Spec: folders.FolderSpec{
 			Title: "foo",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -417,7 +417,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 		{
 			name: "should trim a title",
 			input: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "  foo  ",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -428,7 +428,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 				},
 			},
 			expected: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -442,7 +442,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 		{
 			name: "should return error if title doesnt exist",
 			input: &folders.Folder{
-				Spec: folders.Spec{},
+				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},
@@ -504,7 +504,7 @@ func TestFolderAPIBuilder_Mutate_Create(t *testing.T) {
 
 func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 	existingObj := &folders.Folder{
-		Spec: folders.Spec{
+		Spec: folders.FolderSpec{
 			Title: "some title",
 		},
 		TypeMeta: metav1.TypeMeta{
@@ -523,7 +523,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		{
 			name: "should trim a title",
 			input: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "  foo  ",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -534,7 +534,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 				},
 			},
 			expected: &folders.Folder{
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "foo",
 				},
 				TypeMeta: metav1.TypeMeta{
@@ -548,7 +548,7 @@ func TestFolderAPIBuilder_Mutate_Update(t *testing.T) {
 		{
 			name: "should return error if title doesnt exist",
 			input: &folders.Folder{
-				Spec: folders.Spec{},
+				Spec: folders.FolderSpec{},
 				TypeMeta: metav1.TypeMeta{
 					Kind: "Folder",
 				},

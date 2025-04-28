@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	"xorm.io/core"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 const (

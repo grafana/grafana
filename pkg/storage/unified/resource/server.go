@@ -1,9 +1,10 @@
 package resource
 
 import (
-	context "context"
+	"context"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -13,12 +14,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
+	userutils "github.com/grafana/dskit/user"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -71,6 +76,8 @@ type BackendReadResponse struct {
 	Key    *ResourceKey
 	Folder string
 
+	// GUID that is used internally
+	GUID string
 	// The new resource version
 	ResourceVersion int64
 	// The properties
@@ -188,6 +195,8 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
+
+	Distributor *Distributor
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -253,6 +262,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
 		indexMetrics:   opts.IndexMetrics,
+		reg:            opts.Reg,
+	}
+
+	if opts.Distributor != nil {
+		s.shardingEnabled = true
+		s.distributor = *opts.Distributor
 	}
 
 	if opts.Search.Resources != nil {
@@ -297,6 +312,34 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
+
+	shardingEnabled bool
+	distributor     Distributor
+	reg             prometheus.Registerer
+}
+
+type Distributor struct {
+	ClientPool *ringclient.Pool
+	Ring       *ring.Ring
+	Lifecycler *ring.BasicLifecycler
+}
+
+type RingClient struct {
+	Client ResourceClient
+	grpc_health_v1.HealthClient
+	Conn *grpc.ClientConn
+}
+
+func (c *RingClient) Close() error {
+	return c.Conn.Close()
+}
+
+func (c *RingClient) String() string {
+	return c.RemoteAddress()
+}
+
+func (c *RingClient) RemoteAddress() string {
+	return c.Conn.Target()
 }
 
 // Init implements ResourceServer.
@@ -325,6 +368,39 @@ func (s *server) Init(ctx context.Context) error {
 		}
 	})
 	return s.initErr
+}
+
+var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+	return s != ring.ACTIVE
+})
+
+func (s *server) getClientToDistributeRequest(namespace string) *RingClient {
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(namespace))
+	if err != nil {
+		s.log.Error("Error hashing namespace. Will not distribute request", "err", err)
+		return nil
+	}
+
+	rs, err := s.distributor.Ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
+
+	if err != nil {
+		s.log.Error("Error getting replication set. Will not distribute request", "err", err)
+		return nil
+	}
+
+	if rs.Instances[0].Id != s.distributor.Lifecycler.GetInstanceID() {
+		s.log.Info("distributing request", "instanceId", rs.Instances[0].Id)
+
+		ins, err := s.distributor.ClientPool.GetClientForInstance(rs.Instances[0])
+		if err != nil {
+			s.log.Error("Error getting client. Will not distribute request", "err", err)
+			return nil
+		}
+		return ins.(*RingClient)
+	}
+
+	return nil
 }
 
 func (s *server) Stop(ctx context.Context) error {
@@ -384,23 +460,16 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, NewBadRequestError("can not save annotation: " + utils.AnnoKeyGrantPermissions)
 	}
 
-	check := claims.CheckRequest{
-		Verb:      utils.VerbCreate,
-		Group:     key.Group,
-		Resource:  key.Resource,
-		Namespace: key.Namespace,
-	}
-
 	event := &WriteEvent{
 		Value:  value,
 		Key:    key,
 		Object: obj,
 	}
+
 	if oldValue == nil {
 		event.Type = WatchEvent_ADDED
 	} else {
 		event.Type = WatchEvent_MODIFIED
-		check.Verb = utils.VerbUpdate
 
 		temp := &unstructured.Unstructured{}
 		err = temp.UnmarshalJSON(oldValue)
@@ -444,19 +513,34 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		return nil, err
 	}
 
-	// We only set name for update checks
-	if check.Verb == utils.VerbUpdate {
-		check.Name = key.Name
-	}
+	// For folder moves, we need to check permissions on both folders
+	if s.isFolderMove(event) {
+		if err := s.checkFolderMovePermissions(ctx, user, key, event.ObjectOld.GetFolder(), obj.GetFolder()); err != nil {
+			return nil, err
+		}
+	} else {
+		// Regular permission check for create/update
+		check := claims.CheckRequest{
+			Verb:      utils.VerbCreate,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Namespace: key.Namespace,
+		}
 
-	check.Folder = obj.GetFolder()
-	a, err := s.access.Check(ctx, user, check)
-	if err != nil {
-		return nil, AsErrorResult(err)
-	}
-	if !a.Allowed {
-		return nil, &ErrorResult{
-			Code: http.StatusForbidden,
+		if event.Type == WatchEvent_MODIFIED {
+			check.Verb = utils.VerbUpdate
+			check.Name = key.Name
+		}
+
+		check.Folder = obj.GetFolder()
+		a, err := s.access.Check(ctx, user, check)
+		if err != nil {
+			return nil, AsErrorResult(err)
+		}
+		if !a.Allowed {
+			return nil, &ErrorResult{
+				Code: http.StatusForbidden,
+			}
 		}
 	}
 
@@ -468,6 +552,59 @@ func (s *server) newEvent(ctx context.Context, user claims.AuthInfo, key *Resour
 		}
 	}
 	return event, nil
+}
+
+// isFolderMove determines if an event represents a resource being moved between folders
+func (s *server) isFolderMove(event *WriteEvent) bool {
+	return event.Type == WatchEvent_MODIFIED &&
+		event.ObjectOld != nil &&
+		event.ObjectOld.GetFolder() != event.Object.GetFolder()
+}
+
+// checkFolderMovePermissions handles permission checks when a resource is being moved between folders
+func (s *server) checkFolderMovePermissions(ctx context.Context, user claims.AuthInfo, key *ResourceKey, oldFolder, newFolder string) *ErrorResult {
+	// First check if user can update the resource in the original folder
+	updateCheck := claims.CheckRequest{
+		Verb:      utils.VerbUpdate,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Name:      key.Name,
+		Folder:    oldFolder,
+	}
+
+	a, err := s.access.Check(ctx, user, updateCheck)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &ErrorResult{
+			Code:    http.StatusForbidden,
+			Message: "not allowed to update resource in the source folder",
+		}
+	}
+
+	// Then check if user can create the resource in the destination folder
+	createCheck := claims.CheckRequest{
+		Verb:      utils.VerbCreate,
+		Group:     key.Group,
+		Resource:  key.Resource,
+		Namespace: key.Namespace,
+		Folder:    newFolder,
+	}
+
+	a, err = s.access.Check(ctx, user, createCheck)
+	if err != nil {
+		return AsErrorResult(err)
+	}
+	if !a.Allowed {
+		return &ErrorResult{
+			Code:    http.StatusForbidden,
+			Message: "not allowed to create resource in the destination folder",
+		}
+	}
+
+	return nil
 }
 
 func (s *server) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
@@ -966,6 +1103,14 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
+
+	if s.shardingEnabled {
+		client := s.getClientToDistributeRequest(req.Options.Key.Namespace)
+		if client != nil {
+			return client.Client.Search(userutils.InjectOrgID(ctx, "1"), req)
+		}
+	}
+
 	return s.search.Search(ctx, req)
 }
 
@@ -974,6 +1119,14 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+
+	if s.shardingEnabled {
+		client := s.getClientToDistributeRequest(req.Namespace)
+		if client != nil {
+			return client.Client.GetStats(userutils.InjectOrgID(ctx, "1"), req)
+		}
+	}
+
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
 		srv, ok := s.backend.(ResourceIndexServer)

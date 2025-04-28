@@ -15,11 +15,11 @@ use (
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/dashboard
+	./apps/folder
 	./apps/investigations
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
-	./pkg/apis/folder
 	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apiserver
 	./pkg/build

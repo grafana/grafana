@@ -231,9 +231,12 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		title = rule.Alert
 	}
 
-	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels))
+	labels := make(map[string]string, len(rule.Labels)+len(promGroup.Labels)+1)
 	maps.Copy(labels, promGroup.Labels)
 	maps.Copy(labels, rule.Labels)
+
+	// Add a special label to indicate that this rule was converted from a Prometheus rule.
+	labels[models.ConvertedPrometheusRuleLabel] = "true"
 
 	originalRuleDefinition, err := yaml.Marshal(rule)
 	if err != nil {
