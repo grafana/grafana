@@ -38,9 +38,6 @@ func (s *Service) MutateAdmission(ctx context.Context, req *backend.AdmissionReq
 	if err != nil {
 		return nil, err
 	}
-	if settings == nil {
-		return getBadRequest("missing datasource settings"), nil
-	}
 
 	switch settings.APIVersion {
 	case "", "v0alpha1":
