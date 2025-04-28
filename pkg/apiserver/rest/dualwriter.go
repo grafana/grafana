@@ -164,6 +164,10 @@ func SetDualWritingMode(
 			return Mode0, errDualWriterSetCurrentMode
 		}
 	case cfg.Mode >= Mode3 && currentMode < Mode3:
+		if cfg.SkipDataSync {
+			return currentMode, nil
+		}
+
 		// Transitioning to Mode3 or higher requires data synchronization.
 		cfgModeTmp := cfg.Mode
 		// Before running the sync, set the syncer config to the current mode, as we have to run the syncer
