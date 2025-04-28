@@ -1,7 +1,7 @@
 import { Tooltip } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-const UnknownContactPointDetails = () => (
+const UnknownContactPointDetails = ({ receiverName }: { receiverName?: string }) => (
   <span style={{ cursor: 'help' }}>
     <Tooltip
       content={t(
@@ -10,7 +10,11 @@ const UnknownContactPointDetails = () => (
       )}
     >
       <span>
-        <Trans i18nKey="alerting.unknown-contact-point-details.unknown-contact-point">Unknown contact point</Trans>
+        {receiverName ? (
+          receiverName
+        ) : (
+          <Trans i18nKey="alerting.unknown-contact-point-details.unknown-contact-point">Unknown contact point</Trans>
+        )}
       </span>
     </Tooltip>
   </span>

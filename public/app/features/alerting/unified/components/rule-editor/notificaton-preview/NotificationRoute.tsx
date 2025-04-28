@@ -24,6 +24,7 @@ import { RouteWithPath } from './route';
 function NotificationRouteHeader({
   route,
   receiver,
+  receiverName,
   routesByIdMap,
   instancesCount,
   alertManagerSourceName,
@@ -32,6 +33,7 @@ function NotificationRouteHeader({
 }: {
   route: RouteWithPath;
   receiver?: Receiver;
+  receiverName?: string;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
   alertManagerSourceName: string;
@@ -77,7 +79,7 @@ function NotificationRouteHeader({
               <span className={styles.textMuted}>
                 <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>
               </span>{' '}
-              {receiver ? receiver.name : <UnknownContactPointDetails />}
+              {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverName} />}
             </div>
 
             <div className={styles.verticalBar} />
@@ -93,6 +95,7 @@ function NotificationRouteHeader({
           onClose={() => setShowDetails(false)}
           route={route}
           receiver={receiver}
+          receiverName={receiverName}
           routesByIdMap={routesByIdMap}
           alertManagerSourceName={alertManagerSourceName}
         />
@@ -104,6 +107,7 @@ function NotificationRouteHeader({
 interface NotificationRouteProps {
   route: RouteWithPath;
   receiver?: Receiver;
+  receiverName?: string;
   instanceMatches: AlertInstanceMatch[];
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
@@ -113,6 +117,7 @@ export function NotificationRoute({
   route,
   instanceMatches,
   receiver,
+  receiverName,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteProps) {
@@ -127,6 +132,7 @@ export function NotificationRoute({
       <NotificationRouteHeader
         route={route}
         receiver={receiver}
+        receiverName={receiverName}
         routesByIdMap={routesByIdMap}
         instancesCount={instanceMatches.length}
         alertManagerSourceName={alertManagerSourceName}

@@ -56,6 +56,7 @@ interface NotificationRouteDetailsModalProps {
   onClose: () => void;
   route: RouteWithPath;
   receiver?: Receiver;
+  receiverName?: string;
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
 }
@@ -64,6 +65,7 @@ export function NotificationRouteDetailsModal({
   onClose,
   route,
   receiver,
+  receiverName,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteDetailsModalProps) {
@@ -108,7 +110,9 @@ export function NotificationRouteDetailsModal({
             <Stack gap={1} direction="column">
               <Trans i18nKey="alerting.notification-route-details-modal.contact-point">Contact point</Trans>
 
-              <span className={styles.textMuted}>{receiver ? receiver.name : <UnknownContactPointDetails />}</span>
+              <span className={styles.textMuted}>
+                {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverName} />}
+              </span>
             </Stack>
             <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
               <Stack gap={1} direction="row" alignItems="center">
