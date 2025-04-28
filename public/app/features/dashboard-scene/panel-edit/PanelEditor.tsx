@@ -62,6 +62,8 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
   public constructor(state: PanelEditorState) {
     super(state);
 
+    console.log('PanelEditor');
+
     const panel = this.state.panelRef.resolve();
     const layoutItem = panel.parent;
     if (!layoutItem || !isDashboardLayoutItem(layoutItem)) {
@@ -131,7 +133,9 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
       : performSaveModelDiff;
 
     const handleStateChange = (event: SceneObjectStateChangedEvent) => {
+      console.log('SceneObjectStateChangedEvent');
       if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
+        console.log({ event });
         performSaveModelDiffDebounced();
       }
     };
