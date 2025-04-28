@@ -17,13 +17,6 @@ on:
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
-    env:
-      HEAD_REF: ${{ github.head_ref }}
-      BASE_REF: ${{ github.base_ref }}
-      REPO: ${{ github.repository }}
-      SENDER: ${{ github.event.sender.login }}
-      SHA: ${{ github.sha }}
-      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-latest
     steps:
       - name: "Generate token"
@@ -37,21 +30,27 @@ jobs:
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
+          env:
+            SRC_REPO: ${{ github.repository }}
+            SRC_REF: ${{ github.head_ref }}
+            SRC_MERGE_SHA: ${{ github.sha }}
+            SRC_PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+            PATCH_REPO: ${{ github.repository }}-security-patches
+            PATCH_REF: ${{ github.base_ref }}
+            TRIGGERING_GITHUB_HANDLE: ${{ github.event.sender.login }}
           script: |
-            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
-
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'security-patch-actions',
                 workflow_id: 'test-patches-event.yml',
                 ref: 'main',
                 inputs: {
-                  src_repo: REPO,
-                  src_ref: HEAD_REF,
-                  src_merge_sha: SHA,
-                  src_pr_commit_sha: PR_COMMIT_SHA,
-                  patch_repo: REPO + '-security-patches',
-                  patch_ref: BASE_REF,
-                  triggering_github_handle: SENDER
+                  src_repo: process.env.SRC_REPO,
+                  src_ref: process.env.SRC_REF,
+                  src_merge_sha: process.env.SRC_MERGE_SHA,
+                  src_pr_commit_sha: process.env.SRC_PR_COMMIT_SHA,
+                  patch_repo: process.env.PATCH_REPO,
+                  patch_ref: process.env.PATCH_REF,
+                  triggering_github_handle: process.env.TRIGGERING_GITHUB_HANDLE
                 }
             })
