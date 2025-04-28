@@ -782,7 +782,7 @@ export function mapFrameToDataGrid({
       key,
       name: field.name,
       field,
-      cellClass: textWraps[field?.state?.displayName ?? field.name] ? styles.cellWrapped : styles.cell,
+      cellClass: textWraps[getDisplayName(field)] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
         const { row, rowIdx } = props;
         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
@@ -809,7 +809,7 @@ export function mapFrameToDataGrid({
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
-                textWraps[field?.state?.displayName ?? field.name],
+                textWraps[getDisplayName(field)],
                 field,
                 cellType
               )
