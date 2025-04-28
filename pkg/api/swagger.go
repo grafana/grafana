@@ -23,7 +23,7 @@ func (hs *HTTPServer) registerSwaggerUI(r routing.RouteRegister) {
 	// The swagger based api navigator
 	r.Get("/swagger", func(c *contextmodel.ReqContext) {
 		ctx := c.Req.Context()
-		assets, err := webassets.GetWebAssets(ctx, "build-swagger", hs.Cfg, hs.License)
+		assets, err := webassets.GetWebAssets(ctx, hs.Cfg, hs.License)
 		if err != nil {
 			errhttp.Write(ctx, err, c.Resp)
 			return
