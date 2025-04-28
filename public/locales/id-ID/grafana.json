@@ -2662,9 +2662,6 @@
       "clear": "Hapus pencarian dan filter",
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
-    "soft-delete": {
-      "success": "Dasbor {{name}} dipindahkan ke Baru dihapus"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

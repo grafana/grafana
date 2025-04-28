@@ -591,15 +591,6 @@ var (
 			Owner:       awsDatasourcesSquad,
 		},
 		{
-			Name:            "recoveryThreshold",
-			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
-		},
-		{
 			Name:         "lokiStructuredMetadata",
 			Description:  "Enables the loki data source to request structured metadata from the Loki server",
 			Stage:        FeatureStageGeneralAvailability,
@@ -1747,12 +1738,18 @@ var (
 			FrontendOnly: true,
 		},
 		{
-
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "multiTenantFrontend",
+			Description:  "Register MT frontend",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "alertingListViewV2PreviewToggle",
@@ -1767,6 +1764,16 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
+		},
+		{
+			Name:              "alertingBulkActionsInUI",
+			Description:       "Enables the alerting bulk actions in the UI",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 	}
 )
