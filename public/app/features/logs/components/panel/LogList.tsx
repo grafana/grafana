@@ -199,13 +199,13 @@ const LogListComponent = ({
     setProcessedLogs(
       preProcessLogs(logs, { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone }, grammar)
     );
+    resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
   }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone]);
 
   useEffect(() => {
-    resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage, processedLogs]);
+  }, [wrapLogMessage]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
@@ -222,9 +222,8 @@ const LogListComponent = ({
     if (widthRef.current === containerElement.clientWidth) {
       return;
     }
-    resetLogLineSizes();
-    listRef.current?.resetAfterIndex(0);
     widthRef.current = containerElement.clientWidth;
+    listRef.current?.resetAfterIndex(0);
   });
 
   const handleOverflow = useCallback(
