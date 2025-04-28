@@ -12,9 +12,7 @@ on:
 concurrency:
   group: issue-commands-${{ github.event.issue.number }}
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   config:
@@ -34,6 +32,9 @@ jobs:
     needs: config
     if: needs.config.outputs.has-secrets
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: "Get vault secrets"
         id: vault-secrets

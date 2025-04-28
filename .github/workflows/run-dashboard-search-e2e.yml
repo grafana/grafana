@@ -11,6 +11,9 @@ on:
 env:
   ARCH: linux-amd64
 
+permissions:
+  - contents:read
+
 jobs:
   setup:
     runs-on: ubuntu-latest

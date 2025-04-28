@@ -50,31 +50,25 @@ jobs:
     secrets:
       GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
       GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+
   create-prs:
     name: Create Release PR
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
     steps:
-      - name: Generate bot token
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Get release branch
         id: branch
         uses: grafana/grafana-github-actions-go/latest-release-branch@main
         with:
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           ownerRepo: 'grafana/grafana'
           pattern: ${{ inputs.target }}
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.branch.outputs.branch }}
-          fetch-depth: 0
           fetch-tags: true
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
@@ -82,7 +76,7 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'false'
           path: .grafana-main
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -95,11 +89,17 @@ jobs:
 
       - name: Create branch
         run: git checkout -b "release/${{ github.run_id }}/${{ inputs.version }}"
+      - name: Generate changelog token
+        id: generate_changelog_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
+          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
         uses: ./.grafana-main/.github/workflows/actions/changelog
         with:
-          github_token: ${{ steps.generate_token.outputs.token }}
+          github_token: ${{ steps.generate_changelog_token.outputs.token }}
           target: v${{ inputs.version }}
           output_file: changelog_items.md
       - name: Patch CHANGELOG.md
