@@ -178,6 +178,8 @@ func TestJaegerClient_Search(t *testing.T) {
 	tests := []struct {
 		name           string
 		query          *JaegerQuery
+		start          int64
+		end            int64
 		mockResponse   string
 		mockStatusCode int
 		expectedURL    string
@@ -194,9 +196,11 @@ func TestJaegerClient_Search(t *testing.T) {
 				MaxDuration: "5s",
 				Limit:       10,
 			},
+			start:          1735689600000000,
+			end:            1738368000000000,
 			mockResponse:   `{"data":[{"traceID":"test-trace-id"}]}`,
 			mockStatusCode: http.StatusOK,
-			expectedURL:    "/api/traces?limit=10&maxDuration=5s&minDuration=1s&operation=test-operation&service=test-service&tags=%7B%22error%22%3A%22true%22%7D",
+			expectedURL:    "/api/traces?end=1738368000000000&limit=10&maxDuration=5s&minDuration=1s&operation=test-operation&service=test-service&start=1735689600000000&tags=%7B%22error%22%3A%22true%22%7D",
 			expectError:    false,
 			expectedError:  nil,
 		},
@@ -205,9 +209,11 @@ func TestJaegerClient_Search(t *testing.T) {
 			query: &JaegerQuery{
 				Service: "test-service",
 			},
+			start:          1735689600000000,
+			end:            1738368000000000,
 			mockResponse:   `{"data":[{"traceID":"test-trace-id"}]}`,
 			mockStatusCode: http.StatusOK,
-			expectedURL:    "/api/traces?service=test-service",
+			expectedURL:    "/api/traces?end=1738368000000000&service=test-service&start=1735689600000000",
 			expectError:    false,
 			expectedError:  nil,
 		},
@@ -216,9 +222,11 @@ func TestJaegerClient_Search(t *testing.T) {
 			query: &JaegerQuery{
 				Service: "test-service",
 			},
+			start:          1735689600000000,
+			end:            1738368000000000,
 			mockResponse:   "",
 			mockStatusCode: http.StatusInternalServerError,
-			expectedURL:    "/api/traces?service=test-service",
+			expectedURL:    "/api/traces?end=1738368000000000&service=test-service&start=1735689600000000",
 			expectError:    true,
 			expectedError:  backend.DownstreamError(fmt.Errorf("request failed: %s", http.StatusText(http.StatusInternalServerError))),
 		},
@@ -239,7 +247,7 @@ func TestJaegerClient_Search(t *testing.T) {
 			}
 			client, err := New(server.Client(), log.NewNullLogger(), settings)
 			assert.NoError(t, err)
-			traces, err := client.Search(tt.query)
+			traces, err := client.Search(tt.query, tt.start, tt.end)
 
 			if tt.expectError {
 				assert.Error(t, err)
