@@ -1087,6 +1087,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "type": "string"
+          },
           "value": {
             "type": "string",
             "default": ""
@@ -1104,9 +1107,6 @@
               "type": "string",
               "default": ""
             }
-          },
-          "origin": {
-            "type": "string"
           }
         }
       },
@@ -1215,7 +1215,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "format": "byte",
+              "format": "int64",
               "default": 0
             }
           }
