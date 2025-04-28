@@ -60,6 +60,7 @@ export const LogLine = ({
       className={`${styles.logLine} ${variant ?? ''} ${pinned ? styles.pinnedLogLine : ''}`}
       ref={onOverflow ? logLineRef : undefined}
       onMouseOver={handleMouseOver}
+      onFocus={handleMouseOver}
     >
       <LogLineMenu styles={styles} log={log} />
       <div className={`${wrapLogMessage ? styles.wrappedLogLine : `${styles.unwrappedLogLine} unwrapped-log-line`}`}>

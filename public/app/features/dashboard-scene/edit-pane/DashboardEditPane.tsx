@@ -5,6 +5,7 @@ import { useLocalStorage } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import {
+  clearButtonStyles,
   ElementSelectionContextItem,
   ElementSelectionContextState,
   ElementSelectionOnSelectOptions,
@@ -187,6 +188,7 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
   const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
   const editableElement = useEditableElement(selection, editPane);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
@@ -268,16 +270,15 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
           data-edit-pane-splitter={true}
         />
         <div {...splitter.secondaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
-          <div
-            role="button"
+          <button
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
-            className={styles.outlineCollapseButton}
+            className={cx(clearButton, styles.outlineCollapseButton)}
           >
             <Text weight="medium">
               <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
             </Text>
             <Icon name="angle-up" />
-          </div>
+          </button>
           {!outlineCollapsed && (
             <div className={styles.outlineContainer}>
               <ScrollContainer showScrollIndicators={true}>

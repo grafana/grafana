@@ -112,7 +112,6 @@ export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
                     !isTopLevel && styles.rowTitleNested,
                     isCollapsed && styles.rowTitleCollapsed
                   )}
-                  role="heading"
                 >
                   {!model.hasUniqueTitle() && (
                     <Tooltip

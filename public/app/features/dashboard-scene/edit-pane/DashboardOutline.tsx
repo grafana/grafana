@@ -87,7 +87,6 @@ function DashboardOutlineNode({
           </button>
         )}
         <button
-          role="button"
           className={cx(styles.nodeButton, isCloned && styles.nodeButtonClone, isSelected && styles.nodeButtonSelected)}
           onPointerDown={onNameClicked}
           onDoubleClick={outlineRename.onNameDoubleClicked}

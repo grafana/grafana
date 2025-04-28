@@ -65,7 +65,6 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
               isDropTarget && 'dashboard-drop-target'
             )}
             active={isActive}
-            role="presentation"
             title={titleInterpolated}
             href={href}
             aria-selected={isActive}
