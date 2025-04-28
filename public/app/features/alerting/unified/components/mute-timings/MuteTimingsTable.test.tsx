@@ -1,7 +1,10 @@
 import { render, screen, userEvent, within } from 'test/test-utils';
 
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
-import { setMuteTimingsListError } from 'app/features/alerting/unified/mocks/server/configure';
+import {
+  setMuteTimingsListError,
+  setTimeIntervalsListEmpty,
+} from 'app/features/alerting/unified/mocks/server/configure';
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { captureRequests } from 'app/features/alerting/unified/mocks/server/events';
 import { AccessControlAction } from 'app/types';
@@ -89,6 +92,8 @@ describe('MuteTimingsTable', () => {
       expect(await screen.findByTestId('dynamic-table')).toBeInTheDocument();
 
       expect(await screen.findByText('Provisioned')).toBeInTheDocument();
+      expect(screen.queryByText(/no mute timings configured/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/you haven't created any mute timings yet/i)).not.toBeInTheDocument();
     });
 
     it('shows error when mute timings cannot load', async () => {
@@ -113,6 +118,12 @@ describe('MuteTimingsTable', () => {
       );
 
       expect(deleteRequest).toBeDefined();
+    });
+
+    it('shows empty state when no mute timings are configured', async () => {
+      setTimeIntervalsListEmpty();
+      renderWithProvider();
+      expect(await screen.findByText(/you haven't created any mute timings yet/i)).toBeInTheDocument();
     });
   });
 
