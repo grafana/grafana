@@ -35,6 +35,7 @@ import {
   ScrollToLogsEvent,
   storeLogLineSize,
 } from './virtualization';
+import { LogLineDetails } from './LogLineDetails';
 
 interface Props {
   app: CoreApp;
@@ -317,6 +318,7 @@ const LogListComponent = ({
           </VariableSizeList>
         )}
       </InfiniteScroll>
+      {showDetails.length > 0 && <LogLineDetails logs={logs} />}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>
   );
