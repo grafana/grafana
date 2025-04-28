@@ -1,8 +1,8 @@
-import i18n, { InitOptions, TFunction } from 'i18next';
+import i18n, { InitOptions, ReactOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
 import { ReactElement } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { initReactI18next, Trans as I18NextTrans } from 'react-i18next';
+import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
 import { DEFAULT_LANGUAGE, PSEUDO_LOCALE } from './constants';
 import { LANGUAGES } from './languages';
@@ -19,9 +19,13 @@ export async function initPluginTranslations(id: string) {
       returnEmptyString: false,
       lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
     });
-  } else {
-    // passes i18n down to react-i18next
-    getI18nInstance().use(initReactI18next).init(getI18nInstance().options);
+  }
+
+  // If the initReactI18next is not set, we need to set them
+  if (!getI18n()?.options?.react) {
+    const options: ReactOptions = {};
+    setDefaults(options);
+    setI18n(getI18nInstance());
   }
 
   tFunc = getI18nInstance().getFixedT(null, id);
