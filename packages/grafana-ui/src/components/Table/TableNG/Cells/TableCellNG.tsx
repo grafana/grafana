@@ -237,7 +237,7 @@ const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellCol
       minWidth: color.bgColor ? 'calc(100% - 1px)' : '100%',
       whiteSpace: 'pre-line',
       width: 'fit-content',
-      zIndex: theme.zIndex.tooltip,
+      zIndex: 1,
     },
   }),
   cellActions: css({
