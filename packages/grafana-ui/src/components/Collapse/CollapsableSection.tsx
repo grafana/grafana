@@ -38,11 +38,11 @@ export const CollapsableSection = ({
   contentDataTestId,
   unmountContentWhenClosed = true,
 }: Props) => {
-  const [open, toggleOpen] = useState<boolean>(isOpen);
+  const [internalOpenState, toggleInternalOpenState] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
 
   const isControlled = isOpen !== undefined && onToggle !== undefined;
-  const isSectionOpen = isControlled ? isOpen : open;
+  const isSectionOpen = isControlled ? isOpen : internalOpenState;
 
   const onClick = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
@@ -52,8 +52,11 @@ export const CollapsableSection = ({
     e.preventDefault();
     e.stopPropagation();
 
-    onToggle?.(!open);
-    toggleOpen(!open);
+    if (isControlled) {
+      onToggle?.(!isOpen);
+    } else {
+      toggleInternalOpenState(!internalOpenState);
+    }
   };
   const { current: id } = useRef(uniqueId());
 
