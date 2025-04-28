@@ -1,8 +1,9 @@
-import { useState } from 'react';
-import React from 'react';
+import React, { useState } from 'react';
 
 import { ConfirmModal, Space, Text } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+
+import { trackFolderBulkActionsDeleteFail, trackFolderBulkActionsDeleteSuccess } from '../../Analytics';
 
 export interface Props {
   isOpen: boolean;
@@ -12,14 +13,15 @@ export interface Props {
 
 export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const onDelete = async () => {
-    // track delete folder event
+  const onDeleteConfirm = async () => {
     setIsDeleting(true);
     try {
       await onConfirm();
+      trackFolderBulkActionsDeleteSuccess();
       setIsDeleting(false);
       onDismiss();
     } catch {
+      trackFolderBulkActionsDeleteFail();
       setIsDeleting(false);
     }
   };
@@ -43,7 +45,7 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen }: Props) 
           : t('alerting.folder-bulk-actions.delete-modal-delete-button', 'Delete')
       }
       onDismiss={onDismiss}
-      onConfirm={onDelete}
+      onConfirm={onDeleteConfirm}
       title={t('alerting.folder-bulk-actions.delete-modal-title', 'Delete')}
       isOpen={isOpen}
     />

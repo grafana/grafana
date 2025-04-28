@@ -22,7 +22,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  const onDelete = async () => {
+  const onConfirmDelete = async () => {
     await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
   };
 
@@ -32,8 +32,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
         <>
           <FolderActionMenuItem
             folderUID={folderUID}
-            label={t('alerting.folder-bulk-actions.pause.button.label', 'Pause evaluation')}
-            icon="pause"
+            action="pause"
             executeAction={async (folderUID) => {
               await pauseFolder({ folderUID }).unwrap();
             }}
@@ -41,8 +40,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
           />
           <FolderActionMenuItem
             folderUID={folderUID}
-            label={t('alerting.folder-bulk-actions.pause.button.label', 'Unpause evaluation')}
-            icon="play"
+            action="unpause"
             executeAction={async (folderUID) => {
               await unpauseFolder({ folderUID }).unwrap();
             }}
@@ -64,7 +62,11 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
       <Dropdown overlay={<Menu>{menuItems}</Menu>}>
         <MoreButton size="sm" title={t('alerting.folder-bulk-actions.more-button.title', 'Folder Actions')} />
       </Dropdown>
-      <DeleteModal isOpen={isDeleteModalOpen} onConfirm={onDelete} onDismiss={() => setIsDeleteModalOpen(false)} />
+      <DeleteModal
+        isOpen={isDeleteModalOpen}
+        onConfirm={onConfirmDelete}
+        onDismiss={() => setIsDeleteModalOpen(false)}
+      />
     </>
   );
 };
