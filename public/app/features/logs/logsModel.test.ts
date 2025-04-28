@@ -34,6 +34,7 @@ import {
   filterLogLevels,
   getSeriesProperties,
   LIMIT_LABEL,
+  TOTAL_LABEL,
   logRowToSingleRowDataFrame,
   logSeriesToLogsModel,
   queryLogsSample,
@@ -489,6 +490,52 @@ describe('dataFrameToLogsModel', () => {
       label: '',
       value: `2 lines returned`,
       kind: LogsMetaKind.String,
+    });
+  });
+
+  it('given one series with total as custom meta property should return correct total', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 9999,
+          },
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: TOTAL_LABEL,
+      value: 9999,
+      kind: LogsMetaKind.Number,
+    });
+  });
+
+  it('given multiple series with total as custom meta property should return correct total', () => {
+    const series: DataFrame[] = [
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 4,
+          },
+        },
+      }),
+      createDataFrame({
+        fields: [],
+        meta: {
+          custom: {
+            total: 5,
+          },
+        },
+      }),
+    ];
+    const logsModel = dataFrameToLogsModel(series, 1);
+    expect(logsModel.meta![0]).toMatchObject({
+      label: TOTAL_LABEL,
+      value: 9,
+      kind: LogsMetaKind.Number,
     });
   });
 
