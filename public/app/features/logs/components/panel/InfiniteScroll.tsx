@@ -27,6 +27,7 @@ interface Props {
   handleOverflow: (index: number, id: string, height?: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
+  onClick: (log: LogListModel) => void;
   scrollElement: HTMLDivElement | null;
   setInitialScrollPosition: () => void;
   showTime: boolean;
@@ -44,6 +45,7 @@ export const InfiniteScroll = ({
   handleOverflow,
   loadMore,
   logs,
+  onClick,
   scrollElement,
   setInitialScrollPosition,
   showTime,
@@ -152,6 +154,7 @@ export const InfiniteScroll = ({
           displayedFields={displayedFields}
           index={index}
           log={logs[index]}
+          onClick={onClick}
           showTime={showTime}
           style={style}
           styles={styles}
@@ -166,6 +169,7 @@ export const InfiniteScroll = ({
       handleOverflow,
       infiniteLoaderState,
       logs,
+      onClick,
       onLoadMore,
       showTime,
       sortOrder,

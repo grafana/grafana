@@ -245,6 +245,10 @@ const LogListComponent = ({
     return null;
   }
 
+  const handleLogRowClick = useCallback(() => {
+    alert();
+  }, []);
+
   const filteredLogs = useMemo(
     () =>
       filterLevels.length === 0 ? processedLogs : processedLogs.filter((log) => filterLevels.includes(log.logLevel)),
@@ -258,6 +262,7 @@ const LogListComponent = ({
         handleOverflow={handleOverflow}
         logs={filteredLogs}
         loadMore={loadMore}
+        onClick={handleLogRowClick}
         scrollElement={scrollRef.current}
         showTime={showTime}
         sortOrder={sortOrder}
