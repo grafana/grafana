@@ -47,6 +47,7 @@ interface Props {
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
   initialScrollPosition?: 'top' | 'bottom';
+  loading?: boolean;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
@@ -88,6 +89,7 @@ export const LogList = ({
   getRowContextQuery,
   grammar,
   initialScrollPosition = 'top',
+  loading,
   loadMore,
   logOptionsStorageKey,
   logs,
@@ -140,6 +142,7 @@ export const LogList = ({
         getFieldLinks={getFieldLinks}
         grammar={grammar}
         initialScrollPosition={initialScrollPosition}
+        loading={loading}
         loadMore={loadMore}
         logs={logs}
         showControls={showControls}
@@ -156,6 +159,7 @@ const LogListComponent = ({
   getFieldLinks,
   grammar,
   initialScrollPosition = 'top',
+  loading,
   loadMore,
   logs,
   showControls,
@@ -189,10 +193,14 @@ const LogListComponent = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
     setProcessedLogs(
       preProcessLogs(logs, { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone }, grammar)
     );
-  }, [forceEscape, getFieldLinks, grammar, logs, sortOrder, timeZone]);
+    listRef.current?.resetAfterIndex(0);
+  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone]);
 
   useEffect(() => {
     resetLogLineSizes();
