@@ -13,6 +13,11 @@ labels:
     - oss
 title: What's new in Grafana v12.0
 posts:
+  - title: Drilldown apps
+    items:
+      - docs/grafana-cloud/whats-new/2025-04-17-ga-release-of-grafana-traces-drilldown.md
+      - docs/grafana-cloud/whats-new/2025-04-28-logs-drilldown-improvements.md
+      - docs/grafana-cloud/whats-new/2025-04-28-metrics-drilldown-improvements.md
   - title: Cloud Migration Assistant
     items:
       - docs/grafana-cloud/whats-new/2025-04-11-grafana-cloud-migration-assistant-now-generally-available.md
@@ -27,6 +32,9 @@ posts:
       - docs/grafana-cloud/whats-new/2025-04-10-alert-rule-migration-tool.md
       - docs/grafana-cloud/whats-new/2025-04-10-grafana-managed-alert-rule-recovering-state.md
       - docs/grafana-cloud/whats-new/2025-04-11-grafana-managed-alert-rule-improvements.md
+  - title: Breaking Changes
+    items:
+      - docs/grafana-cloud/whats-new/2025-04-28-removal-of-editors_can_admin-configuration.md
 
 whats_new_grafana_version: 12.0
 weight: -49
