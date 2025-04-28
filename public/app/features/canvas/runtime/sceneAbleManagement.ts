@@ -97,9 +97,10 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
 
   scene.selecto = new Selecto({
     // container: scene.div,
-    container: scene.viewportDiv,
+    // container: scene.viewerDiv,
     // rootContainer: getParent(scene),
-    rootContainer: scene.viewerDiv,
+    // rootContainer: scene.viewerDiv,
+    dragContainer: scene.viewerDiv,
     selectableTargets: targetElements,
     toggleContinueSelect: 'shift',
     selectFromInside: false,
