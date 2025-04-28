@@ -32,9 +32,9 @@ runs:
         COVERAGE_FILE: ${{ inputs.coverage-file }}
       run: |
         # Ensure valid coverage file even if empty
-        if [ ! -s $COVERAGE_FILE ]; then
+        if [ ! -s "$COVERAGE_FILE" ]; then
           echo "Coverage file is empty, creating a minimal valid file"
-          echo "mode: set" > $COVERAGE_FILE
+          echo "mode: set" > "$COVERAGE_FILE"
         fi
 
     - name: Report coverage to CodeCov
