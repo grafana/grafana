@@ -1,5 +1,6 @@
 import saveAs from 'file-saver';
 import yaml from 'js-yaml';
+import { cloneDeep } from 'lodash';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
@@ -122,7 +123,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const initialSaveModelVersion = initialSaveModel && isDashboardV2Spec(initialSaveModel) ? 'v2' : 'v1';
     const origDashboard = scene.serializer.getSaveModel(scene);
     const exportable = isSharingExternally ? exportableDashboard : origDashboard;
-    const metadata = getMetadata(scene);
+    const metadata = getMetadata(scene, Boolean(isSharingExternally));
 
     if (isDashboardV2Spec(origDashboard) && 'elements' in exportable) {
       this.setState({
@@ -216,19 +217,46 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 }
 
 function getMetadata(
-  scene: DashboardScene
+  scene: DashboardScene,
+  isSharingExternally: boolean
 ): DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta> {
-  let result = {};
+  let result: Partial<ObjectMeta> = {};
+
   if (scene.serializer.metadata) {
     if ('k8s' in scene.serializer.metadata) {
-      result = scene.serializer.metadata.k8s ?? {};
+      result = scene.serializer.metadata.k8s ? cloneDeep(scene.serializer.metadata.k8s) : {};
     } else if ('annotations' in scene.serializer.metadata) {
-      result = scene.serializer.metadata;
+      result = cloneDeep(scene.serializer.metadata);
     }
   }
 
   if ('managedFields' in result) {
     delete result['managedFields'];
+  }
+
+  if (isSharingExternally) {
+    // Remove fields that are not needed for sharing externally
+    if ('uid' in result) {
+      delete result['uid'];
+    }
+    delete result['resourceVersion'];
+    delete result['generation'];
+
+    // iterate over labels and delete all keys that start with grafana.app/
+    for (const key in result['labels']) {
+      if (key.startsWith('grafana.app/')) {
+        // @ts-expect-error
+        delete result['labels'][key];
+      }
+    }
+
+    // iterate over annotations and delete all keys that start with grafana.app/
+    for (const key in result['annotations']) {
+      if (key.startsWith('grafana.app/')) {
+        // @ts-expect-error
+        delete result['annotations'][key];
+      }
+    }
   }
 
   return result;
