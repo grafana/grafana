@@ -551,6 +551,7 @@ type Cfg struct {
 	MemberlistBindAddr          string
 	MemberlistAdvertiseAddr     string
 	MemberlistJoinMember        string
+	MemberlistClusterLabel      string
 	InstanceID                  string
 	SprinklesApiServer          string
 	SprinklesApiServerPageLimit int

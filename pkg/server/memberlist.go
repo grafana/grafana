@@ -41,6 +41,10 @@ func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
 	memberlistKVcfg.Codecs = []codec.Codec{
 		ring.GetCodec(),
 	}
+	if cfg.MemberlistClusterLabel != "" {
+		memberlistKVcfg.ClusterLabel = cfg.MemberlistClusterLabel
+		memberlistKVcfg.ClusterLabelVerificationDisabled = false
+	}
 	if cfg.MemberlistBindAddr != "" {
 		memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.MemberlistBindAddr}
 	}
