@@ -22,6 +22,8 @@ jobs:
       BASE_REF: ${{ github.base_ref }}
       REPO: ${{ github.repository }}
       SENDER: ${{ github.event.sender.login }}
+      SHA: ${{ github.sha }}
+      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-latest
     steps:
       - name: "Generate token"
@@ -46,8 +48,8 @@ jobs:
                 inputs: {
                   src_repo: REPO,
                   src_ref: HEAD_REF,
-                  src_merge_sha: "${{ github.sha }}",
-                  src_pr_commit_sha: "${{ github.event.pull_request.head.sha }}",
+                  src_merge_sha: SHA,
+                  src_pr_commit_sha: PR_COMMIT_SHA,
                   patch_repo: REPO + '-security-patches',
                   patch_ref: BASE_REF,
                   triggering_github_handle: SENDER
