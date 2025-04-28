@@ -38,7 +38,7 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {HEAD_REF, BASE_REF, REPO, SENDER} = process.env;
+            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
