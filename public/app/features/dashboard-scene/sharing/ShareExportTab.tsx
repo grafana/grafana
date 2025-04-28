@@ -218,14 +218,20 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 function getMetadata(
   scene: DashboardScene
 ): DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta> {
+  let result = {};
   if (scene.serializer.metadata) {
     if ('k8s' in scene.serializer.metadata) {
-      return scene.serializer.metadata.k8s ?? {};
+      result = scene.serializer.metadata.k8s ?? {};
     } else if ('annotations' in scene.serializer.metadata) {
-      return scene.serializer.metadata;
+      result = scene.serializer.metadata;
     }
   }
-  return {};
+
+  if ('managedFields' in result) {
+    delete result['managedFields'];
+  }
+
+  return result;
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
