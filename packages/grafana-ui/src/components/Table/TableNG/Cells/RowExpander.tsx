@@ -16,7 +16,7 @@ export function RowExpander({ height, onCellExpand, isExpanded }: RowExpanderNGP
     }
   }
   return (
-    <div className={styles.expanderCell} onClick={onCellExpand} onKeyDown={handleKeyDown}>
+    <div role="button" tabIndex={0} className={styles.expanderCell} onClick={onCellExpand} onKeyDown={handleKeyDown}>
       <Icon
         aria-label={
           isExpanded

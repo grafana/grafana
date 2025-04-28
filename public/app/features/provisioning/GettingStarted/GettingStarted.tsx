@@ -157,7 +157,7 @@ export default function GettingStarted({ items }: Props) {
             }}
           />
           <div className={styles.imageContainer}>
-            <img src={'public/img/provisioning/provisioning.webp'} className={styles.image} />
+            <img alt="" src={'public/img/provisioning/provisioning.webp'} className={styles.image} />
           </div>
         </Stack>
         {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
