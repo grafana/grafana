@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # 4.2.2
         with:
           persist-credentials: false
       - name: "Generate token"
@@ -28,6 +28,6 @@ jobs:
         run: |
           git remote set-url origin "https://grafana-delivery-bot:$GIT_TOKEN@github.com/grafana/grafana.git"
       - name: Run backport
-        uses: grafana/grafana-github-actions-go/backport@main
+        uses: grafana/grafana-github-actions-go/backport@d4c452f92ed826d515dccf1f62923e537953acd8
         with:
           token: ${{ steps.generate_token.outputs.token }}
