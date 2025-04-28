@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { EventBusSrv, store } from '@grafana/data';
-import { config, setAppEvents } from '@grafana/runtime';
+import { config, setAppEvents, usePluginLinks } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
@@ -33,6 +33,15 @@ jest.mock('@grafana/runtime', () => ({
       extensionSidebar: true,
     },
   },
+  usePluginLinks: jest.fn().mockImplementation(() => ({
+    links: [
+      {
+        pluginId: mockPluginMeta.pluginId,
+        title: mockComponent.title,
+      },
+    ],
+    isLoading: false,
+  })),
 }));
 
 const mockComponent = {
@@ -95,9 +104,9 @@ describe('ExtensionToolbarItem', () => {
   it('should render a single button when only one component is available', () => {
     setup();
 
-    const button = screen.getByTestId('extension-toolbar-button');
+    const button = screen.getByTestId('extension-toolbar-button-open');
     expect(button).toBeInTheDocument();
-    expect(button).toHaveAttribute('aria-label', mockComponent.description);
+    expect(button).toHaveAttribute('aria-label', `Open ${mockComponent.title}`);
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
     expect(screen.getByTestId('docked-component-id')).toHaveTextContent('');
   });
@@ -105,7 +114,7 @@ describe('ExtensionToolbarItem', () => {
   it('should toggle the sidebar when clicking a single component button', async () => {
     setup();
 
-    const button = screen.getByTestId('extension-toolbar-button');
+    const button = screen.getByTestId('extension-toolbar-button-open');
     await userEvent.click(button);
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('true');
@@ -121,13 +130,21 @@ describe('ExtensionToolbarItem', () => {
       ],
     };
 
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      links: [
+        { pluginId: multipleComponentsMeta.pluginId, title: multipleComponentsMeta.addedComponents[0].title },
+        { pluginId: multipleComponentsMeta.pluginId, title: multipleComponentsMeta.addedComponents[1].title },
+      ],
+      isLoading: false,
+    });
+
     (getExtensionPointPluginMeta as jest.Mock).mockReturnValue(
       new Map([[multipleComponentsMeta.pluginId, multipleComponentsMeta]])
     );
 
     setup();
 
-    const button = screen.getByTestId('extension-toolbar-button');
+    const button = screen.getByTestId('extension-toolbar-button-open');
     expect(button).toBeInTheDocument();
 
     await userEvent.click(button);
@@ -151,7 +168,7 @@ describe('ExtensionToolbarItem', () => {
 
     setup();
 
-    const button = screen.getByTestId('extension-toolbar-button');
+    const button = screen.getByTestId('extension-toolbar-button-open');
     await userEvent.click(button);
 
     // Menu items should be visible
@@ -176,7 +193,7 @@ describe('ExtensionToolbarItem', () => {
     setup();
 
     // Open the dropdown
-    const button = screen.getByTestId('extension-toolbar-button');
+    const button = screen.getByTestId('extension-toolbar-button-open');
     await userEvent.click(button);
 
     // Click a menu item
@@ -202,12 +219,13 @@ describe('ExtensionToolbarItem', () => {
 
     setup();
 
-    const button = screen.getByTestId('extension-toolbar-button');
-    await userEvent.click(button);
-    await userEvent.click(screen.getByText('Component 1'));
+    const openButton = screen.getByTestId('extension-toolbar-button-open');
+    await userEvent.click(openButton);
+    const component1 = screen.getByText('Component 1');
+    await userEvent.click(component1);
 
-    await userEvent.click(button);
-    await userEvent.click(screen.getByText('Component 1'));
+    const closeButton = screen.getByTestId('extension-toolbar-button-close');
+    await userEvent.click(closeButton);
 
     expect(screen.getByTestId('is-open')).toHaveTextContent('false');
   });

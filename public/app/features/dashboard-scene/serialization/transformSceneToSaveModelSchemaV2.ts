@@ -200,7 +200,12 @@ export function vizPanelToSchemaV2(
       min,
       max,
       color,
-    }).filter(([_, value]) => value !== undefined)
+    }).filter(([_, value]) => {
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value !== undefined;
+    })
   );
 
   const vizFieldConfig: FieldConfigSource = {
@@ -215,6 +220,7 @@ export function vizPanelToSchemaV2(
       title: vizPanel.state.title,
       description: vizPanel.state.description ?? '',
       links: getPanelLinks(vizPanel),
+      transparent: vizPanel.state.displayMode === 'transparent' ? true : undefined,
       data: {
         kind: 'QueryGroup',
         spec: {
