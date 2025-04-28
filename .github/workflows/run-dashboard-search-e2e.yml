@@ -107,10 +107,14 @@ jobs:
             key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
         - name: Set the step name
           id: set_file_name
+          env:
+            INI_NAME: ${{ matrix.ini_file }}
           run: |
-            FILE_NAME=$(basename "${{ matrix.ini_file }}" .ini)
-            echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
-        - name: Run tests for ${{ env.FILE_NAME }}
+            FILE_NAME=$(basename "$env.INI_NAME" .ini)
+            echo "FILE_NAME=$FILE_NAME" >> $GITHUB_OUTPUT
+        - name: Run tests for ${{ steps.set_file_name.outputs.FILE_NAME }}
+          env:
+            INI_NAME: ${{ matrix.ini_file }}
           run: |
-            cp -rf ${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
+            cp -rf $INI_NAME ${{ github.workspace }}/scripts/grafana-server/custom.ini
             yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"

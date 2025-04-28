@@ -21,7 +21,7 @@ jobs:
     steps:
 
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
@@ -83,7 +83,7 @@ jobs:
           private_key: ${{ env.GH_APP_PEM }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Send issue to the auto triager action
         id: auto_triage
@@ -99,7 +99,7 @@ jobs:
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
         with:
           payload: >
             {
