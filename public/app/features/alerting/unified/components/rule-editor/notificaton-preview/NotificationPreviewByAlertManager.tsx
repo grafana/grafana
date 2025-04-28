@@ -73,14 +73,12 @@ function NotificationPreviewByAlertManager({
           if (!route) {
             return null;
           }
-          if (!receiver) {
-            throw new Error('Receiver not found');
-          }
           return (
             <NotificationRoute
               instanceMatches={instanceMatches}
               route={route}
-              receiver={receiver}
+              // If we can't find a receiver, it might just be because the user doesn't have access
+              receiver={receiver ? receiver : undefined}
               key={routeId}
               routesByIdMap={routesByIdMap}
               alertManagerSourceName={alertManagerSource.name}

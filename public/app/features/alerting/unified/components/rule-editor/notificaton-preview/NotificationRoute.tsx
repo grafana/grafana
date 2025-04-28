@@ -18,6 +18,7 @@ import { Spacer } from '../../Spacer';
 
 import { NotificationPolicyMatchers } from './NotificationPolicyMatchers';
 import { NotificationRouteDetailsModal } from './NotificationRouteDetailsModal';
+import UnknownContactPointDetails from './UnknownContactPointDetails';
 import { RouteWithPath } from './route';
 
 function NotificationRouteHeader({
@@ -30,7 +31,7 @@ function NotificationRouteHeader({
   onExpandRouteClick,
 }: {
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   instancesCount: number;
   alertManagerSourceName: string;
@@ -76,7 +77,7 @@ function NotificationRouteHeader({
               <span className={styles.textMuted}>
                 <Trans i18nKey="alerting.notification-route-header.delivered-to">@ Delivered to</Trans>
               </span>{' '}
-              {receiver.name}
+              {receiver ? receiver.name : <UnknownContactPointDetails />}
             </div>
 
             <div className={styles.verticalBar} />
@@ -102,7 +103,7 @@ function NotificationRouteHeader({
 
 interface NotificationRouteProps {
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   instanceMatches: AlertInstanceMatch[];
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
