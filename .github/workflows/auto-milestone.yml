@@ -21,7 +21,7 @@ jobs:
       # Note: Github will not trigger other actions from this because it uses
       # the GITHUB_TOKEN token
       - name: Run auto-milestone
-        uses: grafana/grafana-github-actions-go/auto-milestone@main
+        uses: grafana/grafana-github-actions-go/auto-milestone@d4c452f92ed826d515dccf1f62923e537953acd8 # main
         with:
           pr: ${{ github.event.pull_request.number }}
           token: ${{ secrets.GITHUB_TOKEN }}
