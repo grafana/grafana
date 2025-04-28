@@ -32,6 +32,7 @@ export async function initPluginTranslations(id: string) {
 }
 
 function getI18nInstance() {
+  console.log('getI18nInstance', i18n?.resolvedLanguage, i18n?.options?.resources);
   return i18n;
 }
 

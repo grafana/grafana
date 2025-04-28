@@ -9,6 +9,7 @@ export default [
   {
     input: entryPoint,
     plugins,
+    external: ['i18next'],
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-i18n')],
   },
   tsDeclarationOutput(pkg),
