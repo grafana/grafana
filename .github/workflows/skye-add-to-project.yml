@@ -50,10 +50,12 @@ jobs:
       # Check if the user is in the list from the secret
       - name: Check if user is allowed
         id: check_user
+        env:
+          ALLOWED_USERS: ${{ env.ALLOWED_USERS }}
+          USERNAME: ${{ github.event.sender.login }}
         run: |
           # Convert the comma-separated list to an array
-          IFS=',' read -ra ALLOWED_USERS <<< "${{ env.ALLOWED_USERS }}"
-          USERNAME="${{ github.event.sender.login }}"
+          IFS=',' read -ra ALLOWED_USERS <<< "$ALLOWED_USERS"
 
           # Check if user is in the allowed list
           for allowed_user in "${ALLOWED_USERS[@]}"; do
