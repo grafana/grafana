@@ -421,15 +421,42 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   /* infiniteViewer */
   /******************/
   scene.infiniteViewer = new InfiniteViewer(scene.viewerDiv!, scene.viewportDiv!, {
+    preventWheelClick: false,
     useAutoZoom: true,
-    // margin: 0,
-    // threshold: 0,
-    // zoom: 1,
-    // rangeX: [0, 0],
-    // rangeY: [0, 0],
+    useMouseDrag: true,
     useWheelScroll: true,
   });
 
+  // Handles context menu activation
+  // Uses openContextMenu with coordinates when available (after CanvasContextMenu mounts), but
+  // uses the basic visibility toggle when openContextMenu isn't ready (as a fallback)
+  const triggerContextMenu = (x: number, y: number) => {
+    if (scene.openContextMenu) {
+      scene.openContextMenu({ x, y });
+    } else {
+      scene.contextMenuOnVisibilityChange(true);
+    }
+  };
+
+  /* ----------------------------- EVENT HANDLERS ----------------------------- */
+  // Right click
+  scene.viewerDiv!.addEventListener('contextmenu', (e) => {
+    // Prevent default browser context menu
+    e.preventDefault();
+    triggerContextMenu(e.pageX, e.pageY);
+  });
+
+  // Mouse scroll click
+  // Only allow panning with middle mouse button (button 1)
+  // Left click is reserved for selection/manipulation, right click for context menu
+  scene.infiniteViewer!.on('dragStart', (e) => {
+    if (e.inputEvent.button !== 1) {
+      e.preventDefault();
+      e.preventDrag();
+    }
+  });
+
+  // Scroll
   scene.infiniteViewer!.on('scroll', () => {
     scene.updateConnectionsSize();
     scene.scale = scene.infiniteViewer!.getZoom();
