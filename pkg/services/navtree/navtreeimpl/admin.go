@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
@@ -60,7 +61,7 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
+	if c.SignedInUser.HasRole(identity.RoleAdmin) {
 		provisioningNode := &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
