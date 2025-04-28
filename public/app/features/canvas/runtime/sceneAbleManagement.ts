@@ -441,9 +441,35 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   /* ----------------------------- EVENT HANDLERS ----------------------------- */
   // Right click
   scene.viewerDiv!.addEventListener('contextmenu', (e) => {
-    // Prevent default browser context menu
-    e.preventDefault();
-    triggerContextMenu(e.pageX, e.pageY);
+    if (e.ctrlKey) {
+      // Enable panning with Ctrl+right-click
+      e.preventDefault();
+
+      // Start tracking mouse movement for panning
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startScrollLeft = scene.infiniteViewer!.getScrollLeft();
+      const startScrollTop = scene.infiniteViewer!.getScrollTop();
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const deltaX = startX - moveEvent.clientX;
+        const deltaY = startY - moveEvent.clientY;
+        scene.infiniteViewer!.scrollTo(startScrollLeft + deltaX, startScrollTop + deltaY);
+        moveEvent.preventDefault();
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    } else {
+      // Prevent default browser context menu
+      e.preventDefault();
+      triggerContextMenu(e.pageX, e.pageY);
+    }
   });
 
   // Mouse scroll click
