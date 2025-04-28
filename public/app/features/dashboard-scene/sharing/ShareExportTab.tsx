@@ -8,18 +8,7 @@ import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
-import {
-  Alert,
-  Button,
-  ClipboardButton,
-  CodeEditor,
-  Field,
-  Modal,
-  RadioButtonGroup,
-  Stack,
-  Switch,
-  TextLink,
-} from '@grafana/ui';
+import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
@@ -36,6 +25,7 @@ import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSce
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
+import { ResourceExport } from './ExportButton/ResourceExport';
 import { SceneShareTabState, ShareView } from './types';
 
 export enum ExportMode {
@@ -126,7 +116,7 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     const exportable = isSharingExternally ? exportableDashboard : origDashboard;
     const metadata = getMetadata(scene, Boolean(isSharingExternally));
 
-    if (isDashboardV2Spec(origDashboard) && 'elements' in exportable) {
+    if (isDashboardV2Spec(origDashboard) && 'elements' in exportable && initialSaveModelVersion === 'v2') {
       this.setState({
         exportMode: ExportMode.V2Resource,
       });
@@ -180,6 +170,18 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
     }
 
     if (exportMode === ExportMode.Classic) {
+      // This handles a case when:
+      // 1. dashboardNewLayouts feature toggle is enabled
+      // 2. v1 dashboard is loaded
+      // 3. dashboard hasn't been edited yet - if it was edited, user would be forced to save it in v2 version
+      if (initialSaveModelVersion === 'v1' && isDashboardV2Spec(origDashboard) && initialSaveModel) {
+        return {
+          json: initialSaveModel,
+          hasLibraryPanels: undefined,
+          initialSaveModelVersion,
+        };
+      }
+
       return {
         json: origDashboard,
         hasLibraryPanels: undefined,
@@ -264,21 +266,20 @@ function getMetadata(
 }
 
 function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) {
-  const { isSharingExternally, isViewingJSON, modalRef } = model.useState();
+  const { isSharingExternally, isViewingJSON, modalRef, exportMode, isViewingYAML } = model.useState();
 
   const dashboardJson = useAsync(async () => {
     const json = await model.getExportableDashboardJson();
     return json;
-  }, [isViewingJSON, isSharingExternally]);
+  }, [isViewingJSON, isSharingExternally, exportMode]);
 
   const stringifiedDashboardJson = JSON.stringify(dashboardJson.value?.json, null, 2);
-  const hasLibraryPanels = dashboardJson.value?.hasLibraryPanels;
-
-  const isV2Dashboard = dashboardJson.value?.json && 'elements' in dashboardJson.value.json;
-  const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
+  const stringifiedDashboardYAML = yaml.dump(dashboardJson.value?.json, {
+    skipInvalid: true,
+  });
+  const stringifiedDashboard = isViewingYAML ? stringifiedDashboardYAML : stringifiedDashboardJson;
 
   const exportExternallyTranslation = t('share-modal.export.share-externally-label', `Export for sharing externally`);
-  const switchExportModeLabel = t('export.json.export-mode', 'Export mode');
 
   return (
     <>
@@ -287,46 +288,27 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
           <p>
             <Trans i18nKey="share-modal.export.info-text">Export this dashboard.</Trans>
           </p>
-          <Stack gap={2} direction="column">
-            <Field label={switchExportModeLabel}>
-              <RadioButtonGroup
-                options={[
-                  { label: 'Classic', value: ExportMode.Classic },
-                  { label: 'V1 Resource', value: ExportMode.V1Resource },
-                  { label: 'V2 Resource', value: ExportMode.V2Resource },
-                ]}
-                value={model.state.exportMode}
-                onChange={(value) => model.onExportModeChange(value)}
-              />
-            </Field>
-            <Field label={exportExternallyTranslation}>
-              <Switch
-                id="share-externally-toggle"
-                value={isSharingExternally}
-                onChange={model.onShareExternallyChange}
-              />
-            </Field>
-            {showV2LibPanelAlert && (
-              <Alert
-                title={t(
-                  'dashboard-scene.save-dashboard-form.schema-v2-library-panels-export-title',
-                  'Dashboard Schema V2 does not support exporting library panels to be used in another instance yet'
-                )}
-                severity="warning"
-              >
-                <Trans i18nKey="dashboard-scene.save-dashboard-form.schema-v2-library-panels-export">
-                  The dynamic dashboard functionality is experimental, and has not full feature parity with current
-                  dashboards behaviour. It is based on a new schema format, that does not support library panels. This
-                  means that when exporting the dashboard to use it in another instance, we will not include library
-                  panels. We intend to support them as we progress in the feature{' '}
-                  <TextLink external href="https://grafana.com/docs/release-life-cycle/">
-                    life cycle
-                  </TextLink>
-                  .
-                </Trans>
-              </Alert>
-            )}
-          </Stack>
+          {config.featureToggles.kubernetesDashboards ? (
+            <ResourceExport
+              dashboardJson={dashboardJson}
+              isSharingExternally={isSharingExternally ?? false}
+              exportMode={exportMode ?? ExportMode.Classic}
+              isViewingYAML={isViewingYAML ?? false}
+              onExportModeChange={model.onExportModeChange}
+              onShareExternallyChange={model.onShareExternallyChange}
+              onViewYAML={model.onViewYAML}
+            />
+          ) : (
+            <Stack gap={2} direction="column">
+              <Field label={exportExternallyTranslation}>
+                <Switch
+                  id="share-externally-toggle"
+                  value={isSharingExternally}
+                  onChange={model.onShareExternallyChange}
+                />
+              </Field>
+            </Stack>
+          )}
 
           <Modal.ButtonRow>
             <Button
@@ -338,9 +320,15 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
             >
               <Trans i18nKey="share-modal.export.cancel-button">Cancel</Trans>
             </Button>
-            <Button variant="secondary" icon="brackets-curly" onClick={model.onViewJSON}>
-              <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
-            </Button>
+            {isViewingYAML ? (
+              <Button variant="secondary" icon="brackets-curly" onClick={model.onViewJSON}>
+                <Trans i18nKey="share-modal.export.view-button-yaml">View YAML</Trans>
+              </Button>
+            ) : (
+              <Button variant="secondary" icon="brackets-curly" onClick={model.onViewJSON}>
+                <Trans i18nKey="share-modal.export.view-button">View JSON</Trans>
+              </Button>
+            )}
             <Button variant="primary" icon="save" onClick={() => model.onSaveAsFile()}>
               <Trans i18nKey="share-modal.export.save-button">Save to file</Trans>
             </Button>
@@ -354,9 +342,9 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               if (dashboardJson.value) {
                 return (
                   <CodeEditor
-                    value={stringifiedDashboardJson}
+                    value={stringifiedDashboard}
                     showLineNumbers={true}
-                    language="json"
+                    language={isViewingYAML ? 'yaml' : 'json'}
                     showMiniMap={false}
                     height="500px"
                     width={width}
@@ -385,7 +373,7 @@ function ShareExportTabRenderer({ model }: SceneComponentProps<ShareExportTab>) 
               variant="secondary"
               icon="copy"
               disabled={dashboardJson.loading}
-              getText={() => stringifiedDashboardJson ?? ''}
+              getText={() => stringifiedDashboard ?? ''}
             >
               <Trans i18nKey="share-modal.view-json.copy-button">Copy to Clipboard</Trans>
             </ClipboardButton>

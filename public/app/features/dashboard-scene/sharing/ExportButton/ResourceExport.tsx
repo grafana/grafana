@@ -58,18 +58,19 @@ export function ResourceExport({
             />
           </Stack>
         )}
-        <Stack gap={1} alignItems="center">
-          <Label>{switchExportFormatLabel}</Label>
-          <RadioButtonGroup
-            options={[
-              { label: 'JSON', value: 'json' },
-              { label: 'YAML', value: 'yaml' },
-            ]}
-            value={isViewingYAML && exportMode !== ExportMode.Classic ? 'yaml' : 'json'}
-            onChange={onViewYAML}
-            disabled={exportMode === ExportMode.Classic}
-          />
-        </Stack>
+        {exportMode !== ExportMode.Classic && (
+          <Stack gap={1} alignItems="center">
+            <Label>{switchExportFormatLabel}</Label>
+            <RadioButtonGroup
+              options={[
+                { label: 'JSON', value: 'json' },
+                { label: 'YAML', value: 'yaml' },
+              ]}
+              value={isViewingYAML ? 'yaml' : 'json'}
+              onChange={onViewYAML}
+            />
+          </Stack>
+        )}
         {(isV2Dashboard || exportMode === ExportMode.V2Resource) && (
           <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
