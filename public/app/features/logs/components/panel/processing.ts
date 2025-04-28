@@ -11,8 +11,10 @@ import { generateLogGrammar } from './grammar';
 import { getTruncationLength } from './virtualization';
 
 export class LogListModel implements LogRowModel {
+  collapsed: boolean | undefined = undefined;
   datasourceType: string | undefined;
   dataFrame: DataFrame;
+  displayLevel: string;
   duplicates: number | undefined;
   entry: string;
   entryFieldIndex: number;
@@ -24,6 +26,7 @@ export class LogListModel implements LogRowModel {
   rowIndex: number;
   rowId?: string | undefined;
   searchWords: string[] | undefined;
+  timestamp: string;
   timeFromNow: string;
   timeEpochMs: number;
   timeEpochNs: string;
@@ -33,12 +36,10 @@ export class LogListModel implements LogRowModel {
   uniqueLabels: Labels | undefined;
 
   private _body: string | undefined = undefined;
-  displayLevel: string;
   private grammar: Grammar;
   private _highlightedBody: string | undefined = undefined;
-  fields: FieldDef[];
-  timestamp: string;
-  collapsed: boolean | undefined = undefined;
+  private _fields: FieldDef[] | undefined;
+  private _getFieldLinks: GetFieldLinksFn | undefined;
 
   constructor(log: LogRowModel, { escape, getFieldLinks, grammar, timeZone }: PreProcessLogOptions) {
     // LogRowModel
@@ -64,7 +65,6 @@ export class LogListModel implements LogRowModel {
 
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
-    this.fields = getAllFields(log, getFieldLinks);
     this.grammar = grammar ?? generateLogGrammar(this);
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
@@ -76,6 +76,7 @@ export class LogListModel implements LogRowModel {
       raw = escapeUnescapedString(raw);
     }
     this.raw = raw;
+    this._getFieldLinks = getFieldLinks;
   }
 
   get body(): string {
@@ -85,6 +86,13 @@ export class LogListModel implements LogRowModel {
       this._body = body.replace(/(\r\n|\n|\r)/g, '');
     }
     return this._body;
+  }
+
+  get fields(): FieldDef[] {
+    if (this._fields === undefined) {
+      this._fields = getAllFields(this, this._getFieldLinks);
+    }
+    return this._fields;
   }
 
   get highlightedBody() {
