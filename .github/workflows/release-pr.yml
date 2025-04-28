@@ -33,12 +33,13 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 jobs:
   push-changelog-to-main:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
     with:
@@ -52,13 +53,16 @@ jobs:
       GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
   create-prs:
+    permissions:
+      contents: write
+      pull-requests: write
     name: Create Release PR
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
     steps:
       - name: Get release branch
         id: branch
-        uses: grafana/grafana-github-actions-go/latest-release-branch@main
+        uses: grafana/grafana-github-actions-go/latest-release-branch@main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ownerRepo: 'grafana/grafana'
@@ -79,7 +83,7 @@ jobs:
           path: .grafana-main
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Setup nodejs environment
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         with:
           node-version-file: .nvmrc
       - name: Configure git user

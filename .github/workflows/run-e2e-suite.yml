@@ -20,7 +20,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.package }}
-      - uses: dagger/dagger-for-github@8.0.0
+      - uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         if: inputs.old-arch == false
         with:
           verb: run

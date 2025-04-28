@@ -26,7 +26,7 @@ jobs:
           persist-credentials: false
       
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         with:
           node-version-file: 'package.json'
           cache: 'yarn'
@@ -35,7 +35,7 @@ jobs:
         run: yarn install --immutable
       
       - name: Run Storybook and E2E tests
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           browser: chrome
           start: yarn storybook --quiet

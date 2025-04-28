@@ -12,7 +12,7 @@ runs:
   steps:
     - name: Retrieve GitHub App secrets
       id: get-secrets
-      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
+      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
       with:
         repo_secrets: |
           APP_ID=${{ inputs.github-app-name }}:app-id

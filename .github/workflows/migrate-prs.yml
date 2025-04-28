@@ -51,7 +51,7 @@ jobs:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Migrate PRs
-        uses: grafana/grafana-github-actions-go/migrate-open-prs@main
+        uses: grafana/grafana-github-actions-go/migrate-open-prs@main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ steps.generate_token.outputs.token }}
           ownerRepo: ${{ inputs.ownerRepo }}

@@ -11,8 +11,7 @@ on:
 env:
   ARCH: linux-amd64
 
-permissions:
-  - contents:read
+permissions: {}
 
 jobs:
   setup:
@@ -21,6 +20,9 @@ jobs:
     outputs:
       ini_files: ${{ steps.get_files.outputs.ini_files }}
 
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -32,7 +34,7 @@ jobs:
           go-version-file: 'go.mod'
           cache: true
       - run: go version
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         with:
           node-version: 20
           cache: 'yarn'
@@ -49,7 +51,7 @@ jobs:
         run: yarn install --immutable
       - name: Install Cypress dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           runTests: false
       - name: Cache Grafana Build and Dependencies
@@ -86,10 +88,13 @@ jobs:
         matrix:
           ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
 
+      permissions:
+        contents: read
+        id-token: write
+
       steps:
         - name: Checkout repository
           uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-
         - name: Restore Cached Node Modules
           uses: actions/cache@v3
           with:

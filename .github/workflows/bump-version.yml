@@ -17,7 +17,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  main:
+  bump-version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Grafana
@@ -35,6 +35,7 @@ jobs:
           DRY_RUN: ${{ inputs.dry_run }}
           REF_NAME: ${{ github.ref_name }}
           RUN_ID: ${{ github.run_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
@@ -44,5 +45,3 @@ jobs:
           git commit -m "bump version ${VERSION}"
           git push
           gh pr create --dry-run=$DRY_RUN -l "type/ci" -l "no-changelog" -B "$REF_NAME" --title "Release: Bump version to ${VERSION}" --body "Updated version to ${VERSION}"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -27,6 +27,6 @@ jobs:
         run: |
           git remote set-url origin "https://grafana-delivery-bot:$GIT_TOKEN@github.com/grafana/grafana.git"
       - name: Run backport
-        uses: grafana/grafana-github-actions-go/backport@d4c452f92ed826d515dccf1f62923e537953acd8 # main
+        uses: grafana/grafana-github-actions-go/backport@main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
