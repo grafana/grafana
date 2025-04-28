@@ -313,7 +313,7 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
   const value = reduceField({
     field: {
       ...field,
-      values: rows.map((row) => row[field.state?.displayName ?? field.name]),
+      values: rows.map((row) => row[getDisplayName(field)]),
     },
     reducers: options.reducer,
   })[calc];
@@ -470,7 +470,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
       rows[rowCount] = {
         __depth: 0,
         __index: i,
-        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.state?.displayName ?? field.name)}: values[${fieldIdx}][i]`).join(',')}
+        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
       rowCount += 1;
       if (rows[rowCount-1]['Nested frames']){
@@ -600,3 +600,7 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 /** Returns true if the DataFrame contains nested frames */
 export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
   dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
+export const getDisplayName = (field: Field): string => {
+  return field.state?.displayName ?? field.name;
+};

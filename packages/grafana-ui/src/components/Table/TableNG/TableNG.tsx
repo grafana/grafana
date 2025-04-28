@@ -48,6 +48,7 @@ import {
   getCellHeightCalculator,
   getComparator,
   getDefaultRowHeight,
+  getDisplayName,
   getFooterItemNG,
   getFooterStyles,
   getIsNestedTable,
@@ -195,23 +196,19 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(
-    () =>
-      props.data.fields.reduce(
-        (acc, field) => ({ ...acc, [field.state?.displayName ?? field.name]: field.type }),
-        {} as ColumnTypes
-      ),
+    () => props.data.fields.reduce<ColumnTypes>((acc, field) => ({ ...acc, [getDisplayName(field)]: field.type }), {}),
     [props.data.fields]
   );
 
   // Create a map of column key to text wrap
   const textWraps = useMemo(
     () =>
-      props.data.fields.reduce(
+      props.data.fields.reduce<{ [key: string]: boolean }>(
         (acc, field) => ({
           ...acc,
-          [field.state?.displayName ?? field.name]: field.config?.custom?.cellOptions?.wrapText ?? false,
+          [getDisplayName(field)]: field.config?.custom?.cellOptions?.wrapText ?? false,
         }),
-        {} as { [key: string]: boolean }
+        {}
       ),
     [props.data.fields]
   );
@@ -225,11 +222,12 @@ export function TableNG(props: TableNGProps) {
 
     // Set default widths from field config if they exist
     props.data.fields.forEach((field) => {
+      const displayName = getDisplayName(field);
       const configWidth = field.config?.custom?.width;
       const totalWidth = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
       // subtract out padding and 1px right border
       const contentWidth = totalWidth - 2 * TABLE.CELL_PADDING - 1;
-      widths[field.state?.displayName ?? field.name] = contentWidth;
+      widths[displayName] = contentWidth;
     });
 
     // Measure actual widths if available
@@ -249,15 +247,12 @@ export function TableNG(props: TableNGProps) {
   }, [props.data.fields]);
 
   const fieldDisplayType = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, field) => {
-        if (field.config?.custom?.cellOptions?.type) {
-          acc[field.state?.displayName ?? field.name] = field.config.custom.cellOptions.type;
-        }
-        return acc;
-      },
-      {} as Record<string, TableCellDisplayMode>
-    );
+    return props.data.fields.reduce<Record<string, TableCellDisplayMode>>((acc, field) => {
+      if (field.config?.custom?.cellOptions?.type) {
+        acc[getDisplayName(field)] = field.config.custom.cellOptions.type;
+      }
+      return acc;
+    }, {});
   }, [props.data.fields]);
 
   // Clean up fieldsData to simplify
@@ -273,7 +268,9 @@ export function TableNG(props: TableNGProps) {
   );
 
   const getDisplayedValue = (row: TableRow, key: string) => {
-    const field = props.data.fields.find((field) => field.state?.displayName ?? field.name === key)!;
+    const field = props.data.fields.find((field) => {
+      return getDisplayName(field) === key;
+    })!;
     const displayedValue = formattedValueToString(field.display!(row[key]));
     return displayedValue;
   };
@@ -769,7 +766,7 @@ export function mapFrameToDataGrid({
       return;
     }
     const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
-    const key = field.state?.displayName ?? field.name;
+    const key = getDisplayName(field);
     const justifyColumnContent = getTextAlign(field);
     const footerStyles = getFooterStyles(justifyColumnContent);
 
