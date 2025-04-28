@@ -14,7 +14,9 @@ jobs:
   main:
     runs-on: ubuntu-latest-8-cores
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - uses: actions/download-artifact@v4
         with:
           name: ${{ inputs.package }}

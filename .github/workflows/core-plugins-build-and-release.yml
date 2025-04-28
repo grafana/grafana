@@ -41,7 +41,9 @@ jobs:
       version: ${{ steps.build_frontend.outputs.version }}
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Verify inputs
         run: |
           if [ -z ${{ inputs.plugin_id }} ]; then echo "Missing plugin ID"; exit 1; fi
@@ -97,7 +99,7 @@ jobs:
             echo "has_backend=false" >> $GITHUB_OUTPUT
           fi
       - name: Setup golang environment
-        uses: actions/setup-go@v4
+        uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
         if: steps.check_backend.outputs.has_backend == 'true'
         with:
           go-version-file: go.mod

@@ -10,7 +10,7 @@ jobs:
     container:
       image: grafana/vale:latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
       - uses: grafana/writers-toolkit/vale-action@vale-action/v1
