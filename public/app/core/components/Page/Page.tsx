@@ -101,21 +101,28 @@ const getStyles = (theme: GrafanaTheme2) => {
       position: 'relative',
     }),
     pageContent: css({
+      backgroundColor: theme.colors.background.primary,
+      border: `1px solid ${theme.colors.border.weak}`,
+      borderRadius: theme.shape.radius.default,
       label: 'page-content',
       flexGrow: 1,
+      padding: theme.spacing(1),
+
+      [theme.breakpoints.up('md')]: {
+        padding: theme.spacing(2),
+      },
     }),
     primaryBg: css({
       background: theme.colors.background.primary,
     }),
     pageInner: css({
       label: 'page-inner',
-      padding: theme.spacing(2),
       borderBottom: 'none',
-      background: theme.colors.background.primary,
       display: 'flex',
       flexDirection: 'column',
       flexGrow: 1,
       margin: theme.spacing(0, 0, 0, 0),
+      padding: theme.spacing(2),
 
       [theme.breakpoints.up('md')]: {
         padding: theme.spacing(4),
