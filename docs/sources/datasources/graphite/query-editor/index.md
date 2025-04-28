@@ -41,13 +41,17 @@ refs:
 
 Grafana includes a Graphite-specific query editor to help you build queries.
 The query editor helps you quickly navigate the metric space, add functions, and change function parameters.
-It can handle all types of Graphite queries, including complex nested queries through the use of query references.
+It supports a variety of Graphite queries, including complex nested queries, through the use of query references.
 
 For general documentation on querying data sources in Grafana, see [Query and transform data](ref:query-transform-data).
 
-## View the raw query
+## Query editor elements
 
-To see the raw text of the query that Grafana sends to Graphite, click the **Toggle text edit mode** (pencil) icon.
+- **Series** - Select a metric from the drop-down.
+
+- **Functions** - Graphite uses functions to manipulate data. Click the **+ sign** to view a list of function in the drop-down. You can create a query with multiple functions. 
+
+To view the raw query, click the **Pencil icon** in the upper right. Click the click the **Pencil icon** again to continue adding series and functions.
 
 ## Choose metrics to query
 
@@ -100,7 +104,7 @@ Depending on your consolidation function, only one or two can be correct at the 
 
 To combine time series, click **Combine** in the **Functions** list.
 
-### Select and explor data with tags
+### Select and explore data with tags
 
 In Graphite, _everything_ is a tag.
 
