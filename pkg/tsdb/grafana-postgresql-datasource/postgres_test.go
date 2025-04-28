@@ -275,7 +275,7 @@ func TestIntegrationPostgres(t *testing.T) {
 	// change to true to run the PostgreSQL tests
 	const runPostgresTests = false
 
-	if !(isTestDbPostgres() || runPostgresTests) {
+	if !isTestDbPostgres() && !runPostgresTests {
 		t.Skip()
 	}
 

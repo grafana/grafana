@@ -5,7 +5,7 @@ import { useAsync } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, VerticalGroup } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { VariableModel } from '../types';
@@ -80,8 +80,13 @@ function CollapseLabel(): ReactElement {
   const style = useStyles2(getStyles);
   return (
     <h5>
-      Renamed or missing variables
-      <Tooltip content="Click to expand a list with all variable references that have been renamed or are missing from the dashboard.">
+      <Trans i18nKey="variables.variables-unknown-table.collapse-label">Renamed or missing variables</Trans>
+      <Tooltip
+        content={t(
+          'variables.variables-unknown-table.collapse-tooltip',
+          'Click to expand a list with all variable references that have been renamed or are missing from the dashboard.'
+        )}
+      >
         <Icon name="info-circle" className={style.infoIcon} />
       </Tooltip>
     </h5>

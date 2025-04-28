@@ -88,7 +88,9 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             variant="destructive"
             onClick={() => this.onRemoveGroup(group)}
             disabled={isReadOnly}
-            aria-label={`Remove group ${group.groupId}`}
+            aria-label={t('teams.team-group-sync.aria-label-remove', 'Remove group {{groupName}}', {
+              groupName: group.groupId,
+            })}
           >
             <Icon name="times" />
           </Button>
@@ -108,7 +110,10 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             featureId={'team-sync'}
             eventVariant={'trial'}
             featureName={'team sync'}
-            text={'Add a group to enable team sync for free during your trial of Grafana Pro.'}
+            text={t(
+              'teams.team-group-sync.team-sync-upgrade',
+              'Add a group to enable team sync for free during your trial of Grafana Pro'
+            )}
           />
         )}
         <div className="page-action-bar">
@@ -124,8 +129,8 @@ export class TeamGroupSync extends PureComponent<Props, State> {
           )}
           <div className="page-action-bar__spacer" />
           {groups.length > 0 && (
-            <Button onClick={this.onToggleAdding} disabled={isReadOnly}>
-              <Icon name="plus" /> Add group
+            <Button onClick={this.onToggleAdding} icon="plus" disabled={isReadOnly}>
+              <Trans i18nKey="teams.team-group-sync.add-group-button">Add group</Trans>
             </Button>
           )}
         </div>
@@ -136,8 +141,10 @@ export class TeamGroupSync extends PureComponent<Props, State> {
             <form onSubmit={this.onAddGroup}>
               <InlineFieldRow>
                 <InlineField
-                  label={'Add External Group'}
-                  tooltip="LDAP Group Example: cn=users,ou=groups,dc=grafana,dc=org."
+                  label={t('teams.team-group-sync.label-add-external-group', 'Add external group')}
+                  tooltip={t('teams.team-group-sync.tooltip-add-external-group', 'LDAP group example: {{example}}', {
+                    example: 'cn=users,ou=groups,dc=grafana,dc=org',
+                  })}
                 >
                   <Input
                     type="text"
@@ -204,14 +211,15 @@ export const TeamSyncUpgradeContent = ({ action }: { action?: UpgradeContentProp
       action={action}
       listItems={[
         'Stop managing user access in two places - assign users to groups in SAML, LDAP or Oauth, and manage access at a Team level in Grafana',
-        'Update users’ permissions immediately when you add or remove them from an LDAP group, with no need for them to sign out and back in',
+        "Update users' permissions immediately when you add or remove them from an LDAP group, with no need for them to sign out and back in",
       ]}
       image={`team-sync-${theme.isLight ? 'light' : 'dark'}.png`}
       featureName={'team sync'}
       featureUrl={'https://grafana.com/docs/grafana/latest/enterprise/team-sync'}
-      description={
-        'Team Sync makes it easier for you to manage users’ access in Grafana, by immediately updating each user’s Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in.'
-      }
+      description={t(
+        'teams.team-sync-upgrade-content.description',
+        "Team Sync makes it easier for you to manage users' access in Grafana, by immediately updating each user's Grafana teams and permissions based on their single sign-on group membership, instead of when users sign in"
+      )}
     />
   );
 };

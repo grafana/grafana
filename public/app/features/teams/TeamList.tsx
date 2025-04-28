@@ -201,15 +201,19 @@ export const TeamList = ({
               {canReadTeam && (
                 <LinkButton
                   href={`org/teams/edit/${original.uid}`}
-                  aria-label={`Edit team ${original.name}`}
+                  aria-label={t('teams.team-list.columns.aria-label-edit-team', 'Edit team {{teamName}}', {
+                    teamName: original.name,
+                  })}
                   icon="pen"
                   size="sm"
                   variant="secondary"
-                  tooltip={'Edit team'}
+                  tooltip={t('teams.team-list.columns.tooltip-edit-team', 'Edit team')}
                 />
               )}
               <DeleteButton
-                aria-label={`Delete team ${original.name}`}
+                aria-label={t('teams.team-list.columns.aria-label-delete-button', 'Delete team {{teamName}}', {
+                  teamName: original.name,
+                })}
                 size="sm"
                 disabled={!canDelete}
                 onConfirm={() => deleteTeam(original.uid)}

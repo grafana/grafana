@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"testing"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
 func TestValidateRepository(t *testing.T) {
@@ -174,6 +175,44 @@ func TestValidateRepository(t *testing.T) {
 			// 3. sync interval too low
 			// 4. reserved name
 		},
+		{
+			name: "branch workflow for non-github repository",
+			repository: func() *MockRepository {
+				m := NewMockRepository(t)
+				m.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.LocalRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.BranchWorkflow},
+					},
+				})
+				m.On("Validate").Return(field.ErrorList{})
+				return m
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "spec.workflow: Invalid value: \"branch\": branch is only supported on git repositories")
+			},
+		},
+		{
+			name: "invalid workflow in the list",
+			repository: func() *MockRepository {
+				m := NewMockRepository(t)
+				m.On("Config").Return(&provisioning.Repository{
+					Spec: provisioning.RepositorySpec{
+						Title:     "Test Repo",
+						Type:      provisioning.GitHubRepositoryType,
+						Workflows: []provisioning.Workflow{provisioning.WriteWorkflow, "invalid"},
+					},
+				})
+				m.On("Validate").Return(field.ErrorList{})
+				return m
+			}(),
+			expectedErrs: 1,
+			validateError: func(t *testing.T, errors field.ErrorList) {
+				require.Contains(t, errors.ToAggregate().Error(), "spec.workflow: Invalid value: \"invalid\": invalid workflow")
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -192,7 +231,7 @@ func TestTestRepository(t *testing.T) {
 		name          string
 		repository    *MockRepository
 		expectedCode  int
-		expectedErrs  []string
+		expectedErrs  []provisioning.ErrorDetails
 		expectedError error
 	}{
 		{
@@ -208,7 +247,11 @@ func TestTestRepository(t *testing.T) {
 				return m
 			}(),
 			expectedCode: http.StatusUnprocessableEntity,
-			expectedErrs: []string{"spec.title: Required value: a repository title must be given"},
+			expectedErrs: []provisioning.ErrorDetails{{
+				Type:   metav1.CauseTypeFieldValueRequired,
+				Field:  "spec.title",
+				Detail: "a repository title must be given",
+			}},
 		},
 		{
 			name: "test passes",
@@ -257,12 +300,18 @@ func TestTestRepository(t *testing.T) {
 				m.On("Test", mock.Anything).Return(&provisioning.TestResults{
 					Code:    http.StatusBadRequest,
 					Success: false,
-					Errors:  []string{"test failed"},
+					Errors: []provisioning.ErrorDetails{{
+						Type:  metav1.CauseTypeFieldValueInvalid,
+						Field: "spec.property",
+					}},
 				}, nil)
 				return m
 			}(),
 			expectedCode: http.StatusBadRequest,
-			expectedErrs: []string{"test failed"},
+			expectedErrs: []provisioning.ErrorDetails{{
+				Type:  metav1.CauseTypeFieldValueInvalid,
+				Field: "spec.property",
+			}},
 		},
 	}
 
@@ -312,4 +361,68 @@ func TestTester_TestRepository(t *testing.T) {
 	require.NotNil(t, results)
 	require.Equal(t, http.StatusOK, results.Code)
 	require.True(t, results.Success)
+}
+
+func TestFromFieldError(t *testing.T) {
+	tests := []struct {
+		name           string
+		fieldError     *field.Error
+		expectedCode   int
+		expectedField  string
+		expectedType   metav1.CauseType
+		expectedDetail string
+	}{
+		{
+			name: "required field error",
+			fieldError: &field.Error{
+				Type:   field.ErrorTypeRequired,
+				Field:  "spec.title",
+				Detail: "a repository title must be given",
+			},
+			expectedCode:   http.StatusBadRequest,
+			expectedField:  "spec.title",
+			expectedType:   metav1.CauseTypeFieldValueRequired,
+			expectedDetail: "a repository title must be given",
+		},
+		{
+			name: "invalid field error",
+			fieldError: &field.Error{
+				Type:   field.ErrorTypeInvalid,
+				Field:  "spec.sync.intervalSeconds",
+				Detail: "Interval must be at least 10 seconds",
+			},
+			expectedCode:   http.StatusBadRequest,
+			expectedField:  "spec.sync.intervalSeconds",
+			expectedType:   metav1.CauseTypeFieldValueInvalid,
+			expectedDetail: "Interval must be at least 10 seconds",
+		},
+		{
+			name: "not supported field error",
+			fieldError: &field.Error{
+				Type:   field.ErrorTypeNotSupported,
+				Field:  "spec.workflow",
+				Detail: "branch is only supported on git repositories",
+			},
+			expectedCode:   http.StatusBadRequest,
+			expectedField:  "spec.workflow",
+			expectedType:   metav1.CauseTypeFieldValueNotSupported,
+			expectedDetail: "branch is only supported on git repositories",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := fromFieldError(tt.fieldError)
+
+			require.NotNil(t, result)
+			require.Equal(t, tt.expectedCode, result.Code)
+			require.False(t, result.Success)
+			require.Len(t, result.Errors, 1)
+
+			errorDetail := result.Errors[0]
+			require.Equal(t, tt.expectedField, errorDetail.Field)
+			require.Equal(t, tt.expectedType, errorDetail.Type)
+			require.Equal(t, tt.expectedDetail, errorDetail.Detail)
+		})
+	}
 }

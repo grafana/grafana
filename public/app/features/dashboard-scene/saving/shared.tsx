@@ -61,7 +61,9 @@ export function NameAlreadyExistsError({ cancelButton, saveButton }: NameAlready
       severity="error"
     >
       <p>
-        A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
+        <Trans i18nKey="dashboard-scene.name-already-exists-error.body-name-already-exists">
+          A dashboard with the same name in selected folder already exists. Would you still like to save this dashboard?
+        </Trans>
       </p>
       <Box paddingTop={2}>
         <Stack alignItems="center">
@@ -89,7 +91,11 @@ export function SaveButton({ overwrite, isLoading, isValid, onSave }: SaveButton
       variant={overwrite ? 'destructive' : 'primary'}
       data-testid={selectors.components.Drawer.DashboardSaveDrawer.saveButton}
     >
-      {isLoading ? 'Saving...' : overwrite ? 'Save and overwrite' : 'Save'}
+      {isLoading
+        ? t('dashboard-scene.save-button.saving', 'Saving...')
+        : overwrite
+          ? t('dashboard-scene.save-button.save-and-overwrite', 'Save and overwrite')
+          : t('dashboard-scene.save-button.save', 'Save')}
     </Button>
   );
 }

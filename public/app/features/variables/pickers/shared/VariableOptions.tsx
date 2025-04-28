@@ -129,7 +129,9 @@ class VariableOptions extends PureComponent<Props> {
               [styles.variableOptionIconManySelected]: selectedValues.length > 1,
             })}
           ></span>
-          <Trans i18nKey="variable.picker.option-selected-values">Selected</Trans> ({selectedValues.length})
+          <Trans i18nKey="variable.picker.option-selected-values" values={{ numSelected: selectedValues.length }}>
+            Selected ({'{{numSelected}}'})
+          </Trans>
         </button>
       </Tooltip>
     );

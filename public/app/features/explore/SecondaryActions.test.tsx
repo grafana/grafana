@@ -35,7 +35,7 @@ describe('SecondaryActions', () => {
 
   it('should not render hidden elements', () => {
     render(
-      <QueriesDrawerContextProviderMock queryLibraryAvailable={false}>
+      <QueriesDrawerContextProviderMock queryLibraryEnabled={false}>
         <SecondaryActions
           addQueryRowButtonHidden={true}
           richHistoryRowButtonHidden={true}

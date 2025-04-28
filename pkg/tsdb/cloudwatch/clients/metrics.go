@@ -3,42 +3,41 @@ package clients
 import (
 	"context"
 
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-
+	"github.com/aws/aws-sdk-go/aws/awsutil"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models/resources"
+	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/utils"
 )
 
-type MetricsClient struct {
-	cloudwatch.ListMetricsAPIClient
-
+// this client wraps the CloudWatch API and handles pagination and the composition of the MetricResponse DTO
+type metricsClient struct {
+	models.CloudWatchMetricsAPIProvider
 	listMetricsPageLimit int
 }
 
-func NewMetricsClient(client cloudwatch.ListMetricsAPIClient, listMetricsPageLimit int) *MetricsClient {
-	return &MetricsClient{
-		ListMetricsAPIClient: client,
-		listMetricsPageLimit: listMetricsPageLimit,
-	}
+func NewMetricsClient(api models.CloudWatchMetricsAPIProvider, pageLimit int) *metricsClient {
+	return &metricsClient{CloudWatchMetricsAPIProvider: api, listMetricsPageLimit: pageLimit}
 }
 
-func (mc *MetricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
-	var response []resources.MetricResponse
-	paginator := cloudwatch.NewListMetricsPaginator(mc.ListMetricsAPIClient, params)
-	includeAccount := params.IncludeLinkedAccounts != nil && *params.IncludeLinkedAccounts
-	pages := 0
-	for paginator.HasMorePages() && pages < mc.listMetricsPageLimit {
-		pages += 1
-		page, err := paginator.NextPage(ctx)
-		if err != nil {
-			return response, err
-		}
-		for i, metric := range page.Metrics {
-			resp := resources.MetricResponse{Metric: metric}
-			if includeAccount && len(page.OwningAccounts) >= i {
-				resp.AccountId = &page.OwningAccounts[i]
+func (l *metricsClient) ListMetricsWithPageLimit(ctx context.Context, params *cloudwatch.ListMetricsInput) ([]resources.MetricResponse, error) {
+	var cloudWatchMetrics []resources.MetricResponse
+	pageNum := 0
+	err := l.ListMetricsPagesWithContext(ctx, params, func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+		pageNum++
+		utils.QueriesTotalCounter.WithLabelValues(utils.ListMetricsLabel).Inc()
+		metrics, err := awsutil.ValuesAtPath(page, "Metrics")
+		if err == nil {
+			for idx, metric := range metrics {
+				metric := resources.MetricResponse{Metric: metric.(*cloudwatch.Metric)}
+				if len(page.OwningAccounts) >= idx && params.IncludeLinkedAccounts != nil && *params.IncludeLinkedAccounts {
+					metric.AccountId = page.OwningAccounts[idx]
+				}
+				cloudWatchMetrics = append(cloudWatchMetrics, metric)
 			}
-			response = append(response, resp)
 		}
-	}
-	return response, nil
+		return !lastPage && pageNum < l.listMetricsPageLimit
+	})
+
+	return cloudWatchMetrics, err
 }

@@ -93,7 +93,7 @@ func (c *client) DoGetWithHeaderExtraction(ctx context.Context, in *flight.Ticke
 	if err != nil {
 		return nil, err
 	}
-	return newFlightReader(stream, c.Client.Alloc)
+	return newFlightReader(stream, c.Alloc)
 }
 
 // flightReader wraps a [flight.Reader] to expose the headers captured when the

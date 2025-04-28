@@ -5,7 +5,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/templategroup/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/templategroup/v0alpha1"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -45,7 +45,7 @@ func convertToK8sResource(orgID int64, template definitions.NotificationTemplate
 
 func convertToDomainModel(template *model.TemplateGroup) definitions.NotificationTemplate {
 	return definitions.NotificationTemplate{
-		UID:             template.ObjectMeta.Name,
+		UID:             template.Name,
 		Name:            template.Spec.Title,
 		Template:        template.Spec.Content,
 		ResourceVersion: template.ResourceVersion,

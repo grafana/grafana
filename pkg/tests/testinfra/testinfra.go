@@ -104,7 +104,7 @@ func StartGrafanaEnv(t *testing.T, grafDir, cfgPath string) (string, *server.Tes
 	var storage sql.UnifiedStorageGrpcService
 	if runstore {
 		storage, err = sql.ProvideUnifiedStorageGrpcService(env.Cfg, env.FeatureToggles, env.SQLStore,
-			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil)
+			env.Cfg.Logger, prometheus.NewPedanticRegistry(), nil, nil, nil, nil)
 		require.NoError(t, err)
 		ctx := context.Background()
 		err = storage.StartAsync(ctx)
@@ -494,6 +494,14 @@ func CreateGrafDir(t *testing.T, opts GrafanaOpts) (string, string) {
 		_, err = pathsSect.NewKey("permitted_provisioning_paths", opts.PermittedProvisioningPaths)
 		require.NoError(t, err)
 	}
+	if opts.EnableSCIM {
+		scimSection, err := getOrCreateSection("auth.scim")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("user_sync_enabled", "true")
+		require.NoError(t, err)
+		_, err = scimSection.NewKey("group_sync_enabled", "true")
+		require.NoError(t, err)
+	}
 
 	dbSection, err := getOrCreateSection("database")
 	require.NoError(t, err)
@@ -558,6 +566,7 @@ type GrafanaOpts struct {
 	GrafanaComSSOAPIToken                 string
 	LicensePath                           string
 	EnableRecordingRules                  bool
+	EnableSCIM                            bool
 
 	// When "unified-grpc" is selected it will also start the grpc server
 	APIServerStorageType options.StorageType

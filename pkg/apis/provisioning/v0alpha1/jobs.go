@@ -22,26 +22,6 @@ type JobList struct {
 	Items []Job `json:"items,omitempty"`
 }
 
-// HistoricJob is a history entry of Job. It is used to store Jobs that have been processed.
-//
-// The repository name and type are stored as labels.
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type HistoricJob struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
-
-	Spec   JobSpec   `json:"spec,omitempty"`
-	Status JobStatus `json:"status,omitempty"`
-}
-
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-type HistoricJobList struct {
-	metav1.TypeMeta `json:",inline"`
-	metav1.ListMeta `json:"metadata,omitempty"`
-
-	Items []HistoricJob `json:"items,omitempty"`
-}
-
 // +enum
 type JobAction string
 
