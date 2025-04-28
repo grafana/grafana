@@ -87,6 +87,7 @@ module.exports = [
     },
 
     rules: {
+      ...jsxA11yPlugin.configs.recommended.rules,
       'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
