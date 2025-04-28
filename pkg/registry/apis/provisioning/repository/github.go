@@ -56,15 +56,21 @@ func NewGitHub(
 	secrets secrets.Service,
 	webhookURL string,
 	cloneFn CloneFn,
-) *githubRepository {
-	owner, repo, _ := parseOwnerRepo(config.Spec.GitHub.URL)
+) (*githubRepository, error) {
+	owner, repo, err := parseOwnerRepo(config.Spec.GitHub.URL)
+	if err != nil {
+		return nil, fmt.Errorf("parse owner and repo: %w", err)
+	}
+
 	token := config.Spec.GitHub.Token
 	if token == "" {
 		decrypted, err := secrets.Decrypt(ctx, config.Spec.GitHub.EncryptedToken)
-		if err == nil {
-			token = string(decrypted)
+		if err != nil {
+			return nil, fmt.Errorf("decrypt token: %w", err)
 		}
+		token = string(decrypted)
 	}
+
 	return &githubRepository{
 		config:     config,
 		gh:         factory.New(ctx, token), // TODO, baseURL from config
@@ -73,7 +79,7 @@ func NewGitHub(
 		owner:      owner,
 		repo:       repo,
 		cloneFn:    cloneFn,
-	}
+	}, nil
 }
 
 func (r *githubRepository) Config() *provisioning.Repository {
@@ -705,8 +711,8 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 				})
 			case previousErr == nil && currentErr != nil:
 				changes = append(changes, VersionedFileChange{
-					Path:   currentPath,
-					Ref:    ref,
+					Path:   previousPath,
+					Ref:    base,
 					Action: FileActionDeleted,
 				})
 			case previousErr != nil && currentErr == nil:
@@ -740,31 +746,10 @@ func (r *githubRepository) CompareFiles(ctx context.Context, base, ref string) (
 	return changes, nil
 }
 
-// ClearAllPullRequestFileComments clears all comments on a pull request
-func (r *githubRepository) ClearAllPullRequestFileComments(ctx context.Context, prNumber int) error {
-	ctx, _ = r.logger(ctx, "")
-	return r.gh.ClearAllPullRequestFileComments(ctx, r.owner, r.repo, prNumber)
-}
-
 // CommentPullRequest adds a comment to a pull request.
 func (r *githubRepository) CommentPullRequest(ctx context.Context, prNumber int, comment string) error {
 	ctx, _ = r.logger(ctx, "")
 	return r.gh.CreatePullRequestComment(ctx, r.owner, r.repo, prNumber, comment)
-}
-
-// CommentPullRequestFile lints a file and comments the issues found.
-func (r *githubRepository) CommentPullRequestFile(ctx context.Context, prNumber int, path, ref, comment string) error {
-	ctx, _ = r.logger(ctx, ref)
-	fileComment := pgh.FileComment{
-		Content:  comment,
-		Path:     path,
-		Position: 1, // create a top-level comment
-		Ref:      ref,
-	}
-
-	// FIXME: comment with Grafana Logo
-	// FIXME: comment author should be written by Grafana and not the user
-	return r.gh.CreatePullRequestFileComment(ctx, r.owner, r.repo, prNumber, fileComment)
 }
 
 // ResourceURLs implements RepositoryWithURLs.
@@ -847,7 +832,7 @@ func (r *githubRepository) updateWebhook(ctx context.Context) (pgh.WebhookConfig
 
 	var mustUpdate bool
 
-	if hook.URL != r.config.Status.Webhook.URL {
+	if hook.URL != r.webhookURL {
 		mustUpdate = true
 		hook.URL = r.webhookURL
 	}
