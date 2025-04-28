@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -23,12 +22,6 @@ func ProvideSecureValueMetadataStorage(
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
-	}
-
-	// Pass `cfg` as `nil` because it is not used. If it ends up being used, it will panic.
-	// This is intended, as we shouldn't need any configuration settings here for secrets migrations.
-	if err := migrator.MigrateSecretSQL(db.GetEngine(), nil); err != nil {
-		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return &secureValueMetadataStorage{

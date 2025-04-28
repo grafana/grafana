@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -74,7 +75,7 @@ func TestEncryptionService_EnvelopeEncryption(t *testing.T) {
 
 func TestEncryptionService_DataKeys(t *testing.T) {
 	// Initialize data key storage with a fake db
-	testDB := db.InitTestDB(t)
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
 	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
@@ -184,7 +185,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 		}
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-		testDB := db.InitTestDB(t)
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
 		require.NoError(t, err)
 
@@ -460,7 +461,8 @@ func TestIntegration_SecretsService(t *testing.T) {
 
 	for name, tc := range tcs {
 		t.Run(name, func(t *testing.T) {
-			testDB := db.InitTestDB(t)
+			testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+
 			features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 			defaultKey := "SdlklWklckeLS"
 

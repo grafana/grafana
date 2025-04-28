@@ -5,8 +5,10 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 const (
@@ -17,19 +19,30 @@ const (
 	TableNameEncryptedValue    = "secret_encrypted_value"
 )
 
-func MigrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
-	mg := migrator.NewScopedMigrator(engine, cfg, "secret")
-	mg.AddCreateMigration()
+type SecretDB struct {
+	engine *xorm.Engine
+}
 
-	initSecretStore(mg)
+func New() registry.DatabaseMigrator {
+	return &SecretDB{}
+}
 
-	// since it's a new feature enable migration locking by default
+func NewWithEngine(db db.DB) contracts.SecretDBMigrator {
+	return &SecretDB{engine: db.GetEngine()}
+}
+
+func (db *SecretDB) RunMigrations() error {
+	mg := migrator.NewScopedMigrator(db.engine, nil, "secret")
+
+	db.AddMigration(mg)
+
 	return mg.Start(true, 0)
 }
 
-func initSecretStore(mg *migrator.Migrator) string {
-	marker := "Initialize secrets tables"
-	mg.AddMigration(marker, &migrator.RawSQLMigration{})
+func (*SecretDB) AddMigration(mg *migrator.Migrator) {
+	mg.AddCreateMigration()
+
+	mg.AddMigration("Initialize secrets tables", &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
 
@@ -146,6 +159,4 @@ func initSecretStore(mg *migrator.Migrator) string {
 			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
-
-	return marker
 }
