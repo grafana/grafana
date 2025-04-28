@@ -92,7 +92,7 @@ Get the dashboard version with the given version, for the dashboard with the giv
 **Example request for getting a dashboard version**:
 
 ```http
-GET /api/dashboards/id/QA7wKklGz/versions/1 HTTP/1.1
+GET /api/dashboards/uid/QA7wKklGz/versions/1 HTTP/1.1
 Accept: application/json
 Content-Type: application/json
 Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
