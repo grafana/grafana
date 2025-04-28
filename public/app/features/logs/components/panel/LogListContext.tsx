@@ -24,9 +24,12 @@ import { PopoverContent } from '@grafana/ui';
 import { DownloadFormat, downloadLogs as download } from '../../utils';
 
 import { GetRowContextQueryFn } from './LogLineMenu';
+import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
+  closeDetails: () => void;
   downloadLogs: (format: DownloadFormat) => void;
+  enableLogDetails: boolean;
   filterLevels: LogLevel[];
   hasUnescapedContent?: boolean;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
@@ -41,13 +44,17 @@ export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 's
   setShowUniqueLabels: (showUniqueLabels: boolean) => void;
   setSortOrder: (sortOrder: LogsSortOrder) => void;
   setWrapLogMessage: (showTime: boolean) => void;
+  showDetails: LogListModel[];
+  toggleDetails: (log: LogListModel) => void;
 }
 
 export const LogListContext = createContext<LogListContextData>({
   app: CoreApp.Unknown,
+  closeDetails: () => {},
   dedupStrategy: LogsDedupStrategy.none,
   displayedFields: [],
   downloadLogs: () => {},
+  enableLogDetails: false,
   filterLevels: [],
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
@@ -62,9 +69,11 @@ export const LogListContext = createContext<LogListContextData>({
   setSortOrder: () => {},
   setSyntaxHighlighting: () => {},
   setWrapLogMessage: () => {},
+  showDetails: [],
   showTime: true,
   sortOrder: LogsSortOrder.Ascending,
   syntaxHighlighting: true,
+  toggleDetails: () => {},
   wrapLogMessage: false,
 });
 
@@ -103,6 +112,7 @@ export interface Props {
   children?: ReactNode;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
+  enableLogDetails: boolean;
   filterLevels?: LogLevel[];
   forceEscape?: boolean;
   hasUnescapedContent?: boolean;
@@ -131,6 +141,7 @@ export interface Props {
 export const LogListContextProvider = ({
   app,
   children,
+  enableLogDetails,
   dedupStrategy,
   displayedFields,
   filterLevels,
@@ -172,6 +183,7 @@ export const LogListContextProvider = ({
     syntaxHighlighting,
     wrapLogMessage,
   });
+  const [showDetails, setShowDetails] = useState<LogListModel[]>([]);
 
   useEffect(() => {
     // Props are updated in the context only of the panel is being externally controlled.
@@ -339,13 +351,35 @@ export const LogListContextProvider = ({
     [logListState.filterLevels, logs, logsMeta]
   );
 
+  const closeDetails = useCallback(() => {
+    setShowDetails([]);
+  }, []);
+
+  const toggleDetails = useCallback(
+    (log: LogListModel) => {
+      if (!enableLogDetails) {
+        return;
+      }
+      const found = showDetails.findIndex((stateLog) => stateLog === log || stateLog.uid === log.uid);
+      if (found >= 0) {
+        setShowDetails(showDetails.filter((stateLog) => stateLog !== log && stateLog.uid !== log.uid));
+      } else {
+        // Supporting one displayed details for now
+        setShowDetails([log]);
+      }
+    },
+    [enableLogDetails, showDetails]
+  );
+
   return (
     <LogListContext.Provider
       value={{
         app,
+        closeDetails,
         dedupStrategy: logListState.dedupStrategy,
         displayedFields: logListState.displayedFields,
         downloadLogs,
+        enableLogDetails,
         filterLevels: logListState.filterLevels,
         forceEscape: logListState.forceEscape,
         hasUnescapedContent: logListState.hasUnescapedContent,
@@ -371,10 +405,12 @@ export const LogListContextProvider = ({
         setSortOrder,
         setSyntaxHighlighting,
         setWrapLogMessage,
+        showDetails,
         showTime: logListState.showTime,
         showUniqueLabels: logListState.showUniqueLabels,
         sortOrder: logListState.sortOrder,
         syntaxHighlighting: logListState.syntaxHighlighting,
+        toggleDetails,
         wrapLogMessage: logListState.wrapLogMessage,
       }}
     >
