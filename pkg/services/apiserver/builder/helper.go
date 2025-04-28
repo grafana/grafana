@@ -315,6 +315,7 @@ func InstallAPIs(
 
 			var (
 				dualWriterPeriodicDataSyncJobEnabled bool
+				dualWriterMigrationDataSyncDisabled  bool
 				dataSyncerInterval                   = time.Hour
 				dataSyncerRecordsLimit               = 1000
 			)
@@ -323,6 +324,7 @@ func InstallAPIs(
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dualWriterMigrationDataSyncDisabled = resourceConfig.DualWriterMigrationDataSyncDisabled
 				dataSyncerInterval = resourceConfig.DataSyncerInterval
 				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
@@ -343,6 +345,7 @@ func InstallAPIs(
 				Kind:                   key,
 				RequestInfo:            requestInfo,
 				Mode:                   mode,
+				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
 				LegacyStorage:          legacy,
 				Storage:                storage,
 				ServerLockService:      serverLock,

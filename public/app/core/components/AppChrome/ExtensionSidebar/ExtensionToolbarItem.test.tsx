@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { EventBusSrv, store } from '@grafana/data';
-import { config, setAppEvents } from '@grafana/runtime';
+import { config, setAppEvents, usePluginLinks } from '@grafana/runtime';
 import { getExtensionPointPluginMeta } from 'app/features/plugins/extensions/utils';
 
 import { ExtensionSidebarContextProvider, useExtensionSidebarContext } from './ExtensionSidebarProvider';
@@ -33,6 +33,15 @@ jest.mock('@grafana/runtime', () => ({
       extensionSidebar: true,
     },
   },
+  usePluginLinks: jest.fn().mockImplementation(() => ({
+    links: [
+      {
+        pluginId: mockPluginMeta.pluginId,
+        title: mockComponent.title,
+      },
+    ],
+    isLoading: false,
+  })),
 }));
 
 const mockComponent = {
@@ -120,6 +129,14 @@ describe('ExtensionToolbarItem', () => {
         { ...mockComponent, title: 'Component 2' },
       ],
     };
+
+    (usePluginLinks as jest.Mock).mockReturnValue({
+      links: [
+        { pluginId: multipleComponentsMeta.pluginId, title: multipleComponentsMeta.addedComponents[0].title },
+        { pluginId: multipleComponentsMeta.pluginId, title: multipleComponentsMeta.addedComponents[1].title },
+      ],
+      isLoading: false,
+    });
 
     (getExtensionPointPluginMeta as jest.Mock).mockReturnValue(
       new Map([[multipleComponentsMeta.pluginId, multipleComponentsMeta]])
