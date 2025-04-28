@@ -17,7 +17,7 @@ export const LogLineDetails = ({ logs }: Props) => {
   const getRows = useCallback(() => logs, [logs]);
   const logRowsStyles = getLogRowStyles(useTheme2());
   return (
-    <div>
+    <div style={{ resize: 'vertical' }}>
       <table>
         <LogDetails
           getRows={getRows}

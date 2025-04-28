@@ -22,6 +22,7 @@ import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { InfiniteScroll } from './InfiniteScroll';
 import { getGridTemplateColumns } from './LogLine';
+import { LogLineDetails } from './LogLineDetails';
 import { GetRowContextQueryFn } from './LogLineMenu';
 import { LogListContextProvider, LogListState, useLogListContext } from './LogListContext';
 import { LogListControls } from './LogListControls';
@@ -35,7 +36,6 @@ import {
   ScrollToLogsEvent,
   storeLogLineSize,
 } from './virtualization';
-import { LogLineDetails } from './LogLineDetails';
 
 interface Props {
   app: CoreApp;
