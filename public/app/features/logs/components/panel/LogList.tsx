@@ -41,6 +41,7 @@ interface Props {
   containerElement: HTMLDivElement;
   dedupStrategy: LogsDedupStrategy;
   displayedFields: string[];
+  enableLogDetails: boolean;
   eventBus?: EventBus;
   filterLevels?: LogLevel[];
   getFieldLinks?: GetFieldLinksFn;
@@ -75,7 +76,14 @@ export type LogListControlOptions = LogListState;
 
 type LogListComponentProps = Omit<
   Props,
-  'app' | 'dedupStrategy' | 'displayedFields' | 'showTime' | 'sortOrder' | 'syntaxHighlighting' | 'wrapLogMessage'
+  | 'app'
+  | 'dedupStrategy'
+  | 'displayedFields'
+  | 'enableLogDetails'
+  | 'showTime'
+  | 'sortOrder'
+  | 'syntaxHighlighting'
+  | 'wrapLogMessage'
 >;
 
 export const LogList = ({
@@ -83,6 +91,7 @@ export const LogList = ({
   displayedFields,
   containerElement,
   dedupStrategy,
+  enableLogDetails,
   eventBus,
   filterLevels,
   getFieldLinks,
@@ -114,6 +123,7 @@ export const LogList = ({
   return (
     <LogListContextProvider
       app={app}
+      enableLogDetails={enableLogDetails}
       dedupStrategy={dedupStrategy}
       displayedFields={displayedFields}
       filterLevels={filterLevels}
@@ -166,7 +176,18 @@ const LogListComponent = ({
   timeRange,
   timeZone,
 }: LogListComponentProps) => {
-  const { app, displayedFields, filterLevels, forceEscape, showTime, sortOrder, wrapLogMessage } = useLogListContext();
+  const {
+    app,
+    closeDetails,
+    displayedFields,
+    filterLevels,
+    forceEscape,
+    showDetails,
+    showTime,
+    sortOrder,
+    toggleDetails,
+    wrapLogMessage,
+  } = useLogListContext();
   const [processedLogs, setProcessedLogs] = useState<LogListModel[]>([]);
   const [listHeight, setListHeight] = useState(
     app === CoreApp.Explore ? window.innerHeight * 0.75 : containerElement.clientHeight
@@ -245,9 +266,12 @@ const LogListComponent = ({
     return null;
   }
 
-  const handleLogRowClick = useCallback(() => {
-    alert();
-  }, []);
+  const handleLogLineClick = useCallback(
+    (log: LogListModel) => {
+      toggleDetails(log);
+    },
+    [toggleDetails]
+  );
 
   const filteredLogs = useMemo(
     () =>
@@ -262,7 +286,7 @@ const LogListComponent = ({
         handleOverflow={handleOverflow}
         logs={filteredLogs}
         loadMore={loadMore}
-        onClick={handleLogRowClick}
+        onClick={handleLogLineClick}
         scrollElement={scrollRef.current}
         showTime={showTime}
         sortOrder={sortOrder}
