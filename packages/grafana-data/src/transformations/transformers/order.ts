@@ -51,7 +51,7 @@ export const orderFieldsTransformer: DataTransformerInfo<OrderFieldsTransformerO
         }
 
         const orderer =
-          options.fieldOrder === FieldOrdering.Manual
+          (options.fieldOrder ?? FieldOrdering.Manual) === FieldOrdering.Manual
             ? createFieldsOrdererManual(options.indexByName!)
             : createFieldsOrdererAuto(options.autoSortOptions);
 
