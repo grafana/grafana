@@ -12,6 +12,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: "Generate token"
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
@@ -20,7 +22,11 @@ jobs:
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - run: git config --global user.email '132647405+grafana-delivery-bot[bot]@users.noreply.github.com'
       - run: git config --global user.name 'grafana-delivery-bot[bot]'
-      - run: git remote set-url origin "https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/grafana.git"
+      - name: Set remote URL
+        env:
+          GIT_TOKEN: ${{ steps.generate_token.outputs.token }}
+        run: |
+          git remote set-url origin "https://grafana-delivery-bot:$GIT_TOKEN@github.com/grafana/grafana.git"
       - name: Run backport
         uses: grafana/grafana-github-actions-go/backport@main
         with:
