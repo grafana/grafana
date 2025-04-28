@@ -2823,7 +2823,6 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/lezer-logql": "npm:0.2.6"
     "@grafana/lezer-traceql": "npm:0.0.21"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
@@ -2989,7 +2988,7 @@ __metadata:
     fast_array_intersect: "npm:1.1.0"
     history: "npm:4.10.1"
     lodash: "npm:4.17.21"
-    marked: "npm:15.0.6"
+    marked: "npm:15.0.11"
     marked-mangle: "npm:1.1.10"
     moment: "npm:2.30.1"
     moment-timezone: "npm:0.5.47"
@@ -3167,15 +3166,6 @@ __metadata:
     react: 17.0.2
     react-dom: 17.0.2
   checksum: 10/98cb06a971f151e9504ab2b6640edb41fced12ecc6e033df5069937f82ab10a682f63314f713f79a8870975fb42c3cd74f23a605b58d961e632aa6cd35adf44b
-  languageName: node
-  linkType: hard
-
-"@grafana/lezer-logql@npm:0.2.6":
-  version: 0.2.6
-  resolution: "@grafana/lezer-logql@npm:0.2.6"
-  peerDependencies:
-    "@lezer/lr": ^1.0.0
-  checksum: 10/09df02b9934f37e9e58731ce0806923618991dfb46510ab29299040860b590359c9083def93176b1076cb1880302a92e527fb5aad0cbf97557a8025c74a997ed
   languageName: node
   linkType: hard
 
@@ -17875,7 +17865,7 @@ __metadata:
     lru-cache: "npm:11.0.2"
     lru-memoize: "npm:^1.1.0"
     lucene: "npm:^2.1.1"
-    marked: "npm:15.0.6"
+    marked: "npm:15.0.11"
     memoize-one: "npm:6.0.0"
     micro-memoize: "npm:^4.1.2"
     mini-css-extract-plugin: "npm:2.9.2"
@@ -21891,12 +21881,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"marked@npm:15.0.6":
-  version: 15.0.6
-  resolution: "marked@npm:15.0.6"
+"marked@npm:15.0.11":
+  version: 15.0.11
+  resolution: "marked@npm:15.0.11"
   bin:
     marked: bin/marked.js
-  checksum: 10/81c6949655fa6bf0478ab73896cc4be8b7f8b5b755aa1fbfc7cbe3f936cda201dd94dddd09e842e57fffc099c72bef5fe49ec0fa5d7560ee81cc5240860094ce
+  checksum: 10/939e75f3e989ef4d72d6da9c7e80e43d49ffdc7af8ae2a38cc8c73f20a629d9659a0acda1d0cb5a5f90876cbfb1520d029f98790a934b46592dfa178fbd2838c
   languageName: node
   linkType: hard
 
