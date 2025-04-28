@@ -45,7 +45,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
   private isLayoutInitialized = false;
 
   constructor(props: Props) {
-    console.log('DashboardGrid');
     super(props);
     this.state = {
       panelFilter: undefined,
@@ -253,7 +252,6 @@ export class DashboardGrid extends PureComponent<Props, State> {
   }
 
   renderPanel(panel: PanelModel, width: number, height: number, isDraggable: boolean) {
-    console.log({ panel });
     if (panel.type === 'row') {
       return <DashboardRow key={panel.key} panel={panel} dashboard={this.props.dashboard} />;
     }

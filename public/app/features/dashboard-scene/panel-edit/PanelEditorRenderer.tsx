@@ -21,8 +21,6 @@ export function PanelEditorRenderer({ model }: SceneComponentProps<PanelEditor>)
   const styles = useStyles2(getStyles);
   const [isCollapsed, setIsCollapsed] = useEditPaneCollapsed();
 
-  console.log('PanelEditorRenderer');
-
   const { containerProps, primaryProps, secondaryProps, splitterProps, splitterState, onToggleCollapse } =
     useSnappingSplitter({
       direction: 'row',
