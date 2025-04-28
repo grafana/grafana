@@ -38,6 +38,7 @@ export const LogLine = ({
   log,
   style,
   styles,
+  onClick,
   onOverflow,
   showTime,
   variant,
@@ -71,6 +72,9 @@ export const LogLine = ({
   }, [collapsed, index, log, onOverflow]);
 
   const { t } = useTranslate();
+  const handleClick = useCallback(() => {
+    onClick(log);
+  }, [log, onClick]);
 
   return (
     <div style={style}>
@@ -79,6 +83,7 @@ export const LogLine = ({
         ref={onOverflow ? logLineRef : undefined}
         onMouseEnter={handleMouseOver}
         onFocus={handleMouseOver}
+        onClick={handleClick}
       >
         <LogLineMenu styles={styles} log={log} />
         <div
