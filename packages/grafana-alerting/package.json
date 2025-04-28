@@ -1,0 +1,63 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/alerting",
+  "version": "12.0.0-pre",
+  "private": true,
+  "description": "Grafana Alerting Library – Build vertical integrations on top of the industry-leading alerting solution",
+  "keywords": [
+    "typescript",
+    "grafana",
+    "alerting",
+    "alertmanager",
+    "prometheus"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-alerting"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "module": "src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./internal": {
+      "import": "./src/internal.ts",
+      "require": "./src/internal.ts"
+    },
+    "./unstable": {
+      "import": "./src/unstable.ts",
+      "require": "./src/unstable.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit",
+    "codegen": "yarn run rtk-query-codegen-openapi ./scripts/codegen.ts"
+  },
+  "devDependencies": {
+    "@grafana/tsconfig": "^2.0.0",
+    "@rtk-query/codegen-openapi": "^2.0.0",
+    "@types/lodash": "^4",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "type-fest": "^4.40.0",
+    "typescript": "5.7.3"
+  },
+  "peerDependencies": {
+    "@grafana/runtime": "^12.0.0-pre",
+    "@grafana/ui": "^12.0.0-pre",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "^2.7.0",
+    "lodash": "^4.17.21"
+  }
+}

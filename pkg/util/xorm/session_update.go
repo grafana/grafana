@@ -315,10 +315,6 @@ func (session *Session) genUpdateColumns(bean any) ([]string, []any, error) {
 				continue
 			}
 		}
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		fieldValuePtr, err := col.ValueOf(bean)
 		if err != nil {
 			return nil, nil, err

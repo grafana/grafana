@@ -51,8 +51,10 @@ export class UnthemedDashboardRow extends Component<DashboardRowProps> {
       return (
         <div>
           <p>
-            Panels in this row use the {SHARED_DASHBOARD_QUERY} data source. These panels will reference the panel in
-            the original row, not the ones in the repeated rows.
+            <Trans i18nKey="dashboard.untheme-dashboard-row.dashboard-datasource">
+              Panels in this row use the {{ SHARED_DASHBOARD_QUERY }} data source. These panels will reference the panel
+              in the original row, not the ones in the repeated rows.
+            </Trans>
           </p>
           <TextLink
             external
