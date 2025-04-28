@@ -61,15 +61,13 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	if c.SignedInUser.HasRole(identity.RoleAdmin) {
-		provisioningNode := &navtree.NavLink{
+	if c.SignedInUser.HasRole(identity.RoleAdmin) && s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",
 			Url:      s.cfg.AppSubURL + "/admin/provisioning",
-		}
-
-		configNodes = append(configNodes, provisioningNode)
+		})
 	}
 
 	generalNode := &navtree.NavLink{
