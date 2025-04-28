@@ -5,6 +5,7 @@
 //go:build !windows && !nacl && !plan9
 // +build !windows,!nacl,!plan9
 
+//nolint:all
 package xorm
 
 import (
