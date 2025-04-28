@@ -141,6 +141,7 @@ export const LogsPanel = ({
           containerElement={logsContainer}
           dedupStrategy={dedupStrategy}
           displayedFields={[]}
+          enableLogDetails
           grammar={isLogsGrammar(grammar) ? grammar : undefined}
           initialScrollPosition={initialScrollPosition}
           logs={logs}

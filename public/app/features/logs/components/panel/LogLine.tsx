@@ -27,6 +27,7 @@ interface Props {
   showTime: boolean;
   style: CSSProperties;
   styles: LogLineStyles;
+  onClick: (log: LogListModel) => void;
   onOverflow?: (index: number, id: string, height?: number) => void;
   variant?: 'infinite-scroll';
   wrapLogMessage: boolean;
