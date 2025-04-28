@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import { Dropdown, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
@@ -5,6 +7,7 @@ import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { FolderAction, useFolderAbility } from '../../hooks/useAbilities';
 
+import { DeleteModal } from './DeleteModal';
 import { FolderActionMenuItem } from './MenuItemPauseFolder';
 interface Props {
   folderUID: string;
@@ -15,25 +18,12 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
   const canPause = pauseSupported && pauseAllowed;
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
   const [unpauseFolder, unpauseState] = alertingFolderActionsApi.endpoints.unpauseFolder.useMutation();
+  const [deleteGrafanaRulesFromFolder, deleteState] =
+    alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
-  // const onDelete = async () => {
-  //   //todo: delete folder endpoint??
-  // };
-  const showDeleteModal = () => {
-    // appEvents.publish(
-    //   new ShowModalReactEvent({
-    //     component: DeleteModal,
-    //     props: {
-    //       selectedItems: {
-    //         folder: { [folderUID]: true },
-    //         dashboard: {},
-    //         panel: {},
-    //         $all: false,
-    //       },
-    //       onConfirm: onDelete,
-    //     },
-    //   })
-    // );
+  const onDelete = async () => {
+    await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
   };
 
   const menuItems = (
@@ -58,20 +48,23 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
             }}
             isLoading={unpauseState.isLoading}
           />
-          {/* TODO: delete folder */}
-          {/* <Menu.Item
+          <Menu.Item
             label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete folder')}
-            icon='trash-alt'
-            onClick={showDeleteModal}
-          /> */}
+            icon="trash-alt"
+            onClick={() => setIsDeleteModalOpen(true)}
+            disabled={deleteState.isLoading}
+          />
         </>
       )}
     </>
   );
 
   return (
-    <Dropdown overlay={<Menu>{menuItems}</Menu>}>
-      <MoreButton size="sm" title={t('alerting.folder-bulk-actions.more-button.title', 'Folder Actions')} />
-    </Dropdown>
+    <>
+      <Dropdown overlay={<Menu>{menuItems}</Menu>}>
+        <MoreButton size="sm" title={t('alerting.folder-bulk-actions.more-button.title', 'Folder Actions')} />
+      </Dropdown>
+      <DeleteModal isOpen={isDeleteModalOpen} onConfirm={onDelete} onDismiss={() => setIsDeleteModalOpen(false)} />
+    </>
   );
 };

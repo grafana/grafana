@@ -1,4 +1,8 @@
-import { alertingApi } from './alertingApi';
+import { t } from 'app/core/internationalization';
+
+import { WithNotificationOptions, alertingApi } from './alertingApi';
+import { GRAFANA_RULER_CONFIG } from './featureDiscoveryApi';
+import { rulerUrlBuilder } from './ruler';
 
 export const alertingFolderActionsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
@@ -29,6 +33,22 @@ export const alertingFolderActionsApi = alertingApi.injectEndpoints({
           folderUID,
         },
       }),
+    }),
+    deleteGrafanaRulesFromFolder: build.mutation<void, WithNotificationOptions<{ namespace: string }>>({
+      query: ({ namespace, notificationOptions }) => {
+        const successMessage = t('alerting.bulk-actions.delete.success', 'Successfully deleted rules in folder');
+        const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespace(namespace);
+
+        return {
+          url: path,
+          params,
+          method: 'DELETE',
+          notificationOptions: {
+            successMessage,
+            ...notificationOptions,
+          },
+        };
+      },
     }),
   }),
 });
