@@ -5038,9 +5038,9 @@
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
-      "export-format": "Export format",
-      "export-mode": "Export mode",
-      "export-remove-ds-refs": "Remove datasource references",
+      "export-format": "Format",
+      "export-mode": "Model",
+      "export-remove-ds-refs": "Remove deployment details",
       "info-text": "Copy or download a file containing the definition of your dashboard",
       "title": "Export dashboard"
     },

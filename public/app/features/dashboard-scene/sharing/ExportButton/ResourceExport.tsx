@@ -37,9 +37,9 @@ export function ResourceExport({
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
-  const switchExportLabel = t('export.json.export-remove-ds-refs', 'Remove datasource references');
-  const switchExportModeLabel = t('export.json.export-mode', 'Export mode');
-  const switchExportFormatLabel = t('export.json.export-format', 'Export format');
+  const switchExportLabel = t('export.json.export-remove-ds-refs', 'Remove deployment details');
+  const switchExportModeLabel = t('export.json.export-mode', 'Model');
+  const switchExportFormatLabel = t('export.json.export-format', 'Format');
 
   return (
     <Stack gap={2} direction="column">
