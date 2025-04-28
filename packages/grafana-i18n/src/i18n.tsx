@@ -12,8 +12,6 @@ let tFunc: TFunction<string[], undefined> | undefined;
 let transComponent: TransType;
 
 export async function initPluginTranslations(id: string) {
-  console.log('initPluginTranslations', id, getI18nInstance().resolvedLanguage, getI18nInstance().options?.resources);
-
   // If the resources are not an object, we need to initialize the plugin translations
   if (!getI18nInstance().options?.resources || typeof getI18nInstance().options.resources !== 'object') {
     await getI18nInstance().use(initReactI18next).init({
@@ -21,9 +19,10 @@ export async function initPluginTranslations(id: string) {
       returnEmptyString: false,
       lng: DEFAULT_LANGUAGE, // this should be the locale of the phrases in our source JSX
     });
+  } else {
+    // passes i18n down to react-i18next
+    getI18nInstance().use(initReactI18next).init(getI18nInstance().options);
   }
-
-  console.log('initPluginTranslations after', id, getI18nInstance().resolvedLanguage);
 
   tFunc = getI18nInstance().getFixedT(null, id);
   transComponent = (props: TransProps) => <I18NextTrans shouldUnescape ns={id} {...props} />;
@@ -31,8 +30,7 @@ export async function initPluginTranslations(id: string) {
   return { language: getI18nInstance().resolvedLanguage };
 }
 
-function getI18nInstance() {
-  console.log('getI18nInstance', i18n?.resolvedLanguage, i18n?.options?.resources);
+export function getI18nInstance() {
   return i18n;
 }
 
@@ -51,7 +49,6 @@ export async function initTranslations({
   language = DEFAULT_LANGUAGE,
   module,
 }: InitializeI18nOptions): Promise<{ language: string | undefined }> {
-  console.log('initTranslations', ns, language, module, getI18nInstance().resolvedLanguage);
   const options: InitOptions = {
     // We don't bundle any translations, we load them async
     partialBundledLanguages: true,
