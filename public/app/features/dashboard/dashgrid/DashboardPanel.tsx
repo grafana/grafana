@@ -87,8 +87,6 @@ export class DashboardPanelUnconnected extends PureComponent<Props> {
       isDraggable = true,
     } = this.props;
 
-    console.log({ plugin });
-
     if (!plugin) {
       return null;
     }

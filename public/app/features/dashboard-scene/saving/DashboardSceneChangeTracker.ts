@@ -170,10 +170,11 @@ export class DashboardSceneChangeTracker {
     this._changeTrackerSub = this._dashboard.subscribeToEvent(
       SceneObjectStateChangedEvent,
       (event: SceneObjectStateChangedEvent) => {
-        console.log('aaaaaa');
-        console.log({ event });
         if (DashboardSceneChangeTracker.isUpdatingPersistedState(event)) {
-          console.log({ event });
+          const e = event as any;
+          if (e?.payload?.from && e?.payload?.to) {
+            console.log({ event });
+          }
           performSaveModelDiff();
         }
       }

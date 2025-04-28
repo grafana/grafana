@@ -92,8 +92,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   constructor(props: Props) {
     super(props);
 
-    console.log('PanelStateWrapper');
-
     // Can this eventBus be on PanelModel?  when we have more complex event filtering, that may be a better option
     const eventBus = props.dashboard.events.newScopedBus(`panel:${props.panel.id}`, this.eventFilter);
     this.debouncedSetPanelAttention = debounce(this.setPanelAttention.bind(this), 100);
@@ -460,7 +458,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
   }
 
   onChangeTimeRange = (timeRange: AbsoluteTimeRange) => {
-    console.log({ timeRange });
     this.timeSrv.setTime({
       from: toUtc(timeRange.from),
       to: toUtc(timeRange.to),
@@ -525,7 +522,6 @@ export class PanelStateWrapper extends PureComponent<Props, State> {
 
     return (
       <>
-        {console.log('aaaaaaaaaaaaaa')}
         <PanelContextProvider value={this.state.context}>
           <PanelComponent
             id={panel.id}

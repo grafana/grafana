@@ -102,12 +102,7 @@ export const TimeSeriesPanel = ({
                 hoverMode={
                   options.tooltip.mode === TooltipDisplayMode.Single ? TooltipHoverMode.xOne : TooltipHoverMode.xAll
                 }
-                queryZoom={(e, a) => {
-                  console.log(onChangeTimeRange);
-                  console.log('queryZoom');
-                  console.log({ e, a });
-                  onChangeTimeRange(e);
-                }}
+                queryZoom={onChangeTimeRange}
                 clientZoom={true}
                 syncMode={cursorSync}
                 syncScope={eventsScope}
@@ -157,13 +152,7 @@ export const TimeSeriesPanel = ({
                   newRange={newAnnotationRange}
                   setNewRange={setNewAnnotationRange}
                 />
-                <OutsideRangePlugin
-                  config={uplotConfig}
-                  onChangeTimeRange={(e) => {
-                    console.log('OutsideRangePlugin');
-                    onChangeTimeRange(e);
-                  }}
-                />
+                <OutsideRangePlugin config={uplotConfig} onChangeTimeRange={onChangeTimeRange} />
                 {data.annotations && (
                   <ExemplarsPlugin
                     visibleSeries={getVisibleLabels(uplotConfig, frames)}

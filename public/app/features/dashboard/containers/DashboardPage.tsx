@@ -136,7 +136,6 @@ export class UnthemedDashboardPage extends PureComponent<Props, State> {
   }
 
   componentDidMount() {
-    console.log('UnthemedDashboardPage');
     this.initDashboard();
     this.forceRouteReloadCounter = (this.props.location.state as any)?.routeReloadCounter || 0;
   }

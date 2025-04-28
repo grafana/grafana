@@ -47,7 +47,6 @@ export class QueryRows extends PureComponent<Props> {
   };
 
   onChangeTimeRange = (timeRange: RelativeTimeRange, index: number) => {
-    console.log('aaaaa');
     const { queries, onQueriesChange } = this.props;
     onQueriesChange(
       queries.map((item, itemIndex) => {

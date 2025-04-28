@@ -44,7 +44,6 @@ export class TimeSrv {
   private autoRefreshBlocked?: boolean;
 
   constructor(private contextSrv: ContextSrv) {
-    console.log('TimeSrv');
     // default time
     this.time = getDefaultTimeRange().raw;
     this.timeAtLoad = getDefaultTimeRange().raw;
@@ -190,7 +189,6 @@ export class TimeSrv {
   }
 
   updateTimeRangeFromUrl() {
-    console.log('updateTimeRangeFromUrl');
     const params = locationService.getSearch();
 
     if (params.get('left')) {
@@ -294,10 +292,7 @@ export class TimeSrv {
   }
 
   setTime(time: RawTimeRange, updateUrl = true) {
-    console.log({ time });
     extend(this.time, time);
-
-    console.log({ time });
 
     // disable refresh if zoom in or zoom out
     if (isDateTime(time.to)) {
@@ -357,7 +352,6 @@ export class TimeSrv {
   }
 
   zoomOut(factor: number, updateUrl = true) {
-    console.log('zoomOut2');
     const range = this.timeRange();
     const { from, to } = getZoomedTimeRange(range, factor);
 

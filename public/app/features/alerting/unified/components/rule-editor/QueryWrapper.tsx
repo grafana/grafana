@@ -77,7 +77,6 @@ export const QueryWrapper = ({
   onSetCondition,
   onChangeQueryOptions,
 }: Props) => {
-  console.log('querywrapper')
   const styles = useStyles2(getStyles);
   const [dsInstance, setDsInstance] = useState<DataSourceApi>();
   const defaults = dsInstance?.getDefaultQuery ? dsInstance.getDefaultQuery(CoreApp.UnifiedAlerting) : {};
