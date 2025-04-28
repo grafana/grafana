@@ -138,6 +138,7 @@
 /pkg/services/dashboardversion/ @grafana/grafana-backend-group
 /pkg/services/encryption/ @grafana/grafana-operator-experience-squad
 /pkg/services/folder/ @grafana/grafana-search-and-storage
+/pkg/services/frontend/ @grafana/grafana-frontend-platform
 /pkg/services/apiserver @grafana/grafana-app-platform-squad
 /pkg/services/hooks/ @grafana/grafana-backend-group
 /pkg/services/kmsproviders/ @grafana/grafana-operator-experience-squad
@@ -435,6 +436,7 @@
 /packages/grafana-ui/src/graveyard/GraphNG/ @grafana/dataviz-squad
 /packages/grafana-ui/src/graveyard/TimeSeries/ @grafana/dataviz-squad
 /packages/grafana-ui/src/utils/storybook/ @grafana/grafana-frontend-platform
+/packages/grafana-alerting/ @grafana/alerting-frontend
 
 # root files, mostly frontend
 /.browserslistrc @grafana/frontend-ops
@@ -789,11 +791,9 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
-/.github/workflows/pr-patch-check.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-patch-check-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/pr-backend-coverage.yml @grafana/grafana-backend-group
-/.github/workflows/sync-mirror.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
@@ -816,6 +816,8 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/core-plugins-build-and-release.yml @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
+/.github/workflows/i18n-crowdin-create-tasks.yml @grafana/grafana-frontend-platform
+/.github/workflows/scripts/crowdin/create-tasks.js @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad

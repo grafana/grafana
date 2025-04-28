@@ -27,18 +27,20 @@ var _ generic.RESTOptionsGetter = (*RESTOptionsGetter)(nil)
 type StorageOptionsRegister func(gr schema.GroupResource, opts StorageOptions)
 
 type RESTOptionsGetter struct {
-	client   resource.ResourceClient
-	original storagebackend.Config
+	client         resource.ResourceClient
+	original       storagebackend.Config
+	configProvider RestConfigProvider
 
 	// Each group+resource may need custom options
 	options map[string]StorageOptions
 }
 
-func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config) *RESTOptionsGetter {
+func NewRESTOptionsGetterForClient(client resource.ResourceClient, original storagebackend.Config, configProvider RestConfigProvider) *RESTOptionsGetter {
 	return &RESTOptionsGetter{
-		client:   client,
-		original: original,
-		options:  make(map[string]StorageOptions),
+		client:         client,
+		original:       original,
+		options:        make(map[string]StorageOptions),
+		configProvider: configProvider,
 	}
 }
 
@@ -58,6 +60,7 @@ func NewRESTOptionsGetterMemory(originalStorageConfig storagebackend.Config) (*R
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
+		nil,
 	), nil
 }
 
@@ -93,6 +96,7 @@ func NewRESTOptionsGetterForFile(path string,
 	return NewRESTOptionsGetterForClient(
 		resource.NewLocalResourceClient(server),
 		originalStorageConfig,
+		nil,
 	), nil
 }
 
@@ -134,7 +138,7 @@ func (r *RESTOptionsGetter) GetRESTOptions(resource schema.GroupResource, _ runt
 			indexers *cache.Indexers,
 		) (storage.Interface, factory.DestroyFunc, error) {
 			return NewStorage(config, r.client, keyFunc, nil, newFunc, newListFunc, getAttrsFunc,
-				trigger, indexers, r.options[resource.String()])
+				trigger, indexers, r.configProvider, r.options[resource.String()])
 		},
 		DeleteCollectionWorkers: 0,
 		EnableGarbageCollection: false,
