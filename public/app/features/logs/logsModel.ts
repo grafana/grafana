@@ -51,6 +51,7 @@ import { createLogRowsMap, getLogLevel, getLogLevelFromKey, sortInAscendingOrder
 
 export const LIMIT_LABEL = 'Line limit';
 export const COMMON_LABELS = 'Common labels';
+export const TOTAL_LABEL = 'Total lines';
 
 export const LogLevelColor = {
   [LogLevel.critical]: colors[7],
@@ -488,6 +489,15 @@ export function logSeriesToLogsModel(
     meta.push({
       label: LIMIT_LABEL,
       value: limitValue,
+      kind: LogsMetaKind.Number,
+    });
+  }
+
+  const totalValue = logSeries.reduce((acc, series) => (acc += series.meta?.custom?.total), 0);
+  if (totalValue > 0) {
+    meta.push({
+      label: TOTAL_LABEL,
+      value: totalValue,
       kind: LogsMetaKind.Number,
     });
   }
