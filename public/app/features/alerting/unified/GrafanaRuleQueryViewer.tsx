@@ -503,7 +503,9 @@ function ThresholdExpressionViewer({ model }: { model: ExpressionQuery }) {
         {unloadEvaluator && (
           <>
             <div className={styles.label}>
-              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">Stop alerting when </Trans>
+              <Trans i18nKey="alerting.threshold-expression-viewer.stop-alerting-when">
+                Stop alerting (or pending state) when{' '}
+              </Trans>
             </div>
             <div className={styles.value}>{expression}</div>
 
