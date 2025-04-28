@@ -60,6 +60,7 @@ type Alertmanager struct {
 	orgID             int64
 	ready             bool
 	sender            *sender.ExternalAlertmanager
+	smtpFrom          string
 	state             stateStore
 	tenantID          string
 	url               string
@@ -191,6 +192,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		metrics:           metrics,
 		mimirClient:       mc,
 		orgID:             cfg.OrgID,
+		smtpFrom:          cfg.SmtpFrom,
 		state:             store,
 		sender:            s,
 		syncInterval:      cfg.SyncInterval,
@@ -670,6 +672,11 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 	}
 
 	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
+		return true
+	}
+
+	if rc.SmtpFrom != am.smtpFrom {
+		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
 		return true
 	}
 
