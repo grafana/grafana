@@ -66,11 +66,12 @@ jobs:
         shell: bash
         # Crowdin action returns us the URL of the pull request, but we need an ID for the GraphQL API
         # that looks like 'PR_kwDOAOaWjc5mP_GU'
-        run: |
-          pr_id=$(gh pr view ${{ steps.crowdin-download.outputs.pull_request_url }} --json id -q .id)
-          echo "PULL_REQUEST_ID=$pr_id" >> "$GITHUB_ENV"
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
+          PR_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
+        run: |
+          pr_id=$(gh pr view "$PR_URL" --json id -q .id)
+          echo "PULL_REQUEST_ID=$pr_id" >> "$GITHUB_ENV"
 
       - name: Get project board ID
         uses: octokit/graphql-action@8ad880e4d437783ea2ab17010324de1075228110
@@ -139,8 +140,11 @@ jobs:
         # Only approve if:
         # - the PR does not modify files other than json files under the public/locales/ directory
         # - the PR does not modify the en-US locale
+        env:
+          GITHUB_TOKEN: ${{ steps.generate_approver_token.outputs.token }}
+          PR_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
         run: |
-          filesChanged=$(gh pr diff --name-only ${{ steps.crowdin-download.outputs.pull_request_url }})
+          filesChanged=$(gh pr diff --name-only "$PR_URL")
 
           if [[ $(echo $filesChanged | grep -v 'public/locales/[a-zA-Z\-]*/grafana.json' | wc -l) -ne 0 ]]; then
             echo "Non-i18n changes detected, not approving"
@@ -153,7 +157,5 @@ jobs:
           fi
 
           echo "Approving and enabling automerge"
-          gh pr review ${{ steps.crowdin-download.outputs.pull_request_url }} --approve
-          gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
-        env:
-          GITHUB_TOKEN: ${{ steps.generate_approver_token.outputs.token }}
+          gh pr review "$PR_URL" --approve
+          gh pr merge --auto --squash "$PR_URL"
