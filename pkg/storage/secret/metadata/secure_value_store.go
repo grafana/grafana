@@ -386,27 +386,22 @@ func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.N
 	defer func() { _ = res.Close() }()
 
 	var secureValue secureValueDB
-	found := false
-	if res.Next() {
-		found = true
-		err := res.Scan(&secureValue.GUID,
-			&secureValue.Name, &secureValue.Namespace, &secureValue.Annotations,
-			&secureValue.Labels,
-			&secureValue.Created, &secureValue.CreatedBy,
-			&secureValue.Updated, &secureValue.UpdatedBy,
-			&secureValue.Phase, &secureValue.Message,
-			&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID)
-		if err != nil {
-			return secureValueDB{}, fmt.Errorf("failed to scan secure value row: %w", err)
-		}
+	if !res.Next() {
+		return secureValueDB{}, contracts.ErrSecureValueNotFound
+	}
+
+	if err := res.Scan(
+		&secureValue.GUID, &secureValue.Name, &secureValue.Namespace,
+		&secureValue.Annotations, &secureValue.Labels,
+		&secureValue.Created, &secureValue.CreatedBy,
+		&secureValue.Updated, &secureValue.UpdatedBy,
+		&secureValue.Phase, &secureValue.Message,
+		&secureValue.Description, &secureValue.Keeper, &secureValue.Decrypters, &secureValue.Ref, &secureValue.ExternalID); err != nil {
+		return secureValueDB{}, fmt.Errorf("failed to scan secure value row: %w", err)
 	}
 
 	if err := res.Err(); err != nil {
 		return secureValueDB{}, fmt.Errorf("read rows error: %w", err)
-	}
-
-	if !found {
-		return secureValueDB{}, contracts.ErrSecureValueNotFound
 	}
 	return secureValue, nil
 }
