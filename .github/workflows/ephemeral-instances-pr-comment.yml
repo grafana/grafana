@@ -4,6 +4,9 @@ on:
     types: [created]
   pull_request:
     types: [closed]
+
+permissions: {}
+  
 jobs:
   config:
     runs-on: "ubuntu-latest"
@@ -43,6 +46,7 @@ jobs:
       - name: Checkout ephemeral instances repository
         uses: actions/checkout@v4
         with:
+          persist-credentials: false
           repository: grafana/ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}
           ref: main
