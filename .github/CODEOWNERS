@@ -824,13 +824,15 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/go-lint.yml @grafana/grafana-backend-services-squad
 /.github/workflows/trivy-scan.yml @grafana/grafana-backend-services-squad
 /.github/workflows/changelog.yml @zserge
-/.github/workflows/actions/changelog @zserge
+/.github/actions/changelog @zserge
 /.github/workflows/pr-frontend-unit-tests.yml @grafana/grafana-frontend-platform
 /.github/workflows/frontend-lint.yml @grafana/grafana-frontend-platform
 /.github/workflows/analytics-events-report.yml @grafana/grafana-frontend-platform
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/run-e2e-suite.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/skye-add-to-project.yml @grafana/grafana-frontend-platform
+/.github/workflows/zizmor.yml @grafana/grafana-developer-enablement-squad
+/.github/zizmor.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
 /packages/grafana-data/src/types/featureToggles.gen.ts @grafanabot
