@@ -600,6 +600,12 @@
     "bulk-actions": {
       "delete": {
         "success": "Rules successfully deleted from folder"
+      },
+      "pause": {
+        "success": "Rules successfully paused for this folder"
+      },
+      "unpause": {
+        "success": "Rules successfully unpaused for this folder"
       }
     },
     "central-alert-history": {
