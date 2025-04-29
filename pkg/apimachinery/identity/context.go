@@ -110,6 +110,7 @@ var serviceIdentityPermissions = getWildcardPermissions(
 	"dashboards:read",
 	"dashboards:write",
 	"dashboards:create",
+	"query.grafana.app/query:create",
 	"datasources:query",
 	"datasources:read",
 	"datasources:delete",
