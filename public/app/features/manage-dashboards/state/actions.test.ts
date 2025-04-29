@@ -2,8 +2,9 @@ import { thunkTester } from 'test/core/thunk/thunkTester';
 
 import { DataSourceInstanceSettings, ThresholdsMode } from '@grafana/data';
 import { defaultDashboard, FieldColorModeId } from '@grafana/schema';
-import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/types.gen';
 import {
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
   defaultPanelSpec,
   defaultQueryVariableSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
