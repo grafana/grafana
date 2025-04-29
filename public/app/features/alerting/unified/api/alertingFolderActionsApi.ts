@@ -6,33 +6,46 @@ import { rulerUrlBuilder } from './ruler';
 
 export const alertingFolderActionsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
-    pauseFolder: build.mutation<
-      void,
-      {
-        folderUID: string;
-      }
-    >({
-      query: ({ folderUID }) => ({
-        url: `/api/???`,
-        method: 'POST',
-        body: {
-          folderUID,
-        },
-      }),
+    pauseFolder: build.mutation<void, WithNotificationOptions<{ namespace: string }>>({
+      query: ({ namespace, notificationOptions }) => {
+        const successMessage = t('alerting.bulk-actions.pause.success', 'Rules successfully paused for this folder');
+        const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespace(namespace);
+
+        return {
+          url: path,
+          params,
+          body: {
+            is_paused: true,
+          },
+          method: 'PATCH',
+          notificationOptions: {
+            successMessage,
+            ...notificationOptions,
+          },
+        };
+      },
     }),
-    unpauseFolder: build.mutation<
-      void,
-      {
-        folderUID: string;
-      }
-    >({
-      query: ({ folderUID }) => ({
-        url: `/api/???`,
-        method: 'POST',
-        body: {
-          folderUID,
-        },
-      }),
+    unpauseFolder: build.mutation<void, WithNotificationOptions<{ namespace: string }>>({
+      query: ({ namespace, notificationOptions }) => {
+        const successMessage = t(
+          'alerting.bulk-actions.unpause.success',
+          'Rules successfully unpaused for this folder'
+        );
+        const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespace(namespace);
+
+        return {
+          url: path,
+          params,
+          body: {
+            is_paused: false,
+          },
+          method: 'PATCH',
+          notificationOptions: {
+            successMessage,
+            ...notificationOptions,
+          },
+        };
+      },
     }),
     deleteGrafanaRulesFromFolder: build.mutation<void, WithNotificationOptions<{ namespace: string }>>({
       query: ({ namespace, notificationOptions }) => {

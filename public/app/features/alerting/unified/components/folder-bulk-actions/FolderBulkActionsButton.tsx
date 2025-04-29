@@ -43,8 +43,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
             folderUID={folderUID}
             action="pause"
             executeAction={async (folderUID) => {
-              await pauseFolder({ folderUID }).unwrap();
-              redirectToListView();
+              await pauseFolder({ namespace: folderUID }).unwrap();
             }}
             isLoading={updateState.isLoading}
           />
@@ -52,8 +51,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
             folderUID={folderUID}
             action="unpause"
             executeAction={async (folderUID) => {
-              await unpauseFolder({ folderUID }).unwrap();
-              redirectToListView();
+              await unpauseFolder({ namespace: folderUID }).unwrap();
             }}
             isLoading={unpauseState.isLoading}
           />
