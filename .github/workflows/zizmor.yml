@@ -1,0 +1,23 @@
+name: Zizmor GitHub Actions static analysis
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  zizmor:
+    name: Analyse with Zizmor
+
+    permissions:
+      actions: read
+      contents: read
+      # required to comment on pull requests with the results of the check
+      pull-requests: write
+      # required to upload the results to GitHub's code scanning service
+      security-events: write
+
+    uses: grafana/shared-workflows/.github/workflows/reusable-zizmor.yml@main  # zizmor: ignore[unpinned-uses]
+    with:
+      fail-severity: high
+      min-severity: high
