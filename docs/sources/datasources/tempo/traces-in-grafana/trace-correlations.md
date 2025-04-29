@@ -28,15 +28,17 @@ Trace correlations let you define rules that inject context-sensitive links into
 
 ## Before you begin
 
+To use trace correlations, you need: 
+
 - Grafana 12 or later
-- A Tempo tracing data source configured in Grafana
+- A [Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/) configured in Grafana
 - Admin access to configuration settings or provisioning files in Grafana
 
 ## Set up a trace correlation
 
 1. Log in to Grafana with an admin account.
 
-1. Go to **Configuration** → **Plugins & data** → **Correlations**.
+1. Go to **Configuration** > **Plugins & data** > **Correlations**.
 
 1. Select **Add correlation** or **Add new**.
 
@@ -44,11 +46,11 @@ Trace correlations let you define rules that inject context-sensitive links into
 
 1. On step 2, configure the correlation **target**.
 
-   - Select the target type: **query** to link to another data source, or **external** for a custom URL.
+   - Select the **Type** drop-down list and choose **Query** to link to another data source or choose **External** for a custom URL.
 
-   - For a query target, select the **target data source** and define the target query.
+   - For a query **Target**, select the target drop-down list and select the data source that should be queried when the link is clicked. Define the target query.
 
-   - For an external target, enter the **external URL**.
+   - For an external **Target**, enter the **External URL**.
 
    - For both query and external targets, you can use the following variables based on trace data. Object variables must be parsed into a value variable with a regular expression transformation.
 
@@ -65,13 +67,13 @@ Trace correlations let you define rules that inject context-sensitive links into
 
    {{< figure src="/media/docs/tempo/screenshot-grafana-trace-correlations-loki-step-2.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki target using trace variables" >}}
 
-1. On step 3, configure the correlation **data source**:
+1. On step 3, configure the correlation data source:
 
-   - Select your Tempo data source as **source**.
+   - Select your Tempo data source in the **Source** drop-down list.
 
-   - Enter the trace data variable you use for the correlation in the **Result field**.
+   - Enter the trace data variable you use for the correlation in the **Results field**.
 
-   - Optionally, add one or more **transformations** to parse the trace data into additional variables. You can use these variables to configure the correlation **target**.
+   - Optionally, add one or more **Transformations** to parse the trace data into additional variables. You can use these variables to configure the correlation **Target**.
 
    {{< figure src="/media/docs/tempo/screenshot-grafana-trace-correlations-loki-step-3.png" max-width="900px" class="docs-image--no-shadow" alt="Setting up a correlation for a Loki data source" >}}
 
@@ -83,7 +85,7 @@ Trace correlations let you define rules that inject context-sensitive links into
 
 1. Run a query to load spans.
 
-1. Hover over a the span links menu or open the span details to reveal the correlation link buttons.
+1. Hover over the span links menu or open the span details to reveal the correlation link buttons.
 
    {{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
 
@@ -93,7 +95,9 @@ Trace correlations let you define rules that inject context-sensitive links into
 
 Below are several practical correlation configurations to get you started.
 
-### 1. Trace to logs by service name and trace identifier
+### Example 1: Trace to logs by service name and trace identifier
+
+In this example, you configure trace to logs by service name and a trace identifier. 
 
 1. On step 1, add a new correlation with the label **Logs for this service and trace** and an optional description.
 
@@ -127,7 +131,10 @@ Below are several practical correlation configurations to get you started.
 
 1. Save the correlation.
 
-### 2. Trace to custom URL
+### Example 2: Trace to custom URL
+
+In this example, you configure trace corrections with a custom URL. 
+
 
 1. On step 1, add a new correlation with the label **Open custom URL** and an optional description.
 
@@ -157,7 +164,7 @@ Below are several practical correlation configurations to get you started.
 
 ## Best practices
 
-- **Name clearly:** Use descriptive names indicating source and target (e.g., **Trace to errors in logs**).
+- **Name clearly:** Use descriptive names indicating source and target. For example:  **Trace to errors in logs**.
 
 - **Limit scope**: For high-cardinality fields (like `traceID`), ensure your target system can handle frequent queries.
 
