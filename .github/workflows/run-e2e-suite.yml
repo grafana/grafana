@@ -25,10 +25,15 @@ jobs:
         with:
           verb: run
           args: go run ./pkg/build/e2e --package=grafana.tar.gz --suite=${{ inputs.suite }}
-      - run: echo "suite=$(echo ${{ inputs.suite }} | sed 's/\//-/g')" >> $GITHUB_ENV
+      - name: Set suite name
+        id: set-suite-name
+        env:
+          SUITE: ${{ inputs.suite }}
+        run: |
+          echo "suite=$(echo $SUITE | sed 's/\//-/g')" >> $GITHUB_OUTPUT
       - uses: actions/upload-artifact@v4
         if: ${{ always() && inputs.old-arch != true }}
         with:
-          name: e2e-${{ env.suite }}-${{github.run_number}}
+          name: e2e-${{ steps.set-suite-name.outputs.suite }}-${{github.run_number}}
           path: videos
           retention-days: 1
