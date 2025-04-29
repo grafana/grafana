@@ -1,13 +1,9 @@
 name: Zizmor GitHub Actions static analysis
 on:
   pull_request:
-    paths:
-      - ".github/**"
   push:
     branches:
       - main
-    paths:
-      - ".github/**"
 
 jobs:
   zizmor:

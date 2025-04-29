@@ -6,17 +6,20 @@ on:
       - main
       - release-*.*.*
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   lint-frontend-verify-i18n:
     name: Verify i18n
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -34,14 +37,17 @@ jobs:
             exit 1
         fi
   lint-frontend-prettier:
+    permissions:
+      contents: read
+      id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-prettier-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -50,13 +56,16 @@ jobs:
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-prettier-enterprise:
+    permissions:
+      contents: read
+      id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Lint
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -69,14 +78,17 @@ jobs:
     - run: yarn run prettier:check
     - run: yarn run lint
   lint-frontend-typecheck:
+    permissions:
+      contents: read
+      id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `lint-frontend-typecheck-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -84,13 +96,16 @@ jobs:
     - run: yarn install --immutable --check-cache
     - run: yarn run typecheck
   lint-frontend-typecheck-enterprise:
+    permissions:
+      contents: read
+      id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Typecheck
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -102,11 +117,14 @@ jobs:
     - run: yarn install --immutable --check-cache
     - run: yarn run typecheck
   lint-frontend-betterer:
+    permissions:
+      contents: read
+      id-token: write
     name: Betterer
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'

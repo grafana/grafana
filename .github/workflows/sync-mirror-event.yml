@@ -10,10 +10,21 @@ on:
       - "v*.*.*"
       - "release-*"
 
+permissions: {}
+
 # This is run after the pull request has been merged, so we'll run against the target branch
 jobs:
   dispatch-job:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
+    env:
+      REF_NAME: ${{ github.ref_name }}
+      REPO: ${{ github.repository }}
+      SENDER: ${{ github.event.sender.login }}
+      SHA: ${{ github.sha }}
+      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - name: "Generate token"
         id: generate_token
@@ -28,16 +39,18 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
+            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA} = process.env;
+
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'security-patch-actions',
                 workflow_id: 'mirror-branch-and-apply-patches-event.yml',
                 ref: 'main',
                 inputs: {
-                  src_ref: "${{ github.ref_name }}",
-                  src_repo: "${{ github.repository }}",
-                  src_sha: "${{ github.sha }}",
-                  dest_repo: "${{ github.repository }}-security-mirror",
-                  patch_repo: "${{ github.repository }}-security-patches"
+                  src_ref: REF_NAME,
+                  src_repo: REPO,
+                  src_sha: SHA,
+                  dest_repo: REPO + "-security-mirror",
+                  patch_repo: REPO + "-security-patches"
                 }
             })

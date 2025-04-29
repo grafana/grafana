@@ -18,13 +18,15 @@ jobs:
     if: github.event.pull_request.draft == false
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Pin Go version to mod file
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@111f3307d8850f501ac008e886eec1fd1932a34
         with:
           go-version-file: 'go.mod'
       - run: go version
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         with:
           node-version: 20
           cache: 'yarn'
@@ -33,7 +35,7 @@ jobs:
       - name: Build grafana
         run: make build
       - name: Install Cypress dependencies
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           runTests: false
       - name: Run dashboard scenes e2e

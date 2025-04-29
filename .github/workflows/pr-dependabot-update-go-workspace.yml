@@ -22,7 +22,7 @@ jobs:
     steps:
     - name: Retrieve GitHub App secrets
       id: get-secrets
-      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1
+      uses: grafana/shared-workflows/actions/get-vault-secrets@get-vault-secrets-v1.0.1 # zizmor: ignore[unpinned-uses]
       with:
         repo_secrets: |
           APP_ID=grafana-go-workspace-bot:app-id
@@ -37,14 +37,15 @@ jobs:
         private-key: ${{ env.PRIVATE_KEY }}
 
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       with:
         repository: ${{ github.event.pull_request.head.repo.full_name }}
         ref: ${{ github.event.pull_request.head.ref }}
         token: ${{ steps.generate_token.outputs.token }}
+        persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
       with:
         go-version-file: go.mod
 

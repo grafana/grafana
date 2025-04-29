@@ -11,33 +11,37 @@ on:
       dry_run:
         default: false
         required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
-  main:
+  bump-version:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Grafana
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Update package.json versions
         uses: ./pkg/build/actions/bump-version
         with:
           version: ${{ inputs.version }}
       - if: ${{ inputs.push }}
-        name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-      - if: ${{ inputs.push }}
         name: Push & Create PR
+        env:
+          VERSION: ${{ inputs.version }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_ID: ${{ github.run_id }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --local user.name "github-actions[bot]"
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local --add --bool push.autoSetupRemote true
-          git checkout -b "bump-version/${{ github.run_id }}/${{ inputs.version }}"
+          git checkout -b "bump-version/${RUN_ID}/${VERSION}"
           git add .
-          git commit -m "bump version ${{ inputs.version }}"
+          git commit -m "bump version ${VERSION}"
           git push
-          gh pr create --dry-run=${{ inputs.dry_run }} -l "type/ci" -l "no-changelog" -B "${{ github.ref_name }}" --title "Release: Bump version to ${{ inputs.version }}" --body "Updated version to ${{ inputs.version }}"
-        env:
-          GH_TOKEN: ${{ steps.generate_token.outputs.token }}
+          gh pr create --dry-run=$DRY_RUN -l "type/ci" -l "no-changelog" -B "$REF_NAME" --title "Release: Bump version to ${VERSION}" --body "Updated version to ${VERSION}"
