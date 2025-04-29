@@ -28,11 +28,13 @@ import { LogListModel } from './processing';
 
 export interface LogListContextData extends Omit<Props, 'logs' | 'logsMeta' | 'showControls'> {
   closeDetails: () => void;
+  detailsWidth?: number;
   downloadLogs: (format: DownloadFormat) => void;
   enableLogDetails: boolean;
   filterLevels: LogLevel[];
   hasUnescapedContent?: boolean;
   setDedupStrategy: (dedupStrategy: LogsDedupStrategy) => void;
+  setDetailsWidth: (width: number) => void;
   setDisplayedFields: (displayedFields: string[]) => void;
   setFilterLevels: (filterLevels: LogLevel[]) => void;
   setForceEscape: (forceEscape: boolean) => void;
@@ -58,6 +60,7 @@ export const LogListContext = createContext<LogListContextData>({
   filterLevels: [],
   hasUnescapedContent: false,
   setDedupStrategy: () => {},
+  setDetailsWidth: () => {},
   setDisplayedFields: () => {},
   setFilterLevels: () => {},
   setForceEscape: () => {},
@@ -371,12 +374,27 @@ export const LogListContextProvider = ({
     [enableLogDetails, showDetails]
   );
 
+  const setDetailsWidth = useCallback(
+    (width: number) => {
+      if (!logOptionsStorageKey) {
+        return;
+      }
+      store.set(`${logOptionsStorageKey}.detailsWidth`, width);
+    },
+    [logOptionsStorageKey]
+  );
+
+  const detailsWidth = logOptionsStorageKey
+    ? parseInt(store.get(`${logOptionsStorageKey}.detailsWidth`), 10)
+    : undefined;
+
   return (
     <LogListContext.Provider
       value={{
         app,
         closeDetails,
         dedupStrategy: logListState.dedupStrategy,
+        detailsWidth: Number.isInteger(detailsWidth) ? detailsWidth : undefined,
         displayedFields: logListState.displayedFields,
         downloadLogs,
         enableLogDetails,
@@ -394,6 +412,7 @@ export const LogListContextProvider = ({
         pinnedLogs: logListState.pinnedLogs,
         prettifyJSON: logListState.prettifyJSON,
         setDedupStrategy,
+        setDetailsWidth,
         setDisplayedFields,
         setFilterLevels,
         setForceEscape,
