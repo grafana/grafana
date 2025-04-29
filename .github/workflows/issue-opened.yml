@@ -10,14 +10,15 @@ on:
 concurrency:
   group: issue-opened-${{ github.event.issue.number }}
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      id-token: write
     steps:
 
       - name: Checkout Actions
@@ -26,6 +27,7 @@ jobs:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+          persist-credentials: false
 
       - name: Install Actions
         run: npm install --production --prefix ./actions
@@ -37,7 +39,7 @@ jobs:
 
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
@@ -60,13 +62,16 @@ jobs:
 
   auto-triage:
     needs: [main]
+    permissions:
+      contents: read
+      id-token: write
     if: github.repository == 'grafana/grafana' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
     runs-on: ubuntu-latest
     steps:
 
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
           repo_secrets: |
@@ -87,7 +92,7 @@ jobs:
 
       - name: Send issue to the auto triager action
         id: auto_triage
-        uses: grafana/auto-triager@main
+        uses: grafana/auto-triager@main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
