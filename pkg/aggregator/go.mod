@@ -5,8 +5,8 @@ go 1.24.2
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
 	github.com/grafana/grafana-plugin-sdk-go v0.277.0
-	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250418141452-c174c855c30c
-	github.com/grafana/grafana/pkg/semconv v0.0.0-20250418141452-c174c855c30c
+	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
+	github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
 	github.com/stretchr/testify v1.10.0
 	go.opentelemetry.io/otel v1.35.0

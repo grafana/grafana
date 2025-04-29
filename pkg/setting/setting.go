@@ -547,6 +547,11 @@ type Cfg struct {
 	IndexMaxBatchSize           int
 	IndexFileThreshold          int
 	IndexMinCount               int
+	EnableSharding              bool
+	MemberlistBindAddr          string
+	MemberlistAdvertiseAddr     string
+	MemberlistJoinMember        string
+	InstanceID                  string
 	SprinklesApiServer          string
 	SprinklesApiServerPageLimit int
 	CACertPath                  string
@@ -556,6 +561,7 @@ type Cfg struct {
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	DualWriterMigrationDataSyncDisabled  bool
 	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
 	DataSyncerInterval time.Duration
 	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.

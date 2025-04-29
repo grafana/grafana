@@ -73,7 +73,7 @@ describe('PromQueryBuilder', () => {
 
   it('renders all the query sections', async () => {
     setup(bugQuery);
-    expect(screen.getByText('random_metric')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('random_metric')).toBeInTheDocument();
     expect(screen.getByText('localhost:9090')).toBeInTheDocument();
     expect(screen.getByText('Rate')).toBeInTheDocument();
     const sumBys = screen.getAllByTestId('operations.1.wrapper');
@@ -167,8 +167,16 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_bucket'));
-    await waitFor(() => expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument());
+
+    // We need to trigger the option selection to show the hint
+    // Just press Enter to select the current option (which should be our metric)
+    const input = screen.getByTestId('data-testid metric select');
+    await userEvent.type(input, '{enter}');
+
+    // Now check for the hint
+    await waitFor(() => {
+      expect(screen.getByText('hint: add histogram_quantile')).toBeInTheDocument();
+    });
   });
 
   it('shows hints for counter metrics', async () => {
@@ -178,7 +186,13 @@ describe('PromQueryBuilder', () => {
       operations: [],
     });
     await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_sum'));
+
+    // We need to trigger the option selection to show the hint
+    // Just press Enter to select the current option (which should be our metric)
+    const input = screen.getByTestId('data-testid metric select');
+    await userEvent.type(input, '{enter}');
+
+    // Now check for the hint
     await waitFor(() => expect(screen.getByText('hint: add rate')).toBeInTheDocument());
   });
 
@@ -200,7 +214,13 @@ describe('PromQueryBuilder', () => {
       data
     );
     await openMetricSelect(container);
-    await userEvent.click(screen.getByText('histogram_metric_sum'));
+
+    // We need to trigger the option selection to show the hint
+    // Just press Enter to select the current option (which should be our metric)
+    const input = screen.getByTestId('data-testid metric select');
+    await userEvent.type(input, '{enter}');
+
+    // Now check for the hints - should be multiple in this case
     await waitFor(() => expect(screen.getAllByText(/hint:/)).toHaveLength(2));
   });
 
@@ -354,9 +374,12 @@ function setup(
 }
 
 async function openMetricSelect(container: HTMLElement) {
-  const select = container.querySelector('#prometheus-metric-select');
+  const select = container.querySelector('[data-testid="data-testid metric select"]');
   if (select) {
     await userEvent.click(select);
+    // Also focus to ensure callbacks are triggered
+    await userEvent.type(select, ' ');
+    await userEvent.clear(select);
   }
 }
 

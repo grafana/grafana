@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -44,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"golang.org/x/exp/slices"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -1119,6 +1119,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 			},
 			"spec": map[string]any{},
 		}}
+		fakeStore.On("UnprovisionDashboard", mock.Anything, int64(1)).Return(nil).Once()
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
 			"apiVersion": dashboardv0.APIVERSION,
@@ -1169,6 +1170,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		err := service.UnprovisionDashboard(ctx, 1)
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
+		fakeStore.AssertExpectations(t)
 	})
 }
 
@@ -1288,8 +1290,9 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 						UID: "general",
 					},
 				},
-				ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
-				log: log.NewNopLogger(),
+				ac:        actest.FakeAccessControl{ExpectedEvaluate: true},
+				acService: &actest.FakeService{},
+				log:       log.NewNopLogger(),
 			}
 
 			cmd := &folder.CreateFolderCommand{
@@ -2497,6 +2500,7 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
+					acService:                 &actest.FakeService{},
 				}
 				service.RegisterDashboardPermissions(permService)
 

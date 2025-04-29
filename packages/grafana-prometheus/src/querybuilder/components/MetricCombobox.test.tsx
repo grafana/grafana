@@ -134,6 +134,24 @@ describe('MetricCombobox', () => {
     expect(screen.queryByRole('button', { name: /open metrics explorer/i })).toBeInTheDocument();
   });
 
+  it('displays the default metric value from query prop', () => {
+    // Render with a query that has a default metric value
+    render(
+      <MetricCombobox
+        {...defaultProps}
+        query={{
+          metric: 'default_metric_value',
+          labels: [],
+          operations: [],
+        }}
+      />
+    );
+
+    // The Combobox should display the default metric value
+    const combobox = screen.getByPlaceholderText('Select metric');
+    expect(combobox).toHaveValue('default_metric_value');
+  });
+
   it('opens the metrics explorer when the button is clicked', async () => {
     render(<MetricCombobox {...defaultProps} onGetMetrics={() => Promise.resolve([])} />);
 

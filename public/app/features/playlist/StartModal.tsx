@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { Playlist } from '../../api/clients/playlist';
 
@@ -110,7 +110,9 @@ export const StartModal = ({ playlist, onDismiss }: Props) => {
       </FieldSet>
       <Modal.ButtonRow>
         <Button variant="primary" onClick={onStart}>
-          Start {playlist.spec.title}
+          <Trans i18nKey="playlist.start-modal.button-start" values={{ title: playlist.spec.title }}>
+            Start {'{{title}}'}
+          </Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

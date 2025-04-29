@@ -39,10 +39,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -133,10 +130,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -227,10 +221,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -321,10 +312,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -415,10 +403,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -509,10 +494,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -603,10 +585,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -698,10 +677,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -793,10 +769,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -887,10 +860,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -977,10 +947,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1067,10 +1034,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "description": "",
       "fieldConfig": {
         "defaults": {
@@ -1158,10 +1122,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -1250,10 +1211,7 @@
       "type": "timeseries"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {

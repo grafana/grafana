@@ -15,6 +15,7 @@ import {
   GridLayoutKind,
   PanelSpec,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import { AnnoKeyDashboardSnapshotOriginalUrl } from 'app/features/apiserver/types';
 import { SaveDashboardAsOptions } from 'app/features/dashboard/components/SaveDashboard/types';
 import { DASHBOARD_SCHEMA_VERSION } from 'app/features/dashboard/state/DashboardMigrator';
@@ -715,7 +716,22 @@ describe('DashboardSceneSerializer', () => {
           title: baseOptions.title,
           description: baseOptions.description,
           editable: true,
-          annotations: [],
+          annotations: [
+            {
+              kind: 'AnnotationQuery',
+              spec: {
+                builtIn: true,
+                name: 'Annotations & Alerts',
+                datasource: {
+                  uid: '-- Grafana --',
+                  type: 'grafana',
+                },
+                enable: true,
+                hide: true,
+                iconColor: DEFAULT_ANNOTATION_COLOR,
+              },
+            },
+          ],
           cursorSync: 'Off',
           liveNow: false,
           preload: false,

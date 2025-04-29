@@ -12,6 +12,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
@@ -21,7 +22,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	internal "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard"
 	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	dashv2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	"github.com/grafana/grafana/apps/dashboard/pkg/migration/conversion"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
@@ -71,6 +72,7 @@ type DashboardsAPIBuilder struct {
 	features         featuremgmt.FeatureToggles
 
 	accessControl                accesscontrol.AccessControl
+	accessClient                 claims.AccessClient
 	legacy                       *DashboardStorage
 	unified                      resource.ResourceClient
 	dashboardProvisioningService dashboards.DashboardProvisioningService
@@ -97,6 +99,7 @@ func RegisterAPIService(
 	provisioningDashboardService dashboards.DashboardProvisioningService,
 	dashboardPermissions dashboards.PermissionsRegistrationService,
 	accessControl accesscontrol.AccessControl,
+	accessClient claims.AccessClient,
 	provisioning provisioning.ProvisioningService,
 	dashStore dashboards.Store,
 	reg prometheus.Registerer,
@@ -121,6 +124,7 @@ func RegisterAPIService(
 		dashboardPermissions:         dashboardPermissions,
 		features:                     features,
 		accessControl:                accessControl,
+		accessClient:                 accessClient,
 		unified:                      unified,
 		dashboardProvisioningService: provisioningDashboardService,
 		search:                       NewSearchHandler(tracing, dual, legacyDashboardSearcher, unified, features),
@@ -328,7 +332,16 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 	}
 
 	// Validate folder existence if specified and changed
-	if !a.IsDryRun() && newAccessor.GetFolder() != "" && newAccessor.GetFolder() != oldAccessor.GetFolder() {
+	if !a.IsDryRun() && newAccessor.GetFolder() != oldAccessor.GetFolder() {
+		id, err := identity.GetRequester(ctx)
+		if err != nil {
+			return fmt.Errorf("error getting requester: %w", err)
+		}
+
+		if err := b.verifyFolderAccessPermissions(ctx, id, newAccessor.GetFolder()); err != nil {
+			return err
+		}
+
 		if err := b.validateFolderExists(ctx, newAccessor.GetFolder(), nsInfo.OrgID); err != nil {
 			return apierrors.NewNotFound(folders.FolderResourceInfo.GroupResource(), newAccessor.GetFolder())
 		}
@@ -472,7 +485,7 @@ func (b *DashboardsAPIBuilder) storageForVersion(
 	storage := map[string]rest.Storage{}
 	apiGroupInfo.VersionedResourcesStorageMap[dashboards.GroupVersion().Version] = storage
 
-	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg, b.dashboardPermissions)
+	legacyStore, err := b.legacy.NewStore(dashboards, opts.Scheme, opts.OptsGetter, b.reg, b.dashboardPermissions, b.accessClient)
 	if err != nil {
 		return err
 	}
@@ -534,4 +547,25 @@ func (b *DashboardsAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.API
 
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.search.GetAPIRoutes(defs)
+}
+
+func (b *DashboardsAPIBuilder) GetAuthorizer() authorizer.Authorizer {
+	return GetAuthorizer(b.accessControl, b.log)
+}
+
+func (b *DashboardsAPIBuilder) verifyFolderAccessPermissions(ctx context.Context, user identity.Requester, folderIds ...string) error {
+	scopes := []string{}
+	for _, folderId := range folderIds {
+		scopes = append(scopes, dashboards.ScopeFoldersProvider.GetResourceScopeUID(folderId))
+	}
+	ok, err := b.accessControl.Evaluate(ctx, user, accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, scopes...))
+	if err != nil {
+		return err
+	}
+
+	if !ok {
+		return dashboards.ErrFolderAccessDenied
+	}
+
+	return nil
 }

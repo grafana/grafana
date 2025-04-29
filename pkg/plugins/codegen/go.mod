@@ -9,7 +9,7 @@ require (
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d
 	github.com/grafana/cog v0.0.28
 	github.com/grafana/cuetsy v0.1.11
-	github.com/grafana/grafana/pkg/codegen v0.0.0-20250418141452-c174c855c30c
+	github.com/grafana/grafana/pkg/codegen v0.0.0-20250422074709-7c8433fbb2c2
 )
 
 require (
