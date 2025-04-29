@@ -31,12 +31,12 @@ export function getConstantVariableOptions(variable: SceneVariable): OptionsPane
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard-scene.constant-variable-form.label-value', 'Value'),
-      render: () => <ConstantFieldPlaceholder variable={variable} />,
+      render: () => <ConstantValueInput variable={variable} />,
     }),
   ];
 }
 
-function ConstantFieldPlaceholder({ variable }: { variable: ConstantVariable }) {
+function ConstantValueInput({ variable }: { variable: ConstantVariable }) {
   const { value } = variable.useState();
 
   const onBlur = async (event: FormEvent<HTMLInputElement>) => {
