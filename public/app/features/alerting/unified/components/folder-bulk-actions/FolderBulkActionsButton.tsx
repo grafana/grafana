@@ -32,7 +32,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
 
   const onConfirmDelete = async () => {
     await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
-    locationService.replace(createRelativeUrl('/alerting/list', { view: 'list' }, { skipSubPath: true }));
+    redirectToListView();
   };
 
   const menuItems = (
@@ -44,6 +44,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
             action="pause"
             executeAction={async (folderUID) => {
               await pauseFolder({ folderUID }).unwrap();
+              redirectToListView();
             }}
             isLoading={updateState.isLoading}
           />
@@ -52,6 +53,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
             action="unpause"
             executeAction={async (folderUID) => {
               await unpauseFolder({ folderUID }).unwrap();
+              redirectToListView();
             }}
             isLoading={unpauseState.isLoading}
           />
@@ -81,3 +83,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
     </>
   );
 };
+
+function redirectToListView() {
+  locationService.replace(createRelativeUrl('/alerting/list', { view: 'list' }, { skipSubPath: true }));
+}
