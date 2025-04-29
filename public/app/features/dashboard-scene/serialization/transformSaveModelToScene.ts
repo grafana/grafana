@@ -19,6 +19,7 @@ import {
   UserActionEvent,
   SceneInteractionProfileEvent,
   SceneObjectState,
+  SceneTimeRangeCompare,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -332,6 +333,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
+    headerActions: [new SceneTimeRangeCompare({ key: 'bottom' })],
   };
 
   if (panel.libraryPanel) {
