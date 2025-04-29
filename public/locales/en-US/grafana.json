@@ -408,11 +408,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "Delete",
         "edit-yaml": "Edit YAML",
-        "save-exit": "Save rule and exit"
-      },
-      "title-delete-rule": "Delete rule"
+        "save": "Save"
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -906,12 +904,18 @@
       "text-loading-template": "Loading template...",
       "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
     },
+    "editor": {
+      "edit-alert-rule": "Edit alert rule",
+      "edit-recording-rule": "Edit recording rule",
+      "new-alert-rule": "New alert rule",
+      "new-recording-rule": "New recording rule"
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
     },
     "evaluation-behavior-summary": {
-      "evaluate": "Every {{every}}",
+      "evaluate": "Every {{interval}}",
       "label-evaluate": "Evaluate",
       "label-evaluation-time": "Evaluation time",
       "label-last-evaluation": "Last evaluation",
@@ -940,7 +944,6 @@
     "existing-rule-editor": {
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
       "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
-      "text-loading-rule": "Loading rule...",
       "title-cannot-edit-rule": "Cannot edit rule",
       "title-failed-to-load-rule": "Failed to load rule",
       "title-rule-not-found": "Rule not found"
