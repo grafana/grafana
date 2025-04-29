@@ -461,4 +461,50 @@ describe('GroupBy transformer', () => {
       expect(result[0].fields).toEqual(expected);
     });
   });
+
+  it('should match on base name if did not match on displayName', async () => {
+    const testSeries = toDataFrame({
+      name: 'A',
+      fields: [
+        { name: 'message', type: FieldType.string, values: ['A', 'A'], config: { displayName: 'MyMessage' } },
+        { name: 'values', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    const cfg: DataTransformerConfig<GroupByTransformerOptions> = {
+      id: DataTransformerID.groupBy,
+      options: {
+        fields: {
+          message: {
+            operation: GroupByOperationID.groupBy,
+            aggregations: [],
+          },
+          values: {
+            operation: GroupByOperationID.aggregate,
+            aggregations: [ReducerID.sum],
+          },
+        },
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [testSeries])).toEmitValuesWith((received) => {
+      const result = received[0];
+      const expected: Field[] = [
+        {
+          name: 'message',
+          type: FieldType.string,
+          values: ['A'],
+          config: { displayName: 'MyMessage' },
+        },
+        {
+          name: 'values (sum)',
+          type: FieldType.number,
+          values: [3],
+          config: {},
+        },
+      ];
+
+      expect(result[0].fields).toEqual(expected);
+    });
+  });
 });
