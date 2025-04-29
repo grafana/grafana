@@ -18,20 +18,7 @@ func NewAlertmanagerIntegration() *AlertmanagerIntegration {
 
 // A string that contain sensitive information.
 // +k8s:openapi-gen=true
-type Secret interface{}
-
-// +k8s:openapi-gen=true
-type SecretString string
-
-// +k8s:openapi-gen=true
-type RedactedSecret struct {
-	Specified bool `json:"specified"`
-}
-
-// NewRedactedSecret creates a new RedactedSecret object.
-func NewRedactedSecret() *RedactedSecret {
-	return &RedactedSecret{}
-}
+type Secret string
 
 // +k8s:openapi-gen=true
 type DingdingIntegration struct {
@@ -510,7 +497,19 @@ func NewWebexIntegration() *WebexIntegration {
 
 // +k8s:openapi-gen=true
 type Spec struct {
-	Title        string                    `json:"title"`
+	Title        string                   `json:"title"`
+	Integrations V0alpha2SpecIntegrations `json:"integrations"`
+}
+
+// NewSpec creates a new Spec object.
+func NewSpec() *Spec {
+	return &Spec{
+		Integrations: *NewV0alpha2SpecIntegrations(),
+	}
+}
+
+// +k8s:openapi-gen=true
+type V0alpha2SpecIntegrations struct {
 	Alertmanager []AlertmanagerIntegration `json:"alertmanager,omitempty"`
 	Dingding     []DingdingIntegration     `json:"dingding,omitempty"`
 	Discord      []DiscordIntegration      `json:"discord,omitempty"`
@@ -536,7 +535,7 @@ type Spec struct {
 	Webex        []WebexIntegration        `json:"webex,omitempty"`
 }
 
-// NewSpec creates a new Spec object.
-func NewSpec() *Spec {
-	return &Spec{}
+// NewV0alpha2SpecIntegrations creates a new V0alpha2SpecIntegrations object.
+func NewV0alpha2SpecIntegrations() *V0alpha2SpecIntegrations {
+	return &V0alpha2SpecIntegrations{}
 }

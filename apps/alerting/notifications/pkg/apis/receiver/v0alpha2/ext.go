@@ -53,67 +53,67 @@ func (o *Receiver) SetInUse(routesCnt int, rules []string) {
 
 func (s *Spec) GetIntegrationsTypes() []string {
 	response := make([]string, 0, 5)
-	if len(s.Alertmanager) > 0 {
+	if len(s.Integrations.Alertmanager) > 0 {
 		response = append(response, "alertmanager")
 	}
-	if len(s.Discord) > 0 {
+	if len(s.Integrations.Discord) > 0 {
 		response = append(response, "discord")
 	}
-	if len(s.Email) > 0 {
+	if len(s.Integrations.Email) > 0 {
 		response = append(response, "email")
 	}
-	if len(s.Googlechat) > 0 {
+	if len(s.Integrations.Googlechat) > 0 {
 		response = append(response, "googlechat")
 	}
-	if len(s.Kafka) > 0 {
+	if len(s.Integrations.Kafka) > 0 {
 		response = append(response, "kafka")
 	}
-	if len(s.Line) > 0 {
+	if len(s.Integrations.Line) > 0 {
 		response = append(response, "line")
 	}
-	if len(s.Opsgenie) > 0 {
+	if len(s.Integrations.Opsgenie) > 0 {
 		response = append(response, "opsgenie")
 	}
-	if len(s.Pagerduty) > 0 {
+	if len(s.Integrations.Pagerduty) > 0 {
 		response = append(response, "pagerduty")
 	}
-	if len(s.Pushover) > 0 {
+	if len(s.Integrations.Pushover) > 0 {
 		response = append(response, "pushover")
 	}
-	if len(s.Sensugo) > 0 {
+	if len(s.Integrations.Sensugo) > 0 {
 		response = append(response, "sensu")
 	}
-	if len(s.Slack) > 0 {
+	if len(s.Integrations.Slack) > 0 {
 		response = append(response, "slack")
 	}
-	if len(s.Teams) > 0 {
+	if len(s.Integrations.Teams) > 0 {
 		response = append(response, "teams")
 	}
-	if len(s.Telegram) > 0 {
+	if len(s.Integrations.Telegram) > 0 {
 		response = append(response, "telegram")
 	}
-	if len(s.Threema) > 0 {
+	if len(s.Integrations.Threema) > 0 {
 		response = append(response, "threema")
 	}
-	if len(s.Victorops) > 0 {
+	if len(s.Integrations.Victorops) > 0 {
 		response = append(response, "victorops")
 	}
-	if len(s.Webhook) > 0 {
+	if len(s.Integrations.Webhook) > 0 {
 		response = append(response, "webhook")
 	}
-	if len(s.Wecom) > 0 {
+	if len(s.Integrations.Wecom) > 0 {
 		response = append(response, "wecom")
 	}
 	return response
 }
 
 func (s *Spec) IntegrationsCount() int {
-	return len(s.Alertmanager) + len(s.Dingding) + len(s.Discord) + len(s.Email) +
-		len(s.Googlechat) + len(s.Kafka) + len(s.Line) + len(s.Opsgenie) +
-		len(s.Pagerduty) + len(s.Oncall) + len(s.Pushover) + len(s.Sensugo) +
-		len(s.Sns) + len(s.Slack) + len(s.Teams) + len(s.Telegram) +
-		len(s.Threema) + len(s.Victorops) + len(s.Webhook) + len(s.Wecom) +
-		len(s.Webex) + len(s.Mqtt)
+	return len(s.Integrations.Alertmanager) + len(s.Integrations.Dingding) + len(s.Integrations.Discord) + len(s.Integrations.Email) +
+		len(s.Integrations.Googlechat) + len(s.Integrations.Kafka) + len(s.Integrations.Line) + len(s.Integrations.Opsgenie) +
+		len(s.Integrations.Pagerduty) + len(s.Integrations.Oncall) + len(s.Integrations.Pushover) + len(s.Integrations.Sensugo) +
+		len(s.Integrations.Sns) + len(s.Integrations.Slack) + len(s.Integrations.Teams) + len(s.Integrations.Telegram) +
+		len(s.Integrations.Threema) + len(s.Integrations.Victorops) + len(s.Integrations.Webhook) + len(s.Integrations.Wecom) +
+		len(s.Integrations.Webex) + len(s.Integrations.Mqtt)
 }
 
 // InUseAnnotation returns the key for the in-use annotation for the given resource.

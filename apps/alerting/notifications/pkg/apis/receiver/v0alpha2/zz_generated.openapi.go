@@ -43,6 +43,7 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TeamsIntegration":             schema_pkg_apis_receiver_v0alpha2_TeamsIntegration(ref),
 		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TelegramIntegration":          schema_pkg_apis_receiver_v0alpha2_TelegramIntegration(ref),
 		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.ThreemaIntegration":           schema_pkg_apis_receiver_v0alpha2_ThreemaIntegration(ref),
+		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.V0alpha2SpecIntegrations":     schema_pkg_apis_receiver_v0alpha2_V0alpha2SpecIntegrations(ref),
 		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.VictoropsIntegration":         schema_pkg_apis_receiver_v0alpha2_VictoropsIntegration(ref),
 		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebexIntegration":             schema_pkg_apis_receiver_v0alpha2_WebexIntegration(ref),
 		"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebhookIntegration":           schema_pkg_apis_receiver_v0alpha2_WebhookIntegration(ref),
@@ -1508,311 +1509,18 @@ func schema_pkg_apis_receiver_v0alpha2_Spec(ref common.ReferenceCallback) common
 							Format:  "",
 						},
 					},
-					"alertmanager": {
+					"integrations": {
 						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.AlertmanagerIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"dingding": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DingdingIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"discord": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DiscordIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"email": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.EmailIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"googlechat": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.GooglechatIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"jira": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.JiraIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"kafka": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.KafkaIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"line": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.LineIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"mqtt": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.MqttIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"opsgenie": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OpsgenieIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"pagerduty": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PagerdutyIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"oncall": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OnCallIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"pushover": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PushoverIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"sensugo": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SensugoIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"slack": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SlackIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"sns": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SnsIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"teams": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TeamsIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"telegram": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TelegramIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"threema": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.ThreemaIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"victorops": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.VictoropsIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"webhook": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebhookIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"wecom": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WecomIntegration"),
-									},
-								},
-							},
-						},
-					},
-					"webex": {
-						SchemaProps: spec.SchemaProps{
-							Type: []string{"array"},
-							Items: &spec.SchemaOrArray{
-								Schema: &spec.Schema{
-									SchemaProps: spec.SchemaProps{
-										Default: map[string]interface{}{},
-										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebexIntegration"),
-									},
-								},
-							},
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.V0alpha2SpecIntegrations"),
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"title", "integrations"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.AlertmanagerIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DingdingIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DiscordIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.EmailIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.GooglechatIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.JiraIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.KafkaIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.LineIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.MqttIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OnCallIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OpsgenieIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PagerdutyIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PushoverIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SensugoIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SlackIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SnsIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TeamsIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TelegramIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.ThreemaIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.VictoropsIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebexIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebhookIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WecomIntegration"},
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.V0alpha2SpecIntegrations"},
 	}
 }
 
@@ -2128,6 +1836,319 @@ func schema_pkg_apis_receiver_v0alpha2_ThreemaIntegration(ref common.ReferenceCa
 				Required: []string{"gateway_id", "recipient_id", "api_secret"},
 			},
 		},
+	}
+}
+
+func schema_pkg_apis_receiver_v0alpha2_V0alpha2SpecIntegrations(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"alertmanager": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.AlertmanagerIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"dingding": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DingdingIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"discord": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DiscordIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"email": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.EmailIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"googlechat": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.GooglechatIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"jira": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.JiraIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"kafka": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.KafkaIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"line": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.LineIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"mqtt": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.MqttIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"opsgenie": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OpsgenieIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"pagerduty": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PagerdutyIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"oncall": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OnCallIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"pushover": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PushoverIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"sensugo": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SensugoIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"slack": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SlackIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"sns": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SnsIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"teams": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TeamsIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"telegram": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TelegramIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"threema": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.ThreemaIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"victorops": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.VictoropsIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"webhook": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebhookIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"wecom": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WecomIntegration"),
+									},
+								},
+							},
+						},
+					},
+					"webex": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebexIntegration"),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.AlertmanagerIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DingdingIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.DiscordIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.EmailIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.GooglechatIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.JiraIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.KafkaIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.LineIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.MqttIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OnCallIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.OpsgenieIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PagerdutyIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.PushoverIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SensugoIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SlackIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.SnsIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TeamsIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.TelegramIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.ThreemaIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.VictoropsIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebexIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WebhookIntegration", "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2.WecomIntegration"},
 	}
 }
 

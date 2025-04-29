@@ -148,161 +148,161 @@ func convertToDomainModel(apiModel *model.Receiver) (*ngmodels.Receiver, error) 
 	integration := make([]*ngmodels.Integration, 0, apiModel.Spec.IntegrationsCount())
 
 	var errs []error
-	for _, i := range cp.Alertmanager {
+	for _, i := range cp.Integrations.Alertmanager {
 		el, err := marshallIntegration(j, "prometheus-alertmanager", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Dingding {
+	for _, i := range cp.Integrations.Dingding {
 		el, err := marshallIntegration(j, "dingding", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Discord {
+	for _, i := range cp.Integrations.Discord {
 		el, err := marshallIntegration(j, "discord", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Email {
+	for _, i := range cp.Integrations.Email {
 		el, err := marshallIntegration(j, "email", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Googlechat {
+	for _, i := range cp.Integrations.Googlechat {
 		el, err := marshallIntegration(j, "googlechat", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Jira {
+	for _, i := range cp.Integrations.Jira {
 		el, err := marshallIntegration(j, "jira", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Kafka {
+	for _, i := range cp.Integrations.Kafka {
 		el, err := marshallIntegration(j, "kafka", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Line {
+	for _, i := range cp.Integrations.Line {
 		el, err := marshallIntegration(j, "line", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Mqtt {
+	for _, i := range cp.Integrations.Mqtt {
 		el, err := marshallIntegration(j, "mqtt", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Opsgenie {
+	for _, i := range cp.Integrations.Opsgenie {
 		el, err := marshallIntegration(j, "opsgenie", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Pagerduty {
+	for _, i := range cp.Integrations.Pagerduty {
 		el, err := marshallIntegration(j, "pagerduty", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Oncall {
+	for _, i := range cp.Integrations.Oncall {
 		el, err := marshallIntegration(j, "oncall", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Pushover {
+	for _, i := range cp.Integrations.Pushover {
 		el, err := marshallIntegration(j, "pushover", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Sensugo {
+	for _, i := range cp.Integrations.Sensugo {
 		el, err := marshallIntegration(j, "sensugo", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Sns {
+	for _, i := range cp.Integrations.Sns {
 		el, err := marshallIntegration(j, "sns", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Slack {
+	for _, i := range cp.Integrations.Slack {
 		el, err := marshallIntegration(j, "slack", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Teams {
+	for _, i := range cp.Integrations.Teams {
 		el, err := marshallIntegration(j, "teams", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Telegram {
+	for _, i := range cp.Integrations.Telegram {
 		el, err := marshallIntegration(j, "telegram", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Threema {
+	for _, i := range cp.Integrations.Threema {
 		el, err := marshallIntegration(j, "threema", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Victorops {
+	for _, i := range cp.Integrations.Victorops {
 		el, err := marshallIntegration(j, "victorops", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Webhook {
+	for _, i := range cp.Integrations.Webhook {
 		el, err := marshallIntegration(j, "webhook", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Wecom {
+	for _, i := range cp.Integrations.Wecom {
 		el, err := marshallIntegration(j, "wecom", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
 		}
 		integration = append(integration, el)
 	}
-	for _, i := range cp.Webex {
+	for _, i := range cp.Integrations.Webex {
 		el, err := marshallIntegration(j, "webex", i, i.DisableResolveMessage, i.Uid, cp.Title)
 		if err != nil {
 			errs = append(errs, err)
@@ -374,117 +374,117 @@ func parseIntegration(json jsoniter.API, result *model.Spec, integration *ngmode
 	case "prometheus-alertmanager":
 		integration := model.AlertmanagerIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Alertmanager = append(result.Alertmanager, integration)
+			result.Integrations.Alertmanager = append(result.Integrations.Alertmanager, integration)
 		}
 	case "dingding":
 		integration := model.DingdingIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Dingding = append(result.Dingding, integration)
+			result.Integrations.Dingding = append(result.Integrations.Dingding, integration)
 		}
 	case "discord":
 		integration := model.DiscordIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Discord = append(result.Discord, integration)
+			result.Integrations.Discord = append(result.Integrations.Discord, integration)
 		}
 	case "email":
 		integration := model.EmailIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Email = append(result.Email, integration)
+			result.Integrations.Email = append(result.Integrations.Email, integration)
 		}
 	case "googlechat":
 		integration := model.GooglechatIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Googlechat = append(result.Googlechat, integration)
+			result.Integrations.Googlechat = append(result.Integrations.Googlechat, integration)
 		}
 	case "jira":
 		integration := model.JiraIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Jira = append(result.Jira, integration)
+			result.Integrations.Jira = append(result.Integrations.Jira, integration)
 		}
 	case "kafka":
 		integration := model.KafkaIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Kafka = append(result.Kafka, integration)
+			result.Integrations.Kafka = append(result.Integrations.Kafka, integration)
 		}
 	case "line":
 		integration := model.LineIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Line = append(result.Line, integration)
+			result.Integrations.Line = append(result.Integrations.Line, integration)
 		}
 	case "mqtt":
 		integration := model.MqttIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Mqtt = append(result.Mqtt, integration)
+			result.Integrations.Mqtt = append(result.Integrations.Mqtt, integration)
 		}
 	case "opsgenie":
 		integration := model.OpsgenieIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Opsgenie = append(result.Opsgenie, integration)
+			result.Integrations.Opsgenie = append(result.Integrations.Opsgenie, integration)
 		}
 	case "pagerduty":
 		integration := model.PagerdutyIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Pagerduty = append(result.Pagerduty, integration)
+			result.Integrations.Pagerduty = append(result.Integrations.Pagerduty, integration)
 		}
 	case "oncall":
 		integration := model.OnCallIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Oncall = append(result.Oncall, integration)
+			result.Integrations.Oncall = append(result.Integrations.Oncall, integration)
 		}
 	case "pushover":
 		integration := model.PushoverIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Pushover = append(result.Pushover, integration)
+			result.Integrations.Pushover = append(result.Integrations.Pushover, integration)
 		}
 	case "sensugo":
 		integration := model.SensugoIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Sensugo = append(result.Sensugo, integration)
+			result.Integrations.Sensugo = append(result.Integrations.Sensugo, integration)
 		}
 	case "sns":
 		integration := model.SnsIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Sns = append(result.Sns, integration)
+			result.Integrations.Sns = append(result.Integrations.Sns, integration)
 		}
 	case "slack":
 		integration := model.SlackIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Slack = append(result.Slack, integration)
+			result.Integrations.Slack = append(result.Integrations.Slack, integration)
 		}
 	case "teams":
 		integration := model.TeamsIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Teams = append(result.Teams, integration)
+			result.Integrations.Teams = append(result.Integrations.Teams, integration)
 		}
 	case "telegram":
 		integration := model.TelegramIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Telegram = append(result.Telegram, integration)
+			result.Integrations.Telegram = append(result.Integrations.Telegram, integration)
 		}
 	case "threema":
 		integration := model.ThreemaIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Threema = append(result.Threema, integration)
+			result.Integrations.Threema = append(result.Integrations.Threema, integration)
 		}
 	case "victorops":
 		integration := model.VictoropsIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Victorops = append(result.Victorops, integration)
+			result.Integrations.Victorops = append(result.Integrations.Victorops, integration)
 		}
 	case "webhook":
 		integration := model.WebhookIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Webhook = append(result.Webhook, integration)
+			result.Integrations.Webhook = append(result.Integrations.Webhook, integration)
 		}
 	case "wecom":
 		integration := model.WecomIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Wecom = append(result.Wecom, integration)
+			result.Integrations.Wecom = append(result.Integrations.Wecom, integration)
 		}
 	case "webex":
 		integration := model.WebexIntegration{DisableResolveMessage: disable, Uid: util.Pointer(integration.UID)}
 		if err = json.Unmarshal(data, &integration); err == nil {
-			result.Webex = append(result.Webex, integration)
+			result.Integrations.Webex = append(result.Integrations.Webex, integration)
 		}
 	default:
 		err = fmt.Errorf("integration %s is not supported", integration.Config.Type)
@@ -496,24 +496,6 @@ func parseIntegration(json jsoniter.API, result *model.Spec, integration *ngmode
 type contactPointsExtension struct {
 	jsoniter.DummyExtension
 	KeepSecret bool
-}
-
-// CreateEncoder creates a custom encoder for MyInterface
-func (c *contactPointsExtension) CreateEncoder(typ reflect2.Type) jsoniter.ValEncoder {
-	if typ == reflect2.TypeOfPtr((*model.Secret)(nil)).Elem() {
-		return &SecretEncoder{}
-	}
-	return nil
-}
-
-// CreateDecoder creates a custom decoder for MyInterface
-func (c *contactPointsExtension) CreateDecoder(typ reflect2.Type) jsoniter.ValDecoder {
-	if typ == reflect2.TypeOfPtr((*model.Secret)(nil)).Elem() {
-		return &SecretDecoder{
-			KeepSecret: c.KeepSecret,
-		}
-	}
-	return nil
 }
 
 func (c *contactPointsExtension) UpdateStructDescriptor(structDescriptor *jsoniter.StructDescriptor) {
@@ -630,68 +612,4 @@ func (d *numberAsStringCodec) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator
 		iter.ReportError("numberAsStringCodec", "not number or string")
 	}
 	*((*(*int64))(ptr)) = &value
-}
-
-type SecretEncoder struct{}
-
-func (encoder *SecretEncoder) IsEmpty(ptr unsafe.Pointer) bool {
-	return *(*model.Secret)(ptr) == nil
-}
-
-func (encoder *SecretEncoder) Encode(ptr unsafe.Pointer, stream *jsoniter.Stream) {
-	val := *(*model.Secret)(ptr)
-	if val == nil {
-		stream.WriteNil()
-		return
-	}
-
-	switch v := val.(type) {
-	case string:
-		// If it's a raw string, write it as-is
-		stream.WriteString(v)
-	case model.SecretString:
-		// If it's a SecretString, write it as a string
-		stream.WriteString(string(v))
-	case *model.RedactedSecret:
-		// If it's a RedactedSecret (has "specified" field), write null
-		stream.WriteNil()
-	default:
-		stream.Error = fmt.Errorf("unsupported Secret type: %T", val)
-	}
-}
-
-type SecretDecoder struct {
-	KeepSecret bool
-}
-
-func (decoder *SecretDecoder) Decode(ptr unsafe.Pointer, iter *jsoniter.Iterator) {
-	// Peek at the next token to determine the JSON type
-	switch iter.WhatIsNext() {
-	case jsoniter.StringValue:
-		// If it's a string, decode as SecretString
-		str := iter.ReadString()
-		if decoder.KeepSecret {
-			*(*model.Secret)(ptr) = model.SecretString(str)
-			return
-		}
-		*(*model.Secret)(ptr) = &model.RedactedSecret{
-			Specified: len(str) > 0,
-		}
-	// case jsoniter.NilValue:
-	// 	// If it's a string, decode as SecretString
-	// 	_ = iter.ReadNil()
-	// 	if !decoder.KeepSecret {
-	// 		// If it's an object, decode as RedactedSecret
-	// 		redacted := &model.RedactedSecret{
-	// 			Specified: len(str) > 0,
-	// 		}
-	// 		iter.ReadVal(redacted)
-	// 		if iter.Error != nil {
-	// 			return
-	// 		}
-	// 		*(*model.Secret)(ptr) = redacted
-	// 	}
-	default:
-		iter.Error = fmt.Errorf("invalid JSON type for Secret; expected string or object")
-	}
 }
