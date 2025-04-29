@@ -84,6 +84,7 @@ export class Scene {
   ignoreDataUpdate = false;
   panel: CanvasPanel;
   contextMenuVisible?: boolean;
+  openContextMenu?: (position: AnchorPoint) => void;
   contextMenuOnVisibilityChange = (visible: boolean) => {
     this.contextMenuVisible = visible;
     const transformInstance = getTransformInstance(this);

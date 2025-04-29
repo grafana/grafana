@@ -30,6 +30,17 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
   const selectedElements = scene.selecto?.getSelectedTargets();
   const rootLayer: FrameState | undefined = panel.context?.instanceState?.layer;
 
+  useEffect(() => {
+    scene.openContextMenu = (position: AnchorPoint) => {
+      setAnchorPoint(position);
+      setIsMenuVisible(true);
+      onVisibilityChange(true);
+    };
+
+    // Clean up the openContextMenu on unmount
+    return () => (scene.openContextMenu = undefined);
+  }, [scene, onVisibilityChange]);
+
   const handleContextMenu = useCallback(
     (event: Event) => {
       if (!(event instanceof MouseEvent) || event.ctrlKey) {
@@ -60,12 +71,6 @@ export const CanvasContextMenu = ({ scene, panel, onVisibilityChange }: Props) =
       });
     }
   }, [handleContextMenu, scene.selecto]);
-
-  useEffect(() => {
-    if (scene.viewportDiv) {
-      scene.viewportDiv.addEventListener('contextmenu', handleContextMenu);
-    }
-  }, [handleContextMenu, scene.viewportDiv]);
 
   const closeContextMenu = () => {
     setIsMenuVisible(false);

@@ -408,15 +408,70 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   /* infiniteViewer */
   /******************/
   scene.infiniteViewer = new InfiniteViewer(scene.viewerDiv!, scene.viewportDiv!, {
+    preventWheelClick: false,
     useAutoZoom: true,
-    // margin: 0,
-    // threshold: 0,
-    // zoom: 1,
-    // rangeX: [0, 0],
-    // rangeY: [0, 0],
+    useMouseDrag: true,
     useWheelScroll: true,
   });
 
+  // Handles context menu activation
+  // Uses openContextMenu with coordinates when available (after CanvasContextMenu mounts), but
+  // uses the basic visibility toggle when openContextMenu isn't ready (as a fallback)
+  const triggerContextMenu = (x: number, y: number) => {
+    if (scene.openContextMenu) {
+      scene.openContextMenu({ x, y });
+    } else {
+      scene.contextMenuOnVisibilityChange(true);
+    }
+  };
+
+  /* ----------------------------- EVENT HANDLERS ----------------------------- */
+  // Right click
+  scene.viewerDiv!.addEventListener('contextmenu', (e) => {
+    if (e.ctrlKey && e.button === 2) {
+      // Enable panning with Ctrl+right-click
+      e.preventDefault();
+
+      // Start tracking mouse movement for panning
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startScrollLeft = scene.infiniteViewer!.getScrollLeft();
+      const startScrollTop = scene.infiniteViewer!.getScrollTop();
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        const deltaX = startX - moveEvent.clientX;
+        const deltaY = startY - moveEvent.clientY;
+        const scaleAdjustedDeltaX = deltaX / scene.scale;
+        const scaleAdjustedDeltaY = deltaY / scene.scale;
+        scene.infiniteViewer!.scrollTo(startScrollLeft + scaleAdjustedDeltaX, startScrollTop + scaleAdjustedDeltaY);
+        moveEvent.preventDefault();
+      };
+
+      const handleMouseUp = () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    } else {
+      // Prevent default browser context menu
+      e.preventDefault();
+      triggerContextMenu(e.pageX, e.pageY);
+    }
+  });
+
+  // Mouse scroll click
+  // Only allow panning with middle mouse button (button 1)
+  // Left click is reserved for selection/manipulation, right click for context menu
+  scene.infiniteViewer!.on('dragStart', (e) => {
+    if (e.inputEvent.button !== 1) {
+      e.preventDefault();
+      e.preventDrag();
+    }
+  });
+
+  // Scroll
   scene.infiniteViewer!.on('scroll', () => {
     scene.updateConnectionsSize();
     scene.scale = scene.infiniteViewer!.getZoom();
