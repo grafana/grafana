@@ -23,9 +23,7 @@ jobs:
     env:
       REF_NAME: ${{ github.ref_name }}
       REPO: ${{ github.repository }}
-      SENDER: ${{ github.event.sender.login }}
       SHA: ${{ github.sha }}
-      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
@@ -48,7 +46,7 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA} = process.env;
+            const {REF_NAME, REPO, SHA} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
