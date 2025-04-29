@@ -17,28 +17,17 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@111f3307d8850f501ac008e886eec1fd1932a34
         with:
           go-version-file: go.mod
           cache: true
-      - name: Restore GOCACHE
-        uses: actions/cache/restore@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-sqlite
-          restore-keys: |
-            go-test-cache-${{ github.base_ref }}-sqlite
-            go-test-cache-main-sqlite
-          path: /home/runner/.cache/go-build
       - run: |
           make gen-go
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
-      - name: Save GOCACHE
-        uses: actions/cache/save@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-sqlite
-          path: /home/runner/.cache/go-build
   mysql:
     name: MySQL
     runs-on: ubuntu-latest-8-cores
@@ -58,30 +47,17 @@ jobs:
           - 3306:3306
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@111f3307d8850f501ac008e886eec1fd1932a34
         with:
           go-version-file: go.mod
           cache: true
-      - name: Restore GOCACHE
-        uses: actions/cache/restore@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-mysql
-          restore-keys: |
-            go-test-cache-${{ github.base_ref }}-mysql
-            go-test-cache-main-mysql
-          path: /home/runner/.cache/go-build
       - run: |
           sudo apt-get update -yq && sudo apt-get install mariadb-client
           cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
           make gen-go
           go test -tags=mysql -p=1 -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
-      - name: Save GOCACHE
-        uses: actions/cache/save@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-mysql
-          path: /home/runner/.cache/go-build
   postgres:
     name: Postgres
     runs-on: ubuntu-latest-8-cores
@@ -96,20 +72,12 @@ jobs:
           - 5432:5432
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@111f3307d8850f501ac008e886eec1fd1932a34
         with:
           go-version-file: go.mod
           cache: true
-      - name: Restore GOCACHE
-        uses: actions/cache/restore@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-postgres
-          restore-keys: |
-            go-test-cache-${{ github.base_ref }}-postgres
-            go-test-cache-main-postgres
-          path: /home/runner/.cache/go-build
       - env:
           GRAFANA_TEST_DB: postgres
           PGPASSWORD: grafanatest
@@ -119,8 +87,3 @@ jobs:
           psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
           make gen-go
           go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
-      - name: Save GOCACHE
-        uses: actions/cache/save@v4
-        with:
-          key: go-test-cache-${{ github.ref_name }}-postgres
-          path: /home/runner/.cache/go-build
