@@ -10,6 +10,8 @@ export const shouldUseAlertingListViewV2 = () => config.featureToggles.alertingL
 export const useGrafanaManagedRecordingRulesSupport = () =>
   config.unifiedAlerting.recordingRulesEnabled && config.featureToggles.grafanaManagedRecordingRules;
 
+export const useFolderBulkActions = () => config.featureToggles.alertingBulkActionsInUI;
+
 export const shouldAllowRecoveringDeletedRules = () =>
   (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;
 

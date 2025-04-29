@@ -3,11 +3,11 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config } from '@grafana/runtime';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
+import { useFolderBulkActions } from '../../featureToggles';
 import { useFolder } from '../../hooks/useFolder';
 import { useHasRuler } from '../../hooks/useHasRuler';
 import { useRulesAccess } from '../../utils/accessControlHooks';
@@ -19,12 +19,11 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
-import { FolderBukActionsButton } from '../folder-bulk-actions/FolderBulkActionsButton';
+import { FolderBulkActionsButton } from '../folder-bulk-actions/FolderBulkActionsButton';
 
 import { ActionIcon } from './ActionIcon';
 import { RuleGroupStats } from './RuleStats';
 import { RulesTable, useIsRulesLoading } from './RulesTable';
-
 type ViewMode = 'grouped' | 'list';
 
 interface Props {
@@ -69,7 +68,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
 
-  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
+  const isFolderBulkActionsEnabled = useFolderBulkActions();
 
   // check what view mode we are in
   const isListView = viewMode === 'list';
@@ -221,7 +220,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             </div>
           </>
         )}
-        {isFolderBulkActionsEnabled && folderUID && isListView && <FolderBukActionsButton folderUID={folderUID} />}
+        {isFolderBulkActionsEnabled && folderUID && isListView && <FolderBulkActionsButton folderUID={folderUID} />}
       </div>
       {!isCollapsed && (
         <RulesTable

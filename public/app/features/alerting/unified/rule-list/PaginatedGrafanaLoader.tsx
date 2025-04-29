@@ -6,7 +6,8 @@ import { Icon, Stack, Text } from '@grafana/ui';
 import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/unified-alerting';
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
-import { FolderBukActionsButton } from '../components/folder-bulk-actions/FolderBulkActionsButton';
+import { FolderBulkActionsButton } from '../components/folder-bulk-actions/FolderBulkActionsButton';
+import { useFolderBulkActions } from '../featureToggles';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 
@@ -44,7 +45,7 @@ export function PaginatedGrafanaLoader() {
 
   const groupsByFolder = useMemo(() => groupBy(groupsPage, 'folderUid'), [groupsPage]);
 
-  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
+  const isFolderBulkActionsEnabled = useFolderBulkActions();
 
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>
@@ -63,7 +64,7 @@ export function PaginatedGrafanaLoader() {
                   </Text>
                 </Stack>
               }
-              actions={isFolderBulkActionsEnabled ? <FolderBukActionsButton folderUID={folderUid} /> : null}
+              actions={isFolderBulkActionsEnabled ? <FolderBulkActionsButton folderUID={folderUid} /> : null}
             >
               {groups.map((group) => (
                 <GrafanaRuleGroupListItem

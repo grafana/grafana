@@ -16,7 +16,7 @@ interface Props {
   folderUID: string;
 }
 
-export const FolderBukActionsButton = ({ folderUID }: Props) => {
+export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   const [pauseSupported, pauseAllowed] = useFolderAbility(FolderAction.Pause);
   const canPause = pauseSupported && pauseAllowed;
   const [deleteSupported, deleteAllowed] = useFolderAbility(FolderAction.Delete);
@@ -73,7 +73,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
   return (
     <>
       <Dropdown overlay={<Menu>{menuItems}</Menu>}>
-        <MoreButton size="sm" title={t('alerting.folder-bulk-actions.more-button.title', 'Folder Actions')} />
+        <MoreButton title={t('alerting.folder-bulk-actions.more-button.title', 'Edit folder')} />
       </Dropdown>
       <DeleteModal
         isOpen={isDeleteModalOpen}
