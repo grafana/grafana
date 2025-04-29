@@ -19,20 +19,15 @@ import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { makeExportableV2 } from '../scene/export/exporters';
+import { makeExportableV1, makeExportableV2 } from '../scene/export/exporters';
 import { transformSceneToSaveModel } from '../serialization/transformSceneToSaveModel';
 import { transformSceneToSaveModelSchemaV2 } from '../serialization/transformSceneToSaveModelSchemaV2';
+import { getVariablesCompatibility } from '../utils/getVariablesCompatibility';
 import { DashboardInteractions } from '../utils/interactions';
 import { getDashboardSceneFor } from '../utils/utils';
 
-import { ResourceExport } from './ExportButton/ResourceExport';
+import { ExportMode, ResourceExport } from './ExportButton/ResourceExport';
 import { SceneShareTabState, ShareView } from './types';
-
-export enum ExportMode {
-  Classic = 'classic',
-  V1Resource = 'v1-resource',
-  V2Resource = 'v2-resource',
-}
 
 export interface ExportableResource {
   kind: 'Dashboard';
@@ -169,27 +164,31 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
       };
     }
 
-    if (exportMode === ExportMode.Classic) {
-      // This handles a case when:
-      // 1. dashboardNewLayouts feature toggle is enabled
-      // 2. v1 dashboard is loaded
-      // 3. dashboard hasn't been edited yet - if it was edited, user would be forced to save it in v2 version
-      if (initialSaveModelVersion === 'v1' && isDashboardV2Spec(origDashboard) && initialSaveModel) {
-        return {
-          json: initialSaveModel,
-          hasLibraryPanels: undefined,
-          initialSaveModelVersion,
-        };
-      }
-
+    // Classic mode
+    // This handles a case when:
+    // 1. dashboardNewLayouts feature toggle is enabled
+    // 2. v1 dashboard is loaded
+    // 3. dashboard hasn't been edited yet - if it was edited, user would be forced to save it in v2 version
+    if (
+      initialSaveModelVersion === 'v1' &&
+      isDashboardV2Spec(origDashboard) &&
+      initialSaveModel &&
+      'panels' in initialSaveModel
+    ) {
+      const oldModel = new DashboardModel(initialSaveModel, undefined, {
+        getVariablesFromState: () => {
+          return getVariablesCompatibility(window.__grafanaSceneContext);
+        },
+      });
+      const exportableV1 = isSharingExternally ? await makeExportableV1(oldModel) : initialSaveModel;
       return {
-        json: origDashboard,
+        json: exportableV1,
         hasLibraryPanels: undefined,
         initialSaveModelVersion,
       };
     }
 
-    // legacy mode
+    // legacy mode or classic mode when dashboardNewLayouts is disabled
     return {
       json: exportable,
       hasLibraryPanels: undefined,

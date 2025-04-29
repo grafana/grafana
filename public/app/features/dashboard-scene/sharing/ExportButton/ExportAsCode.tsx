@@ -14,21 +14,21 @@ import { t, Trans } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 
 import { DashboardInteractions } from '../../utils/interactions';
-import { ExportMode, ShareExportTab } from '../ShareExportTab';
+import { ShareExportTab } from '../ShareExportTab';
 
-import { ResourceExport } from './ResourceExport';
+import { ExportMode, ResourceExport } from './ResourceExport';
 
 const selector = e2eSelectors.pages.ExportDashboardDrawer.ExportAsJson;
 
-export class ExportAsJson extends ShareExportTab {
-  static Component = ExportAsJsonRenderer;
+export class ExportAsCode extends ShareExportTab {
+  static Component = ExportAsCodeRenderer;
 
   public getTabLabel(): string {
     return t('export.json.title', 'Export dashboard');
   }
 }
 
-function ExportAsJsonRenderer({ model }: SceneComponentProps<ExportAsJson>) {
+function ExportAsCodeRenderer({ model }: SceneComponentProps<ExportAsCode>) {
   const styles = useStyles2(getStyles);
   const { isSharingExternally, isViewingYAML, exportMode } = model.useState();
 

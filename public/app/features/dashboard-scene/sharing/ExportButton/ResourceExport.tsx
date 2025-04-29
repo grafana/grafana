@@ -6,7 +6,13 @@ import { Alert, Label, RadioButtonGroup, Stack, Switch, TextLink } from '@grafan
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardJson } from 'app/features/manage-dashboards/types';
 
-import { ExportMode, ExportableResource } from '../ShareExportTab';
+import { ExportableResource } from '../ShareExportTab';
+
+export enum ExportMode {
+  Classic = 'classic',
+  V1Resource = 'v1-resource',
+  V2Resource = 'v2-resource',
+}
 
 interface Props {
   dashboardJson: AsyncState<{
@@ -37,7 +43,10 @@ export function ResourceExport({
     dashboardJson.value?.json && 'spec' in dashboardJson.value.json && 'elements' in dashboardJson.value.json.spec;
   const showV2LibPanelAlert = isV2Dashboard && isSharingExternally && hasLibraryPanels;
 
-  const switchExportLabel = t('export.json.export-remove-ds-refs', 'Remove deployment details');
+  const switchExportLabel =
+    exportMode === ExportMode.V2Resource
+      ? t('export.json.export-remove-ds-refs', 'Remove deployment details')
+      : t('share-modal.export.share-externally-label', `Export for sharing externally`);
   const switchExportModeLabel = t('export.json.export-mode', 'Model');
   const switchExportFormatLabel = t('export.json.export-format', 'Format');
 
@@ -71,7 +80,7 @@ export function ResourceExport({
             />
           </Stack>
         )}
-        {(isV2Dashboard || exportMode === ExportMode.V2Resource) && (
+        {(isV2Dashboard || exportMode === ExportMode.Classic) && (
           <Stack gap={1} alignItems="start">
             <Label>{switchExportLabel}</Label>
             <Switch label={switchExportLabel} value={isSharingExternally} onChange={onShareExternallyChange} />
