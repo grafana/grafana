@@ -43,8 +43,8 @@ func toMemberlistConfig(cfg *setting.Cfg) *memberlist.KVConfig {
 	}
 	if cfg.MemberlistClusterLabel != "" {
 		memberlistKVcfg.ClusterLabel = cfg.MemberlistClusterLabel
-		memberlistKVcfg.ClusterLabelVerificationDisabled = false
 	}
+	memberlistKVcfg.ClusterLabelVerificationDisabled = cfg.MemberlistClusterLabelVerificationDisabled
 	if cfg.MemberlistBindAddr != "" {
 		memberlistKVcfg.TCPTransport.BindAddrs = []string{cfg.MemberlistBindAddr}
 	}
