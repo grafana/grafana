@@ -157,6 +157,14 @@ For Tempo refer to [Trace to profiles](/docs/grafana/<GRAFANA_VERSION>/datasourc
 
 {{< figure src="/static/img/docs/tempo/profiles/tempo-trace-to-profile.png" max-width="900px" class="docs-image--no-shadow" alt="Selecting a link in the span queries the profile data source" >}}
 
+### Trace correlations
+
+You can use [correlations](/docs/grafana/<GRAFANA_VERSION>/administration/correlations/) to define custom links that appear in the trace view based on trace and span information.
+
+For Tempo, refer to [Trace correlations](/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/traces-in-grafana/trace-correlations/) for configuration instructions.
+
+{{< figure src="/media/docs/tempo/screenshot-grafana-trace-view-correlations.png" max-width="900px" class="docs-image--no-shadow" alt="Using correlations for a trace" >}}
+
 ## Node graph
 
 You can also expand the node graph for a displayed trace. If the data source supports it, this displays spans of the trace as nodes in the graph, or provides additional context, such as a service graph based on the current trace.
