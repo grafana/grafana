@@ -275,16 +275,17 @@ interface TitleProps {
   health?: RuleHealth;
   ruleType?: PromRuleType;
   ruleOrigin?: RulePluginOrigin;
+  returnToHref?: string;
 }
 
-export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin, returnToHref = '' }: TitleProps) => {
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
-  const { returnTo } = useReturnTo('/alerting/list');
+  const { returnTo } = useReturnTo(returnToHref);
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
-      <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
+      {returnToHref && <LinkButton variant="secondary" icon="angle-left" href={returnTo} />}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}

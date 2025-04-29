@@ -36,6 +36,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/slugify"
+	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacysearcher"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -76,6 +77,7 @@ var (
 const (
 	k8sDashboardKvNamespace              = "dashboard-cleanup"
 	k8sDashboardKvLastResourceVersionKey = "last-resource-version"
+	provisioningConcurrencyLimit         = 10
 )
 
 type DashboardServiceImpl struct {
@@ -525,6 +527,7 @@ func (dr *DashboardServiceImpl) GetProvisionedDashboardData(ctx context.Context,
 		results := []*dashboards.DashboardProvisioning{}
 		var mu sync.Mutex
 		g, ctx := errgroup.WithContext(ctx)
+		g.SetLimit(provisioningConcurrencyLimit)
 		for _, org := range orgs {
 			func(orgID int64) {
 				g.Go(func() error {
@@ -751,7 +754,7 @@ func (dr *DashboardServiceImpl) BuildSaveDashboardCommand(ctx context.Context, d
 	var userID int64
 	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		dr.log.Debug("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
 	}
 
@@ -1161,8 +1164,11 @@ func (dr *DashboardServiceImpl) UnprovisionDashboard(ctx context.Context, dashbo
 				UpdatedAt: time.Now(),
 				Dashboard: dash.Data,
 			}, nil, true)
+			if err != nil {
+				return err
+			}
 
-			return err
+			return dr.dashboardStore.UnprovisionDashboard(ctx, dashboardId)
 		}
 
 		return dashboards.ErrDashboardNotFound
@@ -2106,6 +2112,9 @@ type dashboardProvisioningWithUID struct {
 }
 
 func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery) ([]*dashboardProvisioningWithUID, error) {
+	ctx, span := tracing.Start(ctx, "searchProvisionedDashboardsThroughK8s")
+	defer span.End()
+
 	if query == nil {
 		return nil, errors.New("query cannot be nil")
 	}
@@ -2119,10 +2128,13 @@ func (dr *DashboardServiceImpl) searchProvisionedDashboardsThroughK8s(ctx contex
 		return nil, err
 	}
 
+	span.SetAttributes(attribute.Int("hits", len(searchResults.Hits)))
+
 	// loop through all hits concurrently to get the repo information (if set due to file provisioning)
 	dashs := make([]*dashboardProvisioningWithUID, 0)
 	var mu sync.Mutex
 	g, ctx := errgroup.WithContext(ctx)
+	g.SetLimit(provisioningConcurrencyLimit)
 	for _, h := range searchResults.Hits {
 		func(hit dashboardv0.DashboardHit) {
 			g.Go(func() error {

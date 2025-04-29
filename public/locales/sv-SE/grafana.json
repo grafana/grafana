@@ -2680,9 +2680,6 @@
       "clear": "Rensa sökning och filter",
       "text": "Inga resultat hittades för din fråga"
     },
-    "soft-delete": {
-      "success": "Instrumentpanelen {{name}} har flyttats till Nyligen raderat"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {
