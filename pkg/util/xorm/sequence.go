@@ -1,4 +1,3 @@
-//nolint:all
 package xorm
 
 import (
