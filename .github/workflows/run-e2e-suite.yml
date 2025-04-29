@@ -27,6 +27,7 @@ jobs:
           args: go run ./pkg/build/e2e --package=grafana.tar.gz --suite=${{ inputs.suite }}
       - name: Set suite name
         id: set-suite-name
+        if: ${{ always() && inputs.old-arch != true }}
         env:
           SUITE: ${{ inputs.suite }}
         run: |
