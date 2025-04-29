@@ -7,6 +7,7 @@ import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { FolderAction, useFolderAbility } from '../../hooks/useAbilities';
+import { useFolder } from '../../hooks/useFolder';
 import { createRelativeUrl } from '../../utils/url';
 
 import { DeleteModal } from './DeleteModal';
@@ -25,6 +26,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
   const [deleteGrafanaRulesFromFolder, deleteState] =
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const folderName = useFolder(folderUID).folder?.title || 'unknown folder';
 
   if (!canPause && !canDelete) {
     return null;
@@ -77,6 +79,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
         isOpen={isDeleteModalOpen}
         onConfirm={onConfirmDelete}
         onDismiss={() => setIsDeleteModalOpen(false)}
+        folderName={folderName}
       />
     </>
   );

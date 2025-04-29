@@ -9,9 +9,10 @@ export interface Props {
   isOpen: boolean;
   onConfirm: () => Promise<void>;
   onDismiss: () => void;
+  folderName: string;
 }
 
-export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen }: Props) => {
+export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen, folderName }: Props) => {
   const [isDeleting, setIsDeleting] = useState(false);
   const onDeleteConfirm = async () => {
     setIsDeleting(true);
@@ -31,8 +32,9 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen }: Props) 
       body={
         <>
           <Text element="p">
-            <Trans i18nKey="alerting.folder-bulk-actions.delete-modal-text">
-              This action will delete all the rules in the selected folder. Nested folders will not be affected.
+            <Trans i18nKey="alerting.folder-bulk-actions.delete-modal-text" values={{ folderName: folderName }}>
+              This action will delete all the rules in the <strong>{'{{folderName}}'}</strong> folder. Nested folders
+              will not be affected.
             </Trans>
           </Text>
           <Space v={2} />
