@@ -19,10 +19,6 @@ export class CustomTimeRangeCompare extends SceneTimeRangeCompare {
         const buttons = document.querySelectorAll('button');
         buttons.forEach((button) => {
           if (button.getAttribute('aria-label') === 'Enable time frame comparison') {
-            const checkbox = button.querySelector('input[type="checkbox"]');
-            if (checkbox) {
-              (checkbox as HTMLInputElement).checked = true;
-            }
             const divs = button.querySelectorAll('div');
             divs.forEach((div) => {
               if (div.textContent?.trim() === 'Comparison') {
