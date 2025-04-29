@@ -27,11 +27,11 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           path: './pr'
           persist-credentials: false
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
 
@@ -77,12 +77,12 @@ jobs:
         working-directory: './base'
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
 
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
 
@@ -128,8 +128,8 @@ jobs:
       id-token: 'write'
 
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
 
@@ -197,7 +197,7 @@ jobs:
           app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
           private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
 
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
 
       - name: 'Download artifact'
         uses: actions/download-artifact@v4
