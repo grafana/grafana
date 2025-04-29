@@ -73,10 +73,10 @@ export const TimeRangeContent = (props: Props) => {
 
   // Synchronize internal state with external value
   useEffect(() => {
-    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone);
+    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone,fiscalYearStartMonth);
     setFrom(fromValue);
     setTo(toValue);
-  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]);  // fiscalYearStartMonth is included here because valueToState depends on it
+  }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]); // fiscalYearStartMonth is included here because valueToState depends on it
 
   const onOpen = useCallback(
     (event: FormEvent<HTMLElement>) => {
@@ -244,7 +244,7 @@ export const TimeRangeContent = (props: Props) => {
 
 function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
   const raw: RawTimeRange = { from, to };
-  const timeRange = rangeUtil.convertRawToRange(raw, timezone);
+  const timeRange = rangeUtil.convertRawToRange(raw, timezone, fiscalYearStartMonth); 
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
 
   return !valid;
@@ -259,8 +259,8 @@ function valueToState(
   const toValue = valueAsString(rawTo, timeZone);
   const fromInvalid = !isValid(fromValue, false, timeZone);
   const toInvalid = !isValid(toValue, true, timeZone);
-  // If "To" is invalid, we should not check the range anyways
-  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone) && !toInvalid;
+  // If "To" is invalid, we should not check the range anyways, fiscalYearStartMonth passed into rangeInvalid calculation
+  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone, fiscalYearStartMonth)) && !toInvalid;
 
   return [
     {
