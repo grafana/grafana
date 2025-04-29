@@ -10,22 +10,24 @@ on:
 concurrency:
   group: issue-opened-${{ github.event.issue.number }}
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
+    permissions:
+      contents: read
+      id-token: write
     steps:
 
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+          persist-credentials: false
 
       - name: Install Actions
         run: npm install --production --prefix ./actions
@@ -37,7 +39,7 @@ jobs:
 
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot path in Vault
           repo_secrets: |
@@ -60,13 +62,16 @@ jobs:
 
   auto-triage:
     needs: [main]
+    permissions:
+      contents: read
+      id-token: write
     if: github.repository == 'grafana/grafana' && github.event.issue.author_association != 'MEMBER' && github.event.issue.author_association != 'OWNER'
     runs-on: ubuntu-latest
     steps:
 
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in the ci/repo/grafana/grafana/plugins_platform_issue_triager path in Vault
           repo_secrets: |
@@ -83,11 +88,11 @@ jobs:
           private_key: ${{ env.GH_APP_PEM }}
 
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Send issue to the auto triager action
         id: auto_triage
-        uses: grafana/auto-triager@main
+        uses: grafana/auto-triager@main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ steps.generate_token.outputs.token }}
           issue_number: ${{ github.event.issue.number }}
@@ -99,7 +104,7 @@ jobs:
 
       - name: "Send Slack notification"
         if: ${{ steps.auto_triage.outputs.triage_labels != '' }}
-        uses: slackapi/slack-github-action@v1.27.0
+        uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
         with:
           payload: >
             {
