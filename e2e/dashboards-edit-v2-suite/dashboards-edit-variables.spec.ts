@@ -12,8 +12,6 @@ describe('Dashboard edit variables', () => {
   it('can add a new constant variable', () => {
     e2e.pages.Dashboards.visit();
 
-    Cypress.env('USERNAME')
-
     e2e.flows.openDashboard({ uid: `${PAGE_UNDER_TEST}?orgId=1` });
     cy.contains(DASHBOARD_NAME).should('be.visible');
 
