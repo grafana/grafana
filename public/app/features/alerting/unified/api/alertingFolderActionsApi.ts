@@ -49,13 +49,6 @@ export const alertingFolderActionsApi = alertingApi.injectEndpoints({
           },
         };
       },
-      invalidatesTags: (_, _error, { namespace }) => {
-        return [
-          { type: 'RuleNamespace', id: `grafana/${namespace}` },
-          { type: 'RuleGroup', id: `grafana/${namespace}/__any__` },
-          'DeletedRules',
-        ];
-      },
     }),
   }),
 });

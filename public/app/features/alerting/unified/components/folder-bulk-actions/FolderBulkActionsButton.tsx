@@ -1,11 +1,13 @@
 import { useState } from 'react';
 
+import { locationService } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
 import { FolderAction, useFolderAbility } from '../../hooks/useAbilities';
+import { createRelativeUrl } from '../../utils/url';
 
 import { DeleteModal } from './DeleteModal';
 import { FolderActionMenuItem } from './MenuItemPauseFolder';
@@ -30,6 +32,7 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
 
   const onConfirmDelete = async () => {
     await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
+    locationService.replace(createRelativeUrl('/alerting/list', { view: 'list' }, { skipSubPath: true }));
   };
 
   const menuItems = (
