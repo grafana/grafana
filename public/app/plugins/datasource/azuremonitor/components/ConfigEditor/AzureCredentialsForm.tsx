@@ -98,11 +98,14 @@ export const AzureCredentialsForm = (props: Props) => {
   };
 
   return (
-    <ConfigSection title="Authentication">
+    <ConfigSection title={t('components.azure-credentials-form.title-authentication', 'Authentication')}>
       {authTypeOptions.length > 1 && (
         <Field
-          label="Authentication"
-          description="Choose the type of authentication to Azure services"
+          label={t('components.azure-credentials-form.label-authentication', 'Authentication')}
+          description={t(
+            'components.azure-credentials-form.description-authentication',
+            'Choose the type of authentication to Azure services'
+          )}
           data-testid={selectors.components.configEditor.authType.select}
           htmlFor="authentication-type"
         >

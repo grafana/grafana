@@ -206,7 +206,14 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Filters" optional tooltip="Narrow results by applying conditions to specific columns.">
+        <EditorField
+          label={t('components.filter-section.label-filters', 'Filters')}
+          optional
+          tooltip={t(
+            'components.filter-section.tooltip-filters',
+            'Narrow results by applying conditions to specific columns.'
+          )}
+        >
           <div className={styles.filters}>
             {filters.length === 0 || filters.every((g) => g.expressions.length === 0) ? (
               <InputGroup>
@@ -217,7 +224,9 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                 {filters.map((group, groupIndex) => (
                   <div key={groupIndex}>
                     {groupIndex > 0 && filters[groupIndex - 1]?.expressions.length > 0 && (
-                      <Label style={{ padding: '9px 14px' }}>AND</Label>
+                      <Label style={{ padding: '9px 14px' }}>
+                        <Trans i18nKey="components.filter-section.label-and">AND</Trans>
+                      </Label>
                     )}
                     <InputGroup>
                       <>
@@ -247,7 +256,7 @@ export const FilterSection: React.FC<FilterSectionProps> = ({
                 ))}
                 {filters.some((g) => g.expressions.length > 0) && (
                   <Button variant="secondary" onClick={onAddAndFilters} style={{ marginTop: '8px' }}>
-                    Add group
+                    <Trans i18nKey="components.filter-section.label-add-group">Add group</Trans>
                   </Button>
                 )}
               </>

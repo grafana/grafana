@@ -69,14 +69,14 @@ export const DefaultSubscription = (props: Props) => {
   return (
     <>
       <Field
-        label="Default Subscription"
+        label={t('components.default-subscription.label-default-subscription', 'Default Subscription')}
         data-testid={selectors.components.configEditor.defaultSubscription.input}
         htmlFor="default-subscription"
       >
         <div className="width-30" style={{ display: 'flex', gap: '4px' }}>
           <Select
             inputId="default-subscription"
-            aria-label="Default Subscription"
+            aria-label={t('components.default-subscription.aria-label-default-subscription', 'Default Subscription')}
             value={
               options.subscriptionId ? subscriptions.find((opt) => opt.value === options.subscriptionId) : undefined
             }
@@ -91,7 +91,7 @@ export const DefaultSubscription = (props: Props) => {
             disabled={!hasRequiredFields || disabled}
             data-testid={selectors.components.configEditor.loadSubscriptions.button}
           >
-            Load Subscriptions
+            <Trans i18nKey="components.default-subscription.load-subscriptions">Load Subscriptions</Trans>
           </Button>
         </div>
       </Field>

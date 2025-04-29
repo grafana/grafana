@@ -36,21 +36,21 @@ export const FilterItem: React.FC<FilterItemProps> = ({
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
       <Select
-        aria-label="column"
+        aria-label={t('components.filter-item.aria-label-column', 'Column')}
         width={inputFieldSize}
         value={valueToDefinition(filter.property.name)}
         options={selectableOptions.filter((opt) => !usedColumns.includes(opt.value!))}
         onChange={(e) => e.value && onChange(groupIndex, 'property', e.value, filterIndex)}
       />
       <Select
-        aria-label="operator"
+        aria-label={t('components.filter-item.aria-label-operator', 'Operator')}
         width={12}
         value={{ label: filter.operator.name, value: filter.operator.name }}
         options={toOperatorOptions('string')}
         onChange={(e) => e.value && onChange(groupIndex, 'operator', e.value, filterIndex)}
       />
       <Combobox
-        aria-label="column value"
+        aria-label={t('components.filter-item.aria-label-column-value', 'Column value')}
         value={
           filter.operator.value
             ? {
@@ -65,7 +65,11 @@ export const FilterItem: React.FC<FilterItemProps> = ({
         disabled={!filter.property?.name}
       />
       <Button variant="secondary" icon="times" onClick={() => onDelete(groupIndex, filterIndex)} />
-      {showOr && <Label style={{ padding: '9px 14px' }}>OR</Label>}
+      {showOr && (
+        <Label style={{ padding: '9px 14px' }}>
+          <Trans i18nKey="components.filter-item.label-or">OR</Trans>
+        </Label>
+      )}
     </div>
   );
 };
