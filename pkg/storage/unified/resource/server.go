@@ -23,7 +23,6 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/ring"
 	ringclient "github.com/grafana/dskit/ring/client"
-	userutils "github.com/grafana/dskit/user"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -1104,12 +1103,7 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 		return nil, fmt.Errorf("search index not configured")
 	}
 
-	if s.shardingEnabled {
-		client := s.getClientToDistributeRequest(req.Options.Key.Namespace)
-		if client != nil {
-			return client.Client.Search(userutils.InjectOrgID(ctx, "1"), req)
-		}
-	}
+	fmt.Println("searching!")
 
 	return s.search.Search(ctx, req)
 }
@@ -1118,13 +1112,6 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*ResourceStatsResponse, error) {
 	if err := s.Init(ctx); err != nil {
 		return nil, err
-	}
-
-	if s.shardingEnabled {
-		client := s.getClientToDistributeRequest(req.Namespace)
-		if client != nil {
-			return client.Client.GetStats(userutils.InjectOrgID(ctx, "1"), req)
-		}
 	}
 
 	if s.search == nil {
