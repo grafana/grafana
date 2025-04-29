@@ -23,10 +23,10 @@ jobs:
       matrix:
         chunk: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+    - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+    - uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
@@ -51,8 +51,8 @@ jobs:
       matrix:
         chunk: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-    - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
         cache: 'yarn'
