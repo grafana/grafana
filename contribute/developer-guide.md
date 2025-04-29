@@ -11,13 +11,6 @@ Make sure you have the following dependencies installed before setting up your d
 - [Node.js (Long Term Support)](https://nodejs.org), with [corepack enabled](https://nodejs.org/api/corepack.html#enabling-the-feature). See [.nvmrc](../.nvmrc) for supported version. We recommend that you use a version manager such as [nvm](https://github.com/nvm-sh/nvm), [fnm](https://github.com/Schniz/fnm), or similar.
 - [GCC](https://gcc.gnu.org/) (required for Cgo] dependencies)
 
-In the repository enable and install yarn via corepack
-
-```
-corepack enable
-corepack install
-```
-
 ### macOS
 
 We recommend using [Homebrew](https://brew.sh/) for installing any missing dependencies:
@@ -42,6 +35,15 @@ We recommend using the Git command-line interface to download the source code fo
 For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
 
 > **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+
+### Set up yarn
+
+In the repository enable and install yarn via corepack
+
+```
+corepack enable
+corepack install
+```
 
 ### Configure precommit hooks
 
