@@ -41,12 +41,13 @@ jobs:
           private_key: ${{ secrets.EI_APP_PRIVATE_KEY }}
 
       - name: Checkout ephemeral instances repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: grafana/ephemeral-grafana-instances-github-action
           token: ${{ steps.generate_token.outputs.token }}
           ref: main
           path: ephemeral
+          persist-credentials: false
 
       - name: build and deploy ephemeral instance
         uses: ./ephemeral
