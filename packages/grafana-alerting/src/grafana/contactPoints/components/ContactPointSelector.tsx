@@ -8,15 +8,37 @@ import { getContactPointDescription } from '../utils';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-type ContactPointSelectorProps = {
+interface BaseContactPointSelectorProps {
+  id?: string;
+  placeholder?: string;
+  width?: number | 'auto';
+  value?: string;
+}
+
+type ClearableProps = {
+  isClearable: true;
+  onChange: (contactPoint: ContactPoint | null) => void;
+};
+
+type NonClearableProps = {
+  isClearable?: false;
   onChange: (contactPoint: ContactPoint) => void;
 };
+
+type ContactPointSelectorProps = BaseContactPointSelectorProps & (ClearableProps | NonClearableProps);
 
 /**
  * Contact Point Combobox which lists all available contact points
  * @TODO make ComboBox accept a ReactNode so we can use icons and such
  */
-function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
+function ContactPointSelector({
+  onChange,
+  id,
+  width = 'auto',
+  isClearable = false,
+  value,
+  placeholder,
+}: ContactPointSelectorProps) {
   const { currentData: contactPoints, isLoading } = useListContactPoints();
 
   // Create a mapping of options with their corresponding contact points
@@ -35,8 +57,13 @@ function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
 
   const options = contactPointOptions.map<ComboboxOption>((item) => item.option);
 
-  const handleChange = ({ value }: ComboboxOption<string>) => {
-    const selectedItem = contactPointOptions.find(({ option }) => option.value === value);
+  const handleChange = (selectedOption: ComboboxOption<string> | null) => {
+    if (!selectedOption) {
+      onChange(null as any); // sadly yes, we need this type-cast for TypeScript to not complain here
+      return;
+    }
+
+    const selectedItem = contactPointOptions.find(({ option }) => option.value === selectedOption.value);
     if (!selectedItem) {
       return;
     }
@@ -44,7 +71,18 @@ function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
     onChange(selectedItem.contactPoint);
   };
 
-  return <Combobox loading={isLoading} onChange={handleChange} options={options} />;
+  return (
+    <Combobox
+      placeholder={placeholder}
+      loading={isLoading}
+      onChange={handleChange}
+      options={options}
+      isClearable={isClearable}
+      id={id}
+      width={width === 'auto' ? undefined : width}
+      value={value}
+    />
+  );
 }
 
 export { ContactPointSelector };

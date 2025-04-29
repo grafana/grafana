@@ -1499,6 +1499,7 @@
     },
     "notification-policies-filter": {
       "label-search-by-contact-point": "Search by contact point",
+      "placeholder-search-by-contact-point": "Choose a contact point",
       "search-query-input-placeholder-search": "Search"
     },
     "notification-policies-list": {
