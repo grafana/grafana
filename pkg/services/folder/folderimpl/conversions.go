@@ -88,6 +88,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		updaterId = creatorId
 	}
 
+	folder.Version = int(item.GetGeneration())
 	folder.CreatedBy = creatorId
 	folder.UpdatedBy = updaterId
 
@@ -124,6 +125,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 			updaterId = creatorId
 		}
 
+		folder.Version = int(item.GetGeneration())
 		folder.CreatedBy = creatorId
 		folder.UpdatedBy = updaterId
 		folders = append(folders, folder)
