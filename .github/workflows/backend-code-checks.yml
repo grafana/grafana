@@ -1,5 +1,4 @@
 name: Backend Code Checks
-description: Validate go.mod and OpenAPI specifications
 
 on:
   pull_request:
