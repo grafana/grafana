@@ -112,6 +112,9 @@ export interface FieldConfig<TOptions = any> {
 
   // Calculate min max per field
   fieldMinMax?: boolean;
+
+  // Enable time compare
+  timeCompare?: boolean;
 }
 
 export interface FieldTypeConfig {

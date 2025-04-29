@@ -333,7 +333,9 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    headerActions: [new SceneTimeRangeCompare({ key: 'bottom' })],
+    headerActions: panel.fieldConfig?.defaults?.timeCompare
+      ? [new SceneTimeRangeCompare({ key: 'bottom' })]
+      : undefined,
   };
 
   if (panel.libraryPanel) {
