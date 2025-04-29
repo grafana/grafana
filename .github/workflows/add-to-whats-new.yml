@@ -1,0 +1,16 @@
+name: Add comment about adding a What's new note
+on:
+  pull_request:
+    types: [labeled]
+
+jobs:
+  add-comment:
+    if: ${{ ! github.event.pull_request.head.repo.fork && contains(github.event.pull_request.labels.*.name, 'add to what''s new') }}
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: marocchino/sticky-pull-request-comment@52423e01640425a022ef5fd42c6fb5f633a02728 # v2.9.1
+        with:
+          message: |
+            Since you've added the `Add to what's new` label, consider drafting a [What's new note](https://admin.grafana.com/content-admin/#/collections/whats-new/new) for this feature.
