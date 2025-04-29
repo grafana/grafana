@@ -1001,7 +1001,7 @@
       "delete-modal-confirmation-text": "Delete",
       "delete-modal-delete-button": "Delete",
       "delete-modal-deleting": "Deleting...",
-      "delete-modal-text": "This action will delete all the rules in the selected folder. Nested folders will not be deleted.",
+      "delete-modal-text": "This action will delete all the rules in the selected folder. Nested folders will not be affected.",
       "delete-modal-title": "Delete",
       "error": "Failed to execute action: {{error}}",
       "more-button": {

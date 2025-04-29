@@ -32,7 +32,7 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen }: Props) 
         <>
           <Text element="p">
             <Trans i18nKey="alerting.folder-bulk-actions.delete-modal-text">
-              This action will delete all the rules in the selected folder. Nested folders will not be deleted.
+              This action will delete all the rules in the selected folder. Nested folders will not be affected.
             </Trans>
           </Text>
           <Space v={2} />
