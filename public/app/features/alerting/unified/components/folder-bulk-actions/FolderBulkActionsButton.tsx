@@ -24,6 +24,10 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
+  if (!canPause && !canDelete) {
+    return null;
+  }
+
   const onConfirmDelete = async () => {
     await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
   };

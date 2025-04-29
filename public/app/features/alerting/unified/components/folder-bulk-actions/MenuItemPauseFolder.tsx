@@ -29,7 +29,7 @@ export function FolderActionMenuItem({ folderUID, onActionSucceed, executeAction
   const trackActioSuccess =
     action === 'pause' ? trackFolderBulkActionsPauseSuccess : trackFolderBulkActionsUnpauseSuccess;
   const trackActionFail = action === 'pause' ? trackFolderBulkActionsPauseFail : trackFolderBulkActionsUnpauseFail;
-  const onPauseClick = async () => {
+  const onActionClick = async () => {
     try {
       await executeAction(folderUID);
       trackActioSuccess();
@@ -45,5 +45,5 @@ export function FolderActionMenuItem({ folderUID, onActionSucceed, executeAction
     onActionSucceed?.();
   };
 
-  return <Menu.Item label={label} icon={icon} disabled={isLoading} onClick={onPauseClick} />;
+  return <Menu.Item label={label} icon={icon} disabled={isLoading} onClick={onActionClick} />;
 }
