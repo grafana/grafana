@@ -3,6 +3,7 @@ import { Resizable } from 're-resizable';
 import { useCallback, useRef } from 'react';
 
 import { useTheme2 } from '@grafana/ui';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { LogDetails } from '../LogDetails';
 import { getLogRowStyles } from '../getLogRowStyles';
@@ -12,10 +13,12 @@ import { LogListModel } from './processing';
 
 interface Props {
   logs: LogListModel[];
+  getFieldLinks?: GetFieldLinksFn;
 }
 
-export const LogLineDetails = ({ logs }: Props) => {
-  const { detailsWidth, setDetailsWidth, showDetails, wrapLogMessage } = useLogListContext();
+export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
+  const { app, detailsWidth, displayedFields, onPinLine, setDetailsWidth, showDetails, wrapLogMessage } =
+    useLogListContext();
   const getRows = useCallback(() => logs, [logs]);
   const logRowsStyles = getLogRowStyles(useTheme2());
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -38,6 +41,17 @@ export const LogLineDetails = ({ logs }: Props) => {
               showDuplicates={false}
               styles={logRowsStyles}
               wrapLogMessage={wrapLogMessage}
+              onPinLine={onPinLine}
+              getFieldLinks={getFieldLinks}
+              //onClickFilterLabel={onClickFilterLabel}
+              //onClickFilterOutLabel={onClickFilterOutLabel}
+              //onClickShowField={onClickShowField}
+              //onClickHideField={onClickHideField}
+              hasError={showDetails[0].hasError}
+              displayedFields={displayedFields}
+              app={app}
+              //isFilterLabelActive={props.isFilterLabelActive}
+              //pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
             />
           </tbody>
         </table>

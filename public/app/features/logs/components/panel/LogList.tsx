@@ -179,7 +179,6 @@ const LogListComponent = ({
 }: LogListComponentProps) => {
   const {
     app,
-    closeDetails,
     displayedFields,
     filterLevels,
     forceEscape,
@@ -318,7 +317,7 @@ const LogListComponent = ({
           </VariableSizeList>
         )}
       </InfiniteScroll>
-      {showDetails.length > 0 && <LogLineDetails logs={logs} />}
+      {showDetails.length > 0 && <LogLineDetails logs={filteredLogs} getFieldLinks={getFieldLinks} />}
       {showControls && <LogListControls eventBus={eventBus} />}
     </div>
   );
