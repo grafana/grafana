@@ -39,6 +39,7 @@ import { LibraryPanelBehavior } from '../scene/LibraryPanelBehavior';
 import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
+import { isTimeCompareSupported } from '../scene/PanelTimeCompare';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
@@ -333,9 +334,10 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     $behaviors: [],
     extendPanelContext: setDashboardPanelContext,
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
-    headerActions: panel.fieldConfig?.defaults?.timeCompare
-      ? [new SceneTimeRangeCompare({ key: 'bottom' })]
-      : undefined,
+    headerActions:
+      panel.fieldConfig?.defaults?.timeCompare && isTimeCompareSupported(panel.type)
+        ? [new SceneTimeRangeCompare({ key: 'time-compare' })]
+        : undefined,
   };
 
   if (panel.libraryPanel) {
