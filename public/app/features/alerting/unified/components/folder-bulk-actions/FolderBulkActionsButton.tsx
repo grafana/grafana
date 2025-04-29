@@ -16,6 +16,8 @@ interface Props {
 export const FolderBukActionsButton = ({ folderUID }: Props) => {
   const [pauseSupported, pauseAllowed] = useFolderAbility(FolderAction.Pause);
   const canPause = pauseSupported && pauseAllowed;
+  const [deleteSupported, deleteAllowed] = useFolderAbility(FolderAction.Delete);
+  const canDelete = deleteSupported && deleteAllowed;
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
   const [unpauseFolder, unpauseState] = alertingFolderActionsApi.endpoints.unpauseFolder.useMutation();
   const [deleteGrafanaRulesFromFolder, deleteState] =
@@ -46,13 +48,15 @@ export const FolderBukActionsButton = ({ folderUID }: Props) => {
             }}
             isLoading={unpauseState.isLoading}
           />
-          <Menu.Item
-            label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete folder')}
-            icon="trash-alt"
-            onClick={() => setIsDeleteModalOpen(true)}
-            disabled={deleteState.isLoading}
-          />
         </>
+      )}
+      {canDelete && (
+        <Menu.Item
+          label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete folder')}
+          icon="trash-alt"
+          onClick={() => setIsDeleteModalOpen(true)}
+          disabled={deleteState.isLoading}
+        />
       )}
     </>
   );
