@@ -118,11 +118,11 @@ jobs:
           if grep -q "<!-- ${VERSION} START" CHANGELOG.md ; then
             # Replace the content between START and END delimiters
             echo "Version ${VERSION} is found in the CHANGELOG.md, patching contents..."
-            sed -i -e '/${{ inputs.version }} START/,/${{ inputs.version }} END/{//!d;}' \
-                   -e '/${{ inputs.version }} START/r CHANGELOG.part' CHANGELOG.md
+            sed -i -e "/${VERSION} START/,/${VERSION} END/{//!d;}" \
+                   -e "/${VERSION} START/r CHANGELOG.part" CHANGELOG.md
           else
             # Prepend changelog part to the main changelog file
-            echo "Version ${{ inputs.version }} not found in the CHANGELOG.md"
+            echo "Version $VERSION not found in the CHANGELOG.md"
             (
               echo "<!-- ${VERSION} START -->"
               cat CHANGELOG.part
