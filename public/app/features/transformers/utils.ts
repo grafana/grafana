@@ -1,4 +1,3 @@
-import { uniqWith } from 'lodash';
 import { useMemo } from 'react';
 
 import {
@@ -12,50 +11,35 @@ import {
 } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-type FieldNameData = { name: string; isBaseName: boolean };
-
-export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false): FieldNameData[] => {
+export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFieldNames = false) => {
   // get full names
-  let names: FieldNameData[] = frames.flatMap((frame) =>
-    frame.fields.map((field) => {
-      return { name: getFieldDisplayName(field, frame, frames), isBaseName: false };
-    })
-  );
+  let names = frames.flatMap((frame) => frame.fields.map((field) => getFieldDisplayName(field, frame, frames)));
 
   if (withBaseFieldNames) {
     // only add base names of fields that have same field.name
     let baseNameCounts = new Map<string, number>();
 
-    frames.forEach((frame) =>
-      frame.fields.forEach((field) => {
-        let count = baseNameCounts.get(field.name) ?? 0;
-        baseNameCounts.set(field.name, count + 1);
-      })
-    );
+    frames.forEach((frame) => frame.fields.forEach((field) => {
+      let count = baseNameCounts.get(field.name) ?? 0;
+      baseNameCounts.set(field.name, count + 1);
+    }));
 
-    let baseNames: FieldNameData[] = [];
+    let baseNames: string[] = [];
 
     baseNameCounts.forEach((count, name) => {
       if (count > 1) {
-        baseNames.push({ name: name, isBaseName: true });
+        baseNames.push(name);
       }
     });
 
     // prepend base names + uniquify
-    names = uniqWith([...names, ...baseNames], (a, b) => a.name === b.name);
+    names = [...new Set(baseNames.concat(names))];
   }
 
   return names;
 };
 
 export function useAllFieldNamesFromDataFrames(frames: DataFrame[], withBaseFieldNames = false): string[] {
-  return useMemo(
-    () => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames).map((f) => f.name),
-    [frames, withBaseFieldNames]
-  );
-}
-
-export function useAllFieldNamesFromDataFrames2(frames: DataFrame[], withBaseFieldNames = false): FieldNameData[] {
   return useMemo(() => getAllFieldNamesFromDataFrames(frames, withBaseFieldNames), [frames, withBaseFieldNames]);
 }
 

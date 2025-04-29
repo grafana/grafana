@@ -16,13 +16,12 @@ import { useTheme2, Select, StatsPicker, InlineField, Stack, Alert } from '@graf
 import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
-import { useAllFieldNamesFromDataFrames2 } from '../utils';
+import { useAllFieldNamesFromDataFrames } from '../utils';
 
 interface FieldProps {
   fieldName: string;
   config?: GroupByFieldOptions;
   onConfigChange: (config: GroupByFieldOptions) => void;
-  isBaseName: boolean;
 }
 
 export const GroupByTransformerEditor = ({
@@ -30,7 +29,7 @@ export const GroupByTransformerEditor = ({
   options,
   onChange,
 }: TransformerUIProps<GroupByTransformerOptions>) => {
-  const fieldNames = useAllFieldNamesFromDataFrames2(input, true);
+  const fieldNames = useAllFieldNamesFromDataFrames(input, true);
 
   const onConfigChange = useCallback(
     (fieldName: string) => (config: GroupByFieldOptions) => {
@@ -77,11 +76,10 @@ export const GroupByTransformerEditor = ({
       )}
       {fieldNames.map((key) => (
         <GroupByFieldConfiguration
-          onConfigChange={onConfigChange(key.name)}
-          fieldName={key.name}
-          config={options.fields[key.name]}
-          key={key.name}
-          isBaseName={key.isBaseName}
+          onConfigChange={onConfigChange(key)}
+          fieldName={key}
+          config={options.fields[key]}
+          key={key}
         />
       ))}
     </Stack>
@@ -93,7 +91,7 @@ const options = [
   { label: 'Calculate', value: GroupByOperationID.aggregate },
 ];
 
-export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange, isBaseName }: FieldProps) => {
+export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }: FieldProps) => {
   const theme = useTheme2();
   const styles = getStyles(theme);
 
@@ -107,14 +105,12 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange, i
     [config, onConfigChange]
   );
 
-  const optionsList = isBaseName ? [options[1]] : options;
-
   return (
     <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row">
         <div className={styles.operation}>
           <Select
-            options={optionsList}
+            options={options}
             value={config?.operation}
             placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
             onChange={onChange}
