@@ -454,7 +454,9 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       const handleMouseMove = (moveEvent: MouseEvent) => {
         const deltaX = startX - moveEvent.clientX;
         const deltaY = startY - moveEvent.clientY;
-        scene.infiniteViewer!.scrollTo(startScrollLeft + deltaX, startScrollTop + deltaY);
+        const scaleAdjustedDeltaX = deltaX / scene.scale;
+        const scaleAdjustedDeltaY = deltaY / scene.scale;
+        scene.infiniteViewer!.scrollTo(startScrollLeft + scaleAdjustedDeltaX, startScrollTop + scaleAdjustedDeltaY);
         moveEvent.preventDefault();
       };
 
