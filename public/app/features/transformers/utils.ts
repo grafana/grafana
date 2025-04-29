@@ -19,10 +19,12 @@ export const getAllFieldNamesFromDataFrames = (frames: DataFrame[], withBaseFiel
     // only add base names of fields that have same field.name
     let baseNameCounts = new Map<string, number>();
 
-    frames.forEach((frame) => frame.fields.forEach((field) => {
-      let count = baseNameCounts.get(field.name) ?? 0;
-      baseNameCounts.set(field.name, count + 1);
-    }));
+    frames.forEach((frame) =>
+      frame.fields.forEach((field) => {
+        let count = baseNameCounts.get(field.name) ?? 0;
+        baseNameCounts.set(field.name, count + 1);
+      })
+    );
 
     let baseNames: string[] = [];
 

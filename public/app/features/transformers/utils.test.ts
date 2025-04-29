@@ -103,9 +103,7 @@ describe('useAllFieldNamesFromDataFrames', () => {
       }),
       toDataFrame({
         refId: 'B',
-        fields: [
-          { name: 'T', config: { displayName: 't2' }, type: FieldType.time, values: [1, 2, 3] },
-        ],
+        fields: [{ name: 'T', config: { displayName: 't2' }, type: FieldType.time, values: [1, 2, 3] }],
       }),
     ];
 
