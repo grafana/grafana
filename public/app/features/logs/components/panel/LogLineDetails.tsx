@@ -17,8 +17,21 @@ interface Props {
 }
 
 export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
-  const { app, detailsWidth, displayedFields, onPinLine, setDetailsWidth, showDetails, wrapLogMessage } =
-    useLogListContext();
+  const {
+    app,
+    detailsWidth,
+    displayedFields,
+    isLabelFilterActive,
+    onClickFilterLabel,
+    onClickFilterOutLabel,
+    onClickShowField,
+    onClickHideField,
+    onPinLine,
+    pinLineButtonTooltipTitle,
+    setDetailsWidth,
+    showDetails,
+    wrapLogMessage,
+  } = useLogListContext();
   const getRows = useCallback(() => logs, [logs]);
   const logRowsStyles = getLogRowStyles(useTheme2());
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -43,15 +56,15 @@ export const LogLineDetails = ({ getFieldLinks, logs }: Props) => {
               wrapLogMessage={wrapLogMessage}
               onPinLine={onPinLine}
               getFieldLinks={getFieldLinks}
-              //onClickFilterLabel={onClickFilterLabel}
-              //onClickFilterOutLabel={onClickFilterOutLabel}
-              //onClickShowField={onClickShowField}
-              //onClickHideField={onClickHideField}
+              onClickFilterLabel={onClickFilterLabel}
+              onClickFilterOutLabel={onClickFilterOutLabel}
+              onClickShowField={onClickShowField}
+              onClickHideField={onClickHideField}
               hasError={showDetails[0].hasError}
               displayedFields={displayedFields}
               app={app}
-              //isFilterLabelActive={props.isFilterLabelActive}
-              //pinLineButtonTooltipTitle={props.pinLineButtonTooltipTitle}
+              isFilterLabelActive={isLabelFilterActive}
+              pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
             />
           </tbody>
         </table>
