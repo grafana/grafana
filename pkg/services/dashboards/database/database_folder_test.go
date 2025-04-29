@@ -235,6 +235,9 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
 	// the maximux nested folder hierarchy starting from parent down to subfolders
 	nestedFolders := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth+1)
