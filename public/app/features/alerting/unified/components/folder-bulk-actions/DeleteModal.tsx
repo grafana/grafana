@@ -18,10 +18,10 @@ export const DeleteModal = React.memo(({ onConfirm, onDismiss, isOpen }: Props) 
     try {
       await onConfirm();
       trackFolderBulkActionsDeleteSuccess();
-      setIsDeleting(false);
       onDismiss();
     } catch {
       trackFolderBulkActionsDeleteFail();
+    } finally {
       setIsDeleting(false);
     }
   };
