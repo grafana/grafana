@@ -7,7 +7,6 @@ import {
   CONNECTION_VERTEX_ID,
   CONNECTION_VERTEX_ADD_ID,
 } from 'app/plugins/panel/canvas/components/connections/Connections';
-import { VerticalConstraint, HorizontalConstraint } from 'app/plugins/panel/canvas/panelcfg.gen';
 import { getElementTransformAndDimensions } from 'app/plugins/panel/canvas/utils';
 
 import { dimensionViewable, constraintViewable, settingsViewable } from './ables';
@@ -221,10 +220,8 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       e.events.forEach((event) => {
         const targetedElement = findElementByTarget(event.target, scene.root.elements);
         if (targetedElement) {
-          if (targetedElement) {
-            // targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
-            targetedElement.setPlacementFromConstraint(undefined, undefined);
-          }
+          const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
+          targetedElement.setPlacementFromGlobalCoordinates(left, top);
 
           // re-add the selected elements to the snappable guidelines
           if (scene.moveable && scene.moveable.elementGuidelines) {
@@ -266,13 +263,8 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
           }
         }
 
-        targetedElement.tempConstraint = { ...targetedElement.options.constraint };
-        targetedElement.options.constraint = {
-          vertical: VerticalConstraint.Top,
-          horizontal: HorizontalConstraint.Left,
-        };
-        // targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
-        targetedElement.setPlacementFromConstraint(undefined, undefined);
+        const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
+        targetedElement.setPlacementFromGlobalCoordinates(left, top);
       }
     })
     .on('resizeGroupStart', (e) => {
@@ -289,7 +281,6 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
     .on('resize', (event) => {
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
       if (targetedElement) {
-        // targetedElement.applyResize(event, scene.scale);
         targetedElement.applyResize(event);
 
         if (scene.connections.connectionsNeedUpdate(targetedElement) && scene.moveableActionCallback) {
@@ -321,13 +312,8 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
       const targetedElement = findElementByTarget(event.target, scene.root.elements);
 
       if (targetedElement) {
-        if (targetedElement.tempConstraint) {
-          targetedElement.options.constraint = targetedElement.tempConstraint;
-          targetedElement.tempConstraint = undefined;
-        }
-
-        // targetedElement.setPlacementFromConstraint(undefined, undefined, scene.scale);
-        targetedElement.setPlacementFromConstraint(undefined, undefined);
+        const { top, left } = getElementTransformAndDimensions(targetedElement.div!);
+        targetedElement.setPlacementFromGlobalCoordinates(left, top);
 
         // re-add the selected element to the snappable guidelines
         if (scene.moveable && scene.moveable.elementGuidelines) {

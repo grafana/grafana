@@ -614,14 +614,14 @@ export class ElementState implements LayerElement {
     } else if (dirLR === -1) {
       placement.left! -= deltaX;
       placement.width = event.width;
-      style.left = `${placement.left}px`;
+      style.transform = `translate(${placement.left}px, ${placement.top}px)`;
       style.width = `${placement.width}px`;
     }
 
     if (dirTB === -1) {
       placement.top! -= deltaY;
       placement.height = event.height;
-      style.top = `${placement.top}px`;
+      style.transform = `translate(${placement.left}px, ${placement.top}px)`;
       style.height = `${placement.height}px`;
     } else if (dirTB === 1) {
       placement.height = event.height;
