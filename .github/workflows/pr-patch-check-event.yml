@@ -13,10 +13,15 @@ on:
       - "v*.*.*"
       - "release-*"
 
+permissions: {}
+
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
+    permissions:
+      contents: read
+      actions: write
     env:
       HEAD_REF: ${{ github.head_ref }}
       BASE_REF: ${{ github.base_ref }}
