@@ -224,6 +224,7 @@ const ServicesTable: FC<ServicesTableProps> = ({
       showFilter
       tableKey={tableKey}
       autoResetExpanded={false}
+      autoResetPage={false}
     />
   );
 };
