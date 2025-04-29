@@ -794,7 +794,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
-/.github/workflows/remove-milestone.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/scripts/json-file-to-job-output.js @grafana/plugins-platform-frontend
 /.github/workflows/stale.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/storybook-verification.yml @grafana/grafana-frontend-platform
