@@ -139,27 +139,27 @@ export const TableSection: React.FC<TableSectionProps> = (props) => {
   return (
     <EditorRow>
       <EditorFieldGroup>
-        <EditorField label="Table">
+        <EditorField label={t('components.table-section.label-table', 'Table')}>
           <Select
-            aria-label="Table"
+            aria-label={t('components.table-section.aria-label-table', 'Table')}
             value={builderQuery?.from?.property.name}
             options={tableOptions}
-            placeholder="Select a table"
+            placeholder={t('components.table-section.placeholder-select-table', 'Select a table')}
             onChange={handleTableChange}
             width={inputFieldSize}
             isLoading={isLoadingSchema}
           />
         </EditorField>
-        <EditorField label="Columns">
+        <EditorField label={t('components.table-section.label-columns', 'Columns')}>
           <InputGroup>
             <Select
-              aria-label="Columns"
+              aria-label={t('components.table-section.aria-label-columns', 'Columns')}
               isMulti
               isClearable
               closeMenuOnSelect={false}
               value={columnSelectValue}
               options={selectableOptions}
-              placeholder="Select columns"
+              placeholder={t('components.table-section.placeholder-select-columns', 'Select columns')}
               onChange={handleColumnsChange}
               isDisabled={!builderQuery?.from?.property.name}
               width={30}

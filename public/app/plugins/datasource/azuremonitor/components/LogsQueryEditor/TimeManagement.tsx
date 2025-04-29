@@ -89,13 +89,15 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
   return (
     <>
       <InlineField
-        label="Time-range"
+        label={t('components.time-management.label-time-range', 'Time-range')}
         tooltip={
-          <span>
-            Specifies the time-range used to query. The <code>Query</code> option will only use time-ranges specified in
-            the query. <code>Dashboard</code> will only use the Grafana time-range. In Logs Builder mode, only Dashboard
-            time will be used.
-          </span>
+          <Trans i18nKey="components.time-management.tooltip-time-range">
+            <span>
+              Specifies the time-range used to query. The <code>Query</code> option will only use time-ranges specified
+              in the query. <code>Dashboard</code> will only use the Grafana time-range. In Logs Builder mode, only
+              Dashboard time will be used.
+            </span>
+          </Trans>
         }
       >
         <RadioButtonGroup
@@ -116,12 +118,14 @@ export function TimeManagement({ query, onQueryChange: onChange, schema }: Azure
       </InlineField>
       {(query.azureLogAnalytics?.dashboardTime || query.azureLogAnalytics?.mode === 'builder') && (
         <InlineField
-          label="Time Column"
+          label={t('components.time-management.label-time-column', 'Time Column')}
           tooltip={
-            <span>
-              Specifies the time column used for filtering. Defaults to the first tables <code>timeSpan</code> column,
-              the first <code>datetime</code> column found or <code>TimeGenerated</code>.
-            </span>
+            <Trans i18nKey="components.time-management.tooltip-time-column">
+              <span>
+                Specifies the time column used for filtering. Defaults to the first tables <code>timeSpan</code> column,
+                the first <code>datetime</code> column found or <code>TimeGenerated</code>.
+              </span>
+            </Trans>
           }
         >
           <Select

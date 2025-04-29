@@ -144,17 +144,20 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                 const filteredQueries = filterQueriesBySearch(e.currentTarget.value);
                 setVisibleQueries(filteredQueries);
               }}
-              placeholder="Search Logs queries"
+              placeholder={t('components.azure-cheat-sheet.placeholder-search-logs', 'Search Logs queries')}
               width={40}
             />
-            <Field label="Categories" className={styles.categoryDropdown}>
+            <Field
+              label={t('components.azure-cheat-sheet.label-categories', 'Categories')}
+              className={styles.categoryDropdown}
+            >
               <Select
                 options={dropdownMenu}
                 value={''}
                 onChange={(a) => filterQueriesByCategory(a)}
                 allowCustomValue={false}
                 backspaceRemovesValue={true}
-                placeholder="All categories"
+                placeholder={t('components.azure-cheat-sheet.placeholder-all-categories', 'All categories')}
                 isClearable={true}
                 noOptionsMessage="Unable to list all categories"
                 formatCreateLabel={(input: string) => `Category: ${input}`}
@@ -165,11 +168,17 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
             </Field>
           </div>
           <div className={styles.spacing}>
-            Query results:{' '}
-            {Object.keys(visibleQueries).reduce((totalQueries: number, category) => {
-              totalQueries = visibleQueries[category]!.length + totalQueries;
-              return totalQueries;
-            }, 0)}
+            <Trans
+              i18nKey="components.azure-cheat-sheet.label-query-results"
+              values={{
+                numResults: Object.keys(visibleQueries).reduce((totalQueries: number, category) => {
+                  totalQueries = visibleQueries[category]!.length + totalQueries;
+                  return totalQueries;
+                }, 0),
+              }}
+            >
+              Query results: {'{{numResults}}'}
+            </Trans>
           </div>
           <ScrollContainer showScrollIndicators maxHeight="350px">
             {Object.keys(visibleQueries).map((category: string) => {
@@ -188,7 +197,11 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                           <Card.Heading>{query.displayName}</Card.Heading>
                           <ScrollContainer showScrollIndicators maxHeight="100px">
                             <RawQuery
-                              aria-label={`${query.displayName} raw query`}
+                              aria-label={t(
+                                'components.azure-cheat-sheet.aria-label-raw-query',
+                                '{{queryDisplayName}} raw query',
+                                { queryDisplayName: query.displayName }
+                              )}
                               query={query.body}
                               lang={lang}
                               className={styles.rawQuery}
@@ -197,7 +210,10 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                           <Card.Actions>
                             <Button
                               size="sm"
-                              aria-label="use this query button"
+                              aria-label={t(
+                                'components.azure-cheat-sheet.aria-label-use-query',
+                                'Use this query button'
+                              )}
                               onClick={() => {
                                 props.onChange({
                                   refId: 'A',
@@ -213,7 +229,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
                                 });
                               }}
                             >
-                              Use this query
+                              <Trans i18nKey="components.azure-cheat-sheet.button-use-query">Use this query</Trans>
                             </Button>
                           </Card.Actions>
                         </Card>

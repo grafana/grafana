@@ -12,9 +12,12 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
     <>
       <ConfirmModal
         isOpen={basicLogsAckOpen}
-        title="Basic Logs Queries"
+        title={t('components.logs-management.title-basic-logs-queries', 'Basic Logs Queries')}
         body="Are you sure you want to switch to Basic Logs?"
-        description="Basic Logs queries incur cost based on the amount of data scanned."
+        description={t(
+          'components.logs-management.description-basic-logs-queries',
+          'Basic Logs queries incur cost based on the amount of data scanned.'
+        )}
         confirmText="Confirm"
         onConfirm={() => {
           setBasicLogsAckOpen(false);
@@ -29,7 +32,13 @@ export function LogsManagement({ query, onQueryChange: onChange }: AzureQueryEdi
         }}
         confirmButtonVariant="primary"
       />
-      <InlineField label="Logs" tooltip={<span>Specifies whether to run a Basic or Analytics Logs query.</span>}>
+      <InlineField
+        label={t('components.logs-management.label-logs', 'Logs')}
+        tooltip={t(
+          'components.logs-management.tooltip-logs',
+          'Specifies whether to run a Basic or Analytics Logs query.'
+        )}
+      >
         <RadioButtonGroup
           options={[
             { label: 'Analytics', value: false },

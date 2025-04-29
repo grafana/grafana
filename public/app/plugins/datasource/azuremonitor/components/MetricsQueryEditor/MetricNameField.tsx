@@ -30,7 +30,10 @@ const MetricNameField = ({ metricNames, query, variableOptionGroup, onQueryChang
   const options = addValueToOptions(metricNames, variableOptionGroup, query.azureMonitor?.metricName);
 
   return (
-    <Field label="Metric" data-testid={selectors.components.queryEditor.metricsQueryEditor.metricName.input}>
+    <Field
+      label={t('components.metric-name-field.label-metric', 'Metric')}
+      data-testid={selectors.components.queryEditor.metricsQueryEditor.metricName.input}
+    >
       <Select
         inputId="azure-monitor-metrics-metric-field"
         value={query.azureMonitor?.metricName ?? null}

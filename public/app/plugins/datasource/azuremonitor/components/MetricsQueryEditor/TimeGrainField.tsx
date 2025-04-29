@@ -50,7 +50,7 @@ const TimeGrainField = ({ query, timeGrainOptions, variableOptionGroup, onQueryC
   }, [timeGrainOptions, variableOptionGroup, query.azureMonitor?.timeGrain]);
 
   return (
-    <Field label="Time grain">
+    <Field label={t('components.time-grain-field.label-time-grain', 'Time grain')}>
       <Select
         inputId="azure-monitor-metrics-time-grain-field"
         value={query.azureMonitor?.timeGrain}

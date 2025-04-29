@@ -101,7 +101,10 @@ const NestedRow = ({
       <FadeTransition visible={rowStatus === 'loading'}>
         <tr>
           <td className={cx(styles.cell, styles.loadingCell)} colSpan={3}>
-            <LoadingPlaceholder text="Loading..." className={styles.spinner} />
+            <LoadingPlaceholder
+              text={t('components.nested-row.text-loading', 'Loading...')}
+              className={styles.spinner}
+            />
           </td>
         </tr>
       </FadeTransition>

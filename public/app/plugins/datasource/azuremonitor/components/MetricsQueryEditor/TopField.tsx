@@ -25,7 +25,7 @@ const TopField = ({ onQueryChange, query }: AzureQueryEditorFieldProps) => {
   }, [onQueryChange, query, value]);
 
   return (
-    <Field label="Top">
+    <Field label={t('components.top-field.label-top', 'Top')}>
       <Input
         id="azure-monitor-metrics-top-field"
         value={value}

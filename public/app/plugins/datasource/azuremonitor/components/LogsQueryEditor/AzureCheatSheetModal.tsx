@@ -19,7 +19,12 @@ export const AzureCheatSheetModal = (props: Props) => {
   const { isOpen, onClose, datasource, onChange } = props;
 
   return (
-    <Modal aria-label="Kick start your query modal" isOpen={isOpen} title="Kick start your query" onDismiss={onClose}>
+    <Modal
+      aria-label={t('components.azure-cheat-sheet-modal.aria-label-kick-start', 'Kick start your query modal')}
+      isOpen={isOpen}
+      title={t('components.azure-cheat-sheet-modal.title-kick-start', 'Kick start your query')}
+      onDismiss={onClose}
+    >
       <AzureCheatSheet
         onChange={(a) => {
           onChange(a);
