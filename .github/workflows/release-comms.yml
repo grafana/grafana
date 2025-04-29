@@ -21,12 +21,13 @@ on:
     - 'main'
     - 'release-*.*.*'
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   setup:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
     name: Setup and establish latest
     outputs:
