@@ -36,12 +36,12 @@ func parseUnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.F
 		url = dashboards.GetFolderURL(uid, slug)
 	}
 
-	created := meta.GetCreationTimestamp().UTC()
+	created := meta.GetCreationTimestamp().Local()
 	updated, _ := meta.GetUpdatedTimestamp()
 	if updated == nil {
 		updated = &created
 	} else {
-		tmp := updated.UTC()
+		tmp := updated.Local()
 		updated = &tmp
 	}
 
