@@ -243,7 +243,7 @@ const AzureCheatSheet = (props: AzureCheatSheetProps) => {
           </ScrollContainer>
         </div>
       ) : (
-        <LoadingPlaceholder text="Loading..." />
+        <LoadingPlaceholder text={t('components.azure-cheat-sheet.text-loading', 'Loading...')} />
       )}
     </div>
   );

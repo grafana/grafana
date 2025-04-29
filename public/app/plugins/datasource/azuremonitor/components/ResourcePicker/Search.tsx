@@ -18,7 +18,7 @@ const Search = ({ searchFn }: { searchFn: (searchPhrase: string) => void }) => {
 
   return (
     <Input
-      aria-label="resource search"
+      aria-label={t('components.search.aria-label-resource-search', 'Resource search')}
       prefix={<Icon name="search" />}
       value={searchFilter}
       onChange={(event) => {
@@ -26,7 +26,7 @@ const Search = ({ searchFn }: { searchFn: (searchPhrase: string) => void }) => {
         setSearchFilter(searchPhrase);
         debouncedSearch(searchPhrase);
       }}
-      placeholder="search for a resource"
+      placeholder={t('components.search.placeholder-resource-search', 'Search for a resource')}
       data-testid={selectors.components.queryEditor.resourcePicker.search.input}
     />
   );

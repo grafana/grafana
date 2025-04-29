@@ -59,7 +59,7 @@ const Filters = ({ query, datasource, onQueryChange, variableOptionGroup, range 
   };
 
   return (
-    <Field label="Filters">
+    <Field label={t('components.filters.label-filters', 'Filters')}>
       <EditorList
         items={filters}
         onChange={changedFunc}

@@ -45,9 +45,18 @@ const GrafanaTemplateVariableFnInput = ({
   };
 
   return (
-    <InlineField label="Grafana template variable function">
+    <InlineField
+      label={t(
+        'compoennts.grafana-template-variable-fn-input.label-grafana-template-variable',
+        'Grafana template variable function'
+      )}
+    >
       <Input
-        placeholder={'type a grafana template variable function, ex: Subscriptions()'}
+        placeholder={t(
+          'compoennts.grafana-template-variable-fn-input.placeholder-grafana-template-variable',
+          'Type a grafana template variable function, e.g. {{example}}',
+          { example: 'Subscriptions()' }
+        )}
         value={inputVal}
         onChange={onChange}
         onBlur={() => onRunQuery(inputVal)}
