@@ -15,6 +15,9 @@ on:
   issues:
     types: [opened, closed]
 
+permissions:
+  contents: read
+
 jobs:
   config:
     runs-on: "ubuntu-latest"
@@ -35,11 +38,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Actions
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
           ref: main
+          persist-credentials: false
       - name: Install Actions
         run: npm install --production --prefix ./actions
       - name: Run metrics collector
