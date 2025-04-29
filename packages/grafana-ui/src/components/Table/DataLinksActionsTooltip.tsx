@@ -76,7 +76,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
 
   const hasMultipleLinksOrActions = links.length > 1 || Boolean(actions?.length);
 
-  const { getFloatingProps } = useInteractions([dismiss]);
+  const { getFloatingProps, getReferenceProps } = useInteractions([dismiss]);
 
   if (links.length === 0 && !Boolean(actions?.length)) {
     return null;
@@ -87,7 +87,13 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
       {value}
       {hasMultipleLinksOrActions && (
         <Portal>
-          <div ref={refCallback} style={floatingStyles} {...getFloatingProps()} className={styles.tooltipWrapper}>
+          <div
+            ref={refCallback}
+            {...getReferenceProps({ onClick: (e) => e.stopPropagation() })}
+            {...getFloatingProps()}
+            style={floatingStyles}
+            className={styles.tooltipWrapper}
+          >
             <VizTooltipWrapper>
               <VizTooltipFooter dataLinks={links} actions={actions} />
             </VizTooltipWrapper>
