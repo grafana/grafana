@@ -80,7 +80,7 @@ describe('RuleEditor recording rules', () => {
     await userEvent.type(await ui.inputs.expr.find(), 'up == 1');
 
     // try to save, find out that recording rule name is invalid
-    await userEvent.click(ui.buttons.saveAndExit.get());
+    await userEvent.click(ui.buttons.save.get());
     await waitFor(() =>
       expect(
         byText(
@@ -95,7 +95,7 @@ describe('RuleEditor recording rules', () => {
 
     // save and check what was sent to backend
     const capture = captureRequests();
-    await userEvent.click(ui.buttons.saveAndExit.get());
+    await userEvent.click(ui.buttons.save.get());
     const requests = await capture;
 
     const serializedRequests = await serializeRequests(requests);
