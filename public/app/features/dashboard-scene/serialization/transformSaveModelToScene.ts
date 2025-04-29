@@ -19,7 +19,6 @@ import {
   UserActionEvent,
   SceneInteractionProfileEvent,
   SceneObjectState,
-  SceneTimeRangeCompare,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
@@ -29,6 +28,7 @@ import { DashboardDTO, DashboardDataDTO } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { AlertStatesDataLayer } from '../scene/AlertStatesDataLayer';
+import { CustomTimeRangeCompare } from '../scene/CustomTimeRangeCompare';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
@@ -336,7 +336,7 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
     _UNSAFE_customMigrationHandler: getAngularPanelMigrationHandler(panel),
     headerActions:
       panel.fieldConfig?.defaults?.timeCompare && isTimeCompareSupported(panel.type)
-        ? [new SceneTimeRangeCompare({ key: 'time-compare' })]
+        ? [new CustomTimeRangeCompare({ key: 'time-compare', compareWith: undefined, compareOptions: [] })]
         : undefined,
   };
 
