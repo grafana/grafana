@@ -557,12 +557,13 @@ export {
   type PluginExtensionPanelContext,
   type PluginExtensionQueryEditorRowAdaptiveTelemetryV1Context,
   type PluginExtensionDataSourceConfigContext,
-  type PluginExtensionCommandPaletteContext,
+  type PluginExtensionResourceAttributesContext,
   type PluginExtensionOpenModalOptions,
   type PluginExtensionExposedComponentConfig,
   type PluginExtensionAddedComponentConfig,
   type PluginExtensionAddedLinkConfig,
   type PluginExtensionAddedFunctionConfig,
+  type PluginExtensionCommandPaletteContext,
 } from './types/pluginExtensions';
 export {
   type ScopeDashboardBindingSpec,

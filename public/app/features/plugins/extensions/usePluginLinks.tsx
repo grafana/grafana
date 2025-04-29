@@ -32,6 +32,7 @@ export function usePluginLinks({
   const { isLoading: isLoadingAppPlugins } = useLoadAppPlugins(getExtensionPointPluginDependencies(extensionPointId));
 
   return useMemo(() => {
+    console.log('usePluginLinks');
     // For backwards compatibility we don't enable restrictions in production or when the hook is used in core Grafana.
     const enableRestrictions = isGrafanaDevMode() && pluginContext !== null;
     const pluginId = pluginContext?.meta.id ?? '';

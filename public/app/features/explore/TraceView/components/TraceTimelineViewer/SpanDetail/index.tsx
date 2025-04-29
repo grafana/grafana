@@ -15,6 +15,7 @@
 import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
+import { useCallback, useMemo } from 'react';
 
 import {
   CoreApp,
@@ -25,8 +26,11 @@ import {
   TimeRange,
   TraceKeyValuePair,
   TraceLog,
+  PluginExtensionResourceAttributesContext,
+  PluginExtensionPoints,
 } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
+import { usePluginLinks } from '@grafana/runtime';
 import { TimeZone } from '@grafana/schema';
 import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -36,7 +40,7 @@ import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
 import { SpanLinkFunc, TNil } from '../../types';
-import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { TraceLink, TraceProcess, TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -46,6 +50,36 @@ import AccordianText from './AccordianText';
 import DetailState from './DetailState';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
+
+const useResourceAttributesExtensionLinks = (process: TraceProcess) => {
+  // Stable context for useMemo inside usePluginLinks
+  const context: PluginExtensionResourceAttributesContext = useMemo(() => {
+    const processTagsMap = (process.tags ?? []).reduce<Record<string, string>>((acc, tag) => {
+      acc[tag.key] = tag.value;
+      return acc;
+    }, {});
+
+    return {
+      tags: processTagsMap,
+    };
+  }, [process.tags]);
+
+  const { links } = usePluginLinks({
+    extensionPointId: PluginExtensionPoints.ResourceAttributes,
+    limitPerPlugin: 2,
+    context,
+  });
+
+  const resourceLinksGetter = useCallback(
+    (pairs: TraceKeyValuePair[], index: number) => {
+      const { key } = pairs[index];
+      return links.filter((link) => link.category === key);
+    },
+    [links]
+  );
+
+  return resourceLinksGetter;
+};
 
 const getStyles = (theme: GrafanaTheme2) => {
   return {
@@ -302,6 +336,9 @@ export default function SpanDetail(props: SpanDetailProps) {
   });
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
+
+  const resourceLinksGetter = useResourceAttributesExtensionLinks(process);
+
   return (
     <div data-testid="span-detail-component">
       <div className={styles.header}>
@@ -319,7 +356,6 @@ export default function SpanDetail(props: SpanDetailProps) {
           <AccordianKeyValues
             data={tags}
             label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
-            linksGetter={linksGetter}
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
           />
@@ -328,7 +364,7 @@ export default function SpanDetail(props: SpanDetailProps) {
               className={styles.AccordianKeyValuesItem}
               data={process.tags}
               label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
-              linksGetter={linksGetter}
+              linksGetter={resourceLinksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
             />
