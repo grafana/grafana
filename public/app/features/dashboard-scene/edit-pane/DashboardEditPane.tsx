@@ -30,6 +30,7 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from './shared';
 import { useEditableElement } from './useEditableElement';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
@@ -272,11 +273,12 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
             role="button"
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
             className={styles.outlineCollapseButton}
+            data-testid={selectors.components.NavToolbar.editDashboard.outlineSection}
           >
             <Text weight="medium">
               <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
             </Text>
-            <Icon name="angle-up" />
+            <Icon name={outlineCollapsed ? 'angle-up' : 'angle-down'} />
           </div>
           {!outlineCollapsed && (
             <div className={styles.outlineContainer}>

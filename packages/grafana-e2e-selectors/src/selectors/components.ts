@@ -532,6 +532,13 @@ export const versionedComponents = {
     measureButton: {
       '9.2.0': 'show measure tools',
     },
+
+    Outline: {
+      section: {
+        '12.0.0': 'data-testid Outline section',
+      },
+    }
+
   },
   PanelInspector: {
     Data: {
@@ -845,6 +852,9 @@ export const versionedComponents = {
       },
       backToDashboardButton: {
         '11.1.0': 'data-testid Back to dashboard button',
+      },
+      outlineSection: {
+        '11.1.0': 'data-testid Outline section',
       },
     },
   },
