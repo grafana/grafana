@@ -21,6 +21,10 @@ GO_TEST_FLAGS += $(if $(GO_BUILD_TAGS),-tags=$(GO_BUILD_TAGS))
 GIT_BASE = remotes/origin/main
 TOOLS := .citools/tools.sh
 
+MAKEFILE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
+
+
 # GNU xargs has flag -r, and BSD xargs (e.g. MacOS) has that behaviour by default
 XARGSR = $(shell xargs --version 2>&1 | grep -q GNU && echo xargs -r || echo xargs)
 
@@ -99,7 +103,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0$(TOOLS) swagger validate --skip-warnings $(<)
+	GODEBUG=gotypesalias=0 $(TOOLS) swagger validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
