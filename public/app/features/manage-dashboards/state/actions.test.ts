@@ -974,7 +974,7 @@ describe('processV2Datasources', () => {
 });
 
 describe('processV2DatasourceInput', () => {
-  // shoud not map grafana datasource input or dashboard datasource input
+  // should not map grafana datasource input or dashboard datasource input
   it('Should not map grafana datasource input', async () => {
     const queryVariable = {
       kind: 'QueryVariable',
