@@ -1586,6 +1586,8 @@ func TestSearchDashboards(t *testing.T) {
 			},
 			FolderTitle: "testing-folder-1",
 			FolderUID:   "f1",
+			FolderID:    1,
+			FolderURL:   "/dashboards/f/f1/testing-folder-1",
 		},
 		{
 			UID:         "uid2",
@@ -1597,6 +1599,8 @@ func TestSearchDashboards(t *testing.T) {
 			Tags:        []string{},
 			FolderTitle: "testing-folder-1",
 			FolderUID:   "f1",
+			FolderID:    1,
+			FolderURL:   "/dashboards/f/f1/testing-folder-1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
@@ -1612,7 +1616,9 @@ func TestSearchDashboards(t *testing.T) {
 				Title:       "Dashboard 1",
 				Tags:        []string{"tag1", "tag2"},
 				FolderTitle: "testing-folder-1",
+				FolderSlug:  "testing-folder-1",
 				FolderUID:   "f1",
+				FolderID:    1,
 			},
 			{
 				UID:         "uid2",
@@ -1620,7 +1626,9 @@ func TestSearchDashboards(t *testing.T) {
 				OrgID:       1,
 				Title:       "Dashboard 2",
 				FolderTitle: "testing-folder-1",
+				FolderSlug:  "testing-folder-1",
 				FolderUID:   "f1",
+				FolderID:    1,
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
@@ -1635,6 +1643,7 @@ func TestSearchDashboards(t *testing.T) {
 			{
 				UID:   "f1",
 				Title: "testing-folder-1",
+				ID:    1,
 			},
 		}
 		fakeFolders.ExpectedHitList = expectedFolders
