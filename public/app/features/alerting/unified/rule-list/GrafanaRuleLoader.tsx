@@ -23,7 +23,6 @@ const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
 const { useGetGrafanaGroupsQuery } = prometheusApi;
 
 interface GrafanaRuleLoaderProps {
-  // rule: GrafanaPromRuleDTO;
   ruleIdentifier: GrafanaRuleIdentifier;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
@@ -32,7 +31,7 @@ interface GrafanaRuleLoaderProps {
 export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
   const {
     data: rulerRuleGroup,
-    isError: isRulerRuleGroupError,
+    error: rulerRuleGroupError,
     isLoading: isRulerRuleGroupLoading,
   } = useGetGrafanaRulerGroupQuery({
     folderUid: groupIdentifier.namespace.uid,
@@ -40,7 +39,7 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
   });
   const {
     data: promRuleGroup,
-    isError: isPromRuleGroupError,
+    error: promRuleGroupError,
     isLoading: isPromRuleGroupLoading,
   } = useGetGrafanaGroupsQuery({
     folderUid: groupIdentifier.namespace.uid,
@@ -52,8 +51,8 @@ export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceNa
     .flatMap((group) => group.rules)
     .find((promRule) => promRule.uid === ruleIdentifier.uid);
 
-  if (isRulerRuleGroupError || isPromRuleGroupError) {
-    return <RulerRuleLoadingError ruleIdentifier={ruleIdentifier} />;
+  if (rulerRuleGroupError || promRuleGroupError) {
+    return <RulerRuleLoadingError ruleIdentifier={ruleIdentifier} error={rulerRuleGroupError || promRuleGroupError} />;
   }
 
   if (isRulerRuleGroupLoading || isPromRuleGroupLoading) {
