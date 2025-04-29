@@ -36,7 +36,7 @@ export const alertingFolderActionsApi = alertingApi.injectEndpoints({
     }),
     deleteGrafanaRulesFromFolder: build.mutation<void, WithNotificationOptions<{ namespace: string }>>({
       query: ({ namespace, notificationOptions }) => {
-        const successMessage = t('alerting.bulk-actions.delete.success', 'Successfully deleted rules in folder');
+        const successMessage = t('alerting.bulk-actions.delete.success', 'Rules successfully deleted from folder');
         const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespace(namespace);
 
         return {

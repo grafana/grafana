@@ -597,6 +597,11 @@
       "link-dashboard-and-panel": "Link dashboard and panel",
       "placeholder-value-input-default": "Enter custom annotation content..."
     },
+    "bulk-actions": {
+      "delete": {
+        "success": "Rules successfully deleted from folder"
+      }
+    },
     "central-alert-history": {
       "details": {
         "error": "Error loading rule for this event.",
@@ -986,6 +991,32 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": "Delete folder"
+        }
+      },
+      "delete-modal-confirmation-text": "Delete",
+      "delete-modal-delete-button": "Delete",
+      "delete-modal-deleting": "Deleting...",
+      "delete-modal-text": "This action will delete all the rules in the selected folder. Nested folders will not be deleted.",
+      "delete-modal-title": "Delete",
+      "error": "Failed to execute action: {{error}}",
+      "more-button": {
+        "title": "Folder Actions"
+      },
+      "pause": {
+        "button": {
+          "label": "Pause evaluation"
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": "Unpause evaluation"
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in."
