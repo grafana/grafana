@@ -32,11 +32,11 @@ var (
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
 
-	sqlSecureValueRead = mustTemplate("secure_value_read.sql")
-	sqlSecureValueList = mustTemplate("secure_value_list.sql")
-	//	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
-	sqlSecureValueDelete = mustTemplate("secure_value_delete.sql")
-	//	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
+	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
+	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
+	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
 	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
 	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
 )
@@ -159,7 +159,6 @@ func (r listSecureValue) Validate() error {
 	return nil // TODO
 }
 
-/**
 type createSecureValue struct {
 	sqltemplate.SQLTemplate
 	Row *secureValueDB
@@ -169,7 +168,7 @@ type createSecureValue struct {
 func (r createSecureValue) Validate() error {
 	return nil // TODO
 }
-*/
+
 // Delete
 type deleteSecureValue struct {
 	sqltemplate.SQLTemplate
@@ -195,7 +194,6 @@ func (r updateExternalIdSecureValue) Validate() error {
 	return nil // TODO
 }
 
-/**
 // Update secure value
 type updateSecureValue struct {
 	sqltemplate.SQLTemplate
@@ -208,7 +206,6 @@ type updateSecureValue struct {
 func (r updateSecureValue) Validate() error {
 	return nil // TODO
 }
-*/
 
 // update status message
 type updateStatusSecureValue struct {
