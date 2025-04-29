@@ -72,14 +72,14 @@ jobs:
           ownerRepo: 'grafana/grafana'
           pattern: ${{ inputs.target }}
       - name: Checkout Grafana
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
         with:
           ref: ${{ steps.branch.outputs.branch }}
           fetch-tags: true
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: false
       - name: Checkout Grafana (main)
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
         with:
           ref: main
           fetch-depth: '0'
@@ -88,7 +88,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           persist-credentials: false
       - name: Setup nodejs environment
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
       - name: Configure git user
@@ -107,7 +107,7 @@ jobs:
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
-        uses: ./.grafana-main/.github/workflows/actions/changelog
+        uses: ./.grafana-main/.github/actions/changelog
         with:
           github_token: ${{ steps.generate_changelog_token.outputs.token }}
           target: v${{ env.VERSION }}
