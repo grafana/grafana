@@ -11,6 +11,7 @@ import {
 
 import {
   CoreApp,
+  DataFrame,
   LogLevel,
   LogRowModel,
   LogsDedupStrategy,
@@ -120,10 +121,17 @@ export interface Props {
   forceEscape?: boolean;
   hasUnescapedContent?: boolean;
   getRowContextQuery?: GetRowContextQueryFn;
+  isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logOptionsStorageKey?: string;
   logSupportsContext?: (row: LogRowModel) => boolean;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: keyof LogListState, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
@@ -150,11 +158,18 @@ export const LogListContextProvider = ({
   filterLevels,
   forceEscape = false,
   hasUnescapedContent,
+  isLabelFilterActive,
   getRowContextQuery,
   logs,
   logsMeta,
   logOptionsStorageKey,
   logSupportsContext,
+  onClickFilterLabel,
+  onClickFilterOutLabel,
+  onClickFilterString,
+  onClickFilterOutString,
+  onClickShowField,
+  onClickHideField,
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
@@ -401,8 +416,15 @@ export const LogListContextProvider = ({
         filterLevels: logListState.filterLevels,
         forceEscape: logListState.forceEscape,
         hasUnescapedContent: logListState.hasUnescapedContent,
+        isLabelFilterActive,
         getRowContextQuery,
         logSupportsContext,
+        onClickFilterLabel,
+        onClickFilterOutLabel,
+        onClickFilterString,
+        onClickFilterOutString,
+        onClickShowField,
+        onClickHideField,
         onLogLineHover,
         onPermalinkClick,
         onPinLine,

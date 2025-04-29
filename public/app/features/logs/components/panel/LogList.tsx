@@ -7,6 +7,7 @@ import { VariableSizeList } from 'react-window';
 import {
   AbsoluteTimeRange,
   CoreApp,
+  DataFrame,
   EventBus,
   EventBusSrv,
   LogLevel,
@@ -49,12 +50,19 @@ interface Props {
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
   initialScrollPosition?: 'top' | 'bottom';
+  isLabelFilterActive?: (key: string, value: string, refId?: string) => Promise<boolean>;
   loading?: boolean;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
   logsMeta?: LogsMetaItem[];
   logSupportsContext?: (row: LogRowModel) => boolean;
+  onClickFilterLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterOutLabel?: (key: string, value: string, frame?: DataFrame) => void;
+  onClickFilterString?: (value: string, refId?: string) => void;
+  onClickFilterOutString?: (value: string, refId?: string) => void;
+  onClickShowField?: (key: string) => void;
+  onClickHideField?: (key: string) => void;
   onLogOptionsChange?: (option: keyof LogListControlOptions, value: string | boolean | string[]) => void;
   onLogLineHover?: (row?: LogRowModel) => void;
   onPermalinkClick?: (row: LogRowModel) => Promise<void>;
@@ -99,12 +107,19 @@ export const LogList = ({
   getRowContextQuery,
   grammar,
   initialScrollPosition = 'top',
+  isLabelFilterActive,
   loading,
   loadMore,
   logOptionsStorageKey,
   logs,
   logsMeta,
   logSupportsContext,
+  onClickFilterLabel,
+  onClickFilterOutLabel,
+  onClickFilterString,
+  onClickFilterOutString,
+  onClickShowField,
+  onClickHideField,
   onLogOptionsChange,
   onLogLineHover,
   onPermalinkClick,
@@ -129,10 +144,17 @@ export const LogList = ({
       displayedFields={displayedFields}
       filterLevels={filterLevels}
       getRowContextQuery={getRowContextQuery}
+      isLabelFilterActive={isLabelFilterActive}
       logs={logs}
       logsMeta={logsMeta}
       logOptionsStorageKey={logOptionsStorageKey}
       logSupportsContext={logSupportsContext}
+      onClickFilterLabel={onClickFilterLabel}
+      onClickFilterOutLabel={onClickFilterOutLabel}
+      onClickFilterString={onClickFilterString}
+      onClickFilterOutString={onClickFilterOutString}
+      onClickShowField={onClickShowField}
+      onClickHideField={onClickHideField}
       onLogOptionsChange={onLogOptionsChange}
       onLogLineHover={onLogLineHover}
       onPermalinkClick={onPermalinkClick}
