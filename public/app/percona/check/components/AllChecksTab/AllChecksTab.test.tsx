@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { FC } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter, Route, Routes } from 'react-router-dom-v5-compat';
 
 import { NavIndex, OrgRole } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { logger } from 'app/percona/shared/helpers/logger';
 import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
@@ -14,7 +14,6 @@ import { CheckService } from '../../Check.service';
 
 import { AllChecksTab } from './AllChecksTab';
 import { Messages } from './AllChecksTab.messages';
-import { FC } from 'react';
 
 jest.mock('app/percona/shared/helpers/logger', () => {
   const originalModule = jest.requireActual('app/percona/shared/helpers/logger');
@@ -200,16 +199,7 @@ const AllChecksTabTesting: FC<{ category?: string }> = ({ category = 'security' 
     {wrapWithGrafanaContextMock(
       <MemoryRouter initialEntries={['/advisors/' + category]}>
         <Routes>
-          <Route
-            path="/advisors/:category"
-            element={
-              <AllChecksTab
-                {...getRouteComponentProps({
-                  queryParams: {},
-                })}
-              />
-            }
-          />
+          <Route path="/advisors/:category" element={<AllChecksTab />} />
         </Routes>
       </MemoryRouter>
     )}

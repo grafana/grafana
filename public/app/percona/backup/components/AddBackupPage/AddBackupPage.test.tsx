@@ -3,7 +3,6 @@ import { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 
-import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
@@ -53,11 +52,7 @@ describe('AddBackupPage', () => {
     render(
       <AddBackupPageWrapper>
         <MemoryRouter>
-          <AddBackupPage
-            {...getRouteComponentProps({
-              queryParams: { type: '', id: '' },
-            })}
-          />
+          <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
     );
@@ -78,11 +73,7 @@ describe('AddBackupPage', () => {
     render(
       <AddBackupPageWrapper>
         <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
-          <AddBackupPage
-            {...getRouteComponentProps({
-              queryParams: { type: BackupType.SCHEDULED, id: '' },
-            })}
-          />
+          <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
     );
@@ -97,11 +88,7 @@ describe('AddBackupPage', () => {
     render(
       <AddBackupPageWrapper>
         <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
-          <AddBackupPage
-            {...getRouteComponentProps({
-              queryParams: { type: BackupType.SCHEDULED, id: '' },
-            })}
-          />
+          <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
     );
@@ -114,11 +101,7 @@ describe('AddBackupPage', () => {
     render(
       <AddBackupPageWrapper>
         <MemoryRouter>
-          <AddBackupPage
-            {...getRouteComponentProps({
-              queryParams: { type: '', id: '' },
-            })}
-          />
+          <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
     );
@@ -131,11 +114,7 @@ describe('AddBackupPage', () => {
     render(
       <AddBackupPageWrapper>
         <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
-          <AddBackupPage
-            {...getRouteComponentProps({
-              queryParams: { type: BackupType.SCHEDULED, id: '' },
-            })}
-          />
+          <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
     );
@@ -148,11 +127,7 @@ describe('AddBackupPage', () => {
     render(
       <AddBackupPageWrapper>
         <MemoryRouter>
-          <AddBackupPage
-            {...getRouteComponentProps({
-              queryParams: { type: '', id: '' },
-            })}
-          />
+          <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
     );
@@ -168,11 +143,7 @@ describe('AddBackupPage', () => {
     render(
       <AddBackupPageWrapper>
         <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
-          <AddBackupPage
-            {...getRouteComponentProps({
-              queryParams: { type: BackupType.SCHEDULED, id: '' },
-            })}
-          />
+          <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
     );

@@ -1,10 +1,10 @@
 /* eslint-disable react/display-name */
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Cell, Row } from 'react-table';
 
 import { useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Severity } from 'app/percona/integrated-alerting/components/Severity';
 import { Chip } from 'app/percona/shared/components/Elements/Chip';
 import { ExpandableCell } from 'app/percona/shared/components/Elements/ExpandableCell';
@@ -21,9 +21,8 @@ import { ServiceFailedCheck } from '../../types';
 import { SERVICE_CHECKS_CANCEL_TOKEN, SERVICE_CHECKS_TABLE_ID } from './ServiceChecks.constants';
 import { Messages } from './ServiceChecks.messages';
 import { getStyles } from './ServiceChecks.styles';
-import { useParams } from 'react-router-dom-v5-compat';
 
-export const ServiceChecks: FC<GrafanaRouteComponentProps<{ service: string }>> = ({ queryParams }) => {
+export const ServiceChecks: FC = () => {
   const { service: serviceId } = useParams();
   const [pageSize, setPageSize] = useStoredTablePageSize(SERVICE_CHECKS_TABLE_ID);
   const [pageIndex, setPageindex] = useState(0);

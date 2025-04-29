@@ -2,12 +2,13 @@ import { render, screen, waitFor, waitForElementToBeRemoved } from '@testing-lib
 import { FC, PropsWithChildren } from 'react';
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom-v5-compat';
+
+import { logger } from 'app/percona/shared/helpers/logger';
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
 import Contact from './Contact';
 import { ContactService } from './Contact.service';
-import { logger } from 'app/percona/shared/helpers/logger';
 
 const MockWrapper: FC<PropsWithChildren> = ({ children }) => {
   return (

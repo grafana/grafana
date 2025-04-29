@@ -7,7 +7,6 @@ import { SelectableValue, DateTime, dateTime, AppEvents, PageLayoutType } from '
 import { LinkButton, PageToolbar, DateTimePicker, useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { SwitchRow } from 'app/percona/settings/components/Advanced/SwitchRow';
 import { LoaderButton } from 'app/percona/shared/components/Elements/LoaderButton';
 import { MultiSelectField } from 'app/percona/shared/components/Form/MultiSelectField';
@@ -27,7 +26,7 @@ import { ExportDatasetProps } from './ExportDataset.types';
 
 const { Form } = withTypes<ExportDatasetProps>();
 
-const ExportDataset: FC<GrafanaRouteComponentProps<{ type: string; id: string }>> = () => {
+const ExportDataset: FC = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useAppDispatch();
   const { isLoading, services: fetchedServices } = useSelector(getServices);

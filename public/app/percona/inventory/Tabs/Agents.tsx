@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/consistent-type-assertions,@typescript-eslint/no-explicit-any */
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Form } from 'react-final-form';
+import { useParams } from 'react-router-dom-v5-compat';
 import { Row } from 'react-table';
 
 import { AppEvents } from '@grafana/data';
 import { Badge, Button, HorizontalGroup, Icon, Link, Modal, TagList, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
 import { Agent, FlattenAgent, ServiceAgentStatus } from 'app/percona/inventory/Inventory.types';
 import { SelectedTableRows } from 'app/percona/shared/components/Elements/AnotherTableInstance/Table.types';
 import { CheckboxField } from 'app/percona/shared/components/Elements/Checkbox';
@@ -36,15 +36,12 @@ import { beautifyAgentType, getAgentStatusColor, getAgentStatusText, toAgentMode
 import { getTagsFromLabels } from './Services.utils';
 import { getStyles } from './Tabs.styles';
 
-export const Agents: FC<GrafanaRouteComponentProps<{ serviceId: string; nodeId: string }>> = ({ queryParams }) => {
+export const Agents: FC = () => {
   const [agentsLoading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [data, setData] = useState<Agent[]>([]);
   const [selected, setSelectedRows] = useState<any[]>([]);
-  const params = {
-    serviceId: String(queryParams.serviceId),
-    nodeId: String(queryParams.nodeId),
-  };
+  const params = useParams();
   const nodeId = params.nodeId ? (params.nodeId === 'pmm-server' ? 'pmm-server' : params.nodeId) : undefined;
   const navModel = usePerconaNavModel(params.serviceId ? 'inventory-services' : 'inventory-nodes');
   const [generateToken] = useCancelToken();

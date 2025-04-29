@@ -1,11 +1,12 @@
 import { FC, useCallback, useMemo, useState } from 'react';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { AppEvents, OrgRole, UrlQueryMap } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { useStyles2 } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { Page } from 'app/core/components/Page/Page';
-import { GrafanaRouteComponentProps } from 'app/core/navigation/types';
+import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { CheckService } from 'app/percona/check/Check.service';
 import { CheckDetails, Interval } from 'app/percona/check/types';
 import { CustomCollapsableSection } from 'app/percona/shared/components/Elements/CustomCollapsableSection/CustomCollapsableSection';
@@ -28,9 +29,9 @@ import { Messages } from './AllChecksTab.messages';
 import { getStyles } from './AllChecksTab.styles';
 import { ChangeCheckIntervalModal } from './ChangeCheckIntervalModal';
 import { CheckActions } from './CheckActions/CheckActions';
-import { useParams } from 'react-router-dom-v5-compat';
 
-export const AllChecksTab: FC<GrafanaRouteComponentProps> = ({ queryParams }) => {
+export const AllChecksTab: FC = () => {
+  const [queryParams] = useQueryParams();
   const { category } = useParams();
   const navModel = usePerconaNavModel(`advisors-${category}`);
   const [runChecksPending, setRunChecksPending] = useState(false);
