@@ -47,6 +47,8 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   onSubmit = (form: ImportDashboardDTO) => {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
+    console.log({ form });
+
     this.props.importDashboard(form);
   };
 
