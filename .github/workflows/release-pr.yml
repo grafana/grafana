@@ -69,7 +69,6 @@ jobs:
         with:
           # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
           repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_ID=delivery-bot-app:CLIENT_ID
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: Get release branch
         id: branch
