@@ -22,7 +22,7 @@ jobs:
     steps:
 
       - name: Checkout Actions
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4 # v4.2.2
         with:
           repository: "grafana/grafana-github-actions"
           path: ./actions
@@ -88,7 +88,7 @@ jobs:
           private_key: ${{ env.GH_APP_PEM }}
 
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4 # v4.2.2
 
       - name: Send issue to the auto triager action
         id: auto_triage

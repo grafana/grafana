@@ -73,7 +73,7 @@ jobs:
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"
+        uses: "actions/checkout@v4"
         with:
           ref: main
           sparse-checkout: |
@@ -86,7 +86,7 @@ jobs:
           fetch-tags: true
           persist-credentials: false
       - name: Setup nodejs environment
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
       - name: "Configure git user"
@@ -98,7 +98,7 @@ jobs:
         run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
       - name: "Generate changelog"
         id: changelog
-        uses: ./.github/workflows/actions/changelog
+        uses: ./.github/actions/changelog
         with:
           previous: ${{ inputs.previous_version }}
           github_token: ${{ steps.generate_token.outputs.token }}

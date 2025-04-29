@@ -15,7 +15,7 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
       - uses: grafana/writers-toolkit/publish-technical-documentation@publish-technical-documentation/v1 # zizmor: ignore[unpinned-uses]
         with:
           website_directory: content/docs/grafana/next
