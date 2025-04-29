@@ -107,7 +107,7 @@ jobs:
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
-        uses: ./.grafana-main/.github/workflows/actions/changelog
+        uses: ./.grafana-main/.github/actions/changelog
         with:
           github_token: ${{ steps.generate_changelog_token.outputs.token }}
           target: v${{ env.VERSION }}

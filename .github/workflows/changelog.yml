@@ -98,7 +98,7 @@ jobs:
         run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
       - name: "Generate changelog"
         id: changelog
-        uses: ./.github/workflows/actions/changelog
+        uses: ./.github/actions/changelog
         with:
           previous: ${{ inputs.previous_version }}
           github_token: ${{ steps.generate_token.outputs.token }}
