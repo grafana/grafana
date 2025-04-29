@@ -3846,7 +3846,8 @@
     },
     "constant-variable-form": {
       "constant-options": "Constant options",
-      "placeholder-your-metric-prefix": "Your metric prefix"
+      "placeholder-your-metric-prefix": "Your metric prefix",
+      "label-value": "Value"
     },
     "custom-variable-form": {
       "custom-options": "Custom options",
