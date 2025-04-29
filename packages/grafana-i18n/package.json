@@ -50,6 +50,6 @@
     "typescript": "5.7.3"
   },
   "peerDependencies": {
-    "react": "^18"
+    "react": ">=18"
   }
 }

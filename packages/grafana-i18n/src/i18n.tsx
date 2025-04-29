@@ -1,6 +1,5 @@
 import i18n, { InitOptions, ReactOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
-import { ReactElement } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { initReactI18next, setDefaults, setI18n, Trans as I18NextTrans, getI18n } from 'react-i18next';
 
@@ -153,7 +152,7 @@ export function useTranslate() {
   return t;
 }
 
-export const Trans = (props: TransProps): ReactElement => {
+export function Trans(props: TransProps) {
   const Component = transComponent ?? I18NextTrans;
   return <Component {...props} />;
-};
+}
