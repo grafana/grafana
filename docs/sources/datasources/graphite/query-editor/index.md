@@ -63,27 +63,36 @@ You can also select a wildcard and still continue.
 
 ## Functions
 
-Click the plus icon next to **Function** to add a function. You can search for the function or select it from the menu. Once
-a function is selected, it will be added and your focus will be in the text box of the first parameter.
+Click the **+ sign** next to **Function** to add a function from the drop-down. You can also search by typing the first few letters of the function name. 
+
+After selecting a function, it is added to your query, and your cursor automatically moves to the first parameter field.
+
+To edit a parameter, click it to open an editable text box.
+
+To remove a function simply click on it, then click the **X icon** above it.
+
+ <!-- Once a function is selected, it will be added and your focus will be in the text box of the first parameter.
 
 - To edit or change a parameter, click on it and it will turn into a text box.
-- To delete a function, click the function name followed by the x icon.
+- To delete a function, click the function name followed by the x icon. -->
 
 {{< figure src="/static/img/docs/graphite/graphite-functions-still.png" animated-gif="/static/img/docs/graphite/graphite-functions-demo.gif" >}}
 
-Some functions like aliasByNode support an optional second argument. To add an argument, hover your mouse over the first argument and then click the `+` symbol that appears. To remove the second optional parameter, click on it and leave it blank and the editor will remove it.
+Some functions like `aliasByNode` support an optional second argument. To add this argument, hover your mouse over the argument and a dialog box appears. To remove the second optional parameter, click on it to delete it.
 
-To learn more, refer to [Graphite's documentation on functions](https://graphite.readthedocs.io/en/latest/functions.html).
+Refer to [Functions](https://graphite.readthedocs.io/en/latest/functions.html) in the Graphite documentation for more information. 
 
 {{% admonition type="warning" %}}
-Some functions take a second argument that may be a function that returns a series. If you are adding a second argument that is a function, it is suggested to use a series reference from a second query instead of the function itself. The query editor does not currently support parsing of a second argument that is a function when switching between the query editor and the code editor.
+Some functions accept a second argument that can itself be another function returning a series. If you need to add a second argument that is a function, Grafana recommends using a series reference from a second query instead of embedding the function directly.
+
+Currently, the query editor does not support parsing a second function argument when switching between the query builder and the code editor.
 {{% /admonition %}}
 
 ### Sort labels
 
-If you have the same labels on multiple graphs, they are both sorted differently and use different colors.
+If the same labels appear on multiple graphs, they may be sorted differently and assigned different colors.
 
-To avoid this and consistently order labels by name, use the `sortByName()` function.
+To ensure consistent sorting and coloring, use the `sortByName()` function to order labels alphabetically.
 
 ### Modify the metric name in my tables or charts
 
@@ -118,37 +127,30 @@ The regular expression search can be slow on high-cardinality tags, so try to us
 To help reduce the results, start by filtering on a particular name or namespace.
 {{% /admonition %}}
 
-## Nest queries
+## Nested queries
 
-You can reference a query by the "letter" of its row, similar to a spreadsheet.
+Grafana lets you reference one query from another using its query letter, similar to how cell references work in a spreadsheet.
 
-If you add a second query to a graph, you can reference the first query by entering `#A`.
-This helps you build compounded queries.
+For example, if you add a second query and want to build on the results of query A, you can reference it using #A.
+
+This approach allows you to build compound or nested queries, making your panels more flexible and easier to manage.
 
 ## Use wildcards to make fewer queries
 
-To view multiple time series plotted on the same graph, use wildcards in your search to return all of the matching time series in one query.
+To display multiple time series on the same graph, use wildcards in your query to return all matching series at once.
 
-For example, to see how the CPU is being utilized on a machine, you can create a graph and use the single query `cpu.percent.*.g` to retrieve all time series that match that pattern.
-This is more efficient than adding a query for each time series, such as `cpu.percent.user.g`, `cpu.percent.system.g`, and so on, which results in many queries to the data source.
+For example, to monitor CPU utilization across a variety of metrics, you can use a single query like `cpu.percent.*.g` to retrieve all matching time series.
+This approach is more efficient than writing separate queries for each series, such as `cpu.percent.user.g`, `cpu.percent.system.g`, and others, which would result in multiple queries to the data source.
 
 ## Apply annotations
 
-[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs.
-You can add annotation queries in the Dashboard menu's Annotations view.
+[Annotations](ref:annotate-visualizations) overlay rich event information on top of graphs. You can add annotation queries in the dashboard menu's **Annotations** view.
 
 Graphite supports two ways to query annotations:
 
 - A regular metric query, using the `Graphite query` textbox.
 - A Graphite events query, using the `Graphite event tags` textbox with a tag, wildcard, or empty value
 
-## Get Grafana metrics into Graphite
-
-Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-For detailed instructions, refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring).
-
 ## Integration with Loki
 
-Graphite queries get converted to Loki queries when the data source selection changes in Explore. Loki label names and values are extracted from the Graphite queries according to mappings information provided in Graphite data source configuration. Queries using tags with `seriesByTags()` are also transformed without any additional setup.
-
-Refer to the Graphite data source settings for more details.
+When you change the data source to Loki in Explore, your Graphite queries are automatically converted to Loki queries. Loki label names and values are extracted based on the mapping information defined in your Graphite data source configuration. Queries that use tags with `seriesByTags()` are also transformed automatically, without requiring any additional setup.

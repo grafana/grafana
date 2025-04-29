@@ -122,7 +122,7 @@ Pass along additional information and metadata about the request or response.
 
 - **Version** - Select your Graphite version from the dorp-down. This settings controls what functions are available in the Graphite query editor. If you are using Grafana Cloud Graphite, this should be set to `1.1.x`.
 
-- **Graphite backend type** - Select the Graphite backend type from the drop-down. Selecting `Metrictank`` enables additional features like query processing metadata.
+- **Graphite backend type** - Select the Graphite backend type from the drop-down. Selecting `Metrictank` enables additional features like query processing metadata.
 `Metrictank` is a multi-tenant time series engine compatible with Graphite.
 Use `Default` if you are connecting to Grafana Cloud Graphite.
   - **Rollup indicator** -  Enable to display an info icon in panel headers when data aggregation occurs.

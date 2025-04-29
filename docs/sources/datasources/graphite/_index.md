@@ -63,6 +63,10 @@ Once you've added the Graphite data source, you can [configure it](#configure-th
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
 For detailed instructions, refer to [Internal Grafana metrics](ref:internal-grafana-metrics).
 
+## Get Grafana metrics into Graphite
+
+Grafana exposes metrics for Graphite on the `/metrics` endpoint.
+For detailed instructions, refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring).
 
 ## Graphite and Loki integration
 
