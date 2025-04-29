@@ -24,11 +24,11 @@ jobs:
     name: Validate Backend Configs
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Setup Go
-        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b
+        uses: actions/setup-go@v5
         with:
           # Explicitly set Go version to 1.24.1 to ensure consistent OpenAPI spec generation
           # The crypto/x509 package has additional fields in Go 1.24.1 that affect the generated specs
