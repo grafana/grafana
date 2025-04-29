@@ -5,6 +5,7 @@ import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
+import { currentMockApiState, toggleMockApiAndReload } from 'app/mock-api-utils';
 
 import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
@@ -117,6 +118,31 @@ export function useStaticActions(): CommandPaletteAction[] {
           performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
         },
       });
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable @grafana/no-untranslated-strings
+      const currentState = currentMockApiState();
+      const mockApiAction = currentState ? 'Disable' : 'Enable';
+      navBarActions.push(
+        {
+          id: 'preferences/dev',
+          name: 'Dev tooling...',
+          keywords: 'dev preferences tooling',
+          section: 'Tooling',
+          priority: PREFERENCES_PRIORITY,
+        },
+        {
+          id: 'preferences/dev/toggle-mock-api',
+          name: `${mockApiAction} Mock API worker and reload`,
+          subtitle: 'Intercepts requests and returns mock data using MSW',
+          keywords: 'mock api',
+          parent: 'preferences/dev',
+          priority: PREFERENCES_PRIORITY,
+          perform: toggleMockApiAndReload,
+        }
+      );
+      // eslint-enable @grafana/no-untranslated-strings
     }
     return [...getGlobalActions(), ...navBarActions];
   }, [navBarTree]);
