@@ -50,7 +50,6 @@ type decryptStorage struct {
 func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace, name string) (_ secretv0alpha1.ExposedSecureValue, decryptErr error) {
 	var decrypterIdentity string
 	// TEMPORARY: While we evaluate all of our auditing needs, provide one for decrypt operations.
-	logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_request", "namespace", namespace, "secret_name", name)
 	defer func() {
 		if decryptErr == nil {
 			logging.FromContext(ctx).Info("Audit log:", "operation", "decrypt_secret_success", "namespace", namespace, "secret_name", name, "decrypter_identity", decrypterIdentity)
