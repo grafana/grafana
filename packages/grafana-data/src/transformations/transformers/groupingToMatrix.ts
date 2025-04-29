@@ -1,7 +1,7 @@
 import { map } from 'rxjs/operators';
 
 import { getFieldDisplayName } from '../../field/fieldState';
-import { DataFrame, Field } from '../../types/dataFrame';
+import { DataFrame, Field, FieldType } from '../../types/dataFrame';
 import {
   SpecialValue,
   DataTransformerInfo,
@@ -68,7 +68,6 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         const columnFieldMatch = options.columnField || DEFAULT_COLUMN_FIELD;
         const rowFieldMatch = options.rowField || DEFAULT_ROW_FIELD;
         const valueFieldMatch = options.valueField || DEFAULT_VALUE_FIELD;
-        const emptyValue = options.emptyValue || DEFAULT_EMPTY_VALUE;
 
         // Accept only single queries
         if (data.length !== 1) {
@@ -80,6 +79,9 @@ export const groupingToMatrixTransformer: DataTransformerInfo<GroupingToMatrixTr
         const keyRowField = findKeyField(frame, rowFieldMatch);
         const valueField = findKeyField(frame, valueFieldMatch);
         const rowColumnField = `${rowFieldMatch}\\${columnFieldMatch}`;
+
+        const emptyValue =
+          options.emptyValue || valueField?.type === FieldType.number ? SpecialValue.Zero : DEFAULT_EMPTY_VALUE;
 
         if (!keyColumnField || !keyRowField || !valueField) {
           return data;
