@@ -287,6 +287,8 @@ export const getAllStandardFieldConfigs = () => {
 
     shouldApply: () => true,
     category,
+    defaultValue: false,
+    hideFromDefaults: true,
   };
 
   const min: FieldConfigPropertyItem<FieldConfig, number, NumberFieldConfigSettings> = {
