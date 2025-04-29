@@ -28,7 +28,7 @@ Trace correlations let you define rules that inject context-sensitive links into
 
 ## Before you begin
 
-To use trace correlations, you need: 
+To use trace correlations, you need:
 
 - Grafana 12 or later
 - A [Tempo data source](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/datasources/tempo/configure-tempo-data-source/) configured in Grafana
@@ -97,7 +97,7 @@ Below are several practical correlation configurations to get you started.
 
 ### Example 1: Trace to logs by service name and trace identifier
 
-In this example, you configure trace to logs by service name and a trace identifier. 
+In this example, you configure trace to logs by service name and a trace identifier.
 
 1. On step 1, add a new correlation with the label **Logs for this service and trace** and an optional description.
 
@@ -133,8 +133,7 @@ In this example, you configure trace to logs by service name and a trace identif
 
 ### Example 2: Trace to custom URL
 
-In this example, you configure trace corrections with a custom URL. 
-
+In this example, you configure trace corrections with a custom URL.
 
 1. On step 1, add a new correlation with the label **Open custom URL** and an optional description.
 
@@ -164,7 +163,7 @@ In this example, you configure trace corrections with a custom URL.
 
 ## Best practices
 
-- **Name clearly:** Use descriptive names indicating source and target. For example:  **Trace to errors in logs**.
+- **Name clearly:** Use descriptive names indicating source and target. For example: **Trace to errors in logs**.
 
 - **Limit scope**: For high-cardinality fields (like `traceID`), ensure your target system can handle frequent queries.
 
