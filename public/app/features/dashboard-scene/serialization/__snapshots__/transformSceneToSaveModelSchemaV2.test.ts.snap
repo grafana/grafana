@@ -71,6 +71,7 @@ exports[`transformSceneToSaveModelSchemaV2 should transform scene to save model 
           },
         ],
         "title": "Test Panel",
+        "transparent": true,
         "vizConfig": {
           "kind": "timeseries",
           "spec": {

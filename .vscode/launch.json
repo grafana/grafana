@@ -83,6 +83,16 @@
       "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {
+      "name": "Run Frontend Server",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "cwd": "${workspaceFolder}",
+      "env": { "GF_DEFAULT_TARGET": "frontend-server", "GF_SERVER_HTTP_PORT": "3003" },
+      "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    },
+    {
       "name": "Attach to Chrome",
       "port": 9222,
       "request": "attach",
