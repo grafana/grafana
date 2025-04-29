@@ -3,7 +3,7 @@
 name: Dispatch check for patch conflicts
 run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -13,10 +13,15 @@ on:
       - "v*.*.*"
       - "release-*"
 
+permissions: {}
+
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
+    permissions:
+      contents: read
+      actions: write
     env:
       HEAD_REF: ${{ github.head_ref }}
       BASE_REF: ${{ github.base_ref }}
@@ -33,7 +38,6 @@ jobs:
           # App needs Actions: Read/Write for the grafana/security-patch-actions repo
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-
       - name: "Dispatch job"
         uses: actions/github-script@v7
         with:
