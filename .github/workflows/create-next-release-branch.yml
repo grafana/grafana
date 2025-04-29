@@ -44,7 +44,7 @@ jobs:
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ env.GRAFANA_DELIVERY_BOT_APP_ID }}
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Create release branch
         id: branch
