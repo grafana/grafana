@@ -30,18 +30,16 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
+    env:
+      HEAD_REF: ${{ github.head_ref }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      LATEST: ${{ inputs.latest && '1' || '0' }}
+      VERSION: ${{ inputs.version }}
     runs-on: ubuntu-latest
     steps:
-      # The github-release action expects a `LATEST` value of a string of either '1' or '0'
-    - if: ${{ github.event_name == 'workflow_dispatch' }}
-      run: |
-        echo setting up GITHUB_ENV for ${{ github.event_name }}
-        echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-        echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
-        echo "LATEST=${{ inputs.latest && '1' || '0' }}" >> $GITHUB_ENV
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
-        echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\/.*\//v/g')" >> $GITHUB_ENV
+        echo "VERSION=$(echo ${HEAD_REF} | sed -e 's/release\/.*\//v/g')" >> $GITHUB_ENV
         echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}" >> $GITHUB_ENV
         echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}" >> $GITHUB_ENV
     - id: output
@@ -120,7 +118,10 @@ jobs:
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ needs.setup.outputs.dry_run }}
+      VERSION: ${{ needs.setup.outputs.version }}
     steps:
     - run: |
-        echo announce on slack that ${{ needs.setup.outputs.version }} has been released
-        echo dry run: ${{ needs.setup.outputs.dry_run }}
+        echo announce on slack that $VERSION has been released
+        echo dry run: $DRY_RUN

@@ -9,9 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       # Checks-out your repository, which is validated in the next step
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: GitHub CODEOWNERS Validator
-        uses: mszostok/codeowners-validator@v0.7.4
+        uses: mszostok/codeowners-validator@7f3f5e28c6d7b8dfae5731e54ce2272ca384592f
         # input parameters
         with:
           # ==== GitHub Auth ====
