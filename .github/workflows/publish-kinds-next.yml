@@ -29,12 +29,13 @@ jobs:
     runs-on: "ubuntu-latest"
     steps:
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@v4"
+        uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: "Setup Go"
-        uses: "actions/setup-go@v4"
+        uses: "actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639"
         with:
           go-version-file: go.mod
 
