@@ -11,6 +11,8 @@ on:
 env:
   ARCH: linux-amd64
 
+permissions: {}
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -18,16 +20,21 @@ jobs:
     outputs:
       ini_files: ${{ steps.get_files.outputs.ini_files }}
 
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
       - name: Pin Go version to mod file
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@111f3307d8850f501ac008e886eec1fd1932a34
         with:
           go-version-file: 'go.mod'
           cache: true
       - run: go version
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
         with:
           node-version: 20
           cache: 'yarn'
@@ -44,7 +51,7 @@ jobs:
         run: yarn install --immutable
       - name: Install Cypress dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           runTests: false
       - name: Cache Grafana Build and Dependencies
@@ -81,10 +88,13 @@ jobs:
         matrix:
           ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
 
+      permissions:
+        contents: read
+        id-token: write
+
       steps:
         - name: Checkout repository
-          uses: actions/checkout@v4
-
+          uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         - name: Restore Cached Node Modules
           uses: actions/cache@v3
           with:
@@ -107,10 +117,14 @@ jobs:
             key: ${{ runner.os }}-grafana-${{ hashFiles('go.mod', 'package-lock.json', 'Makefile', 'pkg/storage/**/*.go', 'public/app/features/search/**/*.ts', 'public/app/features/search/**/*.tsx') }}
         - name: Set the step name
           id: set_file_name
+          env:
+            INI_NAME: ${{ matrix.ini_file }}
           run: |
-            FILE_NAME=$(basename "${{ matrix.ini_file }}" .ini)
-            echo "FILE_NAME=$FILE_NAME" >> $GITHUB_ENV
-        - name: Run tests for ${{ env.FILE_NAME }}
+            FILE_NAME=$(basename "$env.INI_NAME" .ini)
+            echo "FILE_NAME=$FILE_NAME" >> $GITHUB_OUTPUT
+        - name: Run tests for ${{ steps.set_file_name.outputs.FILE_NAME }}
+          env:
+            INI_NAME: ${{ matrix.ini_file }}
           run: |
-            cp -rf ${{ matrix.ini_file }} ${{ github.workspace }}/scripts/grafana-server/custom.ini
+            cp -rf $INI_NAME ${{ github.workspace }}/scripts/grafana-server/custom.ini
             yarn e2e:dashboards-search || echo "Test failed but marking as success since unified search is behind a feature flag and should not block PRs"
