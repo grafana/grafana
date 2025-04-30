@@ -15,6 +15,7 @@ import { DashboardRoutes } from 'app/types';
 
 import { DashboardPrompt } from '../saving/DashboardPrompt';
 import { DashboardPreviewBanner } from '../saving/provisioned/DashboardPreviewBanner';
+import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 
 import { getDashboardScenePageStateManager } from './DashboardScenePageStateManager';
 
@@ -47,6 +48,7 @@ export function DashboardScenePage({ route, queryParams, location }: Props) {
     }
 
     return () => {
+      preserveDashboardSceneStateInLocalStorage(locationService.getSearch(), uid);
       stateManager.clearState();
     };
 

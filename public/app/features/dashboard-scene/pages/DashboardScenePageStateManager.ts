@@ -360,7 +360,15 @@ abstract class DashboardScenePageStateManagerBase<T>
   }
 
   public getSceneFromCache(cacheKey: string) {
-    return this.cache[cacheKey];
+    const cached = this.cache[cacheKey];
+
+    // if cached dashboard differs than what is currently loaded we invalidate the cache
+    if (!cached || cached.state.version !== this.state.dashboard?.state.version) {
+      delete this.cache[cacheKey];
+      return null;
+    }
+
+    return cached;
   }
 
   public setSceneCache(cacheKey: string, scene: DashboardScene) {
@@ -540,6 +548,11 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
 
       const scene = transformSaveModelToScene(rsp);
 
+      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
+      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+        restoreDashboardStateFromLocalStorage(scene);
+      }
+
       this.setSceneCache(options.uid, scene);
 
       this.setState({ dashboard: scene, isLoading: false, options });
@@ -713,6 +726,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       }
 
       const scene = transformSaveModelSchemaV2ToScene(rsp);
+
+      // we need to call and restore dashboard state on every reload that pulls a new dashboard version
+      if (config.featureToggles.preserveDashboardStateWhenNavigating && Boolean(options.uid)) {
+        restoreDashboardStateFromLocalStorage(scene);
+      }
 
       this.setSceneCache(options.uid, scene);
 
