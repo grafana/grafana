@@ -18,7 +18,7 @@ interface Props {
 
 export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   const [pauseSupported, pauseAllowed] = useFolderAbility(FolderAction.Pause);
-  const canPause = pauseSupported && pauseAllowed;
+  const canPause = pauseSupported && pauseAllowed && false; // lets disable pause for now
   const [deleteSupported, deleteAllowed] = useFolderAbility(FolderAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
@@ -61,7 +61,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
       )}
       {canDelete && (
         <Menu.Item
-          label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete folder')}
+          label={t('alerting.folder-bulk-actions.delete.button.label', 'Delete rules')}
           icon="trash-alt"
           onClick={() => setIsDeleteModalOpen(true)}
           disabled={deleteState.isLoading}

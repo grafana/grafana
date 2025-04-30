@@ -1004,7 +1004,7 @@
     "folder-bulk-actions": {
       "delete": {
         "button": {
-          "label": "Delete folder"
+          "label": "Delete rules"
         }
       },
       "delete-modal-confirmation-text": "Delete",
