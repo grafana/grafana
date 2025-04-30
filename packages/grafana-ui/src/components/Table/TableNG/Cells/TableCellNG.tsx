@@ -62,7 +62,7 @@ export function TableCellNG(props: TableCellNGProps) {
   } else {
     colors = useMemo(() => getCellColors(theme, cellOptions, displayValue), [theme, cellOptions, displayValue]);
   }
-  const styles = useStyles2(getStyles, isRightAligned, colors, height);
+  const styles = useStyles2(getStyles, isRightAligned, colors);
 
   // TODO
   // TableNG provides either an overridden cell width or 'auto' as the cell width value.
@@ -213,7 +213,7 @@ export function TableCellNG(props: TableCellNGProps) {
   );
 }
 
-const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors, height: number) => ({
+const getStyles = (theme: GrafanaTheme2, isRightAligned: boolean, color: CellColors) => ({
   cell: css({
     height: '100%',
     alignContent: 'center',
