@@ -1,20 +1,9 @@
 #!/bin/bash
 set -e
-set -o xtrace
 set -euo pipefail
 
 TOOLS_BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TOOLS_SRC_DIR="$TOOLS_BASE_DIR/src"
-
-
-# Ensure cleanup on exit or error
-cleanup() {
-  rm -rf "$TMP_DIR"
-}
-trap cleanup EXIT
-
-echo "Running command: $@"
-echo "TOOL DIR $TOOLS_SRC_DIR/src"
 
 IMPORT_PATH_WITH_VERSION="$1"
 
