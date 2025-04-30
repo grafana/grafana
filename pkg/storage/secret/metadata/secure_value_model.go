@@ -14,31 +14,30 @@ import (
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/utils/ptr"
 )
 
 type secureValueDB struct {
 	// Kubernetes Metadata
-	GUID        string `xorm:"pk 'guid'"`
-	Name        string `xorm:"name"`
-	Namespace   string `xorm:"namespace"`
-	Annotations string `xorm:"annotations"` // map[string]string
-	Labels      string `xorm:"labels"`      // map[string]string
-	Created     int64  `xorm:"created"`
-	CreatedBy   string `xorm:"created_by"`
-	Updated     int64  `xorm:"updated"`
-	UpdatedBy   string `xorm:"updated_by"`
+	GUID        string
+	Name        string
+	Namespace   string
+	Annotations string // map[string]string
+	Labels      string // map[string]string
+	Created     int64
+	CreatedBy   string
+	Updated     int64
+	UpdatedBy   string
 
 	// Kubernetes Status
-	Phase   string         `xorm:"status_phase"`
-	Message sql.NullString `xorm:"status_message"`
+	Phase   string
+	Message sql.NullString
 
 	// Spec
-	Description string         `xorm:"description"`
-	Keeper      sql.NullString `xorm:"keeper"`
-	Decrypters  sql.NullString `xorm:"decrypters"`
-	Ref         sql.NullString `xorm:"ref"`
-	ExternalID  string         `xorm:"external_id"`
+	Description string
+	Keeper      sql.NullString
+	Decrypters  sql.NullString
+	Ref         sql.NullString
+	ExternalID  string
 }
 
 func (*secureValueDB) TableName() string {
@@ -72,7 +71,6 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	resource := &secretv0alpha1.SecureValue{
 		Spec: secretv0alpha1.SecureValueSpec{
 			Description: sv.Description,
-			Keeper:      ptr.To(sv.Keeper.String),
 			Decrypters:  decrypters,
 		},
 		Status: secretv0alpha1.SecureValueStatus{
@@ -81,6 +79,9 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 		},
 	}
 
+	if sv.Keeper.Valid {
+		resource.Spec.Keeper = &sv.Keeper.String
+	}
 	if sv.Ref.Valid {
 		resource.Spec.Ref = sv.Ref.String
 	}
@@ -241,9 +242,12 @@ func (sv *secureValueDB) toDecrypt() (*contracts.DecryptSecureValue, error) {
 	}
 
 	decryptSecureValue := &contracts.DecryptSecureValue{
-		Keeper:     toStringPtr(sv.Keeper),
 		Decrypters: decrypters,
 		ExternalID: sv.ExternalID,
+	}
+
+	if sv.Keeper.Valid && sv.Keeper.String != "" {
+		decryptSecureValue.Keeper = &sv.Keeper.String
 	}
 	if sv.Ref.Valid && sv.Ref.String != "" {
 		decryptSecureValue.Ref = sv.Ref.String
@@ -266,12 +270,4 @@ func toNullString(s *string) sql.NullString {
 		String: *s,
 		Valid:  true,
 	}
-}
-
-// toStringPtr returns a *string for a given sql.NullString
-func toStringPtr(s sql.NullString) *string {
-	if s.Valid {
-		return ptr.To(s.String)
-	}
-	return nil
 }
