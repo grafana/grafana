@@ -14,7 +14,6 @@ import { AccessControlAction } from 'app/types';
 
 import { ShareEmbed } from './ShareEmbed';
 import { ShareExport } from './ShareExport';
-import { ShareImage } from './ShareImage';
 import { ShareLibraryPanel } from './ShareLibraryPanel';
 import { ShareLink } from './ShareLink';
 import { ShareSnapshot } from './ShareSnapshot';
@@ -43,15 +42,6 @@ function getTabs(canEditDashboard: boolean, panel?: PanelModel, activeTab?: stri
   ) {
     const snapshotLabel = t('share-modal.tab-title.snapshot', 'Snapshot');
     tabs.push({ label: snapshotLabel, value: shareDashboardType.snapshot, component: ShareSnapshot });
-  }
-
-  if (config.featureToggles.dashboardImageSharing) {
-    const imageLabel = t('share-modal.tab-title.image', 'Image');
-    tabs.push({
-      label: imageLabel,
-      value: shareDashboardType.image,
-      component: ShareImage,
-    });
   }
 
   if (panel) {
