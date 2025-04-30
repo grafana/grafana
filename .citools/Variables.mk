@@ -1,57 +1,60 @@
+TOOLS_DIR := $(shell cd $(dir $(lastword $(MAKEFILE_LIST))) && pwd)
+TOOL_SRC_DIR := $(TOOLS_DIR)/src
+TOOL_CACHE := $(TOOLS_DIR)/.tool-cache
 # Generated tool paths
 
 # Tool: bra
 bra = $(shell \
-  if [ ! -f /Users/denis/GolandProjects/grafana/.citools/.tool-cache/bra.path ]; then \
-    (cd /Users/denis/GolandProjects/grafana/.citools/src/bra && GOWORK=off go tool -n github.com/unknwon/bra > /Users/denis/GolandProjects/grafana/.citools/.tool-cache/bra.path); \
+  if [ ! -f $(TOOL_CACHE)/bra.path ]; then \
+    (cd $(TOOL_SRC_DIR)/bra && GOWORK=off go tool -n github.com/unknwon/bra > $(TOOL_CACHE)/bra.path); \
   fi; \
-  cat /Users/denis/GolandProjects/grafana/.citools/.tool-cache/bra.path \
+  cat $(TOOL_CACHE)/bra.path \
 )
 
 # Tool: cog
 cog = $(shell \
-  if [ ! -f /Users/denis/GolandProjects/grafana/.citools/.tool-cache/cog.path ]; then \
-    (cd /Users/denis/GolandProjects/grafana/.citools/src/cog && GOWORK=off go tool -n github.com/grafana/cog/cmd/cli > /Users/denis/GolandProjects/grafana/.citools/.tool-cache/cog.path); \
+  if [ ! -f $(TOOL_CACHE)/cog.path ]; then \
+    (cd $(TOOL_SRC_DIR)/cog && GOWORK=off go tool -n github.com/grafana/cog/cmd/cli > $(TOOL_CACHE)/cog.path); \
   fi; \
-  cat /Users/denis/GolandProjects/grafana/.citools/.tool-cache/cog.path \
+  cat $(TOOL_CACHE)/cog.path \
 )
 
 # Tool: cue
 cue = $(shell \
-  if [ ! -f /Users/denis/GolandProjects/grafana/.citools/.tool-cache/cue.path ]; then \
-    (cd /Users/denis/GolandProjects/grafana/.citools/src/cue && GOWORK=off go tool -n cuelang.org/go/cmd/cue > /Users/denis/GolandProjects/grafana/.citools/.tool-cache/cue.path); \
+  if [ ! -f $(TOOL_CACHE)/cue.path ]; then \
+    (cd $(TOOL_SRC_DIR)/cue && GOWORK=off go tool -n cuelang.org/go/cmd/cue > $(TOOL_CACHE)/cue.path); \
   fi; \
-  cat /Users/denis/GolandProjects/grafana/.citools/.tool-cache/cue.path \
+  cat $(TOOL_CACHE)/cue.path \
 )
 
 # Tool: golangci-lint
 golangci-lint = $(shell \
-  if [ ! -f /Users/denis/GolandProjects/grafana/.citools/.tool-cache/golangci-lint.path ]; then \
-    (cd /Users/denis/GolandProjects/grafana/.citools/src/golangci-lint && GOWORK=off go tool -n github.com/golangci/golangci-lint/v2/cmd/golangci-lint > /Users/denis/GolandProjects/grafana/.citools/.tool-cache/golangci-lint.path); \
+  if [ ! -f $(TOOL_CACHE)/golangci-lint.path ]; then \
+    (cd $(TOOL_SRC_DIR)/golangci-lint && GOWORK=off go tool -n github.com/golangci/golangci-lint/v2/cmd/golangci-lint > $(TOOL_CACHE)/golangci-lint.path); \
   fi; \
-  cat /Users/denis/GolandProjects/grafana/.citools/.tool-cache/golangci-lint.path \
+  cat $(TOOL_CACHE)/golangci-lint.path \
 )
 
 # Tool: jb
 jb = $(shell \
-  if [ ! -f /Users/denis/GolandProjects/grafana/.citools/.tool-cache/jb.path ]; then \
-    (cd /Users/denis/GolandProjects/grafana/.citools/src/jb && GOWORK=off go tool -n github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb > /Users/denis/GolandProjects/grafana/.citools/.tool-cache/jb.path); \
+  if [ ! -f $(TOOL_CACHE)/jb.path ]; then \
+    (cd $(TOOL_SRC_DIR)/jb && GOWORK=off go tool -n github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb > $(TOOL_CACHE)/jb.path); \
   fi; \
-  cat /Users/denis/GolandProjects/grafana/.citools/.tool-cache/jb.path \
+  cat $(TOOL_CACHE)/jb.path \
 )
 
 # Tool: lefthook
 lefthook = $(shell \
-  if [ ! -f /Users/denis/GolandProjects/grafana/.citools/.tool-cache/lefthook.path ]; then \
-    (cd /Users/denis/GolandProjects/grafana/.citools/src/lefthook && GOWORK=off go tool -n github.com/evilmartians/lefthook > /Users/denis/GolandProjects/grafana/.citools/.tool-cache/lefthook.path); \
+  if [ ! -f $(TOOL_CACHE)/lefthook.path ]; then \
+    (cd $(TOOL_SRC_DIR)/lefthook && GOWORK=off go tool -n github.com/evilmartians/lefthook > $(TOOL_CACHE)/lefthook.path); \
   fi; \
-  cat /Users/denis/GolandProjects/grafana/.citools/.tool-cache/lefthook.path \
+  cat $(TOOL_CACHE)/lefthook.path \
 )
 
 # Tool: swagger
 swagger = $(shell \
-  if [ ! -f /Users/denis/GolandProjects/grafana/.citools/.tool-cache/swagger.path ]; then \
-    (cd /Users/denis/GolandProjects/grafana/.citools/src/swagger && GOWORK=off go tool -n github.com/go-swagger/go-swagger/cmd/swagger > /Users/denis/GolandProjects/grafana/.citools/.tool-cache/swagger.path); \
+  if [ ! -f $(TOOL_CACHE)/swagger.path ]; then \
+    (cd $(TOOL_SRC_DIR)/swagger && GOWORK=off go tool -n github.com/go-swagger/go-swagger/cmd/swagger > $(TOOL_CACHE)/swagger.path); \
   fi; \
-  cat /Users/denis/GolandProjects/grafana/.citools/.tool-cache/swagger.path \
+  cat $(TOOL_CACHE)/swagger.path \
 )
