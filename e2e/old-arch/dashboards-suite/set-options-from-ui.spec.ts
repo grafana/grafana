@@ -66,6 +66,7 @@ describe('Variables - Set options from ui', () => {
     e2e.components.NavToolbar.container().click();
 
     cy.wait('@query');
+    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').scrollIntoView().should('be.visible');
 
