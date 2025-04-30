@@ -71,13 +71,18 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 }
 
 export interface DashboardEditActionEventPayload {
-  sceneObj: SceneObject;
+  removedObject?: SceneObject;
+  addedObject?: SceneObject;
+  source: SceneObject;
   description?: string;
-  type?: 'canvas-element-added' | 'canvas-element-removed';
   perform: () => void;
   undo: () => void;
 }
 
 export class DashboardEditActionEvent extends BusEventWithPayload<DashboardEditActionEventPayload> {
   static type = 'dashboard-edit-action';
+}
+
+export function publishEditAction(action: DashboardEditActionEventPayload) {
+  action.source.publishEvent(new DashboardEditActionEvent(action), true);
 }

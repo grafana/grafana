@@ -78,13 +78,11 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private handleEditAction(action: DashboardEditActionEventPayload) {
     this.state.undoStack.push(action);
 
-    const { sceneObj } = action;
-
     this.performAction(action);
 
     // Notify repeaters that something changed
-    if (sceneObj instanceof VizPanel) {
-      const layoutElement = sceneObj.parent!;
+    if (action.source instanceof VizPanel) {
+      const layoutElement = action.source.parent!;
 
       if (isDashboardLayoutItem(layoutElement) && layoutElement.editingCompleted) {
         layoutElement.editingCompleted(true);
@@ -107,13 +105,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
     /**
      * Some edit actions also require clearing selection or selecting new objects
      */
-    switch (action.type) {
-      case 'canvas-element-added':
-        this.clearSelection();
-        break;
-      case 'canvas-element-removed':
-        this.newObjectAddedToCanvas(action.sceneObj);
-        break;
+    if (action.addedObject) {
+      this.clearSelection();
+    }
+
+    if (action.removedObject) {
+      this.newObjectAddedToCanvas(action.removedObject);
     }
 
     this.setState({ undoStack, redoStack: [...this.state.redoStack, action] });
@@ -125,13 +122,12 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
   private performAction(action: DashboardEditActionEventPayload) {
     action.perform();
 
-    switch (action.type) {
-      case 'canvas-element-added':
-        this.newObjectAddedToCanvas(action.sceneObj);
-        break;
-      case 'canvas-element-removed':
-        this.clearSelection();
-        break;
+    if (action.addedObject) {
+      this.newObjectAddedToCanvas(action.addedObject);
+    }
+
+    if (action.removedObject) {
+      this.clearSelection();
     }
   }
 
@@ -147,7 +143,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     this.performAction(action);
 
-    this.setState({ redoStack, undoStack: [...this.state.redoStack, action] });
+    this.setState({ redoStack, undoStack: [...this.state.undoStack, action] });
   }
 
   public enableSelection() {

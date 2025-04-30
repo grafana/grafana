@@ -8,6 +8,7 @@ import {
   DashboardEditActionEvent,
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
+  publishEditAction,
 } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { joinCloneKeys } from '../../utils/clone';
@@ -99,22 +100,19 @@ export class AutoGridLayoutManager
 
     const newGridItem = new AutoGridItem({ body: vizPanel });
 
-    this.publishEvent(
-      new DashboardEditActionEvent({
-        description: 'Add panel',
-        sceneObj: vizPanel,
-        type: 'canvas-element-added',
-        perform: () => {
-          this.state.layout.setState({ children: [...this.state.layout.state.children, newGridItem] });
-        },
-        undo: () => {
-          this.state.layout.setState({
-            children: this.state.layout.state.children.filter((child) => child !== newGridItem),
-          });
-        },
-      }),
-      true
-    );
+    publishEditAction({
+      description: 'Add panel',
+      addedObject: vizPanel,
+      source: this,
+      perform: () => {
+        this.state.layout.setState({ children: [...this.state.layout.state.children, newGridItem] });
+      },
+      undo: () => {
+        this.state.layout.setState({
+          children: this.state.layout.state.children.filter((child) => child !== newGridItem),
+        });
+      },
+    });
   }
 
   public pastePanel() {
@@ -125,9 +123,32 @@ export class AutoGridLayoutManager
   }
 
   public removePanel(panel: VizPanel) {
-    const element = panel.parent;
-    this.state.layout.setState({ children: this.state.layout.state.children.filter((child) => child !== element) });
-    this.publishEvent(new ObjectRemovedFromCanvasEvent(panel), true);
+    const gridItem = panel.parent;
+    if (!(gridItem instanceof AutoGridItem)) {
+      return;
+    }
+
+    const gridItemIndex = this.state.layout.state.children.indexOf(gridItem);
+
+    publishEditAction({
+      description: 'Remove panel',
+      removedObject: panel,
+      source: this,
+      perform: () => {
+        this.state.layout.setState({
+          children: this.state.layout.state.children.filter((child) => child !== gridItem),
+        });
+      },
+      undo: () => {
+        this.state.layout.setState({
+          children: [
+            ...this.state.layout.state.children.slice(0, gridItemIndex),
+            gridItem,
+            ...this.state.layout.state.children.slice(gridItemIndex),
+          ],
+        });
+      },
+    });
   }
 
   public duplicate(): DashboardLayoutManager {
