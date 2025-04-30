@@ -105,8 +105,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	return createdSecureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	secureValue, err := s.read(ctx, namespace, name, notForUpdate)
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+	secureValue, err := s.read(ctx, namespace, name, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 	var newRow *secureValueDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
-		read, err := s.read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, yesForUpdate)
+		read, err := s.read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
 			return fmt.Errorf("reading secure value: %w", err)
 		}
@@ -341,8 +341,8 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 	return nil
 }
 
-func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	row, err := s.read(ctx, namespace, name, notForUpdate)
+func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*contracts.DecryptSecureValue, error) {
+	row, err := s.read(ctx, namespace, name, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -355,12 +355,12 @@ func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespa
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.Namespace, name string, isForUpdate sqlForUpdate) (secureValueDB, error) {
+func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
 	req := readSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
-		IsForUpdate: isForUpdate, // TODO: make this smarter, check if there is a tx in the context and set to TRUE automatically?.
+		IsForUpdate: opts.ForUpdate,
 	}
 
 	query, err := sqltemplate.Execute(sqlSecureValueRead, req)

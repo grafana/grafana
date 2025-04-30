@@ -314,8 +314,8 @@ func newSecureValueMetadataStorageWrapper(rng *rand.Rand, impl contracts.SecureV
 func (wrapper *secureValueMetadataStorageWrapper) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	return wrapper.impl.Create(ctx, sv, actorUID)
 }
-func (wrapper *secureValueMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	return wrapper.impl.Read(ctx, namespace, name)
+func (wrapper *secureValueMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+	return wrapper.impl.Read(ctx, namespace, name, opts)
 }
 func (wrapper *secureValueMetadataStorageWrapper) Update(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// Maybe return an error before calling the real implementation
@@ -378,8 +378,8 @@ func (wrapper *secureValueMetadataStorageWrapper) SetExternalID(ctx context.Cont
 	}
 	return nil
 }
-func (wrapper *secureValueMetadataStorageWrapper) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	return wrapper.impl.ReadForDecrypt(ctx, namespace, name)
+func (wrapper *secureValueMetadataStorageWrapper) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*contracts.DecryptSecureValue, error) {
+	return wrapper.impl.ReadForDecrypt(ctx, namespace, name, opts)
 }
 
 type keeperServiceWrapper struct {
@@ -484,7 +484,7 @@ func newKeeperMetadataStorageWrapper(rng *rand.Rand, impl contracts.KeeperMetada
 func (wrapper *keeperMetadataStorageWrapper) Create(_ context.Context, _ *secretv0alpha1.Keeper, _ string) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) Read(_ context.Context, _ xkube.Namespace, _ string) (*secretv0alpha1.Keeper, error) {
+func (wrapper *keeperMetadataStorageWrapper) Read(_ context.Context, _ xkube.Namespace, _ string, _ contracts.ReadOpts) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
 func (wrapper *keeperMetadataStorageWrapper) Update(_ context.Context, _ *secretv0alpha1.Keeper, _ string) (*secretv0alpha1.Keeper, error) {
@@ -496,12 +496,12 @@ func (wrapper *keeperMetadataStorageWrapper) Delete(_ context.Context, _ xkube.N
 func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace) ([]secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
+func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string, opts contracts.ReadOpts) (secretv0alpha1.KeeperConfig, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
 		return nil, context.DeadlineExceeded
 	}
-	cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name)
+	cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name, opts)
 	if err != nil {
 		return cfg, err
 	}

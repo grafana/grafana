@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -34,14 +35,14 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("get the system keeper config", func(t *testing.T) {
-		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", nil)
+		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", nil, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Nil(t, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
 		keeperTest := "kp-test"
-		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", &keeperTest)
+		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, "default", &keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.NotNil(t, keeperConfig)
 		require.NotEmpty(t, keeperConfig.Type())

@@ -16,11 +16,11 @@ var (
 // KeeperMetadataStorage is the interface for wiring and dependency injection.
 type KeeperMetadataStorage interface {
 	Create(ctx context.Context, keeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error)
-	Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error)
+	Read(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*secretv0alpha1.Keeper, error)
 	Update(ctx context.Context, keeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error)
 	Delete(ctx context.Context, namespace xkube.Namespace, name string) error
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.Keeper, error)
-	GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error)
+	GetKeeperConfig(ctx context.Context, namespace string, name *string, opts ReadOpts) (secretv0alpha1.KeeperConfig, error)
 }
 
 // ErrKeeperInvalidSecureValues is returned when a Keeper references SecureValues that do not exist.
