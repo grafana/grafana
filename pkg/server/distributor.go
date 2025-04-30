@@ -112,20 +112,7 @@ func (ds *DistributorServer) Search(ctx context.Context, r *resource.ResourceSea
 
 	if err != nil {
 		fmt.Println("err getting replication set ", err)
-	} else {
-		fmt.Println("replication set instance ", len(rs.Instances))
-
-		for _, ins := range rs.Instances {
-			fmt.Println("instance: ", ins.Addr)
-		}
-
-		allhealthy, err := ds.ring.GetAllHealthy(ringOp)
-		fmt.Println("here err: ", err)
-		fmt.Println("here all healthy: ", len(allhealthy.Instances))
-
-		for _, ins2 := range allhealthy.Instances {
-			fmt.Println("healthy instance: ", ins2)
-		}
+		return nil, err
 	}
 
 	client, err := ds.clientPool.GetClientForInstance(rs.Instances[0])
