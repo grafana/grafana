@@ -67,8 +67,6 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
   onSubmit = (form: ImportDashboardDTO) => {
     reportInteraction(IMPORT_FINISHED_EVENT_NAME);
 
-    console.log({ form });
-
     this.props.importDashboard(form);
 
     const dashboard = form as unknown as Dashboard;
@@ -83,8 +81,6 @@ class ImportDashboardOverviewUnConnected extends PureComponent<Props, State> {
     ].map(Number);
 
     const uid = form.uid;
-
-    console.log({ uid, assetIdList });
 
     window.parent.postMessage({ source: 'grafana-dashboard-integration-event', payload: { uid, assetIdList } }, '*');
   };
