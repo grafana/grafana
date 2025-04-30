@@ -11,6 +11,7 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 )
@@ -108,7 +109,7 @@ func TestOutboxStore(t *testing.T) {
 
 	ctx := context.Background()
 
-	outbox := ProvideOutboxQueue(testDB)
+	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
 
 	m1 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
@@ -176,7 +177,7 @@ func TestOutboxStoreProperty(t *testing.T) {
 	for range 10 {
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
-		outbox := ProvideOutboxQueue(testDB)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
 
 		model := newOutboxStoreModel()
 

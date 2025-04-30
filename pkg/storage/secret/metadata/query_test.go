@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"database/sql"
 	"testing"
 	"text/template"
 
@@ -274,6 +275,97 @@ func TestSecureValueQueries(t *testing.T) {
 						Name:        "name",
 						Namespace:   "ns",
 						Phase:       "Succeeded",
+					},
+				},
+			},
+		},
+	})
+}
+
+func TestSecureValueOutboxQueries(t *testing.T) {
+	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
+		RootDir: "testdata",
+		Templates: map[*template.Template][]mocks.TemplateTestCase{
+			sqlSecureValueOutboxAppend: {
+				{
+					Name: "no-encrypted-secret",
+					Data: &appendSecureValueOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &outboxMessageDB{
+							MessageID:   "my-uuid",
+							MessageType: "some-type",
+							Name:        "name",
+							Namespace:   "namespace",
+							ExternalID:  sql.NullString{Valid: true, String: "external-id"},
+							KeeperName:  sql.NullString{Valid: true, String: "keeper"},
+							Created:     1234,
+						},
+					},
+				},
+				{
+					Name: "no-external-id",
+					Data: &appendSecureValueOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &outboxMessageDB{
+							MessageID:       "my-uuid",
+							MessageType:     "some-type",
+							Name:            "name",
+							Namespace:       "namespace",
+							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
+							KeeperName:      sql.NullString{Valid: true, String: "keeper"},
+							Created:         1234,
+						},
+					},
+				},
+				{
+					Name: "no-keeper-name",
+					Data: &appendSecureValueOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &outboxMessageDB{
+							MessageID:       "my-uuid",
+							MessageType:     "some-type",
+							Name:            "name",
+							Namespace:       "namespace",
+							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
+							ExternalID:      sql.NullString{Valid: true, String: "external-id"},
+							Created:         1234,
+						},
+					},
+				},
+				{
+					Name: "all-fields-present",
+					Data: &appendSecureValueOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &outboxMessageDB{
+							MessageID:       "my-uuid",
+							MessageType:     "some-type",
+							Name:            "name",
+							Namespace:       "namespace",
+							EncryptedSecret: sql.NullString{Valid: true, String: "encrypted"},
+							ExternalID:      sql.NullString{Valid: true, String: ""}, // can be empty string
+							KeeperName:      sql.NullString{Valid: true, String: "keeper"},
+							Created:         1234,
+						},
+					},
+				},
+			},
+
+			sqlSecureValueOutboxReceiveN: {
+				{
+					Name: "basic",
+					Data: &receiveNSecureValueOutbox{
+						SQLTemplate:  mocks.NewTestingSQLTemplate(),
+						ReceiveLimit: 10,
+					},
+				},
+			},
+
+			sqlSecureValueOutboxDelete: {
+				{
+					Name: "basic",
+					Data: &deleteSecureValueOutbox{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						MessageID:   "my-uuid",
 					},
 				},
 			},
