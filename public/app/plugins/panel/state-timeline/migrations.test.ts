@@ -52,6 +52,11 @@ const discreteInV8 = {
       color: '#FF0', // Should get linked to the range map below
       text: 'AAA',
     },
+    {
+      $$hashKey: 'object:369',
+      color: '#F0F', // Should get linked to the range map below
+      text: 'ONE',
+    },
   ],
   crosshairColor: '#8F070C',
   display: 'timeline',

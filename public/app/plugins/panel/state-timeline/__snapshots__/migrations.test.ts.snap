@@ -15,6 +15,7 @@ exports[`Timeline Migrations from discrete panel 1`] = `
               "color": "#7EB26D",
             },
             "111": {
+              "color": "#F0F",
               "text": "ONE",
             },
             "20": {
@@ -34,6 +35,9 @@ exports[`Timeline Migrations from discrete panel 1`] = `
             },
             "AAA": {
               "color": "#FF0",
+            },
+            "ONE": {
+              "color": "#F0F",
             },
           },
           "type": "value",
