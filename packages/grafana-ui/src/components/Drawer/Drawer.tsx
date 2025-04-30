@@ -55,7 +55,7 @@ export interface Props {
   onClose: () => void;
 
   /**
-   * Drawer wrapper z-index, defaults to 1040
+   * Drawer wrapper z-index, defaults to 1050
    */
   zIndex?: number;
 
