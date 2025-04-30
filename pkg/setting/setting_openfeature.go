@@ -26,7 +26,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 
 	strURL := config.Key("url").MustString("")
 
-	if strURL != "" && cfg.OpenFeature.ProviderType == GOFFProviderType {
+	if cfg.OpenFeature.ProviderType == GOFFProviderType {
 		u, err := url.Parse(strURL)
 		if err != nil {
 			return fmt.Errorf("invalid feature provider url: %w", err)
