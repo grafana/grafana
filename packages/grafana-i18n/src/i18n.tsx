@@ -154,5 +154,5 @@ export function useTranslate() {
 
 export function Trans(props: TransProps) {
   const Component = transComponent ?? I18NextTrans;
-  return <Component {...props} />;
+  return <Component shouldUnescape {...props} />;
 }
