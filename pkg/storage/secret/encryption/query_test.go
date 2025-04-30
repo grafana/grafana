@@ -132,7 +132,7 @@ func TestDataKeyQueries(t *testing.T) {
 					Data: &disableDataKeys{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Namespace:   "ns",
-						Updated:     time.Unix(1735689600, 0),
+						Updated:     time.Unix(1735689600, 0).UTC(),
 					},
 				},
 			},
@@ -163,7 +163,7 @@ func TestDataKeyQueries(t *testing.T) {
 							"SELECT uid, label, encrypted_data from secret_data_key where namespace = 'ns'",
 						},
 						Provider: "provider1",
-						Updated:  time.Unix(1735689600, 0),
+						Updated:  time.Unix(1735689600, 0).UTC(),
 					},
 				},
 				{
@@ -175,7 +175,7 @@ func TestDataKeyQueries(t *testing.T) {
 							"SELECT uid, label, encrypted_data from secret_data_key where namespace = 'ns2'",
 						},
 						Provider: "provider1",
-						Updated:  time.Unix(1735689600, 0),
+						Updated:  time.Unix(1735689600, 0).UTC(),
 					},
 				},
 			},

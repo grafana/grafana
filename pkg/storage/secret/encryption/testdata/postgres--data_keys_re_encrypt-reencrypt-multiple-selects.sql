@@ -5,5 +5,5 @@ SET
   "secret_data_key".label = updates.label,
   "secret_data_key".encrypted_data = updates.encrypted_data,
   "secret_data_key".provider = 'provider1',
-  "secret_data_key".updated = '2025-01-01 02:00:00 +0200 EET'
+  "secret_data_key".updated = '2025-01-01 00:00:00 +0000 UTC'
 ;
