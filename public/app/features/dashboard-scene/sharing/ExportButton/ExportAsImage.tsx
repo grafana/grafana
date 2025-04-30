@@ -2,22 +2,19 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { useState } from 'react';
 import { useMeasure } from 'react-use';
-import { lastValueFrom } from 'rxjs';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, getBackendSrv } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, Field, LoadingBar, RadioButtonGroup, Alert, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
-import { DashboardScene } from '../../scene/DashboardScene';
-import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
-import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 import { ShareExportTab } from '../ShareExportTab';
+
+import { generateDashboardImage } from './utils';
 
 enum ImageFormat {
   PNG = 'png',
@@ -52,51 +49,17 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     setError(null);
 
     try {
-      if (!config.rendererAvailable) {
-        throw new Error('Image renderer plugin not installed');
-      }
-
-      // Calculate dimensions
-      const height = calculateDashboardHeight(dashboard);
-      const scale = config.rendererDefaultImageScale || 1;
-      const scaledHeight = Math.round(height * scale);
-
-      // Use a width that matches the dashboard's grid system (24 columns)
-      const GRID_COLUMN_COUNT = 24;
-      const GRID_CELL_WIDTH = 70; // Approximate width per grid column
-      const width = Math.round(GRID_COLUMN_COUNT * GRID_CELL_WIDTH * scale);
-
-      const imageUrl = getDashboardUrl({
-        uid: dashboard.state.uid,
-        currentQueryParams: location.search,
-        updateQuery: {
-          theme: config.theme2.isDark ? 'dark' : 'light',
-          width,
-          height: scaledHeight,
-          scale,
-          kiosk: true,
-          hideNav: true,
-          orgId: String(config.bootData.user.orgId),
-          fullPageImage: true,
-        },
-        absolute: true,
-        render: true,
+      const result = await generateDashboardImage({
+        dashboard,
+        format,
+        scale: config.rendererDefaultImageScale || 1,
       });
 
-      const response = await lastValueFrom(
-        getBackendSrv().fetch<BlobPart>({
-          url: imageUrl,
-          responseType: 'blob',
-        })
-      );
-
-      if (!response.ok) {
-        throw new Error(`Failed to generate image: ${response.status} ${response.statusText}`);
+      if (result.error) {
+        throw new Error(result.error);
       }
 
-      const blob = new Blob([response.data], { type: `image/${format}` });
-      setImageBlob(blob);
-
+      setImageBlob(result.blob);
       DashboardInteractions.toolbarShareClick();
     } catch (error) {
       console.error('Error exporting image:', error);
@@ -189,58 +152,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       </div>
     </>
   );
-}
-
-function calculateDashboardHeight(dashboard: DashboardScene): number {
-  // First try to calculate based on grid layout
-  let totalHeight = 0;
-  const layout = dashboard.state.body;
-
-  if (layout instanceof DefaultGridLayoutManager) {
-    const gridItems = layout.state.grid.state.children.filter(
-      (item): item is DashboardGridItem => item instanceof DashboardGridItem
-    );
-    for (const item of gridItems) {
-      const itemHeight = item.state.height ?? 0;
-      const y = item.state.y ?? 0;
-      totalHeight = Math.max(totalHeight, y + itemHeight);
-    }
-
-    // Convert grid units to pixels and add extra padding
-    const GRID_CELL_HEIGHT = 30;
-    const GRID_CELL_MARGIN = 8;
-    const EXTRA_PADDING = 100; // Additional padding to ensure we capture everything
-
-    // Calculate total height with margins between panels
-    totalHeight = totalHeight * GRID_CELL_HEIGHT + (totalHeight - 1) * GRID_CELL_MARGIN + EXTRA_PADDING;
-  }
-
-  // Get the dashboard container
-  const dashboardContainer = document.querySelector('.dashboard-container');
-  if (dashboardContainer instanceof HTMLElement) {
-    // Get all panels
-    const panels = document.querySelectorAll('.panel-container');
-    let maxPanelBottom = 0;
-
-    panels.forEach((panel) => {
-      const rect = panel.getBoundingClientRect();
-      maxPanelBottom = Math.max(maxPanelBottom, rect.bottom);
-    });
-
-    // Get the container's top position
-    const containerRect = dashboardContainer.getBoundingClientRect();
-    const containerTop = containerRect.top;
-
-    // Calculate height based on the difference between the bottom-most panel and container top
-    const heightFromPanels = maxPanelBottom - containerTop + 100; // Add 100px padding
-
-    // Use the maximum of grid calculation and panel positions
-    totalHeight = Math.max(totalHeight, heightFromPanels);
-  }
-
-  // Ensure we have a minimum height
-  const MIN_HEIGHT = 500;
-  return Math.max(totalHeight, MIN_HEIGHT);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
