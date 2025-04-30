@@ -28,6 +28,7 @@ jobs:
   dispatch-job:
     permissions:
       id-token: write
+    runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana-security-mirror'
     steps:
       - name: "Get vault secrets"
