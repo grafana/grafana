@@ -66,13 +66,13 @@ $(NGALERT_SPEC_TARGET):
 
 $(MERGED_SPEC_TARGET): swagger-oss-gen swagger-enterprise-gen $(NGALERT_SPEC_TARGET)  ## Merge generated and ngalert API specs
 	# known conflicts DsPermissionType, AddApiKeyCommand, Json, Duration (identical models referenced by both specs)
-	GODEBUG=gotypesalias=0 @$(TOOLS) swagger mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
+	GODEBUG=gotypesalias=0 $(swagger) mixin -q $(SPEC_TARGET) $(ENTERPRISE_SPEC_TARGET) $(NGALERT_SPEC_TARGET) --ignore-conflicts -o $(MERGED_SPEC_TARGET)
 
 .PHONY: swagger-oss-gen
 swagger-oss-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for OSS"
 	rm -f $(SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(TOOLS) swagger generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -90,7 +90,7 @@ else
 swagger-enterprise-gen: ## Generate API Swagger specification
 	@echo "re-generating swagger for enterprise"
 	rm -f $(ENTERPRISE_SPEC_TARGET)
-	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(TOOLS) swagger generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
+	SWAGGER_GENERATE_EXTENSION=false GODEBUG=gotypesalias=0 $(swagger) generate spec -q -m -w pkg/server -o $(ENTERPRISE_SPEC_TARGET) \
 	-x "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions" \
 	-x "github.com/grpc-ecosystem/grpc-gateway/v2/protoc-gen-openapiv2/options" \
 	-x "github.com/prometheus/alertmanager" \
@@ -104,7 +104,7 @@ swagger-gen: gen-go $(MERGED_SPEC_TARGET) swagger-validate
 
 .PHONY: swagger-validate
 swagger-validate: $(MERGED_SPEC_TARGET) # Validate API spec
-	GODEBUG=gotypesalias=0 $(TOOLS) swagger validate --skip-warnings $(<)
+	GODEBUG=gotypesalias=0 $(swagger) validate --skip-warnings $(<)
 
 .PHONY: swagger-clean
 swagger-clean:
@@ -200,8 +200,8 @@ gen-go:
 .PHONY: fix-cue
 fix-cue:
 	@echo "formatting cue files"
-	@$(TOOLS) cue fix kinds/**/*.cue
-	@$(TOOLS) cue fix public/app/plugins/**/**/*.cue
+	$(cue) fix kinds/**/*.cue
+	$(cue) fix public/app/plugins/**/**/*.cue
 
 .PHONY: gen-jsonnet
 gen-jsonnet:
@@ -258,7 +258,7 @@ build: build-go build-js ## Build backend and frontend.
 
 .PHONY: run
 run: ## Build and run web server on filesystem changes. See /.bra.toml for configuration.
-	@$(TOOLS) bra run
+	$(bra) run
 
 .PHONY: run-go
 run-go: ## Build and run web server immediately.
@@ -350,7 +350,7 @@ test: test-go test-js ## Run all tests.
 .PHONY: golangci-lint
 golangci-lint:
 	@echo "lint via golangci-lint"
-	@$(TOOLS) golangci-lint run \
+	$(golangci-lint) run \
 		--config .golangci.yml \
 		$(if $(GO_BUILD_TAGS),--build-tags $(GO_BUILD_TAGS)) \
 		$(GO_LINT_FILES)
@@ -365,7 +365,7 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) @$(TOOLS) golangci-lint run --config .golangci.yml
+		$(XARGSR) $(golangci-lint) run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck
