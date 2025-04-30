@@ -1,20 +1,36 @@
-## Adding New Tools or upgrading existing tools
+## API
 
-### Adding tools
+### Adding and Upgrading tools
 
 To add a new tool please execute the installation script
 
 ```bash
-.citools/install.sh <name>
+install.sh <name>
 ```
+
+#### Example
 
 Following command will add lefthook to the tracked tools if it was not installed previously, or update the tool version
 
 ```bash
-.citools/install.sh github.com/evilmartians/lefthook@v1.11.10
+install.sh github.com/evilmartians/lefthook@v1.11.10
 ```
 
-The script will create a go module under `.citools/src/<toolname>` directory to track the tool version and create a reference in the `.citools/Variables.mk` file
+Behind the scene the script will do a couple of simple steps
+
+- Create a go module under `.citools/src/<toolname>` directory to track the tool version and it's dependencies
+- Create a reference to the tool binary in the `.citools/Variables.mk` file
+
+### Using tools in the Makefile
+
+Our makefile imports .citools/Variables.mk, you can simply call a tool binary using make syntax
+
+#### Example:
+
+```make
+run:
+    $(bra) run
+```
 
 ### Using tracked tools w/o makefile
 
