@@ -139,6 +139,10 @@ const NotificationPoliciesFilter = ({
                 },
                 width: 28,
                 isClearable: true,
+                placeholder: t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                ),
               }}
               selectedContactPointName={searchParams.get('contactPoint') ?? undefined}
             />

@@ -243,6 +243,10 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
                 id="contactPointFilter"
                 value={filterState.contactPoint ?? undefined}
                 width={40}
+                placeholder={t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                )}
                 isClearable
                 onChange={(contactPoint) => {
                   handleContactPointChange(contactPoint?.spec.title ?? '');
