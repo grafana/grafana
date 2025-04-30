@@ -149,7 +149,7 @@ export function t(id: string, defaultMessage: string, values?: Record<string, un
 }
 
 export function useTranslate() {
-  return t;
+  return { t };
 }
 
 export function Trans(props: TransProps) {

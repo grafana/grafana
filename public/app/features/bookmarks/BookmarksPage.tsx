@@ -11,7 +11,7 @@ import { Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 export function BookmarksPage() {
-  const t = useTranslate();
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
   const pinnedItems = usePinnedItems();
   const navTree = useSelector((state) => state.navBarTree);

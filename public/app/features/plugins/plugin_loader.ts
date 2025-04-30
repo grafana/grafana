@@ -8,7 +8,8 @@ import {
   PluginMeta,
   throwIfAngular,
 } from '@grafana/data';
-import { addResourceBundle, DEFAULT_LANGUAGE, getResolvedLanguage } from '@grafana/i18n';
+import { DEFAULT_LANGUAGE } from '@grafana/i18n';
+import { addResourceBundle, getResolvedLanguage } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 

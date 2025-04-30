@@ -1,6 +1,6 @@
 import { i18n } from 'i18next';
 
-import * as i18nModule from '@grafana/i18n';
+import * as i18nModule from '@grafana/i18n/internal';
 
 import { server } from './loader/pluginLoader.mock';
 import { SystemJS } from './loader/systemjs';

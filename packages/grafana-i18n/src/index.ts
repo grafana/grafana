@@ -22,16 +22,5 @@ export {
   PSEUDO_LOCALE,
   DEFAULT_LANGUAGE,
 } from './constants';
-export {
-  addResourceBundle,
-  changeLanguage,
-  getI18nInstance,
-  getLanguage,
-  getResolvedLanguage,
-  initPluginTranslations,
-  initTranslations,
-  t,
-  Trans,
-  useTranslate,
-} from './i18n';
+export { initPluginTranslations, Trans, useTranslate } from './i18n';
 export type { TransProps } from './types';

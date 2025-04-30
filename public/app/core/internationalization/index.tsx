@@ -1,12 +1,7 @@
 import { ReactElement } from 'react';
 
-import {
-  changeLanguage as changeLanguageCore,
-  initTranslations,
-  t as tCore,
-  Trans as TransCore,
-  TransProps,
-} from '@grafana/i18n';
+import { Trans as TransCore, TransProps } from '@grafana/i18n';
+import { changeLanguage as changeLanguageCore, initTranslations, t as tCore } from '@grafana/i18n/internal';
 
 import { NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';

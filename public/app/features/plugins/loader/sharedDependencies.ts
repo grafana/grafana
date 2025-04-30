@@ -88,7 +88,7 @@ export const sharedDependenciesMap = {
   d3: () => import('d3'),
   emotion: () => import('@emotion/css'),
   // bundling grafana-ui in plugins requires sharing i18next state
-  i18next: () => import('@grafana/i18n').then((module) => module.getI18nInstance()),
+  i18next: () => import('@grafana/i18n/internal').then((module) => module.getI18nInstance()),
   jquery: {
     default: jquery,
     __useDefault: true,
