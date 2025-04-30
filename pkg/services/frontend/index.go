@@ -49,7 +49,7 @@ var (
 )
 
 func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProvider, error) {
-	assets, err := webassets.GetWebAssets(context.Background(), "build", cfg, license)
+	assets, err := webassets.GetWebAssets(context.Background(), cfg, license)
 	if err != nil {
 		return nil, err
 	}
