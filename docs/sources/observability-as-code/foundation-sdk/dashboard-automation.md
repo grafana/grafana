@@ -1,9 +1,10 @@
 ---
 description:
 keywords:
-  - terraform
+  - foundation SDK
   - dashboard provisioning
   - CI/CD
+  - GitHub Actions
 labels:
   products:
     - cloud
