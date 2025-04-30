@@ -9,12 +9,12 @@ labels:
     - enterprise
     - oss
 menuTitle: Learn
-title: Grafana Alerting Guides & Tutorials
+title: Grafana Alerting Guides
 weight: 170
 ---
 
-# Grafana Alerting Guides & Tutorials
+# Grafana Alerting Guides
 
-This section provides a set of guides for useful alerting practices and recommendations.
+This section provides a set of guides with useful alerting practices and recommendations.
 
 {{< section >}}
