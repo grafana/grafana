@@ -30,10 +30,10 @@ import { ExportMode, ResourceExport } from './ExportButton/ResourceExport';
 import { SceneShareTabState, ShareView } from './types';
 
 export interface ExportableResource {
-  kind: 'Dashboard';
-  spec: Dashboard | DashboardModel | DashboardV2Spec | { error: unknown };
-  metadata: DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta>;
   apiVersion: string;
+  kind: 'Dashboard';
+  metadata: DashboardWithAccessInfo<DashboardV2Spec>['metadata'] | Partial<ObjectMeta>;
+  spec: Dashboard | DashboardModel | DashboardV2Spec | { error: unknown };
   // A placeholder for now because as code tooling expects it
   status: {};
 }
@@ -118,11 +118,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
       return {
         json: {
+          apiVersion: scene.serializer.apiVersion ?? '',
           kind: 'Dashboard',
           metadata,
           spec: exportable,
           status: {},
-          apiVersion: scene.serializer.apiVersion ?? '',
         },
         initialSaveModelVersion,
         hasLibraryPanels: Object.values(origDashboard.elements).some((element) => element.kind === 'LibraryPanel'),
@@ -134,11 +134,11 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
       return {
         json: {
+          apiVersion: scene.serializer.apiVersion ?? '',
           kind: 'Dashboard',
           metadata,
           spec,
           status: {},
-          apiVersion: scene.serializer.apiVersion ?? '',
         },
         initialSaveModelVersion,
         hasLibraryPanels: undefined,
@@ -153,12 +153,12 @@ export class ShareExportTab extends SceneObjectBase<ShareExportTabState> impleme
 
       return {
         json: {
+          // Forcing V2 version here because in this case we have v1 serializer
+          apiVersion: `${K8S_V2_DASHBOARD_API_CONFIG.group}/${K8S_V2_DASHBOARD_API_CONFIG.version}`,
           kind: 'Dashboard',
           metadata,
           spec: exportableV2,
           status: {},
-          // Forcing V2 version here because in this case we have v1 serializer
-          apiVersion: `${K8S_V2_DASHBOARD_API_CONFIG.group}/${K8S_V2_DASHBOARD_API_CONFIG.version}`,
         },
         initialSaveModelVersion,
       };
