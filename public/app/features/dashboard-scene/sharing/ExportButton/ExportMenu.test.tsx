@@ -14,6 +14,7 @@ describe('ExportMenu', () => {
   it('should render menu items', async () => {
     setup();
     expect(await screen.findByTestId(selector.exportAsJson)).toBeInTheDocument();
+    expect(await screen.findByTestId(selector.exportAsImage)).toBeInTheDocument();
   });
 });
 
@@ -23,11 +24,13 @@ function setup() {
     pluginId: 'table',
     key: 'panel-12',
   });
+
   const dashboard = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
+
   render(<ExportMenu dashboard={dashboard} />);
 }

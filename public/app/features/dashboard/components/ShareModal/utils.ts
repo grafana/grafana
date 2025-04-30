@@ -181,4 +181,5 @@ export const shareDashboardType: {
   report: 'report',
   publicDashboard: 'public_dashboard',
   inviteUser: 'invite_user',
+  image: 'image',
 };
