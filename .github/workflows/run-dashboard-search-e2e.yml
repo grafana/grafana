@@ -25,16 +25,16 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Pin Go version to mod file
-        uses: actions/setup-go@111f3307d8850f501ac008e886eec1fd1932a34
+        uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
           cache: true
       - run: go version
-      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: 'yarn'
@@ -94,7 +94,7 @@ jobs:
 
       steps:
         - name: Checkout repository
-          uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+          uses: actions/checkout@v4
         - name: Restore Cached Node Modules
           uses: actions/cache@v3
           with:
