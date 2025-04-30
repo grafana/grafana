@@ -55,7 +55,7 @@ func setupTestService(t *testing.T, cfg *setting.Cfg) (*OSSKeeperService, error)
 	database := database.ProvideDatabase(testDB)
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, features)
 	require.NoError(t, err)
 
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
