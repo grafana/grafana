@@ -14,12 +14,8 @@ jobs:
     if: github.repository == 'grafana/grafana'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4 # 4.2.2
-        with:
-          persist-credentials: false
-          fetch-depth: 1
-          fetch-tags: false
+      - name: Clone
+        run: git clone --depth=1 "https://github.com/grafana/grafana.git"
       - run: git config --local user.name "github-actions[bot]"
       - run: git config --local user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --local --add --bool push.autoSetupRemote true
