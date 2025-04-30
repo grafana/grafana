@@ -297,8 +297,8 @@ export interface RulerGrafanaRuleDTO<T = GrafanaRuleDefinition> {
   grafana_alert: T;
   for?: string;
   keep_firing_for?: string;
-  annotations: Annotations;
-  labels: Labels;
+  annotations?: Annotations;
+  labels?: Labels;
 }
 
 export type TopLevelGrafanaRuleDTOField = keyof Omit<RulerGrafanaRuleDTO, 'grafana_alert'>;
