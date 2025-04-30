@@ -47,7 +47,7 @@ function install_tool() {
   MOD_FILE="$TOOL_DIR/go.mod"
 
   mkdir -p "$TOOL_DIR"
-  cd "$TOOL_DIR"
+#  cd "$TOOL_DIR"
 
   # Create a new module if go.mod doesn't exist
   if [ ! -f go.mod ]; then
@@ -71,15 +71,10 @@ function run_tool() {
     exit 1
   fi
 
-#  cd "$TOOL_DIR"
+  TOOL_BIN=$(GOWORK=off go tool -modfile="$MOD_FILE" -n "$TOOL_NAME")
+  echo "Executing the tool binary: $TOOL_BIN"
 
-  echo "@@@@@@@@@@"
-  pwd
-  go tool -modfile=$MOD_FILE -n
-  echo "@@@@@@@@@@"
-
-  # Run the Go tool with the specific modfile
-  go tool -modfile="$MOD_FILE" "$TOOL_NAME" "$@"
+  "$TOOL_BIN" "$@"
 }
 
 if [ "$1" == "install" ]; then

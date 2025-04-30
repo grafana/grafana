@@ -6,6 +6,7 @@ WIRE_TAGS = "oss"
 
 -include local/Makefile
 include .bingo/Variables.mk
+include .citools/Variables.mk
 
 GO = go
 GO_VERSION = 1.24.3
@@ -115,11 +116,11 @@ cleanup-old-git-hooks:
 
 .PHONY: lefthook-install
 lefthook-install: cleanup-old-git-hooks # install lefthook for pre-commit hooks
-	@$(TOOLS) lefthook install -f
+	$(lefthook) install -f
 
 .PHONY: lefthook-uninstall
 lefthook-uninstall:
-	@$(TOOLS) lefthook uninstall
+	$(lefthook) uninstall
 
 ##@ OpenAPI 3
 OAPI_SPEC_TARGET = public/openapi3.json
