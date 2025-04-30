@@ -83,7 +83,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 		resource.Spec.Keeper = &sv.Keeper.String
 	}
 	if sv.Ref.Valid {
-		resource.Spec.Ref = sv.Ref.String
+		resource.Spec.Ref = &sv.Ref.String
 	}
 	if sv.Message.Valid {
 		resource.Status.Message = sv.Message.String
@@ -200,11 +200,6 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
-	var ref *string
-	if sv.Spec.Ref != "" {
-		ref = &sv.Spec.Ref
-	}
-
 	var statusMessage *string
 	if sv.Status.Message != "" {
 		statusMessage = &sv.Status.Message
@@ -227,7 +222,7 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Description: sv.Spec.Description,
 		Keeper:      toNullString(sv.Spec.Keeper),
 		Decrypters:  toNullString(decrypters),
-		Ref:         toNullString(ref),
+		Ref:         toNullString(sv.Spec.Ref),
 		ExternalID:  externalID,
 	}, nil
 }
