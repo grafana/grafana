@@ -1,6 +1,11 @@
 package runner
 
 import (
+	"bytes"
+	"context"
+	"strings"
+
+	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
@@ -27,11 +32,12 @@ type AppBuilderConfig struct {
 	ManagedKinds        map[schema.GroupVersion][]resource.Kind
 	CustomConfig        any
 
-	groupVersion schema.GroupVersion
+	group string
 }
 
 type AppBuilder interface {
 	builder.APIGroupBuilder
+	builder.APIGroupVersionsProvider
 	builder.APIGroupMutation
 	builder.APIGroupValidation
 	SetApp(app app.App)
@@ -52,31 +58,56 @@ func (b *appBuilder) SetApp(app app.App) {
 	b.app = app
 }
 
-// GetGroupVersion implements APIGroupBuilder.GetGroupVersion
-func (b *appBuilder) GetGroupVersion() schema.GroupVersion {
-	return b.config.groupVersion
+// GetGroupVersions implements APIGroupBuilder.GetGroupVersions
+func (b *appBuilder) GetGroupVersions() []schema.GroupVersion {
+	gvs := make([]schema.GroupVersion, 0, len(b.config.ManagedKinds))
+	for gv := range b.config.ManagedKinds {
+		gvs = append(gvs, gv)
+	}
+	return gvs
 }
 
 // InstallSchema implements APIGroupBuilder.InstallSchema
 func (b *appBuilder) InstallSchema(scheme *runtime.Scheme) error {
-	gv := b.GetGroupVersion()
+	// Make a map of GroupKind to a single resource.Kind to use as __internal
+	internalKinds := make(map[string]resource.Kind)
 	for _, kinds := range b.config.ManagedKinds {
 		for _, kind := range kinds {
-			scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()), kind.ZeroValue())
-			scheme.AddKnownTypeWithName(gv.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
-
-			// Link this group to the internal representation.
-			// This is used for server-side-apply (PATCH), and avoids the error:
-			// "no kind is registered for the type"
-			gvInternal := schema.GroupVersion{
-				Group:   gv.Group,
-				Version: runtime.APIVersionInternal,
+			cur, ok := internalKinds[kind.Kind()]
+			if !ok {
+				internalKinds[kind.Kind()] = kind
+				continue
 			}
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
-			scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+
+			// Compare versions, set the latest to be the correct one in the map
+			// string compare for now at least
+			if strings.Compare(kind.Version(), cur.Version()) > 0 {
+				internalKinds[kind.Kind()] = kind
+			}
 		}
 	}
-	return scheme.SetVersionPriority(gv)
+	for _, kind := range internalKinds {
+		// Link this group to the internal representation.
+		// This is used for server-side-apply (PATCH), and avoids the error:
+		// "no kind is registered for the type"
+		gvInternal := schema.GroupVersion{
+			Group:   kind.Group(),
+			Version: runtime.APIVersionInternal,
+		}
+		scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()), kind.ZeroValue())
+		scheme.AddKnownTypeWithName(gvInternal.WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+	}
+	for _, kinds := range b.config.ManagedKinds {
+		for _, kind := range kinds {
+			scheme.AddKnownTypeWithName(kind.GroupVersionKind(), kind.ZeroValue())
+			scheme.AddKnownTypeWithName(kind.GroupVersionKind().GroupVersion().WithKind(kind.Kind()+"List"), kind.ZeroListValue())
+			if internal, ok := internalKinds[kind.Kind()]; ok {
+				scheme.AddConversionFunc(kind.ZeroValue(), internal.ZeroValue(), b.conversionFuncFactory(kind, internal))
+				scheme.AddConversionFunc(internal.ZeroValue(), kind.ZeroValue(), b.conversionFuncFactory(internal, kind))
+			}
+		}
+	}
+	return scheme.SetVersionPriority(b.GetGroupVersions()...)
 }
 
 // UpdateAPIGroupInfo implements APIGroupBuilder.UpdateAPIGroupInfo
@@ -119,4 +150,22 @@ func (b *appBuilder) GetOpenAPIDefinitions() common.GetOpenAPIDefinitions {
 // GetAuthorizer implements APIGroupBuilder.GetAuthorizer
 func (b *appBuilder) GetAuthorizer() authorizer.Authorizer {
 	return b.config.Authorizer
+}
+
+func (b *appBuilder) conversionFuncFactory(source resource.Kind, target resource.Kind) conversion.ConversionFunc {
+	return conversion.ConversionFunc(func(in, out interface{}, s conversion.Scope) error {
+		raw := bytes.NewBuffer(nil)
+		if err := source.Codecs[resource.KindEncodingJSON].Write(raw, in.(resource.Object)); err != nil {
+			return err
+		}
+		converted, err := b.app.Convert(context.Background(), app.ConversionRequest{
+			SourceGVK: source.GroupVersionKind(),
+			TargetGVK: target.GroupVersionKind(),
+			Raw:       app.RawObject{Raw: raw.Bytes(), Encoding: resource.KindEncodingJSON},
+		})
+		if err != nil {
+			return err
+		}
+		return target.Codecs[resource.KindEncodingJSON].Read(bytes.NewReader(converted.Raw), out.(resource.Object))
+	})
 }

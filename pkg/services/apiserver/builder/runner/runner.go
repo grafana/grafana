@@ -89,33 +89,39 @@ func newAppBuilderGroup(cfg RunnerConfig, provider app.Provider) (appBuilderGrou
 		return appBuilderGroup{}, fmt.Errorf("app: %s has unsupported manifest location type: %s", manifest.ManifestData.AppName, manifest.Location.Type)
 	}
 
-	group := appBuilderGroup{
+	builderGroup := appBuilderGroup{
 		provider: provider,
 		builders: []AppBuilder{},
 	}
 
 	appBuilderConfig, ok := provider.SpecificConfig().(*AppBuilderConfig)
 	if !ok {
-		return group, fmt.Errorf("provider's SpecificConfig is not of type *AppBuilderConfig, got %T", provider.SpecificConfig())
+		return builderGroup, fmt.Errorf("provider's SpecificConfig is not of type *AppBuilderConfig, got %T", provider.SpecificConfig())
+	}
+	groups := make(map[string][]resource.Kind)
+	for gv, kinds := range appBuilderConfig.ManagedKinds {
+		groups[gv.Group] = append(groups[gv.Group], kinds...)
 	}
 
-	for gv, kinds := range appBuilderConfig.ManagedKinds {
+	for group, kinds := range groups {
 		confCopy := *appBuilderConfig
-		confCopy.ManagedKinds = map[schema.GroupVersion][]resource.Kind{
-			gv: kinds,
+		confCopy.ManagedKinds = make(map[schema.GroupVersion][]resource.Kind)
+		for _, kind := range kinds {
+			gv := kind.GroupVersionKind().GroupVersion()
+			confCopy.ManagedKinds[gv] = append(confCopy.ManagedKinds[gv], kind)
 		}
-		confCopy.groupVersion = gv
+		confCopy.group = group
 		if confCopy.CustomConfig != nil {
-			group.customConfig = confCopy.CustomConfig
+			builderGroup.customConfig = confCopy.CustomConfig
 		}
 		b, err := NewAppBuilder(confCopy)
 		if err != nil {
-			return group, err
+			return builderGroup, err
 		}
-		group.builders = append(group.builders, b)
+		builderGroup.builders = append(builderGroup.builders, b)
 		cfg.APIRegistrar.RegisterAPI(b)
 	}
-	return group, nil
+	return builderGroup, nil
 }
 
 func (g *appBuilderGroup) setApp(app app.App) {
