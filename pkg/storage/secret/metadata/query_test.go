@@ -5,6 +5,7 @@ import (
 	"text/template"
 
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
+	"k8s.io/utils/ptr"
 )
 
 func TestKeeperQueries(t *testing.T) {
@@ -140,10 +141,9 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			/** Not yet implemented
 			sqlSecureValueCreate: {
 				{
-					Name: "create",
+					Name: "create-null",
 					Data: &createSecureValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Row: &secureValueDB{
@@ -157,17 +157,40 @@ func TestSecureValueQueries(t *testing.T) {
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
 							Phase:       "creating",
-							Message:     nil,
+							Message:     toNullString(nil),
 							Description: "description",
-							Keeper:      ptr.To("keeper"),
-							Decrypters:  nil,
-							Ref:         nil,
+							Keeper:      toNullString(nil),
+							Decrypters:  toNullString(nil),
+							Ref:         toNullString(nil),
+							ExternalID:  "extId",
+						},
+					},
+				},
+				{
+					Name: "create-not-null",
+					Data: &createSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Row: &secureValueDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Phase:       "creating",
+							Message:     toNullString(ptr.To("message_test")),
+							Description: "description",
+							Keeper:      toNullString(ptr.To("keeper_test")),
+							Decrypters:  toNullString(ptr.To("decrypters_test")),
+							Ref:         toNullString(ptr.To("ref_test")),
 							ExternalID:  "extId",
 						},
 					},
 				},
 			},
-			*/
 			sqlSecureValueDelete: {
 				{
 					Name: "delete",
@@ -178,10 +201,9 @@ func TestSecureValueQueries(t *testing.T) {
 					},
 				},
 			},
-			/** Not yet implemented
-				sqlSecureValueUpdate: {
+			sqlSecureValueUpdate: {
 				{
-					Name: "update",
+					Name: "update-null",
 					Data: &updateSecureValue{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						Name:        "name",
@@ -197,17 +219,42 @@ func TestSecureValueQueries(t *testing.T) {
 							Updated:     5678,
 							UpdatedBy:   "user:cameron",
 							Phase:       "creating",
-							Message:     nil,
+							Message:     toNullString(nil),
 							Description: "description",
-							Keeper:      ptr.To("keeper"),
-							Decrypters:  nil,
-							Ref:         nil,
+							Keeper:      toNullString(nil),
+							Decrypters:  toNullString(nil),
+							Ref:         toNullString(nil),
+							ExternalID:  "extId",
+						},
+					},
+				},
+				{
+					Name: "update-not-null",
+					Data: &updateSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						Row: &secureValueDB{
+							GUID:        "abc",
+							Name:        "name",
+							Namespace:   "ns",
+							Annotations: `{"x":"XXXX"}`,
+							Labels:      `{"a":"AAA", "b", "BBBB"}`,
+							Created:     1234,
+							CreatedBy:   "user:ryan",
+							Updated:     5678,
+							UpdatedBy:   "user:cameron",
+							Phase:       "creating",
+							Message:     toNullString(ptr.To("message_test")),
+							Description: "description",
+							Keeper:      toNullString(ptr.To("keeper_test")),
+							Decrypters:  toNullString(ptr.To("decrypters_test")),
+							Ref:         toNullString(ptr.To("ref_test")),
 							ExternalID:  "extId",
 						},
 					},
 				},
 			},
-			*/
 			sqlSecureValueUpdateExternalId: {
 				{
 					Name: "updateExternalId",

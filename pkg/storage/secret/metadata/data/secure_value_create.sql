@@ -9,11 +9,19 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
   {{ .Ident "status_phase" }},
+  {{ if .Row.Message.Valid }}
   {{ .Ident "status_message" }},
+  {{ end }}
   {{ .Ident "description" }},
+  {{ if .Row.Keeper.Valid }}
   {{ .Ident "keeper" }},
+  {{ end }}
+  {{ if .Row.Decrypters.Valid }}
   {{ .Ident "decrypters" }},
+  {{ end }}
+  {{ if .Row.Ref.Valid }}
   {{ .Ident "ref" }},
+  {{ end }}
   {{ .Ident "external_id" }}
 ) VALUES (
   {{ .Arg .Row.GUID }},
@@ -26,10 +34,18 @@ INSERT INTO {{ .Ident "secret_secure_value" }} (
   {{ .Arg .Row.Updated }},
   {{ .Arg .Row.UpdatedBy }},
   {{ .Arg .Row.Phase }},
-  {{ .Arg .Row.Message }},
+  {{ if .Row.Message.Valid }}
+  {{ .Arg .Row.Message.String }},
+  {{ end }}
   {{ .Arg .Row.Description }},
-  {{ .Arg .Row.Keeper }},
-  {{ .Arg .Row.Decrypters }},
-  {{ .Arg .Row.Ref }},
+  {{ if .Row.Keeper.Valid }}
+  {{ .Arg .Row.Keeper.String }},
+  {{ end }}
+  {{ if .Row.Decrypters.Valid }}
+  {{ .Arg .Row.Decrypters.String }},
+  {{ end }}
+  {{ if .Row.Ref.Valid }}
+  {{ .Arg .Row.Ref.String }},
+  {{ end }}
   {{ .Arg .Row.ExternalID }}
 );

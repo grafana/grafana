@@ -63,7 +63,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, database, features)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
@@ -224,13 +224,13 @@ func nextAction(rng *rand.Rand, state *state) action {
 
 func buildState(database contracts.Database) *state {
 	const secureValuesNotInOutboxQueueQuery = `
-	SELECT 
+	SELECT
 		secret_secure_value.namespace,
 		secret_secure_value.name,
 		secret_secure_value.external_id
 	FROM secret_secure_value
 	WHERE NOT EXISTS (
-		SELECT 1 FROM secret_secure_value_outbox 
+		SELECT 1 FROM secret_secure_value_outbox
 		WHERE secret_secure_value_outbox.namespace = secret_secure_value.namespace
 					AND secret_secure_value_outbox.name = secret_secure_value.name
 		)
