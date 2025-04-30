@@ -45,6 +45,7 @@ export function TableCellNG(props: TableCellNGProps) {
     getActions,
     rowBg,
     onCellFilterAdded,
+    replaceVariables,
   } = props;
 
   const cellInspect = field.config?.custom?.inspect ?? false;
@@ -75,8 +76,8 @@ export function TableCellNG(props: TableCellNGProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const actions = useMemo(
-    () => (getActions ? getActions(frame, field, rowIdx) : []),
-    [getActions, frame, field, rowIdx]
+    () => (getActions ? getActions(frame, field, rowIdx, replaceVariables) : []),
+    [getActions, frame, field, rowIdx, replaceVariables]
   );
 
   useLayoutEffect(() => {
