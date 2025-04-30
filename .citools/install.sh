@@ -1,8 +1,4 @@
 #!/bin/bash
-# Usage:
-#   ./.citools/tools.sh <tool_name> [args...]
-#   ./.citools/tools.sh install <import_path>@<version>
-
 set -e
 set -o xtrace
 set -euo pipefail
@@ -42,6 +38,8 @@ if [ ! -f go.mod ]; then
 fi
 
 go get -tool --modfile="$MOD_FILE" "$IMPORT_PATH_WITH_VERSION"
-echo "Installed $TOOL_NAME into $TOOL_DIR"
+echo "Installed $TOOL_NAME"
+echo "  Directory: $TOOL_DIR"
+echo "  Modfile: $MOD_FILE"
 
 exec "$TOOLS_BASE_DIR/generate.sh"
