@@ -13,15 +13,14 @@ on:
       - "v*.*.*"
       - "release-*"
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
     permissions:
+      id-token: write
       contents: read
       actions: write
     env:

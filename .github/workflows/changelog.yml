@@ -46,9 +46,7 @@ on:
         default: false
         type: boolean
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
@@ -60,6 +58,7 @@ jobs:
       DRY_RUN: ${{ inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: write
       pull-requests: write
     steps:
