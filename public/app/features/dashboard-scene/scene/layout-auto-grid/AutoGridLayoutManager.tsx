@@ -4,12 +4,7 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import {
-  DashboardEditActionEvent,
-  NewObjectAddedToCanvasEvent,
-  ObjectRemovedFromCanvasEvent,
-  publishEditAction,
-} from '../../edit-pane/shared';
+import { NewObjectAddedToCanvasEvent, publishEditAction } from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';

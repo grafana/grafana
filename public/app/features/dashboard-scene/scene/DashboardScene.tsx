@@ -36,6 +36,7 @@ import { ShowConfirmModalEvent } from 'app/types/events';
 
 import { AnnoKeyManagerKind, AnnoKeySourcePath, ManagerKind, ResourceForCreate } from '../../apiserver/types';
 import { DashboardEditPane } from '../edit-pane/DashboardEditPane';
+import { publishEditAction } from '../edit-pane/shared';
 import { PanelEditor } from '../panel-edit/PanelEditor';
 import { DashboardSceneChangeTracker } from '../saving/DashboardSceneChangeTracker';
 import { SaveDashboardDrawer } from '../saving/SaveDashboardDrawer';
@@ -668,8 +669,18 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   }
 
   public switchLayout(layout: DashboardLayoutManager) {
-    this.setState({ body: this._layoutRestorer.getLayout(layout, this.state.body) });
-    this.state.body.activateRepeaters?.();
+    const currentLayout = this.state.body;
+
+    publishEditAction({
+      description: 'Switch layout',
+      source: this,
+      perform: () => {
+        this.setState({ body: layout });
+      },
+      undo: () => {
+        this.setState({ body: currentLayout });
+      },
+    });
   }
 
   public getLayout(): DashboardLayoutManager {
