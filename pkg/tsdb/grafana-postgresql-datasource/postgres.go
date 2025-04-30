@@ -227,7 +227,7 @@ func (s *Service) newInstanceSettings() datasource.InstanceFactoryFunc {
 
 		var cnnstr string
 		if s.features.IsEnabled(ctx, featuremgmt.FlagPostgresDSUsePGX) {
-			cnnstr, err = generateConnectionConfigPGX(dsInfo)
+			cnnstr, err = s.generateConnectionStringPGX(dsInfo)
 		} else {
 			cnnstr, err = s.generateConnectionString(dsInfo)
 		}
@@ -373,7 +373,7 @@ func (s *Service) generateConnectionString(dsInfo sqleng.DataSourceInfo) (string
 	return connStr, nil
 }
 
-func generateConnectionConfigPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
+func (s *Service) generateConnectionStringPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
 	params, err := parseConnectionParams(dsInfo)
 	if err != nil {
 		return "", err
@@ -382,7 +382,7 @@ func generateConnectionConfigPGX(dsInfo sqleng.DataSourceInfo) (string, error) {
 	connStr := buildBaseConnectionString(params)
 
 	// NOTE: we always set sslmode=disable in the connection string, we handle TLS manually later
-	connStr += " sslmode=disable"
+	connStr += " sslmode='disable'"
 
 	conf, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
