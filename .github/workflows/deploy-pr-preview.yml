@@ -12,7 +12,7 @@ on:
 jobs:
   deploy-pr-preview:
     if: "!github.event.pull_request.head.repo.fork"
-    uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@main
+    uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@main # zizmor: ignore[unpinned-uses]
     with:
       branch: ${{ github.head_ref }}
       event_number: ${{ github.event.number }}
