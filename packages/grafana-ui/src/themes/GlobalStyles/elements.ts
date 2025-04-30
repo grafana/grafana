@@ -276,6 +276,7 @@ export function getElementStyles(theme: GrafanaTheme2, isExtensionSidebarOpen?: 
     // 2. Correct font properties not being inherited.
     // 3. Address margins set differently in Firefox 4+, Safari, and Chrome.
     'button, input, optgroup, select, textarea': {
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: 0,
       color: 'inherit',
       font: 'inherit',
