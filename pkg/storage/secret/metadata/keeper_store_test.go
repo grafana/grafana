@@ -4,12 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/go-jose/go-jose/v3/jwt"
-	"github.com/grafana/authlib/authn"
-	"github.com/grafana/authlib/types"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
@@ -18,21 +13,14 @@ import (
 )
 
 func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
-	ctx := types.WithAuthInfo(context.Background(), authn.NewAccessTokenAuthInfo(authn.Claims[authn.AccessTokenClaims]{
-		Claims: jwt.Claims{
-			Subject: "testuser",
-		},
-	}))
-
+	ctx := context.Background()
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	database := database.ProvideDatabase(testDB)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
-	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
 	// Initialize the keeper storage and add a test keeper
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features)
 	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
@@ -42,7 +30,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	}
 	testKeeper.Name = "kp-test"
 	testKeeper.Namespace = "default"
-	_, err = keeperMetadataStorage.Create(ctx, testKeeper)
+	_, err = keeperMetadataStorage.Create(ctx, testKeeper, "testuser")
 	require.NoError(t, err)
 
 	t.Run("get the system keeper config", func(t *testing.T) {
