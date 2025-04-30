@@ -134,10 +134,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-<<<<<<< HEAD
-=======
-
->>>>>>> main
       - uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
