@@ -151,9 +151,11 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	f, err = s.setFullpath(ctx, f, q.SignedInUser, false)
-	if err != nil {
-		return nil, err
+	if q.WithFullpath || q.WithFullpathUIDs {
+		f, err = s.setFullpath(ctx, f, q.SignedInUser, false)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return f, err
