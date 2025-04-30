@@ -44,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": "Color"
+        }
+      },
       "label-headers": "Headers",
       "label-url": "URL",
       "placeholder-url": "URL"
@@ -5242,7 +5247,8 @@
     "action-editor": {
       "button": {
         "confirm": "Confirm",
-        "confirm-action": "Confirm action"
+        "confirm-action": "Confirm action",
+        "style": "Button style"
       },
       "inline": {
         "add-action": "Add action",
