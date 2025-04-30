@@ -543,7 +543,12 @@ export const versionedComponents = {
       item: {
         '12.0.0': (type: string) => `data-testid outline item ${type}`,
       },
-    }
+    },
+
+    // TODO: hard to add testids/define selectors on these buttons
+    ElemntEditPane: {
+
+    },
 
   },
   PanelInspector: {
