@@ -273,7 +273,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 			NewParentUID: newParent,
 		})
 		if err != nil {
-			return nil, created, fmt.Errorf("error changing parent folder spec")
+			return nil, created, err
 		}
 	}
 
