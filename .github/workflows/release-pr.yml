@@ -33,7 +33,9 @@ on:
         default: false
         type: boolean
 
-permissions: {}
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   push-changelog-to-main:
@@ -48,9 +50,6 @@ jobs:
       latest: ${{ inputs.latest }}
       dry_run: ${{ inputs.dry_run }}
       target: main
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
   create-prs:
     permissions:
@@ -64,6 +63,13 @@ jobs:
       LATEST: ${{ inputs.latest }}
       DRY_RUN: ${{ inputs.dry_run }}
     steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: Get release branch
         id: branch
         uses: grafana/grafana-github-actions-go/latest-release-branch@main # zizmor: ignore[unpinned-uses]
@@ -103,8 +109,8 @@ jobs:
         id: generate_changelog_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
         uses: ./.grafana-main/.github/actions/changelog
