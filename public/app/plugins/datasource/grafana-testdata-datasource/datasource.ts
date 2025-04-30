@@ -362,19 +362,20 @@ export class TestDataDataSource extends DataSourceWithBackend<TestDataDataQuery>
       .filter((v) => Boolean(v.length));
 
     this.step = this.step % steps.length;
+    const step = target.alias?.length ? target.alias : 'step';
 
     const frame: DataFrame = {
       refId: target.refId,
       fields: [
         { name: 'time', type: FieldType.time, values: [Date.now()], config: {} },
-        { name: 'step', type: FieldType.number, values: [this.step], config: {} },
-        { name: 'value', type: FieldType.string, values: [steps[this.step]], config: {} },
+        { name: 'index', type: FieldType.number, values: [this.step], config: {} },
+        { name: step, type: FieldType.string, values: [steps[this.step]], config: {} },
       ],
       length: 1,
     };
     for (let i = 0; i < steps.length; i++) {
       frame.fields.push({
-        name: `step-${steps[i]}`,
+        name: `${step}-${steps[i]}`,
         type: FieldType.boolean,
         values: [i <= this.step],
         config: {},
