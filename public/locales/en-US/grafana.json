@@ -2353,6 +2353,10 @@
     "type-selector-button": {
       "add-expression": "Add expression"
     },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "Unknown contact point",
+      "unknown-contact-point-tooltip": "Details could not be found. This may be because you do not have access to the contact point"
+    },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": "Unknown rule type"
     },
