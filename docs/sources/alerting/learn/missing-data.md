@@ -1,10 +1,12 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/learn/missing-data/
-description: Declare an incident from a firing alert
+description: Learn how to detect missing metrics and design alerts that handle gaps in data in Prometheus and Grafana Alerting.
 keywords:
   - grafana
-  - alert rules
-  - incident
+  - alerting
+  - guide
+  - rules
+  - create
 labels:
   products:
     - cloud

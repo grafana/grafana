@@ -1,10 +1,12 @@
 ---
 canonical: https://grafana.com/docs/grafana/latest/alerting/learn/connectivity-errors/
-description: Declare an incident from a firing alert
+description: Learn how to detect and handle connectivity issues in alerts using Prometheus, Grafana Alerting, or both.
 keywords:
   - grafana
-  - alert rules
-  - incident
+  - alerting
+  - guide
+  - rules
+  - create
 labels:
   products:
     - cloud
