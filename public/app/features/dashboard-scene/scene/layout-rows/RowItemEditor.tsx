@@ -24,7 +24,8 @@ export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPa
       new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard.rows-layout.row-options.row.title', 'Title'),
+            title: '',
+            skipField: true,
             render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
         )
@@ -85,6 +86,7 @@ function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: bool
 
   return (
     <Field
+      label={t('dashboard.rows-layout.row-options.row.title', 'Title')}
       invalid={!hasUniqueTitle}
       error={
         !hasUniqueTitle ? t('dashboard.rows-layout.row-options.title-not-unique', 'Title should be unique') : undefined
