@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone
-        run: git clone --depth=1 "https://github.com/grafana/grafana.git"
+        run: git clone --depth=1 "https://github.com/grafana/grafana.git" && cd grafana
       - run: git config --local user.name "github-actions[bot]"
       - run: git config --local user.email "github-actions[bot]@users.noreply.github.com"
       - run: git config --local --add --bool push.autoSetupRemote true
