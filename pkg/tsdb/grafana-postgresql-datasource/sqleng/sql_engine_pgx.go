@@ -98,13 +98,13 @@ func (e *DataSourceHandler) QueryDataPGX(ctx context.Context, req *backend.Query
 	return result, nil
 }
 
-func (e *DataSourceHandler) handleQueryError(err error, query string, source backend.ErrorSource, ch chan DBDataResponse, queryResult DBDataResponse) {
+func (e *DataSourceHandler) handleQueryError(frameErr string, err error, query string, source backend.ErrorSource, ch chan DBDataResponse, queryResult DBDataResponse) {
 	var emptyFrame data.Frame
 	emptyFrame.SetMeta(&data.FrameMeta{ExecutedQueryString: query})
 	if backend.IsDownstreamError(err) {
 		source = backend.ErrorSourceDownstream
 	}
-	queryResult.dataResponse.Error = fmt.Errorf("%s: %w", "query execution failed", err)
+	queryResult.dataResponse.Error = fmt.Errorf("%s: %w", frameErr, err)
 	queryResult.dataResponse.ErrorSource = source
 	queryResult.dataResponse.Frames = data.Frames{&emptyFrame}
 	ch <- queryResult
@@ -164,32 +164,32 @@ func (e *DataSourceHandler) executeQueryPGX(queryContext context.Context, query 
 	// data source specific substitutions
 	interpolatedQuery, err := e.macroEngine.Interpolate(&query, query.TimeRange, interpolatedQuery)
 	if err != nil {
-		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+		e.handleQueryError("interpolation failed", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
 	results, err := e.execQuery(queryContext, interpolatedQuery, logger)
 	if err != nil {
-		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+		e.handleQueryError("db query error", e.TransformQueryError(logger, err), interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
 	qm, err := e.newProcessCfgPGX(queryContext, query, results, interpolatedQuery)
 	if err != nil {
-		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+		e.handleQueryError("failed to get configurations", err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
 	frame, err := convertResultsToFrame(results, e.rowLimit)
 	if err != nil {
-		e.handleQueryError(err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+		e.handleQueryError("convert frame from rows error", err, interpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
-	e.processFrame(frame, qm, queryResult, ch)
+	e.processFrame(frame, qm, queryResult, ch, logger)
 }
 
-func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, queryResult DBDataResponse, ch chan DBDataResponse) {
+func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, queryResult DBDataResponse, ch chan DBDataResponse, logger log.Logger) {
 	if frame.Meta == nil {
 		frame.Meta = &data.FrameMeta{}
 	}
@@ -207,14 +207,14 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 	}
 
 	if err := convertSQLTimeColumnsToEpochMS(frame, qm); err != nil {
-		e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+		e.handleQueryError("converting time columns failed", err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 		return
 	}
 
 	if qm.Format == dataQueryFormatSeries {
 		// time series has to have time column
 		if qm.timeIndex == -1 {
-			e.handleQueryError(errors.New("time column is missing; make sure your data includes a time column for time series format or switch to a table format that doesn't require it"), qm.InterpolatedQuery, backend.ErrorSourceDownstream, ch, queryResult)
+			e.handleQueryError("db has no time column", errors.New("time column is missing; make sure your data includes a time column for time series format or switch to a table format that doesn't require it"), qm.InterpolatedQuery, backend.ErrorSourceDownstream, ch, queryResult)
 			return
 		}
 
@@ -232,7 +232,7 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 
 			var err error
 			if frame, err = convertSQLValueColumnToFloat(frame, i); err != nil {
-				e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+				e.handleQueryError("convert value to float failed", err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 				return
 			}
 		}
@@ -243,7 +243,7 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 			originalData := frame
 			frame, err = data.LongToWide(frame, qm.FillMissing)
 			if err != nil {
-				e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+				e.handleQueryError("failed to convert long to wide series when converting from dataframe", err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
 				return
 			}
 
@@ -273,7 +273,8 @@ func (e *DataSourceHandler) processFrame(frame *data.Frame, qm *dataQueryModel, 
 			var err error
 			frame, err = sqlutil.ResampleWideFrame(frame, qm.FillMissing, alignedTimeRange, qm.Interval)
 			if err != nil {
-				e.handleQueryError(err, qm.InterpolatedQuery, backend.ErrorSourcePlugin, ch, queryResult)
+				logger.Error("Failed to resample dataframe", "err", err)
+				frame.AppendNotices(data.Notice{Text: "Failed to resample dataframe", Severity: data.NoticeSeverityWarning})
 				return
 			}
 		}
