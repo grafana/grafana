@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import { locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { Dropdown, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
@@ -27,6 +27,8 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
     alertingFolderActionsApi.endpoints.deleteGrafanaRulesFromFolder.useMutation();
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const folderName = useFolder(folderUID).folder?.title || 'unknown folder';
+  const listView2Enabled = config.featureToggles.alertingListViewV2 ?? false;
+  const view = listView2Enabled ? 'list' : 'grouped';
 
   if (!canPause && !canDelete) {
     return null;
@@ -34,7 +36,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
 
   const onConfirmDelete = async () => {
     await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
-    redirectToListView();
+    redirectToListView(view);
   };
 
   const menuItems = (
@@ -46,6 +48,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
             action="pause"
             executeAction={async (folderUID) => {
               await pauseFolder({ namespace: folderUID }).unwrap();
+              redirectToListView(view);
             }}
             isLoading={updateState.isLoading}
           />
@@ -54,6 +57,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
             action="unpause"
             executeAction={async (folderUID) => {
               await unpauseFolder({ namespace: folderUID }).unwrap();
+              redirectToListView(view);
             }}
             isLoading={unpauseState.isLoading}
           />
@@ -85,6 +89,6 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   );
 };
 
-function redirectToListView() {
-  locationService.replace(createRelativeUrl('/alerting/list', { view: 'list' }, { skipSubPath: true }));
+function redirectToListView(view: string) {
+  locationService.push(createRelativeUrl('/alerting/list', { view }, { skipSubPath: true }));
 }
