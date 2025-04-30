@@ -352,16 +352,6 @@ func (b *DashboardsAPIBuilder) validateUpdate(ctx context.Context, a admission.A
 		return apierrors.NewBadRequest(err.Error())
 	}
 
-	allowOverwrite := false // TODO: Add support for overwrite flag
-	// check for is someone else has written in between
-	if newAccessor.GetGeneration() != oldAccessor.GetGeneration() {
-		if allowOverwrite {
-			newAccessor.SetGeneration(oldAccessor.GetGeneration())
-		} else {
-			return apierrors.NewBadRequest(dashboards.ErrDashboardVersionMismatch.Error())
-		}
-	}
-
 	return nil
 }
 

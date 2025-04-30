@@ -22,6 +22,7 @@ func LegacyCreateCommandToUnstructured(cmd *folder.CreateFolderCommand) (*unstru
 			"spec": map[string]any{
 				"title":       cmd.Title,
 				"description": cmd.Description,
+				"version":     1,
 			},
 		},
 	}
@@ -52,6 +53,7 @@ func convertToK8sResource(v *folder.Folder, namespacer request.NamespaceMapper) 
 			ResourceVersion:   fmt.Sprintf("%d", v.Updated.UnixMilli()),
 			CreationTimestamp: metav1.NewTime(v.Created),
 			Namespace:         namespacer(v.OrgID),
+			Generation:        int64(v.Version),
 		},
 		Spec: folders.FolderSpec{
 			Title:       v.Title,
