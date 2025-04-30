@@ -18,11 +18,8 @@ const featureIni = `# In your custom.ini file
 
 [feature_toggles]
 provisioning = true
-kubernetesClientDashboardsFolders = true
 kubernetesDashboards = true ; use k8s from browser
-
-# If you want easy kubectl setup development mode
-grafanaAPIServerEnsureKubectlAccess = true`;
+`;
 
 const ngrokExample = `ngrok http 3000
 
