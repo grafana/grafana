@@ -353,14 +353,9 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 	return f, err
 }
 
-func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester, forceLegacy bool) (*folder.Folder, error) {
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy bool) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.setFullpath")
 	defer span.End()
-	// #TODO is some kind of intermediate conversion required as is the case with user id where
-	// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
-	// part of the parsing?
-	f.CreatedByUID = user.GetUID()
-	f.UpdatedByUID = user.GetUID()
 
 	if f.ParentUID == "" {
 		return f, nil

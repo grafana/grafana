@@ -128,7 +128,7 @@ func runDataSyncer(ctx context.Context, cfg *SyncerConfig) (bool, error) {
 	case Mode1, Mode2:
 		return legacyToUnifiedStorageDataSyncer(ctx, cfg)
 	default:
-		klog.Info("data syncer not implemented for mode: ", cfg.Mode)
+		klog.Info("data syncer not implemented for mode:", cfg.Mode)
 		return false, nil
 	}
 }

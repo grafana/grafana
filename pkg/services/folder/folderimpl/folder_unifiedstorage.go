@@ -151,8 +151,11 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
+	f.CreatedByUID = q.SignedInUser.GetUID()
+	f.UpdatedByUID = q.SignedInUser.GetUID()
+
 	if q.WithFullpath || q.WithFullpathUIDs {
-		f, err = s.setFullpath(ctx, f, q.SignedInUser, false)
+		f, err = s.setFullpath(ctx, f, false)
 		if err != nil {
 			return nil, err
 		}
@@ -533,7 +536,10 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 		return nil, err
 	}
 
-	f, err = s.setFullpath(ctx, f, user, false)
+	f.CreatedByUID = user.GetUID()
+	f.UpdatedByUID = user.GetUID()
+
+	f, err = s.setFullpath(ctx, f, false)
 	if err != nil {
 		return nil, err
 	}
