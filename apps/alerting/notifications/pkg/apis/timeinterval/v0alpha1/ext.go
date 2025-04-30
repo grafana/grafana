@@ -4,16 +4,16 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apiserver/pkg/registry/generic"
 
-	"github.com/grafana/grafana/apps/alerting/common"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 )
 
 func (o *TimeInterval) GetProvenanceStatus() string {
 	if o == nil || o.Annotations == nil {
 		return ""
 	}
-	s, ok := o.Annotations[common.ProvenanceStatusAnnotationKey]
+	s, ok := o.Annotations[v0alpha1.ProvenanceStatusAnnotationKey]
 	if !ok || s == "" {
-		return common.ProvenanceStatusNone
+		return v0alpha1.ProvenanceStatusNone
 	}
 	return s
 }
@@ -23,9 +23,9 @@ func (o *TimeInterval) SetProvenanceStatus(status string) {
 		o.Annotations = make(map[string]string, 1)
 	}
 	if status == "" {
-		status = common.ProvenanceStatusNone
+		status = v0alpha1.ProvenanceStatusNone
 	}
-	o.Annotations[common.ProvenanceStatusAnnotationKey] = status
+	o.Annotations[v0alpha1.ProvenanceStatusAnnotationKey] = status
 }
 
 func SelectableFields(obj *TimeInterval) fields.Set {

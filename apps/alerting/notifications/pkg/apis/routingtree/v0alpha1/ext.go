@@ -1,7 +1,7 @@
 package v0alpha1
 
 import (
-	"github.com/grafana/grafana/apps/alerting/common"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 )
 
 const UserDefinedRoutingTreeName = "user-defined"
@@ -10,9 +10,9 @@ func (o *RoutingTree) GetProvenanceStatus() string {
 	if o == nil || o.Annotations == nil {
 		return ""
 	}
-	s, ok := o.Annotations[common.ProvenanceStatusAnnotationKey]
+	s, ok := o.Annotations[v0alpha1.ProvenanceStatusAnnotationKey]
 	if !ok || s == "" {
-		return common.ProvenanceStatusNone
+		return v0alpha1.ProvenanceStatusNone
 	}
 	return s
 }
@@ -22,7 +22,7 @@ func (o *RoutingTree) SetProvenanceStatus(status string) {
 		o.Annotations = make(map[string]string, 1)
 	}
 	if status == "" {
-		status = common.ProvenanceStatusNone
+		status = v0alpha1.ProvenanceStatusNone
 	}
-	o.Annotations[common.ProvenanceStatusAnnotationKey] = status
+	o.Annotations[v0alpha1.ProvenanceStatusAnnotationKey] = status
 }

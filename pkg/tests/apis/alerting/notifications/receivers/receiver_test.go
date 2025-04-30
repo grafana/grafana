@@ -24,7 +24,7 @@ import (
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
 
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 
 	test_common "github.com/grafana/grafana/pkg/tests/apis/alerting/notifications/common"
 

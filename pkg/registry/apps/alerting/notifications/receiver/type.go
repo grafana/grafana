@@ -12,7 +12,6 @@ import (
 )
 
 var kind = model.Kind()
-var GetOpenAPIDefinitions = model.GetOpenAPIDefinitions
 var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 	kind.GroupVersionResource().Resource, strings.ToLower(kind.Kind()), kind.Kind(),
 	func() runtime.Object { return kind.ZeroValue() },
@@ -35,28 +34,3 @@ var ResourceInfo = utils.NewResourceInfo(kind.Group(), kind.Version(),
 		},
 	},
 )
-
-func AddKnownTypes(scheme *runtime.Scheme) error {
-	scheme.AddKnownTypes(ResourceInfo.GroupVersion(),
-		&model.Receiver{},
-		&model.ReceiverList{},
-	)
-	metav1.AddToGroupVersion(scheme, ResourceInfo.GroupVersion())
-
-	err := scheme.AddFieldLabelConversionFunc(
-		ResourceInfo.GroupVersionKind(),
-		func(label, value string) (string, string, error) {
-			fieldSet := model.SelectableFields(&model.Receiver{})
-			for key := range fieldSet {
-				if label == key {
-					return label, value, nil
-				}
-			}
-			return "", "", fmt.Errorf("field label not supported for %s: %s", ResourceInfo.GroupVersionKind(), label)
-		},
-	)
-	if err != nil {
-		return err
-	}
-	return nil
-}
