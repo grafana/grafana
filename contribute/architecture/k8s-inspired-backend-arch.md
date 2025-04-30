@@ -258,7 +258,7 @@ status: {}
 EOF
 
 cat <<EOF | kubectl apply -f -
-apiVersion: dashboard.grafana.app/v1alpha1
+apiVersion: dashboard.grafana.app/v1beta1
 kind: Dashboard
 metadata:
   name: kubectl-dash
