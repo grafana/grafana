@@ -157,7 +157,7 @@ In order to make sure that we know whether we should create or update the dashbo
 echo "DASHBOARD_NAME=$(jq -r '.metadata.name' dashboard.json)" >> $GITHUB_ENV
 ```
 
-This step extracts the dashboard name using jq and exports it into an environment variable called `DASHBOARD_NAME`.
+This step extracts the dashboard name using `jq` and exports it into an environment variable called `DASHBOARD_NAME`.
 
 ### Check if the dashboard exists
 
