@@ -93,14 +93,6 @@ func (r deleteEncryptedValue) Validate() error {
 /*************************************/
 /**-- Data Key Queries --**/
 /*************************************/
-
-// CreateDataKey(ctx context.Context, dataKey *SecretDataKey) error
-// 	GetDataKey(ctx context.Context, namespace, uid string) (*SecretDataKey, error)
-// 	GetCurrentDataKey(ctx context.Context, namespace, label string) (*SecretDataKey, error)
-// 	GetAllDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error)
-// 	DisableDataKeys(ctx context.Context, namespace string) error
-// 	DeleteDataKey(ctx context.Context, namespace, uid string) error
-
 type createDataKey struct {
 	sqltemplate.SQLTemplate
 	Row *SecretDataKey

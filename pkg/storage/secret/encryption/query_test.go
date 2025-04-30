@@ -156,11 +156,23 @@ func TestDataKeyQueries(t *testing.T) {
 			},
 			sqlDataKeysReEncrypt: {
 				{
-					Name: "reencrypt",
+					Name: "reencrypt-one-select",
 					Data: &reEncryptDataKeys{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
 						SelectStatements: []string{
 							"SELECT uid, label, encrypted_data from secret_data_key where namespace = 'ns'",
+						},
+						Provider: "provider1",
+						Updated:  time.Unix(1735689600, 0),
+					},
+				},
+				{
+					Name: "reencrypt-multiple-selects",
+					Data: &reEncryptDataKeys{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						SelectStatements: []string{
+							"SELECT uid, label, encrypted_data from secret_data_key where namespace = 'ns1'",
+							"SELECT uid, label, encrypted_data from secret_data_key where namespace = 'ns2'",
 						},
 						Provider: "provider1",
 						Updated:  time.Unix(1735689600, 0),

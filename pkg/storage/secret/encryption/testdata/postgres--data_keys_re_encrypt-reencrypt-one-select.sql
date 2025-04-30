@@ -1,6 +1,4 @@
-WITH updates AS (
-  '[SELECT uid, label, encrypted_data from secret_data_key where namespace = 'ns']'
-)
+WITH updates AS (SELECT uid, label, encrypted_data from secret_data_key where namespace = 'ns')
 UPDATE "secret_data_key"
 JOIN updates ON "secret_data_key".uid = updates.uid
 SET

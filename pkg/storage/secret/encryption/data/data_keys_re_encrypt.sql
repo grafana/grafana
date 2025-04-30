@@ -1,6 +1,12 @@
 WITH updates AS (
-  {{ .Arg .SelectStatements }}
-)
+  {{- if eq (len .SelectStatements) 1 -}}
+    {{ index .SelectStatements 0 }}
+  {{- else -}}
+    {{- range $i, $statement := .SelectStatements }}
+      {{- if $i }} UNION ALL {{ end -}}
+      {{ $statement }}
+    {{- end }}
+  {{- end }})
 UPDATE {{ .Ident "secret_data_key" }}
 JOIN updates ON {{ .Ident "secret_data_key" }}.uid = updates.uid
 SET
