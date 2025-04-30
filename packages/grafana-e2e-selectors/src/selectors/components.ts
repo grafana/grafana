@@ -853,9 +853,6 @@ export const versionedComponents = {
       backToDashboardButton: {
         '11.1.0': 'data-testid Back to dashboard button',
       },
-      outlineSection: {
-        '11.1.0': 'data-testid Outline section',
-      },
     },
   },
 
