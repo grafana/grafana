@@ -6,12 +6,13 @@ on:
       - main
       - release-*.*.*
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   frontend-unit-tests:
+    permissions:
+      contents: read
+      id-token: write
     # Run this workflow only for PRs from forks; if it gets merged into `main` or `release-*`,
     # the `frontend-unit-tests-enterprise` workflow will run instead
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true
@@ -23,6 +24,8 @@ jobs:
         chunk: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
     - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
     - uses: actions/setup-node@v4
       with:
         node-version-file: '.nvmrc'
@@ -36,6 +39,9 @@ jobs:
         TEST_SHARD_TOTAL: 8
 
   frontend-unit-tests-enterprise:
+    permissions:
+      contents: read
+      id-token: write
     # Run this workflow for non-PR events (like pushes to `main` or `release-*`) OR for internal PRs (PRs not from forks)
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-latest-8-cores

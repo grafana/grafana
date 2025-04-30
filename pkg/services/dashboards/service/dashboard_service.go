@@ -1541,6 +1541,13 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 
 		finalResults := make([]dashboards.DashboardSearchProjection, len(response.Hits))
 		for i, hit := range response.Hits {
+			folderTitle := ""
+			folderID := int64(0)
+			if f, ok := folderNames[hit.Folder]; ok {
+				folderTitle = f.Title
+				folderID = f.ID
+			}
+
 			result := dashboards.DashboardSearchProjection{
 				ID:          hit.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
 				UID:         hit.Name,
@@ -1549,7 +1556,9 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 				Slug:        slugify.Slugify(hit.Title),
 				IsFolder:    false,
 				FolderUID:   hit.Folder,
-				FolderTitle: folderNames[hit.Folder],
+				FolderTitle: folderTitle,
+				FolderID:    folderID,
+				FolderSlug:  slugify.Slugify(folderTitle),
 				Tags:        hit.Tags,
 			}
 
@@ -1574,7 +1583,12 @@ func (dr *DashboardServiceImpl) FindDashboards(ctx context.Context, query *dashb
 	return dr.dashboardStore.FindDashboards(ctx, query)
 }
 
-func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, hits []dashboardv0.DashboardHit) (map[string]string, error) {
+type folderRes struct {
+	Title string
+	ID    int64
+}
+
+func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *dashboards.FindPersistedDashboardsQuery, hits []dashboardv0.DashboardHit) (map[string]folderRes, error) {
 	// call this with elevated permissions so we can get folder names where user does not have access
 	// some dashboards are shared directly with user, but the folder is not accessible via the folder permissions
 	serviceCtx, serviceIdent := identity.WithServiceIdentity(ctx, query.OrgId)
@@ -1589,9 +1603,12 @@ func (dr *DashboardServiceImpl) fetchFolderNames(ctx context.Context, query *das
 		return nil, folder.ErrInternal.Errorf("failed to fetch parent folders: %w", err)
 	}
 
-	folderNames := make(map[string]string)
+	folderNames := make(map[string]folderRes)
 	for _, f := range folders {
-		folderNames[f.UID] = f.Title
+		folderNames[f.UID] = folderRes{
+			Title: f.Title,
+			ID:    f.ID,
+		}
 	}
 	return folderNames, nil
 }
@@ -1671,7 +1688,7 @@ func makeQueryResult(query *dashboards.FindPersistedDashboardsQuery, res []dashb
 			}
 
 			// nolint:staticcheck
-			if item.FolderID > 0 {
+			if item.FolderID > 0 || item.FolderUID != "" {
 				hit.FolderURL = dashboards.GetFolderURL(item.FolderUID, item.FolderSlug)
 			}
 
@@ -2274,7 +2291,9 @@ func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *uns
 	out.Created = obj.GetCreationTimestamp().Time
 	updated, err := obj.GetUpdatedTimestamp()
 	if err == nil && updated != nil {
-		out.Updated = *updated
+		// old apis return in local time, created is already doing that
+		localTime := updated.Local()
+		out.Updated = localTime
 	} else {
 		// by default, set updated to created
 		out.Updated = out.Created
