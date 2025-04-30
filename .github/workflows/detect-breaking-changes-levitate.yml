@@ -157,8 +157,8 @@ jobs:
       - id: 'auth'
         uses: 'google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f'
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.LEVITATE_SA }}
+          workload_identity_provider: projects/304398677251/locations/global/workloadIdentityPools/github/providers/github-provider
+          service_account: github-plugins-data-levitate@grafanalabs-workload-identity.iam.gserviceaccount.com
           project_id: 'grafanalabs-global'
 
       - name: 'Set up Cloud SDK'
