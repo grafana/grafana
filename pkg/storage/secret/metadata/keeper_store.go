@@ -100,7 +100,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
 		Name:        name,
-		IsForUpdate: bool(forUpdate),
+		IsForUpdate: forUpdate,
 	}
 
 	query, err := sqltemplate.Execute(sqlKeeperRead, req)

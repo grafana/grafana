@@ -72,7 +72,7 @@ type readKeeper struct {
 	sqltemplate.SQLTemplate
 	Namespace   string
 	Name        string
-	IsForUpdate bool
+	IsForUpdate sqlForUpdate
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
@@ -144,8 +144,9 @@ func (r listByNameKeeper) Validate() error {
 
 type readSecureValue struct {
 	sqltemplate.SQLTemplate
-	Namespace string
-	Name      string
+	Namespace   string
+	Name        string
+	IsForUpdate sqlForUpdate
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`

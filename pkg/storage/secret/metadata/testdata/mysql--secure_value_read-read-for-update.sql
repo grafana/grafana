@@ -20,4 +20,5 @@ FROM
 WHERE
   `namespace` = 'ns' AND
   `name` = 'name'
+FOR UPDATE
 ;

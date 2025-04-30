@@ -132,6 +132,15 @@ func TestSecureValueQueries(t *testing.T) {
 						Namespace:   "ns",
 					},
 				},
+				{
+					Name: "read-for-update",
+					Data: &readSecureValue{
+						SQLTemplate: mocks.NewTestingSQLTemplate(),
+						Name:        "name",
+						Namespace:   "ns",
+						IsForUpdate: true,
+					},
+				},
 			},
 			sqlSecureValueList: {
 				{
