@@ -25,6 +25,7 @@ import { t } from '../../../core/internationalization';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
+import { isProvisionedDashboard } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
 interface DeleteItemsArgs {
@@ -242,6 +243,14 @@ export const browseDashboardsAPI = createApi({
           const fullDash = await getDashboardAPI().getDashboardDTO(dashboardUID);
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
+
+          if (isProvisionedDashboard(fullDash)) {
+            appEvents.publish({
+              type: AppEvents.alertWarning.name,
+              payload: ['Cannot move provisioned dashboard'],
+            });
+            continue;
+          }
           await getDashboardAPI().saveDashboard({
             dashboard,
             folderUid: destinationUID,
@@ -289,6 +298,20 @@ export const browseDashboardsAPI = createApi({
         // Delete all the dashboards sequentially
         // TODO error handling here
         for (const dashboardUID of selectedDashboards) {
+          if (config.featureToggles.provisioning) {
+            const dto = await getDashboardAPI().getDashboardDTO(dashboardUID);
+            if (isProvisionedDashboard(dto)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned dashboard. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
+
+              continue;
+            }
+          }
+
           await getDashboardAPI().deleteDashboard(dashboardUID, true);
 
           // handling success alerts for these feature toggles
