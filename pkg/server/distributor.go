@@ -76,11 +76,11 @@ func (d *Distributor) start(ctx context.Context) error {
 		} else {
 			d.stoppedCh <- nil
 		}
+		close(d.stoppedCh)
 	}()
 	return nil
 }
 
-// TODO some send on closed channel somewhere in this file
 func (d *Distributor) running(ctx context.Context) error {
 	select {
 	case err := <-d.stoppedCh:
@@ -88,7 +88,6 @@ func (d *Distributor) running(ctx context.Context) error {
 			return err
 		}
 	case <-ctx.Done():
-		close(d.stoppedCh)
 	}
 	return nil
 }
