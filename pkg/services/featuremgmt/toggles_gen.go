@@ -43,10 +43,6 @@ const (
 	// Allow elements nesting
 	FlagCanvasPanelNesting = "canvasPanelNesting"
 
-	// FlagDisableSecretsCompatibility
-	// Disable duplicated secret storage in legacy tables
-	FlagDisableSecretsCompatibility = "disableSecretsCompatibility"
-
 	// FlagLogRequestsInstrumentedAsUnknown
 	// Logs the path for requests that are instrumented as unknown
 	FlagLogRequestsInstrumentedAsUnknown = "logRequestsInstrumentedAsUnknown"
@@ -322,10 +318,6 @@ const (
 	// FlagCloudWatchBatchQueries
 	// Runs CloudWatch metrics queries as separate batches
 	FlagCloudWatchBatchQueries = "cloudWatchBatchQueries"
-
-	// FlagRecoveryThreshold
-	// Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-	FlagRecoveryThreshold = "recoveryThreshold"
 
 	// FlagLokiStructuredMetadata
 	// Enables the loki data source to request structured metadata from the Loki server
@@ -691,10 +683,6 @@ const (
 	// Enables time pickers sync
 	FlagTimeRangeProvider = "timeRangeProvider"
 
-	// FlagPrometheusUsesCombobox
-	// Use new **Combobox** component for Prometheus query editor
-	FlagPrometheusUsesCombobox = "prometheusUsesCombobox"
-
 	// FlagAzureMonitorDisableLogLimit
 	// Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
 	FlagAzureMonitorDisableLogLimit = "azureMonitorDisableLogLimit"
@@ -935,6 +923,10 @@ const (
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
 
+	// FlagMultiTenantFrontend
+	// Register MT frontend
+	FlagMultiTenantFrontend = "multiTenantFrontend"
+
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle
 	FlagAlertingListViewV2PreviewToggle = "alertingListViewV2PreviewToggle"
@@ -942,4 +934,8 @@ const (
 	// FlagAlertRuleUseFiredAtForStartsAt
 	// Use FiredAt for StartsAt when sending alerts to Alertmaanger
 	FlagAlertRuleUseFiredAtForStartsAt = "alertRuleUseFiredAtForStartsAt"
+
+	// FlagAlertingBulkActionsInUI
+	// Enables the alerting bulk actions in the UI
+	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
 )

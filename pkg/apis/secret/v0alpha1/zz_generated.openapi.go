@@ -20,7 +20,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials":      schema_pkg_apis_secret_v0alpha1_AzureCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig":     schema_pkg_apis_secret_v0alpha1_AzureKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue":       schema_pkg_apis_secret_v0alpha1_CredentialValue(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption":            schema_pkg_apis_secret_v0alpha1_Encryption(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope":              schema_pkg_apis_secret_v0alpha1_Envelope(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials":        schema_pkg_apis_secret_v0alpha1_GCPCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig":       schema_pkg_apis_secret_v0alpha1_GCPKeeperConfig(ref),
@@ -29,7 +28,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Keeper":                schema_pkg_apis_secret_v0alpha1_Keeper(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperList":            schema_pkg_apis_secret_v0alpha1_KeeperList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperSpec":            schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig":       schema_pkg_apis_secret_v0alpha1_SQLKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValue":           schema_pkg_apis_secret_v0alpha1_SecureValue(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueList":       schema_pkg_apis_secret_v0alpha1_SecureValueList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec":       schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref),
@@ -233,46 +231,6 @@ func schema_pkg_apis_secret_v0alpha1_CredentialValue(ref common.ReferenceCallbac
 				},
 			},
 		},
-	}
-}
-
-func schema_pkg_apis_secret_v0alpha1_Encryption(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Encryption of default SQL keeper.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"envelope": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope"),
-						},
-					},
-					"aws": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSCredentials"),
-						},
-					},
-					"azure": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials"),
-						},
-					},
-					"gcp": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials"),
-						},
-					},
-					"hashicorp": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSCredentials", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials"},
 	}
 }
 
@@ -511,17 +469,6 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 							Format:      "",
 						},
 					},
-					"sql": {
-						VendorExtensible: spec.VendorExtensible{
-							Extensions: spec.Extensions{
-								"x-kubernetes-map-type": "atomic",
-							},
-						},
-						SchemaProps: spec.SchemaProps{
-							Description: "SQL Keeper Configuration.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig"),
-						},
-					},
 					"aws": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{
@@ -571,27 +518,7 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig"},
-	}
-}
-
-func schema_pkg_apis_secret_v0alpha1_SQLKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "The default SQL keeper.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"encryption": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption"},
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig"},
 	}
 }
 

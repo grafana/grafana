@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { Alert, Stack, Text } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -121,6 +122,7 @@ interface Props {
 }
 
 export default function GettingStarted({ items }: Props) {
+  const styles = useStyles2(getStyles);
   const settingsQuery = useGetFrontendSettingsQuery(undefined, { refetchOnMountOrArgChange: true });
   const legacyStorage = settingsQuery.data?.legacyStorage;
   const hasItems = Boolean(settingsQuery.data?.items?.length);
@@ -154,21 +156,8 @@ export default function GettingStarted({ items }: Props) {
               setShowModal(true);
             }}
           />
-          <div
-            className={css({
-              height: 360,
-              width: '50%',
-              background: `linear-gradient(to right, rgba(255, 179, 102, 0.6), rgba(255, 143, 143, 0.8))`,
-              borderRadius: `4px`,
-              padding: `16px`,
-              display: `flex`,
-              alignItems: `center`,
-              justifyContent: `center`,
-            })}
-          >
-            <Text variant="h2">
-              <Trans i18nKey="provisioning.getting-started.engaging-graphic">Engaging graphic</Trans>
-            </Text>
+          <div className={styles.imageContainer}>
+            <img src={'public/img/provisioning/provisioning.webp'} className={styles.image} />
           </div>
         </Stack>
         {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
@@ -191,4 +180,20 @@ export default function GettingStarted({ items }: Props) {
       )}
     </>
   );
+}
+
+function getStyles(theme: GrafanaTheme2) {
+  return {
+    imageContainer: css({
+      height: 400,
+      display: `flex`,
+      alignItems: `center`,
+      justifyContent: `center`,
+    }),
+    image: css({
+      borderRadius: theme.shape.radius.default,
+      width: '100%',
+      height: '100%',
+    }),
+  };
 }

@@ -31,6 +31,7 @@ var netClient = &http.Client{
 }
 
 const authTokenHeader = "X-Auth-Token" //#nosec G101 -- This is a false positive
+const rateLimiterHeader = "X-Tenant-ID"
 
 var (
 	remoteVersionFetchInterval   time.Duration = time.Second * 15
@@ -160,6 +161,7 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 	}
 
 	req.Header.Set(authTokenHeader, rs.Cfg.RendererAuthToken)
+	req.Header.Set(rateLimiterHeader, rs.domain)
 	req.Header.Set("User-Agent", fmt.Sprintf("Grafana/%s", rs.Cfg.BuildVersion))
 	for k, v := range headers {
 		req.Header[k] = v
@@ -178,6 +180,10 @@ func (rs *RenderingService) doRequest(ctx context.Context, u *url.URL, headers m
 			}
 		}
 		return nil, fmt.Errorf("failed to send request to remote rendering service: %w", err)
+	}
+
+	if resp.StatusCode == http.StatusTooManyRequests {
+		return nil, ErrTooManyRequests
 	}
 
 	return resp, nil

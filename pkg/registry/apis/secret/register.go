@@ -7,6 +7,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,11 +23,9 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -46,7 +45,6 @@ var (
 
 type SecretAPIBuilder struct {
 	tracer                     tracing.Tracer
-	log                        *log.ConcreteLogger
 	secretService              *service.SecretService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
@@ -64,18 +62,12 @@ func NewSecretAPIBuilder(
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
 	database contracts.Database,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("getting map of keepers: %+w", err)
-	}
-
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
-		log:                        log.New("secret.SecretAPIBuilder"),
 		secretService:              secretService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
@@ -86,12 +78,11 @@ func NewSecretAPIBuilder(
 			BatchSize:      1,
 			ReceiveTimeout: 5 * time.Second,
 		},
-			log.New("secret.worker"),
 			database,
 			secretsOutboxQueue,
 			secureValueMetadataStorage,
 			keeperMetadataStorage,
-			keepers,
+			keeperService,
 		),
 		decryptersAllowList: decryptersAllowList,
 	}, nil
@@ -107,14 +98,19 @@ func RegisterAPIService(
 	outboxQueue contracts.OutboxQueue,
 	secretService *service.SecretService,
 	database contracts.Database,
-	keeperService secretkeeper.Service,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
+	secretDBMigrator contracts.SecretDBMigrator,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return nil, nil
+	}
+
+	if err := secretDBMigrator.RunMigrations(); err != nil {
+		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
@@ -189,7 +185,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secretService, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
-		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, b.accessClient, keeperResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
@@ -223,22 +219,6 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Examples: map[string]*spec3.Example{
-								"a sql keeper": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": &secretv0alpha1.KeeperSpec{
-													Description: "SQL XYZ Keeper",
-													SQL: &secretv0alpha1.SQLKeeperConfig{
-														Encryption: &secretv0alpha1.Encryption{
-															Envelope: &secretv0alpha1.Envelope{},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
 								"an aws keeper": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{
@@ -708,7 +688,7 @@ func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.Post
 		"start-outbox-queue-worker": func(hookCtx genericapiserver.PostStartHookContext) error {
 			if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					b.log.Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
+					logging.FromContext(hookCtx).Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
 					return err
 				}
 			}

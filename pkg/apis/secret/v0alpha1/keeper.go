@@ -19,12 +19,23 @@ type Keeper struct {
 	Spec KeeperSpec `json:"spec" patchStrategy:"replace" patchMergeKey:"name"`
 }
 
-func (k *Keeper) IsSqlKeeper() bool {
-	return k.Spec.SQL != nil && k.Spec.SQL.Encryption != nil
+// KeeperType represents the type of a Keeper.
+type KeeperType string
+
+const (
+	AWSKeeperType       KeeperType = "aws"
+	AzureKeeperType     KeeperType = "azure"
+	GCPKeeperType       KeeperType = "gcp"
+	HashiCorpKeeperType KeeperType = "hashicorp"
+)
+
+func (kt KeeperType) String() string {
+	return string(kt)
 }
 
+// KeeperConfig is an interface that all keeper config types must implement.
 type KeeperConfig interface {
-	Type() string
+	Type() KeeperType
 }
 
 type KeeperSpec struct {
@@ -32,11 +43,6 @@ type KeeperSpec struct {
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=253
 	Description string `json:"description"`
-
-	// SQL Keeper Configuration.
-	// +structType=atomic
-	// +optional
-	SQL *SQLKeeperConfig `json:"sql,omitempty"`
 
 	// AWS Keeper Configuration.
 	// +structType=atomic
@@ -70,25 +76,6 @@ type KeeperList struct {
 
 	// Slice containing all keepers.
 	Items []Keeper `json:"items,omitempty"`
-}
-
-// The default SQL keeper.
-type SQLKeeperConfig struct {
-	Encryption *Encryption `json:"encryption,omitempty"`
-}
-
-func (s *SQLKeeperConfig) Type() string {
-	return "sql"
-}
-
-// Encryption of default SQL keeper.
-type Encryption struct {
-	Envelope *Envelope `json:"envelope,omitempty"` // TODO: what would this be
-
-	AWS       *AWSCredentials       `json:"aws,omitempty"`
-	Azure     *AzureCredentials     `json:"azure,omitempty"`
-	GCP       *GCPCredentials       `json:"gcp,omitempty"`
-	HashiCorp *HashiCorpCredentials `json:"hashicorp,omitempty"`
 }
 
 // Credentials of remote keepers.
@@ -152,18 +139,18 @@ type HashiCorpKeeperConfig struct {
 	HashiCorpCredentials `json:",inline"`
 }
 
-func (s *AWSKeeperConfig) Type() string {
-	return "aws"
+func (s *AWSKeeperConfig) Type() KeeperType {
+	return AWSKeeperType
 }
 
-func (s *AzureKeeperConfig) Type() string {
-	return "azure"
+func (s *AzureKeeperConfig) Type() KeeperType {
+	return AzureKeeperType
 }
 
-func (s *GCPKeeperConfig) Type() string {
-	return "gcp"
+func (s *GCPKeeperConfig) Type() KeeperType {
+	return GCPKeeperType
 }
 
-func (s *HashiCorpKeeperConfig) Type() string {
-	return "hashicorp"
+func (s *HashiCorpKeeperConfig) Type() KeeperType {
+	return HashiCorpKeeperType
 }

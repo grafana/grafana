@@ -330,7 +330,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
-	b.jobs, err = jobs.NewStore(realJobStore, time.Second*30)
+	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -548,13 +548,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				syncer,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)
-			legacyFolders := migrate.NewLegacyFoldersMigrator(b.legacyMigrator)
 			legacyResources := migrate.NewLegacyResourcesMigrator(
 				b.repositoryResources,
 				b.parsers,
 				b.legacyMigrator,
-				legacyFolders,
 				signerFactory,
+				b.clients,
+				export.ExportAll,
 			)
 			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
 			legacyMigrator := migrate.NewLegacyMigrator(
@@ -583,8 +583,15 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			commenter := pullrequest.NewCommenter()
 			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
 
-			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
+			driver, err := jobs.NewJobDriver(
+				time.Minute*20, // Max time for each job
+				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				time.Second*30, // Periodically look for new jobs
+				b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+			if err != nil {
+				return err
+			}
 			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(
@@ -1145,7 +1152,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn), nil
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

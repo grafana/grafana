@@ -18,6 +18,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -553,8 +554,12 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	ctxLogger := s.logger.FromContext(ctx)
 
 	// Only check action if the request doesn't specify scope
-	if req.Name == "" {
+	if req.Name == "" && req.Verb != utils.VerbCreate {
 		return len(scopeMap) > 0, nil
+	}
+
+	if req.Verb == utils.VerbCreate && req.ParentFolder == "" {
+		req.ParentFolder = accesscontrol.GeneralFolderUID
 	}
 
 	// Wildcard grant, no further checks needed
@@ -568,7 +573,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	if scopeMap[t.scope(req.Name)] {
+	if req.Name != "" && scopeMap[t.scope(req.Name)] {
 		return true, nil
 	}
 

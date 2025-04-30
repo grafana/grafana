@@ -206,7 +206,6 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100px',
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {

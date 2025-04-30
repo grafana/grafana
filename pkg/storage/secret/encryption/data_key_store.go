@@ -42,12 +42,6 @@ func ProvideDataKeyStorage(db db.DB, features featuremgmt.FeatureToggles) (DataK
 		return &encryptionStoreImpl{}, nil
 	}
 
-	// Pass `cfg` as `nil` because it is not used. If it ends up being used, it will panic.
-	// This is intended, as we shouldn't need any configuration settings here for secrets migrations.
-	if err := migrator.MigrateSecretSQL(db.GetEngine(), nil); err != nil {
-		return nil, fmt.Errorf("failed to run migrations: %w", err)
-	}
-
 	store := &encryptionStoreImpl{
 		db:  db,
 		log: log.New("encryption.store"),

@@ -20,13 +20,12 @@ import (
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
 
 func TestIntegrationDecrypt(t *testing.T) {
@@ -42,7 +41,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 		t.Cleanup(cancel)
 
-		decryptSvc, _ := setupDecryptTestService(t, nil)
+		decryptSvc, _, _, _ := setupDecryptTestService(t, nil)
 
 		exposed, err := decryptSvc.Decrypt(ctx, "default", "name")
 		require.Error(t, err)
@@ -58,7 +57,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		// Create auth context with proper permissions
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:decrypt"}, types.TypeUser)
 
-		decryptSvc, _ := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, _, _, _ := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "non-existent-value")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotFound)
@@ -78,7 +77,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		allowList := map[string]struct{}{"allowed-group": {}}
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, allowList)
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, allowList)
 
 		// Create a secure value that is not in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
@@ -90,7 +89,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -110,7 +109,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		allowList := map[string]struct{}{"group1": {}}
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, allowList)
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, allowList)
 
 		// Create a secure value that is in the allowlist
 		spec := secretv0alpha1.SecureValueSpec{
@@ -122,7 +121,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.NoError(t, err)
@@ -140,7 +139,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -152,7 +151,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -169,7 +168,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues/group1:read"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -181,7 +180,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -198,7 +197,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"secret.grafana.app/securevalues:decrypt"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -210,7 +209,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.ErrorIs(t, err, contracts.ErrDecryptNotAuthorized)
@@ -227,7 +226,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		authCtx := createAuthContext(ctx, "default", []string{"wrong.group/securevalues/group1:decrypt"}, types.TypeUser)
 
 		// Setup service
-		decryptSvc, secureValueMetadataStorage := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
+		decryptSvc, secureValueMetadataStorage, keeperService, keeperMetadataService := setupDecryptTestService(t, map[string]struct{}{"group1": {}})
 
 		// Create a secure value
 		spec := secretv0alpha1.SecureValueSpec{
@@ -239,7 +238,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 		sv.Name = "sv-test"
 		sv.Namespace = "default"
 
-		newTestSecureValue(authCtx, t, secureValueMetadataStorage, sv, "actor-uid")
+		newTestSecureValue(authCtx, t, secureValueMetadataStorage, keeperService, keeperMetadataService, sv, "actor-uid")
 
 		exposed, err := decryptSvc.Decrypt(authCtx, "default", "sv-test")
 		require.Error(t, err)
@@ -250,7 +249,7 @@ func TestIntegrationDecrypt(t *testing.T) {
 	// TODO: add more tests for keeper failure scenarios, lets see how the async work will change this though.
 }
 
-func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decryptStorage, contracts.SecureValueMetadataStorage) {
+func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decryptStorage, contracts.SecureValueMetadataStorage, *secretkeeper.OSSKeeperService, contracts.KeeperMetadataStorage) {
 	t.Helper()
 
 	// Initialize infra dependencies
@@ -271,7 +270,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 		featuremgmt.FlagSecretsManagementAppPlatform,
 	)
 
-	db := sqlstore.NewTestStore(t)
+	db := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	database := database.ProvideDatabase(db)
 
 	tracer := tracing.InitializeTracerForTest()
@@ -292,19 +291,15 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	)
 	require.NoError(t, err)
 
-	// Initialize access control and client
-	accessControl := acimpl.ProvideAccessControl(features)
-	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
-
 	// Initialize the keeper service
 	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
 	require.NoError(t, err)
 
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(db, features, keeperMetadataStorage, keeperService)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, features)
 	require.NoError(t, err)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(allowList)
@@ -313,7 +308,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	decryptSvc, err := ProvideDecryptStorage(features, keeperService, keeperMetadataStorage, secureValueMetadataStorage, decryptAuthorizer)
 	require.NoError(t, err)
 
-	return decryptSvc.(*decryptStorage), secureValueMetadataStorage
+	return decryptSvc.(*decryptStorage), secureValueMetadataStorage, keeperService, keeperMetadataStorage
 }
 
 func createAuthContext(ctx context.Context, namespace string, permissions []string, identityType types.IdentityType) context.Context {
@@ -335,14 +330,22 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 }
 
 // This helper will also delete the secureValue from the db when the test is done.
-func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, sv *secretv0alpha1.SecureValue, actorUID string) {
+func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureValueMetadataStorage, keeperService *secretkeeper.OSSKeeperService, keeperMetadataStorage contracts.KeeperMetadataStorage, sv *secretv0alpha1.SecureValue, actorUID string) {
 	t.Helper()
 
 	_, err := db.Create(ctx, sv, actorUID)
 	require.NoError(t, err)
 
+	require.NoError(t, err)
+
 	// Since creating secrets is async, store the secret in the keeper synchronously to make testing easier
-	externalID, err := db.(*secureValueMetadataStorage).storeInKeeper(ctx, sv)
+	cfg, err := keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
+	require.NoError(t, err)
+
+	keeper, err := keeperService.KeeperForConfig(cfg)
+	require.NoError(t, err)
+
+	externalID, err := keeper.Store(ctx, cfg, sv.Namespace, sv.Spec.Value.DangerouslyExposeAndConsumeValue())
 	require.NoError(t, err)
 
 	// Set external id for the secure value
@@ -350,6 +353,7 @@ func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVa
 	require.NoError(t, err)
 
 	t.Cleanup(func() {
+		require.NoError(t, keeper.Delete(ctx, cfg, sv.Namespace, externalID))
 		require.NoError(t, db.Delete(ctx, xkube.Namespace(sv.Namespace), sv.Name))
 	})
 }

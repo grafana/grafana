@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -14,12 +14,11 @@ import (
 // Consumes and processes messages from the secure value outbox queue
 type Worker struct {
 	config                     Config
-	log                        *log.ConcreteLogger
 	database                   contracts.Database
 	outboxQueue                contracts.OutboxQueue
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
-	keepers                    map[contracts.KeeperType]contracts.Keeper
+	keeperService              contracts.KeeperService
 }
 
 type Config struct {
@@ -31,21 +30,19 @@ type Config struct {
 
 func NewWorker(
 	config Config,
-	log *log.ConcreteLogger,
 	database contracts.Database,
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
-	keepers map[contracts.KeeperType]contracts.Keeper,
+	keeperService contracts.KeeperService,
 ) *Worker {
 	return &Worker{
 		config:                     config,
-		log:                        log,
 		database:                   database,
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
-		keepers:                    keepers,
+		keeperService:              keeperService,
 	}
 }
 
@@ -82,19 +79,22 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 		}
 		return nil
 	}); err != nil {
-		w.log.Error("receiving outbox messages", "err", err.Error())
+		logging.FromContext(ctx).Error("receiving outbox messages", "err", err.Error())
 	}
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	keeperType, keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
+	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}
 
-	keeper := w.keepers[keeperType]
+	keeper, err := w.keeperService.KeeperForConfig(keeperCfg)
+	if err != nil {
+		return fmt.Errorf("getting keeper for config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
+	}
 	if keeper == nil {
-		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperType)
+		return fmt.Errorf("worker doesn't have access to keeper, did you forget to pass it to the worker in NewWorker?: %+v", keeperCfg.Type())
 	}
 
 	switch message.Type {

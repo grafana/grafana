@@ -1235,7 +1235,7 @@ const v1ProvisionedDashboardResource = {
   resource: {
     type: {
       group: 'dashboard.grafana.app',
-      version: 'v1alpha1',
+      version: 'v1beta1',
       kind: 'Dashboard',
       resource: 'dashboards',
     },
@@ -1243,7 +1243,7 @@ const v1ProvisionedDashboardResource = {
     existing: {},
     action: 'update',
     dryRun: {
-      apiVersion: 'dashboard.grafana.app/v1alpha1',
+      apiVersion: 'dashboard.grafana.app/v1beta1',
       kind: 'Dashboard',
       metadata: {
         annotations: {

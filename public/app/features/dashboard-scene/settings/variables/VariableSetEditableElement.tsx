@@ -10,6 +10,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { NewObjectAddedToCanvasEvent } from '../../edit-pane/shared';
+import { DashboardScene } from '../../scene/DashboardScene';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../../scene/types/EditableDashboardElement';
 import { getDashboardSceneFor } from '../../utils/utils';
 
@@ -51,6 +52,7 @@ function VariableList({ set }: { set: SceneVariableSet }) {
   const { variables } = set.useState();
   const styles = useStyles2(getStyles);
   const [isAdding, setIsAdding] = useToggle(false);
+  const canAdd = set.parent instanceof DashboardScene;
 
   const onEditVariable = (variable: SceneVariable) => {
     const { editPane } = getDashboardSceneFor(set).state;
@@ -83,11 +85,13 @@ function VariableList({ set }: { set: SceneVariableSet }) {
           </Stack>
         </div>
       ))}
-      <Box paddingBottom={1} display={'flex'}>
-        <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={setIsAdding}>
-          <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
-        </Button>
-      </Box>
+      {canAdd && (
+        <Box paddingBottom={1} display={'flex'}>
+          <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={setIsAdding}>
+            <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
+          </Button>
+        </Box>
+      )}
     </Stack>
   );
 }

@@ -116,7 +116,7 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
       <>
         <div>
           <Trans
-            i18nKey=""
+            i18nKey="explore.trace-page-header.tooltip-url"
             values={{
               url: 'http.url',
               target: 'http.target',

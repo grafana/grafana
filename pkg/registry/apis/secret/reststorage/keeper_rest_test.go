@@ -13,7 +13,13 @@ func TestValidateKeeper(t *testing.T) {
 		t.Run("the `description` must be present", func(t *testing.T) {
 			keeper := &secretv0alpha1.Keeper{
 				Spec: secretv0alpha1.KeeperSpec{
-					SQL: &secretv0alpha1.SQLKeeperConfig{},
+					AWS: &secretv0alpha1.AWSKeeperConfig{
+						AWSCredentials: secretv0alpha1.AWSCredentials{
+							AccessKeyID:     secretv0alpha1.CredentialValue{ValueFromEnv: "some-value"},
+							SecretAccessKey: secretv0alpha1.CredentialValue{ValueFromEnv: "some-value"},
+							KMSKeyID:        "kms-key-id",
+						},
+					},
 				},
 			}
 
@@ -27,7 +33,6 @@ func TestValidateKeeper(t *testing.T) {
 		keeper := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
 				Description: "short description",
-				SQL:         &secretv0alpha1.SQLKeeperConfig{},
 				AWS:         &secretv0alpha1.AWSKeeperConfig{},
 				Azure:       &secretv0alpha1.AzureKeeperConfig{},
 				GCP:         &secretv0alpha1.GCPKeeperConfig{},
@@ -266,67 +271,6 @@ func TestValidateKeeper(t *testing.T) {
 				require.Len(t, errs, 1)
 				require.Equal(t, "spec.hashicorp.token", errs[0].Field)
 			})
-		})
-	})
-
-	t.Run("sql keeper validation", func(t *testing.T) {
-		t.Run("does not allow usage of `secureValueName` in credentials", func(t *testing.T) {
-			providers := []struct {
-				name           string
-				enc            secretv0alpha1.Encryption
-				expectedErrors int
-			}{
-				{
-					name: "aws",
-					enc: secretv0alpha1.Encryption{
-						AWS: &secretv0alpha1.AWSCredentials{
-							AccessKeyID: secretv0alpha1.CredentialValue{
-								SecureValueName: "not-empty",
-							},
-							SecretAccessKey: secretv0alpha1.CredentialValue{
-								SecureValueName: "not-empty",
-							},
-						},
-					},
-					expectedErrors: 2,
-				},
-				{
-					name: "azure",
-					enc: secretv0alpha1.Encryption{
-						Azure: &secretv0alpha1.AzureCredentials{
-							ClientSecret: secretv0alpha1.CredentialValue{
-								SecureValueName: "not-empty",
-							},
-						},
-					},
-					expectedErrors: 1,
-				},
-				{
-					name: "hashicorp",
-					enc: secretv0alpha1.Encryption{
-						HashiCorp: &secretv0alpha1.HashiCorpCredentials{
-							Token: secretv0alpha1.CredentialValue{
-								SecureValueName: "not-empty",
-							},
-						},
-					},
-					expectedErrors: 1,
-				},
-			}
-
-			for _, tc := range providers {
-				t.Run("when using credentials for "+tc.name, func(t *testing.T) {
-					keeper := &secretv0alpha1.Keeper{
-						Spec: secretv0alpha1.KeeperSpec{
-							Description: "description",
-							SQL:         &secretv0alpha1.SQLKeeperConfig{Encryption: &tc.enc},
-						},
-					}
-
-					errs := ValidateKeeper(keeper, admission.Create)
-					require.Len(t, errs, tc.expectedErrors)
-				})
-			}
 		})
 	})
 }
