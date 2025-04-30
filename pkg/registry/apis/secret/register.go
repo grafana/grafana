@@ -7,6 +7,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,7 +23,6 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
@@ -45,7 +45,6 @@ var (
 
 type SecretAPIBuilder struct {
 	tracer                     tracing.Tracer
-	log                        *log.ConcreteLogger
 	secretService              *service.SecretService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
@@ -69,7 +68,6 @@ func NewSecretAPIBuilder(
 ) (*SecretAPIBuilder, error) {
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
-		log:                        log.New("secret.SecretAPIBuilder"),
 		secretService:              secretService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
@@ -80,7 +78,6 @@ func NewSecretAPIBuilder(
 			BatchSize:      1,
 			ReceiveTimeout: 5 * time.Second,
 		},
-			log.New("secret.worker"),
 			database,
 			secretsOutboxQueue,
 			secureValueMetadataStorage,
@@ -104,11 +101,16 @@ func RegisterAPIService(
 	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
+	secretDBMigrator contracts.SecretDBMigrator,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return nil, nil
+	}
+
+	if err := secretDBMigrator.RunMigrations(); err != nil {
+		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
@@ -183,7 +185,7 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secretService, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
-		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, b.accessClient, keeperResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
@@ -686,7 +688,7 @@ func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.Post
 		"start-outbox-queue-worker": func(hookCtx genericapiserver.PostStartHookContext) error {
 			if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					b.log.Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
+					logging.FromContext(hookCtx).Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
 					return err
 				}
 			}

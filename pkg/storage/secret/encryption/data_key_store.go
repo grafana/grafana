@@ -6,12 +6,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -33,26 +31,18 @@ type DataKeyStorage interface {
 
 // encryptionStoreImpl is the actual implementation of the data key storage.
 type encryptionStoreImpl struct {
-	dbOld   db.DB
 	db      contracts.Database
 	dialect sqltemplate.Dialect
 	log     log.Logger
 }
 
-func ProvideDataKeyStorage(dbOld db.DB, db contracts.Database, features featuremgmt.FeatureToggles) (DataKeyStorage, error) {
+func ProvideDataKeyStorage(db contracts.Database, features featuremgmt.FeatureToggles) (DataKeyStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptionStoreImpl{}, nil
 	}
 
-	// Pass `cfg` as `nil` because it is not used. If it ends up being used, it will panic.
-	// This is intended, as we shouldn't need any configuration settings here for secrets migrations.
-	if err := migrator.MigrateSecretSQL(dbOld.GetEngine(), nil); err != nil {
-		return nil, fmt.Errorf("failed to run migrations: %w", err)
-	}
-
 	store := &encryptionStoreImpl{
-		dbOld:   dbOld,
 		db:      db,
 		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 		log:     log.New("encryption.store"),

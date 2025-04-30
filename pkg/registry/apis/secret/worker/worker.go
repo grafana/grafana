@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
@@ -14,7 +14,6 @@ import (
 // Consumes and processes messages from the secure value outbox queue
 type Worker struct {
 	config                     Config
-	log                        *log.ConcreteLogger
 	database                   contracts.Database
 	outboxQueue                contracts.OutboxQueue
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
@@ -31,7 +30,6 @@ type Config struct {
 
 func NewWorker(
 	config Config,
-	log *log.ConcreteLogger,
 	database contracts.Database,
 	outboxQueue contracts.OutboxQueue,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
@@ -40,7 +38,6 @@ func NewWorker(
 ) *Worker {
 	return &Worker{
 		config:                     config,
-		log:                        log,
 		database:                   database,
 		outboxQueue:                outboxQueue,
 		secureValueMetadataStorage: secureValueMetadataStorage,
@@ -82,7 +79,7 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 		}
 		return nil
 	}); err != nil {
-		w.log.Error("receiving outbox messages", "err", err.Error())
+		logging.FromContext(ctx).Error("receiving outbox messages", "err", err.Error())
 	}
 }
 

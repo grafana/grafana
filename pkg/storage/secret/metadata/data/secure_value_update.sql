@@ -11,11 +11,19 @@ SET
   {{ .Ident "updated" }} = {{ .Arg .Row.Updated }},
   {{ .Ident "updated_by" }} = {{ .Arg .Row.UpdatedBy }},
   {{ .Ident "status_phase" }} = {{ .Arg .Row.Phase }},
-  {{ .Ident "status_message" }} = {{ .Arg .Row.Message }},
+  {{ if .Row.Message.Valid }}
+  {{ .Ident "status_message" }} = {{ .Arg .Row.Message.String }},
+  {{ end }}
   {{ .Ident "description" }} = {{ .Arg .Row.Description }},
-  {{ .Ident "keeper" }} = {{ .Arg .Row.Keeper }},
-  {{ .Ident "decrypters" }} = {{ .Arg .Row.Decrypters }},
-  {{ .Ident "ref" }} = {{ .Arg .Row.Ref }},
+  {{ if .Row.Keeper.Valid }}
+  {{ .Ident "keeper" }} = {{ .Arg .Row.Keeper.String }},
+  {{ end }}
+  {{ if .Row.Decrypters.Valid }}
+  {{ .Ident "decrypters" }} = {{ .Arg .Row.Decrypters.String }},
+  {{ end }}
+  {{ if .Row.Ref.Valid }}
+  {{ .Ident "ref" }} = {{ .Arg .Row.Ref.String }},
+  {{ end }}
   {{ .Ident "external_id" }} = {{ .Arg .Row.ExternalID }}
 WHERE 1 = 1 AND
   {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND

@@ -20,13 +20,12 @@ import (
 	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"github.com/grafana/grafana/pkg/services/accesscontrol"
-	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
 
 func TestIntegrationDecrypt(t *testing.T) {
@@ -271,13 +270,13 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 		featuremgmt.FlagSecretsManagementAppPlatform,
 	)
 
-	db := sqlstore.NewTestStore(t)
+	db := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	database := database.ProvideDatabase(db)
 
 	tracer := tracing.InitializeTracerForTest()
 
 	// Initialize encryption manager and storage
-	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(db, database, features)
+	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(database, features)
 	require.NoError(t, err)
 
 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
@@ -292,19 +291,15 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	)
 	require.NoError(t, err)
 
-	// Initialize access control and client
-	accessControl := acimpl.ProvideAccessControl(features)
-	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
-
 	// Initialize the keeper service
 	keeperService, err := secretkeeper.ProvideService(tracer, encValueStore, encryptionManager)
 	require.NoError(t, err)
 
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features, accessClient)
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(database, features)
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(db, features)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, features)
 	require.NoError(t, err)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(allowList)

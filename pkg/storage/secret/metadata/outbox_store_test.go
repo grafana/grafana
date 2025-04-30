@@ -11,6 +11,7 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
 )
@@ -104,12 +105,11 @@ func TestOutboxStoreModel(t *testing.T) {
 }
 
 func TestOutboxStore(t *testing.T) {
-	testDB := sqlstore.NewTestStore(t)
-	require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 	ctx := context.Background()
 
-	outbox := ProvideOutboxQueue(testDB)
+	outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
 
 	m1 := contracts.AppendOutboxMessage{
 		Type:            contracts.CreateSecretOutboxMessage,
@@ -175,10 +175,9 @@ func TestOutboxStoreProperty(t *testing.T) {
 
 	// The number of iterations was decided arbitrarily based on the time the test takes to run
 	for range 10 {
-		testDB := sqlstore.NewTestStore(t)
-		require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
-		outbox := ProvideOutboxQueue(testDB)
+		outbox := ProvideOutboxQueue(database.ProvideDatabase(testDB))
 
 		model := newOutboxStoreModel()
 
