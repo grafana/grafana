@@ -20,12 +20,15 @@ import (
 	"github.com/go-git/go-git/v5"
 	plumbing "github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/go-git/go-git/v5/plumbing/transport/server"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
@@ -1568,8 +1571,7 @@ func TestClone(t *testing.T) {
 				tt.root = tempDir
 			}
 			if tt.createRepo {
-				repoDir := createTestRepo(t)
-				tt.config.Spec.GitHub.URL = fmt.Sprintf("file://%s", repoDir)
+				tt.config.Spec.GitHub.URL = createTestRepo(t)
 			}
 
 			// Execute the test
@@ -1603,25 +1605,29 @@ func TestClone(t *testing.T) {
 }
 
 func createTestRepo(t *testing.T) string {
-	dir := t.TempDir()
+	// Create memory filesystem
+	fs := memfs.New()
 
 	// Initialize new repo
-	repo, err := git.PlainInit(dir, false)
+	repo, err := git.Init(memory.NewStorage(), fs)
 	require.NoError(t, err, "Failed to init test repo")
 
 	w, err := repo.Worktree()
 	require.NoError(t, err, "Failed to get worktree")
 
 	// Create a dummy file
-	filePath := filepath.Join(dir, "README.md")
-	err = os.WriteFile(filePath, []byte("Hello, world!"), 0644)
-	require.NoError(t, err, "Failed to write file")
+	f, err := fs.Create("README.md")
+	require.NoError(t, err, "Failed to create file")
+	_, err = f.Write([]byte("Hello, world!"))
+	require.NoError(t, err, "Failed to write content")
+	err = f.Close()
+	require.NoError(t, err, "Failed to close file")
 
 	// Add and commit the file
 	_, err = w.Add("README.md")
 	require.NoError(t, err, "Failed to add file")
 
-	// Create initial commit on master (default branch)
+	// Create initial commit
 	_, err = w.Commit("initial commit", &git.CommitOptions{
 		Author: &object.Signature{
 			Name:  "Test User",
@@ -1630,13 +1636,34 @@ func createTestRepo(t *testing.T) string {
 		},
 	})
 	require.NoError(t, err, "Failed to commit")
+	// Create a branch
+	headRef, err := repo.Head()
+	require.NoError(t, err, "Failed to get HEAD reference")
 
-	// Create and checkout main branch
+	// Create a new branch reference pointing to the current HEAD commit
+	branchRef := plumbing.NewBranchReferenceName("main")
+	ref := plumbing.NewHashReference(branchRef, headRef.Hash())
+
+	// Save the reference to create the branch
+	err = repo.Storer.SetReference(ref)
+	require.NoError(t, err, "Failed to create branch")
+
+	// Checkout the new branch
 	err = w.Checkout(&git.CheckoutOptions{
-		Branch: plumbing.NewBranchReferenceName("main"),
-		Create: true,
+		Branch: branchRef,
 	})
-	require.NoError(t, err, "Failed to create main branch")
+	require.NoError(t, err, "Failed to checkout branch")
 
-	return dir
+	// Create a map of repositories for the server
+	repos := make(map[string]*git.Repository)
+	repos["test-repo.git"] = repo
+
+	// Create and install the server
+	loader := server.MapLoader{
+		"file://test-repo.git": repo.Storer,
+	}
+	srv := server.NewServer(loader)
+	client.InstallProtocol("file", srv)
+
+	return "file://test-repo.git"
 }
