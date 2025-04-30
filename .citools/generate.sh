@@ -19,7 +19,7 @@ for tooldir in "$TOOLS_DIR"/src/*; do
   cat <<EOF >> "$TOOLS_MK"
 
 # Tool: $tool
-${tool} := \$(shell \\
+${tool} = \$(shell \\
   if [ ! -f $cache_file ]; then \\
     (cd $tooldir && GOWORK=off go tool -n $fqtn > $cache_file); \\
   fi; \\
