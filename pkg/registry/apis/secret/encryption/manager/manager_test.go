@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
@@ -78,7 +79,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 
-	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
 	require.NoError(t, err)
 
 	ctx := context.Background()
@@ -186,7 +187,7 @@ func TestEncryptionService_UseCurrentProvider(t *testing.T) {
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+		encryptionStore, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
 		require.NoError(t, err)
 
 		encMgr, err := ProvideEncryptionManager(
@@ -477,7 +478,7 @@ func TestIntegration_SecretsService(t *testing.T) {
 					},
 				},
 			}
-			store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+			store, err := encryptionstorage.ProvideDataKeyStorage(database.ProvideDatabase(testDB), features)
 			require.NoError(t, err)
 
 			usageStats := &usagestats.UsageStatsMock{T: t}

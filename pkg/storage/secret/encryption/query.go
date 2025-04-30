@@ -4,7 +4,9 @@ import (
 	"embed"
 	"fmt"
 	"text/template"
+	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -19,6 +21,14 @@ var (
 	sqlEncryptedValueRead   = mustTemplate("encrypted_value_read.sql")
 	sqlEncryptedValueUpdate = mustTemplate("encrypted_value_update.sql")
 	sqlEncryptedValueDelete = mustTemplate("encrypted_value_delete.sql")
+
+	sqlDataKeyCreate      = mustTemplate("data_key_create.sql")
+	sqlDataKeyRead        = mustTemplate("data_key_read.sql")
+	sqlDataKeyReadCurrent = mustTemplate("data_key_read_current.sql")
+	sqlDataKeyList        = mustTemplate("data_key_list.sql")
+	sqlDataKeyDisable     = mustTemplate("data_key_disable.sql")
+	sqlDataKeyDelete      = mustTemplate("data_key_delete.sql")
+	sqlDataKeysReEncrypt  = mustTemplate("data_keys_re_encrypt.sql")
 )
 
 // TODO: Move this to a common place so that all stores can use
@@ -29,7 +39,9 @@ func mustTemplate(filename string) *template.Template {
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
 
-// Create Encrypted Value
+/*************************************/
+/**-- Encrypted Value Queries --**/
+/*************************************/
 type createEncryptedValue struct {
 	sqltemplate.SQLTemplate
 	Row *EncryptedValue
@@ -77,3 +89,61 @@ type deleteEncryptedValue struct {
 func (r deleteEncryptedValue) Validate() error {
 	return nil // TODO
 }
+
+/*************************************/
+/**-- Data Key Queries --**/
+/*************************************/
+type createDataKey struct {
+	sqltemplate.SQLTemplate
+	Row *SecretDataKey
+}
+
+func (r createDataKey) Validate() error { return nil }
+
+type readDataKey struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	UID       string
+}
+
+func (r readDataKey) Validate() error { return nil }
+
+type readCurrentDataKey struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Label     string
+}
+
+func (r readCurrentDataKey) Validate() error { return nil }
+
+type listDataKeys struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+func (r listDataKeys) Validate() error { return nil }
+
+type disableDataKeys struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Updated   time.Time
+}
+
+func (r disableDataKeys) Validate() error { return nil }
+
+type deleteDataKey struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	UID       string
+}
+
+func (r deleteDataKey) Validate() error { return nil }
+
+type reEncryptDataKeys struct {
+	sqltemplate.SQLTemplate
+	SelectStatements []string
+	Provider         encryption.ProviderID
+	Updated          time.Time
+}
+
+func (r reEncryptDataKeys) Validate() error { return nil }
