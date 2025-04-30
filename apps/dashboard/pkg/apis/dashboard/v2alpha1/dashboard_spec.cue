@@ -82,7 +82,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint8]
+	ids: [...uint32]
 }
 
 // "Off" for no shared crosshair or tooltip (default).

@@ -2680,9 +2680,6 @@
       "clear": "Aramayı ve filtreleri temizle",
       "text": "Sorgunuz için sonuç bulunamadı"
     },
-    "soft-delete": {
-      "success": "{{name}} panosu Son silinenler'e taşındı"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {

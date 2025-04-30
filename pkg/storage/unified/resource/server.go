@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -13,12 +14,16 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-
+	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
+	userutils "github.com/grafana/dskit/user"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -190,6 +195,8 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
+
+	Distributor *Distributor
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -255,6 +262,12 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
 		indexMetrics:   opts.IndexMetrics,
+		reg:            opts.Reg,
+	}
+
+	if opts.Distributor != nil {
+		s.shardingEnabled = true
+		s.distributor = *opts.Distributor
 	}
 
 	if opts.Search.Resources != nil {
@@ -299,6 +312,34 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
+
+	shardingEnabled bool
+	distributor     Distributor
+	reg             prometheus.Registerer
+}
+
+type Distributor struct {
+	ClientPool *ringclient.Pool
+	Ring       *ring.Ring
+	Lifecycler *ring.BasicLifecycler
+}
+
+type RingClient struct {
+	Client ResourceClient
+	grpc_health_v1.HealthClient
+	Conn *grpc.ClientConn
+}
+
+func (c *RingClient) Close() error {
+	return c.Conn.Close()
+}
+
+func (c *RingClient) String() string {
+	return c.RemoteAddress()
+}
+
+func (c *RingClient) RemoteAddress() string {
+	return c.Conn.Target()
 }
 
 // Init implements ResourceServer.
@@ -327,6 +368,39 @@ func (s *server) Init(ctx context.Context) error {
 		}
 	})
 	return s.initErr
+}
+
+var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
+	return s != ring.ACTIVE
+})
+
+func (s *server) getClientToDistributeRequest(namespace string) *RingClient {
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(namespace))
+	if err != nil {
+		s.log.Error("Error hashing namespace. Will not distribute request", "err", err)
+		return nil
+	}
+
+	rs, err := s.distributor.Ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
+
+	if err != nil {
+		s.log.Error("Error getting replication set. Will not distribute request", "err", err)
+		return nil
+	}
+
+	if rs.Instances[0].Id != s.distributor.Lifecycler.GetInstanceID() {
+		s.log.Info("distributing request", "instanceId", rs.Instances[0].Id)
+
+		ins, err := s.distributor.ClientPool.GetClientForInstance(rs.Instances[0])
+		if err != nil {
+			s.log.Error("Error getting client. Will not distribute request", "err", err)
+			return nil
+		}
+		return ins.(*RingClient)
+	}
+
+	return nil
 }
 
 func (s *server) Stop(ctx context.Context) error {
@@ -1029,6 +1103,14 @@ func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*Resou
 	if s.search == nil {
 		return nil, fmt.Errorf("search index not configured")
 	}
+
+	if s.shardingEnabled {
+		client := s.getClientToDistributeRequest(req.Options.Key.Namespace)
+		if client != nil {
+			return client.Client.Search(userutils.InjectOrgID(ctx, "1"), req)
+		}
+	}
+
 	return s.search.Search(ctx, req)
 }
 
@@ -1037,6 +1119,14 @@ func (s *server) GetStats(ctx context.Context, req *ResourceStatsRequest) (*Reso
 	if err := s.Init(ctx); err != nil {
 		return nil, err
 	}
+
+	if s.shardingEnabled {
+		client := s.getClientToDistributeRequest(req.Namespace)
+		if client != nil {
+			return client.Client.GetStats(userutils.InjectOrgID(ctx, "1"), req)
+		}
+	}
+
 	if s.search == nil {
 		// If the backend implements "GetStats", we can use it
 		srv, ok := s.backend.(ResourceIndexServer)
