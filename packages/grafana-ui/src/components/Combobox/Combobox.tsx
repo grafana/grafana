@@ -20,7 +20,7 @@ import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-export interface ComboboxBaseProps<T extends string | number>
+export interface ComboboxBaseProps<T extends string | number, C extends boolean = false>
   extends Pick<
     InputProps,
     'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
@@ -28,7 +28,7 @@ export interface ComboboxBaseProps<T extends string | number>
   /**
    * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
    */
-  isClearable?: boolean;
+  isClearable?: C;
   /**
    * Allows the user to set a value which is not in the list of options.
    */
@@ -43,7 +43,7 @@ export interface ComboboxBaseProps<T extends string | number>
   /**
    * onChange handler is called with the newly selected option.
    */
-  onChange: (option: ComboboxOption<T>) => void;
+  onChange: (option: C extends true ? ComboboxOption<T> | null : ComboboxOption<T>) => void;
 
   /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
@@ -64,19 +64,6 @@ export interface ComboboxBaseProps<T extends string | number>
   onBlur?: () => void;
 }
 
-type ClearableConditionals<T extends number | string> =
-  | {
-      /**
-       * Allow the user to clear the selected value. `null` is emitted from the onChange handler
-       */
-      isClearable: true;
-      /**
-       * The onChange handler is called with `null` when clearing the Combobox.
-       */
-      onChange: (option: ComboboxOption<T> | null) => void;
-    }
-  | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };
-
 export type AutoSizeConditionals =
   | {
       width: 'auto';
@@ -95,9 +82,8 @@ export type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
-  AutoSizeConditionals &
-  ClearableConditionals<T>;
+export type ComboboxProps<T extends string | number, C extends boolean> = ComboboxBaseProps<T, C> &
+  AutoSizeConditionals;
 
 const noop = () => {};
 
@@ -108,7 +94,7 @@ export const VIRTUAL_OVERSCAN_ITEMS = 4;
  *
  * @alpha
  */
-export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
+export const Combobox = <T extends string | number, C extends boolean = false>(props: ComboboxProps<T, C>) => {
   const {
     options: allOptions,
     onChange,
@@ -244,7 +230,15 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
-      onChange(selectedItem);
+      if (selectedItem !== null || isClearable === true) {
+        // This hack is to allow a `null` value to be accepted by onChange.
+        // TypeScript can't infer from `isClearable === true` that the generic C type is `true`, but if it could,
+        // onChange would would allow `null` when it is true. The type works correctly outside of the component,
+        // where it's consumed, but not here. `selectedItem` could be cast to non-null, but that could accidentally
+        // allow it to be a different type that gets overwritten.
+        // If TS could infer here, then `onChange(selectedItem);` would pass type checking.
+        (onChange as (option: ComboboxOption<T> | null) => void)(selectedItem);
+      }
     },
 
     defaultHighlightedIndex: selectedItemIndex ?? 0,
