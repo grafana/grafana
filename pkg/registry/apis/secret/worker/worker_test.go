@@ -63,7 +63,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, database, features)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
