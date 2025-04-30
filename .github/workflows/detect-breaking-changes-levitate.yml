@@ -80,7 +80,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          persist-credentials: false
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
           persist-credentials: false
