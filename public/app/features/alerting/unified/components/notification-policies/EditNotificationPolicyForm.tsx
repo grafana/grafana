@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { ReactNode, useState } from 'react';
 import { Controller, useFieldArray, useForm } from 'react-hook-form';
 
+import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
 import { GrafanaTheme2 } from '@grafana/data';
 import {
   Badge,
@@ -51,7 +52,7 @@ export interface AmRoutesExpandedFormProps {
 export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults }: AmRoutesExpandedFormProps) => {
   const styles = useStyles2(getStyles);
   const formStyles = useStyles2(getFormStyles);
-  const { selectedAlertmanager } = useAlertmanager();
+  const { selectedAlertmanager, isGrafanaAlertmanager } = useAlertmanager();
   const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
   const [groupByOptions, setGroupByOptions] = useState(stringsToSelectableValues(route?.group_by));
   const emptyMatcher = [{ name: '', operator: MatcherOperator.equal, value: '' }];
@@ -171,17 +172,31 @@ export const AmRoutesExpandedForm = ({ actionButtons, route, onSubmit, defaults 
 
       <Field label={t('alerting.am-routes-expanded-form.label-contact-point', 'Contact point')}>
         <Controller
-          render={({ field: { onChange, ref, value, ...field } }) => (
-            <ContactPointSelector
-              selectProps={{
-                ...field,
-                className: formStyles.input,
-                onChange: (value) => handleContactPointSelect(value, onChange),
-                isClearable: true,
-              }}
-              selectedContactPointName={value}
-            />
-          )}
+          render={({ field: { onChange, ref, value, ...field } }) =>
+            isGrafanaAlertmanager ? (
+              <GrafanaManagedContactPointSelector
+                onChange={(contactPoint) => {
+                  handleContactPointSelect(contactPoint?.spec.title, onChange);
+                }}
+                isClearable
+                value={value}
+                placeholder={t(
+                  'alerting.notification-policies-filter.placeholder-search-by-contact-point',
+                  'Choose a contact point'
+                )}
+              />
+            ) : (
+              <ContactPointSelector
+                selectProps={{
+                  ...field,
+                  className: formStyles.input,
+                  onChange: (value) => handleContactPointSelect(value.value?.name, onChange),
+                  isClearable: true,
+                }}
+                selectedContactPointName={value}
+              />
+            )
+          }
           control={control}
           name="receiver"
         />
