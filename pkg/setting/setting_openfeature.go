@@ -29,7 +29,7 @@ func (cfg *Cfg) readOpenFeatureSettings() error {
 	if cfg.OpenFeature.ProviderType == GOFFProviderType {
 		u, err := url.Parse(strURL)
 		if err != nil {
-			return fmt.Errorf("invalid feature provider url: %w", err)
+			return fmt.Errorf("invalid feature provider URL (%q): %w", strURL, err)
 		}
 		cfg.OpenFeature.URL = u
 	}
