@@ -79,7 +79,7 @@ function NotificationPreviewByAlertManager({
               route={route}
               // If we can't find a receiver, it might just be because the user doesn't have access
               receiver={receiver ? receiver : undefined}
-              receiverName={route?.receiver ? route.receiver : undefined}
+              receiverNameFromRoute={route?.receiver ? route.receiver : undefined}
               key={routeId}
               routesByIdMap={routesByIdMap}
               alertManagerSourceName={alertManagerSource.name}
