@@ -1,9 +1,4 @@
 ---
-_build:
-  list: false
-noindex: true
-cascade:
-  noindex: true
 description:
 keywords:
   - terraform
