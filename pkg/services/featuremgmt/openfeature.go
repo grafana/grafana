@@ -21,7 +21,11 @@ func ProvideOpenFeatureService(cfg *setting.Cfg) (*OpenFeatureService, error) {
 	var provider openfeature.FeatureProvider
 	var err error
 	if cfg.OpenFeature.ProviderType == setting.GOFFProviderType {
-		provider, err = newGOFFProvider(cfg.OpenFeature.URL)
+		if cfg.OpenFeature.URL == nil {
+			return nil, fmt.Errorf("feature provider url is required for GOFFProviderType")
+		}
+
+		provider, err = newGOFFProvider(cfg.OpenFeature.URL.String())
 	} else {
 		provider, err = newStaticProvider(cfg)
 	}

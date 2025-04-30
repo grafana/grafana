@@ -1297,7 +1297,11 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 		return err
 	}
 
-	cfg.readOpenFeatureSettings()
+	if err := cfg.readOpenFeatureSettings(); err != nil {
+		cfg.Logger.Error("Failed to read open feature settings", "error", err)
+		return err
+	}
+
 	cfg.readDataSourcesSettings()
 	cfg.readDataSourceSecuritySettings()
 	cfg.readK8sDashboardCleanupSettings()

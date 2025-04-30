@@ -1,6 +1,7 @@
 package featuremgmt
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -11,6 +12,9 @@ import (
 )
 
 func TestProvideOpenFeatureManager(t *testing.T) {
+	u, err := url.Parse("http://localhost:1031")
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name             string
 		cfg              setting.OpenFeatureSettings
@@ -24,7 +28,7 @@ func TestProvideOpenFeatureManager(t *testing.T) {
 			name: "goff provider",
 			cfg: setting.OpenFeatureSettings{
 				ProviderType: setting.GOFFProviderType,
-				URL:          "http://localhost:1031",
+				URL:          u,
 				TargetingKey: "grafana",
 			},
 			expectedProvider: setting.GOFFProviderType,

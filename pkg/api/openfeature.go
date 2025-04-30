@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"net/url"
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/api/routing"
@@ -56,10 +55,14 @@ func (hs *HTTPServer) handleProxyRequest(c *contextmodel.ReqContext) {
 		return
 	}
 
-	u, _ := url.Parse(hs.Cfg.OpenFeature.URL)
+	if hs.Cfg.OpenFeature.URL == nil {
+		c.JsonApiErr(http.StatusInternalServerError, "OpenFeature provider URL is not set", nil)
+		return
+	}
+
 	director := func(req *http.Request) {
-		req.URL.Scheme = u.Scheme
-		req.URL.Host = u.Host
+		req.URL.Scheme = hs.Cfg.OpenFeature.URL.Scheme
+		req.URL.Host = hs.Cfg.OpenFeature.URL.Host
 		req.URL.Path = proxyPath
 	}
 
