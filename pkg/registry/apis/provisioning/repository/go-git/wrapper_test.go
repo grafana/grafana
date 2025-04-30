@@ -1638,12 +1638,5 @@ func createTestRepo(t *testing.T) string {
 	})
 	require.NoError(t, err, "Failed to create main branch")
 
-	// Create a bare clone of the repo
-	bareDir := filepath.Join(t.TempDir(), "bare-repo")
-	_, err = git.PlainClone(bareDir, true, &git.CloneOptions{
-		URL: dir,
-	})
-	require.NoError(t, err, "Failed to create bare repo")
-
-	return bareDir
+	return dir
 }
