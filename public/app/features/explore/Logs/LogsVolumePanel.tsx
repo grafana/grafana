@@ -14,6 +14,7 @@ import {
 } from '@grafana/data';
 import { TimeZone } from '@grafana/schema';
 import { Icon, SeriesVisibilityChangeMode, Tooltip, TooltipDisplayMode, useStyles2, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getLogsVolumeDataSourceInfo, isLogsVolumeLimited } from '../../logs/utils';
 import { ExploreGraph } from '../Graph/ExploreGraph';
@@ -68,7 +69,7 @@ export function LogsVolumePanel(props: Props) {
     extraInfoComponent = (
       <>
         {extraInfoComponent}
-        <Tooltip content="Streaming">
+        <Tooltip content={t('explore.logs-volume-panel.content-streaming', 'Streaming')}>
           <Icon name="circle-mono" size="md" className={styles.streaming} data-testid="logs-volume-streaming" />
         </Tooltip>
       </>

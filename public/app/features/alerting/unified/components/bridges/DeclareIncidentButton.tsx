@@ -30,7 +30,12 @@ export const DeclareIncidentButton = ({ title = '', severity = '', url = '' }: P
         </Button>
       )}
       {installed === false && (
-        <Tooltip content={'Grafana Incident is not installed or is not configured correctly'}>
+        <Tooltip
+          content={t(
+            'alerting.declare-incident-button.content-grafana-incident-installed-configured-correctly',
+            'Grafana Incident is not installed or is not configured correctly'
+          )}
+        >
           <Button icon="fire" size="sm" type="button" disabled>
             <Trans i18nKey="alerting.declare-incident-button.declare-incident">Declare Incident</Trans>
           </Button>
@@ -64,7 +69,12 @@ export const DeclareIncidentMenuItem = ({ title = '', severity = '', url = '' }:
         />
       )}
       {installed === false && (
-        <Tooltip content={'Grafana Incident is not installed or is not configured correctly'}>
+        <Tooltip
+          content={t(
+            'alerting.declare-incident-menu-item.content-grafana-incident-installed-configured-correctly',
+            'Grafana Incident is not installed or is not configured correctly'
+          )}
+        >
           <Menu.Item
             label={t('alerting.declare-incident-menu-item.label-declare-incident', 'Declare incident')}
             icon="fire"

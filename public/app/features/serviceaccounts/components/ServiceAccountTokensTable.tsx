@@ -93,7 +93,12 @@ const TokenRevoked = () => {
     <span className={styles.hasExpired}>
       <Trans i18nKey="serviceaccounts.token-revoked.revoked-label">Revoked</Trans>
       <span className={styles.tooltipContainer}>
-        <Tooltip content="This token has been publicly exposed. Please rotate this token">
+        <Tooltip
+          content={t(
+            'serviceaccounts.token-revoked.content-token-publicly-exposed-please-rotate',
+            'This token has been publicly exposed. Please rotate this token'
+          )}
+        >
           <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
         </Tooltip>
       </span>
@@ -127,7 +132,9 @@ const TokenExpiration = ({ timeZone, token }: TokenExpirationProps) => {
       <span className={styles.hasExpired}>
         <Trans i18nKey="serviceaccounts.token-expiration.expired-label">Expired</Trans>
         <span className={styles.tooltipContainer}>
-          <Tooltip content="This token has expired">
+          <Tooltip
+            content={t('serviceaccounts.token-expiration.content-this-token-has-expired', 'This token has expired')}
+          >
             <Icon name="exclamation-triangle" className={styles.toolTipIcon} />
           </Tooltip>
         </span>

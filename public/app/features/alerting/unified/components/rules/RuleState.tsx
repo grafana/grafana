@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
 import { Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 
@@ -26,7 +26,13 @@ export const RuleState = ({ rule, isDeleting, isCreating, isPaused }: Props) => 
   const RecordingRuleState = () => {
     if (isPaused && rulerRuleType.grafana.recordingRule(rulerRule)) {
       return (
-        <Tooltip content={'Recording rule evaluation is currently paused'} placement="top">
+        <Tooltip
+          content={t(
+            'alerting.rule-state.recording-rule-state.content-recording-rule-evaluation-is-currently-paused',
+            'Recording rule evaluation is currently paused'
+          )}
+          placement="top"
+        >
           <StateTag state="warning">
             <Icon name="pause" size="xs" />
             <Trans i18nKey="alerting.rule-state.paused">Paused</Trans>

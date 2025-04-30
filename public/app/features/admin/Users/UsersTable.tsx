@@ -89,7 +89,10 @@ export const UsersTable = ({
                   <Stack alignItems={'center'}>
                     <OrgUnits units={value} icon={'building'} />
                     {row.original.isAdmin && (
-                      <Tooltip placement="top" content="Grafana Admin">
+                      <Tooltip
+                        placement="top"
+                        content={t('admin.users-table.columns.content-grafana-admin', 'Grafana Admin')}
+                      >
                         <Icon name="shield" />
                       </Tooltip>
                     )}
@@ -108,7 +111,13 @@ export const UsersTable = ({
                 return value === 'None' ? (
                   <Text color={'disabled'}>
                     <Trans i18nKey="admin.users-table.no-licensed-roles">Not assigned</Trans>
-                    <Tooltip placement="top" content="A licensed role will be assigned when this user signs in">
+                    <Tooltip
+                      placement="top"
+                      content={t(
+                        'admin.users-table.tooltip-assigned-role',
+                        'A licensed role will be assigned when this user signs in'
+                      )}
+                    >
                       <Icon name="question-circle" style={{ margin: '0 0 4 4' }} />
                     </Tooltip>
                   </Text>

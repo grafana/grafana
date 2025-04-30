@@ -136,13 +136,15 @@ export const TimeRangeContent = (props: Props) => {
   };
 
   const fiscalYear = rangeUtil.convertRawToRange({ from: 'now/fy', to: 'now/fy' }, timeZone, fiscalYearStartMonth);
-  const fiscalYearMessage = t('time-picker.range-content.fiscal-year', 'Fiscal year');
 
   const fyTooltip = (
     <div className={style.tooltip}>
       {rangeUtil.isFiscal(value) ? (
         <Tooltip
-          content={`${fiscalYearMessage}: ${fiscalYear.from.format('MMM-DD')} - ${fiscalYear.to.format('MMM-DD')}`}
+          content={t('time-picker.range-content.fiscal-year', 'Fiscal year: {{from}} - {{to}}', {
+            from: fiscalYear.from.format('MMM-DD'),
+            to: fiscalYear.to.format('MMM-DD'),
+          })}
         >
           <Icon name="info-circle" />
         </Tooltip>

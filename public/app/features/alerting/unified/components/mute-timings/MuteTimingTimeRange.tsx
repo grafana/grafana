@@ -145,7 +145,13 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
       <ConditionalWrap
         shouldWrap={isDisabled}
         wrap={(children) => (
-          <Tooltip content="This time interval is disabled" placement="right-start">
+          <Tooltip
+            content={t(
+              'alerting.mute-timing-time-range.content-this-time-interval-is-disabled',
+              'This time interval is disabled'
+            )}
+            placement="right-start"
+          >
             {children}
           </Tooltip>
         )}

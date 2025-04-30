@@ -293,7 +293,13 @@ export function PanelChrome({
         {titleItems}
       </div>
       {loadingState === LoadingState.Streaming && (
-        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+        <Tooltip
+          content={
+            onCancelQuery
+              ? t('grafana-ui.panel-chrome.tooltip-stop-streaming', 'Stop streaming')
+              : t('grafana-ui.panel-chrome.tooltip-streaming', 'Streaming')
+          }
+        >
           <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
             <Icon name="circle-mono" size="md" className={styles.streaming} />
           </TitleItem>
@@ -301,7 +307,7 @@ export function PanelChrome({
       )}
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
-          <Tooltip content="Cancel query">
+          <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
             <TitleItem
               className={cx(dragClassCancel, styles.pointer)}
               data-testid="panel-cancel-query"

@@ -154,14 +154,22 @@ export const TracePageHeader = memo((props: TracePageHeaderProps) => {
             </Tooltip>
           )}
           {method && method.length > 0 && (
-            <Tooltip content={'http.method'} interactive={true}>
+            <Tooltip
+              // eslint-disable-next-line @grafana/no-untranslated-strings
+              content="http.method"
+              interactive={true}
+            >
               <span className={styles.tag}>
                 <Badge text={method[0].value} color="blue" />
               </span>
             </Tooltip>
           )}
           {status && status.length > 0 && (
-            <Tooltip content={'http.status_code'} interactive={true}>
+            <Tooltip
+              // eslint-disable-next-line @grafana/no-untranslated-strings
+              content="http.status_code"
+              interactive={true}
+            >
               <span className={styles.tag}>
                 <Badge text={status[0].value} color={statusColor} />
               </span>

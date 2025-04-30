@@ -111,7 +111,10 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const collapseLabel = (
     <>
       <Tooltip
-        content="Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in."
+        content={t(
+          'explore.span-filters.tooltip-collapse',
+          'Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in.'
+        )}
         placement="right"
       >
         <span className={styles.collapseLabel}>

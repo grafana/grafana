@@ -87,7 +87,9 @@ const StatusIcon = ({
   if (errorMap && errorMap.has(id)) {
     return (
       <Tooltip
-        content={`${t('plugins.catalog.update-all.error', 'Error updating plugin:')} ${errorMap.get(id)?.message}`}
+        content={t('plugins.catalog.update-all.error', 'Error updating plugin: {{errorMessage}}', {
+          errorMessage: errorMap.get(id)?.message,
+        })}
       >
         <Icon className={styles.errorIcon} size="xl" name="exclamation-triangle" />
       </Tooltip>
