@@ -64,14 +64,30 @@ export class ScopesApiClient {
   }
 
   /**
-   * @param parent
-   * @param query Filters by title substring
+   * Fetches a map of nodes based on the specified options.
+   *
+   * @param {Object} options An object to configure the node fetch operation.
+   * @param {string|undefined} options.parent The parent node identifier to fetch children for, or undefined if no parent scope is required.
+   * @param {string|undefined} options.query A query string to filter the nodes, or undefined for no filtering.
+   * @param {number|undefined} options.limit The maximum number of nodes to fetch, defaults to 1000 if undefined. Must be between 1 and 10000.
+   * @return {Promise<NodesMap>} A promise that resolves to a map of fetched nodes. Returns an empty object if an error occurs.
    */
-  async fetchNode(parent: string, query: string): Promise<NodesMap> {
+  async fetchNode(options: { parent?: string; query?: string; limit?: number }): Promise<NodesMap> {
+    const limit = options.limit ?? 1000;
+
+    if (!(0 < limit && limit <= 10000)) {
+      throw new Error('Limit must be between 1 and 10000');
+    }
+
     try {
       const nodes =
-        (await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, { parent, query }))
-          ?.items ?? [];
+        (
+          await getBackendSrv().get<{ items: ScopeNode[] }>(apiUrl + `/find/scope_node_children`, {
+            parent: options.parent,
+            query: options.query,
+            limit,
+          })
+        )?.items ?? [];
 
       return nodes.reduce<NodesMap>((acc, { metadata: { name }, spec }) => {
         acc[name] = {

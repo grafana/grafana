@@ -96,7 +96,7 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
       // fetchNodeApi does not throw just returns empty object.
       // Load all the children of the loadingNodeName
-      const childNodes = await this.apiClient.fetchNode(loadingNodeName, query);
+      const childNodes = await this.apiClient.fetchNode({ parent: loadingNodeName, query });
       if (loadingNodeName === this.state.loadingNodeName) {
         const [selectedScopes, treeScopes] = getScopesAndTreeScopesWithPaths(
           this.state.selectedScopes,
@@ -134,70 +134,76 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    * the UI and to prefetch the scope data from the server.
    */
   public toggleNodeSelect = (node: ToggleNode) => {
-    if ('scopeName' in node) {
+    if (node.path) {
+      let treeScopes = [...this.state.treeScopes];
+      const parentNode = getNodesAtPath(this.state.nodes[''], node.path.slice(1, -1));
+
+      if (!parentNode) {
+        // Either the path is wrong or we don't have the nodes loaded yet. So let's check the selected tree nodes if we
+        // can remove something based on scope name.
+        const scopeName = node.path.at(-1);
+        const newTreeScopes = treeScopes.filter((s) => s.scopeName !== scopeName);
+        if (newTreeScopes.length !== treeScopes.length) {
+          this.updateState({ treeScopes: newTreeScopes });
+        } else {
+          console.warn('No node found for path:', node.path);
+        }
+        return;
+      }
+
+      const nodeName = node.path[node.path.length - 1];
+      const { linkId, title } = parentNode.nodes[nodeName];
+
+      const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
+
+      if (selectedIdx === -1) {
+        // We are selecting a new node.
+
+        // We prefetch the scope when clicking on it. This will mean that once the selection is applied in closeAndApply()
+        // we already have all the scopes in cache and don't need to fetch all of them again is multiple requests.
+        this.apiClient.fetchScope(linkId!);
+
+        const treeScope: TreeScope = {
+          scopeName: linkId!,
+          path: node.path,
+          title,
+        };
+
+        // We cannot select multiple scopes with different parents only. In that case we will just deselect all the
+        // others.
+        const selectedFromSameNode =
+          treeScopes.length === 0 ||
+          Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
+
+        this.updateState({
+          treeScopes:
+            parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope],
+        });
+      } else {
+        // We are deselecting already selected node.
+        treeScopes.splice(selectedIdx, 1);
+        this.updateState({ treeScopes });
+      }
+    } else if (node.scopeName) {
       // This is for a case where we don't have a path yet. For example on init we get the selected from url, but
       // just the names. If we want to deselect them without knowing where in the tree they are we can just pass the
       // name.
 
-      const newTreeScopes = this.state.treeScopes.filter((s) => s.scopeName !== node.scopeName);
-      if (newTreeScopes.length !== this.state.treeScopes.length) {
+      if (this.state.treeScopes.find((s) => s.scopeName === node.scopeName)) {
+        // We have a scope with the name selected, so we deselect it.
+        const newTreeScopes = this.state.treeScopes.filter((s) => s.scopeName !== node.scopeName);
         this.updateState({ treeScopes: newTreeScopes });
         return;
-      }
-    }
-
-    if (!node.path) {
-      console.warn('Node cannot be selected without both path and name', node);
-      return;
-    }
-
-    let treeScopes = [...this.state.treeScopes];
-    const parentNode = getNodesAtPath(this.state.nodes[''], node.path.slice(1, -1));
-
-    if (!parentNode) {
-      // Either the path is wrong or we don't have the nodes loaded yet. So let's check the selected tree nodes if we
-      // can remove something based on scope name.
-      const scopeName = node.path.at(-1);
-      const newTreeScopes = treeScopes.filter((s) => s.scopeName !== scopeName);
-      if (newTreeScopes.length !== treeScopes.length) {
-        this.updateState({ treeScopes: newTreeScopes });
       } else {
-        console.warn('No node found for path:', node.path);
+        const newTreeScopes = [
+          ...this.state.treeScopes,
+          { scopeName: node.scopeName, path: node.path || [], title: node.scopeName },
+        ];
+        if (newTreeScopes.length !== this.state.treeScopes.length) {
+          this.updateState({ treeScopes: newTreeScopes });
+          return;
+        }
       }
-      return;
-    }
-
-    const nodeName = node.path[node.path.length - 1];
-    const { linkId, title } = parentNode.nodes[nodeName];
-
-    const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
-
-    if (selectedIdx === -1) {
-      // We are selecting a new node.
-
-      // We prefetch the scope when clicking on it. This will mean that once the selection is applied in closeAndApply()
-      // we already have all the scopes in cache and don't need to fetch all of them again is multiple requests.
-      this.apiClient.fetchScope(linkId!);
-
-      const treeScope: TreeScope = {
-        scopeName: linkId!,
-        path: node.path,
-        title,
-      };
-
-      // We cannot select multiple scopes with different parents only. In that case we will just deselect all the
-      // others.
-      const selectedFromSameNode =
-        treeScopes.length === 0 ||
-        Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
-
-      this.updateState({
-        treeScopes: parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope],
-      });
-    } else {
-      // We are deselecting already selected node.
-      treeScopes.splice(selectedIdx, 1);
-      this.updateState({ treeScopes });
     }
   };
 
@@ -317,6 +323,10 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public resetSelection = () => {
     this.updateState({ treeScopes: getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
+  };
+
+  public searchAllNodes = (query: string, limit: number) => {
+    return this.apiClient.fetchNode({ query, limit });
   };
 }
 

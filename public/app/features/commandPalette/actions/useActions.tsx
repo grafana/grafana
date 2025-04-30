@@ -8,7 +8,7 @@ import { config } from '@grafana/runtime';
 import { t } from '../../../core/internationalization';
 import { useScopesServices } from '../../scopes/ScopesContextProvider';
 import { ScopesSelectorServiceState } from '../../scopes/selector/ScopesSelectorService';
-import { NodesMap, Node, TreeScope, ToggleNode } from '../../scopes/selector/types';
+import { NodesMap, TreeScope, ToggleNode } from '../../scopes/selector/types';
 import { ScopesRow } from '../ScopesRow';
 import { CommandPaletteAction } from '../types';
 import { SCOPES_PRIORITY } from '../values';
@@ -72,7 +72,7 @@ export function useRegisterScopesActions(
     return { scopesRow: undefined };
   }
 
-  const { updateNode, toggleNodeSelect, apply, resetSelection } = services.scopesSelectorService;
+  const { updateNode, toggleNodeSelect, apply, resetSelection, searchAllNodes } = services.scopesSelectorService;
 
   // Initialize the scopes first time this runs and reset the scopes that were selected on unmount.
   useEffect(() => {
@@ -82,10 +82,19 @@ export function useRegisterScopesActions(
     };
   }, [updateNode, resetSelection]);
 
+  const [globalNodes, setGlobalNodes] = useState<NodesMap | undefined>(undefined);
+
   // Load next level of scopes when the parentId changes.
   useEffect(() => {
-    updateNode(getScopePathFromActionId(parentId), true, searchQuery);
-  }, [updateNode, searchQuery, parentId]);
+    if (!parentId && searchQuery && config.featureToggles.scopeSearchAllLevels) {
+      searchAllNodes(searchQuery, 10).then((nodes) => {
+        setGlobalNodes(nodes);
+      });
+    } else {
+      updateNode(getScopePathFromActionId(parentId), true, searchQuery);
+      setGlobalNodes(undefined);
+    }
+  }, [updateNode, searchAllNodes, searchQuery, parentId]);
 
   const selectorServiceState: ScopesSelectorServiceState | undefined = useObservable(
     services.scopesSelectorService.stateObservable ?? new Observable(),
@@ -93,12 +102,12 @@ export function useRegisterScopesActions(
   );
 
   const { nodes, loading, loadingNodeName, treeScopes, selectedScopes } = selectorServiceState;
-  const nodesActions = mapScopeNodesToActions(nodes, treeScopes, toggleNodeSelect);
+  const nodesActions = mapScopeNodesToActions(globalNodes || nodes, treeScopes, toggleNodeSelect);
 
   // Other types can use the actions themselves as a dependency to prevent registering every time the hook runs. The
   // scopes tree though is loaded on demand, and it would be a deep check to see if something changes these deps are
   // approximation of when the actions really change.
-  useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, treeScopes]);
+  useRegisterActions(nodesActions, [parentId, loading, loadingNodeName, treeScopes, globalNodes]);
 
   const isDirty =
     treeScopes
@@ -150,13 +159,13 @@ function mapScopeNodesToActions(
     },
   ];
 
-  const traverse = (node: Node, parentId: string) => {
+  const traverse = (nodesMap: NodesMap | undefined, parentId: string | undefined) => {
     // TODO: not sure how and why a node.nodes can be undefined
-    if (!node.nodes || Object.keys(node.nodes).length === 0) {
+    if (!nodesMap || Object.keys(nodesMap).length === 0) {
       return;
     }
-    for (const key of Object.keys(node.nodes)) {
-      const child = node.nodes[key];
+    for (const key of Object.keys(nodesMap)) {
+      const child = nodesMap[key];
 
       // Selected scopes are not shown in the list but in separate section
       if (child.nodeType === 'leaf') {
@@ -165,26 +174,41 @@ function mapScopeNodesToActions(
         }
       }
 
-      const action: CommandPaletteAction = {
-        id: `${parentId}/${child.name}`,
-        name: child.title,
-        keywords: `${child.title} ${child.name}`,
-        priority: SCOPES_PRIORITY,
-        parent: parentId,
-      };
+      let action: CommandPaletteAction;
+      if (parentId) {
+        action = {
+          id: `${parentId}/${child.name}`,
+          name: child.title,
+          keywords: `${child.title} ${child.name}`,
+          priority: SCOPES_PRIORITY,
+          parent: parentId,
+        };
 
-      if (child.nodeType === 'leaf') {
-        action.perform = () => {
-          toggleNodeSelect({ scopeName: child.name, path: getScopePathFromActionId(action.id) });
+        if (child.nodeType === 'leaf') {
+          action.perform = () => {
+            toggleNodeSelect({ scopeName: child.linkId, path: getScopePathFromActionId(action.id) });
+          };
+        }
+      } else {
+        action = {
+          id: `scopes/${child.name}`,
+          name: child.title,
+          keywords: `${child.title} ${child.name}`,
+          priority: SCOPES_PRIORITY,
+          section: t('command-palette.action.scopes', 'Scopes'),
+          subtitle: child.parentName,
+          perform: () => {
+            toggleNodeSelect({ scopeName: child.linkId! });
+          },
         };
       }
 
       actions.push(action);
-      traverse(child, action.id);
+      traverse(child.nodes, action.id);
     }
   };
 
-  traverse(nodes[''], 'scopes');
+  traverse(nodes['']?.nodes || nodes, nodes[''] ? 'scopes' : undefined);
   return actions;
 }
 

@@ -74,6 +74,7 @@ export interface ScopeNodeSpec {
   disableMultiSelect?: boolean;
   linkId?: string;
   linkType?: ScopeNodeLinkType;
+  parentName?: string;
 }
 
 // TODO: Use Resource from apiserver when we export the types
