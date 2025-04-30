@@ -15,6 +15,7 @@ import {
   RulerAlertingRuleDTO,
   RulerCloudRuleDTO,
   RulerGrafanaRuleDTO,
+  RulerGrafanaRuleGroupDTO,
   RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
@@ -96,6 +97,12 @@ const rulerGroupFactory = Factory.define<RulerRuleGroupDTO<RulerCloudRuleDTO>, {
     };
   }
 );
+
+const rulerGrafanaGroupFactory = Factory.define<RulerGrafanaRuleGroupDTO>(({ sequence }) => ({
+  name: `test-group-${sequence}`,
+  interval: '1m',
+  rules: grafanaAlertingRuleFactory.buildList(3),
+}));
 
 class DataSourceFactory extends Factory<DataSourceInstanceSettings> {
   vanillaPrometheus() {
@@ -212,6 +219,7 @@ export const alertingFactory = {
     alertingRule: rulerAlertingRuleFactory,
     recordingRule: rulerRecordingRuleFactory,
     grafana: {
+      group: rulerGrafanaGroupFactory,
       recordingRule: grafanaRecordingRule,
       alertingRule: grafanaAlertingRuleFactory,
     },
