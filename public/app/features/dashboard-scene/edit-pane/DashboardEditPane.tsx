@@ -76,9 +76,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
    * @param payload
    */
   private handleEditAction(action: DashboardEditActionEventPayload) {
-    this.state.undoStack.push(action);
-
     this.performAction(action);
+
+    this.setState({ undoStack: [...this.state.undoStack, action] });
 
     // Notify repeaters that something changed
     if (action.source instanceof VizPanel) {

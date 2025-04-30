@@ -176,8 +176,6 @@ function UndoButton({ dashboard }: ToolbarActionProps) {
       disabled={undoStack.length === 0}
       onClick={() => editPane.undoAction()}
       tooltip={undoAction?.description}
-      //    onClick={() => dashboard.undo()}
-      //   disabled={!dashboard.canUndo()}
     />
   );
 }
