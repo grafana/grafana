@@ -33,3 +33,6 @@ lefthook = "$(call compile_tool,lefthook,github.com/evilmartians/lefthook)"
 
 # Tool: "swagger"
 swagger = "$(call compile_tool,swagger,github.com/go-swagger/go-swagger/cmd/swagger)"
+
+print-%:
+	@echo '$* = $($*)'
