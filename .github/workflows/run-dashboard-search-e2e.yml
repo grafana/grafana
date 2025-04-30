@@ -2,7 +2,7 @@ name: run-dashboard-search-e2e
 
 on:
   workflow_run:
-    workflows: 
+    workflows:
       - trigger-dashboard-search-e2e
     types:
       - completed
@@ -95,6 +95,8 @@ jobs:
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4
+          with:
+            persist-credentials: false
         - name: Restore Cached Node Modules
           uses: actions/cache@v3
           with:
