@@ -537,6 +537,9 @@ export const versionedComponents = {
       section: {
         '12.0.0': 'data-testid Outline section',
       },
+      dashboardOutline: {
+        '12.0.0': 'data-testid Dashboard outline',
+      },
     }
 
   },

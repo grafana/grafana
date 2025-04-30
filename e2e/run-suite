@@ -151,6 +151,8 @@ case "$1" in
           esac
       ;;
       "dashboards-edit-v2")
+      env[kubernetesDashboards]=true
+      env[dashboardNewLayouts]=true
       cypressConfig[specPattern]=$rootForEditDashboards/$testFilesForSingleSuite
       cypressConfig[video]=false
           case "$2" in

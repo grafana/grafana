@@ -6,7 +6,7 @@ const DASHBOARD_NAME = 'Test variable output';
 describe('Dashboard edit variables', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
-    cy.setLocalStorage('grafana.featureToggles', 'dashboardNewLayouts=true,kubernetesDashboards=true');
+    // cy.setLocalStorage('grafana.featureToggles', 'dashboardNewLayouts=true,kubernetesDashboards=true');
   });
 
   it('can add a new constant variable', () => {

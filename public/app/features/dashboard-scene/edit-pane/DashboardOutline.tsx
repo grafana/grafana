@@ -15,6 +15,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
+import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   editPane: DashboardEditPane;
@@ -88,7 +89,12 @@ function DashboardOutlineNode({
         onPointerDown={onNodeClicked}
       >
         {elementInfo.isContainer && (
-          <button role="treeitem" className={styles.angleButton} onPointerDown={onToggleCollapse}>
+          <button 
+            role="treeitem" 
+            className={styles.angleButton} 
+            onPointerDown={onToggleCollapse} 
+            data-testid={selectors.components.PanelEditor.Outline.dashboardOutline}
+          >
             <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
           </button>
         )}
