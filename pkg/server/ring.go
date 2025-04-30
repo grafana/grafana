@@ -24,8 +24,8 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
-const ringKey = "storage-ring"
-const ringName = "unified_storage"
+const ringKey = "unified-storage-ring"
+const ringName = "unified_storage_ring"
 const numTokens = 128
 const heartbeatTimeout = time.Minute
 

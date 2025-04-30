@@ -169,7 +169,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
 
         abbr: {
           backgroundColor: theme.colors.primary.main,
-          borderRadius: '100px',
+          borderRadius: theme.shape.radius.pill,
           display: 'block',
           paddingTop: '2px',
           height: '26px',
