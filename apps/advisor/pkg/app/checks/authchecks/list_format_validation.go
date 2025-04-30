@@ -68,7 +68,7 @@ func (s *listFormatValidation) Run(ctx context.Context, _ *advisor.CheckSpec, ob
 			[]advisor.CheckErrorLink{
 				{
 					Url:     fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(setting.Provider, "_", "-")),
-					Message: "Go to the documentation",
+					Message: "Check the documentation",
 				},
 				{
 					Url:     fmt.Sprintf("/admin/authentication/%s", setting.Provider),
