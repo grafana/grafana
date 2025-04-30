@@ -4,6 +4,7 @@ import { AppEvents, isTruthy, locationUtil } from '@grafana/data';
 import { config, getBackendSrv, locationService } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { folderAPI } from 'app/api/clients/folder';
 import { createBaseQuery, handleRequestError } from 'app/api/createBaseQuery';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
@@ -11,6 +12,7 @@ import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
 import { isDashboardV2Resource, isV1DashboardCommand, isV2DashboardCommand } from 'app/features/dashboard/api/utils';
 import { SaveDashboardCommand } from 'app/features/dashboard/components/SaveDashboard/types';
 import { dashboardWatcher } from 'app/features/live/dashboard/dashboardWatcher';
+import { dispatch } from 'app/store/store';
 import {
   DescendantCount,
   DescendantCountDTO,
@@ -21,9 +23,7 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
-import { folderAPI } from '../../../api/clients/folder';
 import { t } from '../../../core/internationalization';
-import { dispatch } from '../../../store/store';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
@@ -257,12 +257,14 @@ export const browseDashboardsAPI = createApi({
           const dashboard = isDashboardV2Resource(fullDash) ? fullDash.spec : fullDash.dashboard;
           const k8s = isDashboardV2Resource(fullDash) ? fullDash.metadata : undefined;
 
-          if (isProvisionedDashboard(fullDash)) {
-            appEvents.publish({
-              type: AppEvents.alertWarning.name,
-              payload: ['Cannot move provisioned dashboard'],
-            });
-            continue;
+          if (config.featureToggles.provisioning) {
+            if (isProvisionedDashboard(fullDash)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned dashboard'],
+              });
+              continue;
+            }
           }
           await getDashboardAPI().saveDashboard({
             dashboard,
