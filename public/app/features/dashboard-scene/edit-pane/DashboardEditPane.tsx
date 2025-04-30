@@ -273,7 +273,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
             role="button"
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
             className={styles.outlineCollapseButton}
-            data-testid={selectors.components.NavToolbar.editDashboard.outlineSection}
+            data-testid={selectors.components.PanelEditor.Outline.section}
           >
             <Text weight="medium">
               <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
