@@ -21,11 +21,13 @@ import {
   SaveDashboardResponseDTO,
 } from 'app/types';
 
+import { folderAPI } from '../../../api/clients/folder';
 import { t } from '../../../core/internationalization';
+import { dispatch } from '../../../store/store';
 import { refetchChildren, refreshParents } from '../state';
 import { DashboardTreeSelection } from '../types';
 
-import { isProvisionedDashboard } from './isProvisioned';
+import { isProvisionedDashboard, isProvisionedFolder } from './isProvisioned';
 import { PAGE_SIZE } from './services';
 
 interface DeleteItemsArgs {
@@ -230,6 +232,17 @@ export const browseDashboardsAPI = createApi({
         // Move all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
+          if (config.featureToggles.provisioning) {
+            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+            if (isProvisionedFolder(folder.data)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: ['Cannot move provisioned folder'],
+              });
+              continue;
+            }
+          }
+
           await baseQuery({
             url: `/folders/${folderUID}/move`,
             method: 'POST',
@@ -285,6 +298,18 @@ export const browseDashboardsAPI = createApi({
         // Delete all the folders sequentially
         // TODO error handling here
         for (const folderUID of selectedFolders) {
+          if (config.featureToggles.provisioning) {
+            const folder = await dispatch(folderAPI.endpoints.getFolder.initiate({ name: folderUID }));
+            if (isProvisionedFolder(folder.data)) {
+              appEvents.publish({
+                type: AppEvents.alertWarning.name,
+                payload: [
+                  'Cannot delete provisioned folder. To remove it, delete it from the repository and synchronise to apply the changes.',
+                ],
+              });
+              continue;
+            }
+          }
           await baseQuery({
             url: `/folders/${folderUID}`,
             method: 'DELETE',
