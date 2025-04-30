@@ -27,6 +27,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
+	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
 
 func TestIntegrationDecrypt(t *testing.T) {
@@ -271,7 +272,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 		featuremgmt.FlagSecretsManagementAppPlatform,
 	)
 
-	db := sqlstore.NewTestStore(t)
+	db := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 	database := database.ProvideDatabase(db)
 
 	tracer := tracing.InitializeTracerForTest()
@@ -304,7 +305,7 @@ func setupDecryptTestService(t *testing.T, allowList map[string]struct{}) (*decr
 	require.NoError(t, err)
 
 	// Initialize the secure value storage
-	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(db, database, features)
+	secureValueMetadataStorage, err := ProvideSecureValueMetadataStorage(database, features)
 	require.NoError(t, err)
 
 	decryptAuthorizer := decrypt.ProvideDecryptAuthorizer(allowList)

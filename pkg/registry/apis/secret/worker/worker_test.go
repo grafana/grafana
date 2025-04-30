@@ -47,8 +47,7 @@ func TestProcessMessage(t *testing.T) {
 	}()
 
 	for range 10 {
-		testDB := sqlstore.NewTestStore(t)
-		require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
 		database := database.ProvideDatabase(testDB)
 
@@ -64,7 +63,7 @@ func TestProcessMessage(t *testing.T) {
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, database, features)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 

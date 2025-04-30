@@ -5,30 +5,18 @@ import (
 	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
 var _ contracts.SecureValueMetadataStorage = (*secureValueMetadataStorage)(nil)
 
-func ProvideSecureValueMetadataStorage(
-	oldDb db.DB,
-	db contracts.Database,
-	features featuremgmt.FeatureToggles,
-) (contracts.SecureValueMetadataStorage, error) {
+func ProvideSecureValueMetadataStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.SecureValueMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &secureValueMetadataStorage{}, nil
-	}
-
-	// Pass `cfg` as `nil` because it is not used. If it ends up being used, it will panic.
-	// This is intended, as we shouldn't need any configuration settings here for secrets migrations.
-	if err := migrator.MigrateSecretSQL(oldDb.GetEngine(), nil); err != nil {
-		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return &secureValueMetadataStorage{
@@ -221,7 +209,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -233,7 +220,6 @@ func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube
 		return fmt.Errorf("execute template %q: %w", sqlSecureValueDelete.Name(), err)
 	}
 
-	// TODO: because this is a securevalue, do we care to inform the caller if a row was delete (existed) or not?
 	res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 	if err != nil {
 		return fmt.Errorf("deleting secure value row: %w", err)

@@ -171,6 +171,7 @@ import (
 	secretdatabase "github.com/grafana/grafana/pkg/storage/secret/database"
 	secretencryption "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	secretmetadata "github.com/grafana/grafana/pkg/storage/secret/metadata"
+	secretmigrator "github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unifiedsearch "github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/tsdb/azuremonitor"
@@ -432,6 +433,7 @@ var wireBasicSet = wire.NewSet(
 	secretencryption.ProvideEncryptedValueStorage,
 	secretmetadata.ProvideOutboxQueue,
 	secretservice.ProvideSecretService,
+	secretmigrator.NewWithEngine,
 	secretdatabase.ProvideDatabase,
 	wire.Bind(new(secretcontracts.Database), new(*secretdatabase.Database)),
 	encryptionManager.ProvideEncryptionManager,

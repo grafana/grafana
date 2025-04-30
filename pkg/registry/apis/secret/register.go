@@ -101,11 +101,16 @@ func RegisterAPIService(
 	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
+	secretDBMigrator contracts.SecretDBMigrator,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return nil, nil
+	}
+
+	if err := secretDBMigrator.RunMigrations(); err != nil {
+		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
