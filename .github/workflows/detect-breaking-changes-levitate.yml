@@ -31,6 +31,7 @@ jobs:
         with:
           path: './pr'
           persist-credentials: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
@@ -81,6 +82,7 @@ jobs:
         with:
           path: './base'
           ref: ${{ github.event.pull_request.base.ref }}
+          persist-credentials: false
 
       - uses: actions/setup-node@v4
         with:
@@ -129,6 +131,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22.11.0
@@ -152,8 +157,8 @@ jobs:
       - id: 'auth'
         uses: 'google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f'
         with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.LEVITATE_SA }}
+          workload_identity_provider: projects/304398677251/locations/global/workloadIdentityPools/github/providers/github-provider
+          service_account: github-plugins-data-levitate@grafanalabs-workload-identity.iam.gserviceaccount.com
           project_id: 'grafanalabs-global'
 
       - name: 'Set up Cloud SDK'
@@ -172,7 +177,11 @@ jobs:
       - name: Persisting the check output
         run: |
             mkdir -p ./levitate
-            echo "{ \"exit_code\": ${{ steps.breaking-changes.outputs.is_breaking }}, \"message\": \"${{ steps.breaking-changes.outputs.message }}\", \"pr_number\": \"${{ github.event.pull_request.number }}\" }" > ./levitate/result.json
+            echo "{ \"exit_code\": ${IS_BREAKING}, \"message\": \"${MESSAGE}\", \"pr_number\": \"${PR_NUMBER}\" }" > ./levitate/result.json
+        env:
+          IS_BREAKING: ${{ steps.breaking-changes.outputs.is_breaking }}
+          MESSAGE: ${{ steps.breaking-changes.outputs.message }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
 
       - name: Upload check output as artifact
         uses: actions/upload-artifact@v4
@@ -190,14 +199,24 @@ jobs:
       id-token: write
 
     steps:
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+      - id: get-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760 # get-vault-secrets-v1.1.0
         with:
-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
+          # Secrets placed in the ci/repo/grafana/plugin-tools in vault
+          repo_secrets: |
+            GITHUB_APP_ID=grafana_pr_automation_app:app_id
+            GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
+
+      - name: Generate token
+        id: generate_token
+        uses: actions/create-github-app-token@3ff1caaa28b64c9cc276ce0a02e2ff584f3900c5 # v2.0.2
+        with:
+          app-id: ${{ env.GITHUB_APP_ID }}
+          private-key: ${{ env.GITHUB_APP_PRIVATE_KEY }}
 
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: 'Download artifact'
         uses: actions/download-artifact@v4
@@ -343,7 +362,7 @@ jobs:
       # Related issue: https://github.com/renovatebot/renovate/issues/1908
       - name: Add "grafana/plugins-platform-frontend" as a reviewer
         if: steps.levitate-run.outputs.exit_code == 1
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -360,7 +379,7 @@ jobs:
       # Remove reviewers (no more breaking changes)
       - name: Remove "grafana/plugins-platform-frontend" from the list of reviewers
         if: steps.levitate-run.outputs.exit_code == 0
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -376,9 +395,11 @@ jobs:
 
       - name: Exit
         run: |
-          if [ "${{ steps.levitate-run.outputs.exit_code }}" -ne 0 ]; then
+          if [ "${LV_EXIT_CODE}" -ne 0 ]; then
             echo "Breaking changes detected. Please check the levitate report in your pull request. This workflow won't block merging."
           fi
 
-          exit ${{ steps.levitate-run.outputs.exit_code }}
+          exit ${LV_EXIT_CODE}
         shell: bash
+        env:
+          LV_EXIT_CODE: ${{ steps.levitate-run.outputs.exit_code }}
