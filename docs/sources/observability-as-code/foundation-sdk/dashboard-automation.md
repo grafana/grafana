@@ -1,5 +1,5 @@
 ---
-description:
+description: Learn how to automatically generate and deploy Grafana dashboards as code with GitHub Actions.
 keywords:
   - foundation SDK
   - dashboard provisioning
