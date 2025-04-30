@@ -1,8 +1,8 @@
 ## API
 
-### Adding and Upgrading tools
+### Adding and Upgrading Tools
 
-To add a new tool please execute the installation script
+To add a new tool, execute the installation script:
 
 ```bash
 install.sh <tool>
@@ -10,34 +10,38 @@ install.sh <tool>
 
 #### Example
 
-Following command will add lefthook to the tracked tools if it was not installed previously, or update the tool version
+The following command will add `lefthook` to the tracked tools if it is not already installed, or update its version:
 
 ```bash
 install.sh github.com/evilmartians/lefthook@v1.11.10
 ```
 
-Behind the scene the script will do a couple of simple steps
+Behind the scenes, the script performs a few simple steps:
 
-- Create a go module under `.citools/src/<toolname>` directory to track the tool version and it's dependencies
-- Create a reference to the tool binary in the `.citools/Variables.mk` file
+- Creates a Go module under the `.citools/src/<toolname>` directory to track the tool version and its dependencies.
+- Creates a reference to the tool binary in the `.citools/Variables.mk` file.
 
-### Using tools in the Makefile
+### Using Tools in the Makefile
 
-Our makefile imports .citools/Variables.mk, you can simply call a tool binary using make syntax
+Our Makefile imports `.citools/Variables.mk`, so you can call a tool binary using standard Make syntax.
 
-#### Example:
+#### Example
 
 ```make
 run:
     $(bra) run
 ```
 
-### Using tracked tools w/o makefile
+### Using Tracked Tools Without the Makefile
 
-If you want to use tools outside of Makefile, you can locate the tool binary by executing following command
+If you want to use a tool outside of the Makefile, you can locate the tool binary by executing the following command:
+
+```bash
+GOWORK=off go tool -n -modfile=<path_to_modfile> <toolname>
+```
+
+You can also check the cache file containing the latest path to the binary:
 
 ```
-GOWORK=off go tool -n -modfile=<path_to_modilfe> <toolname>
+.tool-cache/<name>.path
 ```
-
-You can also try checking the cache file containing the latest path to binary `.tool-cache/<name>.path`
