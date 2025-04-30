@@ -14,6 +14,8 @@ import { createContactPointSearchLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
+import { ReceiverNameProps } from './NotificationRoute';
+import UnknownContactPointDetails from './UnknownContactPointDetails';
 import { RouteWithPath, hasEmptyMatchers, isDefaultPolicy } from './route';
 
 interface Props {
@@ -51,10 +53,10 @@ function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
   );
 }
 
-interface NotificationRouteDetailsModalProps {
+interface NotificationRouteDetailsModalProps extends ReceiverNameProps {
   onClose: () => void;
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
 }
@@ -63,6 +65,7 @@ export function NotificationRouteDetailsModal({
   onClose,
   route,
   receiver,
+  receiverNameFromRoute,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteDetailsModalProps) {
@@ -107,13 +110,17 @@ export function NotificationRouteDetailsModal({
             <Stack gap={1} direction="column">
               <Trans i18nKey="alerting.notification-route-details-modal.contact-point">Contact point</Trans>
 
-              <span className={styles.textMuted}>{receiver.name}</span>
+              <span className={styles.textMuted}>
+                {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverNameFromRoute} />}
+              </span>
             </Stack>
             <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
               <Stack gap={1} direction="row" alignItems="center">
-                <TextLink href={createContactPointSearchLink(receiver.name, alertManagerSourceName)} external>
-                  <Trans i18nKey="alerting.notification-route-details-modal.see-details-link">See details</Trans>
-                </TextLink>
+                {receiver ? (
+                  <TextLink href={createContactPointSearchLink(receiver.name, alertManagerSourceName)} external>
+                    <Trans i18nKey="alerting.notification-route-details-modal.see-details-link">See details</Trans>
+                  </TextLink>
+                ) : null}
               </Stack>
             </Authorize>
           </div>
