@@ -72,7 +72,7 @@ func (s *listFormatValidation) Run(ctx context.Context, _ *advisor.CheckSpec, ob
 				},
 				{
 					Url:     fmt.Sprintf("/admin/authentication/%s", setting.Provider),
-					Message: "Go to authentication settings",
+					Message: "Configure provider",
 				},
 			},
 		), nil
