@@ -56,7 +56,7 @@ if (cfg.featureToggles.addFieldFromCalculationStatFunctions) {
   );
 }
 
-const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string]);
+const okTypes = new Set<FieldType>([FieldType.time, FieldType.number, FieldType.string, FieldType.boolean]);
 
 export const CalculateFieldTransformerEditor = (props: CalculateFieldTransformerEditorProps) => {
   const { options, onChange, input } = props;
