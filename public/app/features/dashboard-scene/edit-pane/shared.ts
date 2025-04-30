@@ -73,6 +73,7 @@ export class ConditionalRenderingChangedEvent extends BusEventWithPayload<SceneO
 export interface DashboardEditActionEventPayload {
   sceneObj: SceneObject;
   description?: string;
+  type?: 'canvas-element-added' | 'canvas-element-removed';
   perform: () => void;
   undo: () => void;
 }

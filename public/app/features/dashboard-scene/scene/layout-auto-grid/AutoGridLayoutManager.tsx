@@ -4,7 +4,11 @@ import { GRID_CELL_VMARGIN } from 'app/core/constants';
 import { t } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
-import { NewObjectAddedToCanvasEvent, ObjectRemovedFromCanvasEvent } from '../../edit-pane/shared';
+import {
+  DashboardEditActionEvent,
+  NewObjectAddedToCanvasEvent,
+  ObjectRemovedFromCanvasEvent,
+} from '../../edit-pane/shared';
 import { serializeAutoGridLayout } from '../../serialization/layoutSerializers/AutoGridLayoutSerializer';
 import { joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
@@ -93,11 +97,24 @@ export class AutoGridLayoutManager
     vizPanel.setState({ key: getVizPanelKeyForPanelId(panelId) });
     vizPanel.clearParent();
 
-    this.state.layout.setState({
-      children: [...this.state.layout.state.children, new AutoGridItem({ body: vizPanel })],
-    });
+    const newGridItem = new AutoGridItem({ body: vizPanel });
 
-    this.publishEvent(new NewObjectAddedToCanvasEvent(vizPanel), true);
+    this.publishEvent(
+      new DashboardEditActionEvent({
+        description: 'Add panel',
+        sceneObj: vizPanel,
+        type: 'canvas-element-added',
+        perform: () => {
+          this.state.layout.setState({ children: [...this.state.layout.state.children, newGridItem] });
+        },
+        undo: () => {
+          this.state.layout.setState({
+            children: this.state.layout.state.children.filter((child) => child !== newGridItem),
+          });
+        },
+      }),
+      true
+    );
   }
 
   public pastePanel() {
