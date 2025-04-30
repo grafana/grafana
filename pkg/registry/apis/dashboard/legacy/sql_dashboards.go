@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
@@ -303,19 +304,15 @@ func (a *dashboardSqlAccess) scanRow(rows *sql.Rows, history bool) (*dashboardRo
 		}
 
 		if origin_name.String != "" {
-			// if the reader cannot be found, it may be an orphaned provisioned dashboard
-			resolvedPath := a.provisioning.GetDashboardProvisionerResolvedPath(origin_name.String)
-			if resolvedPath != "" {
-				meta.SetSourceProperties(utils.SourceProperties{
-					Path:            origin_path.String,
-					Checksum:        origin_hash.String,
-					TimestampMillis: origin_ts.Int64,
-				})
-				meta.SetManagerProperties(utils.ManagerProperties{
-					Kind:     utils.ManagerKindClassicFP, // nolint:staticcheck
-					Identity: origin_name.String,
-				})
-			}
+			meta.SetSourceProperties(utils.SourceProperties{
+				Path:            origin_path.String,
+				Checksum:        origin_hash.String,
+				TimestampMillis: origin_ts.Int64,
+			})
+			meta.SetManagerProperties(utils.ManagerProperties{
+				Kind:     utils.ManagerKindClassicFP, // nolint:staticcheck
+				Identity: origin_name.String,
+			})
 		} else if plugin_id.String != "" {
 			meta.SetManagerProperties(utils.ManagerProperties{
 				Kind:     utils.ManagerKindPlugin,
@@ -438,7 +435,7 @@ func (a *dashboardSqlAccess) SaveDashboard(ctx context.Context, orgId int64, das
 		return nil, created, err
 	}
 	if failOnExisting && !created {
-		return nil, created, dashboards.ErrDashboardWithSameUIDExists
+		return nil, created, apierrors.NewConflict(dashboardV1.DashboardResourceInfo.GroupResource(), dash.Name, dashboards.ErrDashboardWithSameUIDExists)
 	}
 
 	out, err := a.dashStore.SaveDashboard(ctx, *cmd)

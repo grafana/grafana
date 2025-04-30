@@ -1014,6 +1014,10 @@ export interface FeatureToggles {
   */
   pluginsAutoUpdate?: boolean;
   /**
+  * Register MT frontend
+  */
+  multiTenantFrontend?: boolean;
+  /**
   * Enables the alerting list view v2 preview toggle
   */
   alertingListViewV2PreviewToggle?: boolean;

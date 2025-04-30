@@ -158,7 +158,16 @@ func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, st
 			go func(step checks.Step, item any) {
 				defer wg.Done()
 				defer func() { <-limit }()
-				stepErr, err := step.Run(ctx, spec, item)
+				var stepErr *advisorv0alpha1.CheckReportFailure
+				var err error
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							err = fmt.Errorf("panic recovered in step %s: %v", step.ID(), r)
+						}
+					}()
+					stepErr, err = step.Run(ctx, spec, item)
+				}()
 				mu.Lock()
 				defer mu.Unlock()
 				if err != nil {

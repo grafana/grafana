@@ -129,6 +129,28 @@ func TestProcessCheck_RunError(t *testing.T) {
 	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
+func TestProcessCheck_RunRecoversFromPanic(t *testing.T) {
+	obj := &advisorv0alpha1.Check{}
+	obj.SetAnnotations(map[string]string{})
+	meta, err := utils.MetaAccessor(obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	meta.SetCreatedBy("user:1")
+	client := &mockClient{}
+	ctx := context.TODO()
+
+	check := &mockCheck{
+		items:     []any{"item"},
+		runPanics: true,
+	}
+
+	err = processCheck(ctx, client, obj, check)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "panic recovered in step")
+	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
+}
+
 func TestProcessCheckRetry_NoRetry(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{})
@@ -212,8 +234,9 @@ func (m *mockClient) PatchInto(ctx context.Context, id resource.Identifier, req 
 }
 
 type mockCheck struct {
-	err   error
-	items []any
+	err       error
+	items     []any
+	runPanics bool
 }
 
 func (m *mockCheck) ID() string {
@@ -230,15 +253,19 @@ func (m *mockCheck) Item(ctx context.Context, id string) (any, error) {
 
 func (m *mockCheck) Steps() []checks.Step {
 	return []checks.Step{
-		&mockStep{err: m.err},
+		&mockStep{err: m.err, panics: m.runPanics},
 	}
 }
 
 type mockStep struct {
-	err error
+	err    error
+	panics bool
 }
 
 func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportFailure, error) {
+	if m.panics {
+		panic("panic")
+	}
 	if m.err != nil {
 		return nil, m.err
 	}
