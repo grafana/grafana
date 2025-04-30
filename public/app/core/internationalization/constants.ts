@@ -1,12 +1,9 @@
 import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
 
-import { LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
+import { PSEUDO_LOCALE, LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
-
-export const PSEUDO_LOCALE = 'pseudo';
-
 export interface LanguageDefinition<Namespace extends string = string> {
   /** IETF language tag for the language e.g. en-US */
   code: string;
