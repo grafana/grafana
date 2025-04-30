@@ -2823,7 +2823,6 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "workspace:*"
     "@grafana/e2e-selectors": "workspace:*"
-    "@grafana/lezer-logql": "npm:0.2.6"
     "@grafana/lezer-traceql": "npm:0.0.21"
     "@grafana/monaco-logql": "npm:^0.0.8"
     "@grafana/o11y-ds-frontend": "workspace:*"
@@ -3167,15 +3166,6 @@ __metadata:
     react: 17.0.2
     react-dom: 17.0.2
   checksum: 10/98cb06a971f151e9504ab2b6640edb41fced12ecc6e033df5069937f82ab10a682f63314f713f79a8870975fb42c3cd74f23a605b58d961e632aa6cd35adf44b
-  languageName: node
-  linkType: hard
-
-"@grafana/lezer-logql@npm:0.2.6":
-  version: 0.2.6
-  resolution: "@grafana/lezer-logql@npm:0.2.6"
-  peerDependencies:
-    "@lezer/lr": ^1.0.0
-  checksum: 10/09df02b9934f37e9e58731ce0806923618991dfb46510ab29299040860b590359c9083def93176b1076cb1880302a92e527fb5aad0cbf97557a8025c74a997ed
   languageName: node
   linkType: hard
 
