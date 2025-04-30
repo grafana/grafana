@@ -5,7 +5,7 @@
 To add a new tool please execute the installation script
 
 ```bash
-install.sh <name>
+install.sh <tool>
 ```
 
 #### Example
@@ -34,8 +34,10 @@ run:
 
 ### Using tracked tools w/o makefile
 
-If you want to use tool outside of Make file, you can locate the tool binary by executing following command
+If you want to use tools outside of Makefile, you can locate the tool binary by executing following command
 
 ```
 GOWORK=off go tool -n -modfile=<path_to_modilfe> <toolname>
 ```
+
+You can also try checking the cache file containing the latest path to binary `.tool-cache/<name>.path`
