@@ -130,7 +130,7 @@ Use these options to refine the visualization.
 
 ### Axis options
 
-{{< docs/shared lookup="visualizations/axis-options-state-status.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
+{{< docs/shared lookup="visualizations/axis-options-3.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
 ### Standard options
 

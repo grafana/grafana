@@ -7,7 +7,7 @@ import {
   DataSourceJsonData,
   makeTimeRange,
 } from '@grafana/data';
-import { setPluginExtensionsHook, getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
+import { getBackendSrv, setBackendSrv, TemplateSrv } from '@grafana/runtime';
 
 import { defaultPyroscopeQueryType } from './dataquery.gen';
 import { normalizeQuery, PyroscopeDataSource } from './datasource';
@@ -35,7 +35,6 @@ export function mockFetchPyroscopeDatasourceSettings(
 
 function setupDatasource() {
   mockFetchPyroscopeDatasourceSettings();
-  setPluginExtensionsHook(() => ({ extensions: [], isLoading: false })); // No extensions
   const templateSrv = {
     replace: (query: string): string => {
       return query.replace(/\$var/g, 'interpolated');

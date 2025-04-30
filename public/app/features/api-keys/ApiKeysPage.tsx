@@ -190,41 +190,60 @@ export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, dat
             <Trans i18nKey="api-keys.migration-summary.migration-successful">Migration Successful!</Trans>
           </p>
           <p>
-            <strong>Total: </strong>
-            {data.total}
+            <Trans i18nKey="api-keys.migration-summary.total" values={{ total: data.total }}>
+              <strong>Total: </strong>
+              {'{{total}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Migrated: </strong>
-            {data.migrated}
+            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ migrated: data.migrated }}>
+              <strong>Migrated: </strong>
+              {'{{migrated}}'}
+            </Trans>
           </p>
         </div>
       )}
       {data.failedApikeyIDs.length !== 0 && (
         <div style={styles.migrationSummary}>
           <p>
-            Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
-            assured, all of your API keys are fully functional and operational. Please try again or contact support.
+            <Trans i18nKey="api-keys.migration-summary.migration-complete">
+              Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
+              assured, all of your API keys are fully functional and operational. Please try again or contact support.
+            </Trans>
           </p>
           <hr />
           <p>
-            <strong>Total: </strong>
-            {data.total}
+            <Trans i18nKey="api-keys.migration-summary.total" values={{ total: data.total }}>
+              <strong>Total: </strong>
+              {'{{total}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Migrated: </strong>
-            {data.migrated}
+            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ migrated: data.migrated }}>
+              <strong>Migrated: </strong>
+              {'{{migrated}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Failed: </strong>
-            {data.failed}
+            <Trans i18nKey="api-keys.migration-summary.failed" values={{ failed: data.failed }}>
+              <strong>Failed: </strong>
+              {'{{failed}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Failed Api Key IDs: </strong>
-            {data.failedApikeyIDs.join(', ')}
+            <Trans i18nKey="api-keys.migration-summary.failed-ids" values={{ ids: data.failedApikeyIDs.join(', ') }}>
+              <strong>Failed api key IDs: </strong>
+              {'{{ids}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Failed Details: </strong>
-            {data.failedDetails.join(', ')}
+            <Trans
+              i18nKey="api-keys.migration-summary.failed-details"
+              values={{ details: data.failedDetails.join(', ') }}
+            >
+              <strong>Failed details: </strong>
+              {'{{details}}'}
+            </Trans>
           </p>
         </div>
       )}

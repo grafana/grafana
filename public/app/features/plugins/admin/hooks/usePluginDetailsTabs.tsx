@@ -126,16 +126,6 @@ export const usePluginDetailsTabs = (
     }
 
     if (pluginConfig.meta.type === PluginType.app) {
-      if (pluginConfig.angularConfigCtrl) {
-        navModelChildren.push({
-          text: 'Config',
-          icon: 'cog',
-          id: PluginTabIds.CONFIG,
-          url: `${pathname}?page=${PluginTabIds.CONFIG}`,
-          active: PluginTabIds.CONFIG === currentPageId,
-        });
-      }
-
       if (pluginConfig.configPages) {
         for (const configPage of pluginConfig.configPages) {
           navModelChildren.push({
@@ -195,10 +185,6 @@ function useDefaultPage(plugin: CatalogPlugin | undefined, pluginConfig: Grafana
 
   if (!hasAccess || pluginConfig.meta.type !== PluginType.app) {
     return PluginTabIds.OVERVIEW;
-  }
-
-  if (pluginConfig.angularConfigCtrl) {
-    return PluginTabIds.CONFIG;
   }
 
   if (pluginConfig.configPages?.length) {

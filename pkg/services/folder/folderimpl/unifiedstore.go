@@ -15,9 +15,8 @@ import (
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"github.com/grafana/grafana/pkg/storage/unified/search"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -51,7 +50,8 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
-	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
+	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
+		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +104,16 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 			return nil, err
 		}
 		meta.SetFolder(*cmd.NewParentUID)
+	} else {
+		// only compare versions if not moving the folder
+		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {
+			return nil, dashboards.ErrDashboardVersionMismatch
+		}
 	}
 
-	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID)
+	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
+		FieldValidation: v1.FieldValidationIgnore,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +178,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	return hits, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	// the general folder is saved as an empty string in the database
 	if q.UID == folder.GeneralFolderUID {
 		q.UID = ""
@@ -230,36 +237,22 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
-	hits := make([]*folder.Folder, 0)
+	hits := make([]*folder.FolderReference, 0)
 	for _, item := range res.Hits {
 		// filter out k6 folders if request is not from a service account
 		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
 			continue
 		}
 
-		// TODO:  Remove this once we migrate the alerting use case.
-		// This is a temporary flag, and will be removed once we migrate the alerting use case to
-		// expect a folder ref too for children folders.
-		if q.RefOnly { // nolint:staticcheck
-			f := &folder.Folder{
-				ID:        item.Field.GetNestedInt64(search.DASHBOARD_LEGACY_ID),
-				UID:       item.Name,
-				Title:     item.Title,
-				ParentUID: item.Folder,
-			}
-
-			if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
-				f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
-			}
-
-			hits = append(hits, f)
-			continue
+		f := &folder.FolderReference{
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:       item.Name,
+			Title:     item.Title,
+			ParentUID: item.Folder,
 		}
 
-		// search only returns a subset of info, get all info of the folder
-		f, err := ss.Get(ctx, folder.GetFolderQuery{UID: &item.Name, OrgID: q.OrgID})
-		if err != nil {
-			return nil, err
+		if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
+			f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
 		}
 
 		hits = append(hits, f)
@@ -466,7 +459,7 @@ func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (
 }
 
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	ds, err := v0alpha1.UnstructuredToDescendantCounts(u)
+	ds, err := folderv1.UnstructuredToDescendantCounts(u)
 	if err != nil {
 		return nil, err
 	}

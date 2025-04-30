@@ -75,6 +75,7 @@ type sqlResourceRequest struct {
 	sqltemplate.SQLTemplate
 	GUID       string
 	WriteEvent resource.WriteEvent
+	Generation int64
 	Folder     string
 
 	// Useful when batch writing
@@ -115,6 +116,7 @@ func (r sqlStatsRequest) Validate() error {
 
 type historyPollResponse struct {
 	Key             resource.ResourceKey
+	GUID            string
 	ResourceVersion int64
 	PreviousRV      *int64
 	Value           []byte
@@ -305,8 +307,9 @@ func (r sqlGetHistoryRequest) Validate() error {
 // prune resource history
 type sqlPruneHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key          *resource.ResourceKey
-	HistoryLimit int64
+	Key                   *resource.ResourceKey
+	PartitionByGeneration bool // include generation in the partition
+	HistoryLimit          int64
 }
 
 func (r *sqlPruneHistoryRequest) Validate() error {

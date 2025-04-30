@@ -19,6 +19,8 @@ export interface AnnotationQuerySpec {
 	name: string;
 	builtIn?: boolean;
 	filter?: AnnotationPanelFilter;
+	// Catch-all field for datasource-specific properties
+	options?: Record<string, any>;
 }
 
 export const defaultAnnotationQuerySpec = (): AnnotationQuerySpec => ({
@@ -65,7 +67,7 @@ export const defaultAnnotationPanelFilter = (): AnnotationPanelFilter => ({
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-export type DashboardCursorSync = "Off" | "Crosshair" | "Tooltip";
+export type DashboardCursorSync = "Crosshair" | "Tooltip" | "Off";
 
 export const defaultDashboardCursorSync = (): DashboardCursorSync => ("Off");
 
@@ -711,11 +713,13 @@ export const defaultConditionalRenderingGroupKind = (): ConditionalRenderingGrou
 });
 
 export interface ConditionalRenderingGroupSpec {
+	visibility: "show" | "hide";
 	condition: "and" | "or";
-	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind)[];
+	items: (ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind)[];
 }
 
 export const defaultConditionalRenderingGroupSpec = (): ConditionalRenderingGroupSpec => ({
+	visibility: "show",
 	condition: "and",
 	items: [],
 });
@@ -760,21 +764,21 @@ export const defaultConditionalRenderingDataSpec = (): ConditionalRenderingDataS
 	value: false,
 });
 
-export interface ConditionalRenderingTimeIntervalKind {
-	kind: "ConditionalRenderingTimeInterval";
-	spec: ConditionalRenderingTimeIntervalSpec;
+export interface ConditionalRenderingTimeRangeSizeKind {
+	kind: "ConditionalRenderingTimeRangeSize";
+	spec: ConditionalRenderingTimeRangeSizeSpec;
 }
 
-export const defaultConditionalRenderingTimeIntervalKind = (): ConditionalRenderingTimeIntervalKind => ({
-	kind: "ConditionalRenderingTimeInterval",
-	spec: defaultConditionalRenderingTimeIntervalSpec(),
+export const defaultConditionalRenderingTimeRangeSizeKind = (): ConditionalRenderingTimeRangeSizeKind => ({
+	kind: "ConditionalRenderingTimeRangeSize",
+	spec: defaultConditionalRenderingTimeRangeSizeSpec(),
 });
 
-export interface ConditionalRenderingTimeIntervalSpec {
+export interface ConditionalRenderingTimeRangeSizeSpec {
 	value: string;
 }
 
-export const defaultConditionalRenderingTimeIntervalSpec = (): ConditionalRenderingTimeIntervalSpec => ({
+export const defaultConditionalRenderingTimeRangeSizeSpec = (): ConditionalRenderingTimeRangeSizeSpec => ({
 	value: "",
 });
 
@@ -867,10 +871,22 @@ export const defaultTabsLayoutTabKind = (): TabsLayoutTabKind => ({
 export interface TabsLayoutTabSpec {
 	title?: string;
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind;
+	conditionalRendering?: ConditionalRenderingGroupKind;
+	repeat?: TabRepeatOptions;
 }
 
 export const defaultTabsLayoutTabSpec = (): TabsLayoutTabSpec => ({
 	layout: defaultGridLayoutKind(),
+});
+
+export interface TabRepeatOptions {
+	mode: "variable";
+	value: string;
+}
+
+export const defaultTabRepeatOptions = (): TabRepeatOptions => ({
+	mode: RepeatMode,
+	value: "",
 });
 
 // Links with references to other dashboards or external resources
@@ -1328,6 +1344,7 @@ export interface AdHocFilterWithLabels {
 	keyLabel?: string;
 	valueLabels?: string[];
 	forceEdit?: boolean;
+	origin?: FilterOrigin;
 	// @deprecated
 	condition?: string;
 }
@@ -1337,6 +1354,12 @@ export const defaultAdHocFilterWithLabels = (): AdHocFilterWithLabels => ({
 	operator: "",
 	value: "",
 });
+
+// Determine the origin of the adhoc variable filter
+// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
+export type FilterOrigin = "dashboard" | "scope";
+
+export const defaultFilterOrigin = (): FilterOrigin => ("dashboard");
 
 // Define the MetricFindValue type
 export interface MetricFindValue {
@@ -1351,7 +1374,6 @@ export const defaultMetricFindValue = (): MetricFindValue => ({
 });
 
 export interface Spec {
-	// Title of dashboard.
 	annotations: AnnotationQueryKind[];
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).

@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -537,7 +538,16 @@ func (b *bleveIndex) Search(
 		if err != nil {
 			return nil, err
 		}
-		searchrequest.Fields = f
+		if len(f) > 0 {
+			searchrequest.Fields = f
+		} else {
+			searchrequest.Fields = []string{
+				resource.SEARCH_FIELD_TITLE,
+				resource.SEARCH_FIELD_FOLDER,
+				resource.SEARCH_FIELD_SOURCE_PATH,
+				resource.SEARCH_FIELD_MANAGED_BY,
+			}
+		}
 	}
 
 	res, err := index.SearchInContext(ctx, searchrequest)
@@ -1029,6 +1039,15 @@ func (b *bleveIndex) hitsToTable(ctx context.Context, selectFields []string, hit
 				if match.Expl != nil {
 					row.Cells[i], err = json.Marshal(match.Expl)
 				}
+			case resource.SEARCH_FIELD_LEGACY_ID:
+				v := match.Fields[resource.SEARCH_FIELD_LABELS+"."+resource.SEARCH_FIELD_LEGACY_ID]
+				if v != nil {
+					str, ok := v.(string)
+					if ok {
+						id, _ := strconv.ParseInt(str, 10, 64)
+						row.Cells[i], err = encoders[i](id)
+					}
+				}
 			default:
 				fieldName := f.Name
 				// since the bleve index fields mix common and resource-specific fields, it is possible a conflict can happen
@@ -1060,6 +1079,8 @@ func getAllFields(standard resource.SearchableDocumentFields, custom resource.Se
 		standard.Field(resource.SEARCH_FIELD_FOLDER),
 		standard.Field(resource.SEARCH_FIELD_RV),
 		standard.Field(resource.SEARCH_FIELD_CREATED),
+		standard.Field(resource.SEARCH_FIELD_LEGACY_ID),
+		standard.Field(resource.SEARCH_FIELD_MANAGER_KIND),
 	}
 
 	if custom != nil {

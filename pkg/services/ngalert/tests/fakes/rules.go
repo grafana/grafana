@@ -273,13 +273,13 @@ func (f *RuleStore) GetNamespaceByUID(_ context.Context, uid string, orgID int64
 	return nil, fmt.Errorf("not found")
 }
 
-func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
+func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	for _, folder := range f.Folders[orgID] {
 		if folder.Title == title && folder.ParentUID == parentUID {
-			return folder, nil
+			return folder.ToFolderReference(), nil
 		}
 	}
 
@@ -292,31 +292,31 @@ func (f *RuleStore) GetOrCreateNamespaceByTitle(ctx context.Context, title strin
 	}
 
 	f.Folders[orgID] = append(f.Folders[orgID], newFolder)
-	return newFolder, nil
+	return newFolder.ToFolderReference(), nil
 }
 
-func (f *RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceByTitle(ctx context.Context, title string, orgID int64, user identity.Requester, parentUID string) (*folder.FolderReference, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
 	for _, folder := range f.Folders[orgID] {
 		if folder.Title == title && folder.ParentUID == parentUID {
-			return folder, nil
+			return folder.ToFolderReference(), nil
 		}
 	}
 
 	return nil, dashboards.ErrFolderNotFound
 }
 
-func (f *RuleStore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.Folder, error) {
+func (f *RuleStore) GetNamespaceChildren(ctx context.Context, uid string, orgID int64, user identity.Requester) ([]*folder.FolderReference, error) {
 	f.mtx.Lock()
 	defer f.mtx.Unlock()
 
-	result := []*folder.Folder{}
+	result := []*folder.FolderReference{}
 
 	for _, folder := range f.Folders[orgID] {
 		if folder.ParentUID == uid {
-			result = append(result, folder)
+			result = append(result, folder.ToFolderReference())
 		}
 	}
 

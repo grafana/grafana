@@ -1,10 +1,7 @@
 package repository
 
 import (
-	"net/http"
-
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
@@ -14,27 +11,27 @@ func IsWriteAllowed(repo *provisioning.Repository, ref string) error {
 		return apierrors.NewBadRequest("this repository is read only")
 	}
 
-	if ref == "" {
-		for _, v := range repo.Spec.Workflows {
-			if v == provisioning.WriteWorkflow {
-				return nil // found
-			}
-		}
-		return apierrors.NewBadRequest("this repository does not support the write workflow")
-	}
-
-	// Only github
-	if repo.Spec.Type != provisioning.GitHubRepositoryType {
-		return &apierrors.StatusError{ErrStatus: v1.Status{
-			Code:    http.StatusPreconditionFailed,
-			Message: "Only github supports writing to a branch",
-		}}
-	}
-
+	var supportsWrite, supportsBranch bool
 	for _, v := range repo.Spec.Workflows {
-		if v == provisioning.BranchWorkflow {
-			return nil
+		switch v {
+		case provisioning.WriteWorkflow:
+			supportsWrite = true
+		case provisioning.BranchWorkflow:
+			supportsBranch = repo.Spec.Type == provisioning.GitHubRepositoryType
 		}
 	}
-	return apierrors.NewBadRequest("this repository does not support the branch workflow")
+
+	// Ref may be the configured branch for github repositories
+	if ref != "" && repo.Spec.GitHub != nil && repo.Spec.GitHub.Branch == ref {
+		ref = ""
+	}
+
+	switch {
+	case ref == "" && !supportsWrite:
+		return apierrors.NewBadRequest("this repository does not support the write workflow")
+	case ref != "" && !supportsBranch:
+		return apierrors.NewBadRequest("this repository does not support the branch workflow")
+	default:
+		return nil
+	}
 }

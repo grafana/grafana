@@ -207,20 +207,19 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	}
 
 	result := definitions.AlertRuleExport{
-		UID:                         rule.UID,
-		Title:                       rule.Title,
-		For:                         model.Duration(rule.For),
-		KeepFiringFor:               model.Duration(rule.KeepFiringFor),
-		Condition:                   cPtr,
-		Data:                        data,
-		DashboardUID:                rule.DashboardUID,
-		PanelID:                     rule.PanelID,
-		NoDataState:                 ndsPtr,
-		ExecErrState:                eesPtr,
-		IsPaused:                    rule.IsPaused,
-		NotificationSettings:        AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
-		Record:                      AlertRuleRecordExportFromRecord(rule.Record),
-		MissingSeriesEvalsToResolve: rule.MissingSeriesEvalsToResolve,
+		UID:                  rule.UID,
+		Title:                rule.Title,
+		For:                  model.Duration(rule.For),
+		KeepFiringFor:        model.Duration(rule.KeepFiringFor),
+		Condition:            cPtr,
+		Data:                 data,
+		DashboardUID:         rule.DashboardUID,
+		PanelID:              rule.PanelID,
+		NoDataState:          ndsPtr,
+		ExecErrState:         eesPtr,
+		IsPaused:             rule.IsPaused,
+		NotificationSettings: AlertRuleNotificationSettingsExportFromNotificationSettings(rule.NotificationSettings),
+		Record:               AlertRuleRecordExportFromRecord(rule.Record),
 	}
 	if rule.For.Seconds() > 0 {
 		result.ForString = util.Pointer(model.Duration(rule.For).String())
@@ -233,6 +232,9 @@ func AlertRuleExportFromAlertRule(rule models.AlertRule) (definitions.AlertRuleE
 	}
 	if rule.Labels != nil {
 		result.Labels = &rule.Labels
+	}
+	if rule.MissingSeriesEvalsToResolve != nil && *rule.MissingSeriesEvalsToResolve != -1 {
+		result.MissingSeriesEvalsToResolve = rule.MissingSeriesEvalsToResolve
 	}
 
 	return result, nil

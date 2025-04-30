@@ -84,7 +84,7 @@ CommonAnnotations: {{ range .CommonAnnotations.SortedPairs }}{{ .Name }}={{ .Val
 		expected: TestTemplatesResults{
 			Results: []alertingNotify.TestTemplatesResult{{
 				Name:  "slack.title",
-				Text:  "\nReceiver: TestReceiver\nStatus: firing\nExternalURL: http://localhost:9093\nAlerts: 1\nFiring Alerts: 1\nResolved Alerts: 0\nGroupLabels: group_label=group_label_value \nCommonLabels: alertname=alert1 grafana_folder=folder title lbl1=val1 \nCommonAnnotations: ann1=annv1 \n",
+				Text:  "\nReceiver: TestReceiver\nStatus: firing\nExternalURL: http://localhost:9093\nAlerts: 1\nFiring Alerts: 1\nResolved Alerts: 0\nGroupLabels: group_label=group_label_value \nCommonLabels: alertname=alert1 grafana_folder=Test Folder lbl1=val1 \nCommonAnnotations: ann1=annv1 \n",
 				Scope: alertingNotify.TemplateScope(apimodels.RootScope),
 			}},
 			Errors: nil,

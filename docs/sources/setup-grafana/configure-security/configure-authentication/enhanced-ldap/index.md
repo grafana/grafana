@@ -23,8 +23,10 @@ weight: 400
 
 The enhanced LDAP integration adds additional functionality on top of the [LDAP integration](../ldap/) available in the open source edition of Grafana.
 
-> **Note:** Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
-> If you are a Grafana Cloud customer, please [open a support ticket in the Cloud Portal](/profile/org#support) to request this feature.
+{{< admonition type="note" >}}
+Available in [Grafana Enterprise](../../../../introduction/grafana-enterprise/) and [Grafana Cloud](/docs/grafana-cloud).
+If you are a Grafana Cloud customer, please [open a support ticket in the Cloud Portal](/profile/org#support) to request this feature.
+{{< /admonition >}}
 
 > To control user access with role-based permissions, refer to [role-based access control](../../../../administration/roles-and-permissions/access-control/).
 
@@ -51,7 +53,7 @@ With active LDAP synchronization, you can configure Grafana to actively sync use
 
 Users with updated role and team membership will need to refresh the page to get access to the new features.
 
-Removed users are automatically logged out and their account disabled. These accounts are displayed in the Server Admin > Users page with a `disabled` label. Disabled users keep their custom permissions on dashboards, folders, and data sources, so if you add them back in your LDAP database, they have access to the application with the same custom permissions as before.
+Removed users are automatically logged out and their account disabled. These accounts are displayed in the **Server Admin > Users** page with a `disabled` label. Disabled users keep their custom permissions on dashboards, folders, and data sources, so if you add them back in your LDAP database, they have access to the application with the same custom permissions as before.
 
 ```bash
 [auth.ldap]
@@ -74,7 +76,7 @@ active_sync_enabled = true # enabled by default
 
 Single bind configuration (as in the [Single bind example](../ldap/#single-bind-example)) is not supported with active LDAP synchronization because Grafana needs user information to perform LDAP searches.
 
-For the synchronization to work, the `servers.search_filter` and `servers.attributes.username` in the ldap.toml config file must match. By default, the `servers.attributes.username` is `cn`, so if you use another attribute as the search filter, you must also update the username attribute.
+For the synchronization to work, the `servers.search_filter` and `servers.attributes.username` in the `ldap.toml` configuration file must match. By default, the `servers.attributes.username` is `cn`, so if you use another attribute as the search filter, you must also update the username attribute.
 
 For example:
 

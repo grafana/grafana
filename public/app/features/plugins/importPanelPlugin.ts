@@ -1,6 +1,4 @@
-import { ComponentType } from 'react';
-
-import { PanelPlugin, PanelPluginMeta, PanelProps, PluginLoadingStrategy } from '@grafana/data';
+import { PanelPlugin, PanelPluginMeta, PluginLoadingStrategy, throwIfAngular } from '@grafana/data';
 import config from 'app/core/config';
 
 import { getPanelPluginLoadError } from '../panel/components/PanelPluginError';
@@ -56,11 +54,12 @@ export function syncGetPanelPlugin(id: string): PanelPlugin | undefined {
 }
 
 function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
+  throwIfAngular(meta);
+
   const fallbackLoadingStrategy = meta.loadingStrategy ?? PluginLoadingStrategy.fetch;
   return importPluginModule({
     path: meta.module,
     version: meta.info?.version,
-    isAngular: meta.angular?.detected,
     loadingStrategy: fallbackLoadingStrategy,
     pluginId: meta.id,
     moduleHash: meta.moduleHash,
@@ -69,20 +68,14 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
     .then((pluginExports) => {
       if (pluginExports.plugin) {
         return pluginExports.plugin;
-      } else if (pluginExports.PanelCtrl) {
-        const plugin = new PanelPlugin(null);
-        plugin.angularPanelCtrl = pluginExports.PanelCtrl;
-        return plugin;
       }
-      throw new Error('missing export: plugin or PanelCtrl');
+
+      throwIfAngular(pluginExports);
+      throw new Error('missing export: plugin');
     })
     .then((plugin: PanelPlugin) => {
       plugin.meta = meta;
       panelPluginCache[meta.id] = plugin;
-
-      if (!plugin.panel && plugin.angularPanelCtrl) {
-        plugin.panel = getAngularPanelReactWrapper(plugin);
-      }
       return plugin;
     })
     .catch((err) => {
@@ -90,10 +83,4 @@ function getPanelPlugin(meta: PanelPluginMeta): Promise<PanelPlugin> {
       console.warn('Error loading panel plugin: ' + meta.id, err);
       return getPanelPluginLoadError(meta, err);
     });
-}
-
-let getAngularPanelReactWrapper = (plugin: PanelPlugin): ComponentType<PanelProps> | null => null;
-
-export function setAngularPanelReactWrapper(wrapper: typeof getAngularPanelReactWrapper) {
-  getAngularPanelReactWrapper = wrapper;
 }

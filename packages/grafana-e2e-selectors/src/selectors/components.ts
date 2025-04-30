@@ -74,6 +74,7 @@ export const versionedComponents = {
       '9.5.0': 'Built-in role picker',
     },
     permissionLevel: {
+      '12.0.0': 'Permission level',
       '9.5.0': 'Permission Level',
     },
   },

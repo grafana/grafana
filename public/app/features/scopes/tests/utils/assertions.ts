@@ -9,6 +9,8 @@ import {
   getNotFoundForScope,
   getNotFoundNoScopes,
   getPersistedApplicationsMimirSelect,
+  getRecentScopeSet,
+  getRecentScopesSection,
   getResultApplicationsCloudSelect,
   getResultApplicationsGrafanaSelect,
   getResultApplicationsMimirSelect,
@@ -25,6 +27,8 @@ import {
   queryDashboardsSearch,
   queryPersistedApplicationsGrafanaSelect,
   queryPersistedApplicationsMimirSelect,
+  queryRecentScopeSet,
+  queryRecentScopesSection,
   queryResultApplicationsCloudSelect,
   queryResultApplicationsGrafanaSelect,
   queryResultApplicationsMimirSelect,
@@ -40,6 +44,10 @@ const expectValue = (selector: () => HTMLInputElement, value: string) => expect(
 const expectTextContent = (selector: () => HTMLElement, text: string) => expect(selector()).toHaveTextContent(text);
 const expectDisabled = (selector: () => HTMLElement) => expect(selector()).toBeDisabled();
 
+export const expectRecentScopeNotPresent = (scope: string) => expectNotInDocument(() => queryRecentScopeSet(scope));
+export const expectRecentScope = (scope: string) => expectInDocument(() => getRecentScopeSet(scope));
+export const expectRecentScopeNotPresentInDocument = () => expectNotInDocument(queryRecentScopesSection);
+export const expectRecentScopesSection = () => expectInDocument(getRecentScopesSection);
 export const expectScopesSelectorClosed = () => expectNotInDocument(querySelectorApply);
 export const expectScopesSelectorDisabled = () => expectDisabled(getSelectorInput);
 export const expectScopesSelectorValue = (value: string) => expectValue(getSelectorInput, value);

@@ -10,7 +10,7 @@ func RegisterRoles(service accesscontrol.Service) error {
 	saReader := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:reader",
-			DisplayName: "Service accounts reader",
+			DisplayName: "Reader",
 			Description: "Read service accounts and service account tokens.",
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
@@ -26,7 +26,7 @@ func RegisterRoles(service accesscontrol.Service) error {
 	saCreator := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:creator",
-			DisplayName: "Service accounts creator",
+			DisplayName: "Creator",
 			Description: "Create service accounts.",
 			Group:       "Service accounts",
 			Permissions: []accesscontrol.Permission{
@@ -41,7 +41,7 @@ func RegisterRoles(service accesscontrol.Service) error {
 	saWriter := accesscontrol.RoleRegistration{
 		Role: accesscontrol.RoleDTO{
 			Name:        "fixed:serviceaccounts:writer",
-			DisplayName: "Service accounts writer",
+			DisplayName: "Writer",
 			Description: "Create, delete and read service accounts, manage service account permissions.",
 			Group:       "Service accounts",
 			Permissions: accesscontrol.ConcatPermissions(saReader.Role.Permissions, []accesscontrol.Permission{

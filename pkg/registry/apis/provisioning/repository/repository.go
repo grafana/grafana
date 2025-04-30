@@ -2,19 +2,21 @@ package repository
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"time"
 
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 )
 
+// FIXME: the name of the mock is different because there is another generated mock for Repository
+// I don't know how it got generated.
+//
+//go:generate mockery --name Repository --structname MockConfigRepository --inpackage --filename config_repository_mock.go --with-expecter
 type Repository interface {
 	// Config returns the saved Kubernetes object.
 	Config() *provisioning.Repository
@@ -29,7 +31,12 @@ type Repository interface {
 }
 
 // ErrFileNotFound indicates that a path could not be found in the repository.
-var ErrFileNotFound error = fs.ErrNotExist
+var ErrFileNotFound error = &apierrors.StatusError{ErrStatus: metav1.Status{
+	Status:  metav1.StatusFailure,
+	Code:    http.StatusNotFound,
+	Reason:  metav1.StatusReasonNotFound,
+	Message: "file not found",
+}}
 
 type FileInfo struct {
 	// Path to the file on disk.
@@ -46,6 +53,7 @@ type FileInfo struct {
 	Modified *metav1.Time
 }
 
+//go:generate mockery --name CloneFn --structname MockCloneFn --inpackage --filename clone_fn_mock.go --with-expecter
 type CloneFn func(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
 
 type CloneOptions struct {
@@ -63,8 +71,12 @@ type CloneOptions struct {
 
 	// Progress is the writer to report progress to
 	Progress io.Writer
+
+	// BeforeFn is called before the clone operation starts
+	BeforeFn func() error
 }
 
+//go:generate mockery --name ClonableRepository --structname MockClonableRepository --inpackage --filename clonable_repository_mock.go --with-expecter
 type ClonableRepository interface {
 	Clone(ctx context.Context, opts CloneOptions) (ClonedRepository, error)
 }
@@ -72,8 +84,10 @@ type ClonableRepository interface {
 type PushOptions struct {
 	Timeout  time.Duration
 	Progress io.Writer
+	BeforeFn func() error
 }
 
+//go:generate mockery --name ClonedRepository --structname MockClonedRepository --inpackage --filename cloned_repository_mock.go --with-expecter
 type ClonedRepository interface {
 	ReaderWriter
 	Push(ctx context.Context, opts PushOptions) error
@@ -96,6 +110,7 @@ type FileTreeEntry struct {
 	Blob bool
 }
 
+//go:generate mockery --name Reader --structname MockReader --inpackage --filename reader_mock.go --with-expecter
 type Reader interface {
 	Repository
 
@@ -177,20 +192,11 @@ type VersionedFileChange struct {
 
 // Versioned is a repository that supports versioning.
 // This interface may be extended to make the the original Repository interface more agnostic to the underlying storage system.
+//
+//go:generate mockery --name Versioned --structname MockVersioned --inpackage --filename versioned_mock.go --with-expecter
 type Versioned interface {
 	// History of changes for a path
 	History(ctx context.Context, path, ref string) ([]provisioning.HistoryItem, error)
 	LatestRef(ctx context.Context) (string, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]VersionedFileChange, error)
-}
-
-func writeWithReadThenCreateOrUpdate(ctx context.Context, r ReaderWriter, path, ref string, data []byte, comment string) error {
-	_, err := r.Read(ctx, path, ref)
-	if err != nil && !(errors.Is(err, ErrFileNotFound)) {
-		return fmt.Errorf("failed to check if file exists before writing: %w", err)
-	}
-	if err == nil {
-		return r.Update(ctx, path, ref, data, comment)
-	}
-	return r.Create(ctx, path, ref, data, comment)
 }

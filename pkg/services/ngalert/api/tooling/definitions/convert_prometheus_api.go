@@ -97,7 +97,7 @@ import (
 //       202: ConvertPrometheusResponse
 //       403: ForbiddenError
 
-// swagger:route POST /convert/api/prom/config/v1/rules convert_prometheus RouteConvertPrometheusCortexPostRuleGroups
+// swagger:route POST /convert/api/prom/rules convert_prometheus RouteConvertPrometheusCortexPostRuleGroups
 //
 // Converts the submitted rule groups into Grafana-Managed Rules.
 //

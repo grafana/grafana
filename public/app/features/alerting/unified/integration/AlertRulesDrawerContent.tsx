@@ -1,4 +1,5 @@
 import { LoadingPlaceholder } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { RulesTable } from '../components/rules/RulesTable';
 import { useCombinedRules } from '../hooks/useCombinedRuleNamespaces';
@@ -14,7 +15,9 @@ export default function AlertRulesDrawerContent({ dashboardUid }: Props) {
   return (
     <>
       {loading ? (
-        <LoadingPlaceholder text="Loading alert rules" />
+        <LoadingPlaceholder
+          text={t('alerting.alert-rules-drawer-content.text-loading-alert-rules', 'Loading alert rules')}
+        />
       ) : (
         <RulesTable rules={rules} showNextEvaluationColumn={false} showGroupColumn={false} />
       )}

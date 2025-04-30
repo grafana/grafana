@@ -99,9 +99,9 @@ describe('PluginListItemBadges', () => {
     expect(screen.queryByText(/update available/i)).toBeNull();
   });
 
-  it('renders an angular badge (when plugin is angular)', () => {
+  it('does not render an angular badge (when plugin is angular), because its not loaded', () => {
     render(<PluginListItemBadges plugin={{ ...plugin, angularDetected: true }} />);
-    expect(screen.getByText(/angular/i)).toBeVisible();
+    expect(screen.queryByText(/angular/i)).not.toBeInTheDocument();
   });
 
   it('does not render an angular badge (when plugin is not angular)', () => {

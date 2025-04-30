@@ -1,10 +1,15 @@
-import { DashboardV2Spec, defaultDashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  defaultSpec as defaultDashboardV2Spec,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { backendSrv } from 'app/core/services/backend_srv';
 import {
   AnnoKeyFolder,
   AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
+  AnnoKeyMessage,
+  AnnoKeySavedFromUI,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 
@@ -55,6 +60,10 @@ jest.mock('@grafana/runtime', () => ({
   }),
   config: {
     ...jest.requireActual('@grafana/runtime').config,
+    buildInfo: {
+      ...jest.requireActual('@grafana/runtime').config.buildInfo,
+      versionString: '10.0.0',
+    },
   },
 }));
 
@@ -135,6 +144,7 @@ describe('v2 dashboard API', () => {
 
         annotations: {
           [AnnoKeyFolder]: 'new-folder',
+          [AnnoKeyMessage]: 'test save',
         },
       },
     };
@@ -202,13 +212,15 @@ describe('v2 dashboard API', () => {
             name: 'existing-dash',
             annotations: {
               [AnnoKeyFolder]: 'folderUidXyz',
+              [AnnoKeySavedFromUI]: '10.0.0',
             },
           },
           spec: {
             ...defaultSaveCommand.dashboard,
             title: 'chaing-title-dashboard',
           },
-        }
+        },
+        { params: undefined }
       );
     });
   });
@@ -232,14 +244,14 @@ describe('v2 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it('should throw DashboardVersionError for v1alpha1 conversion error', async () => {
+    it('should throw DashboardVersionError for v1beta1 conversion error', async () => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {
           conversion: {
             failed: true,
             error: 'backend conversion not yet implemented',
-            storedVersion: 'v1alpha1',
+            storedVersion: 'v1beta1',
           },
         },
       };

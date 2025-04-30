@@ -133,7 +133,14 @@ const RuleViewer = () => {
           )}
           {/* error state */}
           {showError && (
-            <Alert title="Something went wrong when evaluating this alert rule" bottomSpacing={0} topSpacing={2}>
+            <Alert
+              title={t(
+                'alerting.rule-viewer.title-something-wrong-evaluating-alert',
+                'Something went wrong when evaluating this alert rule'
+              )}
+              bottomSpacing={0}
+              topSpacing={2}
+            >
               <pre style={{ marginBottom: 0 }}>
                 <code>{rule.promRule?.lastError ?? 'No error message'}</code>
               </pre>
@@ -209,7 +216,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
           title={rule.name}
           component={
             <TextLink variant="bodySmall" href={makePanelLink(dashboardUID, panelID)}>
-              View panel
+              <Trans i18nKey="alerting.create-metadata.view-panel">View panel</Trans>
             </TextLink>
           }
         />
@@ -223,7 +230,7 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
           title={rule.name}
           component={
             <TextLink title={rule.name} variant="bodySmall" href={makeDashboardLink(dashboardUID)}>
-              View dashboard
+              <Trans i18nKey="alerting.create-metadata.view-dashboard">View dashboard</Trans>
             </TextLink>
           }
         />
@@ -241,7 +248,11 @@ const createMetadata = (rule: CombinedRule): PageInfoItem[] => {
   if (interval) {
     metadata.push({
       label: 'Evaluation interval',
-      value: <Text color="primary">Every {interval}</Text>,
+      value: (
+        <Text color="primary">
+          <Trans i18nKey="alerting.rule-viewer.evaluation-interval">Every {{ interval }}</Trans>
+        </Text>
+      ),
     });
   }
 
@@ -264,16 +275,17 @@ interface TitleProps {
   health?: RuleHealth;
   ruleType?: PromRuleType;
   ruleOrigin?: RulePluginOrigin;
+  returnToHref?: string;
 }
 
-export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin }: TitleProps) => {
+export const Title = ({ name, paused = false, state, health, ruleType, ruleOrigin, returnToHref = '' }: TitleProps) => {
   const isRecordingRule = ruleType === PromRuleType.Recording;
 
-  const { returnTo } = useReturnTo('/alerting/list');
+  const { returnTo } = useReturnTo(returnToHref);
 
   return (
     <Stack direction="row" gap={1} minWidth={0} alignItems="center">
-      <LinkButton variant="secondary" icon="angle-left" href={returnTo} />
+      {returnToHref && <LinkButton variant="secondary" icon="angle-left" href={returnTo} />}
       {ruleOrigin && <PluginOriginBadge pluginId={ruleOrigin.pluginId} size="lg" />}
       <Text variant="h1" truncate>
         {name}
@@ -320,7 +332,14 @@ const PrometheusConsistencyCheck = withErrorBoundary(
 
     if (isError(waitState)) {
       return (
-        <Alert title="Unable to check the rule status" bottomSpacing={0} topSpacing={2}>
+        <Alert
+          title={t(
+            'alerting.prometheus-consistency-check.title-unable-to-check-the-rule-status',
+            'Unable to check the rule status'
+          )}
+          bottomSpacing={0}
+          topSpacing={2}
+        >
           {stringifyErrorLike(waitState.error)}
         </Alert>
       );
@@ -458,6 +477,7 @@ export const calculateTotalInstances = (stats: CombinedRule['instanceTotals']) =
     .pick([
       AlertInstanceTotalState.Alerting,
       AlertInstanceTotalState.Pending,
+      AlertInstanceTotalState.Recovering,
       AlertInstanceTotalState.Normal,
       AlertInstanceTotalState.NoData,
       AlertInstanceTotalState.Error,

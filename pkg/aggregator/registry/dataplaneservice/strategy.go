@@ -151,7 +151,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	if !ok {
 		return nil, nil, fmt.Errorf("given object is not a DataPlaneService")
 	}
-	return labels.Set(s.ObjectMeta.Labels), ToSelectableFields(s), nil
+	return labels.Set(s.Labels), ToSelectableFields(s), nil
 }
 
 // MatchDataPlaneService is the filter used by the generic etcd backend to watch events

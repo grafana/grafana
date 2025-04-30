@@ -4,8 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/features"
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
@@ -89,7 +88,7 @@ func TestMetricDataQueryBuilder(t *testing.T) {
 			mdq, err := executor.buildMetricDataQuery(context.Background(), query)
 			require.NoError(t, err)
 			require.Nil(t, mdq.MetricStat)
-			assert.Equal(t, int32(300), *mdq.Period)
+			assert.Equal(t, int64(300), *mdq.Period)
 			assert.Equal(t, `SUM([a,b])`, *mdq.Expression)
 		})
 

@@ -1,9 +1,10 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
-import { Alert, Badge } from '@grafana/ui';
+import { Alert, Badge, TextLink } from '@grafana/ui';
 import { PluginDetailsPage } from 'app/features/plugins/admin/components/PluginDetailsPage';
 import { StoreState, useSelector, AppNotificationSeverity } from 'app/types';
 
+import { Trans } from '../../../core/internationalization';
 import { ROUTES } from '../constants';
 
 export function DataSourceDetailsPage() {
@@ -32,9 +33,11 @@ function NotFoundDatasource() {
 
   return (
     <Alert severity={AppNotificationSeverity.Warning} title="">
-      Maybe you mistyped the URL or the plugin with the id <Badge text={id} color="orange" /> is unavailable.
-      <br />
-      To see a list of available datasources please <a href={ROUTES.AddNewConnection}>click here</a>.
+      <Trans i18nKey="connections.not-found-datasource.body">
+        Maybe you mistyped the URL or the plugin with the id <Badge text={id} color="orange" /> is unavailable.
+        <br />
+        To see a list of available datasources please <TextLink href={ROUTES.AddNewConnection}>click here</TextLink>.
+      </Trans>
     </Alert>
   );
 }

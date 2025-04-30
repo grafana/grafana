@@ -181,16 +181,14 @@ func (api *API) RegisterAPIEndpoints(m *metrics.API) {
 		hist:   api.Historian,
 	}), m)
 
-	if api.FeatureManager.IsEnabledGlobally(featuremgmt.FlagAlertingConversionAPI) {
-		api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
-			NewConvertPrometheusSrv(
-				&api.Cfg.UnifiedAlerting,
-				logger,
-				api.RuleStore,
-				api.DatasourceCache,
-				api.AlertRules,
-				api.FeatureManager,
-			),
-		), m)
-	}
+	api.RegisterConvertPrometheusApiEndpoints(NewConvertPrometheusApi(
+		NewConvertPrometheusSrv(
+			&api.Cfg.UnifiedAlerting,
+			logger,
+			api.RuleStore,
+			api.DatasourceCache,
+			api.AlertRules,
+			api.FeatureManager,
+		),
+	), m)
 }

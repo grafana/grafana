@@ -192,7 +192,7 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await userEvent.click(input);
 
-      const allHeaders = await screen.findAllByRole('presentation');
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
       expect(allHeaders).toHaveLength(2);
 
       const listbox = await screen.findByRole('listbox');
@@ -219,7 +219,7 @@ describe('Combobox', () => {
       const input = screen.getByRole('combobox');
       await userEvent.click(input);
 
-      const allHeaders = await screen.findAllByRole('presentation');
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
 
       expect(allHeaders[0]).toHaveTextContent('Group 1');
       expect(allHeaders[1]).toHaveTextContent('');

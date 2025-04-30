@@ -174,8 +174,8 @@ export const UsersTable = ({
               size="sm"
               icon="pen"
               href={`admin/users/edit/${original.uid}`}
-              aria-label={`Edit user ${original.name}`}
-              tooltip={'Edit user'}
+              aria-label={t('admin.users-table.edit-aria-label', 'Edit user: {{name}}', { name: original.name })}
+              tooltip={t('admin.users-table.edit-tooltip', 'Edit user')}
             />
           );
         },

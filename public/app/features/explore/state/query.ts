@@ -15,11 +15,9 @@ import {
   hasQueryImportSupport,
   LoadingState,
   LogsVolumeType,
-  PanelEvents,
   QueryFixAction,
   ScopedVars,
   SupplementaryQueryType,
-  toLegacyResponseData,
 } from '@grafana/data';
 import { combinePanelData } from '@grafana/o11y-ds-frontend';
 import { config, getDataSourceSrv } from '@grafana/runtime';
@@ -1311,7 +1309,6 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
   const { response } = action.payload;
   const {
     request,
-    series,
     error,
     graphResult,
     logsResult,
@@ -1328,23 +1325,10 @@ const processQueryResponse = (state: ExploreItemState, action: PayloadAction<Que
     if (error.type === DataQueryErrorType.Timeout || error.type === DataQueryErrorType.Cancelled) {
       return { ...state };
     }
-
-    // Send error to Angular editors
-    // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
-    if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
-      state.eventBridge.emit(PanelEvents.dataError, error);
-    }
   }
 
   if (!request) {
     return { ...state };
-  }
-
-  // Send legacy data to Angular editors
-  // When angularSupportEnabled is removed we can remove this code and all references to eventBridge
-  if (config.angularSupportEnabled && state.datasourceInstance?.components?.QueryCtrl) {
-    const legacy = series.map((v) => toLegacyResponseData(v));
-    state.eventBridge.emit(PanelEvents.dataReceived, legacy);
   }
 
   return {

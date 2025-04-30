@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/resource/receiver/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -58,7 +58,8 @@ func convertToK8sResource(
 	namespacer request.NamespaceMapper,
 ) (*model.Receiver, error) {
 	spec := model.Spec{
-		Title: receiver.Name,
+		Title:        receiver.Name,
+		Integrations: make([]model.Integration, 0, len(receiver.Integrations)),
 	}
 	for _, integration := range receiver.Integrations {
 		spec.Integrations = append(spec.Integrations, model.Integration{

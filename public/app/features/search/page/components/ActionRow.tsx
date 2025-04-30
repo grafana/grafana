@@ -107,7 +107,9 @@ export const ActionRow = ({
         )}
         {state.panel_type && (
           <Button icon="times" variant="secondary" onClick={() => onPanelTypeChange(undefined)}>
-            Panel: {state.panel_type}
+            <Trans i18nKey="search.action-row.panel-type" values={{ panel: state.panel_type }}>
+              Panel: {'{{panel}}'}
+            </Trans>
           </Button>
         )}
       </Stack>

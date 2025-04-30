@@ -1,5 +1,5 @@
 import { css, cx } from '@emotion/css';
-import { CSSProperties, ReactElement, ReactNode, useId, useRef, useState } from 'react';
+import { CSSProperties, ReactElement, ReactNode, useId, useState } from 'react';
 import * as React from 'react';
 import { useMeasure, useToggle } from 'react-use';
 
@@ -8,7 +8,9 @@ import { selectors } from '@grafana/e2e-selectors';
 
 import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
+import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
+import { t } from '../../utils/i18n';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -69,6 +71,10 @@ interface BaseProps {
    */
   onMouseMove?: () => void;
   onMouseEnter?: () => void;
+  /**
+   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
+   */
+  showMenuAlways?: boolean;
 }
 
 interface FixedDimensions extends BaseProps {
@@ -86,10 +92,6 @@ interface AutoSize extends BaseProps {
 interface Collapsible {
   collapsible: boolean;
   collapsed?: boolean;
-  /**
-   * If true, the VizPanelMenu will always be visible in the panel header. Defaults to false.
-   */
-  showMenuAlways?: boolean;
   /**
    * callback when collapsing or expanding the panel
    */
@@ -151,7 +153,7 @@ export function PanelChrome({
   const panelContentId = useId();
   const panelTitleId = useId().replace(/:/g, '_');
   const { isSelected, onSelect, isSelectable } = useElementSelection(selectionId);
-  const pointerDownLocation = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const pointerDistance = usePointerDistance();
 
   const hasHeader = !hoverHeader;
 
@@ -200,13 +202,8 @@ export function PanelChrome({
   // Mainly the tricky bit of differentiating between dragging and selecting
   const onPointerUp = React.useCallback(
     (evt: React.PointerEvent) => {
-      const distance = Math.hypot(
-        evt.clientX - pointerDownLocation.current.x,
-        evt.clientY - pointerDownLocation.current.y
-      );
-
       if (
-        distance > 10 ||
+        pointerDistance.check(evt) ||
         (dragClassCancel && evt.target instanceof Element && evt.target.closest(`.${dragClassCancel}`))
       ) {
         return;
@@ -216,18 +213,18 @@ export function PanelChrome({
       // By doing so, the event won't get to the document and drag will never be stopped
       setTimeout(() => onSelect?.(evt));
     },
-    [dragClassCancel, onSelect]
+    [dragClassCancel, onSelect, pointerDistance]
   );
 
   const onPointerDown = React.useCallback(
     (evt: React.PointerEvent) => {
       evt.stopPropagation();
 
-      pointerDownLocation.current = { x: evt.clientX, y: evt.clientY };
+      pointerDistance.set(evt);
 
       onDragStart?.(evt);
     },
-    [onDragStart]
+    [pointerDistance, onDragStart]
   );
 
   const onContentPointerDown = React.useCallback(
@@ -279,7 +276,9 @@ export function PanelChrome({
               <Icon
                 name={!collapsed ? 'angle-down' : 'angle-right'}
                 aria-hidden={!!title}
-                aria-label={!title ? 'toggle collapse panel' : undefined}
+                aria-label={
+                  !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
+                }
               />
               <Text variant="h6" truncate id={panelTitleId}>
                 {title}

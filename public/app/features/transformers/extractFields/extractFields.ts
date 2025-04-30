@@ -53,7 +53,7 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
 
   const count = frame.length;
   const names: string[] = []; // keep order
-  const values = new Map<string, any[]>();
+  const values = new Map<string, unknown[]>();
   const parse = ext.getParser(options);
 
   for (let i = 0; i < count; i++) {
@@ -99,12 +99,16 @@ export function addExtractedFields(frame: DataFrame, options: ExtractFieldsOptio
 
   const fields = names.map((name) => {
     const buffer = values.get(name);
-    const field = {
+    // this should never happen, but let's be safe
+    if (!buffer) {
+      throw new Error(`Could not find field with name: ${name}`);
+    }
+    const field: Field = {
       name,
       values: buffer,
       type: buffer ? getFieldTypeFromValue(buffer.find((v) => v != null)) : FieldType.other,
       config: {},
-    } as Field;
+    };
     if (config.featureToggles.extractFieldsNameDeduplication) {
       field.name = getUniqueFieldName(field, frame);
     }

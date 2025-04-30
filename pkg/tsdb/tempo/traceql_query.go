@@ -101,7 +101,12 @@ func (s *Service) runTraceQlQueryMetrics(ctx context.Context, pCtx backend.Plugi
 		result.Frames = frames
 	} else {
 		var queryResponse tempopb.QueryRangeResponse
-		err = jsonpb.Unmarshal(bytes.NewReader(responseBody), &queryResponse)
+		// Temporarily allow extra fields until proto changes are available (https://github.com/grafana/tempo/pull/4525)
+		unmarshaler := jsonpb.Unmarshaler{
+			AllowUnknownFields: true,
+		}
+
+		err = unmarshaler.Unmarshal(bytes.NewReader(responseBody), &queryResponse)
 
 		if res, err := handleConversionError(ctxLogger, span, err); err != nil {
 			return res, err

@@ -3,6 +3,7 @@ import { PropsWithChildren, ReactElement, useMemo } from 'react';
 import { TypedVariableModel, VariableHide } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Stack, Tooltip } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { variableAdapters } from '../adapters';
 import { VARIABLE_PREFIX } from '../constants';
@@ -16,7 +17,11 @@ export const PickerRenderer = (props: Props) => {
   const PickerToRender = useMemo(() => variableAdapters.get(props.variable.type).picker, [props.variable]);
 
   if (!props.variable) {
-    return <div>Couldn&apos;t load variable</div>;
+    return (
+      <div>
+        <Trans i18nKey="variables.picker-renderer.couldnt-load-variable">Couldn't load variable</Trans>
+      </div>
+    );
   }
 
   return (

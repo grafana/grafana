@@ -10,6 +10,7 @@ import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
 
+import { t } from '../../../core/internationalization';
 import { CanvasElementItem, CanvasElementOptions, CanvasElementProps, defaultThemeTextColor } from '../element';
 import { ElementState } from '../runtime/element';
 import { Align, TextConfig, TextData, VAlign } from '../types';
@@ -28,7 +29,9 @@ const TextDisplay = (props: CanvasElementProps<TextConfig, TextData>) => {
   }
   return (
     <div className={styles.container}>
-      <span className={styles.span}>{data?.text ? data.text : 'Double click to set text'}</span>
+      <span className={styles.span}>
+        {data?.text ? data.text : t('canvas.text-display.double-click-to-set', 'Double click to set text')}
+      </span>
     </div>
   );
 };

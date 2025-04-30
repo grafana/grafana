@@ -1,14 +1,14 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   GridLayoutItemKind,
   GridLayoutItemSpec,
   GridLayoutKind,
   GridLayoutRowSpec,
   PanelKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,

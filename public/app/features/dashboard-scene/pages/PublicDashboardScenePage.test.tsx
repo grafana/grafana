@@ -6,7 +6,7 @@ import { render } from 'test/test-utils';
 import { getDefaultTimeRange, LoadingState, PanelData, PanelProps } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
-import { config, getPluginLinkExtensions, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
+import { config, setPluginImportUtils, setRunRequest } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { getRouteComponentProps } from 'app/core/navigation/__mocks__/routeProps';
 import { DashboardRoutes } from 'app/types/dashboard';
@@ -18,8 +18,6 @@ import { PublicDashboardScenePage, Props as PublicDashboardSceneProps } from './
 
 jest.mock('@grafana/runtime', () => ({
   ...jest.requireActual('@grafana/runtime'),
-  setPluginExtensionGetter: jest.fn(),
-  getPluginLinkExtensions: jest.fn(),
   getDataSourceSrv: () => {
     return {
       get: jest.fn().mockResolvedValue({}),
@@ -27,8 +25,6 @@ jest.mock('@grafana/runtime', () => ({
     };
   },
 }));
-
-const getPluginLinkExtensionsMock = jest.mocked(getPluginLinkExtensions);
 
 function setup(token = 'an-access-token') {
   const pubdashProps: PublicDashboardSceneProps = {
@@ -126,8 +122,6 @@ describe('PublicDashboardScenePage', () => {
     // // hacky way because mocking autosizer does not work
     Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, value: 1000 });
     Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, value: 1000 });
-    getPluginLinkExtensionsMock.mockRestore();
-    getPluginLinkExtensionsMock.mockReturnValue({ extensions: [] });
   });
 
   it('can render public dashboard', async () => {

@@ -95,11 +95,12 @@ type service struct {
 	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
-	pluginClient    plugins.Client
-	datasources     datasource.ScopedPluginDatasourceProvider
-	contextProvider datasource.PluginContextWrapper
-	pluginStore     pluginstore.Store
-	unified         resource.ResourceClient
+	pluginClient       plugins.Client
+	datasources        datasource.ScopedPluginDatasourceProvider
+	contextProvider    datasource.PluginContextWrapper
+	pluginStore        pluginstore.Store
+	unified            resource.ResourceClient
+	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
@@ -118,6 +119,7 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 ) (*service, error) {
@@ -144,6 +146,7 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
+		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
@@ -155,7 +158,7 @@ func ProvideService(
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
-			if err := s.NamedService.AwaitRunning(c.Req.Context()); err != nil {
+			if err := s.AwaitRunning(c.Req.Context()); err != nil {
 				c.Resp.WriteHeader(http.StatusInternalServerError)
 				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 				return
@@ -198,7 +201,7 @@ func ProvideService(
 }
 
 func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
-	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+	if err := s.AwaitRunning(ctx); err != nil {
 		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
 	return s.restConfig, nil
@@ -210,11 +213,11 @@ func (s *service) IsDisabled() bool {
 
 // Run is an adapter for the BackgroundService interface.
 func (s *service) Run(ctx context.Context) error {
-	if err := s.NamedService.StartAsync(ctx); err != nil {
+	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
 
-	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+	if err := s.AwaitRunning(ctx); err != nil {
 		return err
 	}
 	return s.AwaitTerminated(ctx)
@@ -268,14 +271,6 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
-	// This will check that required feature toggles are enabled for more advanced storage modes
-	// Any required preconditions should be hardcoded here
-	if o.StorageOptions != nil {
-		if err := o.StorageOptions.EnforceFeatureToggleAfterMode1(s.features); err != nil {
-			return err
-		}
-	}
-
 	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
@@ -300,11 +295,11 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
 
 		// Use unified storage client
-		serverConfig.Config.RESTOptionsGetter = getter
+		serverConfig.RESTOptionsGetter = getter
 	}
 
 	// Add OpenAPI specs for each group+version
@@ -499,7 +494,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
-				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
+				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
@@ -511,7 +506,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := s.NamedService.AwaitRunning(r.Context()); err != nil {
+	if err := s.AwaitRunning(r.Context()); err != nil {
 		return
 	}
 	s.handler.ServeHTTP(w, r)

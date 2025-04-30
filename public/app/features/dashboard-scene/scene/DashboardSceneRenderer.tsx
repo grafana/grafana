@@ -11,7 +11,6 @@ import { DashboardEditPaneSplitter } from '../edit-pane/DashboardEditPaneSplitte
 
 import { DashboardScene } from './DashboardScene';
 import { PanelSearchLayout } from './PanelSearchLayout';
-import { DashboardAngularDeprecationBanner } from './angular/DashboardAngularDeprecationBanner';
 
 export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardScene>) {
   const {
@@ -63,12 +62,7 @@ export function DashboardSceneRenderer({ model }: SceneComponentProps<DashboardS
       return <PanelSearchLayout panelSearch={panelSearch} panelsPerRow={panelsPerRow} dashboard={model} />;
     }
 
-    return (
-      <>
-        <DashboardAngularDeprecationBanner dashboard={model} key="angular-deprecation-banner" />
-        <bodyToRender.Component model={bodyToRender} />
-      </>
-    );
+    return <bodyToRender.Component model={bodyToRender} />;
   }
 
   return (

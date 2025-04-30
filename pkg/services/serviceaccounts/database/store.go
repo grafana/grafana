@@ -53,7 +53,7 @@ func generateLogin(prefix string, orgId int64, name string) string {
 	generatedLogin := fmt.Sprintf("%v-%v-%v", prefix, orgId, strings.ToLower(name))
 	// in case the name has multiple spaces or dashes in the prefix or otherwise, replace them with a single dash
 	generatedLogin = strings.Replace(generatedLogin, "--", "-", 1)
-	return strings.Replace(generatedLogin, " ", "-", -1)
+	return strings.ReplaceAll(generatedLogin, " ", "-")
 }
 
 // CreateServiceAccount creates service account

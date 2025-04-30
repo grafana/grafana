@@ -133,15 +133,6 @@ const defaults: any = {
   title: '',
 };
 
-export const explicitlyControlledMigrationPanels = [
-  'graph',
-  'table-old',
-  'grafana-piechart-panel',
-  'grafana-worldmap-panel',
-  'singlestat',
-  'grafana-singlestat-panel',
-];
-
 export const autoMigrateAngular: Record<string, string> = {
   graph: 'timeseries',
   'table-old': 'table',
@@ -149,10 +140,7 @@ export const autoMigrateAngular: Record<string, string> = {
   'grafana-singlestat-panel': 'stat',
   'grafana-piechart-panel': 'piechart',
   'grafana-worldmap-panel': 'geomap',
-};
-
-export const autoMigrateRemovedPanelPlugins: Record<string, string> = {
-  'heatmap-new': 'heatmap', // this was a temporary development panel that is now standard
+  'natel-discrete-panel': 'state-timeline',
 };
 
 export class PanelModel implements DataConfigSource, IPanelModel {

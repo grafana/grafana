@@ -11,10 +11,11 @@ import { EditPaneHeader } from './EditPaneHeader';
 export interface Props {
   element: EditableDashboardElement;
   editPane: DashboardEditPane;
+  isNewElement: boolean;
 }
 
-export function ElementEditPane({ element, editPane }: Props) {
-  const categories = element.useEditPaneOptions ? element.useEditPaneOptions() : [];
+export function ElementEditPane({ element, editPane, isNewElement }: Props) {
+  const categories = element.useEditPaneOptions ? element.useEditPaneOptions(isNewElement) : [];
   const styles = useStyles2(getStyles);
 
   return (

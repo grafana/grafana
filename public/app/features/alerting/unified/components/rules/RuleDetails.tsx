@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, dateTime, dateTimeFormat } from '@grafana/data';
 import { Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { Time } from 'app/features/explore/Time';
 import { CombinedRule } from 'app/types/unified-alerting';
 
@@ -44,7 +45,7 @@ export const RuleDetails = ({ rule }: Props) => {
         <div className={styles.leftSide}>
           {<EvaluationBehaviorSummary rule={rule} />}
           {!!rule.labels && !!Object.keys(rule.labels).length && (
-            <DetailsField label="Labels" horizontal={true}>
+            <DetailsField label={t('alerting.rule-details.label-labels', 'Labels')} horizontal={true}>
               <AlertLabels labels={rule.labels} />
             </DetailsField>
           )}
@@ -56,7 +57,7 @@ export const RuleDetails = ({ rule }: Props) => {
         </div>
       </div>
       {isAlertingRule && (
-        <DetailsField label="Instances" horizontal={true}>
+        <DetailsField label={t('alerting.rule-details.label-instances', 'Instances')} horizontal={true}>
           <RuleDetailsMatchingInstances rule={rule} itemsDisplayLimit={INSTANCES_DISPLAY_LIMIT} />
         </DetailsField>
       )}
@@ -69,7 +70,7 @@ interface EvaluationBehaviorSummaryProps {
 }
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
-  const every = rule.group.interval;
+  const interval = rule.group.interval;
   const lastEvaluation = rule.promRule?.lastEvaluation;
   const lastEvaluationDuration = rule.promRule?.evaluationTime;
   const metric = rulerRuleType.grafana.recordingRule(rule.rulerRule)
@@ -77,40 +78,61 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
     : undefined;
 
   const pendingPeriod = usePendingPeriod(rule);
+  const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
 
   return (
     <>
       {metric && (
-        <DetailsField label="Metric" horizontal={true}>
+        <DetailsField label={t('alerting.evaluation-behavior-summary.label-metric', 'Metric')} horizontal={true}>
           {metric}
         </DetailsField>
       )}
-      {every && (
-        <DetailsField label="Evaluate" horizontal={true}>
-          Every {every}
+      {interval && (
+        <DetailsField label={t('alerting.evaluation-behavior-summary.label-evaluate', 'Evaluate')} horizontal={true}>
+          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ interval }}>
+            Every {{ interval }}
+          </Trans>
         </DetailsField>
       )}
 
       {pendingPeriod && (
-        <DetailsField label="Pending period" horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-pending-period', 'Pending period')}
+          horizontal={true}
+        >
           {pendingPeriod}
+        </DetailsField>
+      )}
+      {keepFiringFor && (
+        <DetailsField label={t('alerting.rule-details.keep-firing-for', 'Keep firing for')} horizontal={true}>
+          {keepFiringFor}
         </DetailsField>
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && (
-        <DetailsField label="Last evaluation" horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-last-evaluation', 'Last evaluation')}
+          horizontal={true}
+        >
           <Tooltip
             placement="top"
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
-            <span>{`${dateTime(lastEvaluation).locale('en').fromNow(true)} ago`}</span>
+            <span>
+              {t('alerting.rule-details.last-evaluation-ago', '{{time}} ago', {
+                time: dateTime(lastEvaluation).locale('en').fromNow(true),
+              })}
+            </span>
           </Tooltip>
         </DetailsField>
       )}
 
       {lastEvaluation && !isNullDate(lastEvaluation) && lastEvaluationDuration !== undefined && (
-        <DetailsField label="Evaluation time" horizontal={true}>
+        <DetailsField
+          label={t('alerting.evaluation-behavior-summary.label-evaluation-time', 'Evaluation time')}
+          horizontal={true}
+        >
           <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
             <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
           </Tooltip>

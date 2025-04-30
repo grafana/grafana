@@ -8,6 +8,7 @@ import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
+import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { addToDashboard, SubmissionError } from './addToDashboard';
@@ -112,7 +113,13 @@ export function AddToDashboardForm<TOptions = undefined>({
         <Controller
           control={control}
           render={({ field: { ref, ...field } }) => (
-            <Field label="Target dashboard" description="Choose where to add the panel.">
+            <Field
+              label={t('dashboard-scene.add-to-dashboard-form.label-target-dashboard', 'Target dashboard')}
+              description={t(
+                'dashboard-scene.add-to-dashboard-form.description-choose-where-to-add-the-panel',
+                'Choose where to add the panel.'
+              )}
+            >
               <RadioButtonGroup options={saveTargets} {...field} id="e2d-save-target" />
             </Field>
           )}
@@ -127,8 +134,11 @@ export function AddToDashboardForm<TOptions = undefined>({
             <Controller
               render={({ field: { ref, value, onChange, ...field } }) => (
                 <Field
-                  label="Dashboard"
-                  description="Select in which dashboard the panel will be created."
+                  label={t('dashboard-scene.add-to-dashboard-form.label-dashboard', 'Dashboard')}
+                  description={t(
+                    'dashboard-scene.add-to-dashboard-form.description-select-which-dashboard-panel-created',
+                    'Select in which dashboard the panel will be created.'
+                  )}
                   error={errors.dashboardUid?.message}
                   invalid={!!errors.dashboardUid}
                 >
@@ -149,14 +159,17 @@ export function AddToDashboardForm<TOptions = undefined>({
         })()}
 
       {submissionError && (
-        <Alert severity="error" title="Error adding the panel">
+        <Alert
+          severity="error"
+          title={t('dashboard-scene.add-to-dashboard-form.title-error-adding-the-panel', 'Error adding the panel')}
+        >
           {submissionError.message}
         </Alert>
       )}
 
       <Modal.ButtonRow>
         <Button type="reset" onClick={onClose} fill="outline" variant="secondary">
-          Cancel
+          <Trans i18nKey="dashboard-scene.add-to-dashboard-form.cancel">Cancel</Trans>
         </Button>
         <Button
           type="submit"
@@ -164,10 +177,10 @@ export function AddToDashboardForm<TOptions = undefined>({
           onClick={handleSubmit(partial(onSubmit, true))}
           icon="external-link-alt"
         >
-          Open in new tab
+          <Trans i18nKey="dashboard-scene.add-to-dashboard-form.open-in-new-tab">Open in new tab</Trans>
         </Button>
         <Button type="submit" variant="primary" onClick={handleSubmit(partial(onSubmit, false))} icon="apps">
-          Open dashboard
+          <Trans i18nKey="dashboard-scene.add-to-dashboard-form.open-dashboard">Open dashboard</Trans>
         </Button>
       </Modal.ButtonRow>
     </form>
