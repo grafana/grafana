@@ -201,7 +201,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -303,12 +302,12 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	return nil
 }
 
-func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
 	req := updateStatusSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
-		Phase:       string(secretv0alpha1.SecureValuePhaseSucceeded),
+		Phase:       string(status.Phase),
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueUpdateStatus, req)

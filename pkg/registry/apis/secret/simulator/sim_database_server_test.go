@@ -79,7 +79,6 @@ func TestTransaction(t *testing.T) {
 		Name:            name,
 		Namespace:       namespace,
 		EncryptedSecret: secretv0alpha1.NewExposedSecureValue("value_1"),
-		KeeperName:      contracts.DefaultSQLKeeper,
 		ExternalID:      nil})
 	require.NoError(t, err)
 

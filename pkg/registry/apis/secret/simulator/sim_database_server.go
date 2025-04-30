@@ -129,9 +129,9 @@ func (db *SimDatabaseServer) readRow(transactionID TransactionID, row secureValu
 			panic(fmt.Sprintf("copying database row for transaction: %+v", err))
 		}
 
-		copy := v.(*secureValueMetadataRow)
+		clone := v.(*secureValueMetadataRow)
 
-		transaction.secretMetadata[copy.Namespace][copy.Name] = copy
+		transaction.secretMetadata[clone.Namespace][clone.Name] = clone
 	}
 
 	return transaction.secretMetadata[row.Namespace][row.Name]
@@ -235,6 +235,20 @@ func (db *SimDatabaseServer) QueryOutboxAppend(transactionID TransactionID, mess
 	return messageID, nil
 }
 
+func (db *SimDatabaseServer) QueryReadSecureValueMetadata(namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+	ns, ok := db.secretMetadata[namespace.String()]
+	if !ok {
+		return nil, contracts.ErrSecureValueNotFound
+	}
+
+	row, ok := ns[name]
+	if !ok {
+		return nil, contracts.ErrSecureValueNotFound
+	}
+
+	return &row.SecureValue, nil
+}
+
 func (db *SimDatabaseServer) QueryOutboxReceive(transactionID TransactionID, n uint) ([]contracts.OutboxMessage, error) {
 	// TODO: lock row
 	assert.True(n > 0, "n must be greater than 0")
@@ -311,10 +325,10 @@ func (db *SimDatabaseServer) QuerySetExternalID(transactionID TransactionID, nam
 	return nil
 }
 
-func (db *SimDatabaseServer) QuerySetStatusSucceeded(transactionID TransactionID, namespace xkube.Namespace, name string) error {
+func (db *SimDatabaseServer) QuerySetStatus(transactionID TransactionID, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
 	row := db.readRow(transactionID, secureValueMetadata{Namespace: namespace.String(), Name: name})
 
-	row.Status = secretv0alpha1.SecureValueStatus{Phase: "Succeeded"}
+	row.Status = status
 
 	return nil
 }

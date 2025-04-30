@@ -8,7 +8,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
 // Simulation version of contracts.SecureValueStorage
@@ -21,7 +20,7 @@ func NewSimSecureMetadataValueStorage(simNetwork *SimNetwork, simDatabase *SimDa
 	return &SimSecureValueMetadataStorage{simNetwork: simNetwork, simDatabase: simDatabase}
 }
 
-func (storage *SimSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (storage *SimSecureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	reply := storage.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("DatabaseCreateSecureValueMetadataQuery(%+v, %+v, %+v)", transactionIDFromContext(ctx), sv.Namespace, sv.Name),
 		Execute: func() any {
@@ -31,9 +30,15 @@ func (storage *SimSecureValueMetadataStorage) Create(ctx context.Context, sv *se
 	return reply[0].(*secretv0alpha1.SecureValue), toError(reply[1])
 }
 func (storage *SimSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	panic("TODO: SimSecureValueMetadataStorage.Read")
+	reply := storage.simNetwork.Send(SendInput{
+		Debug: fmt.Sprintf("DatabaseReadSecureValueMetadataQuery(%+v, %+v)", namespace, name),
+		Execute: func() any {
+			sv, err := storage.simDatabase.QueryReadSecureValueMetadata(namespace, name)
+			return []any{sv, err}
+		}}).([]any)
+	return reply[0].(*secretv0alpha1.SecureValue), toError(reply[1])
 }
-func (storage *SimSecureValueMetadataStorage) Update(ctx context.Context, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (storage *SimSecureValueMetadataStorage) Update(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	panic("TODO: SimSecureValueMetadataStorage.Update")
 }
 func (storage *SimSecureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
@@ -47,7 +52,7 @@ func (storage *SimSecureValueMetadataStorage) Delete(ctx context.Context, namesp
 	storage.simDatabase.activityLog.Record("SimSecureValueMetadataStorage.Delete: reply=%+v", reply)
 	return toError(reply)
 }
-func (storage *SimSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.SecureValueList, error) {
+func (storage *SimSecureValueMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error) {
 	panic("TODO: SimSecureValueMetadataStorage.List")
 }
 
@@ -60,11 +65,15 @@ func (storage *SimSecureValueMetadataStorage) SetExternalID(ctx context.Context,
 	return toError(reply)
 }
 
-func (storage *SimSecureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (storage *SimSecureValueMetadataStorage) SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
 	reply := storage.simNetwork.Send(SendInput{
-		Debug: fmt.Sprintf("DatabaseSetStatusSucceeded(%+v, %+v, %+v)", transactionIDFromContext(ctx), namespace, name),
+		Debug: fmt.Sprintf("DatabaseSetStatus(%+v, %+v, %+v)", transactionIDFromContext(ctx), namespace, name),
 		Execute: func() any {
-			return storage.simDatabase.QuerySetStatusSucceeded(transactionIDFromContext(ctx), namespace, name)
+			return storage.simDatabase.QuerySetStatus(transactionIDFromContext(ctx), namespace, name, status)
 		}})
 	return toError(reply)
+}
+
+func (storage *SimSecureValueMetadataStorage) ReadForDecrypt(_ context.Context, _ xkube.Namespace, _ string) (*contracts.DecryptSecureValue, error) {
+	panic("SimSecureValueMetadataStorage.ReadForDecrypt: unimplemneted")
 }

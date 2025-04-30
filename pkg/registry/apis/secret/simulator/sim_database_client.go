@@ -21,6 +21,10 @@ func NewSimDatabaseClient(simNetwork *SimNetwork, simDatabase *SimDatabaseServer
 	return &SimDatabaseClient{simNetwork: simNetwork, simDatabase: simDatabase}
 }
 
+func (client *SimDatabaseClient) DriverName() string {
+	panic("unimplemented")
+}
+
 func (client *SimDatabaseClient) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	// Send a request to the database server to start a transaction
 	reply := client.simNetwork.Send(SendInput{

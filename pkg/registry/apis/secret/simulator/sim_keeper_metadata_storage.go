@@ -2,11 +2,10 @@ package simulator
 
 import (
 	"context"
+	"fmt"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 )
 
 // Implementation of contracts.KeeperMetadataStorage
@@ -16,7 +15,7 @@ func NewSimKeeperMetadataStorage() *SimKeeperMetadataStorage {
 	return &SimKeeperMetadataStorage{}
 }
 
-func (storage *SimKeeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (storage *SimKeeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
 	panic("TODO: SimKeeperMetadataStorage.Create")
 }
 
@@ -24,7 +23,7 @@ func (storage *SimKeeperMetadataStorage) Read(ctx context.Context, namespace xku
 	panic("TODO: SimKeeperMetadataStorage.Read")
 }
 
-func (storage *SimKeeperMetadataStorage) Update(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (storage *SimKeeperMetadataStorage) Update(ctx context.Context, keeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
 	panic("TODO: SimKeeperMetadataStorage.Update")
 }
 
@@ -32,10 +31,14 @@ func (storage *SimKeeperMetadataStorage) Delete(ctx context.Context, namespace x
 	panic("TODO: SimKeeperMetadataStorage.Delete")
 }
 
-func (storage *SimKeeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+func (storage *SimKeeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.Keeper, error) {
 	panic("TODO: SimKeeperMetadataStorage.List")
 }
 
-func (storage *SimKeeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
-	return contracts.SQLKeeperType, &secretv0alpha1.SQLKeeperConfig{}, nil
+func (storage *SimKeeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
+	if name == nil {
+		return nil, nil
+	}
+
+	panic(fmt.Sprintf("SimKeeperMetadataStorage.GetKeeperConfig: unhandled keeper namespace=%+v name=%+v", namespace, name))
 }

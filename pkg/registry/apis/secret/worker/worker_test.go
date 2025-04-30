@@ -364,12 +364,12 @@ func (wrapper *secureValueMetadataStorageWrapper) List(ctx context.Context, name
 	return wrapper.impl.List(ctx, namespace)
 }
 
-func (wrapper *secureValueMetadataStorageWrapper) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (wrapper *secureValueMetadataStorageWrapper) SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
 		return context.DeadlineExceeded
 	}
-	if err := wrapper.impl.SetStatusSucceeded(ctx, namespace, name); err != nil {
+	if err := wrapper.impl.SetStatus(ctx, namespace, name, status); err != nil {
 		return err
 	}
 	// Maybe return an error after calling the real implementation

@@ -137,19 +137,29 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 }
 
 func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name)
-	if err != nil {
-		return fmt.Errorf("fetching secure value: %+w", err)
-	}
+	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name)
+		if err != nil {
+			return fmt.Errorf("fetching secure value: %+w", err)
+		}
 
-	if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
-		Type:       contracts.DeleteSecretOutboxMessage,
-		Name:       name,
-		Namespace:  namespace.String(),
-		KeeperName: sv.Spec.Keeper,
-		ExternalID: &sv.Status.ExternalID,
+		if err := s.secureValueMetadataStorage.SetStatus(ctx, namespace, name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending}); err != nil {
+			return fmt.Errorf("setting secure value status phase: %+w", err)
+		}
+
+		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+			Type:       contracts.DeleteSecretOutboxMessage,
+			Name:       name,
+			Namespace:  namespace.String(),
+			KeeperName: sv.Spec.Keeper,
+			ExternalID: &sv.Status.ExternalID,
+		}); err != nil {
+			return fmt.Errorf("appending delete secure value message to outbox queue: %+w", err)
+		}
+
+		return nil
 	}); err != nil {
-		return fmt.Errorf("appending delete secure value message to outbox queue: %+w", err)
+		return err
 	}
 
 	return nil

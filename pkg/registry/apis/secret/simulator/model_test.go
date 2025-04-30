@@ -26,10 +26,10 @@ func NewModel() *Model {
 }
 
 func (model *Model) Create(
-	ctx context.Context,
+	_ context.Context,
 	obj runtime.Object,
-	createValidation rest.ValidateObjectFunc,
-	options *metav1.CreateOptions,
+	_ rest.ValidateObjectFunc,
+	_ *metav1.CreateOptions,
 ) (runtime.Object, error) {
 	sv, ok := obj.(*secretv0alpha1.SecureValue)
 	if !ok {
@@ -71,14 +71,13 @@ func TestCreate(t *testing.T) {
 				Name: "sv-1",
 			},
 			Spec: secretv0alpha1.SecureValueSpec{
-				Title: "foo",
 				Value: secretv0alpha1.NewExposedSecureValue("value1"),
 			},
 			Status: secretv0alpha1.SecureValueStatus{
 				Phase: secretv0alpha1.SecureValuePhasePending,
 			},
 		}
-		validateObjectFunc := func(ctx context.Context, obj runtime.Object) error {
+		validateObjectFunc := func(context.Context, runtime.Object) error {
 			return nil
 		}
 		createOptions := &metav1.CreateOptions{}
