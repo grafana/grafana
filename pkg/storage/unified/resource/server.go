@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"hash/fnv"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -22,7 +21,6 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/ring"
-	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
@@ -194,8 +192,6 @@ type ResourceServerOptions struct {
 	storageMetrics *StorageMetrics
 
 	IndexMetrics *BleveIndexMetrics
-
-	Distributor *Distributor
 }
 
 func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
@@ -264,11 +260,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		reg:            opts.Reg,
 	}
 
-	if opts.Distributor != nil {
-		s.shardingEnabled = true
-		s.distributor = *opts.Distributor
-	}
-
 	if opts.Search.Resources != nil {
 		var err error
 		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
@@ -313,14 +304,7 @@ type server struct {
 	initErr error
 
 	shardingEnabled bool
-	distributor     Distributor
 	reg             prometheus.Registerer
-}
-
-type Distributor struct {
-	ClientPool *ringclient.Pool
-	Ring       *ring.Ring
-	Lifecycler *ring.BasicLifecycler
 }
 
 type RingClient struct {
@@ -372,35 +356,6 @@ func (s *server) Init(ctx context.Context) error {
 var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
 	return s != ring.ACTIVE
 })
-
-func (s *server) getClientToDistributeRequest(namespace string) *RingClient {
-	ringHasher := fnv.New32a()
-	_, err := ringHasher.Write([]byte(namespace))
-	if err != nil {
-		s.log.Error("Error hashing namespace. Will not distribute request", "err", err)
-		return nil
-	}
-
-	rs, err := s.distributor.Ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
-
-	if err != nil {
-		s.log.Error("Error getting replication set. Will not distribute request", "err", err)
-		return nil
-	}
-
-	if rs.Instances[0].Id != s.distributor.Lifecycler.GetInstanceID() {
-		s.log.Info("distributing request", "instanceId", rs.Instances[0].Id)
-
-		ins, err := s.distributor.ClientPool.GetClientForInstance(rs.Instances[0])
-		if err != nil {
-			s.log.Error("Error getting client. Will not distribute request", "err", err)
-			return nil
-		}
-		return ins.(*RingClient)
-	}
-
-	return nil
-}
 
 func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")
