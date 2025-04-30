@@ -43,7 +43,10 @@ import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/Dash
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
 import { RowActions } from '../scene/layout-default/row-actions/RowActions';
+import { RowItem } from '../scene/layout-rows/RowItem';
+import { RowsLayoutManager } from '../scene/layout-rows/RowsLayoutManager';
 import { setDashboardPanelContext } from '../scene/setDashboardPanelContext';
+import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { createPanelDataProvider } from '../utils/createPanelDataProvider';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { DashboardInteractions } from '../utils/interactions';
@@ -72,6 +75,48 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
   scene.setInitialSaveModel(rsp.dashboard);
 
   return scene;
+}
+
+export function createRowsFromPanels(oldPanels: PanelModel[]): RowsLayoutManager {
+  const rowItems: RowItem[] = [];
+
+  let currentLegacyRow: PanelModel | null = null;
+  let currentRowPanels: DashboardGridItem[] = [];
+
+  for (const panel of oldPanels) {
+    if (panel.type === 'row') {
+      if (!currentLegacyRow) {
+        // This is the first row. We should flush the current panels into a row item with header hidden.
+        rowItems.push(
+          new RowItem({
+            title: '',
+            collapse: panel.collapsed,
+            layout: new DefaultGridLayoutManager({
+              grid: new SceneGridLayout({
+                children: currentRowPanels,
+              }),
+            }),
+            hideHeader: true,
+            $behaviors: [],
+          })
+        );
+        currentRowPanels = [];
+
+        currentLegacyRow = panel;
+      } else {
+        // This is a new row. We should flush the current panels into a row item.
+        rowItems.push(createRowItemFromLegacyRow(currentLegacyRow, currentRowPanels));
+        currentRowPanels = [];
+        currentLegacyRow = panel;
+      }
+    } else {
+      currentRowPanels.push(buildGridItemForPanel(panel));
+    }
+  }
+
+  return new RowsLayoutManager({
+    rows: rowItems,
+  });
 }
 
 export function createSceneObjectsForPanels(oldPanels: PanelModel[]): SceneGridItemLike[] {
@@ -169,6 +214,23 @@ function createRowFromPanelModel(row: PanelModel, content: SceneGridItemLike[]):
   });
 }
 
+function createRowItemFromLegacyRow(row: PanelModel, panels: DashboardGridItem[]): RowItem {
+  const rowItem = new RowItem({
+    key: getVizPanelKeyForPanelId(row.id),
+    title: row.title,
+    collapse: row.collapsed,
+    layout: new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        // If the row is collapsed it will have panels within the row model.
+        children: (row.panels?.map((p) => buildGridItemForPanel(p)) ?? []).concat(panels),
+      }),
+    }),
+    // TODO: add repeat behavior
+    $behaviors: [],
+  });
+  return rowItem;
+}
+
 export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel, dto: DashboardDataDTO) {
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
@@ -244,6 +306,20 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       version: oldModel.version,
     }),
   ];
+
+  let body: DashboardLayoutManager;
+
+  if (config.featureToggles.dashboardNewLayouts && oldModel.panels.some((p) => p.type === 'row')) {
+    body = createRowsFromPanels(oldModel.panels);
+  } else {
+    body = new DefaultGridLayoutManager({
+      grid: new SceneGridLayout({
+        isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
+        children: createSceneObjectsForPanels(oldModel.panels),
+      }),
+    });
+  }
+
   const dashboardScene = new DashboardScene(
     {
       uid,
@@ -258,12 +334,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       title: oldModel.title,
       version: oldModel.version,
       scopeMeta,
-      body: new DefaultGridLayoutManager({
-        grid: new SceneGridLayout({
-          isLazy: !(dto.preload || contextSrv.user.authenticatedBy === 'render'),
-          children: createSceneObjectsForPanels(oldModel.panels),
-        }),
-      }),
+      body,
       $timeRange: new SceneTimeRange({
         from: oldModel.time.from,
         to: oldModel.time.to,

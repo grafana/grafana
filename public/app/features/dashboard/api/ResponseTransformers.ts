@@ -37,8 +37,9 @@ import {
   GroupByVariableKind,
   LibraryPanelKind,
   PanelKind,
-  GridLayoutRowKind,
   GridLayoutItemKind,
+  RowsLayoutRowKind,
+  GridLayoutKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { DashboardLink, DataTransformerConfig } from '@grafana/schema/src/raw/dashboard/x/dashboard_types.gen';
 import { isWeekStart, WeekStart } from '@grafana/ui';
@@ -253,22 +254,49 @@ function getElementsFromPanels(
     return [elements, layout];
   }
 
-  let currentRow: GridLayoutRowKind | null = null;
+  if (panels.some(isRowPanel)) {
+    return convertToRowsLayout(panels);
+  }
 
   // iterate over panels
   for (const p of panels) {
+    const [element, elementName] = buildElement(p);
+
+    elements[elementName] = element;
+
+    layout.spec.items.push(buildGridItemKind(p, elementName));
+  }
+
+  return [elements, layout];
+}
+
+function convertToRowsLayout(
+  panels: Array<Panel | RowPanel>
+): [DashboardV2Spec['elements'], DashboardV2Spec['layout']] {
+  let currentRow: RowsLayoutRowKind | null = null;
+  let legacyRowY = 0;
+  const elements: DashboardV2Spec['elements'] = {};
+  const layout: DashboardV2Spec['layout'] = {
+    kind: 'RowsLayout',
+    spec: {
+      rows: [],
+    },
+  };
+
+  for (const p of panels) {
     if (isRowPanel(p)) {
+      legacyRowY = p.gridPos!.y;
       if (currentRow) {
         // Flush current row to layout before we create a new one
-        layout.spec.items.push(currentRow);
+        layout.spec.rows.push(currentRow);
       }
 
+      // If the row is collapsed it will have panels
       const rowElements = [];
-
       for (const panel of p.panels || []) {
         const [element, name] = buildElement(panel);
         elements[name] = element;
-        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, p.gridPos!.y)));
+        rowElements.push(buildGridItemKind(panel, name, yOffsetInRows(panel, legacyRowY)));
       }
 
       currentRow = buildRowKind(p, rowElements);
@@ -279,16 +307,31 @@ function getElementsFromPanels(
 
       if (currentRow) {
         // Collect panels to current layout row
-        currentRow.spec.elements.push(buildGridItemKind(p, elementName, yOffsetInRows(p, currentRow.spec.y)));
+        if (currentRow.spec.layout.kind === 'GridLayout') {
+          currentRow.spec.layout.spec.items.push(buildGridItemKind(p, elementName, yOffsetInRows(p, legacyRowY)));
+        } else {
+          throw new Error('RowsLayoutRow from legacy row must have a GridLayout');
+        }
       } else {
-        layout.spec.items.push(buildGridItemKind(p, elementName));
+        // This is the first row. In V1 these items could live outside of a row. In V2 they will be in a row with header hidden so that it will look similar to V1.
+        const grid: GridLayoutKind = {
+          kind: 'GridLayout',
+          spec: {
+            items: [buildGridItemKind(p, elementName)],
+          },
+        };
+
+        currentRow = {
+          kind: 'RowsLayoutRow',
+          spec: {
+            collapse: false,
+            title: '',
+            hideHeader: true,
+            layout: grid,
+          },
+        };
       }
     }
-  }
-
-  if (currentRow) {
-    // Flush last row to layout
-    layout.spec.items.push(currentRow);
   }
 
   return [elements, layout];
@@ -305,15 +348,19 @@ function getWeekStart(weekStart?: string, defaultWeekStart?: WeekStart): WeekSta
   return weekStart;
 }
 
-function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): GridLayoutRowKind {
+function buildRowKind(p: RowPanel, elements: GridLayoutItemKind[]): RowsLayoutRowKind {
   return {
-    kind: 'GridLayoutRow',
+    kind: 'RowsLayoutRow',
     spec: {
-      collapsed: p.collapsed,
+      collapse: p.collapsed,
       title: p.title ?? '',
       repeat: p.repeat ? { value: p.repeat, mode: 'variable' } : undefined,
-      y: p.gridPos?.y ?? 0,
-      elements,
+      layout: {
+        kind: 'GridLayout',
+        spec: {
+          items: elements,
+        },
+      },
     },
   };
 }
