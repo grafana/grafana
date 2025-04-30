@@ -19,15 +19,25 @@ export default function GettingStarted() {
           </Text>
           <ul className={styles.list}>
             <li>
-              Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
+              <Trans i18nKey="alerting.getting-started.periodically-queries-data-sources">
+                Grafana alerting periodically queries data sources and evaluates the condition defined in the alert rule
+              </Trans>
             </li>
             <li>
               <Trans i18nKey="alerting.getting-started.condition-breached-alert-instance-fires">
                 If the condition is breached, an alert instance fires
               </Trans>
             </li>
-            <li>Firing instances are routed to notification policies based on matching labels</li>
-            <li>Notifications are sent out to the contact points specified in the notification policy</li>
+            <li>
+              <Trans i18nKey="alerting.getting-started.firing-instances-routed-notification-policies">
+                Firing instances are routed to notification policies based on matching labels
+              </Trans>
+            </li>
+            <li>
+              <Trans i18nKey="alerting.getting-started.notification-policies-contact-points">
+                Notifications are sent out to the contact points specified in the notification policy
+              </Trans>
+            </li>
           </ul>
           <div className={styles.svgContainer}>
             <Stack justifyContent={'center'}>
@@ -47,27 +57,30 @@ export default function GettingStarted() {
           </Text>
           <ul className={styles.list}>
             <li>
-              <Text weight="bold">Create an alert rule</Text> to query a data source and evaluate the condition defined
-              in the alert rule
+              <Trans i18nKey="alerting.getting-started.create-alert-rule">
+                <Text weight="bold">Create an alert rule</Text> to query a data source and evaluate the condition
+                defined in the alert rule
+              </Trans>
             </li>
             <li>
-              <Text weight="bold">Route alert notifications</Text> either directly to a contact point or through
-              notification policies for more flexibility
+              <Trans i18nKey="alerting.getting-started.route-alert-notifications">
+                <Text weight="bold">Route alert notifications</Text> either directly to a contact point or through
+                notification policies for more flexibility
+              </Trans>
             </li>
             <li>
-              <Text weight="bold">Monitor</Text> your alert rules using dashboards and visualizations
+              <Trans i18nKey="alerting.getting-started.monitor-alert-rules">
+                <Text weight="bold">Monitor</Text> your alert rules using dashboards and visualizations
+              </Trans>
             </li>
           </ul>
           <p>
-            For a hands-on introduction, refer to our{' '}
-            <TextLink
-              href="https://grafana.com/tutorials/alerting-get-started/"
-              icon="angle-right"
-              inline={true}
-              external
-            >
-              tutorial to get started with Grafana Alerting
-            </TextLink>
+            <Trans i18nKey="alerting.getting-stared.learn-more">
+              For a hands-on introduction, refer to our{' '}
+              <TextLink href="https://grafana.com/tutorials/alerting-get-started/" inline={true} external>
+                tutorial to get started with Grafana Alerting
+              </TextLink>
+            </Trans>
           </p>
         </Stack>
       </ContentBox>
@@ -112,7 +125,10 @@ export function WelcomeHeader({ className }: { className?: string }) {
       <ContentBox className={cx(styles.ctaContainer, className)}>
         <WelcomeCTABox
           title={t('alerting.welcome-header.title-alert-rules', 'Alert rules')}
-          description="Define the condition that must be met before an alert rule fires"
+          description={t(
+            'alerting.welcome-header.description-alert-rules',
+            'Define the condition that must be met before an alert rule fires'
+          )}
           href="/alerting/list"
           hrefText="Manage alert rules"
         />

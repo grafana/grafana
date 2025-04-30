@@ -336,6 +336,7 @@ export const TemplateForm = ({ originalTemplate, prefill, alertmanager }: Props)
                     <TemplatePreview
                       payload={payload}
                       templateName={watch('title')}
+                      templateContent={watch('content')}
                       setPayloadFormatError={setPayloadFormatError}
                       payloadFormatError={payloadFormatError}
                       className={cx(styles.templatePreview, styles.minEditorSize)}

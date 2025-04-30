@@ -185,6 +185,7 @@ func TestGRPCtoHTTPStatusMapping(t *testing.T) {
 			nil,
 			nil,
 			nil,
+			nil,
 			apistore.StorageOptions{})
 		require.NoError(t, err)
 

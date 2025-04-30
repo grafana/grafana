@@ -14,32 +14,33 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+//go:generate mockery --name=PullRequestRepo --structname=MockPullRequestRepo --inpackage --filename=mock_pullrequest_repo.go --with-expecter
 type PullRequestRepo interface {
 	Config() *provisioning.Repository
 	Read(ctx context.Context, path, ref string) (*repository.FileInfo, error)
 	CompareFiles(ctx context.Context, base, ref string) ([]repository.VersionedFileChange, error)
-	ClearAllPullRequestFileComments(ctx context.Context, pr int) error
-	CommentPullRequestFile(ctx context.Context, pr int, path string, ref string, comment string) error
 	CommentPullRequest(ctx context.Context, pr int, comment string) error
 }
 
-type PullRequestWorker struct {
-	parsers     resources.ParserFactory
-	renderer    ScreenshotRenderer
-	urlProvider func(namespace string) string
-	commenter   *commentBuilder
+//go:generate mockery --name=Evaluator --structname=MockEvaluator --inpackage --filename=mock_evaluator.go --with-expecter
+type Evaluator interface {
+	Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error)
 }
 
-func NewPullRequestWorker(
-	parsers resources.ParserFactory,
-	renderer ScreenshotRenderer,
-	urlProvider func(namespace string) string,
-) *PullRequestWorker {
+//go:generate mockery --name=Commenter --structname=MockCommenter --inpackage --filename=mock_commenter.go --with-expecter
+type Commenter interface {
+	Comment(ctx context.Context, repo PullRequestRepo, pr int, changeInfo changeInfo) error
+}
+
+type PullRequestWorker struct {
+	evaluator Evaluator
+	commenter Commenter
+}
+
+func NewPullRequestWorker(evaluator Evaluator, commenter Commenter) *PullRequestWorker {
 	return &PullRequestWorker{
-		parsers:     parsers,
-		renderer:    renderer,
-		urlProvider: urlProvider,
-		commenter:   newCommentBuilder(),
+		evaluator: evaluator,
+		commenter: commenter,
 	}
 }
 
@@ -53,22 +54,18 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 	progress jobs.JobProgressRecorder,
 ) error {
 	cfg := repo.Config().Spec
-	options := job.Spec.PullRequest
-	if options == nil {
+	opts := job.Spec.PullRequest
+	if opts == nil {
 		return apierrors.NewBadRequest("missing spec.pr")
 	}
 
-	if options.Ref == "" {
+	if opts.Ref == "" {
 		return apierrors.NewBadRequest("missing spec.ref")
 	}
 
+	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
 	if cfg.GitHub == nil {
 		return apierrors.NewBadRequest("expecting github configuration")
-	}
-
-	prRepo, ok := repo.(PullRequestRepo)
-	if !ok {
-		return fmt.Errorf("repository is not a github repository")
 	}
 
 	reader, ok := repo.(repository.Reader)
@@ -76,71 +73,50 @@ func (c *PullRequestWorker) Process(ctx context.Context,
 		return errors.New("pull request job submitted targeting repository that is not a Reader")
 	}
 
-	logger := logging.FromContext(ctx).With("pr", options.PR)
+	prRepo, ok := repo.(PullRequestRepo)
+	if !ok {
+		return fmt.Errorf("repository is not a pull request repository")
+	}
+
+	logger := logging.FromContext(ctx).With("pr", opts.PR)
 	logger.Info("process pull request")
 	defer logger.Info("pull request processed")
 
 	progress.SetMessage(ctx, "listing pull request files")
+	// FIXME: this is leaky because it's supposed to be already a PullRequestRepo
 	base := cfg.GitHub.Branch
-	files, err := prRepo.CompareFiles(ctx, base, options.Ref)
+	files, err := prRepo.CompareFiles(ctx, base, opts.Ref)
 	if err != nil {
-		return fmt.Errorf("failed to list pull request files: %s", err.Error())
+		return fmt.Errorf("failed to list pull request files: %w", err)
 	}
 
 	files = onlySupportedFiles(files)
-
 	if len(files) == 0 {
 		progress.SetFinalMessage(ctx, "no files to process")
 		return nil
 	}
 
-	parser, err := c.parsers.GetParser(ctx, reader)
+	changeInfo, err := c.evaluator.Evaluate(ctx, reader, *opts, files, progress)
 	if err != nil {
-		return fmt.Errorf("failed to get parser for %s: %w", repo.Config().Name, err)
+		return fmt.Errorf("calculate changes: %w", err)
 	}
 
-	var render ScreenshotRenderer
-	if cfg.GitHub.GenerateDashboardPreviews {
-		render = c.renderer
-	}
-
-	changeInfo, err := processChangedFiles(ctx, changeOptions{
-		grafanaBaseURL: c.urlProvider(repo.Config().Namespace),
-		pullRequest:    *options,
-		changes:        files,
-		parser:         parser,
-		reader:         reader,
-		progress:       progress,
-		render:         render,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to calculate changes: %w", err)
-	}
-
-	if err := c.commenter.Comment(ctx, prRepo, options.PR, changeInfo); err != nil {
+	if err := c.commenter.Comment(ctx, prRepo, opts.PR, changeInfo); err != nil {
 		return fmt.Errorf("comment pull request: %w", err)
 	}
 	logger.Info("preview comment added")
+
 	return nil
 }
 
 // Remove files we should not try to process
 func onlySupportedFiles(files []repository.VersionedFileChange) (ret []repository.VersionedFileChange) {
 	for _, file := range files {
-		if file.Action == repository.FileActionIgnored {
+		if file.Action == repository.FileActionIgnored || resources.IsPathSupported(file.Path) != nil {
 			continue
 		}
-
-		if err := resources.IsPathSupported(file.Path); err == nil {
-			ret = append(ret, file)
-			continue
-		}
-		if file.PreviousPath != "" {
-			if err := resources.IsPathSupported(file.PreviousPath); err != nil {
-				ret = append(ret, file)
-				continue
-			}
-		}
+		ret = append(ret, file)
 	}
+
 	return
 }

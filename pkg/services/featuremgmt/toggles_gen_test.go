@@ -441,16 +441,6 @@ When features are slated for removal, they will be marked as Deprecated first.
 	}
 
 	buf += `
-## Experimental feature toggles
-
-[Experimental](https://grafana.com/docs/release-life-cycle/#experimental) features are early in their development lifecycle and so are not yet supported in Grafana Cloud.
-Experimental features might be changed or removed without prior notice.
-
-` + writeToggleDocsTable(func(flag FeatureFlag) bool {
-		return flag.Stage == FeatureStageExperimental && !flag.RequiresDevMode
-	}, false)
-
-	buf += `
 ## Development feature toggles
 
 The following toggles require explicitly setting Grafana's [app mode](../#app_mode) to 'development' before you can enable this feature toggle. These features tend to be experimental.

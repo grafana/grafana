@@ -10,7 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 )
 
 func TestLargeDashboardSupport(t *testing.T) {
@@ -50,7 +50,7 @@ func TestLargeDashboardSupport(t *testing.T) {
 	small, err := json.MarshalIndent(&dash.Spec, "", "  ")
 	require.NoError(t, err)
 	require.JSONEq(t, `{
-		"schemaVersion": 33,
+		"schemaVersion": 36,
 		"title": "Panel tests - All panels",
 		"tags": ["gdev","panel-tests","all-panels"]
 	}`, string(small))

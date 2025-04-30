@@ -17,7 +17,7 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { isInCloneChain } from '../utils/clone';
+import { containsCloneKey, getOriginalKey, isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardOutline } from './DashboardOutline';
@@ -101,7 +101,9 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    const obj = sceneGraph.findByKey(this, element.id);
+    const elementId = containsCloneKey(element.id) ? getOriginalKey(element.id) : element.id;
+
+    const obj = sceneGraph.findByKey(this, elementId);
     if (obj) {
       this.selectObject(obj, element.id, options);
     }
@@ -130,13 +132,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
-    this.setState({
-      selection: new ElementSelection(selection),
-      selectionContext: {
-        ...this.state.selectionContext,
-        selected,
-      },
-    });
+    this.updateSelection(new ElementSelection(selection), selected);
   }
 
   private removeMultiSelectedObject(id: string) {
@@ -151,13 +147,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    this.setState({
-      selection: new ElementSelection([...entries]),
-      selectionContext: {
-        ...this.state.selectionContext,
-        selected,
-      },
-    });
+    this.updateSelection(new ElementSelection([...entries]), selected);
+  }
+
+  private updateSelection(selection: ElementSelection | undefined, selected: ElementSelectionContextItem[]) {
+    // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
+    // This make sure they fire before unmounting
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    this.setState({ selection, selectionContext: { ...this.state.selectionContext, selected } });
   }
 
   public clearSelection() {
@@ -165,13 +165,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    this.setState({
-      selection: undefined,
-      selectionContext: {
-        ...this.state.selectionContext,
-        selected: [],
-      },
-    });
+    this.updateSelection(undefined, []);
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {

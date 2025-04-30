@@ -237,6 +237,38 @@ func (_c *MockJobProgressRecorder_SetTotal_Call) RunAndReturn(run func(context.C
 	return _c
 }
 
+// Strict provides a mock function with no fields
+func (_m *MockJobProgressRecorder) Strict() {
+	_m.Called()
+}
+
+// MockJobProgressRecorder_Strict_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Strict'
+type MockJobProgressRecorder_Strict_Call struct {
+	*mock.Call
+}
+
+// Strict is a helper method to define mock.On call
+func (_e *MockJobProgressRecorder_Expecter) Strict() *MockJobProgressRecorder_Strict_Call {
+	return &MockJobProgressRecorder_Strict_Call{Call: _e.mock.On("Strict")}
+}
+
+func (_c *MockJobProgressRecorder_Strict_Call) Run(run func()) *MockJobProgressRecorder_Strict_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_Strict_Call) Return() *MockJobProgressRecorder_Strict_Call {
+	_c.Call.Return()
+	return _c
+}
+
+func (_c *MockJobProgressRecorder_Strict_Call) RunAndReturn(run func()) *MockJobProgressRecorder_Strict_Call {
+	_c.Run(run)
+	return _c
+}
+
 // TooManyErrors provides a mock function with no fields
 func (_m *MockJobProgressRecorder) TooManyErrors() error {
 	ret := _m.Called()

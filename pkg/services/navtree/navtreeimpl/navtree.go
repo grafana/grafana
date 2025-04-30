@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/plugins"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apikey"
 	"github.com/grafana/grafana/pkg/services/authn"
@@ -17,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/licensing"
 	"github.com/grafana/grafana/pkg/services/navtree"
 	"github.com/grafana/grafana/pkg/services/org"
+	pc "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	pref "github.com/grafana/grafana/pkg/services/preference"
@@ -139,7 +141,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	}
 
 	if hasAccess(ac.EvalPermission(ac.ActionDatasourcesExplore)) {
-		drilldownChildNavLinks := s.buildDrilldownNavLinks(c)
 		treeRoot.AddSection(&navtree.NavLink{
 			Text:       "Drilldown",
 			Id:         navtree.NavIDDrilldown,
@@ -148,7 +149,6 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 			IsNew:      true,
 			SortWeight: navtree.WeightDrilldown,
 			Url:        s.cfg.AppSubURL + "/drilldown",
-			Children:   drilldownChildNavLinks,
 		})
 	}
 
@@ -162,6 +162,10 @@ func (s *ServiceImpl) GetNavTree(c *contextmodel.ReqContext, prefs *pref.Prefere
 	if uaVisibleForOrg {
 		if alertingSection := s.buildAlertNavLinks(c); alertingSection != nil {
 			treeRoot.AddSection(alertingSection)
+		}
+
+		if aimlSection := s.buildAIMLNavLinks(c); aimlSection != nil {
+			treeRoot.AddSection(aimlSection)
 		}
 	}
 
@@ -418,6 +422,80 @@ func (s *ServiceImpl) buildDashboardNavLinks(c *contextmodel.ReqContext) []*navt
 	return dashboardChildNavs
 }
 
+func (s *ServiceImpl) buildAIMLNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
+	hasAccess := ac.HasAccess(s.accessControl, c)
+
+	pss, err := s.pluginSettings.GetPluginSettings(c.Req.Context(), &pluginsettings.GetArgs{OrgID: c.GetOrgID()})
+	if err != nil {
+		s.log.Error("Failed to get plugin settings", "error", err)
+		return nil
+	}
+
+	// Check if ML plugin is enabled
+	isMLPluginEnabled := false
+	for _, plugin := range s.pluginStore.Plugins(c.Req.Context(), plugins.TypeApp) {
+		if plugin.ID == "grafana-ml-app" {
+			// Check if plugin is enabled in settings
+			if plugin.AutoEnabled {
+				isMLPluginEnabled = true
+				break
+			}
+			for _, ps := range pss {
+				if ps.PluginID == plugin.ID && ps.Enabled {
+					isMLPluginEnabled = true
+					break
+				}
+			}
+			break
+		}
+	}
+
+	// Return nil if plugin is not enabled
+	if !isMLPluginEnabled {
+		return nil
+	}
+
+	// Check if user has access to the plugin
+	if !hasAccess(ac.EvalPermission(pc.ActionAppAccess, "grafana-ml-app")) {
+		return nil
+	}
+
+	var aimlChildNavs []*navtree.NavLink
+
+	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
+		Text:     "Metric forecasting",
+		SubTitle: "Create a forecast",
+		Id:       "ai-ml-metric-forecast",
+		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/metric-forecast",
+	})
+
+	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
+		Text:     "Outlier detection",
+		SubTitle: "Create an outlier detector",
+		Id:       "ai-ml-outlier-detection",
+		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/outlier-detector",
+	})
+
+	aimlChildNavs = append(aimlChildNavs, &navtree.NavLink{
+		Text:     "Sift investigations",
+		SubTitle: "View and create investigations",
+		Id:       "ai-ml-sift-investigations",
+		Url:      s.cfg.AppSubURL + "/a/grafana-ml-app/investigations",
+	})
+
+	var aimlNav = navtree.NavLink{
+		Text:       "AI & Machine Learning",
+		SubTitle:   "Explore AI and machine learning features",
+		Id:         "ai-ml-home",
+		Icon:       "gf-ml-alt",
+		Children:   aimlChildNavs,
+		SortWeight: navtree.WeightAIAndML,
+		Url:        s.cfg.AppSubURL + "/a/grafana-ml-app/home",
+	}
+
+	return &aimlNav
+}
+
 func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.NavLink {
 	hasAccess := ac.HasAccess(s.accessControl, c)
 	var alertChildNavs []*navtree.NavLink
@@ -431,20 +509,14 @@ func (s *ServiceImpl) buildAlertNavLinks(c *contextmodel.ReqContext) *navtree.Na
 	contactPointsPerms := []ac.Evaluator{
 		ac.EvalPermission(ac.ActionAlertingNotificationsRead),
 		ac.EvalPermission(ac.ActionAlertingNotificationsExternalRead),
-	}
 
-	// With the new alerting API, we have other permissions to consider. We don't want to consider these with the old
-	// alerting API to maintain backwards compatibility.
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingApiServer) {
-		contactPointsPerms = append(contactPointsPerms,
-			ac.EvalPermission(ac.ActionAlertingReceiversRead),
-			ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
-			ac.EvalPermission(ac.ActionAlertingReceiversCreate),
+		ac.EvalPermission(ac.ActionAlertingReceiversRead),
+		ac.EvalPermission(ac.ActionAlertingReceiversReadSecrets),
+		ac.EvalPermission(ac.ActionAlertingReceiversCreate),
 
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
-			ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
-		)
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesRead),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesWrite),
+		ac.EvalPermission(ac.ActionAlertingNotificationsTemplatesDelete),
 	}
 
 	if hasAccess(ac.EvalAny(contactPointsPerms...)) {
@@ -571,18 +643,4 @@ func (s *ServiceImpl) buildDataConnectionsNavLink(c *contextmodel.ReqContext) *n
 		return navLink
 	}
 	return nil
-}
-
-func (s *ServiceImpl) buildDrilldownNavLinks(c *contextmodel.ReqContext) []*navtree.NavLink {
-	drilldownChildNavs := []*navtree.NavLink{}
-	if s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetrics) && !s.features.IsEnabled(c.Req.Context(), featuremgmt.FlagExploreMetricsUseExternalAppPlugin) {
-		drilldownChildNavs = append(drilldownChildNavs, &navtree.NavLink{
-			Text:     "Metrics",
-			SubTitle: "Queryless exploration of your metrics",
-			Id:       "explore/metrics",
-			Url:      s.cfg.AppSubURL + "/explore/metrics",
-			Icon:     "code-branch",
-		})
-	}
-	return drilldownChildNavs
 }

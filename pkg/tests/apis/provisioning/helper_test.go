@@ -23,8 +23,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folder "github.com/grafana/grafana/pkg/apis/folder/v1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	folder "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
@@ -46,8 +48,11 @@ type provisioningTestHelper struct {
 	Repositories *apis.K8sResourceClient
 	Jobs         *apis.K8sResourceClient
 	Folders      *apis.K8sResourceClient
-	Dashboards   *apis.K8sResourceClient
+	DashboardsV0 *apis.K8sResourceClient
+	DashboardsV1 *apis.K8sResourceClient
+	DashboardsV2 *apis.K8sResourceClient
 	AdminREST    *rest.RESTClient
+	EditorREST   *rest.RESTClient
 	ViewerREST   *rest.RESTClient
 }
 
@@ -249,20 +254,27 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		Namespace: "default", // actually org1
 		GVR:       folder.FolderResourceInfo.GroupVersionResource(),
 	})
-	dashboards := helper.GetResourceClient(apis.ResourceClientArgs{
+	dashboardsV0 := helper.GetResourceClient(apis.ResourceClientArgs{
 		User:      helper.Org1.Admin,
 		Namespace: "default", // actually org1
-		GVR:       dashboard.DashboardResourceInfo.GroupVersionResource(),
+		GVR:       dashboardV0.DashboardResourceInfo.GroupVersionResource(),
+	})
+	dashboardsV1 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       dashboardV1.DashboardResourceInfo.GroupVersionResource(),
+	})
+	dashboardsV2 := helper.GetResourceClient(apis.ResourceClientArgs{
+		User:      helper.Org1.Admin,
+		Namespace: "default", // actually org1
+		GVR:       dashboardV2.DashboardResourceInfo.GroupVersionResource(),
 	})
 
 	// Repo client, but less guard rails. Useful for subresources. We'll need this later...
-	restClient := helper.Org1.Admin.RESTClient(t, &schema.GroupVersion{
-		Group: "provisioning.grafana.app", Version: "v0alpha1",
-	})
-
-	viewerClient := helper.Org1.Viewer.RESTClient(t, &schema.GroupVersion{
-		Group: "provisioning.grafana.app", Version: "v0alpha1",
-	})
+	gv := &schema.GroupVersion{Group: "provisioning.grafana.app", Version: "v0alpha1"}
+	adminClient := helper.Org1.Admin.RESTClient(t, gv)
+	editorClient := helper.Org1.Editor.RESTClient(t, gv)
+	viewerClient := helper.Org1.Viewer.RESTClient(t, gv)
 
 	deleteAll := func(client *apis.K8sResourceClient) error {
 		ctx := context.Background()
@@ -278,7 +290,7 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		return nil
 	}
 
-	require.NoError(t, deleteAll(dashboards), "deleting all dashboards")
+	require.NoError(t, deleteAll(dashboardsV1), "deleting all dashboards") // v0+v1+v2
 	require.NoError(t, deleteAll(folders), "deleting all folders")
 	require.NoError(t, deleteAll(repositories), "deleting all repositories")
 
@@ -287,11 +299,14 @@ func runGrafana(t *testing.T, options ...grafanaOption) *provisioningTestHelper 
 		K8sTestHelper:    helper,
 
 		Repositories: repositories,
-		AdminREST:    restClient,
+		AdminREST:    adminClient,
+		EditorREST:   editorClient,
 		ViewerREST:   viewerClient,
 		Jobs:         jobs,
 		Folders:      folders,
-		Dashboards:   dashboards,
+		DashboardsV0: dashboardsV0,
+		DashboardsV1: dashboardsV1,
+		DashboardsV2: dashboardsV2,
 	}
 }
 

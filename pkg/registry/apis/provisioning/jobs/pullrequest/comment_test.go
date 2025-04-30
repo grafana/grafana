@@ -2,12 +2,13 @@ package pullrequest
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 
-	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
@@ -16,13 +17,21 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
-func TestGenerateComment(t *testing.T) {
-	builder := newCommentBuilder()
+func TestCommenter_Comment_FailedToComment(t *testing.T) {
+	repo := NewMockPullRequestRepo(t)
+	repo.On("CommentPullRequest", context.Background(), 1, mock.Anything).Return(errors.New("failed"))
 
+	commenter := NewCommenter()
+	err := commenter.Comment(context.Background(), repo, 1, changeInfo{})
+	require.Error(t, err)
+}
+
+func TestGenerateComment(t *testing.T) {
 	for _, tc := range []struct {
 		Name  string
 		Input changeInfo
 	}{
+		{"no changes", changeInfo{}},
 		{"new dashboard", changeInfo{
 			GrafanaBaseURL: "http://host/",
 			Changes: []fileChangeInfo{
@@ -119,27 +128,19 @@ func TestGenerateComment(t *testing.T) {
 		}},
 	} {
 		t.Run(tc.Name, func(t *testing.T) {
-			comment, err := builder.generateComment(context.Background(), tc.Input)
-			require.NoError(t, err)
+			repo := NewMockPullRequestRepo(t)
 
+			// expectation on the comment
 			fpath := filepath.Join("testdata", strings.ReplaceAll(tc.Name, " ", "-")+".md")
-			update := false
-
 			// We can ignore the gosec G304 because this is only for tests
 			// nolint:gosec
 			expect, err := os.ReadFile(fpath)
-			if err != nil || len(expect) < 1 {
-				update = true
-				t.Error("missing " + fpath)
-			} else {
-				if diff := cmp.Diff(string(expect), comment); diff != "" {
-					t.Errorf("%s: %s", fpath, diff)
-					update = true
-				}
-			}
-			if update {
-				_ = os.WriteFile(fpath, []byte(comment), 0777)
-			}
+			require.NoError(t, err)
+			repo.On("CommentPullRequest", context.Background(), 1, string(expect)).Return(nil)
+
+			commenter := NewCommenter()
+			err = commenter.Comment(context.Background(), repo, 1, tc.Input)
+			require.NoError(t, err)
 		})
 	}
 }

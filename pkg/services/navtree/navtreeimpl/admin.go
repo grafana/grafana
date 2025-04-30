@@ -1,6 +1,7 @@
 package navtreeimpl
 
 import (
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/login/social"
 	ac "github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/ssoutils"
@@ -60,8 +61,10 @@ func (s *ServiceImpl) getAdminNode(c *contextmodel.ReqContext) (*navtree.NavLink
 			Url:      s.cfg.AppSubURL + "/admin/migrate-to-cloud",
 		})
 	}
-	if hasAccess(ac.EvalPermission(ac.ActionSettingsRead, ac.ScopeSettingsAll)) {
-		generalNodeLinks = append(generalNodeLinks, &navtree.NavLink{
+	if c.HasRole(identity.RoleAdmin) &&
+		(s.cfg.StackID == "" || // show OnPrem even when provisioning is disabled
+			s.features.IsEnabledGlobally(featuremgmt.FlagProvisioning)) {
+		configNodes = append(configNodes, &navtree.NavLink{
 			Text:     "Provisioning",
 			Id:       "provisioning",
 			SubTitle: "View and manage your provisioning connections",

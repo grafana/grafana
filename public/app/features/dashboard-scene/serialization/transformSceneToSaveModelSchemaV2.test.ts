@@ -72,6 +72,15 @@ jest.mock('../utils/dashboardSceneGraph', () => {
         // Return the panel key if it exists, otherwise use panel-1 as default
         return panel?.state?.key || 'panel-1';
       }),
+      getPanelLinks: jest.fn().mockImplementation(() => {
+        return new VizPanelLinks({
+          rawLinks: [
+            { title: 'Test Link 1', url: 'http://test1.com', targetBlank: true },
+            { title: 'Test Link 2', url: 'http://test2.com' },
+          ],
+          menu: new VizPanelLinksMenu({}),
+        });
+      }),
     },
   };
 });
@@ -223,7 +232,13 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                 description: 'Test Description',
                 hoverHeader: true,
                 hoverHeaderOffset: 10,
-                fieldConfig: { defaults: {}, overrides: [] },
+                fieldConfig: {
+                  defaults: {
+                    mappings: [],
+                    max: undefined,
+                  },
+                  overrides: [],
+                },
                 displayMode: 'transparent',
                 pluginVersion: '7.0.0',
                 $timeRange: new SceneTimeRange({
@@ -253,7 +268,6 @@ describe('transformSceneToSaveModelSchemaV2', () => {
                     title: 'Test Panel 2',
                     description: 'Test Description 2',
                     fieldConfig: { defaults: {}, overrides: [] },
-                    displayMode: 'transparent',
                     pluginVersion: '7.0.0',
                     $timeRange: new SceneTimeRange({
                       timeZone: 'UTC',

@@ -1,8 +1,7 @@
 package v2alpha1
 
 DashboardSpec: {
-	// Title of dashboard.
-	annotations: [...AnnotationQueryKind]
+	annotations: [...AnnotationQueryKind] | *[]
 
 	// Configuration of dashboard cursor sync behavior.
 	// "Off" for no shared crosshair or tooltip (default).
@@ -16,12 +15,12 @@ DashboardSpec: {
 	// Whether a dashboard is editable or not.
 	editable?: bool | *true
 
-	elements: [ElementReference.name]: Element
+	elements: [ElementReference.name]: Element | *{}
 
 	layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
 	// Links with references to other dashboards or external websites.
-	links: [...DashboardLink]
+	links: [...DashboardLink] | *[]
 
 	// When set to true, the dashboard will redraw panels at an interval matching the pixel width.
 	// This will keep data "moving left" regardless of the query refresh rate. This setting helps
@@ -29,14 +28,14 @@ DashboardSpec: {
 	liveNow?: bool
 
 	// When set to true, the dashboard will load all panels in the dashboard when it's loaded.
-	preload: bool
+	preload: bool | *false
 
 	// Plugins only. The version of the dashboard installed together with the plugin.
 	// This is used to determine if the dashboard should be updated when the plugin is updated.
 	revision?: uint16
 
 	// Tags associated with dashboard.
-	tags: [...string]
+	tags: [...string] | *[]
 
 	timeSettings: TimeSettingsSpec
 
@@ -44,7 +43,7 @@ DashboardSpec: {
 	title: string
 
 	// Configured template variables.
-	variables: [...VariableKind]
+	variables: [...VariableKind] | *[]
 }
 
 // Supported dashboard elements
@@ -79,13 +78,13 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint8]
+	ids: [...uint32]
 }
 
 // "Off" for no shared crosshair or tooltip (default).
 // "Crosshair" for shared crosshair.
 // "Tooltip" for shared crosshair AND shared tooltip.
-DashboardCursorSync: "Off" | "Crosshair" | "Tooltip"
+DashboardCursorSync: "Crosshair" | "Tooltip" | *"Off"
 
 // Links with references to other dashboards or external resources
 DashboardLink: {
@@ -101,7 +100,7 @@ DashboardLink: {
 	// Link URL. Only required/valid if the type is link
 	url?: string
 	// List of tags to limit the linked dashboards. If empty, all dashboards will be displayed. Only valid if the type is dashboards
-	tags: [...string]
+	tags: [...string] | *[]
 	// If true, all dashboards links will be displayed in a dropdown. If false, all dashboards links will be displayed side by side. Only valid if the type is dashboards
 	asDropdown: bool | *false
 	// If true, the link will be opened in a new tab
@@ -466,17 +465,17 @@ TimeSettingsSpec: {
 	// Accepted values are relative time strings like "now-6h" or absolute time strings like "2020-07-10T08:00:00.000Z".
 	to: string | *"now"
 	// Refresh rate of dashboard. Represented via interval string, e.g. "5s", "1m", "1h", "1d".
-	autoRefresh: string // v1: refresh
+	autoRefresh: string | *"" // v1: refresh
 	// Interval options available in the refresh picker dropdown.
 	autoRefreshIntervals: [...string] | *["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"] // v1: timepicker.refresh_intervals
 	// Selectable options available in the time picker dropdown. Has no effect on provisioned dashboard.
 	quickRanges?: [...TimeRangeOption] // v1: timepicker.quick_ranges , not exposed in the UI
 	// Whether timepicker is visible or not.
-	hideTimepicker: bool // v1: timepicker.hidden
+	hideTimepicker: bool | *false // v1: timepicker.hidden
 	// Day when the week starts. Expressed by the name of the day in lowercase, e.g. "monday".
 	weekStart?: "saturday" | "monday" | "sunday"
 	// The month that the fiscal year starts on. 0 = January, 11 = December
-	fiscalYearStartMonth: int
+	fiscalYearStartMonth: int | *0
 	// Override the now time by entering a time delay. Use this option to accommodate known delays in data aggregation to avoid null values.
 	nowDelay?: string // v1: timepicker.nowDelay
 }
@@ -705,6 +704,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
+// Determine the origin of the adhoc variable filter
+// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
+FilterOrigin: "dashboard" | "scope"
+
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
 	label:  string
@@ -916,6 +919,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
+	origin?: FilterOrigin
 	// @deprecated
 	condition?: string
 }

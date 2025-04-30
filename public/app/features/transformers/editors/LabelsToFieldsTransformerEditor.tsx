@@ -85,8 +85,9 @@ export const LabelsAsFieldsTransformerEditor = ({
         <InlineField
           label={t('transformers.labels-as-fields-transformer-editor.label-labels', 'Labels')}
           labelWidth={labelWidth}
+          shrink={true}
         >
-          <Stack gap={1} wrap={'wrap'}>
+          <Stack gap={0.5} wrap={'wrap'}>
             {labelNames.map((o, i) => {
               const label = o.label!;
               return (

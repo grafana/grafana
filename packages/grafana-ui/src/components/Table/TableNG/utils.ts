@@ -508,14 +508,16 @@ export interface MapFrameToGridOptions extends TableNGProps {
   setIsInspecting: (isInspecting: boolean) => void;
   setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;
   sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>;
-  styles: { cell: string; cellWrapped: string };
+  styles: { cell: string; cellWrapped: string; dataGrid: string };
   textWraps: Record<string, boolean>;
   theme: GrafanaTheme2;
   showTypeIcons?: boolean;
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
-const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+// The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
+// within strings and sorts numerically instead of lexicographically.
+const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     case FieldType.time:

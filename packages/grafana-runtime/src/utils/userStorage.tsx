@@ -27,6 +27,7 @@ async function apiRequest<T>(requestOptions: RequestOptions) {
         ...requestOptions,
         url: baseURL + requestOptions.url,
         data: requestOptions.body,
+        showErrorAlert: false,
       })
     );
     return { data: responseData, meta };
@@ -60,17 +61,19 @@ export class UserStorage {
     const userStorage = await apiRequest<{ spec: UserStorageSpec }>({
       url: `/${this.resourceName}`,
       method: 'GET',
-      showErrorAlert: false,
+      manageError: (error) => {
+        if (get(error, 'status') === 404) {
+          this.storageSpec = null;
+          return { error: null };
+        }
+        return { error };
+      },
     });
     if ('error' in userStorage) {
-      if (get(userStorage, 'error.status') !== 404) {
-        console.error('Failed to get user storage', userStorage.error);
-      }
-      // No user storage found, return null
-      this.storageSpec = null;
-    } else {
-      this.storageSpec = userStorage.data.spec;
+      return userStorage.error;
     }
+    this.storageSpec = userStorage.data.spec;
+    return;
   }
 
   async getItem(key: string): Promise<string | null> {
@@ -96,7 +99,12 @@ export class UserStorage {
 
     const newData = { data: { [key]: value } };
     // Ensure this.storageSpec is initialized
-    await this.init();
+    const error = await this.init();
+    if (error) {
+      // Fallback to localStorage
+      localStorage.setItem(`${this.resourceName}:${key}`, value);
+      return;
+    }
 
     if (!this.storageSpec) {
       // No user storage found, create a new one
@@ -106,6 +114,11 @@ export class UserStorage {
         body: {
           metadata: { name: this.resourceName, labels: { user: this.userUID, service: this.service } },
           spec: newData,
+        },
+        manageError: (error) => {
+          // Fallback to localStorage
+          localStorage.setItem(`${this.resourceName}:${key}`, value);
+          return { error };
         },
       });
       this.storageSpec = newData;
@@ -119,6 +132,11 @@ export class UserStorage {
       url: `/${this.resourceName}`,
       method: 'PATCH',
       body: { spec: newData },
+      manageError: (error) => {
+        // Fallback to localStorage
+        localStorage.setItem(`${this.resourceName}:${key}`, value);
+        return { error };
+      },
     });
   }
 }

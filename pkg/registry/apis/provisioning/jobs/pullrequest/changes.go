@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/grafana/grafana-app-sdk/logging"
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/infra/slugify"
@@ -28,7 +28,6 @@ type changeInfo struct {
 
 	// Requested image render, but it is not available
 	MissingImageRenderer bool
-	HasScreenshot        bool
 }
 
 type fileChangeInfo struct {
@@ -50,90 +49,74 @@ type fileChangeInfo struct {
 	PreviewScreenshotURL string
 }
 
-type changeOptions struct {
-	grafanaBaseURL string
-	pullRequest    provisioning.PullRequestJobOptions
-	changes        []repository.VersionedFileChange
-	parser         resources.Parser
-	reader         repository.Reader
-	progress       jobs.JobProgressRecorder
-	render         ScreenshotRenderer // from config
+type evaluator struct {
+	render      ScreenshotRenderer
+	parsers     resources.ParserFactory
+	urlProvider func(namespace string) string
+}
+
+func NewEvaluator(render ScreenshotRenderer, parsers resources.ParserFactory, urlProvider func(namespace string) string) Evaluator {
+	return &evaluator{
+		render:      render,
+		parsers:     parsers,
+		urlProvider: urlProvider,
+	}
 }
 
 // This will process the list of versioned file changes into changeInfo
-func processChangedFiles(ctx context.Context, opts changeOptions) (changeInfo, error) {
-	info := changeInfo{
-		GrafanaBaseURL: opts.grafanaBaseURL,
+func (e *evaluator) Evaluate(ctx context.Context, repo repository.Reader, opts provisioning.PullRequestJobOptions, changes []repository.VersionedFileChange, progress jobs.JobProgressRecorder) (changeInfo, error) {
+	cfg := repo.Config()
+	parser, err := e.parsers.GetParser(ctx, repo)
+	if err != nil {
+		return changeInfo{}, fmt.Errorf("failed to get parser for %s: %w", cfg.Name, err)
 	}
 
-	if opts.render != nil {
-		if !opts.render.IsAvailable(ctx) {
-			info.MissingImageRenderer = true
-			opts.render = nil
-		}
-
-		// Only render images when there is just one change
-		if len(opts.changes) > 1 {
-			opts.render = nil
-		}
+	rendererAvailable := e.render.IsAvailable(ctx)
+	shouldRender := rendererAvailable && len(changes) == 1 && cfg.Spec.GitHub.GenerateDashboardPreviews
+	info := changeInfo{
+		GrafanaBaseURL:       e.urlProvider(cfg.Namespace),
+		MissingImageRenderer: !rendererAvailable,
 	}
 
 	logger := logging.FromContext(ctx)
-	for i, change := range opts.changes {
+
+	for i, change := range changes {
 		// process maximum 10 files
 		if i >= 10 {
-			info.SkippedFiles = len(opts.changes) - i
+			info.SkippedFiles = len(changes) - i
+			logger.Info("skipping remaining files", "count", info.SkippedFiles)
 			break
 		}
 
-		opts.progress.SetMessage(ctx, fmt.Sprintf("processing: %s", change.Path))
+		progress.SetMessage(ctx, fmt.Sprintf("process %s", change.Path))
 		logger.With("action", change.Action).With("path", change.Path)
-
-		v, err := calculateFileChangeInfo(ctx, info.GrafanaBaseURL, change, opts)
-		if err != nil {
-			return info, fmt.Errorf("error calculating changes %w", err)
-		}
-
-		// If everything applied OK, then render screenshots
-		if opts.render != nil && v.GrafanaURL != "" && v.Parsed != nil && v.Parsed.DryRunResponse != nil {
-			opts.progress.SetMessage(ctx, fmt.Sprintf("rendering screenshots: %s", change.Path))
-			if err = v.renderScreenshots(ctx, info.GrafanaBaseURL, opts.render); err != nil {
-				info.MissingImageRenderer = true
-				if v.Error == "" {
-					v.Error = "Error running image rendering"
-				}
-
-				if v.GrafanaScreenshotURL != "" || v.PreviewScreenshotURL != "" {
-					info.HasScreenshot = true
-				}
-			}
-		}
-
-		info.Changes = append(info.Changes, v)
+		info.Changes = append(info.Changes, e.evaluateFile(ctx, repo, info.GrafanaBaseURL, change, opts, parser, shouldRender))
 	}
+
 	return info, nil
 }
 
 var dashboardKind = dashboard.DashboardResourceInfo.GroupVersionKind().Kind
 
-func calculateFileChangeInfo(ctx context.Context, baseURL string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
+func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, baseURL string, change repository.VersionedFileChange, opts provisioning.PullRequestJobOptions, parser resources.Parser, shouldRender bool) fileChangeInfo {
 	if change.Action == repository.FileActionDeleted {
-		return calculateFileDeleteInfo(ctx, baseURL, change, opts)
+		// TODO: read the old and verify
+		return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}
 	}
 
 	info := fileChangeInfo{Change: change}
-	fileInfo, err := opts.reader.Read(ctx, change.Path, change.Ref)
+	fileInfo, err := repo.Read(ctx, change.Path, change.Ref)
 	if err != nil {
 		logger.Info("unable to read file", "err", err)
 		info.Error = err.Error()
-		return info, nil
+		return info
 	}
 
 	// Read the file as a resource
-	info.Parsed, err = opts.parser.Parse(ctx, fileInfo)
+	info.Parsed, err = parser.Parse(ctx, fileInfo)
 	if err != nil {
 		info.Error = err.Error()
-		return info, nil
+		return info
 	}
 
 	// Find a name within the file
@@ -145,11 +128,13 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 	err = info.Parsed.DryRun(ctx)
 	if err != nil {
 		info.Error = err.Error()
-		return info, nil
+		return info
 	}
 
 	// Dashboards get special handling
 	if info.Parsed.GVK.Kind == dashboardKind {
+		// FIXME: extract the logic out of a dashboard URL builder/injector or similar
+		// for testability and decoupling
 		if info.Parsed.Existing != nil {
 			info.GrafanaURL = fmt.Sprintf("%sd/%s/%s", baseURL, obj.GetName(),
 				slugify.Slugify(info.Title))
@@ -161,35 +146,28 @@ func calculateFileChangeInfo(ctx context.Context, baseURL string, change reposit
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)
-		if opts.pullRequest.URL != "" {
-			query.Set("pull_request_url", url.QueryEscape(opts.pullRequest.URL))
+		if opts.URL != "" {
+			query.Set("pull_request_url", url.QueryEscape(opts.URL))
 		}
 		info.PreviewURL += "?" + query.Encode()
-	}
+		if shouldRender {
+			if info.GrafanaURL != "" {
+				info.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.GrafanaURL)
+				if err != nil {
+					info.Error = err.Error()
+				}
+			}
 
-	return info, nil
-}
-
-func calculateFileDeleteInfo(_ context.Context, _ string, change repository.VersionedFileChange, opts changeOptions) (fileChangeInfo, error) {
-	// TODO -- read the old and verify
-	return fileChangeInfo{Change: change, Error: "delete feedback not yet implemented"}, nil
-}
-
-// This will update render the linked screenshots and update the screenshotURLs
-func (f *fileChangeInfo) renderScreenshots(ctx context.Context, baseURL string, renderer ScreenshotRenderer) (err error) {
-	if f.GrafanaURL != "" {
-		f.GrafanaScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, renderer, f.Parsed.Repo, f.GrafanaURL)
-		if err != nil {
-			return err
+			if info.PreviewURL != "" {
+				info.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, e.render, info.Parsed.Repo, info.PreviewURL)
+				if err != nil {
+					info.Error = err.Error()
+				}
+			}
 		}
 	}
-	if f.PreviewURL != "" {
-		f.PreviewScreenshotURL, err = renderScreenshotFromGrafanaURL(ctx, baseURL, renderer, f.Parsed.Repo, f.PreviewURL)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+
+	return info
 }
 
 func renderScreenshotFromGrafanaURL(ctx context.Context,
@@ -206,7 +184,7 @@ func renderScreenshotFromGrafanaURL(ctx context.Context,
 	snap, err := renderer.RenderScreenshot(ctx, repo, strings.TrimPrefix(parsed.Path, "/"), parsed.Query())
 	if err != nil {
 		logging.FromContext(ctx).Warn("render failed", "url", grafanaURL, "err", err)
-		return "", fmt.Errorf("error rendering screenshot %w", err)
+		return "", fmt.Errorf("error rendering screenshot: %w", err)
 	}
 	if strings.Contains(snap, "://") {
 		return snap, nil // it is a full URL already (can happen when the blob storage returns CDN urls)

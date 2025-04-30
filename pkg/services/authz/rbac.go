@@ -8,11 +8,6 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authnlib "github.com/grafana/authlib/authn"
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/cache"
-	authlib "github.com/grafana/authlib/types"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -21,6 +16,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
 
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -58,6 +58,13 @@ func ProvideAuthZClient(
 
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) && authCfg.mode == clientModeCloud {
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
+	}
+
+	// Provisioning uses mode 4 (read+write only to unified storage)
+	// For G12 launch, we can disable caching for this and find a more scalable solution soon
+	// most likely this would involve passing the RV (timestamp!) in each check method
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authCfg.cacheTTL = 0
 	}
 
 	switch authCfg.mode {

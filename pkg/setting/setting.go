@@ -144,7 +144,7 @@ type Cfg struct {
 	ImagesDir                      string
 	CSVsDir                        string
 	PDFsDir                        string
-	RendererUrl                    string
+	RendererServerUrl              string
 	RendererCallbackUrl            string
 	RendererAuthToken              string
 	RendererConcurrentRequestLimit int
@@ -547,6 +547,11 @@ type Cfg struct {
 	IndexMaxBatchSize           int
 	IndexFileThreshold          int
 	IndexMinCount               int
+	EnableSharding              bool
+	MemberlistBindAddr          string
+	MemberlistAdvertiseAddr     string
+	MemberlistJoinMember        string
+	InstanceID                  string
 	SprinklesApiServer          string
 	SprinklesApiServerPageLimit int
 	CACertPath                  string
@@ -556,6 +561,7 @@ type Cfg struct {
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	DualWriterMigrationDataSyncDisabled  bool
 	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
 	DataSyncerInterval time.Duration
 	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.
@@ -1168,9 +1174,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 
 	cfg.readZanzanaSettings()
 
-	if err := cfg.readRenderingSettings(iniFile); err != nil {
-		return err
-	}
+	cfg.readRenderingSettings(iniFile)
 
 	cfg.TempDataLifetime = iniFile.Section("paths").Key("temp_data_lifetime").MustDuration(time.Second * 3600 * 24)
 	cfg.MetricsEndpointEnabled = iniFile.Section("metrics").Key("enabled").MustBool(true)
@@ -1796,25 +1800,11 @@ func readServiceAccountSettings(iniFile *ini.File, cfg *Cfg) error {
 	return nil
 }
 
-func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
+func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) {
 	renderSec := iniFile.Section("rendering")
-	cfg.RendererUrl = valueAsString(renderSec, "server_url", "")
+	cfg.RendererServerUrl = valueAsString(renderSec, "server_url", "")
 	cfg.RendererCallbackUrl = valueAsString(renderSec, "callback_url", "")
 	cfg.RendererAuthToken = valueAsString(renderSec, "renderer_token", "-")
-
-	if cfg.RendererCallbackUrl == "" {
-		cfg.RendererCallbackUrl = AppUrl
-	} else {
-		if cfg.RendererCallbackUrl[len(cfg.RendererCallbackUrl)-1] != '/' {
-			cfg.RendererCallbackUrl += "/"
-		}
-		_, err := url.Parse(cfg.RendererCallbackUrl)
-		if err != nil {
-			// XXX: Should return an error?
-			cfg.Logger.Error("Invalid callback_url.", "url", cfg.RendererCallbackUrl, "error", err)
-			os.Exit(1)
-		}
-	}
 
 	cfg.RendererConcurrentRequestLimit = renderSec.Key("concurrent_render_request_limit").MustInt(30)
 	cfg.RendererRenderKeyLifeTime = renderSec.Key("render_key_lifetime").MustDuration(5 * time.Minute)
@@ -1824,8 +1814,6 @@ func (cfg *Cfg) readRenderingSettings(iniFile *ini.File) error {
 	cfg.ImagesDir = filepath.Join(cfg.DataPath, "png")
 	cfg.CSVsDir = filepath.Join(cfg.DataPath, "csv")
 	cfg.PDFsDir = filepath.Join(cfg.DataPath, "pdf")
-
-	return nil
 }
 
 func (cfg *Cfg) readAlertingSettings(iniFile *ini.File) error {

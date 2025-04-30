@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
-
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -16,9 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -37,8 +36,8 @@ func TestMain(m *testing.M) {
 }
 
 var gvr = schema.GroupVersionResource{
-	Group:    "folder.grafana.app",
-	Version:  "v1",
+	Group:    folders.GROUP,
+	Version:  folders.VERSION,
 	Resource: "folders",
 }
 
@@ -55,7 +54,7 @@ func TestIntegrationFoldersApp(t *testing.T) {
 
 	t.Run("Check discovery client", func(t *testing.T) {
 		disco := helper.NewDiscoveryClient()
-		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1")
+		resources, err := disco.ServerResourcesForGroupVersion("folder.grafana.app/v1beta1")
 		require.NoError(t, err)
 
 		v1Disco, err := json.MarshalIndent(resources, "", "  ")
@@ -64,52 +63,52 @@ func TestIntegrationFoldersApp(t *testing.T) {
 		require.JSONEq(t, `{
 			"kind": "APIResourceList",
 			"apiVersion": "v1",
-			"groupVersion": "folder.grafana.app/v1",
+			"groupVersion": "folder.grafana.app/v1beta1",
 			"resources": [
-			  {
-				"name": "folders",
-				"singularName": "folder",
-				"namespaced": true,
-				"kind": "Folder",
-				"verbs": [
-				  "create",
-				  "delete",
-				  "deletecollection",
-				  "get",
-				  "list",
-				  "patch",
-				  "update"
-				]
-			  },
-			  {
-				"name": "folders/access",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "FolderAccessInfo",
-				"verbs": [
-				  "get"
-				]
-			  },
-			  {
-				"name": "folders/counts",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "DescendantCounts",
-				"verbs": [
-				  "get"
-				]
-			  },
-			  {
-				"name": "folders/parents",
-				"singularName": "",
-				"namespaced": true,
-				"kind": "FolderInfoList",
-				"verbs": [
-				  "get"
-				]
-			  }
+				{
+					"name": "folders",
+					"singularName": "folder",
+					"namespaced": true,
+					"kind": "Folder",
+					"verbs": [
+						"create",
+						"delete",
+						"deletecollection",
+						"get",
+						"list",
+						"patch",
+						"update"
+					]
+				},
+				{
+					"name": "folders/access",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderAccessInfo",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/counts",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "DescendantCounts",
+					"verbs": [
+						"get"
+					]
+				},
+				{
+					"name": "folders/parents",
+					"singularName": "",
+					"namespaced": true,
+					"kind": "FolderInfoList",
+					"verbs": [
+						"get"
+					]
+				}
 			]
-		  }`, string(v1Disco))
+		}`, string(v1Disco))
 	})
 
 	t.Run("with dual write (unified storage, mode 0)", func(t *testing.T) {
@@ -238,7 +237,7 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 		require.NotEmpty(t, uid)
 
 		expectedResult := `{
-			"apiVersion": "folder.grafana.app/v1",
+			"apiVersion": "folder.grafana.app/v1beta1",
 			"kind": "Folder",
 			"metadata": {
 			  "creationTimestamp": "${creationTimestamp}",
@@ -250,7 +249,8 @@ func doFolderTests(t *testing.T, helper *apis.K8sTestHelper) *apis.K8sTestHelper
 			},
 			"spec": {
 			  "title": "Test"
-			}
+			},
+			"status": {}
 		  }`
 
 		// Get should return the same result

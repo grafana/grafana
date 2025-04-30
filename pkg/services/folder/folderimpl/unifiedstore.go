@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -50,8 +50,8 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
-
-	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
+	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
+		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {
 		return nil, err
 	}
@@ -104,9 +104,16 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 			return nil, err
 		}
 		meta.SetFolder(*cmd.NewParentUID)
+	} else {
+		// only compare versions if not moving the folder
+		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {
+			return nil, dashboards.ErrDashboardVersionMismatch
+		}
 	}
 
-	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID)
+	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
+		FieldValidation: v1.FieldValidationIgnore,
+	})
 	if err != nil {
 		return nil, err
 	}

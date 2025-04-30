@@ -459,7 +459,10 @@ function EvaluationGroupCreationModal({
             label={
               <Label
                 htmlFor={evaluationGroupNameId}
-                description="A group evaluates all its rules over the same evaluation interval."
+                description={t(
+                  'alerting.evaluation-group-creation-modal.description-group-name',
+                  'A group evaluates all its rules over the same evaluation interval.'
+                )}
               >
                 <Trans i18nKey="alerting.rule-form.evaluation.group-name">Evaluation group name</Trans>
               </Label>
@@ -546,7 +549,10 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor={evaluateForId}
-            description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+            description={t(
+              'alerting.for-input.description-pending',
+              'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+            )}
           >
             <Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
           </Label>

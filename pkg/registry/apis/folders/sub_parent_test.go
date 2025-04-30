@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v1"
-	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 )
 
 func TestSubParent(t *testing.T) {
@@ -25,7 +26,7 @@ func TestSubParent(t *testing.T) {
 					Name:        "test",
 					Annotations: map[string]string{},
 				},
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "some tittle",
 				},
 			},
@@ -38,7 +39,7 @@ func TestSubParent(t *testing.T) {
 					Name:        "test",
 					Annotations: map[string]string{"grafana.app/folder": "parent-test"},
 				},
-				Spec: folders.Spec{
+				Spec: folders.FolderSpec{
 					Title: "some tittle",
 				},
 			},
@@ -48,7 +49,7 @@ func TestSubParent(t *testing.T) {
 						Name:        "parent-test",
 						Annotations: map[string]string{},
 					},
-					Spec: folders.Spec{
+					Spec: folders.FolderSpec{
 						Title: "some other tittle",
 					},
 				}, nil).Once()

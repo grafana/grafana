@@ -68,6 +68,26 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       name: 'Variable interpolation',
       code: `<div>{variable}</div>`,
     },
+    {
+      name: 'Entirely non-alphanumeric text (prop)',
+      code: `<div title="-" />`,
+    },
+    {
+      name: 'Entirely non-alphanumeric text',
+      code: `<div>-</div>`,
+    },
+    {
+      name: 'Non-alphanumeric siblings',
+      code: `<div>({variable})</div>`,
+    },
+    {
+      name: "Ternary in an attribute we don't care about",
+      code: `<div icon={isAThing ? 'Foo' : 'Bar'} />`,
+    },
+    {
+      name: 'Ternary with falsy strings',
+      code: `<div icon={isAThing ? foo : ''} />`,
+    },
   ],
   invalid: [
     /**
@@ -417,12 +437,6 @@ const Foo = () => {
     },
 
     {
-      name: 'Cannot fix entirely non-alphanumeric text',
-      code: `const Foo = () => <div>-</div>`,
-      filename,
-      errors: [{ messageId: 'noUntranslatedStrings' }],
-    },
-    {
       name: 'Cannot fix text with expression sibling',
       code: `const Foo = () => <div>{name} Hello</div>`,
       filename,
@@ -488,6 +502,19 @@ const Foo = () => {
       code: `const Foo = () => <div>Untranslated text</div>`,
       filename: 'public/something-else/foo/SomeOtherFile.tsx',
       errors: [{ messageId: 'noUntranslatedStrings' }],
+    },
+
+    {
+      name: 'Invalid when ternary with string literals',
+      code: `const Foo = () => <div>{isAThing ? 'Foo' : 'Bar'}</div>`,
+      filename,
+      errors: [{ messageId: 'noUntranslatedStrings' }, { messageId: 'noUntranslatedStrings' }],
+    },
+    {
+      name: 'Invalid when ternary with string literals - prop',
+      code: `const Foo = () => <div title={isAThing ? 'Foo' : 'Bar'} />`,
+      filename,
+      errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
     },
   ],
 });

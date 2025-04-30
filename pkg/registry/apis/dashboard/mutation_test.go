@@ -4,24 +4,31 @@ import (
 	"context"
 	"testing"
 
-	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
-	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/admission"
+
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	"github.com/grafana/grafana/apps/dashboard/pkg/migration/schemaversion"
+	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 )
 
 func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 	tests := []struct {
-		name              string
-		inputObj          runtime.Object
-		operation         admission.Operation
-		expectedID        int64
-		migrationExpected bool
+		name                string
+		inputObj            runtime.Object
+		operation           admission.Operation
+		expectedID          int64
+		migrationExpected   bool
+		expectedTitle       string
+		expectedError       bool
+		fieldValidationMode string
 	}{
 		{
 			name: "should skip non-create/update operations",
@@ -48,6 +55,47 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			expectedID: 123,
 		},
 		{
+			name: "v0 should not fail with invalid schema",
+			inputObj: &dashv0.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"id":       float64(123),
+						"revision": "revision-is-a-number",
+					},
+				},
+			},
+			operation:  admission.Create,
+			expectedID: 123,
+		},
+		{
+			name: "v1 should fail with invalid schema",
+			inputObj: &dashv1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"id":       float64(123),
+						"revision": "revision-is-a-number",
+					},
+				},
+			},
+			operation:     admission.Create,
+			expectedError: true,
+		},
+		{
+			name: "v1 should not fail with invalid schema and FieldValidationIgnore is set",
+			inputObj: &dashv1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"id":       float64(123),
+						"revision": "revision-is-a-number",
+					},
+				},
+			},
+			operation:           admission.Create,
+			fieldValidationMode: metav1.FieldValidationIgnore,
+			expectedError:       false,
+			expectedID:          123,
+		},
+		{
 			name: "v1 should migrate dashboard to the latest version, if possible, and set as label",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
@@ -62,7 +110,7 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 			migrationExpected: true,
 		},
 		{
-			name: "v1 should not error mutation hook if migration fails",
+			name: "v1 should error mutation hook if migration fails",
 			inputObj: &dashv1.Dashboard{
 				Spec: common.Unstructured{
 					Object: map[string]interface{}{
@@ -71,14 +119,50 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 					},
 				},
 			},
-			operation:  admission.Create,
-			expectedID: 456,
+			operation:     admission.Create,
+			expectedError: true,
+		},
+		{
+			name: "v1 should not error mutation hook if migration fails and FieldValidationIgnore is set",
+			inputObj: &dashv1.Dashboard{
+				Spec: common.Unstructured{
+					Object: map[string]interface{}{
+						"id":            float64(456),
+						"schemaVersion": schemaversion.MIN_VERSION - 1,
+					},
+				},
+			},
+			expectedID:          456,
+			operation:           admission.Create,
+			fieldValidationMode: metav1.FieldValidationIgnore,
+			expectedError:       false,
+		},
+		{
+			name: "v2 should set layout if it is not set",
+			inputObj: &v2alpha1.Dashboard{
+				Spec: v2alpha1.DashboardSpec{
+					Title: "test123",
+				},
+			},
+			operation:     admission.Create,
+			expectedTitle: "test123",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			b := &DashboardsAPIBuilder{}
+			b := &DashboardsAPIBuilder{
+				features: featuremgmt.WithFeatures(),
+			}
+			var operationOptions runtime.Object
+			switch tt.operation {
+			case admission.Create:
+				operationOptions = &metav1.CreateOptions{FieldValidation: tt.fieldValidationMode}
+			case admission.Update:
+				operationOptions = &metav1.UpdateOptions{FieldValidation: tt.fieldValidationMode}
+			default:
+				operationOptions = nil
+			}
 			err := b.Mutate(context.Background(), admission.NewAttributesRecord(
 				tt.inputObj,
 				nil,
@@ -88,10 +172,15 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 				schema.GroupVersionResource{},
 				"",
 				tt.operation,
-				nil,
+				operationOptions,
 				false,
 				nil,
 			), nil)
+
+			if tt.expectedError {
+				require.Error(t, err)
+				return
+			}
 			require.NoError(t, err)
 
 			if tt.operation == admission.Create || tt.operation == admission.Update {
@@ -111,6 +200,10 @@ func TestDashboardAPIBuilder_Mutate(t *testing.T) {
 					if tt.migrationExpected {
 						require.Equal(t, schemaversion.LATEST_VERSION, schemaVersion, "dashboard should be migrated to the latest version")
 					}
+				case *v2alpha1.Dashboard:
+					require.Equal(t, tt.expectedTitle, v.Spec.Title, "title should be set")
+					require.NotNil(t, v.Spec.Layout, "layout should be set")
+					require.NotNil(t, v.Spec.Layout.GridLayoutKind, "layout should be a GridLayout")
 				}
 			}
 		})

@@ -1087,6 +1087,9 @@
             "type": "string",
             "default": ""
           },
+          "origin": {
+            "type": "string"
+          },
           "value": {
             "type": "string",
             "default": ""
@@ -1212,7 +1215,7 @@
             "type": "array",
             "items": {
               "type": "integer",
-              "format": "byte",
+              "format": "int64",
               "default": 0
             }
           }
@@ -3294,7 +3297,6 @@
         ],
         "properties": {
           "annotations": {
-            "description": "Title of dashboard.",
             "type": "array",
             "items": {
               "default": {},

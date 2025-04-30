@@ -5,7 +5,7 @@ import { Fragment, memo, useEffect } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';
@@ -151,7 +151,11 @@ const Timestamp = ({ time }: TimestampProps) => {
       <Stack alignItems="center" gap={1}>
         <Icon name="clock-nine" size="sm" />
         <span className={styles.timestampText}>{dateTimeFormat(dateTime)}</span>
-        <small>({formatDistanceToNowStrict(dateTime)} ago)</small>
+        <small>
+          <Trans i18nKey="alerting.timestamp.time-ago" values={{ time: formatDistanceToNowStrict(dateTime) }}>
+            ({'{{time}}'} ago)
+          </Trans>
+        </small>
       </Stack>
     </div>
   );

@@ -96,15 +96,26 @@ func TestPrometheus_parseTimeSeriesResponse(t *testing.T) {
 
 		// Test fields
 		require.Len(t, res, 2)
-		require.Equal(t, res[0].Name, "exemplar")
-		require.Equal(t, res[0].Fields[0].Name, "Time")
-		require.Equal(t, res[0].Fields[1].Name, "Value")
-		require.Len(t, res[0].Fields, 6)
+		// Find the exemplar frame
+		var exemplarFrame *data.Frame
+		var rangeFrame *data.Frame
+		for _, frame := range res {
+			if frame.Name == "exemplar" {
+				exemplarFrame = frame
+			} else {
+				rangeFrame = frame
+			}
+		}
+		require.NotNil(t, exemplarFrame)
+		require.NotNil(t, rangeFrame)
+		require.Equal(t, "Time", exemplarFrame.Fields[0].Name)
+		require.Equal(t, "Value", exemplarFrame.Fields[1].Name)
+		require.Len(t, exemplarFrame.Fields, 6)
 
 		// Test correct values (sampled to 2)
-		require.Equal(t, res[0].Fields[1].Len(), 4)
-		require.Equal(t, res[0].Fields[1].At(0), 0.009545445)
-		require.Equal(t, res[0].Fields[1].At(3), 0.003535405)
+		require.Equal(t, 4, exemplarFrame.Fields[1].Len())
+		require.Equal(t, 0.009545445, exemplarFrame.Fields[1].At(0))
+		require.Equal(t, 0.003535405, exemplarFrame.Fields[1].At(3))
 	})
 
 	t.Run("matrix response should be parsed normally", func(t *testing.T) {
@@ -379,6 +390,11 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, rqr any, eqr
 	req := backend.QueryDataRequest{
 		Queries: []backend.DataQuery{query},
 		Headers: headers,
+		PluginContext: backend.PluginContext{
+			GrafanaConfig: backend.NewGrafanaCfg(map[string]string{
+				"concurrent_query_count": "10",
+			}),
+		},
 	}
 
 	rangeRes, err := toAPIResponse(rqr)
@@ -399,7 +415,12 @@ func executeWithHeaders(tctx *testContext, query backend.DataQuery, rqr any, eqr
 	}()
 	tctx.httpProvider.setResponse(rangeRes, exemplarRes)
 
-	res, err := tctx.queryData.Execute(context.Background(), &req)
+	// Create context with GrafanaConfig
+	ctx := backend.WithGrafanaConfig(context.Background(), backend.NewGrafanaCfg(map[string]string{
+		"concurrent_query_count": "10",
+	}))
+
+	res, err := tctx.queryData.Execute(ctx, &req)
 	if err != nil {
 		return nil, err
 	}
@@ -505,7 +526,37 @@ func (p *fakeHttpClientProvider) GetTransport(opts ...httpclient.Options) (http.
 
 func (p *fakeHttpClientProvider) setResponse(rangeRes *http.Response, exemplarRes *http.Response) {
 	p.rangeRes = rangeRes
-	p.exemplarRes = exemplarRes
+
+	// Create a proper clone manually ensuring we have a fresh response
+	if exemplarRes != nil {
+		bodyBytes, _ := io.ReadAll(exemplarRes.Body)
+		err := exemplarRes.Body.Close() // Close the original
+		if err != nil {
+			fmt.Println(fmt.Errorf("exemplarRes body close error: %v", err))
+			return
+		}
+
+		// Create a new request if the original has one
+		var newRequest *http.Request
+		if exemplarRes.Request != nil {
+			newRequest = &http.Request{
+				Method: exemplarRes.Request.Method,
+				URL:    exemplarRes.Request.URL,
+				Header: exemplarRes.Request.Header.Clone(),
+			}
+		}
+
+		// Create a new response with the same data but new body
+		p.exemplarRes = &http.Response{
+			StatusCode: exemplarRes.StatusCode,
+			Body:       io.NopCloser(bytes.NewReader(bodyBytes)),
+			Request:    newRequest,
+			Header:     exemplarRes.Header.Clone(),
+		}
+
+		// Reset the original body with a new reader
+		exemplarRes.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	}
 }
 
 func (p *fakeHttpClientProvider) RoundTrip(req *http.Request) (*http.Response, error) {

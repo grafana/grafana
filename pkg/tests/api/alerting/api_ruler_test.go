@@ -3288,7 +3288,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						  "intervalSeconds":60,
 						  "is_paused": false,
 						  "version":1,
-						  "uid":"uid", 
+						  "uid":"uid",
                           "guid": "guid",
 						  "namespace_uid":"nsuid",
 						  "rule_group":"arulegroup",
@@ -4297,7 +4297,7 @@ func TestIntegrationHysteresisRule(t *testing.T) {
 		DisableAnonymous:             true,
 		AppModeProduction:            true,
 		NGAlertSchedulerBaseInterval: 1 * time.Second,
-		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick, featuremgmt.FlagRecoveryThreshold},
+		EnableFeatureToggles:         []string{featuremgmt.FlagConfigurableSchedulerTick},
 	})
 
 	grafanaListedAddr, env := testinfra.StartGrafanaEnv(t, dir, p)
@@ -4449,32 +4449,6 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		assert.Equal(t, []model.LabelName{ngmodels.FolderTitleLabel, model.AlertNameLabel, "label1"}, ruleRoute.GroupBy)
 
 		t.Log(body)
-	})
-
-	t.Run("create with '...' groupBy followed by config post should succeed", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.GroupBy = []string{ngmodels.FolderTitleLabel, model.AlertNameLabel, ngmodels.GroupByAll}
-
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusAccepted, status, body)
-
-		// Now update the config with no changes.
-		_, status, body = apiClient.GetAlertmanagerConfigWithStatus(t)
-		if !assert.Equalf(t, http.StatusOK, status, body) {
-			return
-		}
-
-		cfg := apimodels.PostableUserConfig{}
-
-		err = json.Unmarshal([]byte(body), &cfg)
-		require.NoError(t, err)
-
-		ok, err := apiClient.PostConfiguration(t, cfg)
-		require.NoError(t, err)
-		require.True(t, ok)
 	})
 
 	t.Run("should create rule and generate route", func(t *testing.T) {

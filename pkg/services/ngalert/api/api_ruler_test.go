@@ -335,7 +335,10 @@ func TestRouteGetNamespaceRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		expectedRules := make([]*models.AlertRule, 0)
+		for i := 0; i < 10; i++ {
+			expectedRules = append(expectedRules, gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(util.Pointer(models.UserUID(util.GenerateShortUID())))).GenerateManyRef(5, 10)...)
+		}
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -666,8 +669,10 @@ func TestRouteGetRulesConfig(t *testing.T) {
 			group2Key := models.GenerateGroupKey(orgID)
 			group2Key.NamespaceUID = folder2.UID
 
-			group1 := gen.With(gen.WithGroupKey(group1Key)).GenerateManyRef(2, 6)
-			group2 := gen.With(gen.WithGroupKey(group2Key)).GenerateManyRef(2, 6)
+			ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+			group1 := gen.With(gen.WithGroupKey(group1Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
+			group2 := gen.With(gen.WithGroupKey(group2Key), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(2, 6)
 			ruleStore.PutRule(context.Background(), append(group1, group2...)...)
 
 			t.Run("and do not return group if user does not have access to one of rules", func(t *testing.T) {
@@ -704,7 +709,9 @@ func TestRouteGetRulesConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)
@@ -753,7 +760,9 @@ func TestRouteGetRulesGroupConfig(t *testing.T) {
 		groupKey := models.GenerateGroupKey(orgID)
 		groupKey.NamespaceUID = folder.UID
 
-		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex()).GenerateManyRef(5, 10)
+		ruleUpdatedBy := util.Pointer(models.UserUID(util.GenerateShortUID()))
+
+		expectedRules := gen.With(gen.WithGroupKey(groupKey), gen.WithUniqueGroupIndex(), gen.WithUpdatedBy(ruleUpdatedBy)).GenerateManyRef(5, 10)
 		ruleStore.PutRule(context.Background(), expectedRules...)
 
 		perms := createPermissionsForRules(expectedRules, orgID)

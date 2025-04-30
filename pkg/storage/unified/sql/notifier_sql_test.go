@@ -2,13 +2,14 @@ package sql
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/stretchr/testify/require"
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -231,11 +232,16 @@ func TestPollingNotifier(t *testing.T) {
 		}
 
 		var historyPollCalled bool
+		once := sync.Once{}
 		historyPoll := func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
-			historyPollCalled = true
-			require.Equal(t, "test-group", grp)
-			require.Equal(t, "test-resource", res)
-			require.Equal(t, int64(0), since)
+			// only assert the first time - this may be called multiple times
+			// depending on the host hardware etc, due to timing issues...
+			once.Do(func() {
+				historyPollCalled = true
+				require.Equal(t, "test-group", grp)
+				require.Equal(t, "test-resource", res)
+				require.Equal(t, int64(0), since)
+			})
 			return []*historyPollResponse{testEvent}, nil
 		}
 

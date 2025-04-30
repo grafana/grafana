@@ -399,12 +399,7 @@ export function TableNG(props: TableNGProps) {
     if (!expandedRows.includes(rowIdx)) {
       setExpandedRows([...expandedRows, rowIdx]);
     } else {
-      const currentExpandedRows = expandedRows;
-      const indexToRemove = currentExpandedRows.indexOf(rowIdx);
-      if (indexToRemove > -1) {
-        currentExpandedRows.splice(indexToRemove, 1);
-        setExpandedRows(currentExpandedRows);
-      }
+      setExpandedRows(expandedRows.filter((id) => id !== rowIdx));
     }
     setResizeTrigger((prev) => prev + 1);
   };
@@ -503,7 +498,10 @@ export function TableNG(props: TableNGProps) {
         return 0;
       } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
-        return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
+
+        // Ensure we have a minimum height for the nested table even if data is empty
+        const rowCount = row.data?.length ?? 0;
+        return Math.max(defaultRowHeight, defaultRowHeight * (rowCount + headerCount));
       }
       return getRowHeight(row, cellHeightCalc, avgCharWidth, defaultRowHeight, fieldsData);
     },
@@ -714,7 +712,7 @@ export function mapFrameToDataGrid({
             calcsRef,
             options: { ...options },
             handlers: { onCellExpand, onColumnResize },
-            availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
+            availableWidth,
           });
           expandedRecords = frameToRecords(row.data);
         }
@@ -725,7 +723,8 @@ export function mapFrameToDataGrid({
             rows={expandedRecords}
             columns={expandedColumns}
             rowHeight={defaultRowHeight}
-            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
+            className={styles.dataGrid}
+            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH - 1 }}
             headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
           />
         );

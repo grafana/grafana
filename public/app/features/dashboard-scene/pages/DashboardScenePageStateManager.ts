@@ -4,10 +4,16 @@ import { locationUtil, UrlQueryMap } from '@grafana/data';
 import { config, getBackendSrv, isFetchError, locationService } from '@grafana/runtime';
 import { sceneGraph } from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { BASE_URL } from 'app/api/clients/provisioning/baseAPI';
 import { StateManagerBase } from 'app/core/services/StateManagerBase';
 import { getMessageFromError, getMessageIdFromError, getStatusFromError } from 'app/core/utils/errors';
 import { startMeasure, stopMeasure } from 'app/core/utils/metrics';
-import { AnnoKeyFolder } from 'app/features/apiserver/types';
+import {
+  AnnoKeyFolder,
+  AnnoKeyManagerIdentity,
+  AnnoKeyManagerKind,
+  AnnoKeySourcePath,
+} from 'app/features/apiserver/types';
 import { transformDashboardV2SpecToV1 } from 'app/features/dashboard/api/ResponseTransformers';
 import { DashboardVersionError, DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Resource, isDashboardV2Spec } from 'app/features/dashboard/api/utils';
@@ -15,6 +21,7 @@ import { dashboardLoaderSrv, DashboardLoaderSrvV2 } from 'app/features/dashboard
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { emitDashboardViewEvent } from 'app/features/dashboard/state/analyticsProcessor';
 import { trackDashboardSceneLoaded } from 'app/features/dashboard/utils/tracking';
+import { ProvisioningPreview } from 'app/features/provisioning/types';
 import {
   DashboardDataDTO,
   DashboardDTO,
@@ -176,6 +183,84 @@ abstract class DashboardScenePageStateManagerBase<T>
     }
   }
 
+  protected async loadProvisioningDashboard(repo: string, path: string): Promise<T> {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref') ?? undefined; // commit hash or branch
+
+    const url = `${BASE_URL}/repositories/${repo}/files/${path}`;
+    return getBackendSrv()
+      .get(url, ref ? { ref } : undefined)
+      .then((v) => {
+        // Load the results from dryRun
+        const dryRun = v.resource.dryRun;
+        if (!dryRun) {
+          return Promise.reject('failed to read provisioned dashboard');
+        }
+
+        if (!dryRun.apiVersion.startsWith('dashboard.grafana.app')) {
+          return Promise.reject('unexpected resource type: ' + dryRun.apiVersion);
+        }
+
+        return this.processDashboardFromProvisioning(repo, path, dryRun, {
+          file: url,
+          ref: ref,
+          repo: repo,
+        });
+      });
+  }
+
+  private processDashboardFromProvisioning(
+    repo: string,
+    path: string,
+    dryRun: any,
+    provisioningPreview: ProvisioningPreview
+  ) {
+    if (dryRun.apiVersion.split('/')[1] === 'v2alpha1') {
+      return {
+        ...dryRun,
+        kind: 'DashboardWithAccessInfo',
+        access: {
+          canStar: false,
+          isSnapshot: false,
+          canShare: false,
+
+          // Should come from the repo settings
+          canDelete: true,
+          canSave: true,
+          canEdit: true,
+        },
+      };
+    }
+
+    let anno = dryRun.metadata.annotations;
+    if (!anno) {
+      dryRun.metadata.annotations = {};
+    }
+    anno[AnnoKeyManagerKind] = 'repo';
+    anno[AnnoKeyManagerIdentity] = repo;
+    anno[AnnoKeySourcePath] = provisioningPreview.ref ? path + '#' + provisioningPreview.ref : path;
+
+    return {
+      meta: {
+        canStar: false,
+        isSnapshot: false,
+        canShare: false,
+
+        // Should come from the repo settings
+        canDelete: true,
+        canSave: true,
+        canEdit: true,
+
+        // Includes additional k8s metadata
+        k8s: dryRun.metadata,
+
+        // lookup info
+        provisioning: provisioningPreview,
+      },
+      dashboard: dryRun.spec,
+    };
+  }
+
   public async loadDashboard(options: LoadDashboardOptions) {
     try {
       startMeasure(LOAD_SCENE_MEASUREMENT);
@@ -230,15 +315,15 @@ abstract class DashboardScenePageStateManagerBase<T>
     // Handling home dashboard flow separately from regular dashboard flow.
     if (options.route === DashboardRoutes.Home) {
       return await this.loadHomeDashboard();
-    } else {
-      const rsp = await this.fetchDashboard(options);
-
-      if (!rsp) {
-        return null;
-      }
-
-      return this.transformResponseToScene(rsp, options);
     }
+
+    const rsp = await this.fetchDashboard(options);
+
+    if (!rsp) {
+      return null;
+    }
+
+    return this.transformResponseToScene(rsp, options);
   }
 
   public getDashboardFromCache(cacheKey: string): T | null {
@@ -356,9 +441,8 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModel(urlFolderUid);
           break;
-        case DashboardRoutes.Provisioning: {
-          return await dashboardLoaderSrv.loadDashboard('provisioning', slug, uid);
-        }
+        case DashboardRoutes.Provisioning:
+          return this.loadProvisioningDashboard(slug || '', uid);
         case DashboardRoutes.Public: {
           return await dashboardLoaderSrv.loadDashboard('public', '', uid);
         }
@@ -537,6 +621,9 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
         case DashboardRoutes.New:
           rsp = await buildNewDashboardSaveModelV2(urlFolderUid);
           break;
+        case DashboardRoutes.Provisioning: {
+          return await this.loadProvisioningDashboard(slug || '', uid);
+        }
         case DashboardRoutes.Public: {
           return await this.dashboardLoader.loadDashboard('public', '', uid);
         }
@@ -659,7 +746,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     this.v1Manager = new DashboardScenePageStateManager(initialState);
     this.v2Manager = new DashboardScenePageStateManagerV2(initialState);
 
-    // Start with v2 if newDashboardLayout is enabled, otherwise v1
     this.activeManager = this.v1Manager;
   }
 
@@ -704,7 +790,6 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
     if (!rsp) {
       return null;
     }
-
     if (isDashboardV2Resource(rsp)) {
       this.activeManager = this.v2Manager;
       return this.v2Manager.transformResponseToScene(rsp, options);
@@ -752,7 +837,19 @@ export class UnifiedDashboardScenePageStateManager extends DashboardScenePageSta
   }
 
   public async loadDashboard(options: LoadDashboardOptions): Promise<void> {
+    if (options.route === DashboardRoutes.New) {
+      const newDashboardVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
+      this.setActiveManager(newDashboardVersion);
+    }
     return this.withVersionHandling((manager) => manager.loadDashboard.call(this, options));
+  }
+
+  public setActiveManager(manager: 'v1' | 'v2') {
+    if (manager === 'v1') {
+      this.activeManager = this.v1Manager;
+    } else {
+      this.activeManager = this.v2Manager;
+    }
   }
 }
 

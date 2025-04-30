@@ -6,7 +6,7 @@ import { useLocation } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { AlertLabels } from './components/AlertLabels';
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';
@@ -61,7 +61,13 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   if (error) {
     return (
       <RuleViewerLayout title={pageTitle}>
-        <Alert title={`Failed to load rules from ${sourceName}`}>
+        <Alert
+          title={t(
+            'alerting.redirect-to-rule-viewer.title-failed-to-load',
+            'Failed to load rules from {{sourceName}}',
+            { sourceName }
+          )}
+        >
           {isFetchError(error) && (
             <details className={styles.errorMessage}>
               {error.message}
@@ -104,8 +110,10 @@ export function RedirectToRuleViewer(): JSX.Element | null {
     return (
       <RuleViewerLayout title={pageTitle}>
         <div data-testid="no-rules">
-          No rules in <span className={styles.param}>{sourceName}</span> matched the name{' '}
-          <span className={styles.param}>{name}</span>
+          <Trans i18nKey="alerting.redirect-to-rule-viewer.no-rules-found" values={{ sourceName, name }}>
+            No rules in <span className={styles.param}>{'{{sourceName}}'}</span> matched the name{' '}
+            <span className={styles.param}>{'{{name}}'}</span>
+          </Trans>
         </div>
       </RuleViewerLayout>
     );
@@ -114,8 +122,10 @@ export function RedirectToRuleViewer(): JSX.Element | null {
   return (
     <RuleViewerLayout title={pageTitle}>
       <div>
-        Several rules in <span className={styles.param}>{sourceName}</span> matched the name{' '}
-        <span className={styles.param}>{name}</span>, please select the rule you want to view.
+        <Trans i18nKey="alerting.redirect-to-rule-viewer.several-rules-found" values={{ sourceName, name }}>
+          Several rules in <span className={styles.param}>{'{{sourceName}}'}</span> matched the name{' '}
+          <span className={styles.param}>{'{{name}}'}</span>, please select the rule you want to view.
+        </Trans>
       </div>
       <div className={styles.rules}>
         {rules.map((rule, index) => {

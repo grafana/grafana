@@ -43,15 +43,17 @@ export const AlertGroup = ({ alertManagerSourceName, group }: Props) => {
 
               {receiverInGroup && (
                 <MetaText icon="at">
-                  Delivered to{' '}
-                  <TextLink
-                    href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
-                    variant="bodySmall"
-                    color="primary"
-                    inline={false}
-                  >
-                    {group.receiver.name}
-                  </TextLink>
+                  <Trans i18nKey="alerting.alert-group.delivered-to" values={{ name: group.receiver.name }}>
+                    Delivered to{' '}
+                    <TextLink
+                      href={createContactPointSearchLink(contactPoint, alertManagerSourceName)}
+                      variant="bodySmall"
+                      color="primary"
+                      inline={false}
+                    >
+                      {'{{name}}'}
+                    </TextLink>
+                  </Trans>
                 </MetaText>
               )}
             </Stack>

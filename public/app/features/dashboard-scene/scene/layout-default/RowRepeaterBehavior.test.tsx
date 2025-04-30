@@ -61,7 +61,7 @@ describe('RowRepeaterBehavior', () => {
 
       const gridItemRow1 = row1.state.children[0] as SceneGridItem;
       expect(gridItemRow1.state.key!).toBe(joinCloneKeys(row1.state.key!, 'grid-item-1'));
-      expect(gridItemRow1.state.body?.state.key).toBe(joinCloneKeys(gridItemRow1.state.key!, 'canvas-1'));
+      expect(gridItemRow1.state.body?.state.key).toBe('canvas-1');
 
       const row2 = grid.state.children[2] as SceneGridRow;
       expect(row2.state.key).toBe(getCloneKey('row-1', 1));
@@ -140,6 +140,9 @@ describe('RowRepeaterBehavior', () => {
     });
 
     it('Should handle second repeat cycle and update remove old repeats', async () => {
+      const sourceRow = grid.state.children[1] as SceneGridRow;
+      const sourceGridItem = sourceRow.state.children[0] as SceneGridItem;
+
       // trigger another repeat cycle by changing the variable
       const variable = scene.state.$variables!.state.variables[0] as TestVariable;
       variable.changeValueTo(['B1', 'C1']);
@@ -148,6 +151,12 @@ describe('RowRepeaterBehavior', () => {
 
       // should now only have 2 repeated rows (and the panel above + the row at the bottom)
       expect(grid.state.children.length).toBe(4);
+
+      // Should reuse source row item instances
+      const sourceRowAfterRepeat = grid.state.children[1] as SceneGridRow;
+      const sourceItemAfterRepeat = sourceRowAfterRepeat.state.children[0] as SceneGridItem;
+      expect(sourceRowAfterRepeat).toBe(sourceRow);
+      expect(sourceItemAfterRepeat).toBe(sourceGridItem);
     });
 
     it('Should ignore repeat process if variable values are the same', async () => {

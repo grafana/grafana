@@ -32,16 +32,16 @@ func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, opti
 	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
 }
 
-func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, orgID)
+func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
 }
 
-func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, orgID)
+func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

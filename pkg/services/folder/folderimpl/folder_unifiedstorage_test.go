@@ -15,9 +15,9 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
+	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	foldersv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/log/logtest"
@@ -54,6 +54,24 @@ func (r rcp) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
 	}, nil
 }
 
+func compareFoldersNormalizeTime(t *testing.T, expected, actual *folder.Folder) {
+	require.Equal(t, expected.Title, actual.Title)
+	require.Equal(t, expected.UID, actual.UID)
+	require.Equal(t, expected.OrgID, actual.OrgID)
+	require.Equal(t, expected.URL, actual.URL)
+	require.Equal(t, expected.Fullpath, actual.Fullpath)
+	require.Equal(t, expected.FullpathUIDs, actual.FullpathUIDs)
+	require.Equal(t, expected.CreatedByUID, actual.CreatedByUID)
+	require.Equal(t, expected.UpdatedByUID, actual.UpdatedByUID)
+	require.Equal(t, expected.ParentUID, actual.ParentUID)
+	require.Equal(t, expected.Description, actual.Description)
+	require.Equal(t, expected.HasACL, actual.HasACL)
+	require.Equal(t, expected.Version, actual.Version)
+	require.Equal(t, expected.ManagedBy, actual.ManagedBy)
+	require.Equal(t, expected.Created.Local(), actual.Created.Local())
+	require.Equal(t, expected.Updated.Local(), actual.Updated.Local())
+}
+
 func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -82,11 +100,11 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("DELETE /apis/folder.grafana.app/v1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("DELETE /apis/folder.grafana.app/v1beta1/namespaces/default/folders/deletefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		l := &foldersv1.FolderList{}
 		l.Kind = "Folder"
@@ -94,7 +112,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/foo", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/foo", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		namespacer := func(_ int64) string { return "1" }
 		result, err := internalfolders.LegacyFolderToUnstructured(fooFolder, namespacer)
@@ -104,7 +122,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		namespacer := func(_ int64) string { return "1" }
 		result, err := internalfolders.LegacyFolderToUnstructured(updateFolder, namespacer)
@@ -114,7 +132,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("PUT /apis/folder.grafana.app/v1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("PUT /apis/folder.grafana.app/v1beta1/namespaces/default/folders/updatefolder", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
@@ -133,17 +151,17 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	mux.HandleFunc("GET /apis/folder.grafana.app/v1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
-	mux.HandleFunc("PUT /apis/folder.grafana.app/v1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("PUT /apis/folder.grafana.app/v1beta1/namespaces/default/folders/ady4yobv315a8e", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode(unifiedStorageFolder)
 		require.NoError(t, err)
 	})
-	mux.HandleFunc("POST /apis/folder.grafana.app/v1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
+	mux.HandleFunc("POST /apis/folder.grafana.app/v1beta1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
@@ -313,7 +331,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					SignedInUser: usr,
 				})
 				require.NoError(t, err)
-				require.Equal(t, f, actualFolder)
+				compareFoldersNormalizeTime(t, f, actualFolder)
 			})
 
 			t.Run("When creating folder should return error if uid is general", func(t *testing.T) {
@@ -403,8 +421,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 					OrgID:        fooFolder.OrgID,
 					SignedInUser: usr,
 				})
-				require.Equal(t, fooFolder, actual)
 				require.NoError(t, err)
+				compareFoldersNormalizeTime(t, fooFolder, actual)
 			})
 
 			t.Run("When get folder by uid and uid is general should return the root folder object", func(t *testing.T) {
@@ -437,8 +455,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				}
 
 				actual, err := folderService.Get(context.Background(), query)
-				require.Equal(t, fooFolder, actual)
 				require.NoError(t, err)
+				compareFoldersNormalizeTime(t, fooFolder, actual)
 			})
 
 			t.Run("When get folder by non existing ID should return not found error", func(t *testing.T) {
@@ -471,8 +489,8 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 				}
 
 				actual, err := folderService.Get(context.Background(), query)
-				require.Equal(t, fooFolder, actual)
 				require.NoError(t, err)
+				compareFoldersNormalizeTime(t, fooFolder, actual)
 			})
 
 			t.Run("When get folder by non existing Title should return not found error", func(t *testing.T) {
@@ -847,7 +865,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 			CreatedByUID: ":0",
 			UpdatedByUID: ":0",
 		}
-		require.Equal(t, expectedResult, result)
+		compareFoldersNormalizeTime(t, expectedResult, result)
 		fakeK8sClient.AssertExpectations(t)
 	})
 }

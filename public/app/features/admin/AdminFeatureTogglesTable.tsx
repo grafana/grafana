@@ -155,7 +155,9 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
       {allowEditing && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
           <Button disabled={!hasModifications() || isSaving} onClick={showSaveChangesModal(true)} ref={saveButtonRef}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving
+              ? t('admin.admin-feature-toggles-table.saving', 'Saving...')
+              : t('admin.admin-feature-toggles-table.save-changes', 'Save changes')}
           </Button>
           <ConfirmModal
             isOpen={showSaveModel}

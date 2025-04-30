@@ -15,7 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"google.golang.org/grpc"
 )
+
+//go:generate mockery --name BlobStoreClient --structname MockBlobStoreClient --inpackage --filename blobstore_client_mock.go --with-expecter
+type BlobStoreClient interface {
+	PutBlob(ctx context.Context, in *resource.PutBlobRequest, opts ...grpc.CallOption) (*resource.PutBlobResponse, error)
+}
 
 // ScreenshotRenderer is an interface for rendering a preview of a file
 //
@@ -27,10 +33,10 @@ type ScreenshotRenderer interface {
 
 type screenshotRenderer struct {
 	render    rendering.Service
-	blobstore resource.BlobStoreClient
+	blobstore BlobStoreClient
 }
 
-func NewScreenshotRenderer(render rendering.Service, blobstore resource.BlobStoreClient) ScreenshotRenderer {
+func NewScreenshotRenderer(render rendering.Service, blobstore BlobStoreClient) ScreenshotRenderer {
 	return &screenshotRenderer{
 		render:    render,
 		blobstore: blobstore,

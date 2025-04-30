@@ -4,6 +4,7 @@ package migrator
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,19 +12,16 @@ import (
 	"time"
 
 	"cloud.google.com/go/spanner"
+	database "cloud.google.com/go/spanner/admin/database/apiv1"
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
-	"github.com/grafana/dskit/concurrency"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
-
-	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
 	"xorm.io/xorm"
 
-	_ "embed"
-
-	database "cloud.google.com/go/spanner/admin/database/apiv1"
+	"github.com/grafana/dskit/concurrency"
+	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 type SpannerDialect struct {

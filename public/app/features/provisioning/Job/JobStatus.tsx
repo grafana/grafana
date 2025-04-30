@@ -4,8 +4,8 @@ import { Trans } from 'app/core/internationalization';
 
 import { StepStatusInfo } from '../Wizard/types';
 
-import { ActiveJobStatus } from './ActiveJobStatus';
 import { FinishedJobStatus } from './FinishedJobStatus';
+import { JobContent } from './JobContent';
 
 export interface JobStatusProps {
   watch: Job;
@@ -35,8 +35,13 @@ export function JobStatus({ watch, onStatusChange }: JobStatusProps) {
     );
   }
 
+  if (activeQuery.isError) {
+    onStatusChange({ status: 'error', error: 'Error fetching active job' });
+    return null;
+  }
+
   if (activeJob) {
-    return <ActiveJobStatus job={activeJob} />;
+    return <JobContent job={activeJob} isFinishedJob={false} />;
   }
 
   if (shouldCheckFinishedJobs) {

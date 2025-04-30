@@ -1,74 +1,47 @@
 import { escapeLabelValueInExactSelector, escapeLabelValueInRegexSelector } from '../../language_utils';
 import { isValidLegacyName, utf8Support } from '../../utf8_support';
 
-import { FacettableValue, METRIC_LABEL, SelectableLabel } from './types';
-
-export function buildSelector(labels: SelectableLabel[]): string {
-  let singleMetric = '';
-  const selectedLabels: string[] = [];
-  for (const label of labels) {
-    if ((label.name === METRIC_LABEL || label.selected) && label.values && label.values.length > 0) {
-      const selectedValues = label.values.filter((value) => value.selected).map((value) => value.name);
-      if (selectedValues.length > 1) {
-        selectedLabels.push(
-          `${utf8Support(label.name)}=~"${selectedValues.map(escapeLabelValueInRegexSelector).join('|')}"`
-        );
-      } else if (selectedValues.length === 1) {
-        if (label.name === METRIC_LABEL) {
-          singleMetric = selectedValues[0];
-        } else {
-          selectedLabels.push(`${utf8Support(label.name)}="${escapeLabelValueInExactSelector(selectedValues[0])}"`);
-        }
-      }
-    }
+/**
+ * Builds a Prometheus selector string from a metric name and label values
+ * @param selectedMetric - The metric name, can be empty
+ * @param selectedLabelValues - Record of label names to their selected values
+ * @returns A properly formatted Prometheus selector string
+ */
+export function buildSelector(selectedMetric: string, selectedLabelValues: Record<string, string[]>): string {
+  // Handle empty case
+  if (selectedMetric === '' && Object.keys(selectedLabelValues).length === 0) {
+    return '{}';
   }
 
+  // Build all label selectors
   const selectorParts: string[] = [];
-  const isLegacyName = singleMetric === '' || isValidLegacyName(singleMetric);
 
-  if (isLegacyName) {
-    selectorParts.push(singleMetric, '{');
-  } else {
-    selectorParts.push('{', `"${singleMetric}"`);
-    if (selectedLabels.length > 0) {
-      selectorParts.push(',');
+  // Process label selectors
+  for (const [key, values] of Object.entries(selectedLabelValues)) {
+    // Skip empty value arrays
+    if (values.length === 0) {
+      continue;
+    }
+
+    // Use regex matcher for multiple values
+    if (values.length > 1) {
+      selectorParts.push(`${utf8Support(key)}=~"${values.map(escapeLabelValueInRegexSelector).join('|')}"`);
+    } else {
+      // Use exact matcher for single value
+      selectorParts.push(`${utf8Support(key)}="${escapeLabelValueInExactSelector(values[0])}"`);
     }
   }
 
-  selectorParts.push(selectedLabels.join(','), '}');
-  return selectorParts.join('');
-}
+  // Handle metric name cases
+  if (selectedMetric === '') {
+    return `{${selectorParts.join(',')}}`;
+  }
 
-export function facetLabels(
-  labels: SelectableLabel[],
-  possibleLabels: Record<string, string[]>,
-  lastFacetted?: string
-): SelectableLabel[] {
-  return labels.map((label) => {
-    const possibleValues = possibleLabels[label.name];
-    if (possibleValues) {
-      let existingValues: FacettableValue[];
-      if (label.name === lastFacetted && label.values) {
-        // Facetting this label, show all values
-        existingValues = label.values;
-      } else {
-        // Keep selection in other facets
-        const selectedValues: Set<string> = new Set(
-          label.values?.filter((value) => value.selected).map((value) => value.name) || []
-        );
-        // Values for this label have not been requested yet, let's use the facetted ones as the initial values
-        existingValues = possibleValues.map((value) => ({ name: value, selected: selectedValues.has(value) }));
-      }
-      return {
-        ...label,
-        loading: false,
-        values: existingValues,
-        hidden: !possibleValues,
-        facets: existingValues.length,
-      };
-    }
+  if (isValidLegacyName(selectedMetric)) {
+    return `${selectedMetric}{${selectorParts.join(',')}}`;
+  }
 
-    // Label is facetted out, hide all values
-    return { ...label, loading: false, hidden: !possibleValues, values: undefined, facets: 0 };
-  });
+  // Add quoted metric as another selector when it's not a valid legacy name
+  selectorParts.unshift(utf8Support(selectedMetric));
+  return `{${selectorParts.join(',')}}`;
 }

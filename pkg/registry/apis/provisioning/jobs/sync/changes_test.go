@@ -315,6 +315,30 @@ func TestChanges(t *testing.T) {
 		require.Empty(t, changes)
 	})
 
+	t.Run("nested folder with space is created correctly", func(t *testing.T) {
+		source := []repository.FileTreeEntry{
+			{Path: "abc/dash.json", Hash: "abc", Blob: true},
+			{Path: "abc/nested folder/nested-dashboard.json", Hash: "xyz", Blob: true},
+		}
+
+		target := &provisioning.ResourceList{}
+
+		expected := []ResourceFileChange{
+			{
+				Action: repository.FileActionCreated,
+				Path:   "abc/nested folder/nested-dashboard.json",
+			},
+			{
+				Action: repository.FileActionCreated,
+				Path:   "abc/dash.json",
+			},
+		}
+
+		changes, err := Changes(source, target)
+		require.NoError(t, err)
+		require.Equal(t, expected, changes, "Expected diff to correctly include nested folder contents")
+	})
+
 	t.Run("error on empty path for non-folder resource", func(t *testing.T) {
 		source := []repository.FileTreeEntry{
 			{Path: "", Hash: "xyz", Blob: true},
