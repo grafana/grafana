@@ -24,6 +24,7 @@ jobs:
           GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: cd grafana && git remote set-url origin "https://grafana-delivery-bot:$GIT_TOKEN@github.com/grafana/grafana.git"
       - name: Run backport
+        uses: grafana/grafana-github-actions-go/backport@main
         with:
           path: grafana
           token: ${{ secrets.GITHUB_TOKEN }}
