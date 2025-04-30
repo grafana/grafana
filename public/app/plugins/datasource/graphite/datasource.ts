@@ -1,4 +1,4 @@
-import { each, indexOf, isArray, isString, map as _map } from 'lodash';
+import { map as _map, each, indexOf, isArray, isString } from 'lodash';
 import { lastValueFrom, merge, Observable, of, OperatorFunction, pipe, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -13,13 +13,13 @@ import {
   DataSourceWithQueryExportSupport,
   dateMath,
   dateTime,
+  getSearchFilterScopedVar,
   MetricFindValue,
   QueryResultMetaStat,
   ScopedVars,
   TimeRange,
   TimeZone,
   toDataFrame,
-  getSearchFilterScopedVar,
 } from '@grafana/data';
 import { BackendSrvRequest, FetchResponse, getBackendSrv } from '@grafana/runtime';
 import { isVersionGtOrEq, SemVersion } from 'app/core/utils/version';
@@ -210,12 +210,19 @@ export class GraphiteDatasource
       return merge(...streams);
     }
 
-    // Use this object to map the original refID of the query to our sanitised one
-    const refIds: { [key: string]: string } = {};
+    // Use this object to map the sanitised refID to the original
+    const formattedRefIdsMap: { [key: string]: string } = {};
+    // Use this object to map the original refID to the original target
+    const originalTargetMap: { [key: string]: string } = {};
     for (const target of options.targets) {
       // Sanitise the refID otherwise the Graphite query will fail
       const formattedRefId = target.refId.replaceAll(' ', '_');
-      refIds[formattedRefId] = target.refId;
+      formattedRefIdsMap[formattedRefId] = target.refId;
+      // Track the original target to ensure if we need to interpolate a series, we interpolate using the original target
+      // rather than the target wrapped in aliasSub e.g.:
+      // Suppose a query has three targets: A: metric1 B: sumSeries(#A) and C: asPercent(#A, #B)
+      // We want the targets to be interpolated to: A: aliasSub(metric1, "(^.*$)", "\\1 A"), B: aliasSub(sumSeries(metric1), "(^.*$)", "\\1 B") and C: asPercent(metric1, sumSeries(metric1))
+      originalTargetMap[target.refId] = target.target || '';
       // Use aliasSub to include the refID in the response series name. This allows us to set the refID on the frame.
       const updatedTarget = `aliasSub(${target.target}, "(^.*$)", "\\1 ${formattedRefId}")`;
       target.target = updatedTarget;
@@ -231,7 +238,7 @@ export class GraphiteDatasource
       maxDataPoints: options.maxDataPoints,
     };
 
-    const params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+    const params = this.buildGraphiteParams(graphOptions, originalTargetMap, options.scopedVars);
     if (params.length === 0) {
       return of({ data: [] });
     }
@@ -255,7 +262,9 @@ export class GraphiteDatasource
       httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
-    return this.doGraphiteRequest(httpOptions).pipe(map((result) => this.convertResponseToDataFrames(result, refIds)));
+    return this.doGraphiteRequest(httpOptions).pipe(
+      map((result) => this.convertResponseToDataFrames(result, formattedRefIdsMap))
+    );
   }
 
   addTracingHeaders(
@@ -975,7 +984,7 @@ export class GraphiteDatasource
       );
   }
 
-  buildGraphiteParams(options: any, scopedVars?: ScopedVars): string[] {
+  buildGraphiteParams(options: any, originalTargetMap: { [key: string]: string }, scopedVars?: ScopedVars): string[] {
     const graphiteOptions = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     const cleanOptions = [],
       targets: Record<string, string> = {};
@@ -1006,7 +1015,8 @@ export class GraphiteDatasource
     }
 
     function nestedSeriesRegexReplacer(match: string, g1: string | number) {
-      return targets[g1] || match;
+      // Recursively replace all nested series references
+      return originalTargetMap[g1].replace(regex, nestedSeriesRegexReplacer) || match;
     }
 
     for (i = 0; i < options.targets.length; i++) {

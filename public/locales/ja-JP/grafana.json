@@ -2662,9 +2662,6 @@
       "clear": "検索とフィルタをクリア",
       "text": "クエリに一致する結果が見つかりませんでした。"
     },
-    "soft-delete": {
-      "success": "ダッシュボード、{{name}}が最近削除されたに移動しました"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {
