@@ -27,12 +27,6 @@ export function getAlertingRoutes(cfg = config): RouteDescriptor[] {
       ),
     },
     {
-      path: '/alerting/experimental',
-      component: importAlertingComponent(
-        () => import(/* webpackChunkName: "AlertingExperimental" */ 'app/features/alerting/experimental')
-      ),
-    },
-    {
       path: '/alerting/home',
       component: importAlertingComponent(
         () => import(/* webpackChunkName: "AlertingHome" */ 'app/features/alerting/unified/home/Home')
