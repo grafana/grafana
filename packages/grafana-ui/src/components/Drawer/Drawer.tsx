@@ -83,7 +83,7 @@ export function Drawer({
   size = 'md',
   tabs,
   zIndex,
-  contain,
+  contain = true,
 }: Props) {
   const [drawerWidth, onMouseDown, onTouchStart] = useResizebleDrawer();
 
