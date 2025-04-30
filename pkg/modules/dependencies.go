@@ -20,7 +20,7 @@ var dependencyMap = map[string][]string{
 	GrafanaAPIServer: {InstrumentationServer},
 	StorageServer:    {InstrumentationServer, StorageRing},
 	ZanzanaServer:    {InstrumentationServer},
-	Distributor:      {InstrumentationServer, MemberlistKV},
+	Distributor:      {InstrumentationServer, MemberlistKV, StorageRing},
 	Core:             {},
 	All:              {Core},
 	FrontendServer:   {},

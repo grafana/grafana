@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/grafana/dskit/kv"
 	"github.com/grafana/dskit/ring"
+	ringclient "github.com/grafana/dskit/ring/client"
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/grafana/dskit/services"
@@ -105,9 +106,10 @@ type ModuleServer struct {
 	promGatherer prometheus.Gatherer
 	registerer   prometheus.Registerer
 
-	MemberlistKVConfig kv.Config
-	httpServerRouter   *mux.Router
-	storageRing        *ring.Ring
+	MemberlistKVConfig    kv.Config
+	httpServerRouter      *mux.Router
+	storageRing           *ring.Ring
+	storageRingClientPool *ringclient.Pool
 }
 
 // init initializes the server and its services.

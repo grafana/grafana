@@ -76,6 +76,7 @@ func (ms *ModuleServer) initRing() (services.Service, error) {
 	}
 
 	ms.storageRing = storageRing
+	ms.storageRingClientPool = pool
 
 	ms.httpServerRouter.Path("/ring").Methods("GET", "POST").Handler(storageRing)
 
