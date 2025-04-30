@@ -155,7 +155,7 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 		statusPhase, ok := status["phase"].(string)
 		require.True(t, ok)
 		require.Equal(t, "Succeeded", statusPhase)
-	}, 10*time.Second, 250*time.Millisecond, "expected status to be Suceeded")
+	}, 10*time.Second, 250*time.Millisecond, "expected status to be Succeeded")
 
 	t.Cleanup(func() {
 		require.NoError(t, secureValueClient.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
