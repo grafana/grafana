@@ -187,7 +187,7 @@ You can configure this behavior depending on how critical the alert is—and whe
 - **Normal**: Ignores the query error and transitions all alert instances to the `Normal` state. This is useful if the error isn’t critical or if you already have other alerts detecting connectivity issues.
 - **Keep Last State**: Keeps the previous state until the query succeeds again. Suitable for unstable environments to avoid flapping alerts.
 
-  {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error-v2.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
+  {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error-v2.png" alt="A screenshot of the `Configure error handling` option in Grafana Alerting." max-width="500px" >}}
 
 This applies even when alert rules query Prometheus itself—not just external data sources.
 
