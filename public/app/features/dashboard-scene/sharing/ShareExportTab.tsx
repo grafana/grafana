@@ -242,7 +242,7 @@ function getMetadata(
       delete result['uid'];
     }
     delete result['resourceVersion'];
-    delete result['generation'];
+    delete result['namespace'];
 
     // iterate over labels and delete all keys that start with grafana.app/
     for (const key in result['labels']) {
