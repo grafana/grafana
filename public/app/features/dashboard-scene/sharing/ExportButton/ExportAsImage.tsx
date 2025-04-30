@@ -192,6 +192,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
 }
 
 function calculateDashboardHeight(dashboard: DashboardScene): number {
+  // First try to calculate based on grid layout
   let totalHeight = 0;
   const layout = dashboard.state.body;
 
@@ -204,9 +205,42 @@ function calculateDashboardHeight(dashboard: DashboardScene): number {
       const y = item.state.y ?? 0;
       totalHeight = Math.max(totalHeight, y + itemHeight);
     }
+
+    // Convert grid units to pixels and add extra padding
+    const GRID_CELL_HEIGHT = 30;
+    const GRID_CELL_MARGIN = 8;
+    const EXTRA_PADDING = 100; // Additional padding to ensure we capture everything
+
+    // Calculate total height with margins between panels
+    totalHeight = totalHeight * GRID_CELL_HEIGHT + (totalHeight - 1) * GRID_CELL_MARGIN + EXTRA_PADDING;
   }
 
-  return totalHeight * 30; // Convert grid units to pixels (assuming 30px per grid unit)
+  // Get the dashboard container
+  const dashboardContainer = document.querySelector('.dashboard-container');
+  if (dashboardContainer instanceof HTMLElement) {
+    // Get all panels
+    const panels = document.querySelectorAll('.panel-container');
+    let maxPanelBottom = 0;
+
+    panels.forEach((panel) => {
+      const rect = panel.getBoundingClientRect();
+      maxPanelBottom = Math.max(maxPanelBottom, rect.bottom);
+    });
+
+    // Get the container's top position
+    const containerRect = dashboardContainer.getBoundingClientRect();
+    const containerTop = containerRect.top;
+
+    // Calculate height based on the difference between the bottom-most panel and container top
+    const heightFromPanels = maxPanelBottom - containerTop + 100; // Add 100px padding
+
+    // Use the maximum of grid calculation and panel positions
+    totalHeight = Math.max(totalHeight, heightFromPanels);
+  }
+
+  // Ensure we have a minimum height
+  const MIN_HEIGHT = 500;
+  return Math.max(totalHeight, MIN_HEIGHT);
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
