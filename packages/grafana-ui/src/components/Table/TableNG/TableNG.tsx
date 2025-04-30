@@ -979,6 +979,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     '::-webkit-scrollbar-thumb': {
       backgroundColor: 'rgba(204, 204, 220, 0.16)',
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: '4px',
     },
     '::-webkit-scrollbar-track': {
