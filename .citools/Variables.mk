@@ -1,60 +1,35 @@
-TOOLS_DIR := $(shell cd $(dir $(lastword $(MAKEFILE_LIST))) && pwd)
-TOOL_SRC_DIR := $(TOOLS_DIR)/src
-TOOL_CACHE := $(TOOLS_DIR)/.tool-cache
 # Generated tool paths
+tools_dir := $(shell cd $(dir $(lastword $(MAKEFILE_LIST))) && pwd)
+tools_cache_dir := $(tools_dir)/.tool-cache
+src_dir := $(tools_dir)/src
 
-# Tool: bra
-bra = $(shell \
-  if [ ! -f $(TOOL_CACHE)/bra.path ]; then \
-    (cd $(TOOL_SRC_DIR)/bra && GOWORK=off go tool -n github.com/unknwon/bra > $(TOOL_CACHE)/bra.path); \
+define compile_tool
+$(shell \
+  if [ ! -f $(tools_cache_dir)/$(1).path ]; then \
+    (cd $(src_dir)/$(1) && GOWORK=off go tool -n $(2) > $(tools_cache_dir)/$(1).path); \
   fi; \
-  cat $(TOOL_CACHE)/bra.path \
+  cat $(tools_cache_dir)/$(1).path | sed 's/^[[:space:]]*//g' \
 )
+endef
 
-# Tool: cog
-cog = $(shell \
-  if [ ! -f $(TOOL_CACHE)/cog.path ]; then \
-    (cd $(TOOL_SRC_DIR)/cog && GOWORK=off go tool -n github.com/grafana/cog/cmd/cli > $(TOOL_CACHE)/cog.path); \
-  fi; \
-  cat $(TOOL_CACHE)/cog.path \
-)
 
-# Tool: cue
-cue = $(shell \
-  if [ ! -f $(TOOL_CACHE)/cue.path ]; then \
-    (cd $(TOOL_SRC_DIR)/cue && GOWORK=off go tool -n cuelang.org/go/cmd/cue > $(TOOL_CACHE)/cue.path); \
-  fi; \
-  cat $(TOOL_CACHE)/cue.path \
-)
+# Tool: "bra"
+bra = "$(call compile_tool,bra,github.com/unknwon/bra)"
 
-# Tool: golangci-lint
-golangci-lint = $(shell \
-  if [ ! -f $(TOOL_CACHE)/golangci-lint.path ]; then \
-    (cd $(TOOL_SRC_DIR)/golangci-lint && GOWORK=off go tool -n github.com/golangci/golangci-lint/v2/cmd/golangci-lint > $(TOOL_CACHE)/golangci-lint.path); \
-  fi; \
-  cat $(TOOL_CACHE)/golangci-lint.path \
-)
+# Tool: "cog"
+cog = "$(call compile_tool,cog,github.com/grafana/cog/cmd/cli)"
 
-# Tool: jb
-jb = $(shell \
-  if [ ! -f $(TOOL_CACHE)/jb.path ]; then \
-    (cd $(TOOL_SRC_DIR)/jb && GOWORK=off go tool -n github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb > $(TOOL_CACHE)/jb.path); \
-  fi; \
-  cat $(TOOL_CACHE)/jb.path \
-)
+# Tool: "cue"
+cue = "$(call compile_tool,cue,cuelang.org/go/cmd/cue)"
 
-# Tool: lefthook
-lefthook = $(shell \
-  if [ ! -f $(TOOL_CACHE)/lefthook.path ]; then \
-    (cd $(TOOL_SRC_DIR)/lefthook && GOWORK=off go tool -n github.com/evilmartians/lefthook > $(TOOL_CACHE)/lefthook.path); \
-  fi; \
-  cat $(TOOL_CACHE)/lefthook.path \
-)
+# Tool: "golangci-lint"
+golangci-lint = "$(call compile_tool,golangci-lint,github.com/golangci/golangci-lint/v2/cmd/golangci-lint)"
 
-# Tool: swagger
-swagger = $(shell \
-  if [ ! -f $(TOOL_CACHE)/swagger.path ]; then \
-    (cd $(TOOL_SRC_DIR)/swagger && GOWORK=off go tool -n github.com/go-swagger/go-swagger/cmd/swagger > $(TOOL_CACHE)/swagger.path); \
-  fi; \
-  cat $(TOOL_CACHE)/swagger.path \
-)
+# Tool: "jb"
+jb = "$(call compile_tool,jb,github.com/jsonnet-bundler/jsonnet-bundler/cmd/jb)"
+
+# Tool: "lefthook"
+lefthook = "$(call compile_tool,lefthook,github.com/evilmartians/lefthook)"
+
+# Tool: "swagger"
+swagger = "$(call compile_tool,swagger,github.com/go-swagger/go-swagger/cmd/swagger)"
