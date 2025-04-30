@@ -93,7 +93,7 @@ function DashboardOutlineNode({
             role="treeitem" 
             className={styles.angleButton} 
             onPointerDown={onToggleCollapse} 
-            data-testid={selectors.components.PanelEditor.Outline.dashboardOutline}
+            data-testid={selectors.components.PanelEditor.Outline.node(instanceName)}
           >
             <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
           </button>
@@ -102,6 +102,7 @@ function DashboardOutlineNode({
           role="button"
           className={cx(styles.nodeName, isCloned && styles.nodeNameClone)}
           onDoubleClick={outlineRename.onNameDoubleClicked}
+          data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
           <Icon size="sm" name={elementInfo.icon} />
           {outlineRename.isRenaming ? (
