@@ -799,8 +799,7 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	ctx := identity.WithRequester(context.Background(), user)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 
-	t.Run("Get folder by title)", func(t *testing.T) {
-		// FIXME
+	t.Run("Get folder by title", func(t *testing.T) {
 		// the search here will return a parent, this will be the parent folder returned when we query for it to add to the hit info
 		fakeFolderStore := folder.NewFakeStore()
 		fakeFolderStore.ExpectedFolder = &folder.Folder{
@@ -869,7 +868,6 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		compareFoldersNormalizeTime(t, expectedResult, result)
 		fakeK8sClient.AssertExpectations(t)
 	})
-
 }
 
 func TestDeleteFoldersFromApiServer(t *testing.T) {
