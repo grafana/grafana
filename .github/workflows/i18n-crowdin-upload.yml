@@ -44,5 +44,5 @@ jobs:
           source: 'public/locales/en-US/grafana.json'
           translation: 'public/locales/%locale%/%original_file_name%'
         env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          CROWDIN_PROJECT_ID: 5
+          CROWDIN_PERSONAL_TOKEN: ${{ env.CROWDIN_TOKEN }}
