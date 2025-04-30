@@ -3,26 +3,64 @@
 name: Create security patch
 run-name: create-security-patch
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
       - synchronize
     branches:
       - "main"
-      - "v*.*.*"
       - "release-*.*.*"
+
+permissions: {}
+
+concurrency: create-patch-${{ github.ref_name }}
+
+env:
+  REPO: "${{ github.repository }}"
+  SRC_REF: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
+  PATCH_REF: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
+  PATCH_REPO: "grafana/grafana-security-patches"
+  PATCH_PREFIX: "${{ github.event.pull_request.number }}"
 
 # This is run before the pull request has been merged, so we'll run against the src branch
 jobs:
-  trigger_downstream_create_security_patch:
-    concurrency: create-patch-${{ github.ref_name }}
-    uses: grafana/security-patch-actions/.github/workflows/create-patch.yml@main # zizmor: ignore[unpinned-uses]
+  dispatch-job:
+    permissions:
+      id-token: write
     if: github.repository == 'grafana/grafana-security-mirror'
-    with:
-      repo: "${{ github.repository }}"
-      src_ref: "${{ github.head_ref }}" # this is the source branch name, Ex: "feature/newthing"
-      patch_ref: "${{ github.base_ref }}" # this is the target branch name, Ex: "main"
-      patch_repo: "grafana/grafana-security-patches"
-      patch_prefix: "${{ github.event.pull_request.number }}"
-    secrets: inherit # zizmor: ignore[secrets-inherit]
+    steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
+      - name: "Generate token"
+        id: generate_token
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
+        with:
+          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
+      - name: "Dispatch job"
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ steps.generate_token.outputs.token }}
+          script: |
+            const {REPO, SRC_REF, PATCH_REF, PATCH_REPO, PATCH_PREFIX} = process.env;
+
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'grafana',
+                repo: 'security-patch-actions',
+                workflow_id: 'create-patch.yml',
+                ref: 'main',
+                inputs: {
+                  repo: REPO,
+                  src_ref:  SRC_REF,
+                  patch_ref: PATCH_REF,
+                  patch_repo: PATCH_REPO,
+                  patch_prefix: PATCH_PREFIX,
+                }
+            })
