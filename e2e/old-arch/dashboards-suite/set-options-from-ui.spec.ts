@@ -66,13 +66,15 @@ describe('Variables - Set options from ui', () => {
     e2e.components.NavToolbar.container().click();
 
     cy.wait('@query');
-    cy.wait('@query');
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('A + B').scrollIntoView().should('be.visible');
 
     e2e.components.LoadingIndicator.icon().should('have.length', 0);
 
-    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA').should('be.visible').click();
+    e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts('AA')
+      .should('be.visible')
+      .should('match', 'button')
+      .click();
 
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownDropDown()
       .should('be.visible')
