@@ -5,6 +5,8 @@ import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { FolderDTO } from 'app/types';
 import {
+  GrafanaAlertStateDecision,
+  GrafanaAlertingRuleDefinition,
   GrafanaRecordingRuleDefinition,
   PromAlertingRuleDTO,
   PromAlertingRuleState,
@@ -18,6 +20,7 @@ import {
 } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
+import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
 import { namespaces } from '../mimirRulerApi';
 
@@ -178,6 +181,26 @@ const grafanaRecordingRule = Factory.define<RulerGrafanaRuleDTO<GrafanaRecording
   annotations: {}, // @TODO recording rules don't have annotations, we need to fix this type definition
 }));
 
+const grafanaAlertingRuleFactory = Factory.define<RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition>>(
+  ({ sequence }) => ({
+    grafana_alert: {
+      id: String(sequence),
+      uid: uniqueId(),
+      title: `Alerting rule ${sequence}`,
+      namespace_uid: 'test-namespace',
+      rule_group: 'test-group',
+      condition: 'A',
+      data: [],
+      is_paused: false,
+      no_data_state: GrafanaAlertStateDecision.NoData,
+      exec_err_state: GrafanaAlertStateDecision.Error,
+    } satisfies GrafanaAlertingRuleDefinition,
+    for: '5m',
+    labels: { 'label-key-1': 'label-value-1' },
+    annotations: { [Annotation.summary]: 'test alert' },
+  })
+);
+
 export const alertingFactory = {
   folder: grafanaFolderFactory,
   prometheus: {
@@ -190,6 +213,7 @@ export const alertingFactory = {
     recordingRule: rulerRecordingRuleFactory,
     grafana: {
       recordingRule: grafanaRecordingRule,
+      alertingRule: grafanaAlertingRuleFactory,
     },
   },
   dataSource: dataSourceFactory,
