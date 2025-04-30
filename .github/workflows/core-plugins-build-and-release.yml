@@ -43,7 +43,7 @@ jobs:
       version: ${{ steps.build_frontend.outputs.version }}
     steps:
       - name: checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
       - name: Verify inputs
@@ -64,7 +64,7 @@ jobs:
       - name: 'Set up Cloud SDK'
         uses: 'google-github-actions/setup-gcloud@6189d56e4096ee891640bb02ac264be376592d6a'
       - name: Setup nodejs environment
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
           cache: yarn
