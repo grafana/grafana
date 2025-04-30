@@ -8,4 +8,5 @@ export const reportingAPI = createApi({
   baseQuery: createBaseQuery({ baseURL: BASE_URL }),
   reducerPath: 'reportingAPI',
   endpoints: () => ({}),
+  tagTypes: ['Reports', 'Report'],
 });
