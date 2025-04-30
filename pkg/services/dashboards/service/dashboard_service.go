@@ -2274,7 +2274,9 @@ func (dr *DashboardServiceImpl) unstructuredToLegacyDashboardWithUsers(item *uns
 	out.Created = obj.GetCreationTimestamp().Time
 	updated, err := obj.GetUpdatedTimestamp()
 	if err == nil && updated != nil {
-		out.Updated = *updated
+		// old apis return in local time, created is already doing that
+		localTime := updated.Local()
+		out.Updated = localTime
 	} else {
 		// by default, set updated to created
 		out.Updated = out.Created
