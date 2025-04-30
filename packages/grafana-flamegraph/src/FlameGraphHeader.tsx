@@ -302,8 +302,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     display: 'inline-block',
     width: '10px',
     height: '10px',
-    // eslint-disable-next-line @grafana/no-border-radius-literal
-    borderRadius: '50%',
+    borderRadius: theme.shape.radius.circle,
   }),
   colorDotDiff: css({
     label: 'colorDotDiff',
