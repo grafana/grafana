@@ -19,7 +19,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
-import { FolderBukActionsButton } from '../folder-bulk-actions/FolderBulkActionsButton';
+import { FolderBulkActionsButton } from '../folder-bulk-actions/FolderBulkActionsButton';
 
 import { ActionIcon } from './ActionIcon';
 import { RuleGroupStats } from './RuleStats';
@@ -221,7 +221,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             </div>
           </>
         )}
-        {isFolderBulkActionsEnabled && folderUID && isListView && <FolderBukActionsButton folderUID={folderUID} />}
+        {isFolderBulkActionsEnabled && folderUID && isListView && <FolderBulkActionsButton folderUID={folderUID} />}
       </div>
       {!isCollapsed && (
         <RulesTable

@@ -23,20 +23,20 @@ export function FolderActionMenuItem({ folderUID, onActionSucceed, executeAction
   const notifyApp = useAppNotification();
   const label =
     action === 'pause'
-      ? t('alerting.folder-bulk-actions.pause.button.label', 'Pause evaluation')
-      : t('alerting.folder-bulk-actions.unpause.button.label', 'Unpause evaluation');
+      ? t('alerting.folder-bulk-actions.pause.button.label', 'Pause all rule evaluation')
+      : t('alerting.folder-bulk-actions.unpause.button.label', 'Resume all rule evaluation');
   const icon = action === 'pause' ? 'pause' : 'play';
-  const trackActioSuccess =
+  const trackActionSuccess =
     action === 'pause' ? trackFolderBulkActionsPauseSuccess : trackFolderBulkActionsUnpauseSuccess;
   const trackActionFail = action === 'pause' ? trackFolderBulkActionsPauseFail : trackFolderBulkActionsUnpauseFail;
   const onActionClick = async () => {
     try {
       await executeAction(folderUID);
-      trackActioSuccess();
+      trackActionSuccess();
     } catch (error) {
       trackActionFail();
       notifyApp.error(
-        t('alerting.folder-bulk-actions.error', 'Failed to execute action: {{error}}', {
+        t('alerting.folder-bulk-actions.error', 'Failed to execute action for folder: {{error}}', {
           error: stringifyErrorLike(error),
         })
       );

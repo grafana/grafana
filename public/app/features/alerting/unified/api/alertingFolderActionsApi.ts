@@ -8,7 +8,10 @@ export const alertingFolderActionsApi = alertingApi.injectEndpoints({
   endpoints: (build) => ({
     pauseFolder: build.mutation<void, WithNotificationOptions<{ namespace: string }>>({
       query: ({ namespace, notificationOptions }) => {
-        const successMessage = t('alerting.bulk-actions.pause.success', 'Rules successfully paused for this folder');
+        const successMessage = t(
+          'alerting.bulk-actions.pause.success',
+          'Rules evaluation successfully paused for folder'
+        );
         const { path, params } = rulerUrlBuilder(GRAFANA_RULER_CONFIG).namespace(namespace);
 
         return {

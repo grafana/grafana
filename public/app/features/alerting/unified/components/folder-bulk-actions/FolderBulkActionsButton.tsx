@@ -16,7 +16,7 @@ interface Props {
   folderUID: string;
 }
 
-export const FolderBukActionsButton = ({ folderUID }: Props) => {
+export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   const [pauseSupported, pauseAllowed] = useFolderAbility(FolderAction.Pause);
   const canPause = pauseSupported && pauseAllowed;
   const [deleteSupported, deleteAllowed] = useFolderAbility(FolderAction.Delete);

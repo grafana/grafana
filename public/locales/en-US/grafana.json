@@ -600,7 +600,7 @@
         "success": "Rules successfully deleted from folder"
       },
       "pause": {
-        "success": "Rules successfully paused for this folder"
+        "success": "Rules evaluation successfully paused for folder"
       },
       "unpause": {
         "success": "Rules successfully unpaused for this folder"
@@ -1010,20 +1010,20 @@
       "delete-modal-confirmation-text": "Delete",
       "delete-modal-delete-button": "Delete",
       "delete-modal-deleting": "Deleting...",
-      "delete-modal-text": "This action will delete all the rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
+      "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
       "delete-modal-title": "Delete",
-      "error": "Failed to execute action: {{error}}",
+      "error": "Failed to execute action for folder: {{error}}",
       "more-button": {
         "title": "Folder Actions"
       },
       "pause": {
         "button": {
-          "label": "Pause evaluation"
+          "label": "Pause all rule evaluation"
         }
       },
       "unpause": {
         "button": {
-          "label": "Unpause evaluation"
+          "label": "Resume all rule evaluation"
         }
       }
     },
