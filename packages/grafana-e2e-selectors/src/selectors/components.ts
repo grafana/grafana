@@ -532,6 +532,33 @@ export const versionedComponents = {
     measureButton: {
       '9.2.0': 'show measure tools',
     },
+
+    Outline: {
+      section: {
+        '12.0.0': 'data-testid Outline section',
+      },
+      node: {
+        '12.0.0': (type: string) => `data-testid outline node ${type}`,
+      },
+      item: {
+        '12.0.0': (type: string) => `data-testid outline item ${type}`,
+      },
+    },
+
+    ElementEditPane: {
+      variableType: {
+        '12.0.0': (type?: string) => `data-testid variable type ${type}`,
+      },
+      addVariableButton: {
+        '12.0.0': 'data-testid add variable button',
+      },
+      variableNameInput: {
+        '12.0.0': 'data-testid variable name input',
+      },
+      variableLabelInput: {
+        '12.0.0': 'data-testid variable label input',
+      },
+    },
   },
   PanelInspector: {
     Data: {
