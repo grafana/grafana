@@ -51,13 +51,6 @@ interface MockLayout {
   };
 }
 
-interface MockDashboard {
-  state: {
-    uid: string;
-    body?: MockLayout;
-  };
-}
-
 // Mock the dependencies
 jest.mock('@grafana/runtime', () => ({
   config: {
