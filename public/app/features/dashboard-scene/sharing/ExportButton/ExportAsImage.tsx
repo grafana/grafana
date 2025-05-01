@@ -14,6 +14,7 @@ import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ShareExportTab } from '../ShareExportTab';
 
+import { ExportImageComponents } from './e2e-selectors/selectors';
 import { generateDashboardImage } from './utils';
 
 enum ImageFormat {
@@ -79,11 +80,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     saveAs(imageBlob, `${name}-${time}.${format}`);
   };
 
-  const formatOptions = [
-    { label: 'PNG', value: ImageFormat.PNG },
-    { label: 'JPG', value: ImageFormat.JPG },
-  ];
-
   return (
     <>
       <p className={styles.info}>
@@ -93,23 +89,41 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       </p>
 
       <Field label={t('share-modal.image.format-label', 'Format')}>
-        <RadioButtonGroup options={formatOptions} value={format} onChange={onFormatChange} />
+        <div data-testid={ExportImageComponents.formatOptions.container}>
+          <RadioButtonGroup
+            value={format}
+            onChange={onFormatChange}
+            options={[
+              { label: 'PNG', value: ImageFormat.PNG, 'data-testid': ExportImageComponents.formatOptions.png },
+              { label: 'JPG', value: ImageFormat.JPG, 'data-testid': ExportImageComponents.formatOptions.jpg },
+            ]}
+          />
+        </div>
       </Field>
 
       {!config.rendererAvailable && (
-        <Alert severity="info" title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}>
-          <Trans i18nKey="share-modal.link.render-instructions">
-            To render a dashboard image, you must install the{' '}
-            <a
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="external-link"
-            >
-              Grafana image renderer plugin
-            </a>
-            . Please contact your Grafana administrator to install the plugin.
-          </Trans>
+        <Alert
+          severity="info"
+          title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
+          data-testid={ExportImageComponents.rendererAlert.container}
+        >
+          <div data-testid={ExportImageComponents.rendererAlert.title}>
+            {t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
+          </div>
+          <div data-testid={ExportImageComponents.rendererAlert.description}>
+            <Trans i18nKey="share-modal.link.render-instructions">
+              To render a panel image, you must install the{' '}
+              <a
+                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="external-link"
+              >
+                Grafana image renderer plugin
+              </a>
+              . Please contact your Grafana administrator to install the plugin.
+            </Trans>
+          </div>
         </Alert>
       )}
 
@@ -120,25 +134,45 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
             onClick={onExport}
             disabled={isLoading || !config.rendererAvailable}
             icon="document-info"
+            data-testid={ExportImageComponents.buttons.generate}
           >
             <Trans i18nKey="share-modal.image.generate-button">Generate image</Trans>
           </Button>
         ) : (
-          <Button variant="primary" onClick={onDownload} icon="download-alt">
+          <Button
+            variant="primary"
+            onClick={onDownload}
+            icon="download-alt"
+            data-testid={ExportImageComponents.buttons.download}
+          >
             <Trans i18nKey="share-modal.image.download-button">Download image</Trans>
           </Button>
         )}
-        <Button variant="secondary" onClick={model.useState().onDismiss} fill="outline">
+        <Button
+          variant="secondary"
+          onClick={model.useState().onDismiss}
+          fill="outline"
+          data-testid={ExportImageComponents.buttons.cancel}
+        >
           <Trans i18nKey="share-modal.image.cancel-button">Cancel</Trans>
         </Button>
       </div>
 
-      <div className={styles.previewContainer} ref={ref}>
-        <div className={styles.loadingBarContainer}>{isLoading && <LoadingBar width={loadingBarWidth} />}</div>
+      <div className={styles.previewContainer} ref={ref} data-testid={ExportImageComponents.preview.container}>
+        <div className={styles.loadingBarContainer} data-testid={ExportImageComponents.preview.loading}>
+          {isLoading && <LoadingBar width={loadingBarWidth} />}
+        </div>
 
         {error && !isLoading && (
-          <Alert severity="error" title={t('share-modal.image.error-title', 'Failed to generate image')}>
-            {error}
+          <Alert
+            severity="error"
+            title={t('share-modal.image.error-title', 'Failed to generate image')}
+            data-testid={ExportImageComponents.preview.error.container}
+          >
+            <div data-testid={ExportImageComponents.preview.error.title}>
+              {t('share-modal.image.error-title', 'Failed to generate image')}
+            </div>
+            <div data-testid={ExportImageComponents.preview.error.message}>{error}</div>
           </Alert>
         )}
 
@@ -147,6 +181,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
             src={URL.createObjectURL(imageBlob)}
             alt={t('share-modal.image.preview', 'Preview')}
             className={styles.image}
+            data-testid={ExportImageComponents.preview.image}
           />
         )}
       </div>
