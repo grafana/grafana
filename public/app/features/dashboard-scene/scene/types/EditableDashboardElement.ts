@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 
 import { IconName } from '@grafana/data';
+import { SceneObject } from '@grafana/scenes';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 
 /**
@@ -69,6 +70,12 @@ export interface EditableDashboardElement {
    * Used to change name from outline
    */
   onChangeName?(name: string): { errorMessage?: string } | void;
+
+  /**
+   * Some objects can have internal repeat clones
+   * Used by outline to flatten repeats
+   */
+  getRepeatClones?(): SceneObject[];
 }
 
 export interface EditableDashboardElementInfo {

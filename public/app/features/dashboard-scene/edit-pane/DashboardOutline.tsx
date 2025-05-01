@@ -7,7 +7,6 @@ import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 import { isInCloneChain } from '../utils/clone';
 import { getDashboardSceneFor } from '../utils/utils';
@@ -47,7 +46,7 @@ function DashboardOutlineNode({
   const isCloned = useMemo(() => isInCloneChain(key!), [key]);
   const editableElement = useMemo(() => getEditableElementFor(sceneObject)!, [sceneObject]);
 
-  const children = sortBy(collectEditableElementChildren(sceneObject, [], 0), 'depth');
+  const children = sortBy(collectEditableElementChildren(sceneObject, [], depth), 'depth');
   const elementInfo = editableElement.getEditableElementInfo();
   const noTitleText = t('dashboard.outline.tree-item.no-title', '<no title>');
   const instanceName = elementInfo.instanceName === '' ? noTitleText : elementInfo.instanceName;
@@ -111,7 +110,11 @@ function DashboardOutlineNode({
           ) : (
             <>
               <span>{instanceName}</span>
-              {isCloned && <span>- Repeated copy</span>}
+              {isCloned && (
+                <span>
+                  <Trans i18nKey="dashboard.outline.repeated-item">Repeated</Trans>
+                </span>
+              )}
               {elementInfo.isHidden && <Icon name="eye-slash" size="sm" className={styles.hiddenIcon} />}
               {elementInfo.isContainer && isCollapsed && <span>({children.length})</span>}
             </>
@@ -242,25 +245,28 @@ function collectEditableElementChildren(
   children: EditableElementConfig[],
   depth: number
 ): EditableElementConfig[] {
-  sceneObject.forEachChild((child) => {
-    const editableElement = getEditableElementFor(child);
+  sceneObject.forEachChild((child: SceneObject) => {
+    const isCloned = isInCloneChain(child.state.key!);
 
-    if (editableElement) {
-      children.push({ sceneObject: child, editableElement, depth });
+    if (isCloned) {
       return;
     }
 
-    if (child instanceof DashboardGridItem) {
-      // DashboardGridItem is a special case as it can contain repeated panels
-      // In this case, we want to show the repeated panels as separate items, otherwise show the body panel
-      if (child.state.repeatedPanels?.length) {
-        for (const repeatedPanel of child.state.repeatedPanels) {
-          const editableElement = getEditableElementFor(repeatedPanel)!;
-          children.push({ sceneObject: repeatedPanel, editableElement, depth });
-        }
+    const childElement = getEditableElementFor(child);
 
-        return;
+    if (childElement) {
+      children.push({ sceneObject: child, editableElement: childElement, depth });
+
+      if (childElement.getRepeatClones) {
+        childElement.getRepeatClones().forEach((clone) => {
+          const cloneElement = getEditableElementFor(clone);
+          if (cloneElement) {
+            children.push({ sceneObject: clone, editableElement: cloneElement, depth });
+          }
+        });
       }
+
+      return;
     }
 
     collectEditableElementChildren(child, children, depth + 1);

@@ -228,4 +228,8 @@ export class RowItem
     const duplicateTitles = parentLayout.duplicateTitles();
     return !duplicateTitles.has(this.state.title);
   }
+
+  public getRepeatClones(): SceneObject[] {
+    return this.state.repeatedRows ?? [];
+  }
 }
