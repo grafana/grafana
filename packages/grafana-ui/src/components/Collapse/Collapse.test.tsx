@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { Collapse } from './Collapse';
 
@@ -29,7 +30,7 @@ describe('Collapse', () => {
     expect(screen.getByText(contentText)).toBeInTheDocument();
   });
 
-  it('should call onToggle when clicked', () => {
+  it('should call onToggle when clicked', async () => {
     const contentText = 'Toggleable content';
     const onToggle = jest.fn();
 
@@ -40,7 +41,7 @@ describe('Collapse', () => {
     );
 
     const header = screen.getByRole('button');
-    header.click();
+    await userEvent.click(header);
 
     expect(onToggle).toHaveBeenCalledWith(true);
   });

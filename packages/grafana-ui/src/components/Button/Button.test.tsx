@@ -1,19 +1,20 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { Button } from './Button';
 
 describe('Button', () => {
-  it('should fire onClick when not disabled', () => {
+  it('should fire onClick when not disabled', async () => {
     const onClick = jest.fn();
     render(<Button onClick={onClick}>Click me</Button>);
 
     const button = screen.getByRole('button');
-    fireEvent.click(button);
+    await userEvent.click(button);
 
     expect(onClick).toHaveBeenCalledTimes(1);
   });
 
-  it('should not fire onClick when disabled', () => {
+  it('should not fire onClick when disabled', async () => {
     const onClick = jest.fn();
     render(
       <Button disabled onClick={onClick}>
@@ -22,7 +23,7 @@ describe('Button', () => {
     );
 
     const button = screen.getByRole('button');
-    fireEvent.click(button);
+    await userEvent.click(button);
 
     expect(onClick).not.toHaveBeenCalled();
   });

@@ -1,18 +1,29 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { ClipboardButton } from './ClipboardButton';
 
-Object.assign(window, {
-  isSecureContext: true,
-});
-
-Object.assign(navigator, {
-  clipboard: {
-    writeText: jest.fn().mockReturnValueOnce(Promise.resolve()),
-  },
-});
-
 describe('ClipboardButton', () => {
+  const originalWindow = { ...window };
+  const originalNavigator = { ...navigator };
+
+  beforeAll(() => {
+    Object.assign(window, {
+      isSecureContext: true,
+    });
+
+    Object.assign(navigator, {
+      clipboard: {
+        writeText: jest.fn().mockReturnValueOnce(Promise.resolve()),
+      },
+    });
+  });
+
+  afterAll(() => {
+    Object.assign(window, originalWindow);
+    Object.assign(navigator, originalNavigator);
+  });
+
   it('should copy text to clipboard when clicked', async () => {
     const textToCopy = 'Copy me!';
     const onClipboardCopy = jest.fn();
@@ -23,12 +34,10 @@ describe('ClipboardButton', () => {
       </ClipboardButton>
     );
 
-    await act(async () => {
-      const button = screen.getByRole('button');
-      await fireEvent.click(button);
-    });
+    const button = screen.getByRole('button');
+    await userEvent.click(button);
 
-    expect(window.navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
+    expect(navigator.clipboard.writeText).toHaveBeenCalledWith(textToCopy);
     expect(onClipboardCopy).toHaveBeenCalledWith(textToCopy);
   });
 });
