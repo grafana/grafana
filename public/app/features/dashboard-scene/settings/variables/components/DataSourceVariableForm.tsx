@@ -42,7 +42,7 @@ export function DataSourceVariableForm({
   onAllValueChange,
   onAllowCustomValueChange,
 }: DataSourceVariableFormProps) {
-  const typeValue = optionTypes.find((o) => o.value === query) ?? optionTypes[0];
+  const typeValue = optionTypes.find((o) => o.value === query);
 
   return (
     <>
