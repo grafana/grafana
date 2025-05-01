@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: ./grafana
+          persist-credentials: false
       - run: echo "GRAFANA_GO_VERSION=$(grep "go 1." grafana/go.work |  cut -d\  -f2)" >> "$GITHUB_ENV"
       - uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
@@ -43,6 +44,7 @@ jobs:
   e2e-matrix:
     name: ${{ matrix.suite }}
     strategy:
+      fail-fast: false
       matrix:
         suite:
           - various-suite
@@ -58,6 +60,7 @@ jobs:
   e2e-matrix-old-arch:
     name: ${{ matrix.suite }} (old arch)
     strategy:
+      fail-fast: false
       matrix:
         suite:
           - old-arch/various-suite
