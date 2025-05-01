@@ -45,10 +45,6 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
   ```
   If this value is set explicitly in a rule group, that value takes precedence over the configuration setting.
 - The `missing_series_evals_to_resolve` is set to 1 for the new rules.
-- The imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior.
-  Sequential evaluation applies only to rules imported with the migration UI or API and only while they remain read‑only in the UI (displayed as "Provisioned").
-  If you import rules with the `X-Disable-Provenance: true` header or via the regular provisioning API, they behave like regular Grafana
-  alert rules and are evaluated in parallel.
 - The newly created rules are given unique UIDs.  
   If you don't want the UID to be automatically generated, you can specify a specific UID with the `__grafana_alert_rule_uid__` label.
 
