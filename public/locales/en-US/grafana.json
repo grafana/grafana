@@ -3671,7 +3671,10 @@
         "export": {
           "arrow": "Export",
           "title": "Export",
-          "tooltip": "Export as JSON"
+          "tooltip": {
+            "as-code": "Export as code",
+            "json": "Export as JSON"
+          }
         },
         "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
@@ -5109,8 +5112,11 @@
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
-      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Export dashboard JSON"
+      "export-format": "Format",
+      "export-mode": "Model",
+      "export-remove-ds-refs": "Remove deployment details",
+      "info-text": "Copy or download a file containing the definition of your dashboard",
+      "title": "Export dashboard"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -7083,6 +7089,7 @@
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
         "repository": "Repository",
         "signature": "Signature",
+        "sponsorDeveloper": "Sponsor this developer",
         "status": "Status"
       },
       "modal": {
@@ -8218,7 +8225,8 @@
       "loading": "Loading...",
       "save-button": "Save to file",
       "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON"
+      "view-button": "View JSON",
+      "view-button-yaml": "View YAML"
     },
     "library": {
       "info": "Create library panel."
