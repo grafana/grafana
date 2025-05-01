@@ -24,7 +24,7 @@ jobs:
         id: check
         shell: bash
         run: |
-          if [ "${{ github.repository }}" == "grafana/grafana" ] && [ -n "${{ secrets.GRAFANA_MISC_STATS_API_KEY }}" ]; then
+          if [ "${{ github.repository }}" == "grafana/grafana" ]; then
             echo "has-secrets=1" >> "$GITHUB_OUTPUT"
           fi
 
@@ -65,6 +65,6 @@ jobs:
       - name: Run Commands
         uses: ./actions/commands
         with:
-          metricsWriteAPIKey: ${{secrets.GRAFANA_MISC_STATS_API_KEY}}
+          metricsWriteAPIKey: ""
           token: ${{ steps.generate_token.outputs.token }}
           configPath: commands
