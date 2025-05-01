@@ -19,6 +19,7 @@ const (
 	None             = "none"
 	// Azure AD
 	ManagedIdentity = "managed_identity"
+	WorkloadIdentity = "workload_identity"
 	// Other providers...
 
 	AzureADProviderName      = "azuread"
