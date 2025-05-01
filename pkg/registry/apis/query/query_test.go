@@ -140,6 +140,7 @@ func TestInstantQueryFromAlerting(t *testing.T) {
 }
 
 func TestQueryRestConnectHandlerWithContextCancelled(t *testing.T) {
+	// Create a mock client that simulates context cancellation handling
 	mockClientInstance := &mockClient{
 		lastCalledWithHeaders:     &map[string]string{},
 		shouldReturnServerTimeout: true,
@@ -188,6 +189,14 @@ func TestQueryRestConnectHandlerWithContextCancelled(t *testing.T) {
 
 	// Verify that responder.Error was not called after context cancellation
 	require.False(t, mr.errorCalled, "responder.Error should not be called after context cancellation")
+
+	// Verify that the context is actually cancelled by checking if the Done channel is closed
+	select {
+	case <-ctx.Done():
+		// This is the expected case - context is cancelled
+	default:
+		t.Error("Context should be cancelled but it is not")
+	}
 }
 
 type mockResponder struct {
@@ -199,7 +208,7 @@ func (m mockResponder) Object(statusCode int, obj runtime.Object) {
 }
 
 // Error writes the provided error to the response. This method may only be invoked once.
-func (m mockResponder) Error(err error) {
+func (m *mockResponder) Error(err error) {
 	m.errorCalled = true
 }
 

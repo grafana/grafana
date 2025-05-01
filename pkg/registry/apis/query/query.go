@@ -160,7 +160,6 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
-
 			var k8sErr *errorsK8s.StatusError
 			if errors.As(err, &k8sErr) {
 				if k8sErr.ErrStatus.Code >= 500 {
