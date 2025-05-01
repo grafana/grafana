@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
+import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { MultiValueVariable, SceneComponentProps, sceneGraph } from '@grafana/scenes';
+import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import { Button, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
@@ -61,7 +62,7 @@ export function RowLayoutManagerRenderer({ model }: SceneComponentProps<RowsLayo
 }
 
 function RowWrapper({ row, manager }: { row: RowItem; manager: RowsLayoutManager }) {
-  const { repeatByVariable } = row.useState();
+  const { repeatByVariable } = useSceneObjectState(row, { shouldActivateOrKeepAlive: true });
 
   if (repeatByVariable) {
     const variable = sceneGraph.lookupVariable(repeatByVariable, manager);

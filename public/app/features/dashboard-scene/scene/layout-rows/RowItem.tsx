@@ -203,7 +203,11 @@ export class RowItem
   }
 
   public onChangeRepeat(repeat: string | undefined) {
-    this.setState({ repeatByVariable: repeat, repeatedRows: repeat ? this.state.repeatedRows : undefined });
+    if (repeat) {
+      this.setState({ repeatByVariable: repeat });
+    } else {
+      this.setState({ repeatedRows: undefined, $variables: undefined, repeatByVariable: undefined });
+    }
   }
 
   public onCollapseToggle() {
