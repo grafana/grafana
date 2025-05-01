@@ -126,7 +126,7 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
 
       - name: Get vault secrets
-        id: vault-secrets
+        id: vault-secrets-approver
         uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in ci/repo/grafana/grafana/grafana-pr-approver
