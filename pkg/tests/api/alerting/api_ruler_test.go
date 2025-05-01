@@ -33,7 +33,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
-	ngstore "github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/setting"
@@ -2974,7 +2973,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 						Annotations: map[string]string{"annotation1": "val1"},
 					},
 					GrafanaManagedAlert: &apimodels.PostableGrafanaRule{
-						Title:     getLongString(t, ngstore.AlertRuleMaxTitleLength+1),
+						Title:     getLongString(t, ngmodels.AlertRuleMaxTitleLength+1),
 						Condition: "A",
 						Data: []apimodels.AlertQuery{
 							{
@@ -2996,7 +2995,7 @@ func TestIntegrationAlertRuleCRUD(t *testing.T) {
 			},
 			{
 				desc:      "alert rule with too long rulegroup",
-				rulegroup: getLongString(t, ngstore.AlertRuleMaxTitleLength+1),
+				rulegroup: getLongString(t, ngmodels.AlertRuleMaxTitleLength+1),
 				rule: apimodels.PostableExtendedRuleNode{
 					ApiRuleNode: &apimodels.ApiRuleNode{
 						For:         &interval,

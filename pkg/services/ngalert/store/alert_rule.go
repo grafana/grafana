@@ -27,12 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-// AlertRuleMaxTitleLength is the maximum length of the alert rule title
-const AlertRuleMaxTitleLength = 190
-
-// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
-const AlertRuleMaxRuleGroupNameLength = 190
-
 var (
 	ErrOptimisticLock = errors.New("version conflict while updating a record in the database with optimistic locking")
 )
@@ -525,8 +519,8 @@ func (st DBstore) preventIntermediateUniqueConstraintViolations(sess *db.Session
 
 		// Some defensive programming in case the temporary title is somehow persisted it will still be recognizable.
 		uniqueTempTitle := r.Title + u
-		if len(uniqueTempTitle) > AlertRuleMaxTitleLength {
-			uniqueTempTitle = r.Title[:AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
+		if len(uniqueTempTitle) > ngmodels.AlertRuleMaxTitleLength {
+			uniqueTempTitle = r.Title[:ngmodels.AlertRuleMaxTitleLength-len(u)] + uuid.New().String()
 		}
 
 		if updated, err := sess.ID(r.ID).Cols("title").Update(&alertRule{Title: uniqueTempTitle, Version: r.Version}); err != nil || updated == 0 {
@@ -929,13 +923,13 @@ func (st DBstore) validateAlertRule(alertRule ngmodels.AlertRule) error {
 	}
 
 	// enforce max name length.
-	if len(alertRule.Title) > AlertRuleMaxTitleLength {
-		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxTitleLength)
+	if len(alertRule.Title) > ngmodels.AlertRuleMaxTitleLength {
+		return fmt.Errorf("%w: name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, ngmodels.AlertRuleMaxTitleLength)
 	}
 
 	// enforce max rule group name length.
-	if len(alertRule.RuleGroup) > AlertRuleMaxRuleGroupNameLength {
-		return fmt.Errorf("%w: rule group name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, AlertRuleMaxRuleGroupNameLength)
+	if len(alertRule.RuleGroup) > ngmodels.AlertRuleMaxRuleGroupNameLength {
+		return fmt.Errorf("%w: rule group name length should not be greater than %d", ngmodels.ErrAlertRuleFailedValidation, ngmodels.AlertRuleMaxRuleGroupNameLength)
 	}
 
 	return nil

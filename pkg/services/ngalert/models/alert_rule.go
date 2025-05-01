@@ -29,6 +29,12 @@ import (
 	"github.com/grafana/grafana/pkg/util/cmputil"
 )
 
+// AlertRuleMaxRuleGroupNameLength is the maximum length of the alert rule group name
+const AlertRuleMaxRuleGroupNameLength = 190
+
+// AlertRuleMaxTitleLength is the maximum length of the alert rule title
+const AlertRuleMaxTitleLength = 190
+
 var (
 	// ErrAlertRuleNotFound is an error for an unknown alert rule.
 	ErrAlertRuleNotFound = fmt.Errorf("could not find alert rule")
