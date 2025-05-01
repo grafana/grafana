@@ -18,6 +18,7 @@ import (
 // TODO: Should this accept a row limit and converters, like sqlutil.FrameFromRows?
 func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Schema) (*data.Frame, error) {
 	f := &data.Frame{}
+
 	// Create fields based on the schema
 	for _, col := range schema {
 		fT, err := MySQLColToFieldType(col)
@@ -31,6 +32,13 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 
 	// Iterate through the rows and append data to fields
 	for {
+		// Check for context cancellation or timeout
+		select {
+		case <-ctx.Context.Done():
+			return nil, ctx.Context.Err()
+		default:
+		}
+
 		row, err := iter.Next(ctx)
 		if errors.Is(err, io.EOF) {
 			break

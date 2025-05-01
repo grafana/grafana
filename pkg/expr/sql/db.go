@@ -5,6 +5,7 @@ package sql
 import (
 	"context"
 	"fmt"
+	"time"
 
 	sqle "github.com/dolthub/go-mysql-server"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -67,6 +68,10 @@ func (db *DB) QueryFrames(ctx context.Context, name string, query string, frames
 
 	pro := NewFramesDBProvider(frames)
 	session := mysql.NewBaseSession()
+
+	timeout := 10 * time.Second
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
 	mCtx := mysql.NewContext(ctx, mysql.WithSession(session))
 
 	// Select the database in the context
@@ -82,15 +87,28 @@ func (db *DB) QueryFrames(ctx context.Context, name string, query string, frames
 		IsReadOnly: true,
 	})
 
+	contextErr := func(err error) error {
+		return fmt.Errorf("SQL expression for refId %v was cancelled or did not complete within the set timeout of %v: %w", name, timeout, err)
+	}
+
+	// Execute the query (planning + iterator construction)
 	schema, iter, _, err := engine.Query(mCtx, query)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, contextErr(ctx.Err())
+		}
 		return nil, WrapGoMySQLServerError(err)
 	}
 
+	// Convert the iterator into a Grafana data.Frame
 	f, err := convertToDataFrame(mCtx, iter, schema)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, contextErr(ctx.Err())
+		}
 		return nil, err
 	}
+
 	f.Name = name
 	f.RefID = name
 
