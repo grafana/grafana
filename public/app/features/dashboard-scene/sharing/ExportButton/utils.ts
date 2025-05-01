@@ -9,7 +9,7 @@ import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGrid
 
 export const GRID_CELL_HEIGHT = 30;
 export const GRID_CELL_MARGIN = 8;
-export const EXTRA_PADDING = 40;
+export const EXTRA_PADDING = 80;
 export const MIN_DASHBOARD_HEIGHT = 400;
 
 interface GridItem {
@@ -145,10 +145,16 @@ export async function generateDashboardImage({
       uid: dashboard.state.uid,
       currentQueryParams: window.location.search,
       render: true,
+      absolute: true,
       updateQuery: {
         width: Math.round(window.innerWidth * scale),
         height: Math.round(height * scale),
         format,
+        scale,
+        kiosk: true,
+        hideNav: true,
+        orgId: String(config.bootData.user.orgId),
+        fullPageImage: true,
       },
     });
 
@@ -159,22 +165,21 @@ export async function generateDashboardImage({
       })
     );
 
-    if (!isFetchResponse(response)) {
-      return {
-        blob: new Blob(),
-        error: 'Invalid response format',
-      };
-    }
-
     if (!response.ok) {
       return {
         blob: new Blob(),
         error: `Failed to generate image: ${response.status} ${response.statusText}`,
       };
     }
+    if (!(response.data instanceof Blob)) {
+      return {
+        blob: new Blob(),
+        error: 'Invalid response data format',
+      };
+    }
 
     return {
-      blob: new Blob([response.data], { type: `image/${format}` }),
+      blob: response.data,
     };
   } catch (error) {
     return {
@@ -182,16 +187,4 @@ export async function generateDashboardImage({
       error: error instanceof Error ? error.message : 'Failed to generate image',
     };
   }
-}
-
-function isFetchResponse(obj: unknown): obj is FetchResponse {
-  return (
-    typeof obj === 'object' &&
-    obj !== null &&
-    'ok' in obj &&
-    'status' in obj &&
-    'statusText' in obj &&
-    'data' in obj &&
-    obj.data instanceof ArrayBuffer
-  );
 }

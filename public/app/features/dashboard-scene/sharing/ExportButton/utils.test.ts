@@ -47,13 +47,6 @@ interface MockDashboard {
   };
 }
 
-interface MockResponse {
-  ok: boolean;
-  status?: number;
-  statusText?: string;
-  data: ArrayBuffer;
-}
-
 // Mock the dependencies
 jest.mock('@grafana/runtime', () => ({
   config: {
@@ -291,47 +284,63 @@ describe('Dashboard Export Image Utils', () => {
     });
 
     it('should calculate correct height based on DOM elements', () => {
-      const container = {
-        getBoundingClientRect: () => ({
-          top: 100,
-        }),
-      } as unknown as HTMLElement;
-
-      const expectedHeight = 800 - 100 + EXTRA_PADDING; // maxBottom - containerTop + padding
-      expect(calculateDOMBasedHeight(container)).toBe(expectedHeight);
-    });
-
-    it('should handle no panels found', () => {
-      document.querySelectorAll = jest.fn().mockReturnValue([]);
-
       const container = document.createElement('div');
       Object.defineProperty(container, 'getBoundingClientRect', {
         value: () => ({
           top: 100,
         }),
       });
+      Object.defineProperty(container, 'querySelectorAll', {
+        value: () => [
+          {
+            getBoundingClientRect: () => ({
+              bottom: 500,
+            }),
+          },
+          {
+            getBoundingClientRect: () => ({
+              bottom: 800,
+            }),
+          },
+        ],
+      });
 
-      const expectedHeight = 0 - 100 + EXTRA_PADDING;
+      const expectedHeight = 800 - 100 + EXTRA_PADDING; // maxBottom - containerTop + padding
       expect(calculateDOMBasedHeight(container)).toBe(expectedHeight);
     });
 
-    it('should handle panels with invalid getBoundingClientRect', () => {
-      document.querySelectorAll = jest.fn().mockReturnValue([
-        {
-          getBoundingClientRect: () => null,
-        },
-        {
-          getBoundingClientRect: () => ({
-            bottom: 800,
-          }),
-        },
-      ]);
-
+    it('should handle no panels found', () => {
       const container = document.createElement('div');
       Object.defineProperty(container, 'getBoundingClientRect', {
         value: () => ({
           top: 100,
         }),
+      });
+      Object.defineProperty(container, 'querySelectorAll', {
+        value: () => [],
+      });
+
+      expect(calculateDOMBasedHeight(container)).toBe(0);
+    });
+
+    it('should handle panels with invalid getBoundingClientRect', () => {
+      const container = document.createElement('div');
+      Object.defineProperty(container, 'getBoundingClientRect', {
+        value: () => ({
+          top: 100,
+        }),
+      });
+      Object.defineProperty(container, 'querySelectorAll', {
+        value: () => [
+          {
+            getBoundingClientRect: () => null,
+          },
+          {
+            getBoundingClientRect: () => ({
+              bottom: 800,
+            }),
+          },
+        ],
       });
 
       const expectedHeight = 800 - 100 + EXTRA_PADDING;
@@ -392,22 +401,23 @@ describe('Dashboard Export Image Utils', () => {
           top: 100,
         }),
       });
+      Object.defineProperty(container, 'querySelectorAll', {
+        value: () => [
+          {
+            getBoundingClientRect: () => ({
+              bottom: 1000,
+            }),
+          },
+        ],
+      });
 
-      // Mock document.querySelector and document.querySelectorAll
+      // Mock document.querySelector
       document.querySelector = jest.fn().mockImplementation((selector) => {
         if (selector === '.dashboard-container') {
           return container;
         }
         return null;
       });
-
-      document.querySelectorAll = jest.fn().mockReturnValue([
-        {
-          getBoundingClientRect: () => ({
-            bottom: 1000,
-          }),
-        },
-      ]);
 
       // Calculate expected heights
       const gridBasedHeight = 8 * GRID_CELL_HEIGHT + 7 * GRID_CELL_MARGIN + EXTRA_PADDING;
@@ -450,18 +460,10 @@ describe('Dashboard Export Image Utils', () => {
       },
     };
 
-    const mockResponse: MockResponse = {
-      ok: true,
-      data: new ArrayBuffer(8),
-    };
-
     beforeEach(() => {
       jest.clearAllMocks();
       jest.spyOn(console, 'error').mockImplementation(() => {});
       (config as { rendererAvailable: boolean }).rendererAvailable = true;
-      (getBackendSrv as jest.Mock).mockReturnValue({
-        fetch: jest.fn().mockReturnValue(of(mockResponse)),
-      });
     });
 
     afterEach(() => {
@@ -469,6 +471,16 @@ describe('Dashboard Export Image Utils', () => {
     });
 
     it('should generate image successfully', async () => {
+      const mockBlob = new Blob(['test'], { type: 'image/png' });
+      (getBackendSrv as jest.Mock).mockReturnValue({
+        fetch: jest.fn().mockReturnValue(
+          of({
+            ok: true,
+            data: mockBlob,
+          })
+        ),
+      });
+
       const result = await generateDashboardImage({
         dashboard: mockDashboard as unknown as DashboardScene,
         format: 'png',
@@ -476,8 +488,7 @@ describe('Dashboard Export Image Utils', () => {
       });
 
       expect(result.error).toBeUndefined();
-      expect(result.blob).toBeInstanceOf(Blob);
-      expect(result.blob.type).toBe('image/png');
+      expect(result.blob).toBe(mockBlob);
     });
 
     it('should handle renderer not available', async () => {
@@ -500,6 +511,7 @@ describe('Dashboard Export Image Utils', () => {
             ok: false,
             status: 500,
             statusText: 'Internal Server Error',
+            data: new ArrayBuffer(0),
           })
         ),
       });
@@ -510,6 +522,26 @@ describe('Dashboard Export Image Utils', () => {
       });
 
       expect(result.error).toBe('Failed to generate image: 500 Internal Server Error');
+      expect(result.blob).toBeInstanceOf(Blob);
+      expect(result.blob.size).toBe(0);
+    });
+
+    it('should handle invalid response data format', async () => {
+      (getBackendSrv as jest.Mock).mockReturnValue({
+        fetch: jest.fn().mockReturnValue(
+          of({
+            ok: true,
+            data: new ArrayBuffer(8), // Not a Blob
+          })
+        ),
+      });
+
+      const result = await generateDashboardImage({
+        dashboard: mockDashboard as unknown as DashboardScene,
+        format: 'png',
+      });
+
+      expect(result.error).toBe('Invalid response data format');
       expect(result.blob).toBeInstanceOf(Blob);
       expect(result.blob.size).toBe(0);
     });
