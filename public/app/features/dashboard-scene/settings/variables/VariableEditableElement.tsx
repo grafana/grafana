@@ -1,6 +1,7 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
 import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
@@ -16,7 +17,6 @@ import { VariableHideSelect } from '../../settings/variables/components/Variable
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
-import { selectors } from '@grafana/e2e-selectors';
 
 export class VariableEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;

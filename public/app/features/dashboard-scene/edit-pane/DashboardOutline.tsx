@@ -3,6 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -15,7 +16,6 @@ import { getDashboardSceneFor } from '../utils/utils';
 import { DashboardEditPane } from './DashboardEditPane';
 import { getEditableElementFor } from './shared';
 import { useOutlineRename } from './useOutlineRename';
-import { selectors } from '@grafana/e2e-selectors';
 
 export interface Props {
   editPane: DashboardEditPane;

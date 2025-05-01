@@ -3,6 +3,7 @@ import { Resizable } from 're-resizable';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import {
   ElementSelectionContextItem,
@@ -30,7 +31,6 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from './shared';
 import { useEditableElement } from './useEditableElement';
-import { selectors } from '@grafana/e2e-selectors';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;

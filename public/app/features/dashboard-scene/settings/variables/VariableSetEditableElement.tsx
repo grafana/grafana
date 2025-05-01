@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -15,7 +16,6 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../../sc
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
-import { selectors } from '@grafana/e2e-selectors';
 
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
