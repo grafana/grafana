@@ -54,19 +54,23 @@ export function TemplateDataDocs() {
           </>
         }
         dataItems={GlobalTemplateData}
-        typeRenderer={(type) =>
-          type === '[]Alert' ? (
-            <PopupCard content={AlertTemplateDataTable}>
-              <div className={styles.interactiveType}>{type}</div>
-            </PopupCard>
-          ) : type === 'KeyValue' ? (
-            <PopupCard content={<KeyValueTemplateDataTable />}>
-              <div className={styles.interactiveType}>{type}</div>
-            </PopupCard>
-          ) : (
-            type
-          )
-        }
+        typeRenderer={(type) => {
+          if (type === '[]Alert') {
+            return (
+              <PopupCard content={AlertTemplateDataTable}>
+                <div className={styles.interactiveType}>{type}</div>
+              </PopupCard>
+            );
+          }
+          if (type === 'KeyValue') {
+            return (
+              <PopupCard content={<KeyValueTemplateDataTable />}>
+                <div className={styles.interactiveType}>{type}</div>
+              </PopupCard>
+            );
+          }
+          return type;
+        }}
       />
     </Stack>
   );

@@ -8,6 +8,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -138,7 +139,7 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 				continue
 			}
 			for group, items := range grv {
-				for resource := range items {
+				for resource, latestRV := range items {
 					// If we haven't seen this resource before, we start from 0.
 					if _, ok := since[group]; !ok {
 						since[group] = make(map[string]int64)
@@ -147,7 +148,17 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 						since[group][resource] = 0
 					}
 
-					// Poll for new events.
+					// We don't need to poll if the RV hasn't changed.
+					if since[group][resource] >= latestRV {
+						p.log.Debug("polling for resource skipped",
+							"group", group,
+							"resource", resource,
+							"latestKnownRV", since[group][resource],
+							"latestFetchedRV", latestRV)
+						continue
+					}
+
+					// Poll for new events since the last known RV.
 					next, err := p.poll(ctx, group, resource, since[group][resource], stream)
 					if err != nil {
 						p.log.Error("polling for resource", "err", err)

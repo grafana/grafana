@@ -48,6 +48,7 @@ module.exports = [
       'scripts/grafana-server/tmp',
       '!.betterer.eslint.config.js',
       'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
+      'public/build-swagger', // swagger build output
     ],
   },
   // Conditionally run the betterer rules if enabled in dev's config
@@ -132,6 +133,7 @@ module.exports = [
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
       'unicorn/no-empty-file': 'error',
+      'no-constant-condition': 'error',
     },
   },
   {
@@ -268,6 +270,7 @@ module.exports = [
       'react/self-closing-comp': 'error',
       'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
+      'no-nested-ternary': 'error',
     },
   },
   {
