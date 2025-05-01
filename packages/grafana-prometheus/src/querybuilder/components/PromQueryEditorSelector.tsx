@@ -91,8 +91,7 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
 
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
-  // This should be filled in from the defaults by now.
-   // Pull in the defaults once
+  // This should be filled in from the defaults by now.. Pull in the defaults once
   const initial = getQueryWithDefaults(props.query, app, defaultEditor);
   // Track mode locally so it never gets yanked out from under us
   const [editorMode, setEditorMode] = useState<QueryEditorMode>(initial.editorMode!);
