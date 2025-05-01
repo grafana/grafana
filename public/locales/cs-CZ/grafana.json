@@ -21,7 +21,9 @@
     "permission-list-item": {
       "inherited": "Zděděno ze složky",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "Přidat oprávnění",
@@ -42,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -70,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -128,6 +136,12 @@
       "test-mapping-heading": "Testovat mapování uživatele",
       "test-mapping-run-button": "Spustit"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -161,6 +175,9 @@
       "title": "Synchronizace LDAP"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -284,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "Nikdy",
-      "no-licensed-roles": "Nepřiřazeno"
+      "no-licensed-roles": "Nepřiřazeno",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -416,11 +435,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -452,6 +469,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -547,6 +565,9 @@
       "user-id": "ID uživatele {{uid}}",
       "warning-restore-manually": "Ručně obnovujete starou verzi tohoto pravidla výstrahy. Před uložením definice pravidla si pečlivě přečtěte změny.",
       "warning-restore-manually-title": "Ruční obnovení pravidla"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -659,6 +680,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -790,6 +814,9 @@
     "contactPointFilter": {
       "label": "Kontaktní bod"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "Kopírovat „{{label}}“ do schránky",
     "create-metadata": {
       "view-dashboard": "",
@@ -818,6 +845,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -839,9 +870,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -877,6 +910,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "",
       "pending-period": "",
@@ -907,9 +943,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -941,7 +986,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -1192,6 +1236,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1363,7 +1410,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "Spravovat oprávnění",
@@ -1456,6 +1504,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1611,6 +1660,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1713,6 +1765,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "Tento zdroj byl zajištěn prostřednictvím {{provenance}} a nelze ho upravovat přes uživatelské rozhraní",
@@ -1951,14 +2006,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "Zastavit výstrahy, když je přes",
-          "stop-alerting-bellow": "Zastavit výstrahy, když je pod",
-          "stop-alerting-equal": "Zastavit výstrahy, když se rovná",
-          "stop-alerting-inside-range": "Zastavit výstrahy, když je v rozsahu",
-          "stop-alerting-less": "Zastavit výstrahy, když je méně než",
-          "stop-alerting-more": "Zastavit výstrahy, když je více než",
-          "stop-alerting-not-equal": "Zastavit výstrahy, když se nerovná",
-          "stop-alerting-outside-range": "Zastavit výstrahy, když je mimo rozsah",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "Vlastní práh obnovy"
         }
       }
@@ -2062,7 +2117,10 @@
       "for": "",
       "na": "",
       "paused": "Pozastaveno",
-      "recording-rule": "Pravidlo nahrávání"
+      "recording-rule": "Pravidlo nahrávání",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2308,6 +2366,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2331,7 +2391,7 @@
       },
       "misconfigured-badge-text": "Nesprávně nakonfigurováno",
       "misconfigured-warning": "Tato šablona je nesprávně nakonfigurována.",
-      "misconfigured-warning-details": "Šablony musí být definovány v oddílech <1></1> a <4></4> konfigurace správce výstrah."
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2375,6 +2435,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2476,6 +2540,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -4196,7 +4261,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4256,6 +4323,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4609,6 +4677,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4765,6 +4834,9 @@
       "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel": {
+      "content-streaming": ""
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
@@ -4965,6 +5037,7 @@
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -5043,7 +5116,8 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
@@ -5157,7 +5231,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "Přeskočit",
-      "submit-button": "Odeslat"
+      "submit-button": "Odeslat",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "Zapomněli jste uživatelské jméno nebo e-mail? Obraťte se na správce Grafany.",
     "email-sent": "Na e-mailovou adresu byl odeslán e-mail s odkazem na obnovení. Brzy byste ho měli obdržet.",
@@ -5214,7 +5289,8 @@
     "action-editor": {
       "button": {
         "confirm": "Potvrdit",
-        "confirm-action": "Potvrdit akci"
+        "confirm-action": "Potvrdit akci",
+        "style": ""
       },
       "inline": {
         "add-action": "Přidat akci",
@@ -5421,7 +5497,11 @@
       "previous-page": "předchozí strana"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "Nabídka pro panel {{ title }}",
@@ -6013,7 +6093,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "další",
-      "see-details": "Zobrazit podrobnosti protokolu"
+      "see-details": "Zobrazit podrobnosti protokolu",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -6990,7 +7071,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "Nejsou k dispozici žádné aktualizace",
@@ -6999,7 +7081,7 @@
         "available-header": "Dostupné",
         "button": "Aktualizovat vše ({{length}})",
         "cloud-update-message": "*Může trvat několik minut, než budou pluginy dostupné.",
-        "error": "Chyba při aktualizaci pluginu:",
+        "error": "",
         "error-status-text": "nezdařilo se – viz chybová hlášení",
         "header": "Následující pluginy mají k dispozici aktualizaci",
         "installed-header": "Nainstalované",
@@ -7208,6 +7290,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
     },
     "user-organizations": {
       "text-loading-organizations": ""
@@ -8152,10 +8237,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -8561,7 +8648,7 @@
     "range-content": {
       "apply-button": "Použít časový rozsah",
       "default-error": "",
-      "fiscal-year": "Fiskální rok",
+      "fiscal-year": "",
       "from-input": "Od",
       "open-input-calendar": "Otevřít kalendář",
       "range-error": "„Od“ nemůže být po „Do“",
@@ -9013,6 +9100,7 @@
       "loading": "Načítání…",
       "no-unknowns": "Nebyly nalezeny žádné přejmenované nebo chybějící proměnné.",
       "renamed-or-missing-variables": "Přejmenované nebo chybějící proměnné",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "Proměnná"
     },
     "variable-check-indicator": {
