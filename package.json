@@ -14,6 +14,8 @@
     "e2e:old-arch": "./e2e/start-and-run-suite old-arch",
     "e2e:schema-v2": "./e2e/start-and-run-suite dashboards-schema-v2",
     "e2e:dashboards-search": "./e2e/start-and-run-suite dashboards-search",
+    "e2e:dashboards-edit-v2": "./e2e/start-and-run-suite dashboards-edit-v2",
+    "e2e:dashboards-edit-v2:dev": "./e2e/start-and-run-suite dashboards-edit-v2 dev",
     "e2e:debug": "./e2e/start-and-run-suite debug",
     "e2e:dev": "./e2e/start-and-run-suite dev",
     "e2e:benchmark:live": "./e2e/start-and-run-suite benchmark live",

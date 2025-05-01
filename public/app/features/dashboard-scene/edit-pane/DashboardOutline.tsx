@@ -3,6 +3,7 @@ import { sortBy } from 'lodash';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -88,7 +89,12 @@ function DashboardOutlineNode({
         onPointerDown={onNodeClicked}
       >
         {elementInfo.isContainer && (
-          <button role="treeitem" className={styles.angleButton} onPointerDown={onToggleCollapse}>
+          <button
+            role="treeitem"
+            className={styles.angleButton}
+            onPointerDown={onToggleCollapse}
+            data-testid={selectors.components.PanelEditor.Outline.node(instanceName)}
+          >
             <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
           </button>
         )}
@@ -96,6 +102,7 @@ function DashboardOutlineNode({
           role="button"
           className={cx(styles.nodeName, isCloned && styles.nodeNameClone)}
           onDoubleClick={outlineRename.onNameDoubleClicked}
+          data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
         >
           <Icon size="sm" name={elementInfo.icon} />
           {outlineRename.isRenaming ? (
