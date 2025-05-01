@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -15,7 +15,7 @@ import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ShareExportTab } from '../ShareExportTab';
 
-import { generateDashboardImage } from './utils';
+import { generateDashboardImage, ImageGenerationError } from './utils';
 
 enum ImageFormat {
   PNG = 'png',
@@ -25,6 +25,7 @@ enum ImageFormat {
 type ErrorState = {
   message: string;
   title: string;
+  code?: ImageGenerationError;
 } | null;
 
 export class ExportAsImage extends ShareExportTab {
@@ -62,6 +63,8 @@ function ImagePreview({ imageBlob, isLoading }: { imageBlob: Blob | null; isLoad
       alt={t('share-modal.image.preview', 'Preview')}
       className={styles.image}
       data-testid={selectors.components.ExportImage.preview.image}
+      aria-label={t('share-modal.image.preview-aria', 'Generated dashboard image preview')}
+      role="img"
     />
   );
 }
@@ -108,6 +111,15 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
 
   const dashboard = getDashboardSceneFor(model);
 
+  // Clean up object URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      if (imageBlob) {
+        URL.revokeObjectURL(URL.createObjectURL(imageBlob));
+      }
+    };
+  }, [imageBlob]);
+
   const onFormatChange = (value: ImageFormat) => {
     setFormat(value);
   };
@@ -128,7 +140,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       }
 
       setImageBlob(result.blob);
-      DashboardInteractions.imageGeneration({
+      DashboardInteractions.generateDashboardImageClicked({
         format,
         scale: config.rendererDefaultImageScale || 1,
         shareResource: 'dashboard',
@@ -136,7 +148,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       });
     } catch (error) {
       console.error('Error exporting image:', error);
-      DashboardInteractions.imageGeneration({
+      DashboardInteractions.generateDashboardImageClicked({
         format,
         scale: config.rendererDefaultImageScale || 1,
         shareResource: 'dashboard',
@@ -161,7 +173,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     const name = dashboard.state.title;
     saveAs(imageBlob, `${name}-${time}.${format}`);
 
-    DashboardInteractions.imageDownload({
+    DashboardInteractions.downloadDashboardImageClicked({
       format,
       fileName: `${name}-${time}.${format}`,
       shareResource: 'dashboard',

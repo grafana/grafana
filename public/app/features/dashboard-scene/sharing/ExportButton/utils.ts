@@ -7,6 +7,16 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 
 /**
+ * Error types for image generation
+ */
+export enum ImageGenerationError {
+  RENDERER_NOT_AVAILABLE = 'renderer_not_available',
+  GENERATION_FAILED = 'generation_failed',
+  INVALID_RESPONSE = 'invalid_response',
+  NETWORK_ERROR = 'network_error',
+}
+
+/**
  * Constants for grid layout calculations
  */
 export const GRID_CELL_HEIGHT = 30; // Height of a single grid cell in pixels
@@ -34,6 +44,7 @@ export interface ImageGenerationOptions {
 export interface ImageGenerationResult {
   blob: Blob;
   error?: string;
+  errorCode?: ImageGenerationError;
 }
 
 /**
@@ -92,6 +103,7 @@ export async function generateDashboardImage({
     return {
       blob: new Blob(),
       error: 'Image renderer plugin not installed',
+      errorCode: ImageGenerationError.RENDERER_NOT_AVAILABLE,
     };
   }
 
@@ -125,6 +137,7 @@ export async function generateDashboardImage({
       return {
         blob: new Blob(),
         error: `Failed to generate image: ${response.status} ${response.statusText}`,
+        errorCode: ImageGenerationError.GENERATION_FAILED,
       };
     }
 
@@ -132,6 +145,7 @@ export async function generateDashboardImage({
       return {
         blob: new Blob(),
         error: 'Invalid response data format',
+        errorCode: ImageGenerationError.INVALID_RESPONSE,
       };
     }
 
@@ -142,6 +156,7 @@ export async function generateDashboardImage({
     return {
       blob: new Blob(),
       error: error instanceof Error ? error.message : 'Failed to generate image',
+      errorCode: ImageGenerationError.NETWORK_ERROR,
     };
   }
 }

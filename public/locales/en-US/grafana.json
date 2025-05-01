@@ -8236,7 +8236,8 @@
       "format-label": "Format",
       "generate-button": "Generate image",
       "info-text": "Save this dashboard as an image file. The image will be captured at high resolution.",
-      "preview": "Preview"
+      "preview": "Preview",
+      "preview-aria": "Generated dashboard image preview"
     },
     "library": {
       "info": "Create library panel."
