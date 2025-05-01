@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, reportInteraction } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, Field, LoadingBar, RadioButtonGroup, Alert, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -128,9 +128,21 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       }
 
       setImageBlob(result.blob);
-      DashboardInteractions.toolbarShareClick();
+      reportInteraction('dashboards_image_generation', {
+        format,
+        scale: config.rendererDefaultImageScale || 1,
+        shareResource: 'dashboard',
+        success: true,
+      });
     } catch (error) {
       console.error('Error exporting image:', error);
+      reportInteraction('dashboards_image_generation', {
+        format,
+        scale: config.rendererDefaultImageScale || 1,
+        shareResource: 'dashboard',
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate image',
+      });
       setError({
         title: t('share-modal.image.error-title', 'Failed to generate image'),
         message: error instanceof Error ? error.message : 'Failed to generate image',
@@ -148,6 +160,12 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     const time = new Date().getTime();
     const name = dashboard.state.title;
     saveAs(imageBlob, `${name}-${time}.${format}`);
+
+    reportInteraction('dashboards_image_download', {
+      format,
+      fileName: `${name}-${time}.${format}`,
+      shareResource: 'dashboard',
+    });
   };
 
   return (
