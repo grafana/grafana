@@ -41,7 +41,6 @@ describe('ConstantVariableEditor', () => {
     const options = getConstantVariableOptions(constantVar);
     expect(options).toHaveLength(1);
   });
-
 });
 
 async function buildTestScene() {
