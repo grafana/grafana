@@ -1,6 +1,7 @@
 import { lastValueFrom } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
+import { SceneGridRow } from '@grafana/scenes';
 import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -61,12 +62,22 @@ function isDashboardGridItem(obj: unknown): obj is DashboardGridItem {
 }
 
 /**
+ * Type guard for SceneGridRow
+ */
+function isSceneGridRow(obj: unknown): obj is SceneGridRow {
+  return (
+    obj instanceof SceneGridRow ||
+    (typeof obj === 'object' && obj !== null && 'constructor' in obj && obj.constructor?.name === 'SceneGridRow')
+  );
+}
+
+/**
  * Calculates height based on grid layout
  * @param layout The grid layout manager
  * @returns The calculated height in pixels
  */
 export function calculateGridBasedHeight(layout: DefaultGridLayoutManager): number {
-  const gridItems = layout.state.grid.state.children.filter(isDashboardGridItem);
+  const gridItems = layout.state.grid.state.children;
 
   if (gridItems.length === 0) {
     return EXTRA_PADDING;
@@ -74,11 +85,56 @@ export function calculateGridBasedHeight(layout: DefaultGridLayoutManager): numb
 
   let maxBottom = 0;
 
-  for (const item of gridItems) {
+  // Helper function to calculate height for a single item
+  const calculateItemHeight = (item: DashboardGridItem | SceneGridRow) => {
     const height = item.state.height ?? 0;
     const y = item.state.y ?? 0;
-    const bottom = y + height;
-    maxBottom = Math.max(maxBottom, bottom);
+    let bottom = y + height;
+
+    // If this is a row, calculate its total height including children
+    if (isSceneGridRow(item)) {
+      // Add 1 for the row header
+      bottom = y + 1;
+
+      // Calculate height of row contents
+      for (const child of item.state.children) {
+        if (isDashboardGridItem(child)) {
+          const childHeight = child.state.height ?? 0;
+          const childY = child.state.y ?? 0;
+          bottom = Math.max(bottom, y + 1 + childY + childHeight);
+        }
+      }
+
+      // If row is collapsed, only return header height
+      if (item.state.isCollapsed) {
+        return y + 1;
+      }
+    } else if (isDashboardGridItem(item)) {
+      // If this is a grid item with repeated panels, calculate its total height
+      if (item.state.repeatedPanels?.length) {
+        const direction = item.getRepeatDirection();
+        const itemCount = item.state.repeatedPanels.length;
+        const maxPerRow = item.getMaxPerRow();
+        const itemHeight = item.state.itemHeight ?? 10;
+
+        if (direction === 'h') {
+          const rowCount = Math.ceil(itemCount / maxPerRow);
+          bottom = y + rowCount * itemHeight;
+        } else {
+          bottom = y + itemCount * itemHeight;
+        }
+      }
+    }
+
+    return bottom;
+  };
+
+  // Calculate height for each item
+  for (const item of gridItems) {
+    if (isDashboardGridItem(item) || isSceneGridRow(item)) {
+      const itemHeight = calculateItemHeight(item);
+      maxBottom = Math.max(maxBottom, itemHeight);
+    }
   }
 
   return maxBottom * GRID_CELL_HEIGHT + (maxBottom - 1) * GRID_CELL_MARGIN + EXTRA_PADDING;
@@ -90,7 +146,8 @@ export function calculateGridBasedHeight(layout: DefaultGridLayoutManager): numb
  * @returns The calculated height in pixels
  */
 export function calculateDOMBasedHeight(container: HTMLElement): number {
-  const panels = Array.from(container.querySelectorAll('.panel-container'));
+  // Get all panel containers and row containers
+  const panels = Array.from(container.querySelectorAll('.panel-container, .dashboard-row'));
   if (panels.length === 0) {
     return 0;
   }
@@ -102,7 +159,18 @@ export function calculateDOMBasedHeight(container: HTMLElement): number {
     try {
       const rect = panel.getBoundingClientRect();
       if (rect) {
-        maxBottom = Math.max(maxBottom, rect.bottom);
+        // For row containers, also check their children
+        if (panel.classList.contains('dashboard-row')) {
+          const rowPanels = Array.from(panel.querySelectorAll('.panel-container'));
+          for (const rowPanel of rowPanels) {
+            const rowRect = rowPanel.getBoundingClientRect();
+            if (rowRect) {
+              maxBottom = Math.max(maxBottom, rowRect.bottom);
+            }
+          }
+        } else {
+          maxBottom = Math.max(maxBottom, rect.bottom);
+        }
       }
     } catch (error) {
       console.warn('Error getting panel dimensions:', error);

@@ -21,9 +21,20 @@ interface MockGridItem {
   state: {
     height?: number;
     y?: number;
+    repeatedPanels?: number[];
+    itemHeight?: number;
   };
   constructor: {
     name: string;
+  };
+  getRepeatDirection?: () => 'h' | 'v';
+  getMaxPerRow?: () => number;
+}
+
+interface MockRowItem extends MockGridItem {
+  state: MockGridItem['state'] & {
+    children: MockGridItem[];
+    isCollapsed?: boolean;
   };
 }
 
@@ -31,7 +42,7 @@ interface MockLayout {
   state: {
     grid: {
       state: {
-        children: MockGridItem[];
+        children: Array<MockGridItem | MockRowItem>;
       };
     };
   };
@@ -60,19 +71,19 @@ jest.mock('@grafana/runtime', () => ({
       },
     },
     rendererDefaultImageScale: 1,
-  },
+  } as typeof config,
   getBackendSrv: jest.fn(),
 }));
 
 jest.mock('../../scene/DashboardScene', () => ({
   DashboardScene: class DashboardScene {
-    state = {};
+    state: Record<string, unknown> = {};
   },
 }));
 
 jest.mock('../../scene/layout-default/DashboardGridItem', () => ({
   DashboardGridItem: class DashboardGridItem {
-    state = {};
+    state: Record<string, unknown> = {};
   },
 }));
 
@@ -81,7 +92,7 @@ jest.mock('../../scene/layout-default/DefaultGridLayoutManager', () => ({
     state = {
       grid: {
         state: {
-          children: [],
+          children: [] as Array<MockGridItem | MockRowItem>,
         },
       },
     };
@@ -89,7 +100,17 @@ jest.mock('../../scene/layout-default/DefaultGridLayoutManager', () => ({
 }));
 
 jest.mock('app/features/dashboard-scene/utils/getDashboardUrl', () => ({
-  getDashboardUrl: jest.fn().mockReturnValue('http://test-url'),
+  getDashboardUrl: jest
+    .fn()
+    .mockImplementation((params: { updateQuery?: Record<string, string | number | boolean> }) => {
+      const url = new URL('http://test-url');
+      if (params.updateQuery) {
+        Object.entries(params.updateQuery).forEach(([key, value]) => {
+          url.searchParams.append(key, String(value));
+        });
+      }
+      return url.toString();
+    }),
 }));
 
 // Mock location
@@ -101,464 +122,323 @@ Object.defineProperty(window, 'location', {
 });
 
 describe('Dashboard Export Image Utils', () => {
+  let consoleWarnSpy: jest.SpyInstance;
+
+  beforeEach(() => {
+    consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    document.body.innerHTML = '';
+  });
+
+  afterEach(() => {
+    consoleWarnSpy.mockRestore();
+  });
+
   describe('calculateGridBasedHeight', () => {
-    it('should calculate correct height for single panel', () => {
-      const gridItem: MockGridItem = {
+    it('should handle empty grid and return extra padding', () => {
+      const layout: MockLayout = {
+        state: { grid: { state: { children: [] } } },
+        constructor: { name: 'DefaultGridLayoutManager' },
+      };
+
+      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(EXTRA_PADDING);
+    });
+
+    it('should calculate correct height for grid items with various configurations', () => {
+      const gridItems: MockGridItem[] = [
+        {
+          state: { height: 8, y: 0 },
+          constructor: { name: 'DashboardGridItem' },
+        },
+        {
+          state: { height: 6, y: 9 },
+          constructor: { name: 'DashboardGridItem' },
+        },
+        {
+          state: { height: undefined, y: 16 }, // Test undefined height
+          constructor: { name: 'DashboardGridItem' },
+        },
+        {
+          state: { height: 4, y: undefined }, // Test undefined y
+          constructor: { name: 'DashboardGridItem' },
+        },
+      ];
+
+      const layout: MockLayout = {
+        state: { grid: { state: { children: gridItems } } },
+        constructor: { name: 'DefaultGridLayoutManager' },
+      };
+
+      const expectedHeight = 16 * GRID_CELL_HEIGHT + 15 * GRID_CELL_MARGIN + EXTRA_PADDING;
+      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedHeight);
+    });
+
+    it('should handle row with children and collapsed state', () => {
+      const rowItem: MockRowItem = {
         state: {
-          height: 8,
+          height: 1,
           y: 0,
+          children: [
+            {
+              state: { height: 8, y: 0 },
+              constructor: { name: 'DashboardGridItem' },
+            },
+          ],
+          isCollapsed: true,
         },
-        constructor: {
-          name: 'DashboardGridItem',
-        },
+        constructor: { name: 'SceneGridRow' },
       };
 
       const layout: MockLayout = {
-        state: {
-          grid: {
-            state: {
-              children: [gridItem],
-            },
-          },
-        },
-        constructor: {
-          name: 'DefaultGridLayoutManager',
-        },
+        state: { grid: { state: { children: [rowItem] } } },
+        constructor: { name: 'DefaultGridLayoutManager' },
       };
 
-      const expectedHeight = 8 * GRID_CELL_HEIGHT + 7 * GRID_CELL_MARGIN + EXTRA_PADDING;
-      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedHeight);
+      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(
+        GRID_CELL_HEIGHT + EXTRA_PADDING
+      );
+
+      // Test expanded row
+      rowItem.state.isCollapsed = false;
+      const expectedExpandedHeight = 9 * GRID_CELL_HEIGHT + 8 * GRID_CELL_MARGIN + EXTRA_PADDING;
+      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedExpandedHeight);
     });
 
-    it('should calculate correct height for multiple panels', () => {
-      const gridItems: MockGridItem[] = [
-        {
+    it('should handle repeated panels in both directions', () => {
+      const testRepeatConfig = (direction: 'h' | 'v', expectedMultiplier: number) => {
+        const gridItem: MockGridItem = {
           state: {
             height: 8,
             y: 0,
+            repeatedPanels: [1, 2, 3, 4, 5],
+            itemHeight: 10,
           },
-          constructor: {
-            name: 'DashboardGridItem',
-          },
-        },
-        {
-          state: {
-            height: 8,
-            y: 9,
-          },
-          constructor: {
-            name: 'DashboardGridItem',
-          },
-        },
-      ];
+          constructor: { name: 'DashboardGridItem' },
+          getRepeatDirection: () => direction,
+          getMaxPerRow: () => 2,
+        };
 
-      const layout: MockLayout = {
-        state: {
-          grid: {
-            state: {
-              children: gridItems,
-            },
-          },
-        },
-        constructor: {
-          name: 'DefaultGridLayoutManager',
-        },
+        const layout: MockLayout = {
+          state: { grid: { state: { children: [gridItem] } } },
+          constructor: { name: 'DefaultGridLayoutManager' },
+        };
+
+        const expectedHeight =
+          expectedMultiplier * GRID_CELL_HEIGHT + (expectedMultiplier - 1) * GRID_CELL_MARGIN + EXTRA_PADDING;
+        expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedHeight);
       };
 
-      const expectedHeight = 17 * GRID_CELL_HEIGHT + 16 * GRID_CELL_MARGIN + EXTRA_PADDING;
-      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedHeight);
-    });
-
-    it('should handle empty grid', () => {
-      const layout: MockLayout = {
-        state: {
-          grid: {
-            state: {
-              children: [],
-            },
-          },
-        },
-        constructor: {
-          name: 'DefaultGridLayoutManager',
-        },
-      };
-
-      const expectedHeight = EXTRA_PADDING;
-      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedHeight);
-    });
-
-    it('should handle panels with missing height or y values', () => {
-      const gridItems: MockGridItem[] = [
-        {
-          state: {
-            height: undefined,
-            y: 0,
-          },
-          constructor: {
-            name: 'DashboardGridItem',
-          },
-        },
-        {
-          state: {
-            height: 8,
-            y: undefined,
-          },
-          constructor: {
-            name: 'DashboardGridItem',
-          },
-        },
-      ];
-
-      const layout: MockLayout = {
-        state: {
-          grid: {
-            state: {
-              children: gridItems,
-            },
-          },
-        },
-        constructor: {
-          name: 'DefaultGridLayoutManager',
-        },
-      };
-
-      const expectedHeight = 8 * GRID_CELL_HEIGHT + 7 * GRID_CELL_MARGIN + EXTRA_PADDING;
-      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedHeight);
-    });
-
-    it('should handle non-grid items in children', () => {
-      const gridItems: MockGridItem[] = [
-        {
-          state: {
-            height: 8,
-            y: 0,
-          },
-          constructor: {
-            name: 'DashboardGridItem',
-          },
-        },
-        {
-          state: {
-            height: 10,
-            y: 9,
-          },
-          constructor: {
-            name: 'NonGridItem',
-          },
-        },
-      ];
-
-      const layout: MockLayout = {
-        state: {
-          grid: {
-            state: {
-              children: gridItems,
-            },
-          },
-        },
-        constructor: {
-          name: 'DefaultGridLayoutManager',
-        },
-      };
-
-      const expectedHeight = 8 * GRID_CELL_HEIGHT + 7 * GRID_CELL_MARGIN + EXTRA_PADDING;
-      expect(calculateGridBasedHeight(layout as unknown as DefaultGridLayoutManager)).toBe(expectedHeight);
+      testRepeatConfig('h', 30); // 3 rows (ceil(5/2)) * 10
+      testRepeatConfig('v', 50); // 5 items * 10
     });
   });
 
   describe('calculateDOMBasedHeight', () => {
-    beforeEach(() => {
-      // Mock document.querySelectorAll
-      document.querySelectorAll = jest.fn().mockReturnValue([
-        {
-          getBoundingClientRect: () => ({
-            bottom: 500,
-          }),
-        },
-        {
-          getBoundingClientRect: () => ({
-            bottom: 800,
-          }),
-        },
-      ]);
+    const createMockRect = (top: number, bottom: number) => ({
+      top,
+      bottom,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
     });
 
-    it('should calculate correct height based on DOM elements', () => {
+    it('should handle empty container and return 0', () => {
       const container = document.createElement('div');
-      Object.defineProperty(container, 'getBoundingClientRect', {
-        value: () => ({
-          top: 100,
-        }),
-      });
-      Object.defineProperty(container, 'querySelectorAll', {
-        value: () => [
-          {
-            getBoundingClientRect: () => ({
-              bottom: 500,
-            }),
-          },
-          {
-            getBoundingClientRect: () => ({
-              bottom: 800,
-            }),
-          },
-        ],
-      });
-
-      const expectedHeight = 800 - 100 + EXTRA_PADDING; // maxBottom - containerTop + padding
-      expect(calculateDOMBasedHeight(container)).toBe(expectedHeight);
-    });
-
-    it('should handle no panels found', () => {
-      const container = document.createElement('div');
-      Object.defineProperty(container, 'getBoundingClientRect', {
-        value: () => ({
-          top: 100,
-        }),
-      });
-      Object.defineProperty(container, 'querySelectorAll', {
-        value: () => [],
-      });
+      container.className = 'dashboard-container';
+      document.body.appendChild(container);
 
       expect(calculateDOMBasedHeight(container)).toBe(0);
     });
 
-    it('should handle panels with invalid getBoundingClientRect', () => {
+    it('should calculate correct height for complex panel layouts', () => {
       const container = document.createElement('div');
-      Object.defineProperty(container, 'getBoundingClientRect', {
-        value: () => ({
-          top: 100,
-        }),
-      });
-      Object.defineProperty(container, 'querySelectorAll', {
-        value: () => [
-          {
-            getBoundingClientRect: () => null,
-          },
-          {
-            getBoundingClientRect: () => ({
-              bottom: 800,
-            }),
-          },
-        ],
-      });
+      container.className = 'dashboard-container';
+      document.body.appendChild(container);
 
-      const expectedHeight = 800 - 100 + EXTRA_PADDING;
-      expect(calculateDOMBasedHeight(container)).toBe(expectedHeight);
+      // Create a row with nested panels
+      const row = document.createElement('div');
+      row.className = 'dashboard-row';
+      container.appendChild(row);
+
+      const panel1 = document.createElement('div');
+      panel1.className = 'panel-container';
+      row.appendChild(panel1);
+
+      const panel2 = document.createElement('div');
+      panel2.className = 'panel-container';
+      row.appendChild(panel2);
+
+      // Create a standalone panel
+      const panel3 = document.createElement('div');
+      panel3.className = 'panel-container';
+      container.appendChild(panel3);
+
+      // Mock getBoundingClientRect for all elements
+      jest.spyOn(container, 'getBoundingClientRect').mockReturnValue(createMockRect(100, 400));
+      jest.spyOn(row, 'getBoundingClientRect').mockReturnValue(createMockRect(100, 300));
+      jest.spyOn(panel1, 'getBoundingClientRect').mockReturnValue(createMockRect(100, 250));
+      jest.spyOn(panel2, 'getBoundingClientRect').mockReturnValue(createMockRect(100, 300));
+      jest.spyOn(panel3, 'getBoundingClientRect').mockReturnValue(createMockRect(300, 400));
+
+      expect(calculateDOMBasedHeight(container)).toBe(300 + EXTRA_PADDING); // 400 - 100 + EXTRA_PADDING
+    });
+
+    it('should handle errors gracefully and continue processing', () => {
+      const container = document.createElement('div');
+      container.className = 'dashboard-container';
+      document.body.appendChild(container);
+
+      const panel1 = document.createElement('div');
+      panel1.className = 'panel-container';
+      container.appendChild(panel1);
+
+      const panel2 = document.createElement('div');
+      panel2.className = 'panel-container';
+      container.appendChild(panel2);
+
+      // Mock container getBoundingClientRect
+      jest.spyOn(container, 'getBoundingClientRect').mockReturnValue(createMockRect(0, 0));
+
+      // First panel throws error, second panel works
+      jest.spyOn(panel1, 'getBoundingClientRect').mockImplementation(() => {
+        throw new Error('Test error');
+      });
+      jest.spyOn(panel2, 'getBoundingClientRect').mockReturnValue(createMockRect(0, 200));
+
+      expect(calculateDOMBasedHeight(container)).toBe(200 + EXTRA_PADDING);
+      expect(consoleWarnSpy).toHaveBeenCalledWith('Error getting panel dimensions:', expect.any(Error));
     });
   });
 
   describe('calculateDashboardHeight', () => {
-    it('should return minimum height when no layout or DOM elements exist', () => {
-      const dashboard: MockDashboard = {
-        state: {
-          uid: 'test',
-          body: undefined,
-        },
-      };
-
-      document.querySelector = jest.fn().mockReturnValue(null);
-      expect(calculateDashboardHeight(dashboard as unknown as DashboardScene)).toBe(MIN_DASHBOARD_HEIGHT);
+    const createMockRect = (top: number, bottom: number) => ({
+      top,
+      bottom,
+      left: 0,
+      right: 0,
+      width: 0,
+      height: 0,
+      x: 0,
+      y: 0,
+      toJSON: () => {},
     });
 
-    it('should use maximum of grid and DOM based calculations', () => {
-      // Create a mock layout with a single panel
+    it('should return minimum height when no layout or container exists', () => {
+      const dashboard = { state: {} } as unknown as DashboardScene;
+      expect(calculateDashboardHeight(dashboard)).toBe(MIN_DASHBOARD_HEIGHT);
+    });
+
+    it('should use maximum of grid, DOM, and minimum heights', () => {
+      // Setup DOM height
+      const container = document.createElement('div');
+      container.className = 'dashboard-container';
+      document.body.appendChild(container);
+
+      const panel = document.createElement('div');
+      panel.className = 'panel-container';
+      container.appendChild(panel);
+
+      jest.spyOn(container, 'getBoundingClientRect').mockReturnValue(createMockRect(0, 500));
+      jest.spyOn(panel, 'getBoundingClientRect').mockReturnValue(createMockRect(0, 500));
+
+      // Setup grid height
       const gridItem: MockGridItem = {
-        state: {
-          height: 8,
-          y: 0,
-        },
-        constructor: {
-          name: 'DashboardGridItem',
-        },
+        state: { height: 8, y: 0 },
+        constructor: { name: 'DashboardGridItem' },
       };
 
       const layout: MockLayout = {
-        state: {
-          grid: {
-            state: {
-              children: [gridItem],
-            },
-          },
-        },
-        constructor: {
-          name: 'DefaultGridLayoutManager',
-        },
+        state: { grid: { state: { children: [gridItem] } } },
+        constructor: { name: 'DefaultGridLayoutManager' },
       };
 
-      // Create a mock dashboard with our layout
-      const dashboard: MockDashboard = {
-        state: {
-          uid: 'test',
-          body: layout,
-        },
-      };
+      const dashboard = {
+        state: { body: layout },
+      } as unknown as DashboardScene;
 
-      // Mock DOM elements
-      const container = document.createElement('div');
-      Object.defineProperty(container, 'getBoundingClientRect', {
-        value: () => ({
-          top: 100,
-        }),
-      });
-      Object.defineProperty(container, 'querySelectorAll', {
-        value: () => [
-          {
-            getBoundingClientRect: () => ({
-              bottom: 1000,
-            }),
-          },
-        ],
-      });
+      const gridHeight = 8 * GRID_CELL_HEIGHT + 7 * GRID_CELL_MARGIN + EXTRA_PADDING;
+      const domHeight = 500 + EXTRA_PADDING;
 
-      // Mock document.querySelector
-      document.querySelector = jest.fn().mockImplementation((selector) => {
-        if (selector === '.dashboard-container') {
-          return container;
-        }
-        return null;
-      });
-
-      // Calculate expected heights
-      const gridBasedHeight = 8 * GRID_CELL_HEIGHT + 7 * GRID_CELL_MARGIN + EXTRA_PADDING;
-      const domBasedHeight = 1000 - 100 + EXTRA_PADDING;
-      const expectedHeight = Math.max(gridBasedHeight, domBasedHeight);
-
-      const result = calculateDashboardHeight(dashboard as unknown as DashboardScene);
-      expect(result).toBe(expectedHeight);
-    });
-
-    it('should handle missing dashboard body', () => {
-      const dashboard: MockDashboard = {
-        state: {
-          uid: 'test',
-        },
-      };
-
-      document.querySelector = jest.fn().mockReturnValue(null);
-      expect(calculateDashboardHeight(dashboard as unknown as DashboardScene)).toBe(MIN_DASHBOARD_HEIGHT);
-    });
-
-    it('should handle invalid dashboard container', () => {
-      const dashboard: MockDashboard = {
-        state: {
-          uid: 'test',
-          body: undefined,
-        },
-      };
-
-      // Mock an invalid container that's not an HTMLElement
-      document.querySelector = jest.fn().mockReturnValue({} as Element);
-      expect(calculateDashboardHeight(dashboard as unknown as DashboardScene)).toBe(MIN_DASHBOARD_HEIGHT);
+      expect(calculateDashboardHeight(dashboard)).toBe(Math.max(gridHeight, domHeight, MIN_DASHBOARD_HEIGHT));
     });
   });
 
   describe('generateDashboardImage', () => {
-    const mockDashboard: MockDashboard = {
-      state: {
-        uid: 'test-uid',
-      },
-    };
-
     beforeEach(() => {
       jest.clearAllMocks();
-      jest.spyOn(console, 'error').mockImplementation(() => {});
+    });
+
+    it('should handle various error scenarios', async () => {
+      const testCases = [
+        {
+          setup: () => {
+            (config as { rendererAvailable: boolean }).rendererAvailable = false;
+          },
+          expectedError: 'Image renderer plugin not installed',
+        },
+        {
+          setup: () => {
+            (config as { rendererAvailable: boolean }).rendererAvailable = true;
+            (getBackendSrv as jest.Mock).mockReturnValue({
+              fetch: jest.fn().mockReturnValue(of({ ok: false, status: 500, statusText: 'Server Error' })),
+            });
+          },
+          expectedError: 'Failed to generate image: 500 Server Error',
+        },
+        {
+          setup: () => {
+            (getBackendSrv as jest.Mock).mockReturnValue({
+              fetch: jest.fn().mockReturnValue(of({ ok: true, data: 'invalid-data' })),
+            });
+          },
+          expectedError: 'Invalid response data format',
+        },
+        {
+          setup: () => {
+            (getBackendSrv as jest.Mock).mockReturnValue({
+              fetch: jest.fn().mockReturnValue(of(Promise.reject(new Error('Network error')))),
+            });
+          },
+          expectedError: 'Network error',
+        },
+      ];
+
+      const dashboard = {
+        state: { uid: 'test-uid' },
+      } as unknown as DashboardScene;
+
+      for (const testCase of testCases) {
+        testCase.setup();
+        const result = await generateDashboardImage({ dashboard });
+        expect(result.error).toBe(testCase.expectedError);
+        expect(result.blob).toBeInstanceOf(Blob);
+        expect(result.blob.size).toBe(0);
+      }
+    });
+
+    it('should generate image successfully with custom options', async () => {
       (config as { rendererAvailable: boolean }).rendererAvailable = true;
-    });
+      const mockBlob = new Blob(['test'], { type: 'image/jpeg' });
+      const fetchMock = jest.fn().mockReturnValue(of({ ok: true, data: mockBlob }));
+      (getBackendSrv as jest.Mock).mockReturnValue({ fetch: fetchMock });
 
-    afterEach(() => {
-      jest.restoreAllMocks();
-    });
+      const dashboard = {
+        state: { uid: 'test-uid' },
+      } as unknown as DashboardScene;
 
-    it('should generate image successfully', async () => {
-      const mockBlob = new Blob(['test'], { type: 'image/png' });
-      (getBackendSrv as jest.Mock).mockReturnValue({
-        fetch: jest.fn().mockReturnValue(
-          of({
-            ok: true,
-            data: mockBlob,
-          })
-        ),
-      });
-
-      const result = await generateDashboardImage({
-        dashboard: mockDashboard as unknown as DashboardScene,
-        format: 'png',
-        scale: 1,
-      });
+      const result = await generateDashboardImage({ dashboard, format: 'jpg', scale: 2 });
 
       expect(result.error).toBeUndefined();
       expect(result.blob).toBe(mockBlob);
-    });
-
-    it('should handle renderer not available', async () => {
-      (config as { rendererAvailable: boolean }).rendererAvailable = false;
-
-      const result = await generateDashboardImage({
-        dashboard: mockDashboard as unknown as DashboardScene,
-        format: 'png',
-      });
-
-      expect(result.error).toBe('Image renderer plugin not installed');
-      expect(result.blob).toBeInstanceOf(Blob);
-      expect(result.blob.size).toBe(0);
-    });
-
-    it('should handle failed response', async () => {
-      (getBackendSrv as jest.Mock).mockReturnValue({
-        fetch: jest.fn().mockReturnValue(
-          of({
-            ok: false,
-            status: 500,
-            statusText: 'Internal Server Error',
-            data: new ArrayBuffer(0),
-          })
-        ),
-      });
-
-      const result = await generateDashboardImage({
-        dashboard: mockDashboard as unknown as DashboardScene,
-        format: 'jpg',
-      });
-
-      expect(result.error).toBe('Failed to generate image: 500 Internal Server Error');
-      expect(result.blob).toBeInstanceOf(Blob);
-      expect(result.blob.size).toBe(0);
-    });
-
-    it('should handle invalid response data format', async () => {
-      (getBackendSrv as jest.Mock).mockReturnValue({
-        fetch: jest.fn().mockReturnValue(
-          of({
-            ok: true,
-            data: new ArrayBuffer(8), // Not a Blob
-          })
-        ),
-      });
-
-      const result = await generateDashboardImage({
-        dashboard: mockDashboard as unknown as DashboardScene,
-        format: 'png',
-      });
-
-      expect(result.error).toBe('Invalid response data format');
-      expect(result.blob).toBeInstanceOf(Blob);
-      expect(result.blob.size).toBe(0);
-    });
-
-    it('should handle fetch error', async () => {
-      (getBackendSrv as jest.Mock).mockReturnValue({
-        fetch: jest.fn().mockReturnValue(of(Promise.reject(new Error('Network error')))),
-      });
-
-      const result = await generateDashboardImage({
-        dashboard: mockDashboard as unknown as DashboardScene,
-        format: 'png',
-      });
-
-      expect(result.error).toBe('Network error');
-      expect(result.blob).toBeInstanceOf(Blob);
-      expect(result.blob.size).toBe(0);
+      expect(fetchMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: expect.stringMatching(/format=jpg.*scale=2.*kiosk=true.*hideNav=true.*fullPageImage=true/),
+          responseType: 'blob',
+        })
+      );
     });
   });
 });
