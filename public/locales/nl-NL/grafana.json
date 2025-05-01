@@ -21,7 +21,9 @@
     "permission-list-item": {
       "inherited": "Overgenomen van map",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "Een toestemming toevoegen",
@@ -42,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -70,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -128,6 +136,12 @@
       "test-mapping-heading": "Test gebruikerstoewijzing",
       "test-mapping-run-button": "Uitvoeren"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -161,6 +175,9 @@
       "title": "LDAP-synchronisatie"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -284,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "Nooit",
-      "no-licensed-roles": "Niet toegewezen"
+      "no-licensed-roles": "Niet toegewezen",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -408,11 +427,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -444,6 +461,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -539,6 +557,9 @@
       "user-id": "Gebruikers-ID {{uid}}",
       "warning-restore-manually": "Je herstelt handmatig een oude versie van deze waarschuwingsregel. Controleer de wijzigingen zorgvuldig voordat je de regeldefinitie opslaat.",
       "warning-restore-manually-title": "Regel handmatig herstellen"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -651,6 +672,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -778,6 +802,9 @@
     "contactPointFilter": {
       "label": "Contactpunt"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "Label '{{label}}' kopiëren naar klembord",
     "create-metadata": {
       "view-dashboard": "",
@@ -806,6 +833,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -827,9 +858,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -865,6 +898,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "",
       "pending-period": "",
@@ -895,9 +931,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -929,7 +974,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -1180,6 +1224,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1349,7 +1396,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "Toestemmingen beheren",
@@ -1442,6 +1490,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1597,6 +1646,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1695,6 +1747,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "Deze bron is geprovisioneerd via {{provenance}} en kan niet worden bewerkt via de gebruikersinterface",
@@ -1931,14 +1986,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "Waarschuwingen stoppen wanneer boven",
-          "stop-alerting-bellow": "Waarschuwingen stoppen wanneer onder",
-          "stop-alerting-equal": "Waarschuwingen stoppen wanneer gelijk aan",
-          "stop-alerting-inside-range": "Waarschuwingen stoppen wanneer binnen bereik",
-          "stop-alerting-less": "Waarschuwingen stoppen wanneer minder dan",
-          "stop-alerting-more": "Waarschuwingen stoppen wanneer meer dan",
-          "stop-alerting-not-equal": "Waarschuwingen stoppen wanneer gelijk aan",
-          "stop-alerting-outside-range": "Waarschuwingen stoppen wanneer buiten bereik",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "Aangepaste hersteldrempel"
         }
       }
@@ -2038,7 +2093,10 @@
       "for": "",
       "na": "",
       "paused": "Gepauzeerd",
-      "recording-rule": "Opnameregel"
+      "recording-rule": "Opnameregel",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2282,6 +2340,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2305,7 +2365,7 @@
       },
       "misconfigured-badge-text": "Verkeerd geconfigureerd",
       "misconfigured-warning": "Dit sjabloon is verkeerd geconfigureerd.",
-      "misconfigured-warning-details": "Sjablonen moeten worden gedefinieerd in zowel de sectie <1></1> als <4></4> van je waarschuwingsmanager-configuratie."
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2349,6 +2409,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2450,6 +2514,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -4154,7 +4219,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4214,6 +4281,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4567,6 +4635,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4723,6 +4792,9 @@
       "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel": {
+      "content-streaming": ""
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
@@ -4923,6 +4995,7 @@
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -5001,7 +5074,8 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
@@ -5115,7 +5189,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "Overslaan",
-      "submit-button": "Verzenden"
+      "submit-button": "Verzenden",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "Ben je je gebruikersnaam of e-mailadres vergeten? Neem contact op met je Grafana-beheerder.",
     "email-sent": "Er is een e-mail met een resetlink verzonden naar het e-mailadres. Je ontvangt deze binnenkort.",
@@ -5172,7 +5247,8 @@
     "action-editor": {
       "button": {
         "confirm": "Bevestigen",
-        "confirm-action": "Actie bevestigen"
+        "confirm-action": "Actie bevestigen",
+        "style": ""
       },
       "inline": {
         "add-action": "Actie toevoegen",
@@ -5379,7 +5455,11 @@
       "previous-page": "vorige pagina"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "Menu voor paneel {{ title }}",
@@ -5961,7 +6041,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "meer",
-      "see-details": "Zie logboek voor details"
+      "see-details": "Zie logboek voor details",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -6938,7 +7019,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "Geen updates beschikbaar",
@@ -6947,7 +7029,7 @@
         "available-header": "Beschikbaar",
         "button": "Alles bijwerken ({{length}})",
         "cloud-update-message": "* Het kan een paar minuten duren voordat de plug-ins beschikbaar zijn voor gebruik.",
-        "error": "Fout bij updaten plug-in:",
+        "error": "",
         "error-status-text": "mislukt - zie foutmeldingen",
         "header": "Voor de volgende plug-ins zijn updates beschikbaar",
         "installed-header": "Geïnstalleerd",
@@ -7156,6 +7238,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
     },
     "user-organizations": {
       "text-loading-organizations": ""
@@ -8090,10 +8175,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -8499,7 +8586,7 @@
     "range-content": {
       "apply-button": "Tijdsbereik toepassen",
       "default-error": "",
-      "fiscal-year": "Boekjaar",
+      "fiscal-year": "",
       "from-input": "Van",
       "open-input-calendar": "Open kalender",
       "range-error": "'Van' mag niet na 'Tot' zijn",
@@ -8951,6 +9038,7 @@
       "loading": "Bezig met laden ...",
       "no-unknowns": "Geen hernoemde of ontbrekende variabelen gevonden.",
       "renamed-or-missing-variables": "Hernoemde of ontbrekende variabelen",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "Variabele"
     },
     "variable-check-indicator": {

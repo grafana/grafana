@@ -21,7 +21,9 @@
     "permission-list-item": {
       "inherited": "繼承自資料夾",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "新增權限",
@@ -42,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -70,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -128,6 +136,12 @@
       "test-mapping-heading": "測試使用者對應",
       "test-mapping-run-button": "執行"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -161,6 +175,9 @@
       "title": "LDAP 同步處理"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -284,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "從不",
-      "no-licensed-roles": "未指派"
+      "no-licensed-roles": "未指派",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -404,11 +423,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -440,6 +457,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -535,6 +553,9 @@
       "user-id": "使用者 ID {{uid}}",
       "warning-restore-manually": "您正在手動還原此警報規則的舊版本。在儲存規則定義之前，請仔細檢查變更。",
       "warning-restore-manually-title": "手動還原規則"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -647,6 +668,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -772,6 +796,9 @@
     "contactPointFilter": {
       "label": "聯絡點"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "將「{{label}}」複製到剪貼簿",
     "create-metadata": {
       "view-dashboard": "",
@@ -800,6 +827,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -821,9 +852,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -859,6 +892,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "",
       "pending-period": "",
@@ -889,9 +925,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -923,7 +968,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -1174,6 +1218,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1342,7 +1389,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "管理權限",
@@ -1435,6 +1483,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1590,6 +1639,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1686,6 +1738,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "此資源已透過 {{provenance}} 設定，無法透過使用者介面編輯",
@@ -1921,14 +1976,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "當高於以下值時停止警報",
-          "stop-alerting-bellow": "當低於以下值時停止警報",
-          "stop-alerting-equal": "當等於以下值時停止警報",
-          "stop-alerting-inside-range": "當在以下範圍內時停止警報",
-          "stop-alerting-less": "當小於以下值時停止警報",
-          "stop-alerting-more": "當大於以下值時停止警報",
-          "stop-alerting-not-equal": "當不等於以下值時停止警報",
-          "stop-alerting-outside-range": "當超出以下範圍時停止警報",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "自訂恢復閾值"
         }
       }
@@ -2026,7 +2081,10 @@
       "for": "",
       "na": "",
       "paused": "已暫停",
-      "recording-rule": "錄製規則"
+      "recording-rule": "錄製規則",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2269,6 +2327,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2292,7 +2352,7 @@
       },
       "misconfigured-badge-text": "設定錯誤",
       "misconfigured-warning": "此範本設定錯誤。",
-      "misconfigured-warning-details": "必須在警報管理設定的<1></1>和<4></4>兩個部分中定義範本。"
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2336,6 +2396,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2437,6 +2501,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -4133,7 +4198,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4193,6 +4260,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4546,6 +4614,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4702,6 +4771,9 @@
       "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel": {
+      "content-streaming": ""
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
@@ -4902,6 +4974,7 @@
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -4980,7 +5053,8 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
@@ -5094,7 +5168,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "跳過",
-      "submit-button": "提交"
+      "submit-button": "提交",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "忘記了使用者名稱或電子郵件嗎？請聯絡您的 Grafana 管理員。",
     "email-sent": "包含重設連結的電子郵件已傳送至電子郵件地址。您應該很快就會收到。",
@@ -5151,7 +5226,8 @@
     "action-editor": {
       "button": {
         "confirm": "確認",
-        "confirm-action": "確認動作"
+        "confirm-action": "確認動作",
+        "style": ""
       },
       "inline": {
         "add-action": "新增動作",
@@ -5358,7 +5434,11 @@
       "previous-page": "上一頁"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "面板「{{ title }}」功能表",
@@ -5935,7 +6015,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "更多",
-      "see-details": "查看日誌詳細資訊"
+      "see-details": "查看日誌詳細資訊",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -6912,7 +6993,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "沒有可用的更新",
@@ -6921,7 +7003,7 @@
         "available-header": "可用",
         "button": "全部更新 ({{length}})",
         "cloud-update-message": "* 外掛程式可能需要幾分鐘才能使用。",
-        "error": "更新外掛程式時發生錯誤：",
+        "error": "",
         "error-status-text": "失敗 - 請參閱錯誤訊息",
         "header": "以下外掛程式有可用的更新",
         "installed-header": "已安裝",
@@ -7130,6 +7212,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
     },
     "user-organizations": {
       "text-loading-organizations": ""
@@ -8059,10 +8144,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -8468,7 +8555,7 @@
     "range-content": {
       "apply-button": "套用時間範圍",
       "default-error": "",
-      "fiscal-year": "財政年度",
+      "fiscal-year": "",
       "from-input": "自",
       "open-input-calendar": "開啟行事曆",
       "range-error": "「自」不能晚於「至」",
@@ -8920,6 +9007,7 @@
       "loading": "正在載入…",
       "no-unknowns": "未找到重新命名或遺失的變數。",
       "renamed-or-missing-variables": "重新命名或遺失的變數",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "變數"
     },
     "variable-check-indicator": {

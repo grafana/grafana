@@ -21,7 +21,9 @@
     "permission-list-item": {
       "inherited": "폴더에서 상속됨",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "권한 추가",
@@ -42,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -70,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -128,6 +136,12 @@
       "test-mapping-heading": "사용자 매핑 테스트",
       "test-mapping-run-button": "실행"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -161,6 +175,9 @@
       "title": "LDAP 동기화"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -284,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "기록 없음",
-      "no-licensed-roles": "할당되지 않음"
+      "no-licensed-roles": "할당되지 않음",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -404,11 +423,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -440,6 +457,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -535,6 +553,9 @@
       "user-id": "사용자 ID {{uid}}",
       "warning-restore-manually": "이 경고 규칙의 이전 버전을 수동으로 복구하고 있습니다. 규칙 정의를 저장하기 전에 변경 사항을 주의 깊게 검토해 주세요.",
       "warning-restore-manually-title": "수동으로 규칙 복구"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -647,6 +668,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -772,6 +796,9 @@
     "contactPointFilter": {
       "label": "연락처"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "'{{label}}'을(를) 클립보드로 복사",
     "create-metadata": {
       "view-dashboard": "",
@@ -800,6 +827,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -821,9 +852,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -859,6 +892,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "경고를 시작하기 위한 평가",
       "pending-period": "보류 기간",
@@ -889,9 +925,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -923,7 +968,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -1174,6 +1218,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1342,7 +1389,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "권한 관리",
@@ -1435,6 +1483,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1590,6 +1639,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1686,6 +1738,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "이 리소스는 {{provenance}}을(를) 통해 프로비저닝되었으며 UI를 통해 편집할 수 없습니다.",
@@ -1921,14 +1976,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "다음 값을 초과할 때 경고 중지",
-          "stop-alerting-bellow": "다음 값 미만일 때 경고 중지",
-          "stop-alerting-equal": "다음 값과 같을 때 경고 중지",
-          "stop-alerting-inside-range": "다음 범위 내에 있을 때 경고 중지",
-          "stop-alerting-less": "다음 값 이하일 때 경고 중지",
-          "stop-alerting-more": "다음 값보다 이상일 때 경고 중지",
-          "stop-alerting-not-equal": "다음 값과 다를 때 경고 중지",
-          "stop-alerting-outside-range": "다음 범위를 벗어날 때 경고 중지",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "사용자 지정 복구 임계값"
         }
       }
@@ -2026,7 +2081,10 @@
       "for": "",
       "na": "",
       "paused": "일시 중지됨",
-      "recording-rule": "기록 규칙"
+      "recording-rule": "기록 규칙",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2269,6 +2327,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2292,7 +2352,7 @@
       },
       "misconfigured-badge-text": "잘못 구성됨",
       "misconfigured-warning": "이 템플릿은 잘못 구성되었습니다.",
-      "misconfigured-warning-details": "템플릿은 alertmanager 구성의 <1></1> 및 <4></4> 섹션에서 모두 정의되어야 합니다."
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2336,6 +2396,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2437,6 +2501,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -4133,7 +4198,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4193,6 +4260,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4546,6 +4614,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4702,6 +4771,9 @@
       "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel": {
+      "content-streaming": ""
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
@@ -4902,6 +4974,7 @@
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -4980,7 +5053,8 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
@@ -5094,7 +5168,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "건너뛰기",
-      "submit-button": "제출"
+      "submit-button": "제출",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "사용자 이름이나 이메일을 잊으셨나요? Grafana 관리자에게 문의하세요.",
     "email-sent": "재설정 링크가 포함된 이메일이 이메일 주소로 전송되었습니다. 곧 받으실 수 있습니다.",
@@ -5151,7 +5226,8 @@
     "action-editor": {
       "button": {
         "confirm": "확인",
-        "confirm-action": "작업 확인"
+        "confirm-action": "작업 확인",
+        "style": ""
       },
       "inline": {
         "add-action": "작업 추가",
@@ -5358,7 +5434,11 @@
       "previous-page": "이전 페이지"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "{{ title }} 패널의 메뉴",
@@ -5935,7 +6015,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "더 보기",
-      "see-details": "로그 세부 정보 보기"
+      "see-details": "로그 세부 정보 보기",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -6912,7 +6993,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "사용 가능 업데이트 없음",
@@ -6921,7 +7003,7 @@
         "available-header": "사용 가능",
         "button": "모두 업데이트({{length}})",
         "cloud-update-message": "* 플러그인을 사용할 수 있게 되기까지 몇 분 정도 걸릴 수 있습니다.",
-        "error": "플러그인 업데이트 중 오류 발생:",
+        "error": "",
         "error-status-text": "실패 - 오류 메시지 참고",
         "header": "다음 플러그인에 대한 업데이트를 사용할 수 있습니다.",
         "installed-header": "설치됨",
@@ -7130,6 +7212,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
     },
     "user-organizations": {
       "text-loading-organizations": ""
@@ -8059,10 +8144,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -8468,7 +8555,7 @@
     "range-content": {
       "apply-button": "시간 범위 적용",
       "default-error": "",
-      "fiscal-year": "회계 연도",
+      "fiscal-year": "",
       "from-input": "시작 시간",
       "open-input-calendar": "캘린더 열기",
       "range-error": "'시작 시간'은 '종료 시간' 이후일 수 없습니다.",
@@ -8920,6 +9007,7 @@
       "loading": "로딩 중...",
       "no-unknowns": "이름이 변경되었거나 누락된 변수가 없습니다.",
       "renamed-or-missing-variables": "이름이 변경되었거나 누락된 변수",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "변수"
     },
     "variable-check-indicator": {

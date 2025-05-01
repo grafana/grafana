@@ -21,7 +21,9 @@
     "permission-list-item": {
       "inherited": "Dziedziczone z folderu",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "Dodaj uprawnienie",
@@ -42,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -70,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -128,6 +136,12 @@
       "test-mapping-heading": "Przetestuj mapowanie użytkowników",
       "test-mapping-run-button": "Uruchom"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -161,6 +175,9 @@
       "title": "Synchronizacja LDAP"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -284,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "Nigdy",
-      "no-licensed-roles": "Nieprzypisane"
+      "no-licensed-roles": "Nieprzypisane",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -416,11 +435,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -452,6 +469,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -547,6 +565,9 @@
       "user-id": "ID użytkownika {{uid}}",
       "warning-restore-manually": "Ręcznie przywracasz starą wersję tej reguły alertu. Przed zapisaniem definicji reguły dokładnie zapoznaj się ze zmianami.",
       "warning-restore-manually-title": "Ręczne przywracanie reguły"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -659,6 +680,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -790,6 +814,9 @@
     "contactPointFilter": {
       "label": "Punkt kontaktowy"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "Kopiuj „{{label}}” do schowka",
     "create-metadata": {
       "view-dashboard": "",
@@ -818,6 +845,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -839,9 +870,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -877,6 +910,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Oceny umożliwiające uruchomienie alertu",
       "pending-period": "Okres oczekiwania",
@@ -907,9 +943,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -941,7 +986,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -1192,6 +1236,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1363,7 +1410,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "Zarządzaj uprawnieniami",
@@ -1456,6 +1504,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1611,6 +1660,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1713,6 +1765,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "Ten zasób został skonfigurowany za pośrednictwem {{provenance}} i nie można go edytować z poziomu interfejsu użytkownika",
@@ -1951,14 +2006,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "Zatrzymaj alerty, gdy powyżej",
-          "stop-alerting-bellow": "Zatrzymaj alerty, gdy poniżej",
-          "stop-alerting-equal": "Zatrzymaj alerty, gdy równe",
-          "stop-alerting-inside-range": "Zatrzymaj alerty, gdy w zakresie",
-          "stop-alerting-less": "Zatrzymaj alerty, gdy mniej niż",
-          "stop-alerting-more": "Zatrzymaj alerty, gdy więcej niż",
-          "stop-alerting-not-equal": "Zatrzymaj alerty, gdy różne od",
-          "stop-alerting-outside-range": "Zatrzymaj alerty, gdy poza zakresem",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "Niestandardowy próg odzysku"
         }
       }
@@ -2062,7 +2117,10 @@
       "for": "",
       "na": "",
       "paused": "Wstrzymano",
-      "recording-rule": "Reguła rejestracji"
+      "recording-rule": "Reguła rejestracji",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2308,6 +2366,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2331,7 +2391,7 @@
       },
       "misconfigured-badge-text": "Źle skonfigurowane",
       "misconfigured-warning": "Ten szablon jest źle skonfigurowany.",
-      "misconfigured-warning-details": "Szablony muszą być zdefiniowane zarówno w sekcjach <1></1>, jak i <4></4> konfiguracji menedżera alertów."
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2375,6 +2435,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2476,6 +2540,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -4196,7 +4261,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4256,6 +4323,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4609,6 +4677,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4765,6 +4834,9 @@
       "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel": {
+      "content-streaming": ""
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
@@ -4965,6 +5037,7 @@
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -5043,7 +5116,8 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
@@ -5157,7 +5231,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "Pomiń",
-      "submit-button": "Prześlij"
+      "submit-button": "Prześlij",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "Nie pamiętasz nazwy użytkownika lub adresu e-mail? Skontaktuj się z administratorem usługi Grafana.",
     "email-sent": "Na adres e-mail została wysłana wiadomość z linkiem do ustawienia nowego hasła. Powinna się niedługo pojawić w skrzynce.",
@@ -5214,7 +5289,8 @@
     "action-editor": {
       "button": {
         "confirm": "Potwierdź",
-        "confirm-action": "Potwierdź działanie"
+        "confirm-action": "Potwierdź działanie",
+        "style": ""
       },
       "inline": {
         "add-action": "Dodaj działanie",
@@ -5421,7 +5497,11 @@
       "previous-page": "poprzednia strona"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "Menu panelu {{ title }}",
@@ -6013,7 +6093,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "więcej",
-      "see-details": "Zobacz szczegóły logu"
+      "see-details": "Zobacz szczegóły logu",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -6990,7 +7071,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "Brak dostępnych aktualizacji",
@@ -6999,7 +7081,7 @@
         "available-header": "Dostępne",
         "button": "Zaktualizuj wszystko ({{length}})",
         "cloud-update-message": "* Może minąć kilka minut, zanim wtyczki będą dostępne do użytku.",
-        "error": "Błąd aktualizacji wtyczki:",
+        "error": "",
         "error-status-text": "niepowodzenie – zobacz komunikaty o błędach",
         "header": "Dla następujących wtyczek są dostępne aktualizacje",
         "installed-header": "Zainstalowane",
@@ -7208,6 +7290,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
     },
     "user-organizations": {
       "text-loading-organizations": ""
@@ -8152,10 +8237,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -8561,7 +8648,7 @@
     "range-content": {
       "apply-button": "Zastosuj zakres czasu",
       "default-error": "",
-      "fiscal-year": "Rok podatkowy",
+      "fiscal-year": "",
       "from-input": "Od",
       "open-input-calendar": "Otwórz kalendarz",
       "range-error": "Wartość „Od” nie może następować po wartości „Do”",
@@ -9013,6 +9100,7 @@
       "loading": "Ładowanie…",
       "no-unknowns": "Nie znaleziono przemianowanych ani brakujących zmiennych.",
       "renamed-or-missing-variables": "Przemianowane lub brakujące zmienne",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "Zmienna"
     },
     "variable-check-indicator": {
