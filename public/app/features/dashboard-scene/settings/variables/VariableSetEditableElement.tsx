@@ -31,6 +31,10 @@ export class VariableSetEditableElement implements EditableDashboardElement {
     };
   }
 
+  public getOutlineChildren() {
+    return this.set.state.variables;
+  }
+
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
     const set = this.set;
 

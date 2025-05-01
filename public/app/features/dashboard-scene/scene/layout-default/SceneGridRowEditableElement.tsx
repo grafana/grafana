@@ -28,8 +28,11 @@ export class SceneGridRowEditableElement implements EditableDashboardElement, Bu
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this._row, this._row.state.title, undefined, 'text'),
       icon: 'list-ul',
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren() {
+    return this._row.state.children;
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {

@@ -72,20 +72,15 @@ export interface EditableDashboardElement {
   onChangeName?(name: string): { errorMessage?: string } | void;
 
   /**
-   * Some objects can have internal repeat clones
-   * Used by outline to flatten repeats
+   * Conatainer objects can have children
    */
-  getRepeatClones?(): SceneObject[];
+  getOutlineChildren?(): SceneObject[];
 }
 
 export interface EditableDashboardElementInfo {
   instanceName: string;
   typeName: string;
   icon: IconName;
-  /**
-   * Mark it as a container of other editable elements
-   */
-  isContainer?: boolean;
   isHidden?: boolean;
 }
 

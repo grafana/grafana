@@ -89,8 +89,11 @@ export class RowItem
       typeName: t('dashboard.edit-pane.elements.row', 'Row'),
       instanceName: sceneGraph.interpolate(this, this.state.title, undefined, 'text'),
       icon: 'list-ul',
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    return this.state.layout.getOutlineChildren();
   }
 
   public getLayout(): DashboardLayoutManager {
@@ -227,9 +230,5 @@ export class RowItem
     const parentLayout = this.getParentLayout();
     const duplicateTitles = parentLayout.duplicateTitles();
     return !duplicateTitles.has(this.state.title);
-  }
-
-  public getRepeatClones(): SceneObject[] {
-    return this.state.repeatedRows ?? [];
   }
 }

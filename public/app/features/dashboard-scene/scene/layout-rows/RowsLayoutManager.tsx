@@ -2,6 +2,7 @@ import {
   sceneGraph,
   SceneGridItemLike,
   SceneGridRow,
+  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   SceneVariable,
@@ -139,6 +140,22 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public shouldUngroup(): boolean {
     return this.state.rows.length === 1;
+  }
+
+  public getOutlineChildren() {
+    const outlineChildren: SceneObject[] = [];
+
+    for (const row of this.state.rows) {
+      outlineChildren.push(row);
+
+      if (row.state.repeatedRows) {
+        for (const clone of row.state.repeatedRows!) {
+          outlineChildren.push(clone);
+        }
+      }
+    }
+
+    return outlineChildren;
   }
 
   public removeRow(row: RowItem) {
