@@ -1,0 +1,1 @@
+export { fixtures } from './fixtures';
