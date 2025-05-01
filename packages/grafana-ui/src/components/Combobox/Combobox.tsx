@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useCallback, useId, useMemo } from 'react';
+import { ReactElement, useCallback, useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -20,15 +20,11 @@ import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-export interface ComboboxBaseProps<T extends string | number, C extends boolean = false>
+export interface ComboboxBaseProps<T extends string | number>
   extends Pick<
     InputProps,
     'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
   > {
-  /**
-   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
-   */
-  isClearable?: C;
   /**
    * Allows the user to set a value which is not in the list of options.
    */
@@ -39,11 +35,6 @@ export interface ComboboxBaseProps<T extends string | number, C extends boolean 
    * If a function, it will be called when the menu is opened and on keypress with the current search query.
    */
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-
-  /**
-   * onChange handler is called with the newly selected option.
-   */
-  onChange: (option: C extends true ? ComboboxOption<T> | null : ComboboxOption<T>) => void;
 
   /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
@@ -82,8 +73,33 @@ export type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-export type ComboboxProps<T extends string | number, C extends boolean> = ComboboxBaseProps<T, C> &
-  AutoSizeConditionals;
+interface ClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable: true;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T> | null) => void;
+}
+
+interface NotClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable?: false;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T>) => void;
+}
+
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
+  AutoSizeConditionals &
+  (ClearableProps<T> | NotClearableProps<T>);
 
 const noop = () => {};
 
@@ -94,13 +110,13 @@ export const VIRTUAL_OVERSCAN_ITEMS = 4;
  *
  * @alpha
  */
-export const Combobox = <T extends string | number, C extends boolean = false>(props: ComboboxProps<T, C>) => {
+export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => {
   const {
     options: allOptions,
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
-    isClearable = false,
+    isClearable, // this should be default false, but TS can't infer the conditional type if you do
     createCustomValue = false,
     id,
     width,
@@ -230,14 +246,11 @@ export const Combobox = <T extends string | number, C extends boolean = false>(p
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
-      if (selectedItem !== null || isClearable === true) {
-        // This hack is to allow a `null` value to be accepted by onChange.
-        // TypeScript can't infer from `isClearable === true` that the generic C type is `true`, but if it could,
-        // onChange would would allow `null` when it is true. The type works correctly outside of the component,
-        // where it's consumed, but not here. `selectedItem` could be cast to non-null, but that could accidentally
-        // allow it to be a different type that gets overwritten.
-        // If TS could infer here, then `onChange(selectedItem);` would pass type checking.
-        (onChange as (option: ComboboxOption<T> | null) => void)(selectedItem);
+      // this is an else if because TS can't do (isClearable || selectedItem !== null)
+      if (isClearable) {
+        onChange(selectedItem);
+      } else if (selectedItem !== null) {
+        onChange(selectedItem);
       }
     },
 
