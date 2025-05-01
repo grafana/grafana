@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
 import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { ReactElement, useCallback, useId, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
