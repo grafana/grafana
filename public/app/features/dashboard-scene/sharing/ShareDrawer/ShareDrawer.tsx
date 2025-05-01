@@ -5,7 +5,7 @@ import { Drawer } from '@grafana/ui';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { DashboardScene } from '../../scene/DashboardScene';
 import { getDashboardSceneFor } from '../../utils/utils';
-import { ExportAsJson } from '../ExportButton/ExportAsJson';
+import { ExportAsCode } from '../ExportButton/ExportAsCode';
 import { ShareExternally } from '../ShareButton/share-externally/ShareExternally';
 import { ShareInternally } from '../ShareButton/share-internally/ShareInternally';
 import { ShareSnapshot } from '../ShareButton/share-snapshot/ShareSnapshot';
@@ -90,7 +90,7 @@ function getShareView(
     case shareDashboardType.snapshot:
       return new ShareSnapshot({ dashboardRef, panelRef, onDismiss });
     case shareDashboardType.export:
-      return new ExportAsJson({ onDismiss });
+      return new ExportAsCode({ onDismiss });
     default:
       return new ShareInternally({ onDismiss });
   }

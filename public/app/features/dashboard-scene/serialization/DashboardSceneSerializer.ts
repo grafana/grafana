@@ -35,6 +35,7 @@ export interface DashboardSceneSerializerLike<T, M, I = T, E = T | { error: unkn
    */
   initialSaveModel?: I;
   metadata?: M;
+  apiVersion?: string;
   initializeElementMapping(saveModel: T | undefined): void;
   initializeDSReferencesMapping(saveModel: T | undefined): void;
   getSaveModel: (s: DashboardScene) => T;
