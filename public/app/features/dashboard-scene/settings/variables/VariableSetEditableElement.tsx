@@ -15,6 +15,7 @@ import { EditableDashboardElement, EditableDashboardElementInfo } from '../../sc
 import { getDashboardSceneFor } from '../../utils/utils';
 
 import { EditableVariableType, getNextAvailableId, getVariableScene, getVariableTypeSelectOptions } from './utils';
+import { selectors } from '@grafana/e2e-selectors';
 
 export class VariableSetEditableElement implements EditableDashboardElement {
   public readonly isEditableDashboardElement = true;
@@ -87,7 +88,7 @@ function VariableList({ set }: { set: SceneVariableSet }) {
       ))}
       {canAdd && (
         <Box paddingBottom={1} display={'flex'}>
-          <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={setIsAdding}>
+          <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={setIsAdding} data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}>
             <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
           </Button>
         </Box>
@@ -115,6 +116,7 @@ function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
           onClick={() => onAddVariable(option.value!)}
           key={option.value}
           title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
+          data-testid={ selectors.components.PanelEditor.ElementEditPane.variableType(option.value!) }
         >
           <Card.Heading>{option.label}</Card.Heading>
           <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
