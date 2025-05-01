@@ -103,5 +103,3 @@ export { useComponentInstanceId } from '../utils/useComponetInstanceId';
 export { closePopover } from '../utils/closePopover';
 
 export { flattenTokens } from '../slate-plugins/slate-prism';
-
-export { setFeatureToggles } from '../utils/featureToggle';

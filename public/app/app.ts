@@ -5,7 +5,6 @@ import 'whatwg-fetch'; // fetch polyfill needed for PhantomJs rendering
 import 'file-saver';
 import 'jquery';
 
-import { pick } from 'lodash';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -48,7 +47,6 @@ import {
   setPanelRenderer,
   setPluginPage,
 } from '@grafana/runtime/internal';
-import { setFeatureToggles } from '@grafana/ui/internal';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -193,12 +191,6 @@ export class GrafanaApp {
         importPanelPlugin,
         getPanelPluginFromCache: syncGetPanelPlugin,
       });
-
-      // Provider featureToggles to @grafana/ui
-      // If empty and you're enabling an existing feature flag,
-      // follow this format: `setFeatureToggles(pick(config.featureToggles, ["myFeatureToggleName"]))`
-      // `pick` comes from lodash
-      setFeatureToggles(pick(config.featureToggles, ['localeFormatPreference']));
 
       if (config.featureToggles.useSessionStorageForRedirection) {
         handleRedirectTo();
