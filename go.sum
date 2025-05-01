@@ -1589,8 +1589,7 @@ github.com/grafana/grafana-app-sdk v0.35.1 h1:zEXubzsQrxGBOzXJJMBwhEClC/tvPi0sfK
 github.com/grafana/grafana-app-sdk v0.35.1/go.mod h1:Zx5MkVppYK+ElSDUAR6+fjzOVo6I/cIgk+ty+LmNOxI=
 github.com/grafana/grafana-app-sdk/logging v0.35.1 h1:taVpl+RoixTYl0JBJGhH+fPVmwA9wvdwdzJTZsv9buM=
 github.com/grafana/grafana-app-sdk/logging v0.35.1/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
-github.com/grafana/grafana-aws-sdk v0.38.0 h1:OALlZ3FvmzKHICQe0C1cuAMdyhSFkVYxHdxJsleotwc=
-github.com/grafana/grafana-aws-sdk v0.38.0/go.mod h1:j3vi+cXYHEFqjhBGrI6/lw1TNM+dl0Y3f0cSnDOPy+s=
+github.com/grafana/grafana-aws-sdk v0.38.1 h1:4fU28F/UIs3YYuS52bBzTOKpFIIYGJZmgM6PO7IEj90=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
 github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 h1:S4kHwr//AqhtL9xHBtz1gqVgZQeCRGTxjgsRBAkpjKY=
