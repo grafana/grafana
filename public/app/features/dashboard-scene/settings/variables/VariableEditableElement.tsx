@@ -16,6 +16,7 @@ import { VariableHideSelect } from '../../settings/variables/components/Variable
 import { getEditableVariableDefinition, validateVariableName } from '../../settings/variables/utils';
 
 import { useVariableSelectionOptionsCategory } from './useVariableSelectionOptionsCategory';
+import { selectors } from '@grafana/e2e-selectors';
 
 export class VariableEditableElement implements EditableDashboardElement, BulkActionElement {
   public readonly isEditableDashboardElement = true;
@@ -143,14 +144,14 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
 
   return (
     <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError}>
-      <Input ref={ref} value={name} onChange={onChange} required onBlur={onBlur} />
+      <Input ref={ref} value={name} onChange={onChange} required onBlur={onBlur} data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}/>
     </Field>
   );
 }
 
 function VariableLabelInput({ variable }: VariableInputProps) {
   const { label } = variable.useState();
-  return <Input value={label} onChange={(e) => variable.setState({ label: e.currentTarget.value })} />;
+  return <Input value={label} onChange={(e) => variable.setState({ label: e.currentTarget.value })} data-testid={selectors.components.PanelEditor.ElementEditPane.variableLabelInput}/>;
 }
 
 function VariableDescriptionTextArea({ variable }: VariableInputProps) {
