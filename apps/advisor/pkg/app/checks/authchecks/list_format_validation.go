@@ -12,38 +12,39 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const ListFormatValidationStepID = "sso-list-format-validation"
+
+// listSettingKeys defines the SSO setting keys that expect a list format (space-separated, comma-separated or JSON array).
+var listSettingKeys = []string{
+	"allowed_domains",
+	"allowed_groups",
+	"allowed_organizations",
+	"role_values_none",
+	"role_values_grafana_admin",
+	"role_values_admin",
+	"role_values_editor",
+	"role_values_viewer",
+}
+
 var _ checks.Step = (*listFormatValidation)(nil)
 
-// listFormatValidation checks if the provided setting based on the key is in a valid format.
-type listFormatValidation struct {
-	stepID     string
-	settingKey string
-	title      string
-}
-
-// NewListFormatValidation creates a new listFormatValidation step.
-func NewListFormatValidation(stepID, settingKey, title string) *listFormatValidation {
-	return &listFormatValidation{
-		stepID:     stepID,
-		settingKey: settingKey,
-		title:      title,
-	}
-}
+// listFormatValidation checks if the specified list parameters in SSO settings are in a valid format.
+type listFormatValidation struct{}
 
 func (s *listFormatValidation) ID() string {
-	return s.stepID
+	return ListFormatValidationStepID
 }
 
 func (s *listFormatValidation) Title() string {
-	return s.title
+	return "SSO List Setting Format Validation"
 }
 
 func (s *listFormatValidation) Description() string {
-	return fmt.Sprintf("Checks if the '%s' setting is in a valid format.", s.settingKey)
+	return "Checks if list configs in SSO settings are in a valid list format (space-separated, comma-separated or JSON array)."
 }
 
 func (s *listFormatValidation) Resolution() string {
-	return fmt.Sprintf("Configure the '%s' setting using a valid format. Like comma-separated values (\"opt1\", \"opt2\") or JSON array format ([\"opt 1\", \"opt 2\"]).", s.settingKey)
+	return "Configure the relevant SSO setting using a valid format, like space-separated (\"opt1 opt2\"), comma-separated values (\"opt1, opt2\") or JSON array format ([\"opt1\", \"opt2\"])."
 }
 
 func (s *listFormatValidation) Run(ctx context.Context, _ *advisor.CheckSpec, objToCheck any) (*advisor.CheckReportFailure, error) {
@@ -52,31 +53,52 @@ func (s *listFormatValidation) Run(ctx context.Context, _ *advisor.CheckSpec, ob
 		return nil, fmt.Errorf("invalid item type %T", objToCheck)
 	}
 
-	currentSetting, exists := setting.Settings[s.settingKey]
-	if !exists || currentSetting == nil {
-		// If the setting is not present, its format is not invalid.
-		return nil, nil
-	}
+	for _, settingKey := range listSettingKeys {
+		currentSettingValue, exists := setting.Settings[settingKey]
+		if !exists || currentSettingValue == nil {
+			// If the setting is not present or nil, its format is considered valid (or non-applicable).
+			continue
+		}
 
-	_, err := util.SplitStringWithError(currentSetting.(string))
-	if err != nil {
-		return checks.NewCheckReportFailure(
-			advisor.CheckReportFailureSeverityHigh,
-			s.ID(),
-			fmt.Sprintf("%s - Invalid format: %s", login.GetAuthProviderLabel(setting.Provider), currentSetting),
-			setting.Provider,
-			[]advisor.CheckErrorLink{
-				{
-					Url:     fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(setting.Provider, "_", "-")),
-					Message: "Check the documentation",
-				},
-				{
-					Url:     fmt.Sprintf("/admin/authentication/%s", setting.Provider),
-					Message: "Configure provider",
-				},
-			},
-		), nil
+		currentSettingStr, ok := currentSettingValue.(string)
+		if !ok {
+			return checks.NewCheckReportFailure(
+				advisor.CheckReportFailureSeverityHigh,
+				s.ID(),
+				fmt.Sprintf("%s - Invalid type for '%s': expected string, got %T", login.GetAuthProviderLabel(setting.Provider), settingKey, currentSettingValue),
+				setting.Provider,
+				s.generateLinks(setting.Provider),
+			), nil
+		}
+
+		if currentSettingStr == "" {
+			continue
+		}
+
+		_, err := util.SplitStringWithError(currentSettingStr)
+		if err != nil {
+			return checks.NewCheckReportFailure(
+				advisor.CheckReportFailureSeverityHigh,
+				s.ID(),
+				fmt.Sprintf("%s - Invalid format for '%s': %s", login.GetAuthProviderLabel(setting.Provider), settingKey, currentSettingStr),
+				setting.Provider,
+				s.generateLinks(setting.Provider),
+			), nil
+		}
 	}
 
 	return nil, nil
+}
+
+func (s *listFormatValidation) generateLinks(provider string) []advisor.CheckErrorLink {
+	return []advisor.CheckErrorLink{
+		{
+			Url:     fmt.Sprintf("https://grafana.com/docs/grafana/latest/setup-grafana/configure-security/configure-authentication/%s", strings.ReplaceAll(provider, "_", "-")),
+			Message: "Check the documentation",
+		},
+		{
+			Url:     fmt.Sprintf("/admin/authentication/%s", provider),
+			Message: "Configure provider",
+		},
+	}
 }

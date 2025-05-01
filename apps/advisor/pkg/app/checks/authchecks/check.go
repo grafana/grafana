@@ -10,15 +10,7 @@ import (
 )
 
 const (
-	CheckID                                = "ssosetting"
-	AllowedOrgsFormatValidationStepID      = "allowed-organizations-format-validation"
-	AllowedGroupsFormatValidationStepID    = "allowed-groups-format-validation"
-	AllowedDomainsFormatValidationStepID   = "allowed-domains-format-validation"
-	RoleValuesGrafanaAdminValidationStepID = "role-values-grafana-admin-validation"
-	RoleValuesAdminFormatValidationStepID  = "role-values-admin-format-validation"
-	RoleValuesEditorFormatValidationStepID = "role-values-editor-format-validation"
-	RoleValuesViewerFormatValidationStepID = "role-values-viewer-format-validation"
-	RoleValuesNoneFormatValidationStepID   = "role-values-none-format-validation"
+	CheckID = "ssosetting"
 )
 
 var _ checks.Check = (*check)(nil)
@@ -41,15 +33,7 @@ func (c *check) ID() string {
 
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
-		NewListFormatValidation(AllowedDomainsFormatValidationStepID, "allowed_domains", "Allowed Domains format validation"),
-		NewListFormatValidation(AllowedGroupsFormatValidationStepID, "allowed_groups", "Allowed Groups format validation"),
-		NewListFormatValidation(AllowedOrgsFormatValidationStepID, "allowed_organizations", "Allowed Organizations format validation"),
-		NewListFormatValidation(RoleValuesNoneFormatValidationStepID, "role_values_none", "None role values format validation"),
-		NewListFormatValidation(RoleValuesGrafanaAdminValidationStepID, "role_values_grafana_admin", "Grafana Admin role values format validation"),
-		NewListFormatValidation(RoleValuesAdminFormatValidationStepID, "role_values_admin", "Admin role values format validation"),
-		NewListFormatValidation(RoleValuesEditorFormatValidationStepID, "role_values_editor", "Editor role values format validation"),
-		NewListFormatValidation(RoleValuesViewerFormatValidationStepID, "role_values_viewer", "Viewer role values format validation"),
-		NewListFormatValidation(RoleValuesNoneFormatValidationStepID, "role_values_none", "None role values format validation"),
+		&listFormatValidation{},
 	}
 }
 
