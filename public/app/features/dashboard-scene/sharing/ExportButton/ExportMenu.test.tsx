@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -14,7 +15,20 @@ describe('ExportMenu', () => {
   it('should render menu items', async () => {
     setup();
     expect(await screen.findByTestId(selector.exportAsJson)).toBeInTheDocument();
-    expect(await screen.findByTestId(selector.exportAsImage)).toBeInTheDocument();
+  });
+
+  describe('dashboardImageSharing feature toggle', () => {
+    it('should render image export option when enabled', async () => {
+      config.featureToggles.dashboardImageSharing = true;
+      setup();
+      expect(await screen.findByTestId(selector.exportAsImage)).toBeInTheDocument();
+    });
+
+    it('should not render image export option when disabled', async () => {
+      config.featureToggles.dashboardImageSharing = false;
+      setup();
+      expect(screen.queryByTestId(selector.exportAsImage)).not.toBeInTheDocument();
+    });
   });
 });
 
