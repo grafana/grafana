@@ -48,12 +48,7 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           </Menu>
         }
       >
-        <Button
-          variant="primary"
-          fill="text"
-          icon="layers"
-          onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
-        >
+        <Button variant="primary" fill="text" icon="layers">
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
       </Dropdown>

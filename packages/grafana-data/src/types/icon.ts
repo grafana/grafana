@@ -80,6 +80,8 @@ export const availableIconsIndex = {
   compass: true,
   'compress-arrows': true,
   copy: true,
+  'corner-up-left': true,
+  'corner-up-right': true,
   'corner-down-right-alt': true,
   'create-dashboard': true,
   'credit-card': true,

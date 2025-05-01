@@ -13,6 +13,7 @@ import {
   NewObjectAddedToCanvasEvent,
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
+  publishEditAction,
 } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
@@ -120,8 +121,18 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
       newRow.setState({ title: newTitle });
     }
 
-    this.setState({ rows: [...this.state.rows, newRow] });
-    this.publishEvent(new NewObjectAddedToCanvasEvent(newRow), true);
+    publishEditAction({
+      description: 'Add row',
+      addedObject: newRow,
+      source: this,
+      perform: () => {
+        this.setState({ rows: [...this.state.rows, newRow] });
+      },
+      undo: () => {
+        this.setState({ rows: this.state.rows.filter((r) => r !== newRow) });
+      },
+    });
+
     return newRow;
   }
 

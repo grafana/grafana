@@ -9,6 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
+import { DashboardEditActionEvent, publishEditAction } from '../edit-pane/shared';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';
@@ -139,19 +140,20 @@ export function PanelDescriptionTextArea({ panel }: { panel: VizPanel }) {
 }
 
 export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
-  const { displayMode } = panel.useState();
+  const { displayMode = 'default' } = panel.useState();
 
-  return (
-    <Switch
-      value={displayMode === 'transparent'}
-      id="transparent-background"
-      onChange={() => {
-        panel.setState({
-          displayMode: panel.state.displayMode === 'transparent' ? 'default' : 'transparent',
-        });
-      }}
-    />
-  );
+  const onChange = () => {
+    const newDisplayMode = displayMode === 'default' ? 'transparent' : 'default';
+
+    publishEditAction({
+      description: 'Change panel background',
+      source: panel,
+      perform: () => panel.setState({ displayMode: newDisplayMode }),
+      undo: () => panel.setState({ displayMode: displayMode }),
+    });
+  };
+
+  return <Switch value={displayMode === 'transparent'} id="transparent-background" onChange={onChange} />;
 }
 
 export function setPanelTitle(panel: VizPanel, title: string) {
