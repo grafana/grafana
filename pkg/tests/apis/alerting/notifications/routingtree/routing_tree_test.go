@@ -18,7 +18,7 @@ import (
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
 	v0alpha1_timeinterval "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/alerting/notifications/routingtree"
+	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 
 	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
