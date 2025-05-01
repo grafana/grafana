@@ -88,6 +88,8 @@ function DashboardOutlineNode({
         onPointerDown={onNodeClicked}
       >
         {elementInfo.isContainer && (
+          // TODO fix keyboard a11y here
+          // eslint-disable-next-line jsx-a11y/role-has-required-aria-props
           <button role="treeitem" className={styles.angleButton} onPointerDown={onToggleCollapse}>
             <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />
           </button>
