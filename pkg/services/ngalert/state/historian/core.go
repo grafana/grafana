@@ -8,11 +8,9 @@ import (
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	prometheus "github.com/prometheus/common/model"
 
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ngalert/eval"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
-	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 const StateHistoryWriteTimeout = time.Minute
