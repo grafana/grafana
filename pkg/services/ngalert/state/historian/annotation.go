@@ -48,7 +48,7 @@ type RuleStore interface {
 
 type AnnotationStore interface {
 	Find(ctx context.Context, query *annotations.ItemQuery) ([]*annotations.ItemDTO, error)
-	Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error
+	Save(ctx context.Context, panel *history_model.PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error
 }
 
 func NewAnnotationBackend(
@@ -73,7 +73,7 @@ func (h *AnnotationBackend) Record(ctx context.Context, rule history_model.RuleM
 	logger := h.log.FromContext(ctx)
 	// Build annotations before starting goroutine, to make sure all data is copied and won't mutate underneath us.
 	annotations := buildAnnotations(rule, states, logger)
-	panel := parsePanelKey(rule, logger)
+	panel := history_model.ParsePanelKey(rule, logger)
 
 	errCh := make(chan error, 1)
 	if len(annotations) == 0 {

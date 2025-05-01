@@ -1,4 +1,4 @@
-package historian
+package store
 
 import (
 	"bytes"
@@ -28,6 +28,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
 	"github.com/grafana/grafana/pkg/services/user"
@@ -99,8 +100,8 @@ func TestAnnotationHistorian(t *testing.T) {
 
 	t.Run("writing state transitions as annotations succeeds", func(t *testing.T) {
 		anns := createTestAnnotationBackendSut(t)
-		rule := createTestRule()
-		states := singleFromNormal(&state.State{
+		rule := historian.createTestRule()
+		states := historian.singleFromNormal(&state.State{
 			State:  eval.Alerting,
 			Labels: data.Labels{"a": "b"},
 		})
@@ -115,8 +116,8 @@ func TestAnnotationHistorian(t *testing.T) {
 		met := metrics.NewHistorianMetrics(reg, metrics.Subsystem)
 		anns := createTestAnnotationBackendSutWithMetrics(t, met)
 		errAnns := createFailingAnnotationSut(t, met)
-		rule := createTestRule()
-		states := singleFromNormal(&state.State{
+		rule := historian.createTestRule()
+		states := historian.singleFromNormal(&state.State{
 			State:  eval.Alerting,
 			Labels: data.Labels{"a": "b"},
 		})
@@ -150,11 +151,11 @@ grafana_alerting_state_history_writes_total{backend="annotations",org="1"} 2
 	})
 }
 
-func createTestAnnotationBackendSut(t *testing.T) *AnnotationBackend {
+func createTestAnnotationBackendSut(t *testing.T) *historian.AnnotationBackend {
 	return createTestAnnotationBackendSutWithMetrics(t, metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem))
 }
 
-func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore) *AnnotationBackend {
+func createTestAnnotationSutWithStore(t *testing.T, annotations historian.AnnotationStore) *historian.AnnotationBackend {
 	t.Helper()
 	met := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
 	rules := fakes.NewRuleStore(t)
@@ -163,10 +164,10 @@ func createTestAnnotationSutWithStore(t *testing.T, annotations AnnotationStore)
 	}
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &acfakes.FakeRuleService{}
-	return NewAnnotationBackend(annotationBackendLogger, annotations, rules, met, ac)
+	return historian.NewAnnotationBackend(annotationBackendLogger, annotations, rules, met, ac)
 }
 
-func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *AnnotationBackend {
+func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Historian) *historian.AnnotationBackend {
 	t.Helper()
 	fakeAnnoRepo := annotationstest.NewFakeAnnotationsRepo()
 	rules := fakes.NewRuleStore(t)
@@ -178,11 +179,11 @@ func createTestAnnotationBackendSutWithMetrics(t *testing.T, met *metrics.Histor
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &acfakes.FakeRuleService{}
-	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
+	return historian.NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
 }
 
-func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *AnnotationBackend {
-	fakeAnnoRepo := &failingAnnotationRepo{}
+func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *historian.AnnotationBackend {
+	fakeAnnoRepo := &historian.failingAnnotationRepo{}
 	rules := fakes.NewRuleStore(t)
 	rules.Rules[1] = []*models.AlertRule{
 		models.RuleGen.With(models.RuleMuts.WithOrgID(1), withUID("my-rule")).GenerateRef(),
@@ -192,7 +193,7 @@ func createFailingAnnotationSut(t *testing.T, met *metrics.Historian) *Annotatio
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	store := NewAnnotationStore(fakeAnnoRepo, dbs, met)
 	ac := &acfakes.FakeRuleService{}
-	return NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
+	return historian.NewAnnotationBackend(annotationBackendLogger, store, rules, met, ac)
 }
 
 func createAnnotation() annotations.Item {
@@ -213,7 +214,7 @@ func TestBuildAnnotations(t *testing.T) {
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].Values = nil
 
-		items := buildAnnotations(rule, states, logger)
+		items := historian.buildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		j := assertValidJSON(t, items[0].Data)
@@ -226,7 +227,7 @@ func TestBuildAnnotations(t *testing.T) {
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].Values = map[string]float64{"a": 1.0, "b": 2.0}
 
-		items := buildAnnotations(rule, states, logger)
+		items := historian.buildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		assertValidJSON(t, items[0].Data)
@@ -244,7 +245,7 @@ func TestBuildAnnotations(t *testing.T) {
 		states := []state.StateTransition{makeStateTransition()}
 		states[0].Values = map[string]float64{"nan": math.NaN(), "inf": math.Inf(1), "ninf": math.Inf(-1)}
 
-		items := buildAnnotations(rule, states, logger)
+		items := historian.buildAnnotations(rule, states, logger)
 
 		require.Len(t, items, 1)
 		j := assertValidJSON(t, items[0].Data)
@@ -283,6 +284,6 @@ func (i *interceptingAnnotationStore) Find(ctx context.Context, query *annotatio
 	return []*annotations.ItemDTO{}, nil
 }
 
-func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
+func (i *interceptingAnnotationStore) Save(ctx context.Context, panel *history_model.PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
 	return nil
 }

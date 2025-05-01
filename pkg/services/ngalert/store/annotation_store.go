@@ -1,4 +1,4 @@
-package historian
+package store
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
 )
 
 type AnnotationService interface {
@@ -29,17 +30,17 @@ func NewAnnotationStore(svc AnnotationService, dashboards dashboards.DashboardSe
 	}
 }
 
-func (s *AnnotationServiceStore) Save(ctx context.Context, panel *PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
+func (s *AnnotationServiceStore) Save(ctx context.Context, panel *model.PanelKey, annotations []annotations.Item, orgID int64, logger log.Logger) error {
 	if panel != nil {
-		dashID, err := s.dashboards.getID(ctx, panel.orgID, panel.dashUID)
+		dashID, err := s.dashboards.getID(ctx, panel.OrgID(), panel.DashUID())
 		if err != nil {
-			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.dashUID, "error", err)
+			logger.Error("Error getting dashboard for alert annotation", "dashboardUID", panel.DashUID(), "error", err)
 			dashID = 0
 		}
 
 		for i := range annotations {
 			annotations[i].DashboardID = dashID
-			annotations[i].PanelID = panel.panelID
+			annotations[i].PanelID = panel.PanelID()
 		}
 	}
 

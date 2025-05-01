@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/state"
 	"github.com/grafana/grafana/pkg/services/ngalert/state/historian"
+	"github.com/grafana/grafana/pkg/services/ngalert/store"
 )
 
 func BenchmarkProcessEvalResults(b *testing.B) {
@@ -26,7 +27,7 @@ func BenchmarkProcessEvalResults(b *testing.B) {
 	as := annotations.FakeAnnotationsRepo{}
 	as.On("SaveMany", mock.Anything, mock.Anything).Return(nil)
 	metrics := metrics.NewHistorianMetrics(prometheus.NewRegistry(), metrics.Subsystem)
-	store := historian.NewAnnotationStore(&as, nil, metrics)
+	store := store.NewAnnotationStore(&as, nil, metrics)
 	annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 	ac := &fakes.FakeRuleService{}
 	hist := historian.NewAnnotationBackend(annotationBackendLogger, store, nil, metrics, ac)

@@ -678,7 +678,7 @@ func configureHistorianBackend(ctx context.Context, cfg setting.UnifiedAlertingS
 		return historian.NewMultipleBackend(primary, secondaries...), nil
 	}
 	if backend == historian.BackendTypeAnnotations {
-		store := historian.NewAnnotationStore(ar, ds, met)
+		store := store.NewAnnotationStore(ar, ds, met)
 		annotationBackendLogger := log.New("ngalert.state.historian", "backend", "annotations")
 		return historian.NewAnnotationBackend(annotationBackendLogger, store, rs, met, ac), nil
 	}
