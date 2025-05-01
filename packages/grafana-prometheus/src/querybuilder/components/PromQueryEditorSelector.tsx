@@ -92,9 +92,8 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
 
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
   // This should be filled in from the defaults by now.. Pull in the defaults once
-  const initial = getQueryWithDefaults(props.query, app, defaultEditor);
   // Track mode locally so it never gets yanked out from under us
-  const [editorMode, setEditorMode] = useState<QueryEditorMode>(initial.editorMode!);
+  const [editorMode, setEditorMode] = useState<QueryEditorMode>(query.editorMode!);
   useEffect(() => {
     const handleEvent = (event: { data: any; origin: string }) => {
       const { type, payload } = event.data;
