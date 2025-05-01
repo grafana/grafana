@@ -1,5 +1,6 @@
 import { ReactNode, useMemo } from 'react';
 
+import { SceneObject } from '@grafana/scenes';
 import { Button, Icon, Input, Stack, TextArea } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -20,8 +21,12 @@ export class DashboardEditableElement implements EditableDashboardElement {
       typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
       icon: 'apps',
       instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
-      isContainer: true,
     };
+  }
+
+  public getOutlineChildren(): SceneObject[] {
+    const { $variables, body } = this.dashboard.state;
+    return [$variables!, ...body.getOutlineChildren()];
   }
 
   public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
