@@ -5,11 +5,12 @@ import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { config, reportInteraction } from '@grafana/runtime';
+import { config } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, Field, LoadingBar, RadioButtonGroup, Alert, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
+import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ShareExportTab } from '../ShareExportTab';
@@ -127,7 +128,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       }
 
       setImageBlob(result.blob);
-      reportInteraction('dashboards_image_generation', {
+      DashboardInteractions.imageGeneration({
         format,
         scale: config.rendererDefaultImageScale || 1,
         shareResource: 'dashboard',
@@ -135,7 +136,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       });
     } catch (error) {
       console.error('Error exporting image:', error);
-      reportInteraction('dashboards_image_generation', {
+      DashboardInteractions.imageGeneration({
         format,
         scale: config.rendererDefaultImageScale || 1,
         shareResource: 'dashboard',
@@ -160,7 +161,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     const name = dashboard.state.title;
     saveAs(imageBlob, `${name}-${time}.${format}`);
 
-    reportInteraction('dashboards_image_download', {
+    DashboardInteractions.imageDownload({
       format,
       fileName: `${name}-${time}.${format}`,
       shareResource: 'dashboard',
