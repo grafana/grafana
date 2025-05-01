@@ -167,10 +167,9 @@ export function processV2Datasources(dashboard: DashboardV2Spec): ThunkResult<vo
       if (element.kind !== 'Panel') {
         throw new Error('Only panels are currenlty supported in v2 dashboards');
       }
-      if (element.spec.data.spec.queries.length > 0) {
-        for (const query of element.spec.data.spec.queries) {
-          await processV2DatasourceInput(query.spec, inputs);
-        }
+
+      for (const query of element.spec.data.spec.queries) {
+        await processV2DatasourceInput(query.spec, inputs);
       }
     }
 
@@ -331,36 +330,32 @@ export function getFolderByUid(uid: string): Promise<{ uid: string; title: strin
 }
 
 export async function processV2DatasourceInput(
-  obj: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
+  spec: PanelQueryKind['spec'] | QueryVariableKind['spec'] | AnnotationQueryKind['spec'],
   inputs: Record<string, DataSourceInput> = {}
 ) {
-  const datasourceRef = obj?.datasource;
-  if (!datasourceRef && obj?.query) {
-    const dsType = obj.query.kind;
-    const datasource = await getDatasourceSrv().get({ type: dsType });
-    let dataSourceInput: DataSourceInput | undefined;
-    if (datasource) {
-      dataSourceInput = {
-        name: datasource.name,
-        label: datasource.name,
-        info: `Select a ${datasource.name} data source`,
-        value: datasource.uid,
-        type: InputType.DataSource,
-        pluginId: datasource.meta?.id,
-      };
+  const dsType = spec.query?.group || 'undefined';
+  const datasource = await getDatasourceSrv().get({ type: dsType });
+  let dataSourceInput: DataSourceInput | undefined;
 
-      inputs[datasource.meta?.id] = dataSourceInput;
-    } else {
-      dataSourceInput = {
-        name: dsType,
-        label: dsType,
-        info: `No data sources of type ${dsType} found`,
-        value: '',
-        type: InputType.DataSource,
-        pluginId: dsType,
-      };
-
-      inputs[dsType] = dataSourceInput;
-    }
+  if (datasource) {
+    dataSourceInput = {
+      name: datasource.name,
+      label: datasource.name,
+      info: `Select a ${datasource.name} data source`,
+      value: datasource.uid,
+      type: InputType.DataSource,
+      pluginId: datasource.meta?.id,
+    };
+    inputs[datasource.meta?.id] = dataSourceInput;
+  } else {
+    dataSourceInput = {
+      name: dsType,
+      label: dsType,
+      info: `No data sources of type ${dsType} found`,
+      value: '',
+      type: InputType.DataSource,
+      pluginId: dsType,
+    };
+    inputs[dsType] = dataSourceInput;
   }
 }
