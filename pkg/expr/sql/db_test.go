@@ -5,12 +5,14 @@ package sql
 import (
 	"context"
 	"encoding/json"
+	"net/http"
 	"testing"
 	"time"
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func TestQueryFrames(t *testing.T) {
@@ -61,7 +63,7 @@ func TestQueryFrames(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			frame, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", tt.query, tt.input_frames)
+			frame, err := db.QueryFrames(context.Background(), &testTracer{}, "sqlExpressionRefId", tt.query, tt.input_frames)
 			require.NoError(t, err)
 
 			if diff := cmp.Diff(tt.expected, frame, data.FrameTestCompareOptions()...); diff != "" {
@@ -123,7 +125,7 @@ func TestQueryFramesInOut(t *testing.T) {
 	db := DB{}
 	qry := `SELECT * from a`
 
-	resultFrame, err := db.QueryFrames(context.Background(), "a", qry, []*data.Frame{frameA})
+	resultFrame, err := db.QueryFrames(context.Background(), &testTracer{}, "a", qry, []*data.Frame{frameA})
 	require.NoError(t, err)
 
 	if diff := cmp.Diff(frameA, resultFrame, data.FrameTestCompareOptions()...); diff != "" {
@@ -163,7 +165,7 @@ func TestQueryFramesNumericSelect(t *testing.T) {
 	4294967295 AS 'intUnsigned',
 	18446744073709551615 AS 'bigUnsigned'`
 
-	resultFrame, err := db.QueryFrames(context.Background(), "a", qry, []*data.Frame{})
+	resultFrame, err := db.QueryFrames(context.Background(), &testTracer{}, "a", qry, []*data.Frame{})
 	require.NoError(t, err)
 
 	if diff := cmp.Diff(expectedFrame, resultFrame, data.FrameTestCompareOptions()...); diff != "" {
@@ -186,7 +188,7 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 
 	qry := `SELECT str_to_date('2025-02-03T03:00:00','%Y-%m-%dT%H:%i:%s') as ts`
 
-	f, err := db.QueryFrames(context.Background(), "a", qry, nil)
+	f, err := db.QueryFrames(context.Background(), &testTracer{}, "a", qry, nil)
 	require.NoError(t, err)
 
 	if diff := cmp.Diff(expectedFrame, f, data.FrameTestCompareOptions()...); diff != "" {
@@ -201,7 +203,7 @@ func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
 
 	query := `SELECT ` + GmsNotImplemented + `(123.456, 2);`
 
-	_, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", query, nil)
+	_, err := db.QueryFrames(context.Background(), &testTracer{}, "sqlExpressionRefId", query, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "error in go-mysql-server")
 }
@@ -223,7 +225,7 @@ func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
 
 	query := `SELECT * FROM json_test`
 
-	resultFrame, err := db.QueryFrames(context.Background(), "json_test", query, data.Frames{expectedFrame})
+	resultFrame, err := db.QueryFrames(context.Background(), &testTracer{}, "json_test", query, data.Frames{expectedFrame})
 	require.NoError(t, err)
 
 	// Use custom compare options that ignore Name and RefID
@@ -267,7 +269,7 @@ func TestQueryFrames_JSONFilter(t *testing.T) {
 
 	query := `SELECT title, labels FROM A WHERE json_contains(labels, '"type/bug"')`
 
-	result, err := db.QueryFrames(context.Background(), "B", query, data.Frames{input})
+	result, err := db.QueryFrames(context.Background(), &testTracer{}, "B", query, data.Frames{input})
 	require.NoError(t, err)
 
 	// Use custom compare options that ignore Name and RefID
@@ -286,4 +288,22 @@ func TestQueryFrames_JSONFilter(t *testing.T) {
 // p is a utility for pointers from constants
 func p[T any](v T) *T {
 	return &v
+}
+
+type testTracer struct {
+	trace.Tracer
+}
+
+func (t *testTracer) Start(ctx context.Context, name string, s ...trace.SpanStartOption) (context.Context, trace.Span) {
+	return ctx, &testSpan{}
+}
+func (t *testTracer) Inject(context.Context, http.Header, trace.Span) {
+
+}
+
+type testSpan struct {
+	trace.Span
+}
+
+func (ts *testSpan) End(opt ...trace.SpanEndOption) {
 }
