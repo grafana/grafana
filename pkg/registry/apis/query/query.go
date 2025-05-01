@@ -223,7 +223,6 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		qdr, err = b.handleExpressions(ctx, req, qdr)
 		if err != nil {
 			b.log.Debug("handleExpressions failed", "err", err)
-			return qdr, err // return early to prevent hiding responses that may not exist?
 		}
 	}
 
