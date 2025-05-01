@@ -10,7 +10,6 @@ import { SceneComponentProps } from '@grafana/scenes';
 import { Button, Field, LoadingBar, RadioButtonGroup, Alert, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
-import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ShareExportTab } from '../ShareExportTab';
