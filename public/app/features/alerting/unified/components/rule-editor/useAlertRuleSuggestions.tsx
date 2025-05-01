@@ -7,6 +7,7 @@ import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 import { alertRuleApi } from '../../api/alertRuleApi';
 import { featureDiscoveryApi } from '../../api/featureDiscoveryApi';
 import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
+import { isPrivateLabelKey } from '../../utils/labels';
 
 const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery, useRulerRulesQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
@@ -14,8 +15,10 @@ const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const emptyRulerConfig: RulerRulesConfigDTO = {};
 
-export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
-  const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
+export function useGetLabelsFromDataSourceName(rulesSourceName?: string, includeAlerts = false) {
+  const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery(
+    rulesSourceName ? { rulesSourceName } : skipToken
+  );
 
   // emptyRulerConfig is used to prevent from triggering  labels' useMemo all the time
   // rulerRules = {} creates a new object and triggers useMemo to recalculate labels
@@ -23,8 +26,7 @@ export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
     useLazyRulerRulesQuery();
 
   const { data: promNamespaces = [], isLoading: isPrometheusRulesLoading } = usePrometheusRuleNamespacesQuery(
-    { ruleSourceName: rulesSourceName },
-    { skip: !prometheusRulesPrimary }
+    rulesSourceName && prometheusRulesPrimary ? { ruleSourceName: rulesSourceName } : skipToken
   );
 
   useEffect(() => {
@@ -39,11 +41,11 @@ export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
     }
 
     if (prometheusRulesPrimary) {
-      return promNamespacesToLabels(promNamespaces);
+      return promNamespacesToLabels(promNamespaces, includeAlerts);
     }
 
     return rulerRulesToLabels(rulerRules);
-  }, [promNamespaces, rulerRules, isPrometheusRulesLoading, isRulerRulesLoading]);
+  }, [promNamespaces, rulerRules, isPrometheusRulesLoading, isRulerRulesLoading, includeAlerts]);
 
   return { labels, isLoading: isPrometheusRulesLoading || isRulerRulesLoading || isFeaturesLoading };
 }
@@ -128,7 +130,11 @@ export function rulerRulesToNamespaceGroups(rulerConfig: RulerRulesConfigDTO) {
   return result;
 }
 
-function promNamespacesToLabels(promNamespace: RuleNamespace[]) {
+function promNamespacesToLabels(
+  promNamespace: RuleNamespace[],
+  /** Should we also parse out labels from the alerts, when present? */
+  includeAlerts = false
+) {
   const rules = promNamespace.flatMap((namespace) => namespace.groups).flatMap((group) => group.rules);
 
   return rules.reduce((result, rule) => {
@@ -136,8 +142,17 @@ function promNamespacesToLabels(promNamespace: RuleNamespace[]) {
       return result;
     }
 
-    Object.entries(rule.labels).forEach(([labelKey, labelValue]) => {
-      if (!labelKey || !labelValue) {
+    const alertsToCheck =
+      includeAlerts && 'alerts' in rule
+        ? (rule?.alerts || []).flatMap((alert) => {
+            return Object.entries(alert.labels);
+          })
+        : [];
+
+    const toCheck = [...Object.entries(rule.labels), ...alertsToCheck];
+
+    toCheck.forEach(([labelKey, labelValue]) => {
+      if (!labelKey || !labelValue || isPrivateLabelKey(labelKey)) {
         return;
       }
 
@@ -148,6 +163,7 @@ function promNamespacesToLabels(promNamespace: RuleNamespace[]) {
         result.set(labelKey, new Set([labelValue]));
       }
     });
+
     return result;
   }, new Map<string, Set<string>>());
 }

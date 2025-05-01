@@ -220,7 +220,7 @@ function SilenceList({
       />
     );
   } else {
-    return <Trans i18nKey="silences.table.no-matching-silences">No matching silences found;</Trans>;
+    return <Trans i18nKey="silences.table.no-matching-silences">No matching silences found</Trans>;
   }
 }
 

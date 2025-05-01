@@ -1331,9 +1331,6 @@
       "notes": "Notes",
       "returns": "Returns"
     },
-    "label-picker": {
-      "no-options-message": "No labels found"
-    },
     "labels-editor-modal": {
       "title-edit-labels": "Edit labels"
     },
@@ -1420,8 +1417,6 @@
       "label-operator": "Operator",
       "label-refine-affected-alerts": "Refine affected alerts",
       "label-value": "Value",
-      "placeholder-label": "label",
-      "placeholder-value": "value",
       "remove": "Remove",
       "tooltip-refine-which-alert-instances-silenced-selecting": "Refine which alert instances are silenced by selecting label matchers"
     },
@@ -8407,7 +8402,7 @@
       "add-silence-button": "Add Silence",
       "edit-button": "Edit",
       "expired-silences": "Expired silences are automatically deleted after 5 days.",
-      "no-matching-silences": "No matching silences found;",
+      "no-matching-silences": "No matching silences found",
       "noConfig": "Create a new contact point to create a configuration using the default values or contact your administrator to set up the Alertmanager.",
       "recreate-button": "Recreate",
       "unsilence-button": "Unsilence"

@@ -2,8 +2,19 @@ import { css, cx } from '@emotion/css';
 import { FC, useCallback, useMemo, useState } from 'react';
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext } from 'react-hook-form';
 
-import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Button, Field, InlineLabel, Input, LoadingPlaceholder, Space, Stack, Text, useStyles2 } from '@grafana/ui';
+import { GrafanaTheme2 } from '@grafana/data';
+import {
+  Button,
+  ComboboxOption,
+  Field,
+  InlineLabel,
+  Input,
+  LoadingPlaceholder,
+  Space,
+  Stack,
+  Text,
+  useStyles2,
+} from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { labelsApi } from '../../../api/labelsApi';
@@ -28,10 +39,16 @@ const useGetOpsLabelsKeys = (skip: boolean) => {
 
 function mapLabelsToOptions(
   items: Iterable<string> = [],
-  labelsInSubForm?: Array<{ key: string; value: string }>
-): Array<SelectableValue<string>> {
+  labelsInSubForm?: Array<{ key: string; value: string }>,
+  groupName?: string
+): Array<ComboboxOption<string>> {
   const existingKeys = new Set(labelsInSubForm ? labelsInSubForm.map((label) => label.key) : []);
-  return Array.from(items, (item) => ({ label: item, value: item, isDisabled: existingKeys.has(item) }));
+  return Array.from(items, (item) => ({
+    label: item,
+    value: item,
+    isDisabled: existingKeys.has(item),
+    group: groupName,
+  }));
 }
 
 export interface LabelsInRuleProps {
@@ -108,7 +125,7 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
 
 const isKeyAllowed = (labelKey: string) => !isPrivateLabelKey(labelKey);
 
-export function useCombinedLabels(
+function useCombinedLabels(
   dataSourceName: string,
   labelsPluginInstalled: boolean,
   loadingLabelsPlugin: boolean,
@@ -131,27 +148,19 @@ export function useCombinedLabels(
 
   //------- Convert the keys from the ops labels to options for the dropdown
   const keysFromGopsLabels = useMemo(() => {
-    return mapLabelsToOptions(Object.keys(labelsByKeyOps).filter(isKeyAllowed), labelsInSubform);
+    return mapLabelsToOptions(Object.keys(labelsByKeyOps).filter(isKeyAllowed), labelsInSubform, 'From system');
   }, [labelsByKeyOps, labelsInSubform]);
 
   //------- Convert the keys from the existing alerts to options for the dropdown
   const keysFromExistingAlerts = useMemo(() => {
-    return mapLabelsToOptions(Array.from(labelsByKeyFromExisingAlerts.keys()).filter(isKeyAllowed), labelsInSubform);
+    return mapLabelsToOptions(
+      Array.from(labelsByKeyFromExisingAlerts.keys()).filter(isKeyAllowed),
+      labelsInSubform,
+      'From alerts'
+    );
   }, [labelsByKeyFromExisingAlerts, labelsInSubform]);
 
-  // create two groups of labels, one for ops and one for custom
-  const groupedOptions = [
-    {
-      label: 'From alerts',
-      options: keysFromExistingAlerts,
-      expanded: true,
-    },
-    {
-      label: 'From system',
-      options: keysFromGopsLabels,
-      expanded: true,
-    },
-  ];
+  const groupedOptions = [...keysFromExistingAlerts, ...keysFromGopsLabels];
 
   const selectedKeyIsFromAlerts = labelsByKeyFromExisingAlerts.has(selectedKey);
   const selectedKeyIsFromOps = labelsByKeyOps[selectedKey] !== undefined && labelsByKeyOps[selectedKey]?.size > 0;
@@ -249,7 +258,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
   );
   const [selectedKey, setSelectedKey] = useState('');
 
-  const { loading, keysFromExistingAlerts, groupedOptions, getValuesForLabel } = useCombinedLabels(
+  const { loading, groupedOptions, getValuesForLabel } = useCombinedLabels(
     dataSourceName,
     labelsPluginInstalled,
     loadingLabelsPlugin,
@@ -276,7 +285,6 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
             return (
               <div key={field.id} className={cx(styles.flexRow, styles.centerAlignRow)}>
                 <Field
-                  className={styles.labelInput}
                   invalid={Boolean(errors.labelsInSubform?.[index]?.key?.message)}
                   error={errors.labelsInSubform?.[index]?.key?.message}
                   data-testid={`labelsInSubform-key-${index}`}
@@ -289,11 +297,11 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                       return (
                         <AlertLabelDropdown
                           {...rest}
-                          defaultValue={field.key ? { label: field.key, value: field.key } : undefined}
-                          options={labelsPluginInstalled ? groupedOptions : keysFromExistingAlerts}
-                          onChange={(newValue: SelectableValue) => {
-                            onChange(newValue.value);
-                            setSelectedKey(newValue.value);
+                          value={field.key ? { label: field.key, value: field.key } : undefined}
+                          options={groupedOptions}
+                          onChange={(newValue: ComboboxOption<string> | null) => {
+                            onChange(newValue ? newValue.value : '');
+                            setSelectedKey(newValue?.value || '');
                           }}
                           type="key"
                         />
@@ -303,7 +311,6 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                 </Field>
                 <InlineLabel className={styles.equalSign}>=</InlineLabel>
                 <Field
-                  className={styles.labelInput}
                   invalid={Boolean(errors.labelsInSubform?.[index]?.value?.message)}
                   error={errors.labelsInSubform?.[index]?.value?.message}
                   data-testid={`labelsInSubform-value-${index}`}
@@ -316,10 +323,10 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
                       return (
                         <AlertLabelDropdown
                           {...rest}
-                          defaultValue={field.value ? { label: field.value, value: field.value } : undefined}
+                          value={field.value ? { label: field.value, value: field.value } : undefined}
                           options={values}
-                          onChange={(newValue: SelectableValue) => {
-                            onChange(newValue.value);
+                          onChange={(newValue: ComboboxOption<string> | null) => {
+                            onChange(newValue ? newValue.value : '');
                           }}
                           onOpenMenu={() => {
                             setSelectedKey(labelsInSubform[index].key);
@@ -342,7 +349,7 @@ export function LabelsWithSuggestions({ dataSourceName }: LabelsWithSuggestionsP
   );
 }
 
-export const LabelsWithoutSuggestions: FC = () => {
+const LabelsWithoutSuggestions: FC = () => {
   const styles = useStyles2(getStyles);
   const {
     register,
@@ -363,11 +370,7 @@ export const LabelsWithoutSuggestions: FC = () => {
         return (
           <div key={field.id}>
             <div className={cx(styles.flexRow, styles.centerAlignRow)} data-testid="alertlabel-input-wrapper">
-              <Field
-                className={styles.labelInput}
-                invalid={!!errors.labels?.[index]?.key?.message}
-                error={errors.labels?.[index]?.key?.message}
-              >
+              <Field invalid={!!errors.labels?.[index]?.key?.message} error={errors.labels?.[index]?.key?.message}>
                 <Input
                   {...register(`labels.${index}.key`, {
                     required: { value: !!labels[index]?.value, message: 'Required.' },
@@ -378,11 +381,7 @@ export const LabelsWithoutSuggestions: FC = () => {
                 />
               </Field>
               <InlineLabel className={styles.equalSign}>=</InlineLabel>
-              <Field
-                className={styles.labelInput}
-                invalid={!!errors.labels?.[index]?.value?.message}
-                error={errors.labels?.[index]?.value?.message}
-              >
+              <Field invalid={!!errors.labels?.[index]?.value?.message} error={errors.labels?.[index]?.value?.message}>
                 <Input
                   {...register(`labels.${index}.value`, {
                     required: { value: !!labels[index]?.key, message: 'Required.' },
@@ -460,17 +459,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       justifyContent: 'flex-start',
     }),
     centerAlignRow: css({
-      alignItems: 'center',
+      alignItems: 'start',
       gap: theme.spacing(0.5),
     }),
     equalSign: css({
       alignSelf: 'flex-start',
       width: '28px',
       justifyContent: 'center',
-      margin: 0,
-    }),
-    labelInput: css({
-      width: '175px',
       margin: 0,
     }),
     confirmButton: css({
