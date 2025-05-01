@@ -45,6 +45,7 @@ export function TableCellNG(props: TableCellNGProps) {
     getActions,
     rowBg,
     onCellFilterAdded,
+    replaceVariables,
   } = props;
 
   const cellInspect = field.config?.custom?.inspect ?? false;
@@ -74,7 +75,7 @@ export function TableCellNG(props: TableCellNGProps) {
   const [divWidth, setDivWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const actions = getActions ? getActions(frame, field, rowIdx) : [];
+  const actions = getActions ? getActions(frame, field, rowIdx, replaceVariables) : [];
 
   useLayoutEffect(() => {
     if (divWidthRef.current && divWidthRef.current.clientWidth !== 0) {
