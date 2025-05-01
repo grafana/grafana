@@ -39,21 +39,44 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
       info.push(<TagBadge key={item.value} label={item.value} removeIcon={false} count={0} />);
       if (!first) {
         icon = 'exclamation-triangle';
-        info.push(<span key="info">&nbsp; No dashboards found</span>);
+        info.push(
+          <span>
+            &nbsp;{' '}
+            <span key="info">
+              <Trans i18nKey="playlist.playlist-table-rows.no-dashboards-found">No dashboards found</Trans>
+            </span>
+          </span>
+        );
       } else {
         info.push(<span key="info">&nbsp; {pluralize('dashboard', item.dashboards.length, true)}</span>);
       }
     } else if (first) {
       info.push(
         item.dashboards.length > 1 ? (
-          <span key="info">Multiple items found: ${item.value}</span>
+          <span>
+            &nbsp;{' '}
+            <span key="info">
+              <Trans i18nKey="playlist.playlist-table-rows.multiple-dashboards-found" values={{ items: item.value }}>
+                Multiple items found: {'{{items}}'}
+              </Trans>
+            </span>
+          </span>
         ) : (
           <span key="info">{first.name ?? item.value}</span>
         )
       );
     } else {
       icon = 'exclamation-triangle';
-      info.push(<span key="info">&nbsp; Not found: {item.value}</span>);
+      info.push(
+        <span>
+          &nbsp;{' '}
+          <span key="info">
+            <Trans i18nKey="playlist.playlist-table-rows.not-found" values={{ items: item.value }}>
+              Not found: {'{{items}}'}
+            </Trans>
+          </span>
+        </span>
+      );
     }
     return (
       <>
@@ -75,7 +98,15 @@ export const PlaylistTableRows = ({ items, onDelete }: Props) => {
               {...provided.dragHandleProps}
               role="row"
             >
-              <div className={styles.actions} role="cell" aria-label={`Playlist item, ${item.type}, ${item.value}`}>
+              <div
+                className={styles.actions}
+                role="cell"
+                aria-label={t(
+                  'playlist.playlist-table-rows.aria-label-playlist-item',
+                  'Playlist item, {{itemType}}, {{itemValue}}',
+                  { itemType: item.type, itemValue: item.value }
+                )}
+              >
                 {renderItem(item)}
               </div>
               <div className={styles.actions}>

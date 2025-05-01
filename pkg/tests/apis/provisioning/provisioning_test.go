@@ -147,7 +147,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 	require.Equal(t, status.Message, "Dry run failed: Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 
 	const invalidSchemaUid = "invalid-schema-uid"
-	_, err = helper.Dashboards.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
+	_, err = helper.DashboardsV1.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
 	require.Error(t, err, "invalid dashboard shouldn't exist")
 	require.True(t, apierrors.IsNotFound(err))
 
@@ -195,7 +195,7 @@ func TestIntegrationProvisioning_FailInvalidSchema(t *testing.T) {
 		require.Equal(t, job.Status.Errors[0], "Dashboard.dashboard.grafana.app \"invalid-schema-uid\" is invalid: [spec.panels.0.repeatDirection: Invalid value: conflicting values \"h\" and \"this is not an allowed value\", spec.panels.0.repeatDirection: Invalid value: conflicting values \"v\" and \"this is not an allowed value\"]")
 	}, time.Second*10, time.Millisecond*10, "Expected provisioning job to conclude with the status failed")
 
-	_, err = helper.Dashboards.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
+	_, err = helper.DashboardsV1.Resource.Get(ctx, invalidSchemaUid, metav1.GetOptions{})
 	require.Error(t, err, "invalid dashboard shouldn't have been created")
 	require.True(t, apierrors.IsNotFound(err))
 
@@ -272,7 +272,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 
 	// By now, we should have synced, meaning we have data to read in the local Grafana instance!
 
-	found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+	found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
 	names := []string{}
@@ -286,7 +286,7 @@ func TestIntegrationProvisioning_CreatingGitHubRepository(t *testing.T) {
 	require.NoError(t, err, "should delete values")
 
 	assert.EventuallyWithT(t, func(collect *assert.CollectT) {
-		found, err := helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+		found, err := helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 		require.NoError(t, err, "can list values")
 		require.Equal(collect, 0, len(found.Items), "expected dashboards to be deleted")
 	}, time.Second*10, time.Millisecond*10, "Expected dashboards to be deleted")
@@ -396,7 +396,7 @@ func TestIntegrationProvisioning_RunLocalRepository(t *testing.T) {
 		require.Equal(t, allPanels, name, "save the name from the request")
 
 		// Get the file from the grafana database
-		obj, err := helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+		obj, err := helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 		require.NoError(t, err, "the value should be saved in grafana")
 		val, _, _ := unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyManagerKind)
 		require.Equal(t, string(utils.ManagerKindRepo), val, "should have repo annotations")
@@ -539,33 +539,33 @@ func TestIntegrationProvisioning_ImportAllPanelsFromLocalRepository(t *testing.T
 
 	// But the dashboard shouldn't exist yet
 	const allPanels = "n1jR8vnnz"
-	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	_, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "no all-panels dashboard should exist")
 	require.True(t, apierrors.IsNotFound(err))
 
 	// Now, we import it, such that it may exist
 	helper.SyncAndWait(t, repo, nil)
 
-	_, err = helper.Dashboards.Resource.List(ctx, metav1.ListOptions{})
+	_, err = helper.DashboardsV1.Resource.List(ctx, metav1.ListOptions{})
 	require.NoError(t, err, "can list values")
 
-	obj, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	obj, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.NoError(t, err, "all-panels dashboard should exist")
 	require.Equal(t, repo, obj.GetAnnotations()[utils.AnnoKeyManagerIdentity])
 
 	// Try writing the value directly
 	err = unstructured.SetNestedField(obj.Object, []any{"aaa", "bbb"}, "spec", "tags")
 	require.NoError(t, err, "set tags")
-	obj, err = helper.Dashboards.Resource.Update(ctx, obj, metav1.UpdateOptions{})
+	obj, err = helper.DashboardsV1.Resource.Update(ctx, obj, metav1.UpdateOptions{})
 	require.NoError(t, err)
 	v, _, _ := unstructured.NestedString(obj.Object, "metadata", "annotations", utils.AnnoKeyUpdatedBy)
 	require.Equal(t, "access-policy:provisioning", v)
 
 	// Should not be able to directly delete the managed resource
-	err = helper.Dashboards.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
+	err = helper.DashboardsV1.Resource.Delete(ctx, allPanels, metav1.DeleteOptions{})
 	require.NoError(t, err, "user can delete")
 
-	_, err = helper.Dashboards.Resource.Get(ctx, allPanels, metav1.GetOptions{})
+	_, err = helper.DashboardsV1.Resource.Get(ctx, allPanels, metav1.GetOptions{})
 	require.Error(t, err, "should delete the internal resource")
 	require.True(t, apierrors.IsNotFound(err))
 }
@@ -578,10 +578,18 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	helper := runGrafana(t)
 	ctx := context.Background()
 
-	// Set up dashboards first, then the repository, and finally export.
-	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/root_dashboard.json")
-	_, err := helper.Dashboards.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
-	require.NoError(t, err, "should be able to create prerequisite dashboard")
+	// Write dashboards at
+	dashboard := helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v0.yaml")
+	_, err := helper.DashboardsV0.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v0 dashboard")
+
+	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v1.yaml")
+	_, err = helper.DashboardsV1.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v1 dashboard")
+
+	dashboard = helper.LoadYAMLOrJSONFile("exportunifiedtorepository/dashboard-test-v2.yaml")
+	_, err = helper.DashboardsV2.Resource.Create(ctx, dashboard, metav1.CreateOptions{})
+	require.NoError(t, err, "should be able to create v2 dashboard")
 
 	// Now for the repository.
 	const repo = "local-repository"
@@ -608,7 +616,38 @@ func TestProvisioning_ExportUnifiedToRepository(t *testing.T) {
 	// And time to assert.
 	helper.AwaitJobs(t, repo)
 
-	fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(mustNestedString(dashboard.Object, "spec", "title"))+".json")
-	_, err = os.Stat(fpath)
-	require.NoError(t, err, "exported file was not created at path %s", fpath)
+	type props struct {
+		title      string
+		apiVersion string
+		name       string
+	}
+
+	// Check that each file was exported with its stored version
+	for _, test := range []props{
+		{title: "Test dashboard. Created at v0", apiVersion: "dashboard.grafana.app/v0alpha1", name: "test-v0"},
+		{title: "Test dashboard. Created at v1", apiVersion: "dashboard.grafana.app/v1beta1", name: "test-v1"},
+		{title: "Test dashboard. Created at v2", apiVersion: "dashboard.grafana.app/v2alpha1", name: "test-v2"},
+	} {
+		fpath := filepath.Join(helper.ProvisioningPath, slugify.Slugify(test.title)+".json")
+		//nolint:gosec // we are ok with reading files in testdata
+		body, err := os.ReadFile(fpath)
+		require.NoError(t, err, "exported file was not created at path %s", fpath)
+		obj := map[string]any{}
+		err = json.Unmarshal(body, &obj)
+		require.NoError(t, err, "exported file not json %s", fpath)
+
+		val, _, err := unstructured.NestedString(obj, "apiVersion")
+		require.NoError(t, err)
+		require.Equal(t, test.apiVersion, val)
+
+		val, _, err = unstructured.NestedString(obj, "spec", "title")
+		require.NoError(t, err)
+		require.Equal(t, test.title, val)
+
+		val, _, err = unstructured.NestedString(obj, "metadata", "name")
+		require.NoError(t, err)
+		require.Equal(t, test.name, val)
+
+		require.Nil(t, obj["status"], "should not have a status element")
+	}
 }

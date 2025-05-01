@@ -68,6 +68,50 @@ func TestMigrationWorker_ProcessNotReaderWriter(t *testing.T) {
 	require.EqualError(t, err, "migration job submitted targeting repository that is not a ReaderWriter")
 }
 
+func TestMigrationWorker_WithHistory(t *testing.T) {
+	fakeDualwrite := dualwrite.NewMockService(t)
+	fakeDualwrite.On("ReadFromUnified", mock.Anything, mock.Anything).
+		Maybe().Return(true, nil) // using unified storage
+
+	worker := NewMigrationWorker(nil, nil, fakeDualwrite)
+	job := provisioning.Job{
+		Spec: provisioning.JobSpec{
+			Action: provisioning.JobActionMigrate,
+			Migrate: &provisioning.MigrateJobOptions{
+				History: true,
+			},
+		},
+	}
+
+	t.Run("fail local", func(t *testing.T) {
+		progressRecorder := jobs.NewMockJobProgressRecorder(t)
+		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
+		progressRecorder.On("Strict").Return()
+
+		repo := repository.NewLocal(&provisioning.Repository{}, nil)
+		err := worker.Process(context.Background(), repo, job, progressRecorder)
+		require.EqualError(t, err, "history is only supported for github repositories")
+	})
+
+	t.Run("fail unified", func(t *testing.T) {
+		progressRecorder := jobs.NewMockJobProgressRecorder(t)
+		progressRecorder.On("SetTotal", mock.Anything, 10).Return()
+		progressRecorder.On("Strict").Return()
+
+		repo := repository.NewMockRepository(t)
+		repo.On("Config").Return(&provisioning.Repository{
+			Spec: provisioning.RepositorySpec{
+				Type: provisioning.GitHubRepositoryType,
+				GitHub: &provisioning.GitHubRepositoryConfig{
+					URL: "empty", // not valid
+				},
+			},
+		})
+		err := worker.Process(context.Background(), repo, job, progressRecorder)
+		require.EqualError(t, err, "history is not yet supported in unified storage")
+	})
+}
+
 func TestMigrationWorker_Process(t *testing.T) {
 	tests := []struct {
 		name           string

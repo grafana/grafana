@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -16,7 +17,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apiserver/pkg/endpoints/request"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -44,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
-	"golang.org/x/exp/slices"
 )
 
 func TestDashboardService(t *testing.T) {
@@ -543,8 +543,8 @@ func TestGetProvisionedDashboardData(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"name": "uid",
 					"labels": map[string]interface{}{
@@ -649,8 +649,8 @@ func TestGetProvisionedDashboardDataByDashboardID(t *testing.T) {
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name": "uid",
 				"labels": map[string]interface{}{
@@ -743,8 +743,8 @@ func TestGetProvisionedDashboardDataByDashboardUID(t *testing.T) {
 		provisioningTimestamp := int64(1234567)
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{Object: map[string]interface{}{
-			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name": "uid",
 				"labels": map[string]interface{}{
@@ -976,8 +976,8 @@ func TestDeleteOrphanedProvisionedDashboards(t *testing.T) {
 		k8sCliMock.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
 			Object: map[string]interface{}{
-				"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
-				"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
+				"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
+				"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
 				"metadata": map[string]interface{}{
 					"name": "uid",
 					"labels": map[string]interface{}{
@@ -1119,9 +1119,10 @@ func TestUnprovisionDashboard(t *testing.T) {
 			},
 			"spec": map[string]any{},
 		}}
+		fakeStore.On("UnprovisionDashboard", mock.Anything, int64(1)).Return(nil).Once()
 		k8sCliMock.On("Get", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(dash, nil)
 		dashWithoutAnnotations := &unstructured.Unstructured{Object: map[string]any{
-			"apiVersion": dashboardv1.APIVERSION,
+			"apiVersion": dashboardv0.APIVERSION,
 			"kind":       "Dashboard",
 			"metadata": map[string]any{
 				"name":        "uid",
@@ -1169,6 +1170,7 @@ func TestUnprovisionDashboard(t *testing.T) {
 		err := service.UnprovisionDashboard(ctx, 1)
 		require.NoError(t, err)
 		k8sCliMock.AssertExpectations(t)
+		fakeStore.AssertExpectations(t)
 	})
 }
 
@@ -1288,8 +1290,9 @@ func TestSetDefaultPermissionsWhenSavingFolderForProvisionedDashboards(t *testin
 						UID: "general",
 					},
 				},
-				ac:  actest.FakeAccessControl{ExpectedEvaluate: true},
-				log: log.NewNopLogger(),
+				ac:        actest.FakeAccessControl{ExpectedEvaluate: true},
+				acService: &actest.FakeService{},
+				log:       log.NewNopLogger(),
 			}
 
 			cmd := &folder.CreateFolderCommand{
@@ -1583,6 +1586,8 @@ func TestSearchDashboards(t *testing.T) {
 			},
 			FolderTitle: "testing-folder-1",
 			FolderUID:   "f1",
+			FolderID:    1,
+			FolderURL:   "/dashboards/f/f1/testing-folder-1",
 		},
 		{
 			UID:         "uid2",
@@ -1594,6 +1599,8 @@ func TestSearchDashboards(t *testing.T) {
 			Tags:        []string{},
 			FolderTitle: "testing-folder-1",
 			FolderUID:   "f1",
+			FolderID:    1,
+			FolderURL:   "/dashboards/f/f1/testing-folder-1",
 		},
 	}
 	query := dashboards.FindPersistedDashboardsQuery{
@@ -1609,7 +1616,9 @@ func TestSearchDashboards(t *testing.T) {
 				Title:       "Dashboard 1",
 				Tags:        []string{"tag1", "tag2"},
 				FolderTitle: "testing-folder-1",
+				FolderSlug:  "testing-folder-1",
 				FolderUID:   "f1",
+				FolderID:    1,
 			},
 			{
 				UID:         "uid2",
@@ -1617,7 +1626,9 @@ func TestSearchDashboards(t *testing.T) {
 				OrgID:       1,
 				Title:       "Dashboard 2",
 				FolderTitle: "testing-folder-1",
+				FolderSlug:  "testing-folder-1",
 				FolderUID:   "f1",
+				FolderID:    1,
 			},
 		}, nil).Once()
 		result, err := service.SearchDashboards(context.Background(), &query)
@@ -1632,6 +1643,7 @@ func TestSearchDashboards(t *testing.T) {
 			{
 				UID:   "f1",
 				Title: "testing-folder-1",
+				ID:    1,
 			},
 		}
 		fakeFolders.ExpectedHitList = expectedFolders
@@ -2497,12 +2509,13 @@ func TestSetDefaultPermissionsAfterCreate(t *testing.T) {
 					dashboardPermissions:      permService,
 					folderPermissions:         permService,
 					dashboardPermissionsReady: make(chan struct{}),
+					acService:                 &actest.FakeService{},
 				}
 				service.RegisterDashboardPermissions(permService)
 
 				// Create test object
 				key := &resource.ResourceKey{Group: "dashboard.grafana.app", Resource: "dashboards", Name: "test", Namespace: "default"}
-				obj := &dashboardv1.Dashboard{
+				obj := &dashboardv0.Dashboard{
 					TypeMeta: metav1.TypeMeta{
 						APIVersion: "dashboard.grafana.app/v0alpha1",
 					},
@@ -2857,8 +2870,8 @@ func TestK8sDashboardCleanupJob(t *testing.T) {
 func createTestUnstructuredDashboard(uid, title string, resourceVersion string) unstructured.Unstructured {
 	return unstructured.Unstructured{
 		Object: map[string]interface{}{
-			"apiVersion": dashboardv1.DashboardResourceInfo.GroupVersion().String(),
-			"kind":       dashboardv1.DashboardResourceInfo.GroupVersionKind().Kind,
+			"apiVersion": dashboardv0.DashboardResourceInfo.GroupVersion().String(),
+			"kind":       dashboardv0.DashboardResourceInfo.GroupVersionKind().Kind,
 			"metadata": map[string]interface{}{
 				"name":              uid,
 				"deletionTimestamp": "2023-01-01T00:00:00Z",

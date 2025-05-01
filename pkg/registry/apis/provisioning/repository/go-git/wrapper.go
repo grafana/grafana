@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-billy/v5/util"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -43,6 +44,27 @@ func init() {
 	client.InstallProtocol("http", httpClient)
 }
 
+//go:generate mockery --name=Worktree --output=mocks --inpackage --filename=worktree_mock.go --with-expecter
+type Worktree interface {
+	Commit(message string, opts *git.CommitOptions) (plumbing.Hash, error)
+	Remove(path string) (plumbing.Hash, error)
+	Add(path string) (plumbing.Hash, error)
+	Filesystem() billy.Filesystem
+}
+
+type worktree struct {
+	*git.Worktree
+}
+
+//go:generate mockery --name=Repository --output=mocks --inpackage --filename=repository_mock.go --with-expecter
+type Repository interface {
+	PushContext(ctx context.Context, o *git.PushOptions) error
+}
+
+func (w *worktree) Filesystem() billy.Filesystem {
+	return w.Worktree.Filesystem
+}
+
 var _ repository.Repository = (*GoGitRepo)(nil)
 
 type GoGitRepo struct {
@@ -50,8 +72,8 @@ type GoGitRepo struct {
 	decryptedPassword string
 	opts              repository.CloneOptions
 
-	repo *git.Repository
-	tree *git.Worktree
+	repo Repository
+	tree Worktree
 	dir  string // file path to worktree root (necessary? should use billy)
 }
 
@@ -66,6 +88,14 @@ func Clone(
 ) (repository.ClonedRepository, error) {
 	if root == "" {
 		return nil, fmt.Errorf("missing root config")
+	}
+
+	if config.Namespace == "" {
+		return nil, fmt.Errorf("config is missing namespace")
+	}
+
+	if config.Name == "" {
+		return nil, fmt.Errorf("config is missing name")
 	}
 
 	if opts.BeforeFn != nil {
@@ -91,7 +121,7 @@ func Clone(
 		return nil, fmt.Errorf("create root dir: %w", err)
 	}
 
-	dir, err := mkdirTempClone(root, config)
+	dir, err := os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 	if err != nil {
 		return nil, fmt.Errorf("create temp clone dir: %w", err)
 	}
@@ -101,7 +131,7 @@ func Clone(
 		progress = io.Discard
 	}
 
-	repo, worktree, err := clone(ctx, config, opts, decrypted, dir, progress)
+	repo, tree, err := clone(ctx, config, opts, decrypted, dir, progress)
 	if err != nil {
 		if err := os.RemoveAll(dir); err != nil {
 			return nil, fmt.Errorf("remove temp clone dir after clone failed: %w", err)
@@ -112,7 +142,7 @@ func Clone(
 
 	return &GoGitRepo{
 		config:            config,
-		tree:              worktree,
+		tree:              &worktree{Worktree: tree},
 		opts:              opts,
 		decryptedPassword: string(decrypted),
 		repo:              repo,
@@ -122,7 +152,10 @@ func Clone(
 
 func clone(ctx context.Context, config *provisioning.Repository, opts repository.CloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
 	gitcfg := config.Spec.GitHub
-	url := fmt.Sprintf("%s.git", gitcfg.URL)
+	url := gitcfg.URL
+	if !strings.HasPrefix(url, "file://") {
+		url = fmt.Sprintf("%s.git", url)
+	}
 
 	branch := plumbing.NewBranchReferenceName(gitcfg.Branch)
 	cloneOpts := &git.CloneOptions{
@@ -177,16 +210,6 @@ func clone(ctx context.Context, config *provisioning.Repository, opts repository
 	}
 
 	return repo, worktree, nil
-}
-
-func mkdirTempClone(root string, config *provisioning.Repository) (string, error) {
-	if config.Namespace == "" {
-		return "", fmt.Errorf("config is missing namespace")
-	}
-	if config.Name == "" {
-		return "", fmt.Errorf("config is missing name")
-	}
-	return os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 }
 
 // After making changes to the worktree, push changes
@@ -254,13 +277,13 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 	treePath = safepath.Clean(treePath)
 
 	entries := make([]repository.FileTreeEntry, 0, 100)
-	err := util.Walk(g.tree.Filesystem, treePath, func(path string, info fs.FileInfo, err error) error {
+	err := util.Walk(g.tree.Filesystem(), treePath, func(path string, info fs.FileInfo, err error) error {
 		// We already have an error, just pass it onwards.
 		if err != nil ||
 			// This is the root of the repository (or should pretend to be)
 			safepath.Clean(path) == "" || path == treePath ||
 			// This is the Git data
-			(treePath == "" && strings.HasPrefix(path, ".git/")) {
+			(treePath == "" && (strings.HasPrefix(path, ".git/") || path == ".git")) {
 			return err
 		}
 		if treePath != "" {
@@ -280,9 +303,9 @@ func (g *GoGitRepo) ReadTree(ctx context.Context, ref string) ([]repository.File
 		return err
 	})
 	if errors.Is(err, fs.ErrNotExist) {
-		// We intentionally ignore this case, as
+		// We intentionally ignore this case, as it is expected
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to walk tree for ref '%s': %w", ref, err)
+		return nil, fmt.Errorf("walk tree for ref '%s': %w", ref, err)
 	}
 	return entries, nil
 }
@@ -300,30 +323,33 @@ func (g *GoGitRepo) Update(ctx context.Context, path string, ref string, data []
 
 // Create implements repository.Repository.
 func (g *GoGitRepo) Create(ctx context.Context, path string, ref string, data []byte, message string) error {
+	// FIXME: this means we would override files
 	return g.Write(ctx, path, ref, data, message)
 }
 
 // Write implements repository.Repository.
 func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []byte, message string) error {
-	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
 	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
 
+	// FIXME: this means that won't export empty folders
+	// should we create them with a .keep file?
 	// For folders, just create the folder and ignore the commit
 	if safepath.IsDir(fpath) {
-		return g.tree.Filesystem.MkdirAll(fpath, 0750)
+		return g.tree.Filesystem().MkdirAll(fpath, 0750)
 	}
 
 	dir := safepath.Dir(fpath)
 	if dir != "" {
-		err := g.tree.Filesystem.MkdirAll(dir, 0750)
+		err := g.tree.Filesystem().MkdirAll(dir, 0750)
 		if err != nil {
 			return err
 		}
 	}
 
-	file, err := g.tree.Filesystem.Create(fpath)
+	file, err := g.tree.Filesystem().Create(fpath)
 	if err != nil {
 		return err
 	}
@@ -336,22 +362,29 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 	if err != nil {
 		return err
 	}
+	return g.maybeCommit(ctx, message)
+}
 
+func (g *GoGitRepo) maybeCommit(ctx context.Context, message string) error {
 	// Skip commit for each file
 	if !g.opts.PushOnWrites {
 		return nil
 	}
 
-	opts := &git.CommitOptions{}
+	opts := &git.CommitOptions{
+		Author: &object.Signature{
+			Name: "grafana",
+		},
+	}
 	sig := repository.GetAuthorSignature(ctx)
-	if sig != nil {
+	if sig != nil && sig.Name != "" {
 		opts.Author = &object.Signature{
 			Name:  sig.Name,
 			Email: sig.Email,
 			When:  sig.When,
 		}
 	}
-	_, err = g.tree.Commit(message, opts)
+	_, err := g.tree.Commit(message, opts)
 	if errors.Is(err, git.ErrEmptyCommit) {
 		return nil // empty commit is fine -- no change
 	}
@@ -359,22 +392,33 @@ func (g *GoGitRepo) Write(ctx context.Context, fpath string, ref string, data []
 }
 
 // Delete implements repository.Repository.
-func (g *GoGitRepo) Delete(ctx context.Context, path string, ref string, message string) error {
-	if _, err := g.tree.Remove(safepath.Join(g.config.Spec.GitHub.Path, path)); err != nil {
+func (g *GoGitRepo) Delete(ctx context.Context, fpath string, ref string, message string) error {
+	if err := verifyPathWithoutRef(fpath, ref); err != nil {
 		return err
 	}
 
-	return nil
+	fpath = safepath.Join(g.config.Spec.GitHub.Path, fpath)
+	if _, err := g.tree.Remove(fpath); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			return repository.ErrFileNotFound
+		}
+
+		return err
+	}
+	return g.maybeCommit(ctx, message)
 }
 
 // Read implements repository.Repository.
 func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*repository.FileInfo, error) {
+	if err := verifyPathWithoutRef(path, ref); err != nil {
+		return nil, err
+	}
 	readPath := safepath.Join(g.config.Spec.GitHub.Path, path)
-	stat, err := g.tree.Filesystem.Lstat(readPath)
+	stat, err := g.tree.Filesystem().Lstat(readPath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return nil, repository.ErrFileNotFound
 	} else if err != nil {
-		return nil, fmt.Errorf("failed to stat path '%s': %w", readPath, err)
+		return nil, fmt.Errorf("stat path '%s': %w", readPath, err)
 	}
 	info := &repository.FileInfo{
 		Path: path,
@@ -383,13 +427,13 @@ func (g *GoGitRepo) Read(ctx context.Context, path string, ref string) (*reposit
 		},
 	}
 	if !stat.IsDir() {
-		f, err := g.tree.Filesystem.Open(readPath)
+		f, err := g.tree.Filesystem().Open(readPath)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("open file '%s': %w", readPath, err)
 		}
 		info.Data, err = io.ReadAll(f)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("read file '%s': %w", readPath, err)
 		}
 	}
 	return info, err

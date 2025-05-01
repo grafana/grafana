@@ -17,7 +17,8 @@ export interface SynchronizeStepProps {
 export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: SynchronizeStepProps) {
   const [createJob] = useCreateRepositoryJobsMutation();
   const { getValues, register, watch } = useFormContext<WizardFormData>();
-  const target = watch('repository.sync.target');
+  const repoType = watch('repository.type');
+  const supportsHistory = requiresMigration && repoType === 'github';
   const [job, setJob] = useState<Job>();
 
   const startSynchronization = async () => {
@@ -35,7 +36,7 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: Synch
       const jobSpec = requiresMigration
         ? {
             migrate: {
-              history,
+              history: history && supportsHistory,
             },
           }
         : {
@@ -111,7 +112,7 @@ export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: Synch
           </li>
         </ul>
       </Alert>
-      {requiresMigration && target !== 'folder' && (
+      {supportsHistory && (
         <>
           <Text element="h3">
             <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>

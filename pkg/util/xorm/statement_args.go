@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/builder"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/builder"
 )
 
 func quoteNeeded(a any) bool {

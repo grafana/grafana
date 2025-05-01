@@ -149,13 +149,16 @@ function useAlertsFolderViewParams() {
   const [labelFilter, setLabelFilter] = useState(searchParams.get(AlertFolderViewParams.labelFilter) ?? '');
 
   const sortParam = searchParams.get(AlertFolderViewParams.sortOrder);
-  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(
-    sortParam === SortOrder.Ascending
-      ? SortOrder.Ascending
-      : sortParam === SortOrder.Descending
-        ? SortOrder.Descending
-        : undefined
-  );
+  const defaultSortOrder = (() => {
+    if (sortParam === SortOrder.Ascending) {
+      return SortOrder.Ascending;
+    }
+    if (sortParam === SortOrder.Descending) {
+      return SortOrder.Descending;
+    }
+    return undefined;
+  })();
+  const [sortOrder, setSortOrder] = useState<SortOrder | undefined>(defaultSortOrder);
 
   useDebounce(
     () =>
