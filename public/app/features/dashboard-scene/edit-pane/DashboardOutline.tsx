@@ -89,10 +89,10 @@ function DashboardOutlineNode({
         onPointerDown={onNodeClicked}
       >
         {elementInfo.isContainer && (
-          <button 
-            role="treeitem" 
-            className={styles.angleButton} 
-            onPointerDown={onToggleCollapse} 
+          <button
+            role="treeitem"
+            className={styles.angleButton}
+            onPointerDown={onToggleCollapse}
             data-testid={selectors.components.PanelEditor.Outline.node(instanceName)}
           >
             <Icon name={!isCollapsed ? 'angle-down' : 'angle-right'} />

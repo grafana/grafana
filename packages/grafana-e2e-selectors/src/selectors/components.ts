@@ -559,7 +559,6 @@ export const versionedComponents = {
         '12.0.0': 'data-testid variable label input',
       },
     },
-
   },
   PanelInspector: {
     Data: {

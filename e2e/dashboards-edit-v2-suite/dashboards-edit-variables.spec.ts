@@ -32,7 +32,6 @@ describe('Dashboard edit variables', () => {
     e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
     const values = variable.value.split(',');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(values[0]).should('be.visible');
-
   });
 });
 
@@ -45,12 +44,12 @@ const flows = {
     e2e.components.PanelEditor.Outline.item('Variables').should('be.visible').click();
     e2e.components.PanelEditor.ElementEditPane.addVariableButton().should('be.visible').click();
   },
-  newEditPanelCommonVariableInputs(variable: Variable) {   
+  newEditPanelCommonVariableInputs(variable: Variable) {
     e2e.components.PanelEditor.ElementEditPane.variableType(variable.type).should('be.visible').click();
     e2e.components.PanelEditor.ElementEditPane.variableNameInput().clear().type(variable.name).blur();
     e2e.components.PanelEditor.ElementEditPane.variableLabelInput().clear().type(variable.label).blur();
-  }
-}
+  },
+};
 
 type Variable = {
   type: string;
