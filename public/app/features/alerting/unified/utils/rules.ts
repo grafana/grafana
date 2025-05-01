@@ -208,6 +208,10 @@ export function getPendingPeriod(rule: CombinedRule): string | undefined {
   return undefined;
 }
 
+export function getPendingPeriodFromRulerRule(rule: RulerRuleDTO) {
+  return rulerRuleType.any.alertingRule(rule) ? rule.for : undefined;
+}
+
 export function getKeepFiringfor(rule: CombinedRule): string | undefined {
   if (rulerRuleType.any.recordingRule(rule.rulerRule)) {
     return undefined;

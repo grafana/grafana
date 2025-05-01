@@ -32,8 +32,7 @@ const getDotStyles = (theme: GrafanaTheme2, props: DotStylesProps) => {
         width: size,
         height: size,
 
-        // eslint-disable-next-line @grafana/no-border-radius-literal
-        borderRadius: '100%',
+        borderRadius: theme.shape.radius.circle,
 
         backgroundColor: theme.colors.secondary.main,
         outline: `solid ${outlineSize} ${theme.colors.secondary.transparent}`,
