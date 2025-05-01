@@ -1,4 +1,3 @@
-import { split } from 'lodash';
 import { e2e } from '../utils';
 
 const PAGE_UNDER_TEST = 'kVi2Gex7z/test-variable-output';
@@ -31,7 +30,7 @@ describe('Dashboard edit variables', () => {
 
     // assert the dropdown for the variable is visible and has the correct values
     e2e.pages.Dashboard.SubMenu.submenuItemLabels(variable.label).should('be.visible').contains(variable.label);
-    const values = split(variable.value, ',');
+    const values = variable.value.split(',');
     e2e.pages.Dashboard.SubMenu.submenuItemValueDropDownValueLinkTexts(values[0]).should('be.visible');
 
   });
