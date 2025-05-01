@@ -30,6 +30,7 @@ jobs:
 
   handle-pull-request-event:
     permissions:
+      id-token: write
       contents: read
       pull-requests: write
     needs: config
