@@ -545,7 +545,6 @@ export const versionedComponents = {
       },
     },
 
-    // TODO: hard to add testids/define selectors on these buttons
     ElementEditPane: {
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
