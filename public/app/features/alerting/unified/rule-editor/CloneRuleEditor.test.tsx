@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { getWrapper, render, waitFor, waitForElementToBeRemoved, within } from 'test/test-utils';
-import { byRole, byTestId, byText } from 'testing-library-selector';
+import { getWrapper, render, waitFor, within } from 'test/test-utils';
+import { byRole, byTestId } from 'testing-library-selector';
 
 import { MIMIR_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 import { RuleWithLocation } from 'app/types/unified-alerting';
 import {
@@ -18,19 +19,22 @@ import { setupMswServer } from '../mockApi';
 import {
   grantUserPermissions,
   mockDataSource,
+  mockFolder,
   mockRulerAlertingRule,
   mockRulerGrafanaRule,
   mockRulerRuleGroup,
 } from '../mocks';
 import { grafanaRulerRule } from '../mocks/grafanaRulerApi';
 import { mockRulerRulesApiResponse, mockRulerRulesGroupApiResponse } from '../mocks/rulerApi';
+import { setFolderResponse } from '../mocks/server/configure';
 import { AlertingQueryRunner } from '../state/AlertingQueryRunner';
 import { setupDataSources } from '../testSetup/datasources';
 import { RuleFormValues } from '../types/rule-form';
 import { Annotation } from '../utils/constants';
 import { hashRulerRule } from '../utils/rule-id';
 
-import { CloneRuleEditor, cloneRuleDefinition } from './CloneRuleEditor';
+import { ExistingRuleEditor } from './ExistingRuleEditor';
+import { cloneRuleDefinition } from './clone.utils';
 import { getDefaultFormValues } from './formDefaults';
 
 jest.mock('../components/rule-editor/ExpressionEditor', () => ({
@@ -54,7 +58,6 @@ const ui = {
     annotationValue: (idx: number) => byTestId(`annotation-value-${idx}`),
     labelValue: (idx: number) => byTestId(`label-value-${idx}`),
   },
-  loadingIndicator: byText('Loading the rule...'),
 };
 
 const Providers = getWrapper({ renderWithRouter: true });
@@ -68,18 +71,50 @@ function Wrapper({ children }: React.PropsWithChildren<{}>) {
 }
 
 describe('CloneRuleEditor', function () {
-  grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
+  const folder = {
+    title: 'Folder A',
+    uid: grafanaRulerRule.grafana_alert.namespace_uid,
+    id: 1,
+    type: DashboardSearchItemType.DashDB,
+    accessControl: {
+      [AccessControlAction.AlertingRuleUpdate]: true,
+    },
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    grantUserPermissions([
+      AccessControlAction.AlertingRuleRead,
+      AccessControlAction.AlertingRuleCreate,
+      AccessControlAction.DataSourcesRead,
+      AccessControlAction.FoldersRead,
+      AccessControlAction.AlertingRuleExternalRead,
+      AccessControlAction.AlertingRuleExternalWrite,
+    ]);
+
+    const dataSources = {
+      default: mockDataSource({
+        uid: MIMIR_DATASOURCE_UID,
+        type: 'prometheus',
+        name: 'Mimir',
+        isDefault: true,
+      }),
+    };
+    setupDataSources(dataSources.default);
+    setFolderResponse(mockFolder(folder));
+  });
 
   describe('Grafana-managed rules', function () {
     it('should populate form values from the existing alert rule', async function () {
-      setupDataSources();
-
       render(
-        <CloneRuleEditor sourceRuleId={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }} />,
+        <ExistingRuleEditor
+          identifier={{ uid: grafanaRulerRule.grafana_alert.uid, ruleSourceName: 'grafana' }}
+          clone={true}
+        />,
         { wrapper: Wrapper }
       );
 
-      await waitForElementToBeRemoved(ui.loadingIndicator.query());
       await waitFor(() => {
         expect(within(ui.inputs.group.get()).queryByTestId('Spinner')).not.toBeInTheDocument();
       });
@@ -130,19 +165,18 @@ describe('CloneRuleEditor', function () {
       });
 
       render(
-        <CloneRuleEditor
-          sourceRuleId={{
+        <ExistingRuleEditor
+          identifier={{
             ruleSourceName: 'my-prom-ds',
             namespace: 'namespace-one',
             groupName: 'group1',
             ruleName: 'First Ruler Rule',
             rulerRuleHash: hashRulerRule(originRule),
           }}
+          clone={true}
         />,
         { wrapper: Wrapper }
       );
-
-      await waitForElementToBeRemoved(ui.loadingIndicator.query());
 
       await waitFor(() => {
         expect(ui.inputs.name.get()).toHaveValue('First Ruler Rule (copy)');

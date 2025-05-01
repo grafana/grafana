@@ -536,12 +536,6 @@ func (hs *HTTPServer) postDashboard(c *contextmodel.ReqContext, cmd dashboards.S
 		return apierrors.ToDashboardErrorResponse(ctx, hs.pluginStore, saveErr)
 	}
 
-	// Clear permission cache for the user who's created the dashboard, so that new permissions are fetched for their next call
-	// Required for cases when caller wants to immediately interact with the newly created object
-	if newDashboard {
-		hs.accesscontrolService.ClearUserPermissionCache(c.SignedInUser)
-	}
-
 	// connect library panels for this dashboard after the dashboard is stored and has an ID
 	err = hs.LibraryPanelService.ConnectLibraryPanelsForDashboard(ctx, c.SignedInUser, dashboard)
 	if err != nil {
