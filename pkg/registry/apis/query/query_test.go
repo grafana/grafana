@@ -19,7 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/stretchr/testify/require"
+	errorsK8s "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 func TestQueryRestConnectHandler(t *testing.T) {
@@ -137,7 +139,59 @@ func TestInstantQueryFromAlerting(t *testing.T) {
 	require.Equal(t, "Value", result.Responses["A"].Frames[0].Fields[0].Name, "Expected the single field to be Value")
 }
 
+func TestQueryRestConnectHandlerWithContextCancelled(t *testing.T) {
+	mockClientInstance := &mockClient{
+		lastCalledWithHeaders:     &map[string]string{},
+		shouldReturnServerTimeout: true,
+	}
+
+	b := &QueryAPIBuilder{
+		client: mockClientInstance,
+		tracer: tracing.InitializeTracerForTest(),
+		parser: newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
+			&legacyDataSourceRetriever{}, tracing.InitializeTracerForTest(), nil),
+		log: log.New("test"),
+	}
+	qr := newQueryREST(b)
+	ctx, cancel := context.WithCancel(context.Background())
+	mr := &mockResponder{}
+
+	handler, err := qr.Connect(ctx, "name", nil, mr)
+	require.NoError(t, err)
+
+	rr := httptest.NewRecorder()
+	body := runtime.RawExtension{
+		Raw: []byte(`{
+			"queries": [
+				{
+					"datasource": {
+						"type": "prometheus",
+						"uid": "demo-prometheus"
+					},
+					"expr": "sum(go_gc_duration_seconds)",
+					"range": false,
+					"instant": true
+				}
+			],
+			"from": "now-1h",
+			"to": "now"
+		}`),
+	}
+	req := httptest.NewRequest(http.MethodGet, "/some-path", bytes.NewReader(body.Raw))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Cancel the context before sending the request
+	cancel()
+
+	// Now handle the request with a cancelled context
+	handler.ServeHTTP(rr, req)
+
+	// Verify that responder.Error was not called after context cancellation
+	require.False(t, mr.errorCalled, "responder.Error should not be called after context cancellation")
+}
+
 type mockResponder struct {
+	errorCalled bool
 }
 
 // Object writes the provided object to the response. Invoking this method multiple times is undefined.
@@ -146,19 +200,23 @@ func (m mockResponder) Object(statusCode int, obj runtime.Object) {
 
 // Error writes the provided error to the response. This method may only be invoked once.
 func (m mockResponder) Error(err error) {
+	m.errorCalled = true
 }
 
 type mockClient struct {
-	lastCalledWithHeaders *map[string]string
+	lastCalledWithHeaders     *map[string]string
+	shouldReturnServerTimeout bool
 }
 
 func (m mockClient) GetDataSourceClient(ctx context.Context, ref data.DataSourceRef, headers map[string]string) (clientapi.QueryDataClient, error) {
 	*m.lastCalledWithHeaders = headers
-
-	return nil, fmt.Errorf("mock error")
+	return m, nil
 }
 
-func (m mockClient) QueryData(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
+func (m mockClient) QueryData(ctx context.Context, req data.QueryDataRequest) (*backend.QueryDataResponse, error) {
+	if m.shouldReturnServerTimeout {
+		return nil, errorsK8s.NewServerTimeout(schema.GroupResource{}, "operation", 1)
+	}
 	return nil, fmt.Errorf("mock error")
 }
 

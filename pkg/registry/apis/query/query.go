@@ -160,35 +160,30 @@ func (r *queryREST) Connect(connectCtx context.Context, name string, _ runtime.O
 		// Actually run the query
 		rsp, err := b.execute(ctx, req)
 		if err != nil {
-			// log unexpected errors
+
 			var k8sErr *errorsK8s.StatusError
 			if errors.As(err, &k8sErr) {
-				// we do not need to log 4xx errors as they are expected
 				if k8sErr.ErrStatus.Code >= 500 {
-					if errorsK8s.IsServerTimeout(k8sErr) {
+					if errorsK8s.IsServerTimeout(k8sErr) { // handle context cancelled
 						b.log.Debug("hit a timeout error while executing query, not returning a response to the client as it has already disconnected", "err", err, "status", k8sErr.Status())
-						// No need to send a response to the client, as the client has already disconnected, doing so will cause an error
+						// No need to send a response to the client, as the client has already disconnected, doing so will cause a subsequent error in the querier
 						ctx.Done()
 						return
-					} else {
-						// error source = plugin errors can happen here (expected) but also unexpected errors
-						// maybe a problem worth investigating, may be nothing we need to worry too much about as the query service
+					} else { // log all other k8s errors as they may or may not be expected
 						b.log.Error("hit 5xx k8s error while executing query", "err", err, "status", k8sErr.Status())
 					}
-				} else {
-					// expected errors like 404s
+				} else { // expected errors like 404s, not a concern most of the time
 					b.log.Debug("sending a non-5xx k8s error to the client", "err", err, "status", k8sErr.Status())
 				}
-			} else {
-				// unexpected errors, do something about these!
+			} else { // unexpected errors, definitely do something to manually handle these if you see them
 				b.log.Error("hit unexpected error while executing query, this will show as an unhandled k8s status error", "err", err)
 			}
-
-			// return the error to the client, will send all non k8s errors as a k8 unexpected error
+			// return the error to the client,
+			// the responder will transform all non k8s errors as a k8s unexpected error,
+			// and change the status code to 500, so ALWAYS return a k8 error or a valid qdr!
 			responder.Error(err)
 			return
 		}
-
 		responder.Object(query.GetResponseCode(rsp), &query.QueryDataResponse{
 			QueryDataResponse: *rsp, // wrap the backend response as a QueryDataResponse
 		})
