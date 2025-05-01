@@ -5531,13 +5531,13 @@ name: prerelease_bucket
 ---
 get:
   name: username
-  path: infra/data/ci/grafanaci-docker-hub
+  path: ci/data/common/dockerhub
 kind: secret
 name: docker_username
 ---
 get:
   name: password
-  path: infra/data/ci/grafanaci-docker-hub
+  path: ci/data/common/dockerhub
 kind: secret
 name: docker_password
 ---
@@ -5668,6 +5668,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 24fc7d82aa799bb50dbef765acb62872b890e72a3c1a2a87dc1e0bb5c717ba00
+hmac: 78ac28b59a6da5289b69c043c12032c3820755dc0d6f1757ec77f0d1eff29650
 
 ...
