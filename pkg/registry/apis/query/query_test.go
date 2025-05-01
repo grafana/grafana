@@ -36,7 +36,7 @@ func TestQueryRestConnectHandler(t *testing.T) {
 	}
 	qr := newQueryREST(b)
 	ctx := context.Background()
-	mr := mockResponder{}
+	mr := &mockResponder{}
 
 	handler, err := qr.Connect(ctx, "name", nil, mr)
 	require.NoError(t, err)
