@@ -36,7 +36,8 @@ describe('Dashboard edit variables', () => {
   });
 });
 
-//TODO: maybe move to e2e flows
+// Common flows for adding/editing variables
+// TODO: maybe move to e2e flows
 const flows = {
   newEditPaneVariableClick() {
     e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
@@ -56,5 +57,5 @@ type Variable = {
   name: string;
   label: string;
   description?: string;
-  value?: string;
+  value: string;
 };
