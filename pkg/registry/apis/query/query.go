@@ -210,7 +210,6 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		if err != nil {
 			b.log.Debug("error in executeConcurrentQueries", "err", err)
 		}
-
 	}
 
 	if err != nil {
