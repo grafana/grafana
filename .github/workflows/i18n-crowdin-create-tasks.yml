@@ -2,8 +2,10 @@ name: Crowdin Create Tasks
 
 on:
   workflow_dispatch:
+  # TODO uncomment when we're confident this works
+  # once a week on Sunday at midnight
   # schedule:
-  #   - cron: "0 0 * * *"
+  #   - cron: "0 0 * * 0"
 
 jobs:
   create-tasks-in-crowdin:
@@ -33,8 +35,10 @@ jobs:
         with:
           node-version-file: '.nvmrc'
 
+      - run: yarn install --immutable --check-cache
+
       - name: Create tasks
         env:
           CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
           CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
-        run: node ./.github/workflows/scripts/crowdin/create-tasks.js
+        run: node --experimental-strip-types ./.github/workflows/scripts/crowdin/create-tasks.ts
