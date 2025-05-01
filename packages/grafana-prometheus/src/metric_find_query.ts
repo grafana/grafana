@@ -12,6 +12,7 @@ import {
   PrometheusMetricNamesRegex,
   PrometheusQueryResultRegex,
 } from './migrations/variableMigration';
+import { getOriginalMetricName } from './result_transformer';
 import { escapeForUtf8Support, isValidLegacyName } from './utf8_support';
 
 export class PrometheusMetricFindQuery {
@@ -182,12 +183,11 @@ export class PrometheusMetricFindQuery {
     };
 
     const url = `/api/v1/series`;
-    const self = this;
 
     return this.datasource.metadataRequest(url, params).then((result) => {
       return _map(result.data.data, (metric: { [key: string]: string }) => {
         return {
-          text: self.datasource.getOriginalMetricName(metric),
+          text: getOriginalMetricName(metric),
           expandable: true,
         };
       });
