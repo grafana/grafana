@@ -91,8 +91,9 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
   const { flag: explain, setFlag: setExplain } = useFlag(promQueryEditorExplainKey);
 
   const query = getQueryWithDefaults(props.query, app, defaultEditor);
-  // This should be filled in from the defaults by now.
-  const editorMode = query.editorMode!;
+  // This should be filled in from the defaults by now.. Pull in the defaults once
+  // Track mode locally so it never gets yanked out from under us
+  const [editorMode, setEditorMode] = useState<QueryEditorMode>(query.editorMode!);
   useEffect(() => {
     const handleEvent = (event: { data: any; origin: string }) => {
       const { type, payload } = event.data;
@@ -138,6 +139,8 @@ export const PromQueryEditorSelector = memo<Props>((props) => {
         }
       }
       changeEditorMode(query, newMetricEditorMode, onChange);
+      setEditorMode(newMetricEditorMode);
+
       if (queryBuilderOnly) {
         // Trigger onRunQuery to change URL to reflect the new editor mode.
         onRunQuery();
