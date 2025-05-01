@@ -22,11 +22,6 @@ on:
         required: false
         default: false
         type: boolean
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID:
-        required: true
-      GRAFANA_DELIVERY_BOT_APP_PEM:
-        required: true
 
   workflow_dispatch:
     inputs:
@@ -63,17 +58,25 @@ jobs:
       DRY_RUN: ${{ inputs.dry_run }}
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: write
       pull-requests: write
     steps:
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: "Generate token"
         id: generate_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: "Checkout Grafana repo"
-        uses: "actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683"
+        uses: "actions/checkout@v4"
         with:
           ref: main
           sparse-checkout: |
@@ -86,7 +89,7 @@ jobs:
           fetch-tags: true
           persist-credentials: false
       - name: Setup nodejs environment
-        uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+        uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
       - name: "Configure git user"
@@ -98,7 +101,7 @@ jobs:
         run: git checkout -b "changelog/${RUN_ID}/${VERSION}"
       - name: "Generate changelog"
         id: changelog
-        uses: ./.github/workflows/actions/changelog
+        uses: ./.github/actions/changelog
         with:
           previous: ${{ inputs.previous_version }}
           github_token: ${{ steps.generate_token.outputs.token }}
