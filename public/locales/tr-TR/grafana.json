@@ -21,7 +21,9 @@
     "permission-list-item": {
       "inherited": "Klasörden devralındı",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "İzin ekle",
@@ -42,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -70,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -128,6 +136,12 @@
       "test-mapping-heading": "Kullanıcı eşleme testi",
       "test-mapping-run-button": "Çalıştır"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -161,6 +175,9 @@
       "title": "LDAP Eşitlemesi"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -284,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "Hiçbir zaman",
-      "no-licensed-roles": "Atanmadı"
+      "no-licensed-roles": "Atanmadı",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -408,11 +427,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -444,6 +461,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -539,6 +557,9 @@
       "user-id": "Kullanıcı Kimliği {{uid}}",
       "warning-restore-manually": "Bu uyarı kuralının eski bir sürümünü manuel olarak geri yüklüyorsunuz. Kural tanımını kaydetmeden önce değişiklikleri dikkatlice inceleyin.",
       "warning-restore-manually-title": "Kural manuel olarak geri yükleniyor"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -651,6 +672,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -778,6 +802,9 @@
     "contactPointFilter": {
       "label": "İletişim noktası"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "\"{{label}}\" metnini panoya kopyala",
     "create-metadata": {
       "view-dashboard": "",
@@ -806,6 +833,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -827,9 +858,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -865,6 +898,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Uyarı vermeye başlamak için değerlendirmeler",
       "pending-period": "Bekleme süresi",
@@ -895,9 +931,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -929,7 +974,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -1180,6 +1224,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1349,7 +1396,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "İzinleri yönet",
@@ -1442,6 +1490,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1597,6 +1646,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1695,6 +1747,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "Bu kaynak {{provenance}} aracılığıyla sağlanmıştır ve kullanıcı arayüzü üzerinden düzenlenemez",
@@ -1931,14 +1986,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "Belirtilen değerin üzerine çıktığında uyarıyı durdur",
-          "stop-alerting-bellow": "Belirtilen değerin altına düştüğünde uyarıyı durdur",
-          "stop-alerting-equal": "Belirtilen değere eşit olduğunda uyarıyı durdur",
-          "stop-alerting-inside-range": "Belirtilen aralık içinde olduğunda uyarıyı durdur",
-          "stop-alerting-less": "Belirtilen değerden küçük olduğunda uyarıyı durdur",
-          "stop-alerting-more": "Belirtilen değerden büyük olduğunda uyarıyı durdur",
-          "stop-alerting-not-equal": "Belirtilen değere eşit olmadığında uyarıyı durdur",
-          "stop-alerting-outside-range": "Belirtilen aralığın dışında olduğunda uyarıyı durdur",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "Özel kurtarma eşiği"
         }
       }
@@ -2038,7 +2093,10 @@
       "for": "",
       "na": "",
       "paused": "Duraklatıldı",
-      "recording-rule": "Kayıt kuralı"
+      "recording-rule": "Kayıt kuralı",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2282,6 +2340,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2305,7 +2365,7 @@
       },
       "misconfigured-badge-text": "Yanlış yapılandırılmış",
       "misconfigured-warning": "Bu şablon yanlış yapılandırılmış.",
-      "misconfigured-warning-details": "Şablonlar, alertmanager yapılandırmanızın hem <1></1> hem de <4></4> bölümlerinde tanımlanmalıdır."
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2349,6 +2409,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2450,6 +2514,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -4154,7 +4219,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4214,6 +4281,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4567,6 +4635,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4723,6 +4792,9 @@
       "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel": {
+      "content-streaming": ""
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
@@ -4923,6 +4995,7 @@
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -5001,7 +5074,8 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
@@ -5115,7 +5189,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "Atla",
-      "submit-button": "Gönder"
+      "submit-button": "Gönder",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "Kullanıcı adınızı veya e-posta adresinizi mi unuttunuz? Grafana yöneticinizle iletişime geçin.",
     "email-sent": "E-posta adresine, bir sıfırlama bağlantısı içeren bir e-posta gönderildi. Kısa süre içinde e-postayı almanız gerekir.",
@@ -5172,7 +5247,8 @@
     "action-editor": {
       "button": {
         "confirm": "Onayla",
-        "confirm-action": "İşlemi onayla"
+        "confirm-action": "İşlemi onayla",
+        "style": ""
       },
       "inline": {
         "add-action": "İşlem ekle",
@@ -5379,7 +5455,11 @@
       "previous-page": "önceki sayfa"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "Panel için menü {{ title }}",
@@ -5961,7 +6041,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "daha fazla",
-      "see-details": "Günlük ayrıntılarını göster"
+      "see-details": "Günlük ayrıntılarını göster",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -6938,7 +7019,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "Güncelleme yok",
@@ -6947,7 +7029,7 @@
         "available-header": "Mevcut",
         "button": "Tümünü güncelle ({{length}})",
         "cloud-update-message": "* Eklentilerin kullanılabilir hâle gelmesi birkaç dakika sürebilir.",
-        "error": "Eklenti güncellenirken hata oluştu:",
+        "error": "",
         "error-status-text": "Başarısız - Hata mesajlarına göz atın",
         "header": "Aşağıdaki eklentiler için güncelleme mevcut",
         "installed-header": "Yüklü",
@@ -7156,6 +7238,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
     },
     "user-organizations": {
       "text-loading-organizations": ""
@@ -8090,10 +8175,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -8499,7 +8586,7 @@
     "range-content": {
       "apply-button": "Zaman aralığını uygula",
       "default-error": "",
-      "fiscal-year": "Mali yıl",
+      "fiscal-year": "",
       "from-input": "Başlangıç",
       "open-input-calendar": "Takvimi aç",
       "range-error": "\"Başlangıç\", \"Bitiş\" sonrasına denk gelen bir tarih olamaz.",
@@ -8951,6 +9038,7 @@
       "loading": "Yükleniyor...",
       "no-unknowns": "Yeniden adlandırılmış veya eksik değişken bulunamadı.",
       "renamed-or-missing-variables": "Yeniden adlandırılmış veya eksik değişkenler",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "Değişken"
     },
     "variable-check-indicator": {
