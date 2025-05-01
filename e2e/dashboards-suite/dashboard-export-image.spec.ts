@@ -1,24 +1,32 @@
-/// <reference types="cypress" />
-
-import { ExportImageComponents } from '../../public/app/features/dashboard-scene/sharing/ExportButton/e2e-selectors/selectors';
+import { e2e } from '../utils';
 
 describe('Dashboard export image', () => {
+  beforeEach(() => {
+    e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+  });
+
   const openDashboard = () => {
-    cy.visit('/d/000000012/dashboard-export-image');
+    cy.intercept({
+      pathname: '/api/ds/query',
+    }).as('query');
+    e2e.flows.openDashboard({
+      uid: 'ZqZnVvFZz',
+    });
+    cy.wait('@query');
   };
 
   it('should show renderer not available message when renderer is not installed', () => {
     openDashboard();
 
     // Open export menu
-    cy.get('[data-testid="new export button"]').click();
-    cy.get('[data-testid="new export button export as image"]').click();
+    e2e.pages.Dashboard.DashNav.NewExportButton.arrowMenu().click();
+    e2e.pages.Dashboard.DashNav.NewExportButton.Menu.exportAsImage().click();
 
     // Verify renderer not available message
-    cy.get(`[${ExportImageComponents.rendererAlert.container}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.rendererAlert.title}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.rendererAlert.description}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.buttons.generate}]`).should('be.disabled');
+    e2e.components.ExportImage.rendererAlert.container().should('be.visible');
+    e2e.components.ExportImage.rendererAlert.title().should('be.visible');
+    e2e.components.ExportImage.rendererAlert.description().should('be.visible');
+    e2e.components.ExportImage.buttons.generate().should('be.disabled');
   });
 
   // TODO: This is a temporary skip until we have a way to mock the renderer plugin
@@ -43,26 +51,26 @@ describe('Dashboard export image', () => {
     openDashboard();
 
     // Open export menu
-    cy.get('[data-testid="new export button"]').click();
-    cy.get('[data-testid="new export button export as image"]').click();
+    e2e.pages.Dashboard.DashNav.NewExportButton.arrowMenu().click();
+    e2e.pages.Dashboard.DashNav.NewExportButton.Menu.exportAsImage().click();
 
     // Verify format options are visible
-    cy.get(`[${ExportImageComponents.formatOptions.container}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.formatOptions.png}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.formatOptions.jpg}]`).should('be.visible');
+    e2e.components.ExportImage.formatOptions.container().should('be.visible');
+    e2e.components.ExportImage.formatOptions.png().should('be.visible');
+    e2e.components.ExportImage.formatOptions.jpg().should('be.visible');
 
     // Generate image
-    cy.get(`[${ExportImageComponents.buttons.generate}]`).should('be.enabled').click();
+    e2e.components.ExportImage.buttons.generate().should('be.enabled').click();
 
     // Verify loading state
-    cy.get(`[${ExportImageComponents.preview.loading}]`).should('be.visible');
+    e2e.components.ExportImage.preview.loading().should('be.visible');
 
     // Wait for image generation
     cy.wait('@renderImage');
 
     // Verify preview and download button
-    cy.get(`[${ExportImageComponents.preview.image}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.buttons.download}]`).should('be.visible');
+    e2e.components.ExportImage.preview.image().should('be.visible');
+    e2e.components.ExportImage.buttons.download().should('be.visible');
   });
 
   // TODO: This is a temporary skip until we have a way to mock the renderer plugin
@@ -84,21 +92,21 @@ describe('Dashboard export image', () => {
     openDashboard();
 
     // Open export menu
-    cy.get('[data-testid="new export button"]').click();
-    cy.get('[data-testid="new export button export as image"]').click();
+    e2e.pages.Dashboard.DashNav.NewExportButton.arrowMenu().click();
+    e2e.pages.Dashboard.DashNav.NewExportButton.Menu.exportAsImage().click();
 
     // Generate image
-    cy.get(`[${ExportImageComponents.buttons.generate}]`).should('be.enabled').click();
+    e2e.components.ExportImage.buttons.generate().should('be.enabled').click();
 
     // Verify loading state
-    cy.get(`[${ExportImageComponents.preview.loading}]`).should('be.visible');
+    e2e.components.ExportImage.preview.loading().should('be.visible');
 
     // Wait for error
     cy.wait('@renderImageError');
 
     // Verify error message
-    cy.get(`[${ExportImageComponents.preview.error.container}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.preview.error.title}]`).should('be.visible');
-    cy.get(`[${ExportImageComponents.preview.error.message}]`).should('be.visible');
+    e2e.components.ExportImage.preview.error.container().should('be.visible');
+    e2e.components.ExportImage.preview.error.title().should('be.visible');
+    e2e.components.ExportImage.preview.error.message().should('be.visible');
   });
 });

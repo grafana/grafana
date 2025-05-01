@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, reportInteraction } from '@grafana/runtime';
 import { SceneComponentProps } from '@grafana/scenes';
 import { Button, Field, LoadingBar, RadioButtonGroup, Alert, useStyles2 } from '@grafana/ui';
@@ -14,7 +15,6 @@ import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
 import { ShareExportTab } from '../ShareExportTab';
 
-import { ExportImageComponents } from './e2e-selectors/selectors';
 import { generateDashboardImage } from './utils';
 
 enum ImageFormat {
@@ -42,9 +42,9 @@ function ErrorAlert({ error }: { error: ErrorState }) {
   }
 
   return (
-    <Alert severity="error" title={error.title} data-testid={ExportImageComponents.preview.error.container}>
-      <div data-testid={ExportImageComponents.preview.error.title}>{error.title}</div>
-      <div data-testid={ExportImageComponents.preview.error.message}>{error.message}</div>
+    <Alert severity="error" title={error.title} data-testid={selectors.components.ExportImage.preview.error.container}>
+      <div data-testid={selectors.components.ExportImage.preview.error.title}>{error.title}</div>
+      <div data-testid={selectors.components.ExportImage.preview.error.message}>{error.message}</div>
     </Alert>
   );
 }
@@ -61,7 +61,7 @@ function ImagePreview({ imageBlob, isLoading }: { imageBlob: Blob | null; isLoad
       src={URL.createObjectURL(imageBlob)}
       alt={t('share-modal.image.preview', 'Preview')}
       className={styles.image}
-      data-testid={ExportImageComponents.preview.image}
+      data-testid={selectors.components.ExportImage.preview.image}
     />
   );
 }
@@ -75,12 +75,12 @@ function RendererAlert() {
     <Alert
       severity="info"
       title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
-      data-testid={ExportImageComponents.rendererAlert.container}
+      data-testid={selectors.components.ExportImage.rendererAlert.container}
     >
-      <div data-testid={ExportImageComponents.rendererAlert.title}>
+      <div data-testid={selectors.components.ExportImage.rendererAlert.title}>
         {t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
       </div>
-      <div data-testid={ExportImageComponents.rendererAlert.description}>
+      <div data-testid={selectors.components.ExportImage.rendererAlert.description}>
         <Trans i18nKey="share-modal.link.render-instructions">
           To render a panel image, you must install the{' '}
           <a
@@ -177,13 +177,21 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       </p>
 
       <Field label={t('share-modal.image.format-label', 'Format')}>
-        <div data-testid={ExportImageComponents.formatOptions.container}>
+        <div data-testid={selectors.components.ExportImage.formatOptions.container}>
           <RadioButtonGroup
             value={format}
             onChange={onFormatChange}
             options={[
-              { label: 'PNG', value: ImageFormat.PNG, 'data-testid': ExportImageComponents.formatOptions.png },
-              { label: 'JPG', value: ImageFormat.JPG, 'data-testid': ExportImageComponents.formatOptions.jpg },
+              {
+                label: 'PNG',
+                value: ImageFormat.PNG,
+                'data-testid': selectors.components.ExportImage.formatOptions.png,
+              },
+              {
+                label: 'JPG',
+                value: ImageFormat.JPG,
+                'data-testid': selectors.components.ExportImage.formatOptions.jpg,
+              },
             ]}
           />
         </div>
@@ -198,7 +206,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
             onClick={onExport}
             disabled={isLoading || !config.rendererAvailable}
             icon="document-info"
-            data-testid={ExportImageComponents.buttons.generate}
+            data-testid={selectors.components.ExportImage.buttons.generate}
           >
             <Trans i18nKey="share-modal.image.generate-button">Generate image</Trans>
           </Button>
@@ -207,7 +215,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
             variant="primary"
             onClick={onDownload}
             icon="download-alt"
-            data-testid={ExportImageComponents.buttons.download}
+            data-testid={selectors.components.ExportImage.buttons.download}
           >
             <Trans i18nKey="share-modal.image.download-button">Download image</Trans>
           </Button>
@@ -216,14 +224,18 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
           variant="secondary"
           onClick={model.useState().onDismiss}
           fill="outline"
-          data-testid={ExportImageComponents.buttons.cancel}
+          data-testid={selectors.components.ExportImage.buttons.cancel}
         >
           <Trans i18nKey="share-modal.image.cancel-button">Cancel</Trans>
         </Button>
       </div>
 
-      <div className={styles.previewContainer} ref={ref} data-testid={ExportImageComponents.preview.container}>
-        <div className={styles.loadingBarContainer} data-testid={ExportImageComponents.preview.loading}>
+      <div
+        className={styles.previewContainer}
+        ref={ref}
+        data-testid={selectors.components.ExportImage.preview.container}
+      >
+        <div className={styles.loadingBarContainer} data-testid={selectors.components.ExportImage.preview.loading}>
           {isLoading && <LoadingBar width={loadingBarWidth} />}
         </div>
 
