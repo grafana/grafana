@@ -118,7 +118,14 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
           <FocusScope contain autoFocus restoreFocus>
             {/* convenience method for keyboard users */}
             {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-            <div ref={ref} {...overlayProps} {...dialogProps} onKeyDown={handleKeyDown} className={styles.overlay}>
+            <div
+              data-testid="carousel-full-screen"
+              ref={ref}
+              {...overlayProps}
+              {...dialogProps}
+              onKeyDown={handleKeyDown}
+              className={styles.overlay}
+            >
               <IconButton
                 name="times"
                 aria-label={t('carousel.close', 'Close')}
