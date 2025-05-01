@@ -46,10 +46,7 @@ Cypress.on('uncaught:exception', (err) => {
 //
 
 // TODO: read from toggles_gen.csv?
-const featureToggles = [
-  'kubernetesDashboards',
-  'dashboardNewLayouts',
-]
+const featureToggles = ['kubernetesDashboards', 'dashboardNewLayouts'];
 
 beforeEach(() => {
   let toggles = [];
