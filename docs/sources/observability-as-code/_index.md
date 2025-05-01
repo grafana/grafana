@@ -65,8 +65,6 @@ Observability as Code provides more control over configuration. Instead of manua
 
 {{< card-grid key="cards" type="simple" >}}
 
-
-
 <!-- Hiding this part of the doc because the rest of the docs aren't released yet
 
 ## Key features
