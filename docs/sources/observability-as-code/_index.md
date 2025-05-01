@@ -32,7 +32,7 @@ cards:
     - title: Git Sync
       height: 24
       href: ./provision-resources/intro-git-sync/
-      description: Git Sync is an experimental feature that lets you store your dashboard files in a Git Hub repository and synchrize those changes with your Grafana instance.
+      description: Git Sync is an experimental feature that lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance.
   title_class: pt-0 lh-1
 hero:
   title: Observability as Code
