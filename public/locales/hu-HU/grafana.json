@@ -21,7 +21,9 @@
     "permission-list-item": {
       "inherited": "Mappából örökölve",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "Engedély hozzáadása",
@@ -42,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -70,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -128,6 +136,12 @@
       "test-mapping-heading": "Felhasználói hozzárendelés tesztelése",
       "test-mapping-run-button": "Futtatás"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -161,6 +175,9 @@
       "title": "LDAP-szinkronizálás"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -284,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "Soha",
-      "no-licensed-roles": "Nincs kiosztva"
+      "no-licensed-roles": "Nincs kiosztva",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -408,11 +427,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -444,6 +461,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -539,6 +557,9 @@
       "user-id": "Felhasználói azonosító: {{uid}}",
       "warning-restore-manually": "Manuálisan állítja vissza ennek a riasztási szabálynak egy régi verzióját. Kérjük, figyelmesen tekintse át a módosításokat a szabálydefiníció mentése előtt.",
       "warning-restore-manually-title": "Szabály manuális visszaállítása"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -651,6 +672,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -778,6 +802,9 @@
     "contactPointFilter": {
       "label": "Kapcsolattartási pont"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "„{{label}}” másolása a vágólapra",
     "create-metadata": {
       "view-dashboard": "",
@@ -806,6 +833,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -827,9 +858,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -865,6 +898,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Értékelések a riasztás megkezdéséhez",
       "pending-period": "Függőben lévő időszak",
@@ -895,9 +931,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -929,7 +974,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -1180,6 +1224,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1349,7 +1396,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "Engedélyek kezelése",
@@ -1442,6 +1490,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1597,6 +1646,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1695,6 +1747,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "Ez az erőforrás ki van építve ({{provenance}}), és nem szerkeszthető a felhasználói felületen keresztül",
@@ -1931,14 +1986,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "Riasztás leállítása e felett:",
-          "stop-alerting-bellow": "Riasztás leállítása ez alatt:",
-          "stop-alerting-equal": "Riasztás leállítása, ha egyenlő ezzel:",
-          "stop-alerting-inside-range": "Riasztás leállítása tartományon belül",
-          "stop-alerting-less": "Riasztás leállítása, ha kevesebb mint",
-          "stop-alerting-more": "Riasztás leállítása, ha több mint",
-          "stop-alerting-not-equal": "Riasztás leállítása, ha nem egyenlő ezzel:",
-          "stop-alerting-outside-range": "Riasztás leállítása tartományon kívül",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "Egyedi helyreállítási küszöbérték"
         }
       }
@@ -2038,7 +2093,10 @@
       "for": "",
       "na": "",
       "paused": "Szüneteltetett",
-      "recording-rule": "Felvételi szabály"
+      "recording-rule": "Felvételi szabály",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2282,6 +2340,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2305,7 +2365,7 @@
       },
       "misconfigured-badge-text": "Hibás konfiguráció",
       "misconfigured-warning": "Ez a sablon rosszul van konfigurálva.",
-      "misconfigured-warning-details": "A sablonokat a riasztáskezelő konfigurációjának <1></1> és <4></4> szakaszában is meg kell határozni."
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2349,6 +2409,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2450,6 +2514,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -4154,7 +4219,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4214,6 +4281,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4567,6 +4635,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4723,6 +4792,9 @@
       "aria-label-select-query-by-name": "",
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
+    },
+    "logs-volume-panel": {
+      "content-streaming": ""
     },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
@@ -4923,6 +4995,7 @@
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -5001,7 +5074,8 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
@@ -5115,7 +5189,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "Kihagyás",
-      "submit-button": "Küldés"
+      "submit-button": "Küldés",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "Elfelejtette a felhasználónevét vagy az e-mail-címét? Vegye fel a kapcsolatot Grafana-rendszergazdájával.",
     "email-sent": "A visszaállítási hivatkozást tartalmazó e-mailt elküldtük az e-mail-címre. Hamarosan meg kell kapnia.",
@@ -5172,7 +5247,8 @@
     "action-editor": {
       "button": {
         "confirm": "Megerősítés",
-        "confirm-action": "Művelet megerősítése"
+        "confirm-action": "Művelet megerősítése",
+        "style": ""
       },
       "inline": {
         "add-action": "Művelet hozzáadása",
@@ -5379,7 +5455,11 @@
       "previous-page": "előző oldal"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "{{ title }} panel menüje",
@@ -5961,7 +6041,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "továbbiak",
-      "see-details": "A napló részleteinek megtekintése"
+      "see-details": "A napló részleteinek megtekintése",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -6938,7 +7019,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "Nem érhetők el frissítések",
@@ -6947,7 +7029,7 @@
         "available-header": "Elérhető",
         "button": "Összes frissítése ({{length}})",
         "cloud-update-message": "*Eltarthat néhány percig, amíg a bővítmények használatra készen állnak.",
-        "error": "Hiba a bővítmény frissítésekor:",
+        "error": "",
         "error-status-text": "sikertelen – lásd a hibaüzeneteket",
         "header": "A következő bővítményekhez érhető el frissítés",
         "installed-header": "Telepítve",
@@ -7156,6 +7238,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
     },
     "user-organizations": {
       "text-loading-organizations": ""
@@ -8090,10 +8175,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -8499,7 +8586,7 @@
     "range-content": {
       "apply-button": "Időtartomány alkalmazása",
       "default-error": "",
-      "fiscal-year": "Pénzügyi év",
+      "fiscal-year": "",
       "from-input": "Kezdete",
       "open-input-calendar": "Naptár megnyitása",
       "range-error": "A „Kezdete” nem lehet a „Vége” után",
@@ -8951,6 +9038,7 @@
       "loading": "Betöltés...",
       "no-unknowns": "Nem található átnevezett vagy hiányzó változó.",
       "renamed-or-missing-variables": "Átnevezett vagy hiányzó változók",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "Változó"
     },
     "variable-check-indicator": {
