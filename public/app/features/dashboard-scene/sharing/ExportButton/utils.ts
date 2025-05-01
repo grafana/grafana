@@ -12,23 +12,6 @@ export const GRID_CELL_MARGIN = 8;
 export const EXTRA_PADDING = 80;
 export const MIN_DASHBOARD_HEIGHT = 400;
 
-interface GridItem {
-  state: {
-    height?: number;
-    y?: number;
-  };
-}
-
-interface GridLayout {
-  state: {
-    grid: {
-      state: {
-        children: GridItem[];
-      };
-    };
-  };
-}
-
 interface ImageGenerationOptions {
   dashboard: DashboardScene;
   format?: 'png' | 'jpg';
@@ -38,13 +21,6 @@ interface ImageGenerationOptions {
 interface ImageGenerationResult {
   blob: Blob;
   error?: string;
-}
-
-interface FetchResponse {
-  ok: boolean;
-  status: number;
-  statusText: string;
-  data: ArrayBuffer;
 }
 
 function isDefaultGridLayoutManager(obj: unknown): obj is DefaultGridLayoutManager {
