@@ -71,7 +71,13 @@ export const PermissionListItem = ({ item, permissionLevels, canSet, onRemove, o
             )}
           />
         ) : (
-          <Tooltip content={item.isInherited ? 'Inherited Permission' : 'Provisioned Permission'}>
+          <Tooltip
+            content={
+              item.isInherited
+                ? t('access-control.permission-list-item.tooltip-inherited-permission', 'Inherited permission')
+                : t('access-control.permission-list-item.tooltip-provisioned-permission', 'Provisioned permission')
+            }
+          >
             <Button
               size="sm"
               icon="lock"
