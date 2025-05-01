@@ -8193,6 +8193,7 @@
   },
   "share-dashboard": {
     "menu": {
+      "export-image-title": "Export as Image",
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
@@ -8227,6 +8228,15 @@
       "share-externally-label": "Export for sharing externally",
       "view-button": "View JSON",
       "view-button-yaml": "View YAML"
+    },
+    "image": {
+      "cancel-button": "Cancel",
+      "download-button": "Download image",
+      "error-title": "Failed to generate image",
+      "format-label": "Format",
+      "generate-button": "Generate image",
+      "info-text": "Save this dashboard as an image file. The image will be captured at high resolution.",
+      "preview": "Preview"
     },
     "library": {
       "info": "Create library panel."
@@ -8269,6 +8279,7 @@
     "tab-title": {
       "embed": "Embed",
       "export": "Export",
+      "export-image": "Export image",
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",
