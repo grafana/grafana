@@ -22,6 +22,11 @@ enum ImageFormat {
   JPG = 'jpg',
 }
 
+type ErrorState = {
+  message: string;
+  title: string;
+} | null;
+
 export class ExportAsImage extends ShareExportTab {
   public tabId = shareDashboardType.image;
   static Component = ExportAsImageRenderer;
@@ -31,11 +36,73 @@ export class ExportAsImage extends ShareExportTab {
   }
 }
 
+function ErrorAlert({ error }: { error: ErrorState }) {
+  if (!error) {
+    return null;
+  }
+
+  return (
+    <Alert severity="error" title={error.title} data-testid={ExportImageComponents.preview.error.container}>
+      <div data-testid={ExportImageComponents.preview.error.title}>{error.title}</div>
+      <div data-testid={ExportImageComponents.preview.error.message}>{error.message}</div>
+    </Alert>
+  );
+}
+
+function ImagePreview({ imageBlob, isLoading }: { imageBlob: Blob | null; isLoading: boolean }) {
+  const styles = useStyles2(getStyles);
+
+  if (!imageBlob || isLoading) {
+    return null;
+  }
+
+  return (
+    <img
+      src={URL.createObjectURL(imageBlob)}
+      alt={t('share-modal.image.preview', 'Preview')}
+      className={styles.image}
+      data-testid={ExportImageComponents.preview.image}
+    />
+  );
+}
+
+function RendererAlert() {
+  if (config.rendererAvailable) {
+    return null;
+  }
+
+  return (
+    <Alert
+      severity="info"
+      title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
+      data-testid={ExportImageComponents.rendererAlert.container}
+    >
+      <div data-testid={ExportImageComponents.rendererAlert.title}>
+        {t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
+      </div>
+      <div data-testid={ExportImageComponents.rendererAlert.description}>
+        <Trans i18nKey="share-modal.link.render-instructions">
+          To render a panel image, you must install the{' '}
+          <a
+            href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="external-link"
+          >
+            Grafana image renderer plugin
+          </a>
+          . Please contact your Grafana administrator to install the plugin.
+        </Trans>
+      </div>
+    </Alert>
+  );
+}
+
 function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   const [format, setFormat] = useState<ImageFormat>(ImageFormat.PNG);
   const [isLoading, setIsLoading] = useState(false);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorState>(null);
   const styles = useStyles2(getStyles);
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
 
@@ -64,7 +131,10 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       DashboardInteractions.toolbarShareClick();
     } catch (error) {
       console.error('Error exporting image:', error);
-      setError(error instanceof Error ? error.message : 'Failed to generate image');
+      setError({
+        title: t('share-modal.image.error-title', 'Failed to generate image'),
+        message: error instanceof Error ? error.message : 'Failed to generate image',
+      });
     } finally {
       setIsLoading(false);
     }
@@ -101,31 +171,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
         </div>
       </Field>
 
-      {!config.rendererAvailable && (
-        <Alert
-          severity="info"
-          title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
-          data-testid={ExportImageComponents.rendererAlert.container}
-        >
-          <div data-testid={ExportImageComponents.rendererAlert.title}>
-            {t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
-          </div>
-          <div data-testid={ExportImageComponents.rendererAlert.description}>
-            <Trans i18nKey="share-modal.link.render-instructions">
-              To render a panel image, you must install the{' '}
-              <a
-                href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="external-link"
-              >
-                Grafana image renderer plugin
-              </a>
-              . Please contact your Grafana administrator to install the plugin.
-            </Trans>
-          </div>
-        </Alert>
-      )}
+      <RendererAlert />
 
       <div className={styles.buttonRow}>
         {!imageBlob ? (
@@ -163,27 +209,8 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
           {isLoading && <LoadingBar width={loadingBarWidth} />}
         </div>
 
-        {error && !isLoading && (
-          <Alert
-            severity="error"
-            title={t('share-modal.image.error-title', 'Failed to generate image')}
-            data-testid={ExportImageComponents.preview.error.container}
-          >
-            <div data-testid={ExportImageComponents.preview.error.title}>
-              {t('share-modal.image.error-title', 'Failed to generate image')}
-            </div>
-            <div data-testid={ExportImageComponents.preview.error.message}>{error}</div>
-          </Alert>
-        )}
-
-        {imageBlob && !isLoading && !error && (
-          <img
-            src={URL.createObjectURL(imageBlob)}
-            alt={t('share-modal.image.preview', 'Preview')}
-            className={styles.image}
-            data-testid={ExportImageComponents.preview.image}
-          />
-        )}
+        {error && !isLoading && <ErrorAlert error={error} />}
+        <ImagePreview imageBlob={imageBlob} isLoading={isLoading} />
       </div>
     </>
   );

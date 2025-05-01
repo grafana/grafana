@@ -7,32 +7,63 @@ import { DashboardScene } from '../../scene/DashboardScene';
 import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../../scene/layout-default/DefaultGridLayoutManager';
 
-export const GRID_CELL_HEIGHT = 30;
-export const GRID_CELL_MARGIN = 8;
-export const EXTRA_PADDING = 80;
-export const MIN_DASHBOARD_HEIGHT = 400;
+/**
+ * Constants for grid layout calculations
+ */
+export const GRID_CELL_HEIGHT = 30; // Height of a single grid cell in pixels
+export const GRID_CELL_MARGIN = 8; // Margin between grid cells in pixels
+export const EXTRA_PADDING = 80; // Additional padding for the dashboard image
+export const MIN_DASHBOARD_HEIGHT = 400; // Minimum height of the dashboard image
 
-interface ImageGenerationOptions {
+/**
+ * Supported image formats for export
+ */
+export type ImageFormat = 'png' | 'jpg';
+
+/**
+ * Options for generating a dashboard image
+ */
+export interface ImageGenerationOptions {
   dashboard: DashboardScene;
-  format?: 'png' | 'jpg';
+  format?: ImageFormat;
   scale?: number;
 }
 
-interface ImageGenerationResult {
+/**
+ * Result of image generation attempt
+ */
+export interface ImageGenerationResult {
   blob: Blob;
   error?: string;
 }
 
+/**
+ * Type guard for DefaultGridLayoutManager
+ */
 function isDefaultGridLayoutManager(obj: unknown): obj is DefaultGridLayoutManager {
-  return obj instanceof DefaultGridLayoutManager || obj?.constructor?.name === 'DefaultGridLayoutManager';
+  return (
+    obj instanceof DefaultGridLayoutManager ||
+    (typeof obj === 'object' &&
+      obj !== null &&
+      'constructor' in obj &&
+      obj.constructor?.name === 'DefaultGridLayoutManager')
+  );
 }
 
+/**
+ * Type guard for DashboardGridItem
+ */
 function isDashboardGridItem(obj: unknown): obj is DashboardGridItem {
-  return obj instanceof DashboardGridItem || obj?.constructor?.name === 'DashboardGridItem';
+  return (
+    obj instanceof DashboardGridItem ||
+    (typeof obj === 'object' && obj !== null && 'constructor' in obj && obj.constructor?.name === 'DashboardGridItem')
+  );
 }
 
 /**
  * Calculates height based on grid layout
+ * @param layout The grid layout manager
+ * @returns The calculated height in pixels
  */
 export function calculateGridBasedHeight(layout: DefaultGridLayoutManager): number {
   const gridItems = layout.state.grid.state.children.filter(isDashboardGridItem);
@@ -55,6 +86,8 @@ export function calculateGridBasedHeight(layout: DefaultGridLayoutManager): numb
 
 /**
  * Calculates height based on DOM elements
+ * @param container The container element containing panels
+ * @returns The calculated height in pixels
  */
 export function calculateDOMBasedHeight(container: HTMLElement): number {
   const panels = Array.from(container.querySelectorAll('.panel-container'));
@@ -73,6 +106,8 @@ export function calculateDOMBasedHeight(container: HTMLElement): number {
       }
     } catch (error) {
       console.warn('Error getting panel dimensions:', error);
+      // Continue with other panels if one fails
+      continue;
     }
   }
 
@@ -81,6 +116,8 @@ export function calculateDOMBasedHeight(container: HTMLElement): number {
 
 /**
  * Calculates the total height needed for the dashboard
+ * @param dashboard The dashboard scene
+ * @returns The calculated height in pixels
  */
 export function calculateDashboardHeight(dashboard: DashboardScene): number {
   let totalHeight = MIN_DASHBOARD_HEIGHT;
@@ -102,6 +139,8 @@ export function calculateDashboardHeight(dashboard: DashboardScene): number {
 
 /**
  * Generates a dashboard image using the renderer service
+ * @param options The options for image generation
+ * @returns A promise that resolves to the image generation result
  */
 export async function generateDashboardImage({
   dashboard,
@@ -147,6 +186,7 @@ export async function generateDashboardImage({
         error: `Failed to generate image: ${response.status} ${response.statusText}`,
       };
     }
+
     if (!(response.data instanceof Blob)) {
       return {
         blob: new Blob(),
