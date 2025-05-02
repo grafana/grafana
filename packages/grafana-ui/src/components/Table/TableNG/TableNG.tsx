@@ -9,12 +9,10 @@ import {
   DataHoverClearEvent,
   DataHoverEvent,
   Field,
-  fieldReducers,
   FieldType,
   formattedValueToString,
   getDefaultTimeRange,
   GrafanaTheme2,
-  ReducerID,
 } from '@grafana/data';
 import { TableCellDisplayMode } from '@grafana/schema';
 
@@ -28,6 +26,7 @@ import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspecto
 
 import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
+import { SummaryCell } from './Cells/SummaryCell';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
 import {
@@ -43,13 +42,12 @@ import {
   CellColors,
 } from './types';
 import {
+  calculateFooterHeight,
   frameToRecords,
   getCellColors,
   getCellHeightCalculator,
   getComparator,
   getDefaultRowHeight,
-  getFooterItemNG,
-  getFooterStyles,
   getIsNestedTable,
   getRowHeight,
   getTextAlign,
@@ -64,7 +62,6 @@ export function TableNG(props: TableNGProps) {
     enablePagination,
     enableVirtualization = true,
     fieldConfig,
-    footerOptions,
     height,
     initialSortBy,
     noHeader,
@@ -122,18 +119,17 @@ export function TableNG(props: TableNGProps) {
   const prevProps = useRef(props);
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
+  const tableRef = useRef<DataGridHandle | null>(null);
 
   const theme = useTheme2();
+  // For some reason Firefox doesn't set the summary cell height correctly with the react-data-grid
+  // prop called summaryRowHeight. This is a workaround to set the height manually via CSS instead.
+  const footerHeight = calculateFooterHeight(props.data, fieldConfig);
   const panelContext = usePanelContext();
 
-  const isFooterVisible = Boolean(footerOptions?.show && footerOptions.reducer?.length);
-  const isCountRowsSet = Boolean(
-    footerOptions?.countRows &&
-      footerOptions.reducer &&
-      footerOptions.reducer.length &&
-      footerOptions.reducer[0] === ReducerID.count
-  );
-  const tableRef = useRef<DataGridHandle | null>(null);
+  const isFooterVisible = useMemo(() => {
+    return props.data.fields.some((field) => field.config?.custom?.footer?.reducer?.length ?? false);
+  }, [props.data.fields]);
 
   /* --------------------------------- Effects -------------------------------- */
   useEffect(() => {
@@ -211,7 +207,7 @@ export function TableNG(props: TableNGProps) {
   );
 
   const textWrap = useMemo(() => Object.values(textWraps).some(Boolean), [textWraps]);
-  const styles = useStyles2(getStyles);
+  const styles = useStyles2(getStyles, footerHeight);
 
   // Create a function to get column widths for text wrapping calculations
   const getColumnWidths = useCallback(() => {
@@ -380,22 +376,6 @@ export function TableNG(props: TableNGProps) {
     return sortedRows.slice(pageOffset, pageOffset + rowsPerPage);
   }, [rows, sortedRows, page, rowsPerPage]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useMemo(() => {
-    calcsRef.current = props.data.fields.map((field, index) => {
-      if (field.state?.calcs) {
-        delete field.state?.calcs;
-      }
-      if (isCountRowsSet) {
-        return index === 0 ? `${sortedRows.length}` : '';
-      }
-      if (index === 0) {
-        const footerCalcReducer = footerOptions?.reducer?.[0];
-        return footerCalcReducer ? fieldReducers.get(footerCalcReducer).name : '';
-      }
-      return getFooterItemNG(sortedRows, field, footerOptions);
-    });
-  }, [sortedRows, props.data.fields, footerOptions, isCountRowsSet]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const onCellExpand = (rowIdx: number) => {
     if (!expandedRows.includes(rowIdx)) {
       setExpandedRows([...expandedRows, rowIdx]);
@@ -437,14 +417,11 @@ export function TableNG(props: TableNGProps) {
           columnWidth,
           crossFilterOrder,
           crossFilterRows,
-          defaultLineHeight,
           defaultRowHeight,
           expandedRows,
           filter,
           headerCellRefs,
-          isCountRowsSet,
           onCellFilterAdded,
-          ctx,
           onSortByChange,
           rows,
           // INFO: sortedRows is for correct row indexing for cell background coloring
@@ -467,7 +444,7 @@ export function TableNG(props: TableNGProps) {
         // Adjust table width to account for the scroll bar width
         availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + TABLE.SCROLL_BAR_MARGIN : 0),
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll, sortedRows] // eslint-disable-line react-hooks/exhaustive-deps
+    [props.data, calcsRef, filter, expandedRows, expandedRows.length, width, hasScroll, sortedRows] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   // This effect needed to set header cells refs before row height calculation
@@ -648,14 +625,11 @@ export function mapFrameToDataGrid({
     textWraps,
     crossFilterOrder,
     crossFilterRows,
-    defaultLineHeight,
     defaultRowHeight,
     expandedRows,
     filter,
     headerCellRefs,
-    isCountRowsSet,
     onCellFilterAdded,
-    ctx,
     onSortByChange,
     rows,
     sortedRows,
@@ -767,7 +741,6 @@ export function mapFrameToDataGrid({
     const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
     const key = field.name;
     const justifyColumnContent = getTextAlign(field);
-    const footerStyles = getFooterStyles(justifyColumnContent);
 
     // current/old table width logic calculations
     if (fieldTableOptions.width) {
@@ -798,21 +771,7 @@ export function mapFrameToDataGrid({
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
             rowIdx={sortedRows[rowIdx].__index}
-            shouldTextOverflow={() =>
-              shouldTextOverflow(
-                key,
-                row,
-                columnTypes,
-                headerCellRefs,
-                ctx,
-                defaultLineHeight,
-                defaultRowHeight,
-                TABLE.CELL_PADDING,
-                textWraps[field.name],
-                field,
-                cellType
-              )
-            }
+            shouldTextOverflow={() => shouldTextOverflow(key, columnTypes, textWraps[field.name], field, cellType)}
             setIsInspecting={setIsInspecting}
             setContextMenuProps={setContextMenuProps}
             getActions={getActions}
@@ -822,19 +781,7 @@ export function mapFrameToDataGrid({
           />
         );
       },
-      renderSummaryCell: () => {
-        if (isCountRowsSet && fieldIndex === 0) {
-          return (
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>
-                <Trans i18nKey="grafana-ui.table.count">Count</Trans>
-              </span>
-              <span>{calcsRef.current[fieldIndex]}</span>
-            </div>
-          );
-        }
-        return <div className={footerStyles.footerCell}>{calcsRef.current[fieldIndex]}</div>;
-      },
+      renderSummaryCell: () => <SummaryCell sortedRows={sortedRows} field={field} omitCountAll={fieldIndex > 0} />,
       renderHeaderCell: ({ column, sortDirection }): JSX.Element => (
         <HeaderCell
           column={column}
@@ -954,7 +901,7 @@ export function onRowLeave(panelContext: PanelContext, enableSharedCrosshair: bo
   panelContext.eventBus.publish(new DataHoverClearEvent());
 }
 
-const getStyles = (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2, footerHeight: number) => ({
   dataGrid: css({
     '--rdg-background-color': theme.colors.background.primary,
     '--rdg-header-background-color': theme.colors.background.primary,
@@ -981,6 +928,9 @@ const getStyles = (theme: GrafanaTheme2) => ({
       '--rdg-summary-border-color': theme.colors.border.medium,
 
       '.rdg-cell': {
+        height: footerHeight,
+        padding: theme.spacing(1),
+        paddingInline: 'unset',
         // Prevent collisions with custom cell components
         zIndex: 2,
         borderRight: 'none',
