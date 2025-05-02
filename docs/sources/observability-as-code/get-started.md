@@ -17,44 +17,55 @@ weight: 100
 
 # Get started with Observability as Code
 
-Simply put, with Observability as Code, you can manage Grafana resources.
-You can write code that describes what you want the dashboard to do, rather than manipulate it via the UI.
+Grafana provides a suite of tools for **Observability as Code** to help you manage your Grafana resources programmatically and at scale. This approach lets you define dashboards, data sources, and other configurations in code, enabling version control, automated testing, and reliable deployments through CI/CD pipelines.
 
-Observability as Code lets you manage dashboards, resources, and configurations programmatically, leveraging powerful tools for automation and standardization.
+Historically, managing Grafana as code involved various community and Grafana Labs tools, but lacked a single, cohesive story. Grafana 12 introduces foundational improvements, including new versioned APIs and official tooling, to provide a clearer path forward.
 
-## Get started with Observability as Code
+## Grafana CLI (`grafanactl`)
 
-<!--
-1. [**Understand the Dashboard Schemas**](json-models/)
+Use the official command-line tool, `grafanactl`, to interact with your Grafana instances and manage resources via the new APIs.
 
-   - Learn about the Dashboard JSON models, which introduces clearer separation of properties, improved layouts, and metadata management.
-   - Review examples of JSON definitions for dashboards to get familiar with the structure and fields.
+- It's the recommended tool for automation and direct API interaction, suitable for CI/CD pipelines and local development or ad-hoc tasks. It supports pulling/pushing configurations from remote instances, validating configs, and more.
+- `grafanactl` works across all environments for Grafana OSS, Enterprise, and Cloud.
 
-1. [**Understand the Foundation SDK**](foundation-sdk)
+Refer to the [Grafana CLI (`grafanactl`)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/grafana-cli) documentation for more information.
 
-   - Learn about a toolkit for programmatically creating and managing Grafana dashboards and resources with reusable components and streamlined workflows.
--->
+## Git Sync
 
-1. [Grafana CLI (`grafanactl`)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/grafana-cli)
+For an integrated, UI-driven Git workflow focused on dashboards, explore Git Sync.
 
-   - Use a command-line tool for simplifying the management of Grafana resources.
-   - Grafana CLI Works across environments (OSS, Enterprise, Cloud), and provides solutions for many as-code situations.
-   - It provides the flexibility many advanced users and existing pipelines require: CI/CD, pull/push from remotes, and more.
+- Connect folders or entire Grafana instances directly to a GitHub repository to synchronize dashboard definitions, enabling version control, branching, and pull requests directly from Grafana.
+- Git Sync offers a simple, out-of-the-box approach for managing dashboards as code.
+  {{< admonition type="note" >}}
+  Git Sync is an **experimental feature** in Grafana 12, available in Grafana OSS and Enterprise [nightly releases](https://grafana.com/grafana/download/nightly). It is not yet available in Grafana Cloud.
+  {{< /admonition >}}
 
-1. [Git Sync](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync/)
+Refer to the [Git Sync documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync/) to learn more.
 
-   - Configure Git repositories to store your dashboard JSON files.
-   - Understand best practices for version control, including collaboration through pull requests and rollbacks.
-   - Edit your JSON files in GitHub and then sync with Grafana.
+## Direct API usage
 
-1. [Manage dashboard deployments from GitHub](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/)
+For maximum flexibility, advanced use cases, or building custom tooling, you can interact directly with the underlying versioned APIs.
 
-   - Integrate dashboards into CI/CD pipelines using tools like GitHub Actions.
-   - Leverage provisioning features in Grafana to automate updates and deployment of dashboards.
+- This approach requires handling HTTP requests and responses but provides complete control over resource management.
+- `grafanactl`, Git Sync, and the Foundation SDK are all built on top of these APIs.
+- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](json-models/).
+
+Refer to the [Grafana APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/) documentation for more information.
+
+## Foundation SDK
+
+To programmatically define your Grafana resources (like dashboards or alerts) using familiar programming languages, use Foundation SDK.
+
+- Define resources using strongly typed builders in languages like Go, TypeScript, Python, Java, and PHP.
+- Avoid crafting complex JSON manually and integrate resource generation into your existing development workflows.
+- Catch errors at compile time and easily integrate resource generation into your CI/CD pipelines.
+- Use in conjunction with `grafanactl` to push your programmatically generated resources.
+
+Refer to the [Foundation SDK](../foundation-sdk) documentation for more information.
 
 ## Additional Observability as Code tools
 
-Explore these additional tools and libraries for working with Observability as Code.
+If you're already using established Infrastructure as Code or other configuration management tools, Grafana offers integrations to manage resources within your existing workflows.
 
 - [Terraform](../infrastructure-as-code/terraform/)
 
