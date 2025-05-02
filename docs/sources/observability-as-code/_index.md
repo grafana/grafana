@@ -37,9 +37,6 @@ hero:
   height: 110
   level: 1
   width: 110
-title: Introduction to Grafana CLI
-menuTitle: Grafana CLI
-weight: 130
 ---
 
 {{< docs/hero-simple key="hero" >}}
