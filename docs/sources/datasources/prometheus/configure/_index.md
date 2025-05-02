@@ -256,7 +256,7 @@ Once you have provisioned a data source you cannot edit it.
           httpMethod: POST
           manageAlerts: true
           prometheusType: Prometheus
-          prometheusVersion: 2.44.0
+          prometheusVersion: 3.3.0
           cacheLevel: 'High'
           disableRecordingRules: false
           incrementalQueryOverlapWindow: 10m
