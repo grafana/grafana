@@ -145,7 +145,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		// Read old value first.
 		oldKeeperRow, err := s.read(ctx, newKeeper.Namespace, newKeeper.Name, yesForUpdate)
 		if err != nil {
-			return fmt.Errorf("failed to get row: %w", err)
+			return err
 		}
 
 		// Generate an update row model.

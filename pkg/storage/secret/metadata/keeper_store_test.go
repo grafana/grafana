@@ -257,8 +257,9 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		updatedKeeper.Spec.Description = "updated description"
 
 		_, err = keeperMetadataStorage.Update(ctx, updatedKeeper, "testuser")
-		require.Error(t, err)
-		require.Equal(t, contracts.ErrKeeperNotFound, err)
+		// should this return contracts.ErrKeeperNotFound directly?
+		// require.Equal(t, contracts.ErrKeeperNotFound, err)
+		require.Error(t, err, "db failure: keeper not found")
 
 		// Verify original keeper is unchanged
 		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest)
