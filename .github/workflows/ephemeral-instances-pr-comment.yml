@@ -4,6 +4,9 @@ on:
     types: [created]
   pull_request:
     types: [closed]
+
+permissions: {}
+
 jobs:
   config:
     runs-on: "ubuntu-latest"
@@ -26,6 +29,10 @@ jobs:
           fi
 
   handle-pull-request-event:
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
     needs: config
     if: needs.config.outputs.has-secrets &&
         ${{ github.event.issue.pull_request && (startsWith(github.event.comment.body, '/deploy-to-hg') || github.event.action == 'closed') }}
