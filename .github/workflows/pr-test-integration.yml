@@ -67,6 +67,7 @@ jobs:
           sudo apt-get update -yq  && sudo apt-get install build-essential
           go clean -testcache
           go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m
+
   test:
     name: testing gh services
     runs-on: ubuntu-latest-8-cores
