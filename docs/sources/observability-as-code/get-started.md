@@ -25,7 +25,7 @@ Historically, managing Grafana as code involved various community and Grafana La
 
 Use the official command-line tool, `grafanactl`, to interact with your Grafana instances and manage resources via the new APIs.
 
-- It's the recommended tool for automation and direct API interaction, suitable for CI/CD pipelines and local development or ad-hoc tasks. It supports pulling/pushing configurations from remote instances, validating configs, and more.
+- It's the recommended tool for automation and direct API interaction, suitable for CI/CD pipelines and local development or free-form tasks. It supports pulling/pushing configurations from remote instances, validating configurations, and more.
 - `grafanactl` works across all environments for Grafana OSS, Enterprise, and Cloud.
 
 Refer to the [Grafana CLI (`grafanactl`)](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/grafana-cli) documentation for more information.
