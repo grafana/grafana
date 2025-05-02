@@ -1,11 +1,13 @@
 # Generated tool paths
 tools_dir := $(shell cd $(dir $(lastword $(MAKEFILE_LIST))) && pwd)
-tools_cache_dir := $(tools_dir)/.tool-cache
 src_dir := $(tools_dir)/src
 
+# Due to the race condition, right after the compilation golang may report a wrong binary location pointing to the `/tmp/go-buildXXX` directory
 define compile_tool
 $(shell \
-  (cd $(src_dir)/$(1) && GOWORK=off go tool -n $(2)) | sed 's/^[[:space:]]*//g'; \
+  (cd $(src_dir)/$(1) \
+  && GOWORK=off go tool -n $(2) > /dev/null \
+  && GOWORK=off go tool -n $(2)) | sed 's/^[[:space:]]*//g'; \
 )
 endef
 
