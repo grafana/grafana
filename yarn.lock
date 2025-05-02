@@ -17894,7 +17894,7 @@ __metadata:
     prettier: "npm:3.4.2"
     prismjs: "npm:1.30.0"
     rc-slider: "npm:11.1.8"
-    rc-tree: "npm:5.13.0"
+    rc-tree: "npm:5.13.1"
     re-resizable: "npm:6.10.3"
     react: "npm:18.3.1"
     react-diff-viewer-continued: "npm:^3.4.0"
@@ -25658,9 +25658,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.13.0, rc-tree@npm:~5.13.0":
-  version: 5.13.0
-  resolution: "rc-tree@npm:5.13.0"
+"rc-tree@npm:5.13.1, rc-tree@npm:~5.13.0":
+  version: 5.13.1
+  resolution: "rc-tree@npm:5.13.1"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:2.x"
@@ -25670,7 +25670,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10/c8615773780f6855e8bd5398620187a3956c1a3a145c07bbbcd3a73a6d6c3f6b5d74c38dafdfea4f82cfd51846b1358ca3e98279a353dfa2814617bc5ab7abc0
+  checksum: 10/27d11b1bda077e14dff4dd3d17ea246145f52b4c4157a17f9a8d8c55a0e440fbf9a0eef76d07e1fdc70501b28a7d0009e08bc4594130340ee4df0978dda4820f
   languageName: node
   linkType: hard
 
