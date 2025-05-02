@@ -42,17 +42,11 @@ describe('TextBoxVariableEditor', () => {
 
   it('renders inline', () => {
     const onChange = jest.fn();
-    const variable = new TextBoxVariable({
-      name: 'textBoxVar',
-      label: 'textBoxVar',
-      type: 'textbox',
-      value: 'initial value test',
-    });
-    render(<TextBoxVariableEditor variable={variable} onChange={onChange} inline={true} />);
+    render(<TextBoxVariableEditor variable={textBoxVar} onChange={onChange} inline={true} />);
 
-    const input = screen.getByDisplayValue(variable.state.value);
+    const input = screen.getByDisplayValue(textBoxVar.state.value);
     expect(input).toBeInTheDocument();
-    expect(input).toHaveValue(variable.state.value);
+    expect(input).toHaveValue(textBoxVar.state.value);
 
     const legend = screen.queryByText('Text options');
     expect(legend).not.toBeInTheDocument();
