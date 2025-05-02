@@ -241,6 +241,3 @@ public/app/plugins/**/dist/
 public/mockServiceWorker.js
 
 /e2e/test-plugins/*/dist
-
-# managed tools
-/.citools/.tool-cache/
