@@ -931,8 +931,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
         "GCP_KEY": from_secret(gcp_grafanauploads),
         "DOCKER_USER": from_secret("docker_username"),
         "DOCKER_PASSWORD": from_secret("docker_password"),
-        "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-        "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+        "GITHUB_APP_ID": "329617",
+        "GITHUB_APP_INSTALLATION_ID": "37346161",
         "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
     }
 
@@ -949,8 +949,8 @@ def publish_images_step(ver_mode, docker_repo, trigger = None):
         environment = {
             "DOCKER_USER": from_secret("docker_username"),
             "DOCKER_PASSWORD": from_secret("docker_password"),
-            "GITHUB_APP_ID": from_secret("delivery-bot-app-id"),
-            "GITHUB_APP_INSTALLATION_ID": from_secret("delivery-bot-app-installation-id"),
+            "GITHUB_APP_ID": "329617",
+            "GITHUB_APP_INSTALLATION_ID": "37346161",
             "GITHUB_APP_PRIVATE_KEY": from_secret("delivery-bot-app-private-key"),
         }
 
