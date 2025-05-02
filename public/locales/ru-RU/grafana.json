@@ -3709,7 +3709,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3949,6 +3952,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5151,8 +5155,11 @@
       "download-button": "Загрузить файл",
       "download-successful_toast_message": "JSON-файл загружен",
       "export-externally-label": "Экспорт дашборда для использования в другом экземпляре",
-      "info-text": "Скопируйте или загрузите JSON-файл, содержащий модель JSON вашего дашборда.",
-      "title": "Экспорт модели JSON дашборда"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Экспорт",
@@ -7135,6 +7142,7 @@
         "reportAbuseTooltip": "Сообщайте о проблемах, связанных с вредоносными или опасными плагинами, непосредственно в Grafana Labs.",
         "repository": "Репозиторий",
         "signature": "Подпись",
+        "sponsorDeveloper": "",
         "status": "Статус"
       },
       "modal": {
@@ -8280,7 +8288,8 @@
       "loading": "Загрузка…",
       "save-button": "Сохранить в файл",
       "share-externally-label": "Экспорт для внешнего доступа",
-      "view-button": "Просмотр JSON-файла"
+      "view-button": "Просмотр JSON-файла",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Создайте панель библиотеки."

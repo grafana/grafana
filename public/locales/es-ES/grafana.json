@@ -3671,7 +3671,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3911,6 +3914,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5109,8 +5113,11 @@
       "download-button": "Descargar archivo",
       "download-successful_toast_message": "Tu JSON se ha descargado",
       "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
-      "info-text": "Copia o descarga un archivo JSON que contenga el JSON de tu panel de control",
-      "title": "Exportar JSON del panel de control"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "",
@@ -7083,6 +7090,7 @@
         "reportAbuseTooltip": "Informa de problemas relacionados con complementos maliciosos o dañinos directamente a Grafana Labs.",
         "repository": "Repositorio",
         "signature": "Firma",
+        "sponsorDeveloper": "",
         "status": ""
       },
       "modal": {
@@ -8218,7 +8226,8 @@
       "loading": "",
       "save-button": "Guardar en archivo",
       "share-externally-label": "Exportar para compartir externamente",
-      "view-button": "Ver JSON"
+      "view-button": "Ver JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Cree un panel de librería."

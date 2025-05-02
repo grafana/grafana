@@ -3671,7 +3671,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3911,6 +3914,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5109,8 +5113,11 @@
       "download-button": "Bestand downloaden",
       "download-successful_toast_message": "Je JSON is gedownload",
       "export-externally-label": "Exporteer het dashboard om het in een andere instantie te gebruiken",
-      "info-text": "Kopieer of download een JSON-bestand met de JSON van je dashboard",
-      "title": "Exporteer de dashboard-JSON"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Exporteren",
@@ -7083,6 +7090,7 @@
         "reportAbuseTooltip": "Meld problemen met kwaadaardige of schadelijke plug-ins rechtstreeks aan Grafana Labs.",
         "repository": "Repository",
         "signature": "Handtekening",
+        "sponsorDeveloper": "",
         "status": "Status"
       },
       "modal": {
@@ -8218,7 +8226,8 @@
       "loading": "Bezig met laden ...",
       "save-button": "Opslaan naar bestand",
       "share-externally-label": "Exporteren om extern te delen",
-      "view-button": "JSON weergeven"
+      "view-button": "JSON weergeven",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Bibliotheekpaneel aanmaken."

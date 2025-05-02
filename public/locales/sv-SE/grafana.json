@@ -3671,7 +3671,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3911,6 +3914,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5109,8 +5113,11 @@
       "download-button": "Ladda ner fil",
       "download-successful_toast_message": "Din JSON har laddats ner",
       "export-externally-label": "Exportera instrumentpanelen om du vill använda i en annan instans",
-      "info-text": "Kopiera eller ladda ner en JSON-fil som innehåller instrumentpanelens JSON",
-      "title": "Exportera instrumentpanelens JSON"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Exportera",
@@ -7083,6 +7090,7 @@
         "reportAbuseTooltip": "Rapportera problem relaterade till skadliga eller farliga tilläggsprogram direkt till Grafana Labs.",
         "repository": "Databas",
         "signature": "Underskrift",
+        "sponsorDeveloper": "",
         "status": "Status"
       },
       "modal": {
@@ -8218,7 +8226,8 @@
       "loading": "Laddar …",
       "save-button": "Spara till fil",
       "share-externally-label": "Exportera för extern delning",
-      "view-button": "Visa JSON"
+      "view-button": "Visa JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Skapa bibliotekspanel."

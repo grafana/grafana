@@ -3671,7 +3671,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3911,6 +3914,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5109,8 +5113,11 @@
       "download-button": "Transferir ficheiro",
       "download-successful_toast_message": "O seu JSON foi descarregado",
       "export-externally-label": "Exportar o painel de controlo para utilizar noutra instância",
-      "info-text": "Copiar ou descarregar um ficheiro JSON que contém o JSON do seu painel de controlo",
-      "title": "Exportar JSON do painel de controlo"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Exportar",
@@ -7083,6 +7090,7 @@
         "reportAbuseTooltip": "Comunique problemas relacionados com plugins maliciosos ou prejudiciais diretamente à Grafana Labs.",
         "repository": "Repositório",
         "signature": "Assinatura",
+        "sponsorDeveloper": "",
         "status": "Estado"
       },
       "modal": {
@@ -8218,7 +8226,8 @@
       "loading": "A carregar...",
       "save-button": "Guardar num ficheiro",
       "share-externally-label": "Exportar para partilhar externamente",
-      "view-button": "Ver JSON"
+      "view-button": "Ver JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Criar painel de biblioteca."

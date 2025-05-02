@@ -3652,7 +3652,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3892,6 +3895,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5088,8 +5092,11 @@
       "download-button": "파일 다운로드",
       "download-successful_toast_message": "JSON 다운로드 완료",
       "export-externally-label": "다른 인스턴스에서 사용할 대시보드 내보내기",
-      "info-text": "대시보드의 JSON이 포함된 JSON 파일을 복사하거나 다운로드",
-      "title": "대시보드 JSON 내보내기"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "내보내기",
@@ -7057,6 +7064,7 @@
         "reportAbuseTooltip": "악성 또는 유해한 플러그인과 관련된 문제는 바로 Grafana Labs에 신고해 주세요.",
         "repository": "리포지토리",
         "signature": "서명",
+        "sponsorDeveloper": "",
         "status": "상태"
       },
       "modal": {
@@ -8187,7 +8195,8 @@
       "loading": "로딩 중...",
       "save-button": "파일로 저장",
       "share-externally-label": "외부 공유를 위해 내보내기",
-      "view-button": "JSON 보기"
+      "view-button": "JSON 보기",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "라이브러리 패널을 생성합니다."
