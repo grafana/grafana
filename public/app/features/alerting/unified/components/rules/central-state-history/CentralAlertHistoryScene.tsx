@@ -37,7 +37,7 @@ import {
   TooltipDisplayMode,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { LogMessages, logInfo } from '../../../Analytics';
 
@@ -236,7 +236,7 @@ export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<C
   };
 
   return (
-    <Tooltip content="Clear filter">
+    <Tooltip content={t('alerting.clear-filter-button-object-renderer.content-clear-filter', 'Clear filter')}>
       <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
         <Trans i18nKey="alerting.central-alert-history.filter.clear">Clear filters</Trans>
       </Button>
