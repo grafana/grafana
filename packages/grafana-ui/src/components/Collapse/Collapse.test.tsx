@@ -5,6 +5,13 @@ import { Collapse } from './Collapse';
 
 const TEST_LABEL = 'Test Collapse';
 
+const setup = (jsx: JSX.Element) => {
+  return {
+    user: userEvent.setup(),
+    ...render(jsx),
+  };
+};
+
 describe('Collapse', () => {
   it('should not render content when isOpen is false', () => {
     const contentText = 'Hidden content';
@@ -34,14 +41,14 @@ describe('Collapse', () => {
     const contentText = 'Toggleable content';
     const onToggle = jest.fn();
 
-    render(
+    const { user } = setup(
       <Collapse label={TEST_LABEL} onToggle={onToggle} collapsible>
         <div>{contentText}</div>
       </Collapse>
     );
 
     const header = screen.getByRole('button');
-    await userEvent.click(header);
+    await user.click(header);
 
     expect(onToggle).toHaveBeenCalledWith(true);
   });
