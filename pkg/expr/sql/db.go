@@ -66,10 +66,11 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		return nil, err
 	}
 
-	pro := NewFramesDBProvider(frames)
-	session := mysql.NewBaseSession()
 	_, span := tracer.Start(ctx, "SSE.ExecuteGMSQuery")
 	defer span.End()
+
+	pro := NewFramesDBProvider(frames)
+	session := mysql.NewBaseSession()
 
 	// Create a new context with the session and tracer
 	mCtx := mysql.NewContext(ctx, mysql.WithSession(session), mysql.WithTracer(tracer))

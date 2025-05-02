@@ -12,6 +12,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	"github.com/stretchr/testify/require"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -306,4 +307,14 @@ type testSpan struct {
 }
 
 func (ts *testSpan) End(opt ...trace.SpanEndOption) {
+}
+
+func (ts *testSpan) SetAttributes(attr ...attribute.KeyValue) {
+}
+
+func (ts *testSpan) IsRecording() bool {
+	return true
+}
+
+func (ts *testSpan) AddEvent(name string, options ...trace.EventOption) {
 }
