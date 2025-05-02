@@ -30,14 +30,14 @@ jobs:
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Vault secret paths:
-          # - ci/repo/grafana/grafana/plugins_platform_issue_commands_github_bot
+          # - ci/repo/grafana/grafana/grafana_pr_automation_app
           # - ci/repo/grafana/grafana/frontend_platform_skye_usernames (comma separated list of usernames)
           repo_secrets: |
-            GH_APP_ID=plugins_platform_issue_commands_github_bot:app_id
-            GH_APP_PEM=plugins_platform_issue_commands_github_bot:app_pem
+            GH_APP_ID=grafana_pr_automation_app:app_id
+            GH_APP_PEM=grafana_pr_automation_app:app_pem
             ALLOWED_USERS=frontend_platform_skye_usernames:allowed_users
 
       - name: Generate token
@@ -50,10 +50,12 @@ jobs:
       # Check if the user is in the list from the secret
       - name: Check if user is allowed
         id: check_user
+        env:
+          ALLOWED_USERS: ${{ env.ALLOWED_USERS }}
+          USERNAME: ${{ github.event.sender.login }}
         run: |
           # Convert the comma-separated list to an array
-          IFS=',' read -ra ALLOWED_USERS <<< "${{ env.ALLOWED_USERS }}"
-          USERNAME="${{ github.event.sender.login }}"
+          IFS=',' read -ra ALLOWED_USERS <<< "$ALLOWED_USERS"
 
           # Check if user is in the allowed list
           for allowed_user in "${ALLOWED_USERS[@]}"; do
@@ -68,7 +70,7 @@ jobs:
       - name: Get node ID for item
         if: steps.check_user.outputs.user_allowed == 'true'
         id: get_node_id
-        uses: octokit/graphql-action@v2.x
+        uses: octokit/graphql-action@51bf543c240dcd14761320e2efc625dc32ec0d32
         with:
           query: |
             query getNodeId($owner: String!, $repo: String!, $number: Int!) {
@@ -89,7 +91,7 @@ jobs:
       # Finally, add the issue/PR to the project board
       - name: Add to project board
         if: steps.check_user.outputs.user_allowed == 'true'
-        uses: octokit/graphql-action@v2.x
+        uses: octokit/graphql-action@51bf543c240dcd14761320e2efc625dc32ec0d32
         with:
           query: |
             mutation addItem($projectid: ID!, $itemid: ID!) {

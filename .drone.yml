@@ -134,7 +134,7 @@ steps:
   environment:
     HOST: start-storybook
     PORT: "9001"
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-storybook-suite
 trigger:
   event:
@@ -520,10 +520,8 @@ steps:
       from_secret: docker_password
     DOCKER_USER:
       from_secret: docker_username
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   failure: ignore
@@ -561,7 +559,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
@@ -570,7 +568,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -579,7 +577,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
@@ -588,7 +586,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -597,7 +595,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
@@ -606,7 +604,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -615,7 +613,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-various-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
@@ -624,7 +622,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/various-suite
 - commands:
   - GITHUB_TOKEN=$(cat /github-app/token)
@@ -1658,7 +1656,7 @@ steps:
   environment:
     HOST: start-storybook
     PORT: "9001"
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-storybook-suite
 trigger:
   branch: main
@@ -1808,10 +1806,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -1851,7 +1847,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/dashboards-suite
@@ -1860,7 +1856,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/dashboards-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite smoke-tests-suite
@@ -1869,7 +1865,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/smoke-tests-suite
@@ -1878,7 +1874,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/smoke-tests-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite panels-suite
@@ -1887,7 +1883,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/panels-suite
@@ -1896,7 +1892,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/panels-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite various-suite
@@ -1905,7 +1901,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-various-suite
 - commands:
   - ./bin/build e2e-tests --port 3001 --suite old-arch/various-suite
@@ -1914,7 +1910,7 @@ steps:
   - build-test-plugins
   environment:
     HOST: grafana-server
-  image: cypress/included:13.10.0
+  image: cypress/included:14.3.2
   name: end-to-end-tests-old-arch/various-suite
 - commands:
   - GITHUB_TOKEN=$(cat /github-app/token)
@@ -2112,10 +2108,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -3110,10 +3104,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -4923,7 +4915,7 @@ steps:
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/drone-downstream
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM grafana/docs-base:latest
-  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:13.10.0
+  - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM cypress/included:14.3.2
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM jwilder/dockerize:0.6.1
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM koalaman/shellcheck:stable
   - trivy --exit-code 0 --severity UNKNOWN,LOW,MEDIUM rockylinux:9
@@ -4961,7 +4953,7 @@ steps:
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/drone-downstream
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docker-puppeteer:1.1.0
   - trivy --exit-code 1 --severity HIGH,CRITICAL grafana/docs-base:latest
-  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:13.10.0
+  - trivy --exit-code 1 --severity HIGH,CRITICAL cypress/included:14.3.2
   - trivy --exit-code 1 --severity HIGH,CRITICAL jwilder/dockerize:0.6.1
   - trivy --exit-code 1 --severity HIGH,CRITICAL koalaman/shellcheck:stable
   - trivy --exit-code 1 --severity HIGH,CRITICAL rockylinux:9
@@ -5061,13 +5053,13 @@ name: prerelease_bucket
 ---
 get:
   name: username
-  path: infra/data/ci/grafanaci-docker-hub
+  path: ci/data/common/dockerhub
 kind: secret
 name: docker_username
 ---
 get:
   name: password
-  path: infra/data/ci/grafanaci-docker-hub
+  path: ci/data/common/dockerhub
 kind: secret
 name: docker_password
 ---
@@ -5186,20 +5178,8 @@ kind: secret
 name: dagger_token
 ---
 get:
-  name: app-id
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
-kind: secret
-name: delivery-bot-app-id
----
-get:
-  name: app-installation-id
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
-kind: secret
-name: delivery-bot-app-installation-id
----
-get:
-  name: app-private-key
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+  name: PRIVATE_KEY
+  path: ci/data/repo/grafana/grafana/delivery-bot-app
 kind: secret
 name: delivery-bot-app-private-key
 ---
@@ -5210,6 +5190,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 8e25f1f786b8de4eb21dfbeca8c5fcb9701b1e62ecf98287d9225ecc6e8c29e8
+hmac: 42a35cb0c3a5f320e6bdf3d6727539fb3895832506964ae055907a751c91ab8e
 
 ...

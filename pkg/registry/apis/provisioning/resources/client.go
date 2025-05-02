@@ -10,7 +10,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -18,9 +19,10 @@ import (
 )
 
 var (
-	UserResource      = iam.UserResourceInfo.GroupVersionResource()
-	FolderResource    = folders.FolderResourceInfo.GroupVersionResource()
-	DashboardResource = dashboard.DashboardResourceInfo.GroupVersionResource()
+	UserResource        = iam.UserResourceInfo.GroupVersionResource()
+	FolderResource      = folders.FolderResourceInfo.GroupVersionResource()
+	DashboardResource   = dashboardV1.DashboardResourceInfo.GroupVersionResource()
+	DashboardResourceV2 = dashboardV2.DashboardResourceInfo.GroupVersionResource()
 
 	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
 	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}

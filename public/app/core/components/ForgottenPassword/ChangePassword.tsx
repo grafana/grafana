@@ -103,7 +103,10 @@ export const ChangePassword = ({ onSubmit, onSkip, showDefaultPasswordWarning }:
 
         {!config.auth.basicAuthStrongPasswordPolicy && onSkip && (
           <Tooltip
-            content="If you skip you will be prompted to change password next time you log in."
+            content={t(
+              'forgot-password.change-password.tooltip-skip-button',
+              'If you skip you will be prompted to change password next time you log in.'
+            )}
             placement="bottom"
           >
             <Button
