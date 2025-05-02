@@ -150,11 +150,6 @@ func (p *pollingNotifier) poller(ctx context.Context, since groupResourceRV, str
 
 					// We don't need to poll if the RV hasn't changed.
 					if since[group][resource] >= latestRV {
-						p.log.Debug("polling for resource skipped",
-							"group", group,
-							"resource", resource,
-							"latestKnownRV", since[group][resource],
-							"latestFetchedRV", latestRV)
 						continue
 					}
 
