@@ -11,10 +11,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
+permissions: {}
+
 jobs:
   build-grafana:
     name: Build & Package Grafana
     runs-on: ubuntu-latest-16-cores
+    permissions:
+      contents: read
     outputs:
       artifact: ${{ steps.artifact.outputs.artifact }}
     steps:
@@ -42,6 +46,8 @@ jobs:
           name: ${{ steps.artifact.outputs.artifact }}
           path: grafana.tar.gz
   e2e-matrix:
+    permissions:
+      contents: read
     name: ${{ matrix.suite }}
     strategy:
       fail-fast: false
@@ -58,6 +64,8 @@ jobs:
       package: ${{ needs.build-grafana.outputs.artifact }}
       suite: ${{ matrix.suite }}
   e2e-matrix-old-arch:
+    permissions:
+      contents: read
     name: ${{ matrix.suite }} (old arch)
     strategy:
       fail-fast: false

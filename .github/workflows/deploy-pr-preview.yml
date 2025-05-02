@@ -9,8 +9,13 @@ on:
     paths:
       - "docs/sources/**"
 
+permissions: {}
+
 jobs:
   deploy-pr-preview:
+    permissions:
+      contents: read
+      pull-requests: write
     if: "!github.event.pull_request.head.repo.fork"
     uses: grafana/writers-toolkit/.github/workflows/deploy-preview.yml@main # zizmor: ignore[unpinned-uses]
     with:
