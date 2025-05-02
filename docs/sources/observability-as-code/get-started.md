@@ -37,7 +37,7 @@ For an integrated, UI-driven Git workflow focused on dashboards, explore Git Syn
 - Git Sync offers a simple, out-of-the-box approach for managing dashboards as code.
 - **Note:** Git Sync is an **experimental feature** in Grafana 12, available in Grafana OSS and Enterprise [nightly releases](https://grafana.com/grafana/download/nightly). It is not yet available in Grafana Cloud.
 
-## [Direct API Usage](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/dashboard/)
+## [Direct API Usage](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/)
 
 For maximum flexibility, advanced use cases, or building custom tooling, you can interact directly with the underlying versioned APIs.
 
