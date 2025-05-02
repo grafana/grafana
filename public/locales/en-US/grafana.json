@@ -51,8 +51,10 @@
       "aria-label-delete": "Delete",
       "placeholder-key": "Key",
       "placeholder-name": "Name",
-      "placeholder-type": "Type",
       "placeholder-value": "Value"
+    },
+    "variables-editor": {
+      "placeholder-type": "Type"
     }
   },
   "admin": {
@@ -5176,6 +5178,7 @@
   "grafana-ui": {
     "action-editor": {
       "button": {
+        "action-variables-title": "Action variables",
         "confirm": "Confirm",
         "confirm-action": "Confirm action"
       },

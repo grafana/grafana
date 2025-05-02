@@ -63,6 +63,7 @@ export const getActions = (
         buildActionOnClick(action, boundReplaceVariables);
       },
       oneClick: action.oneClick ?? false,
+      variables: action.variables,
     };
 
     return actionModel;

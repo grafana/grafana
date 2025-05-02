@@ -72,7 +72,7 @@ export const ActionVariablesEditor = ({ value, onChange }: Props) => {
         <Combobox
           value={type}
           onChange={changeType}
-          placeholder={t('actions.params-editor.placeholder-type', 'Type')}
+          placeholder={t('actions.variables-editor.placeholder-type', 'Type')}
           options={variableTypeOptions}
           maxWidth={100}
           minWidth={10}
