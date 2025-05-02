@@ -40,3 +40,30 @@ jobs:
           sudo apt-get update -yq && sudo apt-get install build-essential
           go clean -testcache
           go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m
+
+  redis:
+    name: Redis
+    runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+    services:
+      redis:
+        image: redis:6.2.11-alpine
+        ports:
+          - 6379:6379
+    steps:
+      - name: Chekout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run tests
+        env:
+          REDIS_URL: redis://127.0.0.1:6379/0
+        run: |
+          sudo apt-get update -yq  && sudo apt-get install build-essential
+          go clean -testcache
+          go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m
