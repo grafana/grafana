@@ -313,7 +313,7 @@ The GeoJSON layer allows you to select and load a static GeoJSON file from the f
 <!-- prettier-ignore-start -->
 | Option | Description |
 | ------ | ----------- |
-| GeoJSON URL | Provides a choice of GeoJSON files that ship with Grafana. |
+| GeoJSON URL | Provides a choice of GeoJSON files that ship with Grafana. You can also enter a URL manually, which supports variables. |
 | Default Style | Controls which styles to apply when no rules above match.<ul><li>**Color** - configures the color of the default style</li><li>**Opacity** - configures the default opacity</li></ul> |
 | Style Rules | Apply styles based on feature properties <ul><li>**Rule** - allows you to select a _feature_, _condition_, and _value_ from the GeoJSON file in order to define a rule. The trash bin icon can be used to delete the current rule.</li><li>**Color** - configures the color of the style for the current rule</li><li>**Opacity** - configures the transparency level for the current rule</li> |
 | Display tooltip | Allows you to toggle tooltips for the layer. |
