@@ -42,7 +42,7 @@ refs:
 # Prometheus template variables
 
 Instead of hard-coding details such as server, application, and sensor names in metric queries, you can use variables. Grafana refers to such variables as **template** variables.
-Grafana lists these variables in drop-down select boxes at the top of the dashboard to help you change the displayed data.
+Grafana lists these variables in dropdown select boxes at the top of the dashboard to help you change the displayed data.
 
 For an introduction to templating and template variables, refer to [Templating](ref:variables) and [Add and manage variables](ref:add-template-variables).
 
