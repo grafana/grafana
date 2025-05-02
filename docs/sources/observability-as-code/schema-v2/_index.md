@@ -220,6 +220,7 @@ If `dashboardNewLayouts` feature toggle is disabled, depending on how the dashbo
 - Dashboards built on the new schema through the UI - View only
 - Dashboards built on Schema v1 - View and edit
 - Dashboards built on the new schema by way of Terraform or the CLI - View and edit
+- Provisioned dashboards built on the new schema - View and edit, but the edit experience will be the old experience
 
 #### Disable `dashboardNewLayouts` and `kubernetesDashboard`
 
