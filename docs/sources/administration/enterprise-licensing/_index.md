@@ -175,7 +175,7 @@ Enterprise plugins might stop working.
 
 #### Custom branding
 
-The Custom branding feature is turned off, meaning that any custom branding options will not have any effect.
+The custom branding feature is turned off, meaning that any custom branding options will not have any effect.
 
 #### Usage insights
 
