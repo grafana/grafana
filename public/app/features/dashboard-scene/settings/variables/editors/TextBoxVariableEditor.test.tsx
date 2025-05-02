@@ -47,6 +47,9 @@ describe('TextBoxVariableEditor', () => {
     const input = screen.getByRole('textbox', { name: undefined });
     expect(input).toBeInTheDocument();
     expect(input).toHaveValue('initial value test');
+
+    const legend = screen.queryByText('Text options');
+    expect(legend).not.toBeInTheDocument();
   });
 });
 
