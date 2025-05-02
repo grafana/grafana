@@ -1,6 +1,5 @@
 ---
 aliases:
-
 labels:
   products:
     - cloud
@@ -14,11 +13,6 @@ refs:
   expressions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/
-  dataplane:
-    - pattern: /docs/grafana/
-      destination: 
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/
 ---
@@ -43,7 +37,7 @@ For general information on Grafana expressions, refer to [Write expression queri
 
 ```
 [feature_toggles]
-enable = sqlExpresssions
+enable = sqlExpressions
 ```
 
 - If you are using Grafana Cloud, contact [Support](https://grafana.com/help/) to enable this feature.
@@ -52,18 +46,18 @@ enable = sqlExpresssions
 
 SQL expressions allow you to:
 
-- Shape, transform, and modify query results without affecting the original query.
-- `JOIN` data in tables
-- Create alerts or recording rules on the transformed data
-- Ability to do final-stage modifications to datasets, including:
-  - Show, hide, and rename columns.
-  - Filter data - select only certain rows based on conditions.
-  - Aggregate data - perform calculations across groups of data (e.g., sum, average, count).
-- Write subqueries and CTEs
-- Subqueries are nested queries within a larger query,  which is useful for filtering, calculations, or transformations.
-- CTEs, or Common Table Expressions, are temporary named result sets that make complex queries more readable and reusable.
+- Shape, transform, and modify query results without changing the original query.
+- JOIN data from multiple tables.
+- Create alerts or recording rules based on transformed data.
+- Perform final-stage modifications to datasets, including:
+  - Show, hide, or rename columns.
+  - Filter rows based on conditions.
+  - Aggregate data (for example: sum, average, count).
+- Write subqueries and Common Table Expressions (CTEs) to support more complex logic:
+  - **Subqueries** are nested queries used for filtering, calculations, or transformations.
+  - **CTEs** are temporary named result sets that help make complex queries more readable and reusable.
 
-A key capability of SQL expressions is the ability to JOIN data. Users want to combine and transform data from multiple tables in a way that is predictable, user-friendly, and capable of supporting even highly complex operations as needed. You can JOIN data from an unlimited number of data source queries.
+A key capability of SQL expressions is the ability to JOIN data from multiple tables. This allows users to combine and transform data in a predictable, user-friendly way—even for complex use cases. You can JOIN data from an unlimited number of data source queries.
 
 To work with SQL expressions, you must use data from a backend data source. In Grafana, a backend data source refers to a data source plugin or integration that communicates with a database, service, or API through the Grafana server, rather than directly from the browser (frontend).
 
@@ -71,7 +65,7 @@ To work with SQL expressions, you must use data from a backend data source. In G
 
 The following are compatible data sources:
 
-Full support:
+**Full support:** All query types for each data source are supported.
 
 - Elasticsearch
 - MySQL
@@ -80,7 +74,7 @@ Full support:
 - Google Sheets
 - Amazon Athena
 
-Partial support: The following data sources offer limited or conditional support. Some allow different types of queries depending on the service being accessed. For example, Azure Monitor can query multiple services, each with its own query format. In some cases, you can also change the query type within a panel. Supported data formats include: `JSON`, `CSV`, and `TSV`.
+**Partial support:** The following data sources offer limited or conditional support. Some allow different types of queries, depending on the service being accessed. For example, Azure Monitor can query multiple services, each with its own query format. In some cases, you can also change the query type within a panel. 
 
 - InfluxDB
 - Infinity
@@ -96,12 +90,13 @@ Partial support: The following data sources offer limited or conditional support
 
 To create a SQL expression, complete the following steps:
 
-1. Enable SQL expression under the feature toggle sqlExpressions.  
-1. Once enabled, navigate to Dashboards in the left-side menu. 
-1. Open a dashboard panel.
-1. Click Transform, then Add Expression and select SQL.
+1. Navigate to **Dashboards** in the left-side menu.
+1. Select a dashboard and open a dashboard panel.
+1. Click the ellipsis in the upper right and select **Edit** .
+1. Click **+ Expression**.
+1. Select **SQL** from the drop-down. 
 
-Once you have added a SQL expression, you can select from other Data source queries by referencing the RefIDs of the queries in your SQL expression as if they were tables in a SQL database.
+Once you have added a SQL expression, you can select from other data source queries by referencing the RefIDs of the queries in your SQL expression as if they were tables in a SQL database.
 
 ![Using the RefID](/media/docs/sql-expressions/using-the-RefID.png)
 
@@ -129,11 +124,13 @@ Once you have added a SQL expression, you can select from other Data source quer
 
 When selecting a visualization type, **ensure your SQL expression returns data in the required shape**. For example, time series panels require a column with a time field (e.g., timestamp) and a numeric value column (e.g., \_\_value\_\_). If the output is not shaped correctly, your visualization may appear empty or fail to render.
 
-The workflow is designed this way to :
+The SQL expression workflow in Grafana is designed with the following behaviors:
 
-- If an input query is not hidden, Grafana will attempt to visualize it in addition to the SQL expression. This can clutter the output, especially in table view.  
-- The results of your SQL expression might not be immediately visible unless you switch to the correct data frame using the dropdown at the bottom of the table view.  
-- In non-table visualizations, data that doesn't match the expected structure may not render at all.
+- **Unhidden queries are visualized automatically.** If an input query is not hidden, Grafana will attempt to render it alongside your SQL expression. This can clutter the output, especially in table visualizations.
+
+- **SQL expression results may not be immediately visible.** You might need to use the data frame selector (dropdown at the bottom of the table panel) to switch between the raw query and the SQL expression result.
+
+- **Non-tabular or incorrectly shaped data will not render in certain panels.** Visualizations such as graphs or gauges require properly structured data. Mismatched formats will result in rendering issues or missing data.
 
 For data to be used in SQL expressions, it must be in a **tabular format**, specifically the **FullLong format**. This means all relevant data is contained within a single table, with values such as metric labels stored as columns and individual cells. Because not all data sources return results in this format by default, Grafana will automatically convert compatible query results to FullLong format when they are referenced in a SQL expression.  
 
@@ -149,59 +146,58 @@ The SQL conversion path:
 ## Known limitations
 
 - Currently, only one SQL expression is supported per panel or alert.
-- Grafana supports certain data sources. Refer to[compatible data sources](#compatible-data-sources).
+- Grafana supports certain data sources. Refer to [compatible data sources](#compatible-data-sources) for a current list.
 
 ## Supported data source formats
 
 Grafana supports three types of data source response formats:
 
-1. **Single Table-like Frame**: This refers to data returned in a standard tabular structure, where all values are organized into rows and columns, similar to what you'd get from a SQL query.  
-    - **Example**: Any query against a SQL data source (e.g., PostgreSQL, MySQL) with the format set to Table.
+1. **Single Table-like Frame**:  
+   This refers to data returned in a standard tabular structure, where all values are organized into rows and columns, similar to what you'd get from a SQL query.  
+   - **Example**: Any query against a SQL data source (e.g., PostgreSQL, MySQL) with the format set to Table.
 
-2. **Dataplane: Time Series Format**: This format represents time series data with timestamps and associated values. It is typically returned from monitoring data sources.  
-    - **Example**: Prometheus or Loki Range Queries (queries that return a set of values over time).
+2. **Dataplane: Time Series Format**:  
+   This format represents time series data with timestamps and associated values. It is typically returned from monitoring data sources.  
+   - **Example**: Prometheus or Loki Range Queries (queries that return a set of values over time).
 
-3. **Dataplane: Numeric Long Format**: This format is used for point-in-time (instant) metric queries that return a single value (or a set of values) at a specific moment.  
-    - **Example**: Prometheus or Loki Instant Queries (queries that return the current value of a metric).
+3. **Dataplane: Numeric Long Format**:  
+   This format is used for point-in-time (instant) metric queries that return a single value (or a set of values) at a specific moment.  
+   - **Example**: Prometheus or Loki Instant Queries (queries that return the current value of a metric).
 
 For more information on Dataplane formats, refer to [Grafana Dataplane Documentation](https://grafana.com/developers/dataplane).
 
-How are Dataplane Time Series and Numeric Kinds that are not in tabular format converted?
-Both Dataplane Time Series and Numeric Long formats are not tabular by default, but Grafana automatically converts them into a tabular format (FullLong) when they are used in a SQL expression.
+The following non-tabular formats are automatically converted to a tabular format (`FullLong`) when used in SQL expressions:
 
-Label data (e.g., metric labels) is converted into nullable string columns:
-Label keys become column names
-Label values become the values in each row (or null if a label is missing)
+- **Time Series Wide**: Label keys become column names.  
+- **Time Series Multi**: Label values become the values in each row (or null if a label is missing).  
+- **Numeric Wide**: The `value` column contains the numeric metric value.  
+- **Numeric Multi**: If a display name exists, it will appear in the `display_name` column.  
 
-The `value` column contains the numeric metric value. If a display name exists, it will appear in the  `display_name` column. Metric names are added in the `metric_name` column. For time series data, there will be a time column containing the timestamp.
+During conversion:
 
-## Troubleshooting and best practices
+- Label keys become column names.
+- Label values populate the corresponding rows (null if a label is missing).
+- The `value` column contains the numeric metric.
+- If available, the `display_name` column contains a human-readable name.
+- The `metric_name` column stores the raw metric identifier.
+- For time series data, Grafana includes a `time` column with timestamps
 
-**Scenario**:  My SQL expression result looks like a time series. How do I graph it using the Time series panel?
-
-Use the **Prepare time series** transformation:
-
-1. Add a transformation.  
-2. Choose **Prepare time series**  
-3. Select **Format to Multi-frame time series**
-
-## SQL Expressions examples
-
-Add 2 or 3 examples of creating SQL expressions
-
-Possible example \- Example using PromQL ([Kyle’s doc](https://docs.google.com/document/d/1EOjCn9AANP6qmzlUAQj5CNh7wgHsWHEEaKTanG_TPgw/edit?tab=t.0#heading=h.3ooblta28mwr))  
- 
+## SQL expressions examples
 
 1. Create the following Prometheus query:
 
-   Add the PromQL query
+    ```promql
+    sum(
+      rate(go_cpu_classes_gc_total_cpu_seconds_total{namespace=~".*(namespace).*5."}[$__rate_interval])
+    ) by (namespace)
+    ```
 
-2. Add a SQL expression: Once you add a SQL expression that selects from RefID A it gets converted to a table response 
+    The panel displays the CPU usage by Go garbage collection (GC) over time, broken down by namespace.
 
-   SELECT \* from A:
+    ![Example using a Prometheus query](/media/docs/sql-expressions/sql-expressions-prom-query-example.png)
 
-   Insert screenshot
+2. Add the SQL expression **SELECT * from A**. Once you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
-
+    ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
 
 
