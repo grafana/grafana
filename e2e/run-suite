@@ -92,7 +92,7 @@ case "$1" in
     "")
         ;;
    "old-arch")
-      env[DISABLE_SCENES]=true
+      env[dashboardScene]=false
       cypressConfig[specPattern]=$rootForOldArch/*/$testFilesForSingleSuite
       cypressConfig[video]=false
         case "$2" in
@@ -112,7 +112,7 @@ case "$1" in
     "old-arch/"*)
       cypressConfig[specPattern]=./e2e/"${args[0]}"/$testFilesForSingleSuite
       cypressConfig[video]=${args[1]}
-      env[DISABLE_SCENES]=true
+      env[dashboardScene]=false
       ;;
     "dashboards-schema-v2")
       env[kubernetesDashboards]=true
