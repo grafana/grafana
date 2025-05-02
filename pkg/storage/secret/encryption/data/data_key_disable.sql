@@ -3,7 +3,6 @@ UPDATE
 SET
   {{ .Ident "active" }} = false,
   {{ .Ident "updated" }} = {{ .Arg .Updated }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "active" }} = true
 ;

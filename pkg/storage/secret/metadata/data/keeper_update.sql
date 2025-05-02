@@ -13,7 +13,6 @@ SET
   {{ .Ident "description" }} = {{ .Arg .Row.Description }},
   {{ .Ident "type" }} = {{ .Arg .Row.Type }},
   {{ .Ident "payload" }} = {{ .Arg .Row.Payload }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Row.Name }}
 ;

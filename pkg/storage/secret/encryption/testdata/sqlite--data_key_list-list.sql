@@ -9,6 +9,5 @@ SELECT
   "updated"
 FROM
   "secret_data_key"
-WHERE 1 = 1 AND
-  "namespace" = 'ns'
+WHERE "namespace" = 'ns'
 ;

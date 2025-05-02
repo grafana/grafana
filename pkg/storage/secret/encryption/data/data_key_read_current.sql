@@ -9,8 +9,7 @@ SELECT
   {{ .Ident "updated" }}
 FROM
   {{ .Ident "secret_data_key" }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "label" }} = {{ .Arg .Label }} AND
   {{ .Ident "active" }} = true
 ;

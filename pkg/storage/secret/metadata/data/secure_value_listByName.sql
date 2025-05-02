@@ -5,8 +5,7 @@ SELECT
   {{ .Ident "keeper" }}
 FROM
   {{ .Ident "secret_secure_value" }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+WHERE  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} IN ({{ .ArgList .UsedSecureValues }})
 {{ .SelectFor "UPDATE" }}
 ;
