@@ -3,6 +3,12 @@ import { e2e } from '../utils';
 describe('Dashboard templating', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+    Cypress.automation('remote:debugger:protocol', {
+      command: 'Emulation.setTimezoneOverride',
+      params: {
+        timezoneId: 'America/New_York', // OR  'UTC'
+      },
+    });
   });
 
   it('Verify variable interpolation works', () => {
