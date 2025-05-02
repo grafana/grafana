@@ -9,7 +9,7 @@ import (
 	"github.com/go-sql-driver/mysql"
 	"github.com/grafana/dskit/crypto/tls"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
