@@ -381,7 +381,7 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy
 	}
 	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
 	// Escape forward slashes in the title
-	f.Fullpath, f.FullpathUIDs = computeFullPath(parents)
+	f.Fullpath, f.FullpathUIDs = computeFullPath(append(parents, f))
 	return f, nil
 }
 

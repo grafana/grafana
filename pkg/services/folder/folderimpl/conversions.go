@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func mapUnstructuredToFolder(item *unstructured.Unstructured, identifiers map[string]*user.User) (*folder.Folder, error) {
+func convertUnstructuredToFolder(item *unstructured.Unstructured, identifiers map[string]*user.User) (*folder.Folder, error) {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		return nil, err
 	}
 
-	folder, err := mapUnstructuredToFolder(item, folderUserIdentifiers)
+	folder, err := convertUnstructuredToFolder(item, folderUserIdentifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 	}
 	folders := make([]*folder.Folder, 0)
 	for _, item := range unstructuredList.Items {
-		folder, err := mapUnstructuredToFolder(&item, folderUserIdentifiers)
+		folder, err := convertUnstructuredToFolder(&item, folderUserIdentifiers)
 		if err != nil {
 			return nil, err
 		}

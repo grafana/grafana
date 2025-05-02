@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	clientrest "k8s.io/client-go/rest"
 
-	foldersv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/bus"
@@ -77,19 +77,19 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 
-	m := map[string]foldersv1.Folder{}
+	m := map[string]folderv1.Folder{}
 
-	unifiedStorageFolder := &foldersv1.Folder{}
+	unifiedStorageFolder := &folderv1.Folder{}
 	unifiedStorageFolder.Kind = "folder"
 
 	fooFolder := &folder.Folder{
-		ID:           123,
-		Title:        "Foo Folder",
-		OrgID:        orgID,
-		UID:          "foo",
-		URL:          "/dashboards/f/foo/foo-folder",
-		CreatedByUID: "user:1",
-		UpdatedByUID: "user:1",
+		ID:        123,
+		Title:     "Foo Folder",
+		OrgID:     orgID,
+		UID:       "foo",
+		URL:       "/dashboards/f/foo/foo-folder",
+		CreatedBy: 1,
+		UpdatedBy: 1,
 	}
 
 	updateFolder := &folder.Folder{
@@ -106,7 +106,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 
 	mux.HandleFunc("GET /apis/folder.grafana.app/v1beta1/namespaces/default/folders", func(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		l := &foldersv1.FolderList{}
+		l := &folderv1.FolderList{}
 		l.Kind = "Folder"
 		err := json.NewEncoder(w).Encode(l)
 		require.NoError(t, err)
@@ -137,7 +137,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
-		var foldr foldersv1.Folder
+		var foldr folderv1.Folder
 		err = json.Unmarshal(buf, &foldr)
 		require.NoError(t, err)
 
@@ -166,7 +166,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 		buf, err := io.ReadAll(req.Body)
 		require.NoError(t, err)
 
-		var folder foldersv1.Folder
+		var folder folderv1.Folder
 		err = json.Unmarshal(buf, &folder)
 		require.NoError(t, err)
 
@@ -202,7 +202,7 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 	features := featuremgmt.WithFeatures(featuresArr...)
 
 	dashboardStore := dashboards.NewFakeDashboardStore(t)
-	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), foldersv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
+	k8sCli := client.NewK8sHandler(dualwrite.ProvideTestService(), request.GetNamespaceMapper(cfg), folderv1.FolderResourceInfo.GroupVersionResource(), restCfgProvider.GetRestConfig, dashboardStore, userService, nil, sort.ProvideService())
 	unifiedStore := ProvideUnifiedStore(k8sCli, userService)
 
 	ctx := context.Background()
@@ -315,12 +315,12 @@ func TestIntegrationFolderServiceViaUnifiedStorage(t *testing.T) {
 			ctx = identity.WithRequester(context.Background(), usr)
 
 			f := &folder.Folder{
-				OrgID:        orgID,
-				Title:        "Test-Folder",
-				UID:          "testfolder",
-				URL:          "/dashboards/f/testfolder/test-folder",
-				CreatedByUID: "user:1",
-				UpdatedByUID: "user:1",
+				OrgID:     orgID,
+				Title:     "Test-Folder",
+				UID:       "testfolder",
+				URL:       "/dashboards/f/testfolder/test-folder",
+				CreatedBy: 1,
+				UpdatedBy: 1,
 			}
 
 			t.Run("When creating folder should not return access denied error", func(t *testing.T) {
@@ -559,8 +559,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "default",
-					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
+					Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
 				Fields: []*resource.Requirement{
 					{
@@ -649,8 +649,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "default",
-					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
+					Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
 				Fields: []*resource.Requirement{},
 				Labels: []*resource.Requirement{
@@ -718,8 +718,8 @@ func TestSearchFoldersFromApiServer(t *testing.T) {
 			Options: &resource.ListOptions{
 				Key: &resource.ResourceKey{
 					Namespace: "default",
-					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
+					Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+					Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
 				},
 				Fields: []*resource.Requirement{},
 				Labels: []*resource.Requirement{},
@@ -798,6 +798,11 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 	user := &user.SignedInUser{OrgID: 1}
 	ctx := identity.WithRequester(context.Background(), user)
 	fakeK8sClient.On("GetNamespace", mock.Anything, mock.Anything).Return("default")
+	folderkey := &resource.ResourceKey{
+		Namespace: "default",
+		Group:     folderv1.FolderResourceInfo.GroupVersionResource().Group,
+		Resource:  folderv1.FolderResourceInfo.GroupVersionResource().Resource,
+	}
 
 	t.Run("Get folder by title", func(t *testing.T) {
 		// the search here will return a parent, this will be the parent folder returned when we query for it to add to the hit info
@@ -813,57 +818,50 @@ func TestGetFoldersFromApiServer(t *testing.T) {
 		service.unifiedStore = fakeFolderStore
 		fakeK8sClient.On("Search", mock.Anything, int64(1), &resource.ResourceSearchRequest{
 			Options: &resource.ListOptions{
-				Key: &resource.ResourceKey{
-					Namespace: "default",
-					Group:     foldersv1.FolderResourceInfo.GroupVersionResource().Group,
-					Resource:  foldersv1.FolderResourceInfo.GroupVersionResource().Resource,
-				},
+				Key:    folderkey,
 				Fields: []*resource.Requirement{},
 				Labels: []*resource.Requirement{},
 			},
 			Query: "foo title",
-			Limit: folderSearchLimit}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{
-						Name: "title",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-					{
-						Name: "folder",
-						Type: resource.ResourceTableColumnDefinition_STRING,
-					},
-				},
-				Rows: []*resource.ResourceTableRow{
-					{
-						Key: &resource.ResourceKey{
-							Name:     "uid",
-							Resource: "folder",
+			Limit: folderSearchLimit}).
+			Return(&resource.ResourceSearchResponse{
+				Results: &resource.ResourceTable{
+					Columns: []*resource.ResourceTableColumnDefinition{
+						{
+							Name: "title",
+							Type: resource.ResourceTableColumnDefinition_STRING,
 						},
-						Cells: [][]byte{
-							[]byte("foouid"),
-							[]byte("parentuid"),
+						{
+							Name: "folder",
+							Type: resource.ResourceTableColumnDefinition_STRING,
 						},
 					},
+					Rows: []*resource.ResourceTableRow{
+						{
+							Key: &resource.ResourceKey{
+								Name:     "uid",
+								Resource: "folder",
+							},
+							Cells: [][]byte{
+								[]byte("foouid"),
+								[]byte("parentuid"),
+							},
+						},
+					},
 				},
-			},
-			TotalHits: 1,
-		}, nil).Once()
+				TotalHits: 1,
+			}, nil).Once()
 
 		result, err := service.getFolderByTitleFromApiServer(ctx, 1, "foo title", nil)
 		require.NoError(t, err)
 
 		expectedResult := &folder.Folder{
-			ID:           2,
-			UID:          "foouid",
-			ParentUID:    "parentuid",
-			Title:        "foo title",
-			OrgID:        1,
-			URL:          "/dashboards/f/foouid/foo-title",
-			Fullpath:     "",
-			FullpathUIDs: "",
-			CreatedByUID: ":0",
-			UpdatedByUID: ":0",
+			ID:        2,
+			UID:       "foouid",
+			ParentUID: "parentuid",
+			Title:     "foo title",
+			OrgID:     1,
+			URL:       "/dashboards/f/foouid/foo-title",
 		}
 		compareFoldersNormalizeTime(t, expectedResult, result)
 		fakeK8sClient.AssertExpectations(t)
