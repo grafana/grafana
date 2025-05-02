@@ -387,14 +387,20 @@ func TestRawQueryWithAdhocFilters(t *testing.T) {
 			ExpectedQuery: `SELECT "gauge" FROM "a"."b" WHERE "lol" = 'sob' AND "lol" = 'sob' AND time >= 123456780 AND time <= 123456789`,
 			AdhocFilters:  []*Tag{adhocFilter, adhocFilter},
 		},
+		{
+			Name:          "multiple filters, existing where condition",
+			RawQuery:      `SELECT first("gauge") *3.28 FROM "alolb" WHERE time >= 123456780 AND time <= 123456789 GROUP BY time(10s), "LolSob"::tag fill(null)`,
+			ExpectedQuery: `SELECT first("gauge") *3.28 FROM "alolb" WHERE "lol" = 'sob' AND time >= 123456780 AND time <= 123456789 GROUP BY time(10s), "LolSob"::tag fill(null)`,
+			AdhocFilters:  []*Tag{adhocFilter},
+		},
 	}
 
 	for _, c := range cases {
 		t.Run(fmt.Sprintf("raw query + adhoc filters: %s", c.Name), func(t *testing.T) {
 			query := &Query{
-				RawQuery:     c.RawQuery,
-				UseRawQuery:  true,
-				AdhocFilters: c.AdhocFilters,
+				RawQuery:    c.RawQuery,
+				UseRawQuery: true,
+				Tags:        c.AdhocFilters,
 			}
 			actualQuery := query.getRawQueryWithAdhocFilters()
 			require.Equal(t, c.ExpectedQuery, actualQuery)

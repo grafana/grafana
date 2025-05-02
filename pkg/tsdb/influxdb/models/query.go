@@ -20,7 +20,7 @@ var (
 )
 
 func (query *Query) getRawQueryWithAdhocFilters() string {
-	if len(query.AdhocFilters) == 0 {
+	if len(query.Tags) == 0 {
 		return query.RawQuery
 	}
 
@@ -96,7 +96,7 @@ func (query *Query) Build(queryContext *backend.QueryDataRequest) (string, error
 }
 
 func (query *Query) renderAdhocFilters() []string {
-	return renderTags(query.AdhocFilters)
+	return renderTags(query.Tags)
 }
 
 func renderTags(tags []*Tag) []string {
