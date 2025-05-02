@@ -270,9 +270,22 @@ func (am *alertmanager) ApplyConfig(ctx context.Context, dbCfg *ngmodels.AlertCo
 		// Since we will now update last_applied when autogen changes even if the user-created config remains the same.
 		// To fix this however, the local alertmanager needs to be able to tell the difference between user-created and
 		// autogen config, which may introduce cross-cutting complexity.
-		if err := am.applyAndMarkConfig(ctx, dbCfg.ConfigurationHash, cfg); err != nil {
+		configChanged, err := am.applyConfig(cfg)
+		if err != nil {
 			outerErr = fmt.Errorf("unable to apply configuration: %w", err)
 			return
+		}
+
+		if !configChanged {
+			return
+		}
+		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
+			OrgID:             am.orgID,
+			ConfigurationHash: dbCfg.ConfigurationHash,
+		}
+		err = am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
+		if err != nil {
+			outerErr = fmt.Errorf("unable to mark configuration as applied: %w", err)
 		}
 	})
 
@@ -361,24 +374,6 @@ func (am *alertmanager) applyConfig(cfg *apimodels.PostableUserConfig) (bool, er
 
 	am.updateConfigMetrics(cfg, len(rawConfig))
 	return true, nil
-}
-
-// applyAndMarkConfig applies a configuration and marks it as applied if no errors occur.
-func (am *alertmanager) applyAndMarkConfig(ctx context.Context, hash string, cfg *apimodels.PostableUserConfig) error {
-	configChanged, err := am.applyConfig(cfg)
-	if err != nil {
-		return err
-	}
-
-	if configChanged {
-		markConfigCmd := ngmodels.MarkConfigurationAsAppliedCmd{
-			OrgID:             am.orgID,
-			ConfigurationHash: hash,
-		}
-		return am.Store.MarkConfigurationAsApplied(ctx, &markConfigCmd)
-	}
-
-	return nil
 }
 
 func (am *alertmanager) AppURL() string {
