@@ -102,8 +102,10 @@ Once you have added a SQL expression, you can select from other data source quer
 
 ## Workflow to build SQL expressions
 
+Use the following workflow to create a SQL expression:
+
 1. **Build your base queries.** Create the individual query and give it a meaningful name. Create the queries (A, B, etc.) that provide the data you want to combine or transform using SQL Expressions.  
-1. **Hide your base queries.** Click the 👁️ Eye icon next to each base query to hide them from visualization. This keeps your panel clean while still making the data available to the SQL Expression.  
+1. **Hide your base queries.** Click the **👁️ Eye icon** next to each base query to hide them from visualization. This keeps your panel clean while still making the data available to the SQL Expression.  
 1. **Switch to table view**. Set the panel visualization to **Table** to inspect and review the structure and output of your SQL expression as you build and refine it.  
 1. **Add a SQL Expression**. Add a new query and add select SQL Expression as its type.   
    **Inspect inputs**. Start with simple test queries to understand the shape of your input frames.   
@@ -112,7 +114,7 @@ Once you have added a SQL expression, you can select from other data source quer
    SELECT \* FROM A LIMIT 10\. 
    ```
 
-   This lets you see the available columns and sample rows from query A. Repeat this for each input query you want to use (e.g., SELECT \* FROM B LIMIT 10).  
+   This lets you see the available columns and sample rows from `query A`. Repeat this for each input query you want to use (e.g., SELECT * FROM B LIMIT 10).  
 1. **Inspect your data**. Repeat this for each input query to understand the column structure and data types you're working with.
 
     ```sql
