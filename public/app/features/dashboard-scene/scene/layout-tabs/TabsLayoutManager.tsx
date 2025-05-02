@@ -1,6 +1,5 @@
 import {
   sceneGraph,
-  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,

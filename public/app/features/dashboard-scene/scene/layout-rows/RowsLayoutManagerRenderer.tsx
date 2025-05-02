@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
-import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { MultiValueVariable, SceneComponentProps, sceneGraph, useSceneObjectState } from '@grafana/scenes';
