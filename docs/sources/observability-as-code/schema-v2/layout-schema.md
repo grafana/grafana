@@ -87,25 +87,25 @@ Following is the JSON for a default grid layout, a grid layout item, and a grid 
 
 The following table explains the usage of the grid layout item JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| x | integer. Position of the item x-axis.  |
-| y | integer. Position of the item y-axis. |
-| width | Width of the item in pixels. |
-| height | Height of the item in pixels. |
+| Name    | Usage                                                                                                                                                                                                                             |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| x       | integer. Position of the item x-axis.                                                                                                                                                                                             |
+| y       | integer. Position of the item y-axis.                                                                                                                                                                                             |
+| width   | Width of the item in pixels.                                                                                                                                                                                                      |
+| height  | Height of the item in pixels.                                                                                                                                                                                                     |
 | element | `ElementReference`. Reference to a [`PanelKind`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/panel-schema/) from `dashboard.spec.elements` expressed as JSON Schema reference. |
-| repeat? | [RepeatOptions](#repeatoptions). Configured repeat options, if any |
+| repeat? | [RepeatOptions](#repeatoptions). Configured repeat options, if any                                                                                                                                                                |
 
 #### `RepeatOptions`
 
 The following table explains the usage of the repeat option JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| mode | `RepeatMode` - "variable" |
-| value | string |
+| Name       | Usage                                                |
+| ---------- | ---------------------------------------------------- |
+| mode       | `RepeatMode` - "variable"                            |
+| value      | string                                               |
 | direction? | Options are `h` for horizontal and `v` for vertical. |
-| maxPerRow? | integer |
+| maxPerRow? | integer                                              |
 
 ### `GridLayoutRowSpec`
 
@@ -125,10 +125,10 @@ The following table explains the usage of the grid layout row JSON fields:
 
 #### `RowRepeatOptions`
 
-| Name | Usage |
-| ---- | ----- |
-| mode | `RepeatMode` - "variable" |
-| value | string |
+| Name  | Usage                     |
+| ----- | ------------------------- |
+| mode  | `RepeatMode` - "variable" |
+| value | string                    |
 
 ## `AutoGridLayoutKind`
 
@@ -198,10 +198,10 @@ The following table explains the usage of the auto grid layout item JSON fields:
 
 The following table explains the usage of the auto grid repeat option JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| mode | `RepeatMode` - "variable" |
-| value | String |
+| Name  | Usage                     |
+| ----- | ------------------------- |
+| mode  | `RepeatMode` - "variable" |
+| value | String                    |
 
 ##### `ConditionalRenderingGroupSpec`
 
@@ -225,13 +225,13 @@ The following table explains the usage of the auto grid repeat option JSON field
 
 ###### `ConditionalRenderingDataSpec`
 
-| Name  | Type   |
-| ----- | ------- |
+| Name  | Type |
+| ----- | ---- |
 | value | bool |
 
 ###### `ConditionalRenderingTimeRangeSizeSpec`
 
-| Name  | Type  |
+| Name  | Type   |
 | ----- | ------ |
 | value | string |
 

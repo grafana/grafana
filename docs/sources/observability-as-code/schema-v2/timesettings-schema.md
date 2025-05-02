@@ -77,8 +77,8 @@ The following table explains the usage of the time settings JSON fields:
 
 The following table explains the usage of the time range option JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| display | string. Default is `Last 6 hours`.  |
-| from | string. Default is `now-6h`. |
-| to | string. Default is `now`. |
+| Name    | Usage                              |
+| ------- | ---------------------------------- |
+| display | string. Default is `Last 6 hours`. |
+| from    | string. Default is `now-6h`.       |
+| to      | string. Default is `now`.          |

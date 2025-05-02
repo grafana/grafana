@@ -95,18 +95,18 @@ The following table explains the usage of the query variable JSON fields:
 
 #### `VariableOption`
 
-| Name | Usage |
-| ---- | ---------------- |
+| Name     | Usage                                        |
+| -------- | -------------------------------------------- |
 | selected | bool. Whether or not the option is selected. |
-| text | string. Text to be displayed for the option. |
-| value | string. Value of the option. |
+| text     | string. Text to be displayed for the option. |
+| value    | string. Value of the option.                 |
 
 #### `DataSourceRef`
 
-| Name | Usage |
-| ---- | ---------------- |
-| type? | string. The plugin type-id. |
-| uid? | The specific data source instance. |
+| Name  | Usage                              |
+| ----- | ---------------------------------- |
+| type? | string. The plugin type-id.        |
+| uid?  | The specific data source instance. |
 
 ## `TextVariableKind`
 
@@ -139,15 +139,15 @@ Following is the JSON for a default text variable:
 
 The following table explains the usage of the query variable JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| name | string. Name of the variable.  |
-| current | "Text" and a "value" or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| query | string |
-| label? | string |
-| hide | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`. |
-| skipUrlSync | bool. Default is `false`. |
-| description? | string |
+| Name         | Usage                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| name         | string. Name of the variable.                                                                                                    |
+| current      | "Text" and a "value" or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
+| query        | string                                                                                                                           |
+| label?       | string                                                                                                                           |
+| hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
+| skipUrlSync  | bool. Default is `false`.                                                                                                        |
+| description? | string                                                                                                                           |
 
 ## `ConstantVariableKind`
 
@@ -180,15 +180,15 @@ Following is the JSON for a default constant variable:
 
 The following table explains the usage of the constant variable JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| name | string. Name of the variable.  |
-| query | string |
-| current | "Text" and a "value" or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| label? | string |
-| hide | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`. |
-| skipUrlSync | bool. Default is `false`. |
-| description? | string |
+| Name         | Usage                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| name         | string. Name of the variable.                                                                                                    |
+| query        | string                                                                                                                           |
+| current      | "Text" and a "value" or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
+| label?       | string                                                                                                                           |
+| hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
+| skipUrlSync  | bool. Default is `false`.                                                                                                        |
+| description? | string                                                                                                                           |
 
 ## `DatasourceVariableKind`
 
@@ -226,21 +226,21 @@ Following is the JSON for a default data source variable:
 
 The following table explains the usage of the data source variable JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| name | string. Name of the variable.  |
-| pluginId | string |
-| refresh | `VariableRefresh`. Options are `never`, `onDashboardLoad`, and `onTimeChanged`.  |
-| regex | string |
-| current | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| options | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| multi | bool. Default is `false`. |
-| includeAll | bool. Default is `false`. |
-| allValue? | string |
-| label? | string |
-| hide | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`. |
-| skipUrlSync | bool. Default is `false`. |
-| description? | string |
+| Name         | Usage                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| name         | string. Name of the variable.                                                                                                    |
+| pluginId     | string                                                                                                                           |
+| refresh      | `VariableRefresh`. Options are `never`, `onDashboardLoad`, and `onTimeChanged`.                                                  |
+| regex        | string                                                                                                                           |
+| current      | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
+| options      | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`.                         |
+| multi        | bool. Default is `false`.                                                                                                        |
+| includeAll   | bool. Default is `false`.                                                                                                        |
+| allValue?    | string                                                                                                                           |
+| label?       | string                                                                                                                           |
+| hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
+| skipUrlSync  | bool. Default is `false`.                                                                                                        |
+| description? | string                                                                                                                           |
 
 ## `IntervalVariableKind`
 
@@ -278,19 +278,19 @@ Following is the JSON for a default interval variable:
 
 The following table explains the usage of the interval variable JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| name | string. Name of the variable. |
-| query | string |
-| current | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| options | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| auto | bool. Default is `false`. |
-| auto_count | integer. Default is `0`. |
-| refresh | `VariableRefresh`. Options are `never`, `onDashboardLoad`, and `onTimeChanged`.  |
-| label? | string |
-| hide | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`. |
-| skipUrlSync | bool. Default is `false` |
-| description? | string |
+| Name         | Usage                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| name         | string. Name of the variable.                                                                                                    |
+| query        | string                                                                                                                           |
+| current      | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
+| options      | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`.                         |
+| auto         | bool. Default is `false`.                                                                                                        |
+| auto_count   | integer. Default is `0`.                                                                                                         |
+| refresh      | `VariableRefresh`. Options are `never`, `onDashboardLoad`, and `onTimeChanged`.                                                  |
+| label?       | string                                                                                                                           |
+| hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
+| skipUrlSync  | bool. Default is `false`                                                                                                         |
+| description? | string                                                                                                                           |
 
 ## `CustomVariableKind`
 
@@ -323,19 +323,19 @@ Following is the JSON for a default custom variable:
 
 The following table explains the usage of the custom variable JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| name | string. Name of the variable.  |
-| query | string |
-| current | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| options | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| multi | bool. Default is `false`. |
-| includeAll | bool. Default is `false`. |
-| allValue? | string |
-| label? | string |
-| hide | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`. |
-| skipUrlSync | bool. Default is `false`. |
-| description? | string |
+| Name         | Usage                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| name         | string. Name of the variable.                                                                                                    |
+| query        | string                                                                                                                           |
+| current      | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
+| options      | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`.                         |
+| multi        | bool. Default is `false`.                                                                                                        |
+| includeAll   | bool. Default is `false`.                                                                                                        |
+| allValue?    | string                                                                                                                           |
+| label?       | string                                                                                                                           |
+| hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
+| skipUrlSync  | bool. Default is `false`.                                                                                                        |
+| description? | string                                                                                                                           |
 
 ## `GroupByVariableKind`
 
@@ -374,17 +374,17 @@ Following is the JSON for a default group by variable:
 
 The following table explains the usage of the group by variable JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| name | string. Name of the variable  |
-| datasource? | `DataSourceRef`. Refer to the [`DataSourceRef` definition](#datasourceref) under `QueryVariableKind`. |
-| current | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| options | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
-| multi | bool. Default is `false`. |
-| label? | string |
-| hide | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`. |
-| skipUrlSync | bool. Default is `false`. |
-| description? | string. |
+| Name         | Usage                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| name         | string. Name of the variable                                                                                                     |
+| datasource?  | `DataSourceRef`. Refer to the [`DataSourceRef` definition](#datasourceref) under `QueryVariableKind`.                            |
+| current      | `Text` and a `value` or `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`. |
+| options      | `VariableOption`. Refer to the [`VariableOption` definition](#variableoption) under `QueryVariableKind`.                         |
+| multi        | bool. Default is `false`.                                                                                                        |
+| label?       | string                                                                                                                           |
+| hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                        |
+| skipUrlSync  | bool. Default is `false`.                                                                                                        |
+| description? | string.                                                                                                                          |
 
 ## `AdhocVariableKind`
 
@@ -415,39 +415,39 @@ Following is the JSON for a default ad hoc variable:
 
 The following table explains the usage of the ad hoc variable JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| name | string. Name of the variable.  |
-| datasource? | `DataSourceRef`. Consists of:<ul><li>type? - string. The plugin type-id.</li><li>uid? - string. The specific data source instance.</li></ul> |
-| baseFilters | [AdHocFilterWithLabels](#adhocfilterswithlabels) |
-| filters | [AdHocFilterWithLabels](#adhocfilterswithlabels) |
-| defaultKeys | [MetricFindValue](#metricfindvalue) |
-| label? | string |
-| hide | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`. |
-| skipUrlSync | bool. Default is `false`. |
-| description? | string |
+| Name         | Usage                                                                                                                                        |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| name         | string. Name of the variable.                                                                                                                |
+| datasource?  | `DataSourceRef`. Consists of:<ul><li>type? - string. The plugin type-id.</li><li>uid? - string. The specific data source instance.</li></ul> |
+| baseFilters  | [AdHocFilterWithLabels](#adhocfilterswithlabels)                                                                                             |
+| filters      | [AdHocFilterWithLabels](#adhocfilterswithlabels)                                                                                             |
+| defaultKeys  | [MetricFindValue](#metricfindvalue)                                                                                                          |
+| label?       | string                                                                                                                                       |
+| hide         | `VariableHide`. Options are: `dontHide`, `hideLabel`, and `hideVariable`.                                                                    |
+| skipUrlSync  | bool. Default is `false`.                                                                                                                    |
+| description? | string                                                                                                                                       |
 
 #### `AdHocFiltersWithLabels`
 
 The following table explains the usage of the ad hoc variable with labels JSON fields:
 
-| Name | Type |
-| ---- | ----- |
-| key | string  |
-| operator | string |
-| value | string |
-| values? | `[...string]` |
-| keyLabel | string |
+| Name         | Type          |
+| ------------ | ------------- |
+| key          | string        |
+| operator     | string        |
+| value        | string        |
+| values?      | `[...string]` |
+| keyLabel     | string        |
 | valueLabels? | `[...string]` |
-| forceEdit? | bool |
+| forceEdit?   | bool          |
 
 #### `MetricFindValue`
 
 The following table explains the usage of the metric find value JSON fields:
 
-| Name | Type |
-| ---- | ----- |
-| text | string  |
-| value? | string or number |
-| group? | string |
-| expandable? | bool |
+| Name        | Type             |
+| ----------- | ---------------- |
+| text        | string           |
+| value?      | string or number |
+| group?      | string           |
+| expandable? | bool             |

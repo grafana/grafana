@@ -49,35 +49,35 @@ The configuration for the list of annotations that are associated with the dashb
 
 ## `AnnotationQuerySpec`
 
-| Name | Type/Definition |
-| ---- | ---------------- |
-| datasource | [`DataSourceRef`](#datasourceref) |
-| query | [`DataQueryKind`](#dataquerykind) |
-| enable | bool |
-| hide | bool |
-| iconColor | string |
-| name | string |
-| builtIn | bool. Default is `false`. |
-| filter | [`AnnotationPanelFilter`](#annotationpanelfilter) |
-| options | `[string]`: A catch-all field for datasource-specific properties. |
+| Name       | Type/Definition                                                   |
+| ---------- | ----------------------------------------------------------------- |
+| datasource | [`DataSourceRef`](#datasourceref)                                 |
+| query      | [`DataQueryKind`](#dataquerykind)                                 |
+| enable     | bool                                                              |
+| hide       | bool                                                              |
+| iconColor  | string                                                            |
+| name       | string                                                            |
+| builtIn    | bool. Default is `false`.                                         |
+| filter     | [`AnnotationPanelFilter`](#annotationpanelfilter)                 |
+| options    | `[string]`: A catch-all field for datasource-specific properties. |
 
 ### `DataSourceRef`
 
-| Name | Usage |
-| ---- | ---------------- |
-| type? | string. The plugin type-id. |
-| uid? | The specific data source instance. |
+| Name  | Usage                              |
+| ----- | ---------------------------------- |
+| type? | string. The plugin type-id.        |
+| uid?  | The specific data source instance. |
 
 ### `DataQueryKind`
 
-| Name | Type |
-| ---- | ----- |
+| Name | Type   |
+| ---- | ------ |
 | kind | string |
 | spec | string |
 
 ### `AnnotationPanelFilter`
 
-| Name | Type/Definition |
-| ---- | ---------------- |
+| Name     | Type/Definition                                                                |
+| -------- | ------------------------------------------------------------------------------ |
 | exclude? | bool. Should the specified panels be included or excluded. Default is `false`. |
-| ids | `[...uint8]`. Panel IDs that should be included or excluded. |
+| ids      | `[...uint8]`. Panel IDs that should be included or excluded.                   |

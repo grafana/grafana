@@ -80,24 +80,24 @@ The following table explains the usage of the panel element JSON fields:
 
 #### `PanelQuerySpec`
 
-| Name        | Usage                              |
-| ----------- | ---------------------------------- |
-| query       | [`DataQueryKind`](#dataquerykind)  |
-| datasource? | [`DataSourceRef`](#datasourceref)  |
+| Name        | Usage                             |
+| ----------- | --------------------------------- |
+| query       | [`DataQueryKind`](#dataquerykind) |
+| datasource? | [`DataSourceRef`](#datasourceref) |
 
 ##### `DataQueryKind`
 
-| Name | Type |
-| ---- | ----- |
+| Name | Type   |
+| ---- | ------ |
 | kind | string |
 | spec | string |
 
 ##### `DataSourceRef`
 
-| Name | Usage |
-| ---- | ---------------- |
-| type? | string. The plugin type-id. |
-| uid? | The specific data source instance. |
+| Name  | Usage                              |
+| ----- | ---------------------------------- |
+| type? | string. The plugin type-id.        |
+| uid?  | The specific data source instance. |
 
 #### `DataTransformerConfig`
 
@@ -122,10 +122,10 @@ Matcher is a predicate configuration.
 Based on the configuration a set of field or values, it's filtered to apply an override or transformation.
 It comes with in id (to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
 
-| Name      | Usage                                                                                   |
-| --------- | --------------------------------------------------------------------------------------- |
-| id        | string. The matcher id. This is used to find the matcher implementation from registry.  |
-| options?  | The matcher options. This is specific to the matcher implementation.                    |
+| Name     | Usage                                                                                  |
+| -------- | -------------------------------------------------------------------------------------- |
+| id       | string. The matcher id. This is used to find the matcher implementation from registry. |
+| options? | The matcher options. This is specific to the matcher implementation.                   |
 
 #### `QueryOptionsSpec`
 
@@ -137,7 +137,7 @@ It comes with in id (to resolve implementation from registry) and a configuratio
 | queryCachingTTL?  | integer |
 | interval?         | string  |
 | cacheTimeout?     | string  |
-| hideTimeOverride? | bool |
+| hideTimeOverride? | bool    |
 
 ### `VizConfigSpec`
 

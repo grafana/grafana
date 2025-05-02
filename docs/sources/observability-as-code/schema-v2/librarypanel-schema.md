@@ -49,11 +49,11 @@ The `LibraryPanelKind` consists of:
 
 The following table explains the usage of the library panel element JSON fields:
 
-| Name | Usage |
-| ---- | ----- |
-| id | Panel ID for the library panel in the dashboard. |
-| libraryPanel | [`LibraryPanelRef`](#librarypanelref) |
-| title | Title for the library panel in the dashboard. |
+| Name         | Usage                                            |
+| ------------ | ------------------------------------------------ |
+| id           | Panel ID for the library panel in the dashboard. |
+| libraryPanel | [`LibraryPanelRef`](#librarypanelref)            |
+| title        | Title for the library panel in the dashboard.    |
 
 ### `LibraryPanelRef`
 

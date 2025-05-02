@@ -124,7 +124,7 @@ The JSON in a new dashboard for the other three layout options, `AutoGridLayout`
 ### `DashboardSpec`
 
 The following table explains the usage of the dashboard JSON fields.
- The table includes default and other fields:
+The table includes default and other fields:
 
 <!-- prettier-ignore-start -->
 
