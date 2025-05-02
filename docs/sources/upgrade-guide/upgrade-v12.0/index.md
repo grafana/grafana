@@ -13,7 +13,7 @@ weight: 600
 
 # Upgrade to Grafana v12.0
 
-{{< docs/shared lookup="upgrade/intro.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+{{< docs/shared lookup="upgrade/intro_2.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 {{< docs/shared lookup="back-up/back-up-grafana.md" source="grafana" version="<GRAFANA_VERSION>" leveloffset="+1" >}}
 
@@ -25,7 +25,7 @@ weight: 600
 
 **Ensure that your data source UIDs follow the correct standard**
 
-We've had standard ways to define UIDs for Grafana objects for years (at least [since Grafana v5](https://github.com/grafana/grafana/issues/7883)). While all of our internal code complies to this format, we haven't strictly enforced this format in REST APIs and provisioning paths that allow the creation and update of data sources.
+We've had standard ways to define UIDs for Grafana objects for years (at least [since Grafana v5](https://github.com/grafana/grafana/issues/7883)). While all of our internal code complies with this format, we haven't strictly enforced this format in REST APIs and provisioning paths that allow the creation and update of data sources.
 
 In Grafana v11.1, we [introduced](https://github.com/grafana/grafana/pull/86598) a warning that is sent to Grafana server logs every time a data source instance is created or updated using an invalid UID format.
 
@@ -59,12 +59,15 @@ You'll need to create a new data source with the correct UID and update your das
 
 #### How do I update my dashboards to use the new or updated data source?
 
-1. Go to the dashboard using the data source and update it by selecting the new or updated data source from the picker below your panel.
-1. Update the dashboard's JSON model directly using search and replace.
+- Go to the dashboard using the data source and update it by selecting the new or updated data source from the picker below your panel.
 
-   Navigate to [dashboard json model](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/view-dashboard-json-model/) and carefully replace all the instances of the old `uid` with the newly created `uid`.
+OR
 
-   {{< figure src="/media/docs/grafana/screenshot-grafana-11-datasource-uid-enforcement.png" alt="Updating JSON Model of a Dashboard">}}
+- Update the dashboard's JSON model directly using search and replace.
+
+  Navigate to [dashboard json model](https://grafana.com/docs/grafana/latest/dashboards/build-dashboards/view-dashboard-json-model/) and carefully replace all the instances of the old `uid` with the newly created `uid`.
+
+  {{< figure src="/media/docs/grafana/screenshot-grafana-11-datasource-uid-enforcement.png" alt="Updating JSON Model of a Dashboard">}}
 
 #### How do I update my alert rules to use the new or updated data source?
 
@@ -74,6 +77,6 @@ Open the alert rule you want to adjust and search for the data source that is be
 
 Since Grafana 10.2, the endpoint to check compatible versions when installing a plugin using `grafana cli plugins install` changed, which led to Grafana dependency version no longer being taken into account. This might have led to some behavior where the CLI would install plugins that are not fully compatible based on the plugins definition of compatibility via `grafanaDependency` property in the `plugin.json` file.
 
-#### What to do if I want to ignore the compatibility check?
+#### What if I want to ignore the compatibility check?
 
 We _do not_ recommend installing plugins declared as incompatible. But if you really have to force install a plugin despite it being declared as incompatible, refer to the [Installing a plugin from a ZIP](https://grafana.com/docs/grafana/latest/administration/plugin-management/#install-a-plugin-from-a-zip-file) guidance.
