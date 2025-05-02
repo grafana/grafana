@@ -310,12 +310,12 @@ export const QueryGroupOptionsEditor = React.memo(({ options, dataSource, data, 
       <>
         {
           <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {mdDesc}</Trans>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-max-data-points">MD = {{ mdDesc }}</Trans>
           </span>
         }
         {
           <span className={styles.collapsedText}>
-            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {intervalDesc}</Trans>
+            <Trans i18nKey="query.query-group-options-editor.collapsed-interval">Interval = {{ intervalDesc }}</Trans>
           </span>
         }
       </>
