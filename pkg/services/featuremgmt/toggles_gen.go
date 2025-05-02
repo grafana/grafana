@@ -239,10 +239,6 @@ const (
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
 
-	// FlagWargamesTesting
-	// Placeholder feature flag for internal testing
-	FlagWargamesTesting = "wargamesTesting"
-
 	// FlagAlertingInsights
 	// Show the new alerting insights landing page
 	FlagAlertingInsights = "alertingInsights"

@@ -269,10 +269,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Placeholder feature flag for internal testing
-  */
-  wargamesTesting?: boolean;
-  /**
   * Show the new alerting insights landing page
   * @default true
   */
