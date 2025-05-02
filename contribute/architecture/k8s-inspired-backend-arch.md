@@ -6,14 +6,14 @@ On top of adopting the declarative, eventually-consistent system design, we are 
 - **Inconsistent designs:** Variations in structure, parameters, and response formats across different endpoints.
 - **No versioning:** Difficulty managing breaking changes and API evolution without clear versioning.
 - **Absence of schemas:** Lack of machine-readable schemas hindered programmatic interaction, validation, and tooling.
-- **Limited extensibility model:** No standardized way for Grafana plugins to extend core APIs.
+- **Limited extensibility model:** No standardized way for Grafana plugins to extend core APIs or use Grafana database for storing custom configs 
 
 The end goal is for the Resource APIs to become the only interface for managing core Grafana resources. We will eventually deprecate and remove all Legacy API endpoints.
 
 ## 1. Key Differences from Legacy API Endpoints
 
 - **URL structure & versioning:**
-  - **Resource APIs:** Follow Kubernetes conventions (`/apis/<group>/<version>/namespaces/<namespace>/<resource>/<name>`). Includes explicit API versions (e.g., `v0alpha1`, `v1alpha1`, `v2alpha1`) in the path, allowing for controlled evolution and multiple versions of a resource API to co-exist.
+  - **Resource APIs:** Follow Kubernetes conventions (`/apis/<group>/<version>/namespaces/<namespace>/<resource>/<name>`). Includes explicit API versions (e.g., `v0alpha1`, `v1`, `v2beta1`) in the path, allowing for controlled evolution and multiple versions of a resource API to co-exist.
   - **Legacy APIs:** Variable path structures (e.g., `/api/dashboards/uid/:uid`, `/api/ruler/grafana/api/v1/rules/:uid/:uid`). Less explicit versioning.
 
 - **Resource schemas:**
@@ -21,11 +21,11 @@ The end goal is for the Resource APIs to become the only interface for managing 
   - **Legacy APIs:** Structures vary
 
 - **Namespacing / org context:**
-  - **Resource APIs:** Uses explicit namespaces in the path (`/namespaces/<namespace>/...`) mapping to Grafana Organization IDs for scoping.
+  - **Resource APIs:** Uses explicit namespaces in the path (`/namespaces/<namespace>/...`) mapping to Grafana Organization IDs in OSS/Enterprise and Grafana Cloud Stack IDs in Grafana Cloud for scoping.
   - **Legacy APIs:** Org context determined implicitly (session, API key), not usually part of the URL structure.
 
 - **Consistency of convenience features:**
-  - **Resource APIs:** Convenience features such as resource history or restore come out of the box; a single implementation works across all resources
+  - **Resource APIs:** Convenience features such as resource history, restore and observability-as-code tooling come out of the box; a single implementation of convenience features works across all resources because of the standardization
   - **Legacy APIs:** Different APIs support different convenience features; implementations are feature-specific
 
 - **Error Handling:**
@@ -34,10 +34,10 @@ The end goal is for the Resource APIs to become the only interface for managing 
 
 ## 2. Core Concepts
 
-- **Resource APIs:** New Grafana API endpoints that mimic the Kubernetes API structure (e.g., `/apis/dashboard.grafana.app/v1alpha1/dashboards`). These are served by Grafana itself and are distinct from any Kubernetes API running on the same system..
+- **Resource APIs:** New Grafana API endpoints that mimic the Kubernetes API structure (e.g., `/apis/dashboard.grafana.app/v1alpha1/dashboards`). These are served by Grafana itself and are distinct from any Kubernetes API running on the same system.
 
 - **API implementation approaches:**
-  - **Registry Approach (`pkg/registry/apis/...`):** Original method using Go code (`.../register.go` files)
+  - **Registry Approach (`pkg/registry/apis/...`):** Original method using Go code (`.../register.go` files). While newer resources are primarily defined using CUE in `apps/`, this path is still used for things such as legacy fallbacks for App-defined resources.
   - **Apps Approach (`apps/...`):** The newer, more modular implementation where APIs are defined using CUE in self-contained modules. Each app defines resources in `kinds/*.cue` files and resources are registered via the App SDK. This is the direction Grafana is moving toward for all resources.
 - **Unified Storage (`pkg/storage/unified/...`):** Internal abstraction handling resource persistence. It handles the conversion between the Resource API and the underlying storage backend.
 - **`K8sHandler` (`pkg/services/apiserver/client/client.go`):** Internal client facade used by Grafana services. Provides a Kubernetes-like client interface (`Get`, `Create`, etc.) for the Resource API. Acts as an adapter during migration, enabling legacy services to use the Resource API. Does not interact with external systems - it interact only with Grafana's own APIs.
@@ -46,12 +46,18 @@ The end goal is for the Resource APIs to become the only interface for managing 
 
 ### 2.1 Unified Storage
 
-The Unified Storage (`pkg/storage/unified/...`) is Grafana's internal persistence layer backing the Resource API. It decouples API handlers from the storage backend. Key characteristics/design rationale:
+The Unified Storage (`pkg/storage/unified/...`) is Grafana's internal persistence layer backing the Resource API. It decouples API handlers from the storage backend.
 
-- **Addressing legacy limitations:** Traditionally, Grafana stored entire resource definitions (like dashboard JSON) as opaque blobs in resource-specific tables (e.g. `dashboard`). This made it difficult to query specific fields, implement consistent versioning, or natively support Kubernetes concepts like `metadata` (labels, annotations), `spec`, and `status`. Unified Storage addresses this by storing resources in a structured format that aligns with the Kubernetes object model.
+**Design Rationale:**
+
+- **Addressing legacy limitations:** Traditionally, Grafana stored entire resource definitions (like dashboard JSON) as opaque blobs in resource-specific tables (e.g. `dashboard`). This made it difficult to query specific fields, implement consistent versioning/watching, or natively support Kubernetes concepts. It also made it impossible for plugins to store custom configs alongside core resources in Grafana database.
+- **Supporting existing Databases (vs. etcd/Kine):** Instead of `etcd`, Unified Storage uses Grafana's existing SQL database support (PostgreSQL, MySQL, SQLite) for operational simplicity - we do not want to introduce `etcd` as a mandatory dependency - and backwards compatibility - we need to ensure Grafana continues to work in all the varied environments its being used.
+
+**Key Characteristics:**
+
 - **Implementing Kubernetes `storage.Interface`:** Provides an implementation of `k8s.io/apiserver/pkg/storage.Interface` via `apistore.Storage` (`pkg/storage/unified/apistore/store.go`). This adapter translates Kubernetes storage operations (`Create`, `Get`, `List`, `Watch`) to calls against Grafana's `resource.ResourceClient`.
-- **Supporitng existing Databases (vs. etcd/Kine):** Instead of `etcd`, Unified Storage uses Grafana's existing SQL database support (PostgreSQL, MySQL, SQLite) for operational simplicity - we do not want to introduce `etcd` as a mandatory dependency - and backwards compatibility - we need to ensure Grafana continues to work in all the varied environments its being used.
-- **Resource versioning:** Each resource stored in the Unified Storage has a `resourceVersion` that changes whenever the resource is modified. It's stored as a monotonically increasing counter and is used for optimistic concurrency control in updates; if the stored version differs from the provided version, the update is rejected with a 409 Conflict error. `resourceVersion` also provides the basis for the Watch API to stream changes
+- **Resource versioning:** Each resource stored in the Unified Storage has a `resourceVersion` that changes whenever the resource is modified. It's stored as a monotonically increasing counter and is used for optimistic concurrency control in updates; if the stored version differs from the provided version, the update is rejected with a 409 Conflict error. 
+- **Native `Watch` support:** `resourceVersion` enables efficient `Watch` capabilities, even on standard SQL databases. Every resource modification writes an entry to a `resource_history` table, tagged with the new `resourceVersion`. In HA mode, an internal poller reads this table based on `resourceVersion` to detect changes. In non-HA mode, writes trigger direct notifications via Go channels. The API server then streams these detected events (from polling or direct notification) to connected Watch clients.
 
 ### 2.2 Defining APIs through `/apps/*`
 
@@ -240,7 +246,7 @@ The frontend code is also updated gradually. As Resource API endpoints stabilize
 
 ## 5. So does it all mean I can point `kubectl` directly at the Grafana server and use it to create dashboards?
 
-**Yes, with caveats.** `kubectl` is supported under a dev-mode-only, experimental `grafanaAPIServerEnsureKubectlAccess` feature flag and requires `server.protocol` set to `https`.
+**Yes, with caveats.** `kubectl` is supported under a dev-mode-only, experimental `grafanaAPIServerEnsureKubectlAccess` feature flag and requires `server.protocol` set to `https`. 
 
 ```bash
 #!/bin/bash
