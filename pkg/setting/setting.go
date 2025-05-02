@@ -541,21 +541,23 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage              map[string]UnifiedStorageConfig
-	IndexPath                   string
-	IndexWorkers                int
-	IndexMaxBatchSize           int
-	IndexFileThreshold          int
-	IndexMinCount               int
-	EnableSharding              bool
-	MemberlistBindAddr          string
-	MemberlistAdvertiseAddr     string
-	MemberlistJoinMember        string
-	InstanceID                  string
-	SprinklesApiServer          string
-	SprinklesApiServerPageLimit int
-	CACertPath                  string
-	HttpsSkipVerify             bool
+	UnifiedStorage                             map[string]UnifiedStorageConfig
+	IndexPath                                  string
+	IndexWorkers                               int
+	IndexMaxBatchSize                          int
+	IndexFileThreshold                         int
+	IndexMinCount                              int
+	EnableSharding                             bool
+	MemberlistBindAddr                         string
+	MemberlistAdvertiseAddr                    string
+	MemberlistJoinMember                       string
+	MemberlistClusterLabel                     string
+	MemberlistClusterLabelVerificationDisabled bool
+	InstanceID                                 string
+	SprinklesApiServer                         string
+	SprinklesApiServerPageLimit                int
+	CACertPath                                 string
+	HttpsSkipVerify                            bool
 }
 
 type UnifiedStorageConfig struct {

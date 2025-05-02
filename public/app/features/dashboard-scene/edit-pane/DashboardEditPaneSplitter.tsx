@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
@@ -98,7 +99,11 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
           <NavToolbarActions dashboard={dashboard} />
           <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
           <div className={styles.bodyWrapper}>
-            <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
+            <div
+              className={cx(styles.body, isEditing && styles.bodyEditing)}
+              data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+              ref={onBodyRef}
+            >
               {body}
             </div>
           </div>
