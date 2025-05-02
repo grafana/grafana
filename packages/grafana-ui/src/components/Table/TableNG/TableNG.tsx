@@ -444,8 +444,6 @@ export function TableNG(props: TableNGProps) {
           ctx,
           onSortByChange,
           rows,
-          // INFO: sortedRows is for correct row indexing for cell background coloring
-          sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -655,7 +653,6 @@ export function mapFrameToDataGrid({
     ctx,
     onSortByChange,
     rows,
-    sortedRows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
