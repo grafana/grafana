@@ -63,6 +63,8 @@ To delete a repository, follow these steps.
 1. Select the trashcan icon in the right side to delete the chosen entry.
 1. Select **Delete** to confirm.
 
+Refer to [Work with provisioned dashboards](../provisioned-dashboards) for information on removing provisioned files.
+
 ## Troubleshoot synchronization
 
 Monitor the **View** status page for synchronization issues and status updates. Common events include:

@@ -119,6 +119,12 @@ Saving changes requires opening a pull request in your GitHub repository.
 
 1. Follow your usual GitHub workflow to save and merge the PR to your repository.
 
+### Remove dashboards
+
+You can remove a provisioned dashboard by deleting the dashboard from the repository.
+
+Grafana updates when the changes from the GitHub repository sync.
+
 ### Tips
 
 - Use GitHub pull requests for changes to maintain review processes.
