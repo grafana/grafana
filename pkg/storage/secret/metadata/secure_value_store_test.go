@@ -82,6 +82,25 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, "test description", readSecureValue.Spec.Description)
 		require.Equal(t, keeperName, *readSecureValue.Spec.Keeper)
 		require.Equal(t, secretv0alpha1.SecureValuePhasePending, readSecureValue.Status.Phase)
+
+		// List secure values and verify our value is in the list
+		secureValues, err := secureValueStorage.List(ctx, xkube.Namespace("default"))
+		require.NoError(t, err)
+		require.NotEmpty(t, secureValues)
+
+		// Find our secure value in the list
+		var found bool
+		for _, sv := range secureValues {
+			if sv.Name == "sv-test" {
+				found = true
+				require.Equal(t, "default", sv.Namespace)
+				require.Equal(t, "test description", sv.Spec.Description)
+				require.Equal(t, keeperName, *sv.Spec.Keeper)
+				require.Equal(t, secretv0alpha1.SecureValuePhasePending, sv.Status.Phase)
+				break
+			}
+		}
+		require.True(t, found, "secure value not found in list")
 	})
 
 	t.Run("create, read, delete and verify secure value", func(t *testing.T) {
