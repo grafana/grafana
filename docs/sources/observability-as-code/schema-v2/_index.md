@@ -3,7 +3,6 @@ description: A reference for the JSON dashboard schemas used with Observability 
 keywords:
   - configuration
   - as code
-  - as-code
   - dashboards
   - git integration
   - git sync
