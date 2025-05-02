@@ -59,10 +59,14 @@ for (let i = 0; i < BIN_INCRS.length; i++) {
   BIN_INCRS[i] = 2 ** i;
 }
 
-import { UPlotConfigBuilder, UPlotConfigPrepFn } from '@grafana/ui/src/components/uPlot/config/UPlotConfigBuilder';
-import { getScaleGradientFn } from '@grafana/ui/src/components/uPlot/config/gradientFills';
-import { buildScaleKey } from '@grafana/ui/src/components/uPlot/internal';
-import { getStackingGroups, preparePlotData2 } from '@grafana/ui/src/components/uPlot/utils';
+import {
+  UPlotConfigBuilder,
+  UPlotConfigPrepFn,
+  getScaleGradientFn,
+  buildScaleKey,
+  getStackingGroups,
+  preparePlotData2,
+} from '@grafana/ui/internal';
 
 const defaultFormatter = (v: any, decimals: DecimalCount = 1) => (v == null ? '-' : v.toFixed(decimals));
 
@@ -572,6 +576,7 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn = ({
     focus: {
       prox: hoverProximity ?? DEFAULT_FOCUS_PROXIMITY,
     },
+    points: { one: true },
   };
 
   builder.setCursor(cursor);

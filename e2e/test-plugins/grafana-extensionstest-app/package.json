@@ -1,6 +1,6 @@
 {
   "name": "@test-plugins/extensions-test-app",
-  "version": "11.6.0-pre",
+  "version": "12.1.0-pre",
   "private": true,
   "scripts": {
     "build": "webpack -c ./webpack.config.ts --env production",
@@ -42,6 +42,5 @@
   },
   "peerDependencies": {
     "@grafana/runtime": "*"
-  },
-  "packageManager": "yarn@4.4.0"
+  }
 }

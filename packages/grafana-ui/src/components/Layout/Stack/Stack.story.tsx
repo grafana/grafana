@@ -36,11 +36,11 @@ const meta: Meta<typeof Stack> = {
   },
 };
 
-export const Basic: StoryFn<typeof Stack> = ({ direction, wrap, alignItems, justifyContent, gap }) => {
+export const Basic: StoryFn<typeof Stack> = (args) => {
   const theme = useTheme2();
   return (
     <div style={{ width: '600px', height: '600px', border: '1px solid grey' }}>
-      <Stack direction={direction} wrap={wrap} alignItems={alignItems} justifyContent={justifyContent} gap={gap}>
+      <Stack {...args}>
         {Array.from({ length: 5 }).map((_, i) => (
           <Item key={i} color={theme.colors.warning.main} text={i + 1} />
         ))}
@@ -51,6 +51,8 @@ export const Basic: StoryFn<typeof Stack> = ({ direction, wrap, alignItems, just
 
 Basic.argTypes = {
   gap: SpacingTokenControl,
+  rowGap: SpacingTokenControl,
+  columnGap: SpacingTokenControl,
   direction: { control: 'select', options: ['row', 'row-reverse', 'column', 'column-reverse'] },
   wrap: { control: 'select', options: ['nowrap', 'wrap', 'wrap-reverse'] },
   alignItems: {

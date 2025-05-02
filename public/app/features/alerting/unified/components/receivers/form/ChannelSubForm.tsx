@@ -5,7 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Controller, FieldErrors, FieldValues, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Alert, Button, Field, Select, Text, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Field, Select, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useUnifiedAlertingSelector } from '../../../hooks/useUnifiedAlertingSelector';
@@ -106,11 +106,16 @@ export function ChannelSubForm<R extends ChannelValues>({
       sortBy(notifiers, ({ dto, meta }) => [meta?.order ?? 0, dto.name])
         // .notifiers.sort((a, b) => a.dto.name.localeCompare(b.dto.name))
         .map<SelectableValue>(({ dto: { name, type }, meta }) => ({
-          label: name,
+          // @ts-expect-error ReactNode is supported
+          label: (
+            <Stack alignItems="center" gap={1}>
+              {name}
+              {meta?.badge}
+            </Stack>
+          ),
           value: type,
           description: meta?.description,
           isDisabled: meta ? !meta.enabled : false,
-          imgUrl: meta?.iconUrl,
         })),
     [notifiers]
   );
@@ -140,7 +145,11 @@ export function ChannelSubForm<R extends ChannelValues>({
     <div className={styles.wrapper} data-testid="item-container">
       <div className={styles.topRow}>
         <div>
-          <Field label="Integration" htmlFor={contactPointTypeInputId} data-testid={`${pathPrefix}type`}>
+          <Field
+            label={t('alerting.channel-sub-form.label-integration', 'Integration')}
+            htmlFor={contactPointTypeInputId}
+            data-testid={`${pathPrefix}type`}
+          >
             <Controller
               name={fieldName('type')}
               defaultValue={defaultValues.type}
@@ -169,13 +178,13 @@ export function ChannelSubForm<R extends ChannelValues>({
               onClick={() => handleTest()}
               icon={testingReceiver ? 'spinner' : 'message'}
             >
-              Test
+              <Trans i18nKey="alerting.channel-sub-form.test">Test</Trans>
             </Button>
           )}
           {isEditable && (
             <>
               <Button size="xs" variant="secondary" type="button" onClick={() => onDuplicate()} icon="copy">
-                Duplicate
+                <Trans i18nKey="alerting.channel-sub-form.duplicate">Duplicate</Trans>
               </Button>
               {onDelete && (
                 <Button
@@ -186,7 +195,7 @@ export function ChannelSubForm<R extends ChannelValues>({
                   onClick={() => onDelete()}
                   icon="trash-alt"
                 >
-                  Delete
+                  <Trans i18nKey="alerting.channel-sub-form.delete">Delete</Trans>
                 </Button>
               )}
             </>
@@ -221,7 +230,11 @@ export function ChannelSubForm<R extends ChannelValues>({
             customValidators={customValidators}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
-            <CollapsibleSection label={`Optional ${notifier.dto.name} settings`}>
+            <CollapsibleSection
+              label={t('alerting.channel-sub-form.label-section', 'Optional {{name}} settings', {
+                name: notifier.dto.name,
+              })}
+            >
               {notifier.dto.info !== '' && (
                 <Alert title="" severity="info">
                   {notifier.dto.info}
@@ -239,7 +252,9 @@ export function ChannelSubForm<R extends ChannelValues>({
               />
             </CollapsibleSection>
           )}
-          <CollapsibleSection label="Notification settings">
+          <CollapsibleSection
+            label={t('alerting.channel-sub-form.label-notification-settings', 'Notification settings')}
+          >
             <CommonSettingsComponent pathPrefix={pathPrefix} readOnly={!isEditable} />
           </CollapsibleSection>
         </div>

@@ -1,11 +1,11 @@
 import { ComponentType } from 'react';
 
+import { throwIfAngular } from '../utils/throwIfAngular';
+
 import { KeyValue } from './data';
 import { NavModel } from './navModel';
 import { PluginMeta, GrafanaPlugin, PluginIncludeType } from './plugin';
 import {
-  type PluginExtensionLinkConfig,
-  PluginExtensionComponentConfig,
   PluginExtensionExposedComponentConfig,
   PluginExtensionAddedComponentConfig,
   PluginExtensionAddedLinkConfig,
@@ -85,9 +85,7 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
   }
 
   setComponentsFromLegacyExports(pluginExports: System.Module) {
-    if (pluginExports.ConfigCtrl) {
-      this.angularConfigCtrl = pluginExports.ConfigCtrl;
-    }
+    throwIfAngular(pluginExports);
 
     if (this.meta && this.meta.includes) {
       for (const include of this.meta.includes) {
@@ -139,26 +137,6 @@ export class AppPlugin<T extends KeyValue = KeyValue> extends GrafanaPlugin<AppP
 
   exposeComponent<Props = {}>(componentConfig: PluginExtensionExposedComponentConfig<Props>) {
     this._exposedComponentConfigs.push(componentConfig as PluginExtensionExposedComponentConfig);
-
-    return this;
-  }
-
-  /** @deprecated Use .addLink() instead */
-  configureExtensionLink<Context extends object>(extension: Omit<PluginExtensionLinkConfig<Context>, 'type'>) {
-    this.addLink({
-      targets: [extension.extensionPointId],
-      ...extension,
-    });
-
-    return this;
-  }
-  /** @deprecated Use .addComponent() instead */
-  configureExtensionComponent<Props = {}>(extension: Omit<PluginExtensionComponentConfig<Props>, 'type'>) {
-    this.addComponent({
-      targets: [extension.extensionPointId],
-      ...extension,
-      component: extension.component,
-    });
 
     return this;
   }

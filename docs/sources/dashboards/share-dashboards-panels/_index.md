@@ -41,7 +41,7 @@ refs:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/share-dashboards-panels/shared-dashboards/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
+      destination: /docs/grafana-cloud/visualizations/dashboards/share-dashboards-panels/shared-dashboards/
   configure-report:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/dashboards/create-reports/#create-a-report
@@ -80,8 +80,6 @@ Grafana enables you to share dashboards and panels with other users within your 
 - JSON files
 - Reports
 - Library panels
-
-You can also invite new members to your organization from the **Share** menu. For more information, refer to [Invite new members](#invite-new-members).
 
 You must have an authorized viewer permission to see an image rendered by a direct link. The same permission is also required to view embedded links unless you have anonymous access permission enabled for your Grafana instance.
 
@@ -140,7 +138,7 @@ Learn how to configure and manage externally shared dashboards in [Externally sh
 ### Schedule a report
 
 {{< admonition type="note" >}}
-This feature is only available in Grafana Enterprise.
+This feature is only available on Grafana Enterprise.
 {{< /admonition >}}
 
 To share your dashboard as a report, follow these steps:
@@ -203,6 +201,10 @@ The snapshot is immediately deleted. You might need to clear your browser cache 
 In addition to sharing dashboards as links, reports, and snapshots, you can export them as PDFs or JSON files.
 
 ### Export a dashboard as PDF
+
+{{< admonition type="note" >}}
+This feature is only available on Grafana Enterprise.
+{{< /admonition >}}
 
 To export a dashboard in its current state as a PDF, follow these steps:
 
@@ -365,23 +367,3 @@ To delete existing snapshots, follow these steps:
 1. Click the red **x** next to the snapshot URL that you want to delete.
 
 The snapshot is immediately deleted. You may need to clear your browser cache or use a private or incognito browser to confirm this.
-
-## Invite new members
-
-{{< admonition type="note" >}}
-This feature is only available on Grafana Cloud.
-{{< /admonition >}}
-
-You can invite new members to your organization using the **Share** drop-down menu. You must have the `OrgUsersAdd` permission to use this feature.
-
-To invite a new member to your organization, follow these steps:
-
-1. Click **Dashboards** in the main menu and open any dashboard.
-1. Click the **Share** drop-down list in the top-right corner and select **Invite new member**.
-
-   The **Members** page of your Grafana Cloud Portal opens.
-
-1. Enter the email address of the new member in the provided field.
-1. Make a selection in the **Role** drop-down list.
-1. (Optional) Select the **Receive billing emails** checkbox, if applicable.
-1. Click **Invite**.

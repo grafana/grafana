@@ -13,14 +13,15 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
 
-	dashboardV0 "github.com/grafana/grafana/pkg/apis/dashboard/v0alpha1"
-	dashboardV1 "github.com/grafana/grafana/pkg/apis/dashboard/v1alpha1"
-	dashboardV2 "github.com/grafana/grafana/pkg/apis/dashboard/v2alpha1"
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
 )
 
 func TestMain(m *testing.M) {
@@ -41,7 +42,8 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 		obj := &unstructured.Unstructured{
 			Object: map[string]interface{}{
 				"spec": map[string]any{
-					"title": "Test empty dashboard",
+					"title":         "Test empty dashboard",
+					"schemaVersion": 41,
 				},
 			},
 		}
@@ -110,8 +112,8 @@ func runDashboardTest(t *testing.T, helper *apis.K8sTestHelper, gvr schema.Group
 
 func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	gvr := schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v0alpha1",
+		Group:    dashboardV1.GROUP,
+		Version:  dashboardV1.VERSION,
 		Resource: "dashboards",
 	}
 	if testing.Short() {
@@ -180,17 +182,17 @@ func TestIntegrationDashboardsAppV0Alpha1(t *testing.T) {
 	})
 }
 
-func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
+func TestIntegrationDashboardsAppV1(t *testing.T) {
 	gvr := schema.GroupVersionResource{
-		Group:    "dashboard.grafana.app",
-		Version:  "v1alpha1",
+		Group:    dashboardV1.GROUP,
+		Version:  dashboardV1.VERSION,
 		Resource: "dashboards",
 	}
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
 
-	t.Run("v1alpha1 with dual writer mode 0", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 0", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -202,7 +204,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 1", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 1", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -214,7 +216,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 2", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 2", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -226,7 +228,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 3", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 3", func(t *testing.T) {
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
 			UnifiedStorageConfig: map[string]setting.UnifiedStorageConfig{
@@ -238,7 +240,7 @@ func TestIntegrationDashboardsAppV1Alpha1(t *testing.T) {
 		runDashboardTest(t, helper, gvr)
 	})
 
-	t.Run("v1alpha1 with dual writer mode 4", func(t *testing.T) {
+	t.Run("v1 with dual writer mode 4", func(t *testing.T) {
 		t.Skip("skipping test because of authorizer issue")
 		helper := apis.NewK8sTestHelper(t, testinfra.GrafanaOpts{
 			DisableAnonymous: true,
@@ -313,6 +315,22 @@ func TestIntegrationLegacySupport(t *testing.T) {
 			obj, err = client.Get(ctx, name, metav1.GetOptions{}, "dto")
 			require.NoError(t, err)
 			require.Equal(t, name, obj.GetName())
+
+			if obj.Object["spec"] == nil {
+				continue // missing conversions
+			}
+
+			// This should have been moved to metadata
+			spec, _, err := unstructured.NestedMap(obj.Object, "spec")
+			require.NoError(t, err)
+
+			require.Nil(t, spec["id"])
+			require.Nil(t, spec["uid"])
+			require.Nil(t, spec["version"])
+
+			access, _, err := unstructured.NestedMap(obj.Object, "access")
+			require.NoError(t, err)
+			require.Equal(t, slugify.Slugify(spec["title"].(string)), access["slug"])
 		}
 	}
 
@@ -325,14 +343,14 @@ func TestIntegrationLegacySupport(t *testing.T) {
 		Path: "/api/dashboards/uid/test-v0",
 	}, &dtos.DashboardFullWithMeta{})
 	require.Equal(t, 200, rsp.Response.StatusCode)
-	require.Equal(t, "v0alpha1", rsp.Result.Meta.APIVersion)
+	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
 
 	rsp = apis.DoRequest(helper, apis.RequestParams{
 		User: helper.Org1.Admin,
 		Path: "/api/dashboards/uid/test-v1",
 	}, &dtos.DashboardFullWithMeta{})
 	require.Equal(t, 200, rsp.Response.StatusCode)
-	require.Equal(t, "v1alpha1", rsp.Result.Meta.APIVersion)
+	require.Equal(t, dashboardV0.VERSION, rsp.Result.Meta.APIVersion)
 
 	// V2 should send a not acceptable
 	rsp = apis.DoRequest(helper, apis.RequestParams{

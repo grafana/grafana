@@ -16,7 +16,7 @@ jest.mock('./MultipleDataSourcePicker', () => {
   const original = jest.requireActual('./MultipleDataSourcePicker');
   return {
     ...original,
-    MultipleDataSourcePicker: () => <></>,
+    MultipleDataSourcePicker: () => null,
   };
 });
 

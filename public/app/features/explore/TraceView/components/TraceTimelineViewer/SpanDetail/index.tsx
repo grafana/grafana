@@ -29,6 +29,7 @@ import {
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
 import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
@@ -291,7 +292,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
-  const { profileLinkButtons, logLinkButton, sessionLinkButton } = getSpanDetailLinkButtons({
+  const linksComponent = getSpanDetailLinkButtons({
     span,
     createSpanLink,
     datasourceType,
@@ -311,17 +312,13 @@ export default function SpanDetail(props: SpanDetailProps) {
           <LabeledList className={styles.list} divider={true} items={overviewItems} />
         </div>
       </div>
-      <div className={styles.linkList}>
-        {logLinkButton}
-        {profileLinkButtons}
-        {sessionLinkButton}
-      </div>
+      <div className={styles.linkList}>{linksComponent}</div>
       <Divider spacing={1} />
       <div>
         <div>
           <AccordianKeyValues
             data={tags}
-            label="Span Attributes"
+            label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
             linksGetter={linksGetter}
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
@@ -330,7 +327,7 @@ export default function SpanDetail(props: SpanDetailProps) {
             <AccordianKeyValues
               className={styles.AccordianKeyValuesItem}
               data={process.tags}
-              label="Resource Attributes"
+              label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
               linksGetter={linksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
@@ -352,7 +349,11 @@ export default function SpanDetail(props: SpanDetailProps) {
           <AccordianText
             className={styles.AccordianWarnings}
             headerClassName={styles.AccordianWarningsHeader}
-            label={<span className={styles.AccordianWarningsLabel}>Warnings</span>}
+            label={
+              <span className={styles.AccordianWarningsLabel}>
+                <Trans i18nKey="explore.span-detail.warnings">Warnings</Trans>
+              </span>
+            }
             data={warnings}
             isOpen={isWarningsOpen}
             onToggle={() => warningsToggle(spanID)}
@@ -360,7 +361,7 @@ export default function SpanDetail(props: SpanDetailProps) {
         )}
         {stackTraces?.length ? (
           <AccordianText
-            label="Stack trace"
+            label={t('explore.span-detail.label-stack-trace', 'Stack trace')}
             data={stackTraces}
             isOpen={isStackTracesOpen}
             TextComponent={(textComponentProps) => {

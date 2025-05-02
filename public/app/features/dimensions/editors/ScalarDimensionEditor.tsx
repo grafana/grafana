@@ -4,8 +4,9 @@ import { useCallback } from 'react';
 import { FieldType, GrafanaTheme2, SelectableValue, StandardEditorProps } from '@grafana/data';
 import { ScalarDimensionMode, ScalarDimensionConfig } from '@grafana/schema';
 import { InlineField, InlineFieldRow, RadioButtonGroup, Select, useStyles2 } from '@grafana/ui';
-import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/src/components/MatchersUI/utils';
+import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
+import { t } from 'app/core/internationalization';
 
 import { ScalarDimensionOptions } from '../types';
 
@@ -81,7 +82,7 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
     <>
       <div>
         <InlineFieldRow>
-          <InlineField label="Limit" labelWidth={8} grow={true}>
+          <InlineField label={t('dimensions.scalar-dimension-editor.label-limit', 'Limit')} labelWidth={8} grow={true}>
             <RadioButtonGroup value={mode} options={scalarOptions} onChange={onModeChange} fullWidth />
           </InlineField>
         </InlineFieldRow>
@@ -95,7 +96,11 @@ export const ScalarDimensionEditor = ({ value, context, onChange, item }: Props)
       <div className={styles.range}>
         {isFixed && (
           <InlineFieldRow>
-            <InlineField label="Value" labelWidth={8} grow={true}>
+            <InlineField
+              label={t('dimensions.scalar-dimension-editor.label-value', 'Value')}
+              labelWidth={8}
+              grow={true}
+            >
               <NumberInput
                 value={val?.fixed ?? DEFAULT_VALUE}
                 onChange={onValueChange}

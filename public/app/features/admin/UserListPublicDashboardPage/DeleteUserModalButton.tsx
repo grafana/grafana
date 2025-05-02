@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
+import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui/src';
+import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { SessionUser } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 

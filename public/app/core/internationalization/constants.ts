@@ -1,17 +1,11 @@
 import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
 
-export const ENGLISH_US = 'en-US';
-export const FRENCH_FRANCE = 'fr-FR';
-export const SPANISH_SPAIN = 'es-ES';
-export const GERMAN_GERMANY = 'de-DE';
-export const BRAZILIAN_PORTUGUESE = 'pt-BR';
-export const CHINESE_SIMPLIFIED = 'zh-Hans';
-export const PSEUDO_LOCALE = 'pseudo';
-
-export const DEFAULT_LANGUAGE = ENGLISH_US;
+import { LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/data/unstable';
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
+
+export const PSEUDO_LOCALE = 'pseudo';
 
 export interface LanguageDefinition<Namespace extends string = string> {
   /** IETF language tag for the language e.g. en-US */
@@ -24,55 +18,10 @@ export interface LanguageDefinition<Namespace extends string = string> {
   loader: Record<Namespace, LocaleFileLoader>;
 }
 
-export const LANGUAGES: LanguageDefinition[] = [
-  {
-    code: ENGLISH_US,
-    name: 'English',
-    loader: {
-      grafana: () => import('../../../locales/en-US/grafana.json'),
-    },
-  },
-
-  {
-    code: FRENCH_FRANCE,
-    name: 'Français',
-    loader: {
-      grafana: () => import('../../../locales/fr-FR/grafana.json'),
-    },
-  },
-
-  {
-    code: SPANISH_SPAIN,
-    name: 'Español',
-    loader: {
-      grafana: () => import('../../../locales/es-ES/grafana.json'),
-    },
-  },
-
-  {
-    code: GERMAN_GERMANY,
-    name: 'Deutsch',
-    loader: {
-      grafana: () => import('../../../locales/de-DE/grafana.json'),
-    },
-  },
-
-  {
-    code: CHINESE_SIMPLIFIED,
-    name: '中文（简体）',
-    loader: {
-      grafana: () => import('../../../locales/zh-Hans/grafana.json'),
-    },
-  },
-
-  {
-    code: BRAZILIAN_PORTUGUESE,
-    name: 'Português Brasileiro',
-    loader: {
-      grafana: () => import('../../../locales/pt-BR/grafana.json'),
-    },
-  },
-] satisfies Array<LanguageDefinition<'grafana'>>;
+export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => ({
+  ...def,
+  loader: { grafana: () => import(`../../../locales/${def.code}/grafana.json`) },
+}));
 
 if (process.env.NODE_ENV === 'development') {
   LANGUAGES.push({

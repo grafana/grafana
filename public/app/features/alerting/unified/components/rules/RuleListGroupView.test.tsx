@@ -8,7 +8,9 @@ import { AccessControlAction } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import * as analytics from '../../Analytics';
-import { mockCombinedRule, mockDataSource } from '../../mocks';
+import { setupMswServer } from '../../mockApi';
+import { mockCombinedRule } from '../../mocks';
+import { mimirDataSource } from '../../mocks/server/configure';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
 import { RuleListGroupView } from './RuleListGroupView';
@@ -24,6 +26,9 @@ setPluginLinksHook(() => ({
   links: [],
   isLoading: false,
 }));
+
+setupMswServer();
+const mimirDs = mimirDataSource();
 
 describe('RuleListGroupView', () => {
   describe('RBAC', () => {
@@ -119,7 +124,7 @@ function getGrafanaNamespace(): CombinedRuleNamespace {
 function getCloudNamespace(): CombinedRuleNamespace {
   return {
     name: 'Cloud Test Namespace',
-    rulesSource: mockDataSource(),
+    rulesSource: mimirDs.dataSource,
     groups: [
       {
         name: 'Prom group',

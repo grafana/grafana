@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,10 +28,10 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/bwmarrin/snowflake"
-
+	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
 	"github.com/grafana/grafana/pkg/apiserver/rest"
@@ -45,11 +46,22 @@ const (
 
 var _ storage.Interface = (*Storage)(nil)
 
+type DefaultPermissionSetter = func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
+	// ????: should we constrain this to only dashboards for now?
+	// Not yet clear if this is a good general solution, or just a stop-gap
 	LargeObjectSupport LargeObjectSupport
 
+	// Allow writing objects with metadata.annotations[grafana.app/folder]
+	EnableFolderSupport bool
+
+	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Temporary fix to support adding default permissions AfterCreate
+	Permissions DefaultPermissionSetter
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -63,9 +75,10 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store     resource.ResourceClient
-	getKey    func(string) (*resource.ResourceKey, error)
-	snowflake *snowflake.Node // used to enforce internal ids
+	store          resource.ResourceClient
+	getKey         func(string) (*resource.ResourceKey, error)
+	snowflake      *snowflake.Node    // used to enforce internal ids
+	configProvider RestConfigProvider // used for provisioning
 
 	versioner storage.Versioner
 
@@ -79,6 +92,10 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*clientrest.Config, error)
+}
+
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
@@ -90,18 +107,20 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	configProvider RestConfigProvider,
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
-		store:        store,
-		gr:           config.GroupResource,
-		codec:        config.Codec,
-		keyFunc:      keyFunc,
-		newFunc:      newFunc,
-		newListFunc:  newListFunc,
-		getAttrsFunc: getAttrsFunc,
-		trigger:      trigger,
-		indexers:     indexers,
+		store:          store,
+		gr:             config.GroupResource,
+		codec:          config.Codec,
+		keyFunc:        keyFunc,
+		newFunc:        newFunc,
+		newListFunc:    newListFunc,
+		getAttrsFunc:   getAttrsFunc,
+		trigger:        trigger,
+		indexers:       indexers,
+		configProvider: configProvider,
 
 		getKey: keyParser,
 
@@ -157,15 +176,23 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
+	var permissions string
 	req := &resource.CreateRequest{}
-	req.Value, err = s.prepareObjectForStorage(ctx, obj)
+	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_ADDED, key, obj, out)
 	}
+
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
+
+	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, permissions, obj, s.opts.Permissions)
+	if err != nil {
+		return err
+	}
+
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -196,6 +223,11 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 		})
 	}
 
+	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
+	if grantPermissions != nil {
+		return grantPermissions(ctx)
+	}
+
 	return nil
 }
 
@@ -213,6 +245,11 @@ func (s *Storage) Delete(
 	_ runtime.Object,
 	opts storage.DeleteOptions,
 ) error {
+	info, ok := authtypes.AuthInfoFrom(ctx)
+	if !ok {
+		return errors.New("missing auth info")
+	}
+
 	if err := s.Get(ctx, key, storage.GetOptions{}, out); err != nil {
 		return err
 	}
@@ -244,6 +281,15 @@ func (s *Storage) Delete(
 			return err
 		}
 	}
+
+	meta, err := utils.MetaAccessor(out)
+	if err != nil {
+		return fmt.Errorf("unable to read object %w", err)
+	}
+	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_DELETED, key, out, out)
+	}
+
 	rsp, err := s.store.Delete(ctx, cmd)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -445,11 +491,11 @@ func (s *Storage) GuaranteedUpdate(
 	cachedExistingObject runtime.Object,
 ) error {
 	var (
-		res         storage.ResponseMeta
-		updatedObj  runtime.Object
-		existingObj runtime.Object
-		created     bool
-		err         error
+		res           storage.ResponseMeta
+		updatedObj    runtime.Object
+		existingObj   runtime.Object
+		existingBytes []byte
+		err           error
 	)
 	req := &resource.UpdateRequest{}
 	req.Key, err = s.getKey(key)
@@ -465,61 +511,71 @@ func (s *Storage) GuaranteedUpdate(
 
 	for attempt := 1; attempt <= MaxUpdateAttempts; attempt = attempt + 1 {
 		// Read the latest value
-		rsp, err := s.store.Read(ctx, &resource.ReadRequest{Key: req.Key})
+		readResponse, err := s.store.Read(ctx, &resource.ReadRequest{Key: req.Key})
 		if err != nil {
 			return resource.GetError(resource.AsErrorResult(err))
 		}
 
-		if rsp.Error != nil {
-			if rsp.Error.Code == http.StatusNotFound {
+		if readResponse.Error != nil {
+			if readResponse.Error.Code == http.StatusNotFound {
 				if !ignoreNotFound {
 					return apierrors.NewNotFound(s.gr, req.Key.Name)
 				}
 			} else {
-				return resource.GetError(rsp.Error)
+				return resource.GetError(readResponse.Error)
 			}
 		}
 
-		created = true
-		existingObj = s.newFunc()
-		if len(rsp.Value) > 0 {
-			created = false
-			_, err = s.convertToObject(rsp.Value, existingObj)
+		// Upsert?  (create because it does not already exist)
+		if len(readResponse.Value) == 0 {
+			if !ignoreNotFound {
+				return apierrors.NewNotFound(s.gr, req.Key.Name)
+			}
+
+			updatedObj, _, err = tryUpdate(s.newFunc(), res)
 			if err != nil {
-				return err
-			}
-
-			mmm, err := utils.MetaAccessor(existingObj)
-			if err != nil {
-				return err
-			}
-			mmm.SetResourceVersionInt64(rsp.ResourceVersion)
-			res.ResourceVersion = uint64(rsp.ResourceVersion)
-
-			if rest.IsDualWriteUpdate(ctx) {
-				// Ignore the RV when updating legacy values
-				mmm.SetResourceVersion("")
-			} else {
-				if err := preconditions.Check(key, existingObj); err != nil {
-					if attempt >= MaxUpdateAttempts {
-						return fmt.Errorf("precondition failed: %w", err)
-					}
-					continue
-				}
-			}
-
-			// restore the full original object before tryUpdate
-			if s.opts.LargeObjectSupport != nil && mmm.GetBlob() != nil {
-				err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, mmm)
-				if err != nil {
+				if attempt >= MaxUpdateAttempts {
 					return err
 				}
+				continue
 			}
-		} else if !ignoreNotFound {
-			return apierrors.NewNotFound(s.gr, req.Key.Name)
+			return s.Create(ctx, key, updatedObj, destination, 0)
 		}
 
-		updatedObj, _, err = tryUpdate(existingObj.DeepCopyObject(), res)
+		existingBytes = readResponse.Value
+		existingObj, err = s.convertToObject(readResponse.Value, s.newFunc())
+		if err != nil {
+			return err
+		}
+
+		existing, err := utils.MetaAccessor(existingObj)
+		if err != nil {
+			return err
+		}
+		existing.SetResourceVersionInt64(readResponse.ResourceVersion)
+		res.ResourceVersion = uint64(readResponse.ResourceVersion)
+
+		if rest.IsDualWriteUpdate(ctx) {
+			// Ignore the RV when updating legacy values
+			existing.SetResourceVersion("")
+		} else {
+			if err := preconditions.Check(key, existingObj); err != nil {
+				if attempt >= MaxUpdateAttempts {
+					return fmt.Errorf("precondition failed: %w", err)
+				}
+				continue
+			}
+		}
+
+		// restore the full original object before tryUpdate
+		if s.opts.LargeObjectSupport != nil && existing.GetBlob() != nil {
+			err = s.opts.LargeObjectSupport.Reconstruct(ctx, req.Key, s.store, existing)
+			if err != nil {
+				return err
+			}
+		}
+
+		updatedObj, _, err = tryUpdate(existingObj, res)
 		if err != nil {
 			if attempt >= MaxUpdateAttempts {
 				return err
@@ -529,64 +585,32 @@ func (s *Storage) GuaranteedUpdate(
 		break
 	}
 
-	unchanged, err := isUnchanged(s.codec, existingObj, updatedObj)
+	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
 
-	if unchanged {
-		var buf bytes.Buffer
-		if err = s.codec.Encode(updatedObj, &buf); err != nil {
-			return err
-		}
-		if _, err := s.convertToObject(buf.Bytes(), destination); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	var (
-		value []byte
-		rv    int64
-	)
-	if created {
-		value, err = s.prepareObjectForStorage(ctx, updatedObj)
-		if err != nil {
-			return err
-		}
-		rsp2, err := s.store.Create(ctx, &resource.CreateRequest{
-			Key:   req.Key,
-			Value: value,
-		})
+	var rv uint64
+	// Only update (for real) if the bytes have changed
+	if !bytes.Equal(req.Value, existingBytes) {
+		updateResponse, err := s.store.Update(ctx, req)
 		if err != nil {
 			return resource.GetError(resource.AsErrorResult(err))
 		}
-		if rsp2.Error != nil {
-			return resource.GetError(rsp2.Error)
+		if updateResponse.Error != nil {
+			return resource.GetError(updateResponse.Error)
 		}
-		rv = rsp2.ResourceVersion
-	} else {
-		value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
-		if err != nil {
+		rv = uint64(updateResponse.ResourceVersion)
+	}
+
+	if _, err := s.convertToObject(req.Value, destination); err != nil {
+		return err
+	}
+
+	if rv > 0 {
+		if err := s.versioner.UpdateObject(destination, rv); err != nil {
 			return err
 		}
-		req.Value = value
-		rsp2, err := s.store.Update(ctx, req)
-		if err != nil {
-			return resource.GetError(resource.AsErrorResult(err))
-		}
-		if rsp2.Error != nil {
-			return resource.GetError(rsp2.Error)
-		}
-		rv = rsp2.ResourceVersion
-	}
-
-	if _, err := s.convertToObject(value, destination); err != nil {
-		return err
-	}
-
-	if err := s.versioner.UpdateObject(destination, uint64(rv)); err != nil {
-		return err
 	}
 
 	return nil

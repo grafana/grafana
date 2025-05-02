@@ -13,6 +13,8 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkscheduler"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checktyperegisterer"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	"github.com/grafana/grafana/pkg/infra/log"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/klog/v2"
 )
@@ -24,6 +26,7 @@ func New(cfg app.Config) (app.App, error) {
 		return nil, fmt.Errorf("invalid config type")
 	}
 	checkRegistry := specificConfig.CheckRegistry
+	log := log.New("advisor.app")
 
 	// Prepare storage client
 	clientGenerator := k8s.NewClientRegistry(cfg.KubeConfig, k8s.ClientConfig{})
@@ -52,19 +55,42 @@ func New(cfg app.Config) (app.App, error) {
 				Validator: &simple.Validator{
 					ValidateFunc: func(ctx context.Context, req *app.AdmissionRequest) error {
 						if req.Object != nil {
-							_, err := getCheck(req.Object, checkMap)
-							return err
+							check, err := getCheck(req.Object, checkMap)
+							if err != nil {
+								return err
+							}
+							if req.Action == resource.AdmissionActionCreate {
+								go func() {
+									log.Debug("Processing check", "namespace", req.Object.GetNamespace())
+									requester, err := identity.GetRequester(ctx)
+									if err != nil {
+										log.Error("Error getting requester", "error", err)
+										return
+									}
+									ctx = identity.WithRequester(context.Background(), requester)
+									err = processCheck(ctx, client, req.Object, check)
+									if err != nil {
+										log.Error("Error processing check", "error", err)
+									}
+								}()
+							}
+							if req.Action == resource.AdmissionActionUpdate {
+								go func() {
+									log.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
+									requester, err := identity.GetRequester(ctx)
+									if err != nil {
+										log.Error("Error getting requester", "error", err)
+										return
+									}
+									ctx = identity.WithRequester(context.Background(), requester)
+									err = processCheckRetry(ctx, client, req.Object, check)
+									if err != nil {
+										log.Error("Error processing check retry", "error", err)
+									}
+								}()
+							}
 						}
 						return nil
-					},
-				},
-				Watcher: &simple.Watcher{
-					AddFunc: func(ctx context.Context, obj resource.Object) error {
-						check, err := getCheck(obj, checkMap)
-						if err != nil {
-							return err
-						}
-						return processCheck(ctx, client, obj, check)
 					},
 				},
 			},

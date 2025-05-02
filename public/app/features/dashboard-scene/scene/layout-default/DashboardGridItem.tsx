@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash';
+import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -20,6 +21,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
 import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
@@ -47,9 +49,9 @@ export class DashboardGridItem
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
   public readonly isDashboardLayoutItem = true;
+  public containerRef = React.createRef<HTMLDivElement>();
 
   private _prevRepeatValues?: VariableValueSingle[];
-
   private _gridSizeSub: Unsubscribable | undefined;
 
   public constructor(state: DashboardGridItemState) {
@@ -82,8 +84,12 @@ export class DashboardGridItem
     return this.state.variableName ? 'panel-repeater-grid-item' : '';
   }
 
-  public getOptions(): OptionsPaneCategoryDescriptor {
+  public getOptions(): OptionsPaneCategoryDescriptor[] {
     return getDashboardGridItemOptions(this);
+  }
+
+  public setElementBody(body: VizPanel): void {
+    this.setState({ body });
   }
 
   public editingStarted() {
@@ -157,6 +163,8 @@ export class DashboardGridItem
               name: variable.state.name,
               value: variableValues[index],
               text: String(variableTexts[index]),
+              isMulti: variable.state.isMulti,
+              includeAll: variable.state.includeAll,
             }),
           ],
         }),
@@ -242,5 +250,9 @@ export class DashboardGridItem
 
   public isRepeated(): boolean {
     return this.state.variableName !== undefined;
+  }
+
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }

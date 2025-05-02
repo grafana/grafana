@@ -74,6 +74,7 @@ export const versionedComponents = {
       '9.5.0': 'Built-in role picker',
     },
     permissionLevel: {
+      '12.0.0': 'Permission level',
       '9.5.0': 'Permission Level',
     },
   },
@@ -531,6 +532,33 @@ export const versionedComponents = {
     measureButton: {
       '9.2.0': 'show measure tools',
     },
+
+    Outline: {
+      section: {
+        '12.0.0': 'data-testid Outline section',
+      },
+      node: {
+        '12.0.0': (type: string) => `data-testid outline node ${type}`,
+      },
+      item: {
+        '12.0.0': (type: string) => `data-testid outline item ${type}`,
+      },
+    },
+
+    ElementEditPane: {
+      variableType: {
+        '12.0.0': (type?: string) => `data-testid variable type ${type}`,
+      },
+      addVariableButton: {
+        '12.0.0': 'data-testid add variable button',
+      },
+      variableNameInput: {
+        '12.0.0': 'data-testid variable name input',
+      },
+      variableLabelInput: {
+        '12.0.0': 'data-testid variable label input',
+      },
+    },
   },
   PanelInspector: {
     Data: {
@@ -589,6 +617,9 @@ export const versionedComponents = {
     addQuery: {
       '10.2.0': 'data-testid query-tab-add-query',
       [MIN_GRAFANA_VERSION]: 'Query editor add query button',
+    },
+    addQueryFromLibrary: {
+      '11.5.0': 'data-testid query-tab-add-query-from-library',
     },
     queryGroupTopSection: {
       '11.2.0': 'data-testid query group top section',

@@ -19,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/advisor"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/sandbox"
 	"github.com/grafana/grafana/pkg/services/stats"
@@ -41,6 +42,7 @@ type Service struct {
 	datasources        datasources.DataSourceService
 	httpClientProvider httpclient.Provider
 	sandbox            sandbox.Sandbox
+	advisor            advisor.AdvisorStats
 
 	log log.Logger
 
@@ -61,6 +63,7 @@ func ProvideService(
 	datasourceService datasources.DataSourceService,
 	httpClientProvider httpclient.Provider,
 	sandbox sandbox.Sandbox,
+	advisor advisor.AdvisorStats,
 ) *Service {
 	s := &Service{
 		cfg:                cfg,
@@ -73,9 +76,9 @@ func ProvideService(
 		datasources:        datasourceService,
 		httpClientProvider: httpClientProvider,
 		sandbox:            sandbox,
-
-		startTime: time.Now(),
-		log:       log.New("infra.usagestats.collector"),
+		advisor:            advisor,
+		startTime:          time.Now(),
+		log:                log.New("infra.usagestats.collector"),
 	}
 
 	collectors := []usagestats.MetricsFunc{
@@ -150,7 +153,7 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.plugins.apps.count"] = s.appCount(ctx)
 	m["stats.plugins.panels.count"] = s.panelCount(ctx)
 	m["stats.plugins.datasources.count"] = s.dataSourceCount(ctx)
-	m["stats.plugins.sandboxed_plugins.count"] = s.sandboxCount()
+	m["stats.plugins.sandboxed_plugins.count"] = s.sandboxCount(ctx)
 	m["stats.alerts.count"] = statsResult.Alerts
 	m["stats.active_users.count"] = statsResult.ActiveUsers
 	m["stats.active_admins.count"] = statsResult.ActiveAdmins
@@ -214,6 +217,15 @@ func (s *Service) collectSystemStats(ctx context.Context) (map[string]any, error
 	m["stats.distributor."+s.cfg.ReportingDistributor+".count"] = 1
 
 	m["stats.uptime"] = int64(time.Since(s.startTime).Seconds())
+
+	report, err := s.advisor.ReportSummary(ctx)
+	if err != nil {
+		s.log.Error("Failed to get advisor usage stats", "error", err)
+	} else {
+		m["stats.plugins.advisor.outdated_plugins"] = report.PluginsOutdated
+		m["stats.plugins.advisor.deprecated_plugins"] = report.PluginsDeprecated
+		m["stats.plugins.advisor.unhealthy_datasources"] = report.DatasourcesUnhealthy
+	}
 
 	featureUsageStats := s.features.GetUsageStats(ctx)
 	for k, v := range featureUsageStats {
@@ -367,8 +379,8 @@ func (s *Service) dataSourceCount(ctx context.Context) int {
 	return len(s.plugins.Plugins(ctx, plugins.TypeDataSource))
 }
 
-func (s *Service) sandboxCount() int {
-	ps, err := s.sandbox.Plugins()
+func (s *Service) sandboxCount(ctx context.Context) int {
+	ps, err := s.sandbox.Plugins(ctx)
 	if err != nil {
 		s.log.Error("Failed to get sandboxed plugin count", "error", err)
 		return 0

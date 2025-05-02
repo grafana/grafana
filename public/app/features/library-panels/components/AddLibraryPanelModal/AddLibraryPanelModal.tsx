@@ -60,7 +60,6 @@ export const AddLibraryPanelContents = ({
     }
   }, [debouncedPanelName, folderUid]);
 
-  console.log('isValidName:', isValidName);
   const invalidInput =
     !isValidName?.value && isValidName.value !== undefined && panelName === debouncedPanelName && !waiting;
 
@@ -120,7 +119,11 @@ interface Props extends AddLibraryPanelContentsProps {
 
 export const AddLibraryPanelModal = ({ isOpen = false, panel, initialFolderUid, ...props }: Props) => {
   return (
-    <Modal title="Create library panel" isOpen={isOpen} onDismiss={props.onDismiss}>
+    <Modal
+      title={t('library-panels.add-library-panel-modal.title-create-library-panel', 'Create library panel')}
+      isOpen={isOpen}
+      onDismiss={props.onDismiss}
+    >
       <AddLibraryPanelContents panel={panel} initialFolderUid={initialFolderUid} onDismiss={props.onDismiss} />
     </Modal>
   );

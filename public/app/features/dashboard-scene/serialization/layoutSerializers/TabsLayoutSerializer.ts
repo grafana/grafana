@@ -1,49 +1,87 @@
-import { DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
+import {
+  Spec as DashboardV2Spec,
+  TabsLayoutTabKind,
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 
 import { TabItem } from '../../scene/layout-tabs/TabItem';
+import { TabItemRepeaterBehavior } from '../../scene/layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../../scene/layout-tabs/TabsLayoutManager';
-import { LayoutManagerSerializer } from '../../scene/types/DashboardLayoutManager';
+import { isClonedKey } from '../../utils/clone';
 
-import { layoutSerializerRegistry } from './layoutSerializerRegistry';
-import { getLayout } from './utils';
+import { layoutDeserializerRegistry } from './layoutSerializerRegistry';
+import { getConditionalRendering } from './utils';
 
-export class TabsLayoutSerializer implements LayoutManagerSerializer {
-  serialize(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
-    return {
-      kind: 'TabsLayout',
-      spec: {
-        tabs: layoutManager.state.tabs.map((tab) => {
-          const layout = getLayout(tab.state.layout);
-          if (layout.kind === 'TabsLayout') {
-            throw new Error('Nested TabsLayout is not supported');
-          }
-          return {
-            kind: 'TabsLayoutTab',
-            spec: {
-              title: tab.state.title,
-              layout: layout,
-            },
-          };
-        }),
-      },
-    };
+export function serializeTabsLayout(layoutManager: TabsLayoutManager): DashboardV2Spec['layout'] {
+  return {
+    kind: 'TabsLayout',
+    spec: {
+      tabs: layoutManager.state.tabs.filter((tab) => !isClonedKey(tab.state.key!)).map(serializeTab),
+    },
+  };
+}
+
+export function serializeTab(tab: TabItem): TabsLayoutTabKind {
+  const layout = tab.state.layout.serialize();
+  const tabKind: TabsLayoutTabKind = {
+    kind: 'TabsLayoutTab',
+    spec: {
+      title: tab.state.title,
+      layout: layout,
+    },
+  };
+
+  const conditionalRenderingRootGroup = tab.state.conditionalRendering?.serialize();
+  // Only serialize the conditional rendering if it has items
+  if (conditionalRenderingRootGroup?.spec.items.length) {
+    tabKind.spec.conditionalRendering = conditionalRenderingRootGroup;
   }
 
-  deserialize(
-    layout: DashboardV2Spec['layout'],
-    elements: DashboardV2Spec['elements'],
-    preload: boolean
-  ): TabsLayoutManager {
-    if (layout.kind !== 'TabsLayout') {
-      throw new Error('Invalid layout kind');
+  if (tab.state.$behaviors) {
+    for (const behavior of tab.state.$behaviors) {
+      if (behavior instanceof TabItemRepeaterBehavior) {
+        if (tabKind.spec.repeat) {
+          throw new Error('Multiple repeaters are not supported');
+        }
+        tabKind.spec.repeat = { value: behavior.state.variableName, mode: 'variable' };
+      }
     }
-    const tabs = layout.spec.tabs.map((tab) => {
-      const layout = tab.spec.layout;
-      return new TabItem({
-        title: tab.spec.title,
-        layout: layoutSerializerRegistry.get(layout.kind).serializer.deserialize(layout, elements, preload),
-      });
-    });
-    return new TabsLayoutManager({ tabs });
   }
+
+  return tabKind;
+}
+
+export function deserializeTabsLayout(
+  layout: DashboardV2Spec['layout'],
+  elements: DashboardV2Spec['elements'],
+  preload: boolean,
+  panelIdGenerator?: () => number
+): TabsLayoutManager {
+  if (layout.kind !== 'TabsLayout') {
+    throw new Error('Invalid layout kind');
+  }
+
+  const tabs = layout.spec.tabs.map((tab) => {
+    return deserializeTab(tab, elements, preload, panelIdGenerator);
+  });
+
+  return new TabsLayoutManager({ tabs });
+}
+
+export function deserializeTab(
+  tab: TabsLayoutTabKind,
+  elements: DashboardV2Spec['elements'],
+  preload: boolean,
+  panelIdGenerator?: () => number
+): TabItem {
+  const layout = tab.spec.layout;
+  const $behaviors = !tab.spec.repeat
+    ? undefined
+    : [new TabItemRepeaterBehavior({ variableName: tab.spec.repeat.value })];
+
+  return new TabItem({
+    title: tab.spec.title,
+    layout: layoutDeserializerRegistry.get(layout.kind).deserialize(layout, elements, preload, panelIdGenerator),
+    $behaviors,
+    conditionalRendering: getConditionalRendering(tab),
+  });
 }

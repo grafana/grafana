@@ -8,6 +8,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import {
   Box,
   Button,
+  Divider,
   Field,
   Icon,
   Input,
@@ -21,53 +22,37 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { RulerRuleGroupDTO, RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
+import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
-import { alertRuleApi } from '../../api/alertRuleApi';
-import { GRAFANA_RULER_CONFIG } from '../../api/featureDiscoveryApi';
+import { evaluateEveryValidationOptions } from '../../group-details/validation';
+import { useFetchGroupsForFolder } from '../../hooks/useFetchGroupsForFolder';
 import { DEFAULT_GROUP_EVALUATION_INTERVAL } from '../../rule-editor/formDefaults';
 import { RuleFormValues } from '../../types/rule-form';
 import {
   isGrafanaAlertingRuleByType,
   isGrafanaManagedRuleByType,
   isGrafanaRecordingRuleByType,
-  rulerRuleType,
+  isProvisionedRuleGroup,
 } from '../../utils/rules';
 import { parsePrometheusDuration } from '../../utils/time';
 import { CollapseToggle } from '../CollapseToggle';
 import { ProvisioningBadge } from '../Provisioning';
-import { evaluateEveryValidationOptions } from '../rules/EditRuleGroupModal';
 
+import { DurationQuickPick } from './DurationQuickPick';
 import { EvaluationGroupQuickPick } from './EvaluationGroupQuickPick';
 import { GrafanaAlertStatePicker } from './GrafanaAlertStatePicker';
 import { NeedHelpInfo } from './NeedHelpInfo';
-import { PendingPeriodQuickPick } from './PendingPeriodQuickPick';
 import { RuleEditorSection } from './RuleEditorSection';
 
 export const MIN_TIME_RANGE_STEP_S = 10; // 10 seconds
 export const MAX_GROUP_RESULTS = 1000;
-
-const useFetchGroupsForFolder = (folderUid: string) => {
-  // fetch the ruler rules from the database so we can figure out what other "groups" are already defined
-  // for our folders
-  return alertRuleApi.endpoints.rulerNamespace.useQuery(
-    {
-      namespace: folderUid,
-      rulerConfig: GRAFANA_RULER_CONFIG,
-    },
-    {
-      refetchOnMountOrArgChange: true,
-      skip: !folderUid,
-    }
-  );
-};
 
 const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProvisionedGroups: boolean) => {
   const folderGroups = Object.values(rulerNamespace).flat();
 
   return folderGroups
     .map<SelectableValue<string>>((group) => {
-      const isProvisioned = isProvisionedGroup(group);
+      const isProvisioned = isProvisionedRuleGroup(group);
       return {
         label: group.name,
         value: group.name,
@@ -79,12 +64,6 @@ const namespaceToGroupOptions = (rulerNamespace: RulerRulesConfigDTO, enableProv
     })
 
     .sort(sortByLabel);
-};
-
-const isProvisionedGroup = (group: RulerRuleGroupDTO) => {
-  return group.rules.some(
-    (rule) => rulerRuleType.grafana.rule(rule) && Boolean(rule.grafana_alert.provenance) === true
-  );
 };
 
 const sortByLabel = (a: SelectableValue<string>, b: SelectableValue<string>) => {
@@ -147,6 +126,7 @@ export function GrafanaEvaluationBehaviorStep({
     getValues,
     formState: { errors },
     control,
+    register,
   } = useFormContext<RuleFormValues>();
 
   const [group, type, isPaused, folder, evaluateEvery] = watch([
@@ -155,6 +135,7 @@ export function GrafanaEvaluationBehaviorStep({
     'isPaused',
     'folder',
     'evaluateEvery',
+    'keepFiringFor',
   ]);
 
   const isGrafanaAlertingRule = isGrafanaAlertingRuleByType(type);
@@ -205,7 +186,7 @@ export function GrafanaEvaluationBehaviorStep({
     // TODO remove "and alert condition" for recording rules
     <RuleEditorSection
       stepNo={step}
-      title="Set evaluation behavior"
+      title={t('alerting.grafana-evaluation-behavior-step.title-set-evaluation-behavior', 'Set evaluation behavior')}
       description={getDescription(isGrafanaRecordingRule)}
     >
       <Stack direction="column" justify-content="flex-start" align-items="flex-start">
@@ -246,7 +227,10 @@ export function GrafanaEvaluationBehaviorStep({
                         )}
                       </div>
                     )}
-                    placeholder={'Select an evaluation group...'}
+                    placeholder={t(
+                      'alerting.grafana-evaluation-behavior-step.placeholder-select-an-evaluation-group',
+                      'Select an evaluation group...'
+                    )}
                   />
                 )}
                 name="group"
@@ -258,7 +242,9 @@ export function GrafanaEvaluationBehaviorStep({
             </Field>
           </div>
           <Box gap={1} display={'flex'} alignItems={'center'}>
-            <Text color="secondary">or</Text>
+            <Text color="secondary">
+              <Trans i18nKey="alerting.grafana-evaluation-behavior-step.or">or</Trans>
+            </Text>
             <Button
               onClick={onOpenEvaluationGroupCreationModal}
               type="button"
@@ -297,6 +283,9 @@ export function GrafanaEvaluationBehaviorStep({
         )}
         {/* Show the pending period input only for Grafana alerting rules */}
         {isGrafanaAlertingRule && <ForInput evaluateEvery={evaluateEvery} />}
+        <Divider />
+        {/*Show the keepFiringFor input only for Grafana alerting rules*/}
+        {isGrafanaAlertingRule && <KeepFiringFor evaluateEvery={evaluateEvery} />}
 
         {existing && (
           <Field htmlFor="pause-alert-switch">
@@ -328,7 +317,10 @@ export function GrafanaEvaluationBehaviorStep({
           <CollapseToggle
             isCollapsed={!showErrorHandling}
             onToggle={(collapsed) => setShowErrorHandling(!collapsed)}
-            text="Configure no data and error handling"
+            text={t(
+              'alerting.grafana-evaluation-behavior-step.text-configure-no-data-and-error-handling',
+              'Configure no data and error handling'
+            )}
           />
           {showErrorHandling && (
             <>
@@ -367,6 +359,29 @@ export function GrafanaEvaluationBehaviorStep({
                     />
                   )}
                   name="execErrState"
+                />
+              </Field>
+              <Field
+                label={t('alerting.alert.missing-series-resolve', 'Missing series evaluations to resolve')}
+                description={t(
+                  'alerting.alert.description-missing-series-evaluations',
+                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
+                )}
+                invalid={!!errors.missingSeriesEvalsToResolve?.message}
+                error={errors.missingSeriesEvalsToResolve?.message}
+                className={styles.inlineField}
+                htmlFor="missing-series-resolve"
+              >
+                <Input
+                  placeholder={t(
+                    'alerting.grafana-evaluation-behavior-step.missing-series-resolve-placeholder',
+                    'Default: 2'
+                  )}
+                  id="missing-series-resolve"
+                  {...register('missingSeriesEvalsToResolve', {
+                    pattern: { value: /^\d+$/, message: 'Must be a positive integer.' },
+                  })}
+                  width={21}
                 />
               </Field>
             </>
@@ -432,7 +447,7 @@ function EvaluationGroupCreationModal({
     <Modal
       className={styles.modal}
       isOpen={true}
-      title={'New evaluation group'}
+      title={t('alerting.evaluation-group-creation-modal.title-new-evaluation-group', 'New evaluation group')}
       onDismiss={onCancel}
       onClickBackdrop={onCancel}
     >
@@ -444,7 +459,10 @@ function EvaluationGroupCreationModal({
             label={
               <Label
                 htmlFor={evaluationGroupNameId}
-                description="A group evaluates all its rules over the same evaluation interval."
+                description={t(
+                  'alerting.evaluation-group-creation-modal.description-group-name',
+                  'A group evaluates all its rules over the same evaluation interval.'
+                )}
               >
                 <Trans i18nKey="alerting.rule-form.evaluation.group-name">Evaluation group name</Trans>
               </Label>
@@ -457,7 +475,7 @@ function EvaluationGroupCreationModal({
               className={styles.formInput}
               autoFocus={true}
               id={evaluationGroupNameId}
-              placeholder="Enter a name"
+              placeholder={t('alerting.evaluation-group-creation-modal.placeholder-enter-a-name', 'Enter a name')}
               {...register('group', { required: { value: true, message: 'Required.' } })}
             />
           </Field>
@@ -465,7 +483,13 @@ function EvaluationGroupCreationModal({
           <Field
             error={formState.errors.evaluateEvery?.message}
             label={
-              <Label htmlFor={evaluateEveryId} description="How often all rules in the group are evaluated.">
+              <Label
+                htmlFor={evaluateEveryId}
+                description={t(
+                  'alerting.evaluation-group-creation-modal.description-often-rules-group-evaluated',
+                  'How often all rules in the group are evaluated.'
+                )}
+              >
                 <Trans i18nKey="alerting.rule-form.evaluation.group.interval">Evaluation interval</Trans>
               </Label>
             }
@@ -525,7 +549,10 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
         label={
           <Label
             htmlFor={evaluateForId}
-            description='Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+            description={t(
+              'alerting.for-input.description-pending',
+              'Period during which the threshold condition must be met to trigger an alert. Selecting "None" triggers the alert immediately once the condition is met.'
+            )}
           >
             <Trans i18nKey="alerting.rule-form.evaluation-behaviour.pending-period">Pending period</Trans>
           </Label>
@@ -537,10 +564,56 @@ export function ForInput({ evaluateEvery }: { evaluateEvery: string }) {
       >
         <Input id={evaluateForId} width={8} {...register('evaluateFor', forValidationOptions(evaluateEvery))} />
       </Field>
-      <PendingPeriodQuickPick
-        selectedPendingPeriod={currentPendingPeriod}
+      <DurationQuickPick
+        selectedDuration={currentPendingPeriod}
         groupEvaluationInterval={evaluateEvery}
         onSelect={setPendingPeriod}
+      />
+    </Stack>
+  );
+}
+
+function KeepFiringFor({ evaluateEvery }: { evaluateEvery: string }) {
+  const styles = useStyles2(getStyles);
+  const {
+    register,
+    formState: { errors },
+    setValue,
+    watch,
+  } = useFormContext<RuleFormValues>();
+
+  const currentKeepFiringFor = watch('keepFiringFor');
+  const keepFiringForId = 'keep-firing-for-input';
+
+  const setKeepFiringFor = (keepFiringFor: string) => {
+    setValue('keepFiringFor', keepFiringFor);
+  };
+
+  return (
+    <Stack direction="column" justify-content="flex-start" align-items="flex-start">
+      <Field
+        label={
+          <Label
+            htmlFor={keepFiringForId}
+            description={t(
+              'alerting.rule-form.evaluation-behaviour.keep-firing-for.label-description',
+              'Period during which the alert will continue to show up as firing even though the threshold condition is no longer breached. Selecting "None" means the alert will be back to normal immediately.'
+            )}
+          >
+            <Trans i18nKey="alerting.rule-form.evaluation-behaviour.keep-firing-for.label-text">Keep firing for</Trans>
+          </Label>
+        }
+        className={styles.inlineField}
+        error={errors.keepFiringFor?.message}
+        invalid={Boolean(errors.keepFiringFor?.message) ? true : undefined}
+        validationMessageHorizontalOverflow={true}
+      >
+        <Input id={keepFiringForId} width={8} {...register('keepFiringFor')} />
+      </Field>
+      <DurationQuickPick
+        selectedDuration={currentKeepFiringFor}
+        groupEvaluationInterval={evaluateEvery}
+        onSelect={setKeepFiringFor}
       />
     </Stack>
   );
@@ -558,10 +631,16 @@ function NeedHelpInfoForConfigureNoDataError() {
         </Trans>
       </Text>
       <NeedHelpInfo
-        contentText="These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts."
+        contentText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help.content',
+          'These settings can help mitigate temporary data source issues, preventing alerts from unintentionally firing due to lack of data, errors, or timeouts.'
+        )}
         externalLink={docsLink}
-        linkText={`Read more about this option`}
-        title="Configure no data and error handling"
+        linkText={t('alerting.rule-form.evaluation-behaviour.info-help.link-text', `Read more about this option`)}
+        title={t(
+          'alerting.rule-form.evaluation-behaviour.info-help.link-title',
+          'Configure no data and error handling'
+        )}
       />
     </Stack>
   );
@@ -606,8 +685,11 @@ function getDescription(isGrafanaRecordingRule: boolean) {
           </>
         }
         externalLink={docsLink}
-        linkText={`Read about evaluation and alert states`}
-        title="Alert rule evaluation"
+        linkText={t(
+          'alerting.rule-form.evaluation-behaviour.info-help2.link-text',
+          `Read about evaluation and alert states`
+        )}
+        title={t('alerting.rule-form.evaluation-behaviour.info-help2.link-title', 'Alert rule evaluation')}
       />
     </Stack>
   );

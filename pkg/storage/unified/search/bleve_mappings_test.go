@@ -1,4 +1,4 @@
-package search
+package search_test
 
 import (
 	"fmt"
@@ -9,10 +9,11 @@ import (
 
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 )
 
 func TestDocumentMapping(t *testing.T) {
-	mappings, err := getBleveMappings(nil)
+	mappings, err := search.GetBleveMappings(nil)
 	require.NoError(t, err)
 	data := resource.IndexableDocument{
 		Title:       "title",
@@ -36,6 +37,7 @@ func TestDocumentMapping(t *testing.T) {
 			TimestampMillis: 1234,
 		},
 	}
+	data.UpdateCopyFields()
 
 	doc := document.NewDocument("id")
 	err = mappings.MapDocument(doc, data)
@@ -47,5 +49,5 @@ func TestDocumentMapping(t *testing.T) {
 
 	fmt.Printf("DOC: fields %d\n", len(doc.Fields))
 	fmt.Printf("DOC: size %d\n", doc.Size())
-	require.Equal(t, 15, len(doc.Fields))
+	require.Equal(t, 17, len(doc.Fields))
 }

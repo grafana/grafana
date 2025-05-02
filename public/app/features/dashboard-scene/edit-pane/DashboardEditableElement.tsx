@@ -1,12 +1,13 @@
-import { useMemo } from 'react';
+import { ReactNode, useMemo } from 'react';
 
-import { Input, TextArea } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Button, Icon, Input, Stack, TextArea } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardLayoutSelector } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { useLayoutCategory } from '../scene/layouts-shared/DashboardLayoutSelector';
+import { EditSchemaV2Button } from '../scene/new-toolbar/actions/EditSchemaV2Button';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
 
 export class DashboardEditableElement implements EditableDashboardElement {
@@ -18,7 +19,8 @@ export class DashboardEditableElement implements EditableDashboardElement {
     return {
       typeName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
       icon: 'apps',
-      instanceName: this.dashboard.state.title,
+      instanceName: t('dashboard.edit-pane.elements.dashboard', 'Dashboard'),
+      isContainer: true,
     };
   }
 
@@ -41,24 +43,35 @@ export class DashboardEditableElement implements EditableDashboardElement {
             title: t('dashboard.options.description', 'Description'),
             render: () => <DashboardDescriptionInput dashboard={dashboard} />,
           })
-        )
-        .addItem(
-          new OptionsPaneItemDescriptor({
-            title: t('dashboard.layout.common.layout', 'Layout'),
-            render: () => <DashboardLayoutSelector layoutManager={body} />,
-          })
         );
 
-      if (body.getOptions) {
-        for (const option of body.getOptions()) {
-          editPaneHeaderOptions.addItem(option);
-        }
-      }
-
       return editPaneHeaderOptions;
-    }, [body, dashboard]);
+    }, [dashboard]);
 
-    return [dashboardOptions];
+    const layoutCategory = useLayoutCategory(body);
+
+    return [dashboardOptions, ...layoutCategory];
+  }
+
+  public renderActions(): ReactNode {
+    return (
+      <>
+        <EditSchemaV2Button dashboard={this.dashboard} />
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => this.dashboard.onOpenSettings()}
+          tooltip={t('dashboard.toolbar.dashboard-settings.tooltip', 'Dashboard settings')}
+        >
+          <Stack direction="row" gap={1} justifyContent="space-between" alignItems={'center'}>
+            <span>
+              <Trans i18nKey="dashboard.actions.open-settings">Settings</Trans>
+            </span>
+            <Icon name="sliders-v-alt" />
+          </Stack>
+        </Button>
+      </>
+    );
   }
 }
 
@@ -71,5 +84,5 @@ export function DashboardTitleInput({ dashboard }: { dashboard: DashboardScene }
 export function DashboardDescriptionInput({ dashboard }: { dashboard: DashboardScene }) {
   const { description } = dashboard.useState();
 
-  return <TextArea value={description} onChange={(e) => dashboard.setState({ title: e.currentTarget.value })} />;
+  return <TextArea value={description} onChange={(e) => dashboard.setState({ description: e.currentTarget.value })} />;
 }

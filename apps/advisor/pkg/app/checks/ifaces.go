@@ -10,6 +10,8 @@ import (
 type Check interface {
 	// ID returns the unique identifier of the check
 	ID() string
+	// Item returns the item that will be checked
+	Item(ctx context.Context, id string) (any, error)
 	// Items returns the list of items that will be checked
 	Items(ctx context.Context) ([]any, error)
 	// Steps returns the list of steps that will be executed

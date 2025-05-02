@@ -47,6 +47,20 @@ describe('DashboardModel', () => {
     it('should have default properties', () => {
       expect(model.panels.length).toBe(0);
     });
+
+    it('should have uid if specified', () => {
+      const model = createDashboardModelFixture({ uid: '123' });
+      expect(model.uid).toBe('123');
+    });
+    it('should have null uid if not specified in spec', () => {
+      const model = createDashboardModelFixture();
+      expect(model.uid).toBe(null);
+    });
+
+    it('should have uid if specified in meta', () => {
+      const model = createDashboardModelFixture({}, { uid: '123' });
+      expect(model.uid).toBe('123');
+    });
   });
 
   describe('when storing original dashboard data', () => {

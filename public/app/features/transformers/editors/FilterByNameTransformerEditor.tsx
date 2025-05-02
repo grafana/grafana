@@ -11,9 +11,10 @@ import {
   TransformerCategory,
   SelectableValue,
 } from '@grafana/data';
-import { FilterFieldsByNameTransformerOptions } from '@grafana/data/src/transformations/transformers/filterByName';
-import { getTemplateSrv } from '@grafana/runtime/src/services';
+import { FilterFieldsByNameTransformerOptions } from '@grafana/data/internal';
+import { getTemplateSrv } from '@grafana/runtime';
 import { Input, FilterPill, InlineFieldRow, InlineField, InlineSwitch, Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -198,14 +199,14 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
     const { options, selected, isRegexValid } = this.state;
     return (
       <div>
-        <InlineFieldRow label="Use variable">
-          <InlineField label="From variable">
+        <InlineFieldRow label={t('transformers.filter-by-name-transformer-editor.label-use-variable', 'Use variable')}>
+          <InlineField label={t('transformers.filter-by-name-transformer-editor.label-from-variable', 'From variable')}>
             <InlineSwitch value={this.state.byVariable} onChange={this.onFromVariableChange}></InlineSwitch>
           </InlineField>
         </InlineFieldRow>
         {this.state.byVariable ? (
           <InlineFieldRow>
-            <InlineField label="Variable">
+            <InlineField label={t('transformers.filter-by-name-transformer-editor.label-variable', 'Variable')}>
               <Select
                 value={this.state.variable}
                 onChange={this.onVariableChange}
@@ -214,14 +215,17 @@ export class FilterByNameTransformerEditor extends React.PureComponent<
             </InlineField>
           </InlineFieldRow>
         ) : (
-          <InlineFieldRow label="Identifier">
+          <InlineFieldRow label={t('transformers.filter-by-name-transformer-editor.label-identifier', 'Identifier')}>
             <InlineField
-              label="Identifier"
+              label={t('transformers.filter-by-name-transformer-editor.label-identifier', 'Identifier')}
               invalid={!isRegexValid}
               error={!isRegexValid ? 'Invalid pattern' : undefined}
             >
               <Input
-                placeholder="Regular expression pattern"
+                placeholder={t(
+                  'transformers.filter-by-name-transformer-editor.placeholder-regular-expression-pattern',
+                  'Regular expression pattern'
+                )}
                 value={this.state.regex || ''}
                 onChange={(e) => this.setState({ regex: e.currentTarget.value })}
                 onBlur={this.onInputBlur}

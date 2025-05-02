@@ -1,6 +1,7 @@
 import { Observable, from, retry, catchError, filter, map, mergeMap } from 'rxjs';
 
-import { BackendSrvRequest, config, getBackendSrv } from '@grafana/runtime';
+import { isLiveChannelMessageEvent, LiveChannelScope } from '@grafana/data';
+import { config, getBackendSrv, getGrafanaLiveSrv } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { getAPINamespace } from '../../api/utils';
@@ -19,20 +20,17 @@ import {
   K8sAPIGroupList,
   AnnoKeySavedFromUI,
   ResourceEvent,
+  ResourceClientWriteParams,
+  GroupVersionResource,
 } from './types';
-
-export interface GroupVersionResource {
-  group: string;
-  version: string;
-  resource: string;
-}
 
 export class ScopedResourceClient<T = object, S = object, K = string> implements ResourceClient<T, S, K> {
   readonly url: string;
+  readonly gvr: GroupVersionResource;
 
   constructor(gvr: GroupVersionResource, namespaced = true) {
     const ns = namespaced ? `namespaces/${getAPINamespace()}/` : '';
-
+    this.gvr = gvr;
     this.url = `/apis/${gvr.group}/${gvr.version}/${ns}${gvr.resource}`;
   }
 
@@ -40,26 +38,40 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<Resource<T, S, K>>(`${this.url}/${name}`);
   }
 
-  public watch(
-    params?: WatchOptions,
-    config?: Pick<BackendSrvRequest, 'data' | 'method'>
-  ): Observable<ResourceEvent<T, S, K>> {
-    const decoder = new TextDecoder();
-    const { name, ...rest } = params ?? {}; // name needs to be added to fieldSelector
+  public watch(params?: WatchOptions): Observable<ResourceEvent<T, S, K>> {
     const requestParams = {
-      ...rest,
       watch: true,
       labelSelector: this.parseListOptionsSelector(params?.labelSelector),
       fieldSelector: this.parseListOptionsSelector(params?.fieldSelector),
     };
-    if (name) {
+    if (params?.name) {
       requestParams.fieldSelector = `metadata.name=${name}`;
     }
+
+    // For now, watch over live only supports provisioning
+    if (this.gvr.group === 'provisioning.grafana.app') {
+      let query = '';
+      if (requestParams.fieldSelector?.startsWith('metadata.name=')) {
+        query = requestParams.fieldSelector.substring('metadata.name'.length);
+      }
+      return getGrafanaLiveSrv()
+        .getStream<ResourceEvent<T, S, K>>({
+          scope: LiveChannelScope.Watch,
+          namespace: this.gvr.group,
+          path: `${this.gvr.version}/${this.gvr.resource}${query}/${config.bootData.user.uid}`,
+        })
+        .pipe(
+          filter((event) => isLiveChannelMessageEvent(event)),
+          map((event) => event.message)
+        );
+    }
+
+    const decoder = new TextDecoder();
     return getBackendSrv()
       .chunked({
         url: this.url,
         params: requestParams,
-        ...config,
+        method: 'GET',
       })
       .pipe(
         filter((response) => response.ok && response.data instanceof Uint8Array),
@@ -73,7 +85,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
           try {
             return JSON.parse(line);
           } catch (e) {
-            console.warn('Invalid JSON in watch stream:', e);
+            console.warn('Invalid JSON in watch stream:', e, line);
             return null;
           }
         }),
@@ -86,8 +98,8 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       );
   }
 
-  public async subresource<S>(name: string, path: string): Promise<S> {
-    return getBackendSrv().get<S>(`${this.url}/${name}/${path}`);
+  public async subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S> {
+    return getBackendSrv().get<S>(`${this.url}/${name}/${path}`, params);
   }
 
   public async list(opts?: ListOptions | undefined): Promise<ResourceList<T, S, K>> {
@@ -98,7 +110,7 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
     return getBackendSrv().get<ResourceList<T, S, K>>(this.url, opts);
   }
 
-  public async create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>> {
+  public async create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
     if (!obj.metadata.name && !obj.metadata.generateName) {
       const login = contextSrv.user.login;
       // GenerateName lets the apiserver create a new uid for the name
@@ -106,12 +118,17 @@ export class ScopedResourceClient<T = object, S = object, K = string> implements
       obj.metadata.generateName = login ? login.slice(0, 2) : 'g';
     }
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().post(this.url, obj);
+    return getBackendSrv().post(this.url, obj, {
+      params,
+    });
   }
 
-  public async update(obj: Resource<T, S, K>): Promise<Resource<T, S, K>> {
+  public async update(obj: Resource<T, S, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>> {
     setSavedFromUIAnnotation(obj.metadata);
-    return getBackendSrv().put<Resource<T, S, K>>(`${this.url}/${obj.metadata.name}`, obj);
+    const url = `${this.url}/${obj.metadata.name}`;
+    return getBackendSrv().put<Resource<T, S, K>>(url, obj, {
+      params,
+    });
   }
 
   public async delete(name: string, showSuccessAlert: boolean): Promise<MetaStatus> {

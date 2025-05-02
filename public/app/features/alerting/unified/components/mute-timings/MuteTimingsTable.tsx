@@ -55,7 +55,11 @@ export const MuteTimingsTable = () => {
   const columns = useColumns(alertManagerSourceName, hideActions);
 
   if (isLoading) {
-    return <LoadingPlaceholder text="Loading mute timings..." />;
+    return (
+      <LoadingPlaceholder
+        text={t('alerting.mute-timings-table.text-loading-mute-timings', 'Loading mute timings...')}
+      />
+    );
   }
 
   if (error) {
@@ -103,19 +107,29 @@ export const MuteTimingsTable = () => {
           </>
         )}
       </Stack>
-      {items.length > 0 ? (
-        <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} />
-      ) : !hideActions ? (
-        <EmptyAreaWithCTA
-          text="You haven't created any mute timings yet"
-          buttonLabel="Add mute timing"
-          buttonIcon="plus"
-          buttonSize="lg"
-          href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
-          showButton={allowedToCreateMuteTiming}
-        />
-      ) : (
-        <EmptyAreaWithCTA text="No mute timings configured" buttonLabel={''} showButton={false} />
+      {items.length > 0 ? <DynamicTable items={items} cols={columns} pagination={{ itemsPerPage: 25 }} /> : null}
+      {items.length === 0 && (
+        <>
+          {!hideActions ? (
+            <EmptyAreaWithCTA
+              text={t(
+                'alerting.mute-timings-table.text-havent-created-timings',
+                "You haven't created any mute timings yet"
+              )}
+              buttonLabel="Add mute timing"
+              buttonIcon="plus"
+              buttonSize="lg"
+              href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
+              showButton={allowedToCreateMuteTiming}
+            />
+          ) : (
+            <EmptyAreaWithCTA
+              text={t('alerting.mute-timings-table.text-no-mute-timings-configured', 'No mute timings configured')}
+              buttonLabel={''}
+              showButton={false}
+            />
+          )}
+        </>
       )}
     </div>
   );

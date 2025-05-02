@@ -35,9 +35,9 @@ func TestStandardDocumentBuilder(t *testing.T) {
 		},
 		"name": "test1",
 		"rv": 10,
-		"title": "test playlist unified storage",
-		"title_phrase": "test playlist unified storage",
-		"title_ngram": "test playlist unified storage",
+		"title": "Test Playlist from Unified Storage",
+		"title_ngram": "Test Playlist from Unified Storage",
+		"title_phrase": "test playlist from unified storage",
 		"created": 1717236672000,
 		"createdBy": "user:ABC",
 		"updatedBy": "user:XYZ",
@@ -45,6 +45,7 @@ func TestStandardDocumentBuilder(t *testing.T) {
 			"kind": "repo",
 			"id": "something"
 		},
+		"managedBy": "repo:something",
 		"source": {
 			"path": "path/in/system.json",
 			"checksum": "xyz"

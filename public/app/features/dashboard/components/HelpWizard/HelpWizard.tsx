@@ -17,10 +17,10 @@ import {
   Alert,
   Select,
   ClipboardButton,
-  Icon,
   Stack,
+  TextLink,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { AccessControlAction } from 'app/types';
@@ -69,20 +69,15 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
 
   return (
     <Drawer
-      title={`Get help with this panel`}
+      title={t('dashboard.help-wizard.title-get-help-with-this-panel', 'Get help with this panel')}
       size="lg"
       onClose={onClose}
       subtitle={
         <Stack direction="column" gap={1}>
           <Stack direction="row" gap={1}>
-            <a
-              href="https://grafana.com/docs/grafana/latest/troubleshooting/"
-              target="blank"
-              className="external-link"
-              rel="noopener noreferrer"
-            >
-              Troubleshooting docs <Icon name="external-link-alt" />
-            </a>
+            <TextLink href="https://grafana.com/docs/grafana/latest/troubleshooting/" external>
+              <Trans i18nKey="dashboard.help-wizard.troubleshooting-docs">Troubleshooting docs</Trans>
+            </TextLink>
           </Stack>
           <span className="muted">
             <Trans i18nKey="help-wizard.troubleshooting-help">
@@ -119,17 +114,17 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
       {currentTab === SnapshotTab.Data && (
         <div className={styles.code}>
           <div className={styles.opts}>
-            <Field label="Template" className={styles.field}>
+            <Field label={t('dashboard.help-wizard.label-template', 'Template')} className={styles.field}>
               <Select options={options} value={showMessage} onChange={service.onShowMessageChange} />
             </Field>
 
             {showMessage === ShowMessage.GithubComment ? (
               <ClipboardButton icon="copy" getText={service.onGetMarkdownForClipboard}>
-                Copy to clipboard
+                <Trans i18nKey="dashboard.help-wizard.copy-to-clipboard">Copy to clipboard</Trans>
               </ClipboardButton>
             ) : (
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                Download ({snapshotSize})
+                <Trans i18nKey="dashboard.help-wizard.download-snapshot">Download ({{ snapshotSize }})</Trans>
               </Button>
             )}
           </div>
@@ -152,26 +147,29 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
       {currentTab === SnapshotTab.Support && (
         <>
           <Field
-            label="Obfuscate data"
-            description="Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal."
+            label={t('dashboard.help-wizard.label-obfuscate-data', 'Obfuscate data')}
+            description={t(
+              'dashboard.help-wizard.description-obfuscate-data',
+              'Modify the original data to hide sensitve information.  Note the lengths will stay the same, and duplicate values will be equal.'
+            )}
           >
             <Stack direction="row" gap={1}>
               <InlineSwitch
-                label="Labels"
+                label={t('dashboard.help-wizard.randomize-labels-label-labels', 'Labels')}
                 id="randomize-labels"
                 showLabel={true}
                 value={Boolean(randomize.labels)}
                 onChange={() => service.onToggleRandomize('labels')}
               />
               <InlineSwitch
-                label="Field names"
+                label={t('dashboard.help-wizard.randomize-field-names-label-field-names', 'Field names')}
                 id="randomize-field-names"
                 showLabel={true}
                 value={Boolean(randomize.names)}
                 onChange={() => service.onToggleRandomize('names')}
               />
               <InlineSwitch
-                label="String values"
+                label={t('dashboard.help-wizard.randomize-string-values-label-string-values', 'String values')}
                 id="randomize-string-values"
                 showLabel={true}
                 value={Boolean(randomize.values)}
@@ -180,15 +178,23 @@ export function HelpWizard({ panel, plugin, onClose }: Props) {
             </Stack>
           </Field>
 
-          <Field label="Support snapshot" description={`Panel: ${panelTitle}`}>
+          <Field
+            label={t('dashboard.help-wizard.label-support-snapshot', 'Support snapshot')}
+            description={t('dashboard.help-wizard.description-support-snapshot', 'Panel: {{panelTitle}}', {
+              panelTitle,
+            })}
+          >
             <Stack>
               <Button icon="download-alt" onClick={service.onDownloadDashboard}>
-                <Trans i18nKey="help-wizard.download-snapshot">Download snapshot</Trans> ({snapshotSize})
+                <Trans i18nKey="help-wizard.download-snapshot">Download snapshot ({{ snapshotSize }})</Trans>
               </Button>
               <ClipboardButton
                 icon="github"
                 getText={service.onGetMarkdownForClipboard}
-                title="Copy a complete GitHub comment to the clipboard"
+                title={t(
+                  'dashboard.help-wizard.title-complete-git-hub-comment-clipboard',
+                  'Copy a complete GitHub comment to the clipboard'
+                )}
               >
                 <Trans i18nKey="help-wizard.github-comment">Copy Github comment</Trans>
               </ClipboardButton>

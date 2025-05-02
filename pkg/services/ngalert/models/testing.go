@@ -73,6 +73,7 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 
 	interval := (rand.Int63n(6) + 1) * 10
 	forInterval := time.Duration(interval*rand.Int63n(6)) * time.Second
+	keepFiringFor := time.Duration(interval*rand.Int63n(6)) * time.Second
 
 	var annotations map[string]string = nil
 	if rand.Int63()%2 == 0 {
@@ -103,29 +104,31 @@ func (g *AlertRuleGenerator) Generate() AlertRule {
 	}
 
 	rule := AlertRule{
-		ID:                   0,
-		GUID:                 uuid.NewString(),
-		OrgID:                rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
-		Title:                fmt.Sprintf("title-%s", util.GenerateShortUID()),
-		Condition:            "A",
-		Data:                 []AlertQuery{g.GenerateQuery()},
-		Updated:              time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
-		UpdatedBy:            updatedBy,
-		IntervalSeconds:      rand.Int63n(60) + 1,
-		Version:              rand.Int63n(1500), // Don't generate a rule ID too big for postgres
-		UID:                  util.GenerateShortUID(),
-		NamespaceUID:         util.GenerateShortUID(),
-		DashboardUID:         dashUID,
-		PanelID:              panelID,
-		RuleGroup:            fmt.Sprintf("group-%s,", util.GenerateShortUID()),
-		RuleGroupIndex:       rand.Intn(1500),
-		NoDataState:          randNoDataState(),
-		ExecErrState:         randErrState(),
-		For:                  forInterval,
-		Annotations:          annotations,
-		Labels:               labels,
-		NotificationSettings: ns,
-		Metadata:             GenerateMetadata(),
+		ID:                          0,
+		GUID:                        uuid.NewString(),
+		OrgID:                       rand.Int63n(1500) + 1, // Prevent OrgID=0 as this does not pass alert rule validation.
+		Title:                       fmt.Sprintf("title-%s", util.GenerateShortUID()),
+		Condition:                   "A",
+		Data:                        []AlertQuery{g.GenerateQuery()},
+		Updated:                     time.Now().Add(-time.Duration(rand.Intn(100) + 1)),
+		UpdatedBy:                   updatedBy,
+		IntervalSeconds:             rand.Int63n(60) + 1,
+		Version:                     rand.Int63n(1500), // Don't generate a rule ID too big for postgres
+		UID:                         util.GenerateShortUID(),
+		NamespaceUID:                util.GenerateShortUID(),
+		DashboardUID:                dashUID,
+		PanelID:                     panelID,
+		RuleGroup:                   fmt.Sprintf("group-%s,", util.GenerateShortUID()),
+		RuleGroupIndex:              rand.Intn(1500),
+		NoDataState:                 randNoDataState(),
+		ExecErrState:                randErrState(),
+		For:                         forInterval,
+		KeepFiringFor:               keepFiringFor,
+		Annotations:                 annotations,
+		Labels:                      labels,
+		NotificationSettings:        ns,
+		Metadata:                    GenerateMetadata(),
+		MissingSeriesEvalsToResolve: util.Pointer(2),
 	}
 
 	for _, mutator := range g.mutators {
@@ -295,7 +298,7 @@ func (a *AlertRuleMutators) WithNamespaceUID(namespaceUID string) AlertRuleMutat
 	}
 }
 
-func (a *AlertRuleMutators) WithNamespace(namespace *folder.Folder) AlertRuleMutator {
+func (a *AlertRuleMutators) WithNamespace(namespace *folder.FolderReference) AlertRuleMutator {
 	return a.WithNamespaceUID(namespace.UID)
 }
 
@@ -340,6 +343,18 @@ func (a *AlertRuleMutators) WithFor(duration time.Duration) AlertRuleMutator {
 func (a *AlertRuleMutators) WithForNTimes(timesOfInterval int64) AlertRuleMutator {
 	return func(rule *AlertRule) {
 		rule.For = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
+	}
+}
+
+func (a *AlertRuleMutators) WithKeepFiringFor(interval time.Duration) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.KeepFiringFor = interval
+	}
+}
+
+func (a *AlertRuleMutators) WithKeepFiringForNTimes(timesOfInterval int64) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		rule.KeepFiringFor = time.Duration(rule.IntervalSeconds*timesOfInterval) * time.Second
 	}
 }
 
@@ -496,6 +511,15 @@ func (a *AlertRuleMutators) WithSameGroup() AlertRuleMutator {
 			name = util.GenerateShortUID()
 		})
 		rule.RuleGroup = name
+	}
+}
+
+func (a *AlertRuleMutators) WithMissingSeriesEvalsToResolve(timesOfInterval int) AlertRuleMutator {
+	return func(rule *AlertRule) {
+		if timesOfInterval <= 0 {
+			panic("timesOfInterval must be greater than 0")
+		}
+		rule.MissingSeriesEvalsToResolve = util.Pointer(timesOfInterval)
 	}
 }
 
@@ -845,6 +869,7 @@ func AlertInstanceGen(mutators ...AlertInstanceMutator) *AlertInstance {
 			InstanceStatePending,
 			InstanceStateNoData,
 			InstanceStateError,
+			InstanceStateRecovering,
 		}
 		return s[rand.Intn(len(s))]
 	}
@@ -1003,20 +1028,20 @@ func CopySilence(s Silence) Silence {
 	if s.UpdatedAt != nil {
 		c.UpdatedAt = util.Pointer(*s.UpdatedAt)
 	}
-	if s.Silence.Comment != nil {
-		c.Silence.Comment = util.Pointer(*s.Silence.Comment)
+	if s.Comment != nil {
+		c.Comment = util.Pointer(*s.Comment)
 	}
-	if s.Silence.CreatedBy != nil {
-		c.Silence.CreatedBy = util.Pointer(*s.Silence.CreatedBy)
+	if s.CreatedBy != nil {
+		c.CreatedBy = util.Pointer(*s.CreatedBy)
 	}
-	if s.Silence.EndsAt != nil {
-		c.Silence.EndsAt = util.Pointer(*s.Silence.EndsAt)
+	if s.EndsAt != nil {
+		c.EndsAt = util.Pointer(*s.EndsAt)
 	}
-	if s.Silence.StartsAt != nil {
-		c.Silence.StartsAt = util.Pointer(*s.Silence.StartsAt)
+	if s.StartsAt != nil {
+		c.StartsAt = util.Pointer(*s.StartsAt)
 	}
-	if s.Silence.Matchers != nil {
-		c.Silence.Matchers = CopyMatchers(s.Silence.Matchers)
+	if s.Matchers != nil {
+		c.Matchers = CopyMatchers(s.Matchers)
 	}
 
 	return c
@@ -1081,7 +1106,7 @@ func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchT
 			IsRegex: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchNotRegexp),
 			IsEqual: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
 		}
-		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+		s.Matchers = append(s.Matchers, &m)
 	}
 }
 func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
@@ -1093,13 +1118,13 @@ func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
 			IsRegex: util.Pointer(false),
 			IsEqual: util.Pointer(true),
 		}
-		for _, matcher := range s.Silence.Matchers {
+		for _, matcher := range s.Matchers {
 			if isRuleUIDMatcher(*matcher) {
 				*matcher = m
 				return
 			}
 		}
-		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+		s.Matchers = append(s.Matchers, &m)
 	}
 }
 func (n SilenceMutators) Expired() Mutator[Silence] {
@@ -1343,6 +1368,7 @@ func ConvertToRecordingRule(rule *AlertRule) {
 	rule.ExecErrState = ""
 	rule.For = 0
 	rule.NotificationSettings = nil
+	rule.MissingSeriesEvalsToResolve = nil
 }
 
 func nameToUid(name string) string { // Avoid legacy_storage.NameToUid import cycle.

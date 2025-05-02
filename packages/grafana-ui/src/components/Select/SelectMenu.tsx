@@ -8,7 +8,7 @@ import { SelectableValue, toIconName } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 
 import { useTheme2 } from '../../themes/ThemeContext';
-import { Trans } from '../../utils/i18n';
+import { t, Trans } from '../../utils/i18n';
 import { clearButtonStyles } from '../Button';
 import { Icon } from '../Icon/Icon';
 import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
@@ -52,7 +52,7 @@ export const SelectMenu = ({
       data-testid={selectors.components.Select.menu}
       className={styles.menu}
       style={{ maxHeight }}
-      aria-label="Select options menu"
+      aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
     >
       <ScrollContainer ref={innerRef} maxHeight="inherit" overflowX="hidden" showScrollIndicators padding={0.5}>
         {toggleAllOptions && (
@@ -185,7 +185,7 @@ export const VirtualizedSelectMenu = ({
       className={styles.menu}
       height={heightEstimate}
       width={widthEstimate}
-      aria-label="Select options menu"
+      aria-label={t('grafana-ui.select.menu-label', 'Select options menu')}
       itemCount={flattenedChildren.length}
       itemSize={VIRTUAL_LIST_ITEM_HEIGHT}
     >

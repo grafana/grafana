@@ -9,6 +9,7 @@ on:
       - "pkg/aggregator/apis/**"
       - "pkg/apimachinery/apis/**"
       - "hack/**"
+      - "apps/**"
       - "*.sum"
 
 jobs:
@@ -19,9 +20,11 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+      with:
+        persist-credentials: false
 
     - name: Set go version
-      uses: actions/setup-go@v4
+      uses: actions/setup-go@19bb51245e9c80abacb2e91cc42b33fa478b8639
       with:
         go-version-file: go.mod
 

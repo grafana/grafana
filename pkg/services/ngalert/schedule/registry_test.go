@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func TestSchedulableAlertRulesRegistry(t *testing.T) {
@@ -195,6 +196,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			ExecErrState:    "test-err",
 			Record:          &models.Record{Metric: "my_metric", From: "A"},
 			For:             12,
+			KeepFiringFor:   456,
 			Annotations: map[string]string{
 				"key-annotation": "value-annotation",
 			},
@@ -211,6 +213,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 					SimplifiedNotificationsSection:       false,
 				},
 			},
+			MissingSeriesEvalsToResolve: util.Pointer(2),
 		}
 		r2 := &models.AlertRule{
 			ID:        2,
@@ -240,6 +243,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 			ExecErrState:    "test-err2",
 			Record:          &models.Record{Metric: "my_metric2", From: "B"},
 			For:             1141,
+			KeepFiringFor:   123,
 			Annotations: map[string]string{
 				"key-annotation2": "value-annotation",
 			},
@@ -255,6 +259,7 @@ func TestRuleWithFolderFingerprint(t *testing.T) {
 					SimplifiedQueryAndExpressionsSection: true,
 				},
 			},
+			MissingSeriesEvalsToResolve: util.Pointer(1),
 		}
 
 		excludedFields := map[string]struct{}{

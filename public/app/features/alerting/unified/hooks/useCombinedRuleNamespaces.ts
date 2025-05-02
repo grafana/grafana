@@ -184,17 +184,21 @@ export function attachRulerRuleToCombinedRule(rule: CombinedRule, rulerGroup: Ru
   const combinedRulesFromRuler = rulerGroup.rules.map((rulerRule) =>
     rulerRuleToCombinedRule(rulerRule, rule.namespace, rule.group)
   );
-  const existingRulerRulesByName = combinedRulesFromRuler.reduce((acc, rule) => {
-    const sameNameRules = acc.get(rule.name);
-    if (sameNameRules) {
-      sameNameRules.push(rule);
+  const existingRulerRulesByUidOrName = combinedRulesFromRuler.reduce((acc, rule) => {
+    const sameNameOrUidRules = acc.get(getIdToCompare(rule));
+    if (sameNameOrUidRules) {
+      sameNameOrUidRules.push(rule);
     } else {
-      acc.set(rule.name, [rule]);
+      acc.set(getIdToCompare(rule), [rule]);
     }
     return acc;
   }, new Map<string, CombinedRule[]>());
 
-  const matchingRulerRule = getExistingRuleInGroup(rule.promRule, existingRulerRulesByName, rule.namespace.rulesSource);
+  const matchingRulerRule = getExistingRuleInGroup(
+    rule.promRule,
+    existingRulerRulesByUidOrName,
+    rule.namespace.rulesSource
+  );
   if (matchingRulerRule) {
     rule.rulerRule = matchingRulerRule.rulerRule;
     rule.query = matchingRulerRule.query;
@@ -283,15 +287,15 @@ export function addPromGroupsToCombinedNamespace(namespace: CombinedRuleNamespac
       ...calculateGroupTotals(group),
     };
 
-    const combinedRulesByName = new Map<string, CombinedRule[]>();
+    const combinedRulesByUidOrName = new Map<string, CombinedRule[]>();
     combinedGroup!.rules.forEach((r) => {
       // Prometheus rules do not have to be unique by name
-      const existingRule = combinedRulesByName.get(r.name);
-      existingRule ? existingRule.push(r) : combinedRulesByName.set(r.name, [r]);
+      const existingRule = combinedRulesByUidOrName.get(getIdToCompare(r));
+      existingRule ? existingRule.push(r) : combinedRulesByUidOrName.set(getIdToCompare(r), [r]);
     });
 
     (group.rules ?? []).forEach((rule) => {
-      const existingRule = getExistingRuleInGroup(rule, combinedRulesByName, namespace.rulesSource);
+      const existingRule = getExistingRuleInGroup(rule, combinedRulesByUidOrName, namespace.rulesSource);
       if (existingRule) {
         existingRule.promRule = rule;
         existingRule.instanceTotals = prometheusRuleType.alertingRule(rule) ? calculateRuleTotals(rule) : {};
@@ -316,6 +320,7 @@ export function calculateRuleTotals(rule: Pick<AlertingRule, 'alerts' | 'totals'
   return {
     alerting: result[AlertInstanceTotalState.Alerting] || result.firing,
     pending: result[AlertInstanceTotalState.Pending],
+    recovering: result[AlertInstanceTotalState.Recovering],
     inactive: result[AlertInstanceTotalState.Normal],
     nodata: result[AlertInstanceTotalState.NoData],
     error: result[AlertInstanceTotalState.Error] || result.err || undefined, // Prometheus uses "err" instead of "error"
@@ -352,6 +357,7 @@ export function calculateGroupTotals(group: Pick<RuleGroup, 'rules' | 'totals'>)
     nodata: countsByHealth.nodata,
     inactive: countsByState[PromAlertingRuleState.Inactive],
     pending: countsByState[PromAlertingRuleState.Pending],
+    recovering: countsByState[PromAlertingRuleState.Recovering],
     recording: recordingCount,
   };
 }
@@ -394,64 +400,61 @@ function rulerRuleToCombinedRule(
   namespace: CombinedRuleNamespace,
   group: CombinedRuleGroup
 ): CombinedRule {
-  return rulerRuleType.dataSource.alertingRule(rule)
-    ? {
-        name: rule.alert,
-        query: rule.expr,
-        labels: rule.labels || {},
-        annotations: rule.annotations || {},
-        rulerRule: rule,
-        namespace,
-        group,
-        instanceTotals: {},
-        filteredInstanceTotals: {},
-      }
-    : rulerRuleType.dataSource.recordingRule(rule)
-      ? {
-          name: rule.record,
-          query: rule.expr,
-          labels: rule.labels || {},
-          annotations: {},
-          rulerRule: rule,
-          namespace,
-          group,
-          instanceTotals: {},
-          filteredInstanceTotals: {},
-        }
-      : {
-          name: rule.grafana_alert.title,
-          query: '',
-          labels: rule.labels || {},
-          annotations: rule.annotations || {},
-          rulerRule: rule,
-          namespace,
-          group,
-          instanceTotals: {},
-          filteredInstanceTotals: {},
-        };
+  const commonProps = {
+    labels: rule.labels || {},
+    rulerRule: rule,
+    namespace,
+    group,
+    instanceTotals: {},
+    filteredInstanceTotals: {},
+    uid: rulerRuleType.grafana.rule(rule) ? rule.grafana_alert.uid : undefined,
+  };
+
+  if (rulerRuleType.dataSource.alertingRule(rule)) {
+    return {
+      ...commonProps,
+      name: rule.alert,
+      query: rule.expr,
+      annotations: rule.annotations || {},
+    };
+  }
+  if (rulerRuleType.dataSource.recordingRule(rule)) {
+    return {
+      ...commonProps,
+      name: rule.record,
+      query: rule.expr,
+      annotations: {},
+    };
+  }
+  return {
+    ...commonProps,
+    name: rule.grafana_alert.title,
+    query: '',
+    annotations: rule.annotations || {},
+  };
 }
 
 // find existing rule in group that matches the given prom rule
 function getExistingRuleInGroup(
   rule: Rule,
-  existingCombinedRulesMap: Map<string, CombinedRule[]>,
+  existingCombinedRulesMap: Map<string, CombinedRule[]>, // map by uid
   rulesSource: RulesSource
 ): CombinedRule | undefined {
   // Using Map of name-based rules is important performance optimization for the code below
   // Otherwise we would perform find method multiple times on (possibly) thousands of rules
 
-  const nameMatchingRules = existingCombinedRulesMap.get(rule.name);
-  if (!nameMatchingRules) {
+  const fieldToSearch = getIdToCompare(rule);
+  const uidOrNameMatchingRules = existingCombinedRulesMap.get(fieldToSearch);
+  if (!uidOrNameMatchingRules) {
     return undefined;
   }
 
   if (isGrafanaRulesSource(rulesSource)) {
-    // assume grafana groups have only the one rule. check name anyway because paranoid
-    return nameMatchingRules[0];
+    return uidOrNameMatchingRules[0];
   }
 
   // try finding a rule that matches name, labels, annotations and query
-  const strictlyMatchingRule = nameMatchingRules.find(
+  const strictlyMatchingRule = uidOrNameMatchingRules.find(
     (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, true)
   );
   if (strictlyMatchingRule) {
@@ -460,7 +463,7 @@ function getExistingRuleInGroup(
 
   // if that fails, try finding a rule that only matches name, labels and annotations.
   // loki & prom can sometimes modify the query so it doesnt match, eg `2 > 1` becomes `1`
-  const looselyMatchingRule = nameMatchingRules.find(
+  const looselyMatchingRule = uidOrNameMatchingRules.find(
     (combinedRule) => !combinedRule.promRule && isCombinedRuleEqualToPromRule(combinedRule, rule, false)
   );
   if (looselyMatchingRule) {
@@ -590,4 +593,15 @@ export function useCombinedRules(
     error: promRuleNsError ?? rulerRulesError,
     result: rules,
   };
+}
+/**
+ * Returns the ID of the rule to compare.
+ * If the rule has a UID, it will be used, otherwise the rule name will be used.
+ * cloud rules don't have a UID, so the name will be used.
+ */
+function getIdToCompare(rule: CombinedRule | Rule): string {
+  if (Boolean(rule.uid)) {
+    return rule.uid ?? '';
+  }
+  return rule.name;
 }

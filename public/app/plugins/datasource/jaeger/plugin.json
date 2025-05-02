@@ -30,6 +30,14 @@
       {
         "name": "GitHub Project",
         "url": "https://github.com/jaegertracing/jaeger"
+      },
+      {
+        "name": "Raise issue",
+        "url": "https://github.com/jaegertracing/jaeger/issues/new"
+      },
+      {
+        "name": "Documentation",
+        "url": "https://grafana.com/docs/grafana/latest/datasources/jaeger/"
       }
     ],
     "version": "%VERSION%"

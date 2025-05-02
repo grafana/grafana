@@ -19,7 +19,7 @@ export interface TempoQuery extends common.DataQuery {
   exemplars?: number;
   filters: Array<TraceqlFilter>;
   /**
-   * Filters that are used to query the metrics summary
+   * deprecated Filters that are used to query the metrics summary
    */
   groupBy?: Array<TraceqlFilter>;
   /**

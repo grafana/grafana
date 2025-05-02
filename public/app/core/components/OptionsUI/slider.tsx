@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { StandardEditorProps, GrafanaTheme2, SliderFieldConfigSettings } from '@grafana/data';
 import { useTheme2 } from '@grafana/ui';
-import { getStyles } from '@grafana/ui/src/components/Slider/styles';
+import { getSliderStyles } from '@grafana/ui/internal';
 
 import { NumberInput } from './NumberInput';
 
@@ -86,7 +86,7 @@ export const SliderValueEditor = ({ value, onChange, item }: Props) => {
   );
 
   // Styles
-  const styles = getStyles(theme, isHorizontal, Boolean(marks));
+  const styles = getSliderStyles(theme, isHorizontal, Boolean(marks));
   const stylesSlider = getStylesSlider(theme, inputWidth);
   const sliderInputClassNames = !isHorizontal ? [styles.sliderInputVertical] : [];
 

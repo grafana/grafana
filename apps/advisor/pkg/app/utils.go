@@ -4,15 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
-	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Check, error) {
@@ -33,24 +30,8 @@ func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Che
 	return c, nil
 }
 
-func getStatusAnnotation(obj resource.Object) string {
-	return obj.GetAnnotations()[checks.StatusAnnotation]
-}
-
-func setStatusAnnotation(ctx context.Context, client resource.Client, obj resource.Object, status string) error {
-	annotations := obj.GetAnnotations()
-	annotations[checks.StatusAnnotation] = status
-	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/metadata/annotations",
-			Value:     annotations,
-		}},
-	}, resource.PatchOptions{}, obj)
-}
-
 func processCheck(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
-	status := getStatusAnnotation(obj)
+	status := checks.GetStatusAnnotation(obj)
 	if status != "" {
 		// Check already processed
 		return nil
@@ -59,24 +40,10 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	if !ok {
 		return fmt.Errorf("invalid object type")
 	}
-	// Populate ctx with the user that created the check
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		return err
-	}
-	createdBy := meta.GetCreatedBy()
-	typ, uid, err := claims.ParseTypeID(createdBy)
-	if err != nil {
-		return err
-	}
-	ctx = identity.WithRequester(ctx, &user.SignedInUser{
-		UserUID:      uid,
-		FallbackType: typ,
-	})
 	// Get the items to check
 	items, err := check.Items(ctx)
 	if err != nil {
-		setErr := setStatusAnnotation(ctx, client, obj, "error")
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
@@ -86,7 +53,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	steps := check.Steps()
 	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
 	if err != nil {
-		setErr := setStatusAnnotation(ctx, client, obj, "error")
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
 			return setErr
 		}
@@ -97,7 +64,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		Failures: failures,
 		Count:    int64(len(items)),
 	}
-	err = setStatusAnnotation(ctx, client, obj, "processed")
+	err = checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationProcessed)
 	if err != nil {
 		return err
 	}
@@ -106,6 +73,72 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 			Operation: resource.PatchOpAdd,
 			Path:      "/status/report",
 			Value:     *report,
+		}},
+	}, resource.PatchOptions{}, obj)
+}
+
+func processCheckRetry(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
+	status := checks.GetStatusAnnotation(obj)
+	if status == "" || status == checks.StatusAnnotationError {
+		// Check not processed yet or errored
+		return nil
+	}
+	// Get the item to retry from the annotation
+	itemToRetry := checks.GetRetryAnnotation(obj)
+	if itemToRetry == "" {
+		// No item to retry, nothing to do
+		return nil
+	}
+	c, ok := obj.(*advisorv0alpha1.Check)
+	if !ok {
+		return fmt.Errorf("invalid object type")
+	}
+	// Get the items to check
+	item, err := check.Item(ctx, itemToRetry)
+	if err != nil {
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
+		if setErr != nil {
+			return setErr
+		}
+		return fmt.Errorf("error initializing check: %w", err)
+	}
+	// Run the steps
+	steps := check.Steps()
+	failures, err := runStepsInParallel(ctx, &c.Spec, steps, []any{item})
+	if err != nil {
+		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
+		if setErr != nil {
+			return setErr
+		}
+		return fmt.Errorf("error running steps: %w", err)
+	}
+	// Pull failures from the report for the items to retry
+	c.CheckStatus.Report.Failures = slices.DeleteFunc(c.CheckStatus.Report.Failures, func(f advisorv0alpha1.CheckReportFailure) bool {
+		if f.ItemID == itemToRetry {
+			for _, newFailure := range failures {
+				if newFailure.StepID == f.StepID {
+					// Same failure found, keep it
+					return false
+				}
+			}
+			// Failure no longer found, remove it
+			return true
+		}
+		// Failure not in the list of items to retry, keep it
+		return false
+	})
+	// Delete the retry annotation to mark the check as processed
+	annotations := obj.GetAnnotations()
+	delete(annotations, checks.RetryAnnotation)
+	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
+		Operations: []resource.PatchOperation{{
+			Operation: resource.PatchOpAdd,
+			Path:      "/status/report",
+			Value:     c.CheckStatus.Report,
+		}, {
+			Operation: resource.PatchOpAdd,
+			Path:      "/metadata/annotations",
+			Value:     annotations,
 		}},
 	}, resource.PatchOptions{}, obj)
 }
@@ -125,7 +158,16 @@ func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, st
 			go func(step checks.Step, item any) {
 				defer wg.Done()
 				defer func() { <-limit }()
-				stepErr, err := step.Run(ctx, spec, item)
+				var stepErr *advisorv0alpha1.CheckReportFailure
+				var err error
+				func() {
+					defer func() {
+						if r := recover(); r != nil {
+							err = fmt.Errorf("panic recovered in step %s: %v", step.ID(), r)
+						}
+					}()
+					stepErr, err = step.Run(ctx, spec, item)
+				}()
 				mu.Lock()
 				defer mu.Unlock()
 				if err != nil {

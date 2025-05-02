@@ -3,7 +3,6 @@ import { memo } from 'react';
 import {
   PluginContextType,
   PluginExtensionAddedLinkConfig,
-  PluginExtensionLinkConfig,
   PluginExtensionPoints,
   PluginLoadingStrategy,
   PluginType,
@@ -92,16 +91,13 @@ describe('Plugin Extension Validators', () => {
 
     it('should throw an error if the configure() function is defined but is not a function', () => {
       expect(() => {
-        assertConfigureIsValid(
-          // @ts-ignore
-          {
-            title: 'Title',
-            description: 'Description',
-            extensionPointId: 'grafana/some-page/extension-point-a',
-            handler: () => {},
-            configure: '() => {}',
-          } as PluginExtensionLinkConfig
-        );
+        assertConfigureIsValid({
+          title: 'Title',
+          description: 'Description',
+          extensionPointId: 'grafana/some-page/extension-point-a',
+          handler: () => {},
+          configure: '() => {}',
+        } as unknown as PluginExtensionAddedLinkConfig); // We are casting to unknown to test it with a unvalid argument
       }).toThrowError();
     });
   });

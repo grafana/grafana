@@ -4,27 +4,24 @@ package migrator
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strconv"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/spanner"
+	database "cloud.google.com/go/spanner/admin/database/apiv1"
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
-	"google.golang.org/api/option"
-	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/credentials/insecure"
-	"xorm.io/core"
-
 	"xorm.io/xorm"
 
-	_ "embed"
-
-	database "cloud.google.com/go/spanner/admin/database/apiv1"
+	"github.com/grafana/dskit/concurrency"
+	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 type SpannerDialect struct {
@@ -38,14 +35,26 @@ func init() {
 
 func NewSpannerDialect() Dialect {
 	d := SpannerDialect{d: core.QueryDialect(Spanner)}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = Spanner
+	d.dialect = &d
+	d.driverName = Spanner
 	return &d
 }
 
 func (s *SpannerDialect) AutoIncrStr() string      { return s.d.AutoIncrStr() }
 func (s *SpannerDialect) Quote(name string) string { return s.d.Quote(name) }
 func (s *SpannerDialect) SupportEngine() bool      { return s.d.SupportEngine() }
+
+func (s *SpannerDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := strings.ToLower(pattern)
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("LOWER(%s) LIKE ?", column), param
+}
+
 func (s *SpannerDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	return s.d.IndexCheckSql(tableName, indexName)
 }
@@ -55,6 +64,11 @@ func (s *SpannerDialect) SQLType(col *Column) string {
 }
 
 func (s *SpannerDialect) BatchSize() int { return 1000 }
+
+func (s *SpannerDialect) BooleanValue(b bool) any {
+	return b
+}
+
 func (s *SpannerDialect) BooleanStr(b bool) string {
 	if b {
 		return "true"
@@ -127,32 +141,38 @@ func (s *SpannerDialect) ColStringNoPk(col *Column) string {
 }
 
 func (s *SpannerDialect) TruncateDBTables(engine *xorm.Engine) error {
-	tables, err := engine.DBMetas()
+	// Get tables names only, no columns or indexes.
+	tables, err := engine.Dialect().GetTables()
 	if err != nil {
 		return err
 	}
 	sess := engine.NewSession()
 	defer sess.Close()
 
+	var statements []string
+
 	for _, table := range tables {
 		switch table.Name {
 		case "":
 			continue
+		case "autoincrement_sequences":
+			// Don't delete sequence number for migration_log.id column.
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE name <> 'migration_log:id'", s.Quote(table.Name)))
 		case "migration_log":
 			continue
 		case "dashboard_acl":
 			// keep default dashboard permissions
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE dashboard_id != -1 AND org_id != -1;", s.Quote(table.Name)))
 		default:
-			if _, err := sess.Exec(fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name))); err != nil {
-				return fmt.Errorf("failed to truncate table %q: %w", table.Name, err)
-			}
+			statements = append(statements, fmt.Sprintf("DELETE FROM %v WHERE TRUE;", s.Quote(table.Name)))
 		}
 	}
 
-	return nil
+	// Run statements concurrently.
+	return concurrency.ForEachJob(context.Background(), len(statements), 10, func(ctx context.Context, idx int) error {
+		_, err := sess.Exec(statements[idx])
+		return err
+	})
 }
 
 // CleanDB drops all existing tables and their indexes.
@@ -163,13 +183,16 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 	}
 
 	// Collect all DROP statements.
-	var statements []string
-	for _, table := range tables {
-		// Ignore these tables used by Unified storage.
-		if table.Name == "resource" || table.Name == "resource_blob" || table.Name == "resource_history" {
-			continue
-		}
+	changeStreams, err := s.findChangeStreams(engine)
+	if err != nil {
+		return err
+	}
+	statements := make([]string, 0, len(tables)+len(changeStreams))
+	for _, cs := range changeStreams {
+		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
+	}
 
+	for _, table := range tables {
 		// Indexes must be dropped first, otherwise dropping tables fails.
 		for _, index := range table.Indexes {
 			if !index.IsRegular {
@@ -279,12 +302,13 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	opts := confToClientOptions(cfg)
+	opts := utilspanner.ConnectorConfigToClientOptions(cfg)
 
 	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create database admin client: %v", err)
 	}
+	//nolint:errcheck // If the databaseAdminClient.Close fails, we simply don't care.
 	defer databaseAdminClient.Close()
 
 	databaseName := fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, cfg.Database)
@@ -304,28 +328,28 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 	return nil
 }
 
-// Adapted from https://github.com/googleapis/go-sql-spanner/blob/main/driver.go#L341-L477, from version 1.11.1.
-func confToClientOptions(connectorConfig spannerdriver.ConnectorConfig) []option.ClientOption {
-	var opts []option.ClientOption
-	if connectorConfig.Host != "" {
-		opts = append(opts, option.WithEndpoint(connectorConfig.Host))
-	}
-	if strval, ok := connectorConfig.Params["credentials"]; ok {
-		opts = append(opts, option.WithCredentialsFile(strval))
-	}
-	if strval, ok := connectorConfig.Params["credentialsjson"]; ok {
-		opts = append(opts, option.WithCredentialsJSON([]byte(strval)))
-	}
-	if strval, ok := connectorConfig.Params["useplaintext"]; ok {
-		if val, err := strconv.ParseBool(strval); err == nil && val {
-			opts = append(opts,
-				option.WithGRPCDialOption(grpc.WithTransportCredentials(insecure.NewCredentials())),
-				option.WithoutAuthentication())
-		}
-	}
-	return opts
-}
-
 func (s *SpannerDialect) UnionDistinct() string {
 	return "UNION DISTINCT"
+}
+
+func (s *SpannerDialect) findChangeStreams(engine *xorm.Engine) ([]string, error) {
+	var result []string
+	query := `SELECT c.CHANGE_STREAM_NAME
+	FROM INFORMATION_SCHEMA.CHANGE_STREAMS AS C
+	WHERE C.CHANGE_STREAM_CATALOG=''
+	AND C.CHANGE_STREAM_SCHEMA=''`
+	rows, err := engine.DB().Query(query)
+	if err != nil {
+		return nil, err
+	}
+	//nolint:errcheck // If the rows.Close fails, we simply don't care.
+	defer rows.Close()
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		result = append(result, name)
+	}
+	return result, nil
 }

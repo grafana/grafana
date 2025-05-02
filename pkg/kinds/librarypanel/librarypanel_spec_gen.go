@@ -15,35 +15,6 @@ import (
 	time "time"
 )
 
-type LibraryElementDTOMetaUser struct {
-	Id        int64  `json:"id"`
-	Name      string `json:"name"`
-	AvatarUrl string `json:"avatarUrl"`
-}
-
-// NewLibraryElementDTOMetaUser creates a new LibraryElementDTOMetaUser object.
-func NewLibraryElementDTOMetaUser() *LibraryElementDTOMetaUser {
-	return &LibraryElementDTOMetaUser{}
-}
-
-type LibraryElementDTOMeta struct {
-	FolderName          string                    `json:"folderName"`
-	FolderUid           string                    `json:"folderUid"`
-	ConnectedDashboards int64                     `json:"connectedDashboards"`
-	Created             time.Time                 `json:"created"`
-	Updated             time.Time                 `json:"updated"`
-	CreatedBy           LibraryElementDTOMetaUser `json:"createdBy"`
-	UpdatedBy           LibraryElementDTOMetaUser `json:"updatedBy"`
-}
-
-// NewLibraryElementDTOMeta creates a new LibraryElementDTOMeta object.
-func NewLibraryElementDTOMeta() *LibraryElementDTOMeta {
-	return &LibraryElementDTOMeta{
-		CreatedBy: *NewLibraryElementDTOMetaUser(),
-		UpdatedBy: *NewLibraryElementDTOMetaUser(),
-	}
-}
-
 type Spec struct {
 	// Folder UID
 	FolderUid *string `json:"folderUid,omitempty"`
@@ -69,4 +40,33 @@ type Spec struct {
 // NewSpec creates a new Spec object.
 func NewSpec() *Spec {
 	return &Spec{}
+}
+
+type LibraryElementDTOMeta struct {
+	FolderName          string                    `json:"folderName"`
+	FolderUid           string                    `json:"folderUid"`
+	ConnectedDashboards int64                     `json:"connectedDashboards"`
+	Created             time.Time                 `json:"created"`
+	Updated             time.Time                 `json:"updated"`
+	CreatedBy           LibraryElementDTOMetaUser `json:"createdBy"`
+	UpdatedBy           LibraryElementDTOMetaUser `json:"updatedBy"`
+}
+
+// NewLibraryElementDTOMeta creates a new LibraryElementDTOMeta object.
+func NewLibraryElementDTOMeta() *LibraryElementDTOMeta {
+	return &LibraryElementDTOMeta{
+		CreatedBy: *NewLibraryElementDTOMetaUser(),
+		UpdatedBy: *NewLibraryElementDTOMetaUser(),
+	}
+}
+
+type LibraryElementDTOMetaUser struct {
+	Id        int64  `json:"id"`
+	Name      string `json:"name"`
+	AvatarUrl string `json:"avatarUrl"`
+}
+
+// NewLibraryElementDTOMetaUser creates a new LibraryElementDTOMetaUser object.
+func NewLibraryElementDTOMetaUser() *LibraryElementDTOMetaUser {
+	return &LibraryElementDTOMetaUser{}
 }

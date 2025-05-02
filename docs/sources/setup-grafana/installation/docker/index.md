@@ -150,7 +150,7 @@ To install plugins in the Docker container, complete the following steps:
 
    ```bash
    docker run -d -p 3000:3000 --name=grafana \
-     -e "GF_PLUGINS_PREINSTALL=grafana-clock-panel 1.0.1" \
+     -e "GF_PLUGINS_PREINSTALL=grafana-clock-panel@1.0.1" \
      grafana/grafana-enterprise
    ```
 
@@ -364,7 +364,9 @@ volumes:
   grafana_storage: {}
 ```
 
-> **Note:** If you want to specify the version of a plugin, add the version number to the `GF_PLUGINS_PREINSTALL` environment variable. For example: `-e "GF_PLUGINS_PREINSTALL=grafana-clock-panel@1.0.1,grafana-simple-json-datasource@1.3.5"`. If you do not specify a version number, the latest version is used.
+{{< admonition type="note" >}}
+If you want to specify the version of a plugin, add the version number to the `GF_PLUGINS_PREINSTALL` environment variable. For example: `-e "GF_PLUGINS_PREINSTALL=grafana-clock-panel@1.0.1,grafana-simple-json-datasource@1.3.5"`. If you do not specify a version number, the latest version is used.
+{{< /admonition >}}
 
 ## Next steps
 

@@ -141,6 +141,8 @@ export class DashboardSceneUrlSync implements SceneObjectUrlSyncHandler {
         this._scene.onEnterEditMode();
       }
 
+      this._scene.state.scopesBridge?.setReadOnly(true);
+
       const libPanelBehavior = getLibraryPanelBehavior(panel);
       if (libPanelBehavior && !libPanelBehavior?.state.isLoaded) {
         this._waitForLibPanelToLoadBeforeEnteringPanelEdit(panel, libPanelBehavior);

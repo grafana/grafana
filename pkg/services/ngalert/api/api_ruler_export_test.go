@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	folder2 "github.com/grafana/grafana/pkg/services/folder"
+	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/tests/fakes"
@@ -39,7 +40,7 @@ func TestExportFromPayload(t *testing.T) {
 	ruleStore := fakes.NewRuleStore(t)
 	ruleStore.Folders[orgID] = append(ruleStore.Folders[orgID], folder)
 
-	srv := createService(ruleStore)
+	srv := createService(ruleStore, nil)
 
 	requestFile := "post-rulegroup-101.json"
 	rawBody, err := testData.ReadFile(path.Join("test-data", requestFile))
@@ -57,7 +58,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains yaml, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+		rc.Req.Header.Add("Accept", "application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 
@@ -69,7 +70,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query format contains yaml, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "yaml")
+		rc.Req.Form.Set("format", "yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -80,7 +81,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query format contains unknown value, GET returns text yaml", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "foo")
+		rc.Req.Form.Set("format", "foo")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -91,7 +92,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains json, GET returns json", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+		rc.Req.Header.Add("Accept", "application/json")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -102,7 +103,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("accept header contains json and yaml, GET returns json", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json, application/yaml")
+		rc.Req.Header.Add("Accept", "application/json, application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -113,7 +114,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query param download=true, GET returns content disposition attachment", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "true")
+		rc.Req.Form.Set("download", "true")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -124,7 +125,7 @@ func TestExportFromPayload(t *testing.T) {
 
 	t.Run("query param download=false, GET returns empty content disposition", func(t *testing.T) {
 		rc := createRequest()
-		rc.Context.Req.Form.Set("download", "false")
+		rc.Req.Form.Set("download", "false")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -148,7 +149,7 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/json")
+		rc.Req.Header.Add("Accept", "application/json")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -163,7 +164,7 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Header.Add("Accept", "application/yaml")
+		rc.Req.Header.Add("Accept", "application/yaml")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -176,8 +177,8 @@ func TestExportFromPayload(t *testing.T) {
 		require.NoError(t, err)
 
 		rc := createRequest()
-		rc.Context.Req.Form.Set("format", "hcl")
-		rc.Context.Req.Form.Set("download", "false")
+		rc.Req.Form.Set("format", "hcl")
+		rc.Req.Form.Set("download", "false")
 
 		response := srv.ExportFromPayload(rc, body, folder.UID)
 		response.WriteTo(rc)
@@ -188,8 +189,8 @@ func TestExportFromPayload(t *testing.T) {
 
 		t.Run("and add specific headers if download=true", func(t *testing.T) {
 			rc := createRequest()
-			rc.Context.Req.Form.Set("format", "hcl")
-			rc.Context.Req.Form.Set("download", "true")
+			rc.Req.Form.Set("format", "hcl")
+			rc.Req.Form.Set("download", "true")
 
 			response := srv.ExportFromPayload(rc, body, folder.UID)
 			response.WriteTo(rc)
@@ -252,7 +253,7 @@ func TestExportRules(t *testing.T) {
 	// overwrite the folders visible to user because PutRule automatically creates folders in the fake store.
 	ruleStore.Folders[orgID] = []*folder2.Folder{f1, f2}
 
-	srv := createService(ruleStore)
+	srv := createService(ruleStore, nil)
 
 	allRules := make([]*ngmodels.AlertRule, 0, len(hasAccess1)+len(hasAccess2)+len(noAccess1))
 	allRules = append(allRules, hasAccess1...)

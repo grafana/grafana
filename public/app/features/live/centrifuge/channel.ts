@@ -175,6 +175,8 @@ export class CentrifugeLiveChannel<T = any> {
     });
   }
 
+  publish = (data: unknown) => this.subscription?.publish(data);
+
   /**
    * This will close and terminate all streams for this channel
    */

@@ -32,16 +32,16 @@ func (m *MockK8sHandler) Get(ctx context.Context, name string, orgID int64, opti
 	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
 }
 
-func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, orgID)
+func (m *MockK8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
 	return args.Get(0).(*unstructured.Unstructured), args.Error(1)
 }
 
-func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64) (*unstructured.Unstructured, error) {
-	args := m.Called(ctx, obj, orgID)
+func (m *MockK8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error) {
+	args := m.Called(ctx, obj, orgID, opts)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
@@ -82,12 +82,12 @@ func (m *MockK8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.R
 	return args.Get(0).(*resource.ResourceStatsResponse), args.Error(1)
 }
 
-func (m *MockK8sHandler) GetUserFromMeta(ctx context.Context, userMeta string) (*user.User, error) {
-	args := m.Called(ctx, userMeta)
+func (m *MockK8sHandler) GetUsersFromMeta(ctx context.Context, usersMeta []string) (map[string]*user.User, error) {
+	args := m.Called(ctx, usersMeta)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*user.User), args.Error(1)
+	return args.Get(0).(map[string]*user.User), args.Error(1)
 }
 
 type MockTestRestConfig struct {

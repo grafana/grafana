@@ -112,6 +112,7 @@ type UnifiedAlertingSettings struct {
 	StateHistory                  UnifiedAlertingStateHistorySettings
 	RemoteAlertmanager            RemoteAlertmanagerSettings
 	RecordingRules                RecordingRuleSettings
+	PrometheusConversion          UnifiedAlertingPrometheusConversionSettings
 
 	// MaxStateSaveConcurrency controls the number of goroutines (per rule) that can save alert state in parallel.
 	MaxStateSaveConcurrency    int
@@ -129,23 +130,24 @@ type UnifiedAlertingSettings struct {
 	// should be stored in the database for each alert_rule in an organization including the current one.
 	// 0 value means no limit
 	RuleVersionRecordLimit int
+
+	// DeletedRuleRetention defines the maximum duration to retain deleted alerting rules before permanent removal.
+	DeletedRuleRetention time.Duration
 }
 
 type RecordingRuleSettings struct {
-	Enabled               bool
-	URL                   string
-	BasicAuthUsername     string
-	BasicAuthPassword     string
-	CustomHeaders         map[string]string
-	Timeout               time.Duration
-	DefaultDatasourceUID  string
-	RemoteWritePathSuffix string
+	Enabled              bool
+	URL                  string
+	BasicAuthUsername    string
+	BasicAuthPassword    string
+	CustomHeaders        map[string]string
+	Timeout              time.Duration
+	DefaultDatasourceUID string
 }
 
 // RemoteAlertmanagerSettings contains the configuration needed
 // to disable the internal Alertmanager and use an external one instead.
 type RemoteAlertmanagerSettings struct {
-	Enable       bool
 	URL          string
 	TenantID     string
 	Password     string
@@ -161,6 +163,12 @@ type UnifiedAlertingScreenshotSettings struct {
 
 type UnifiedAlertingReservedLabelSettings struct {
 	DisabledLabels map[string]struct{}
+}
+
+// UnifiedAlertingPrometheusConversionSettings contains configuration for converting Prometheus rules to Grafana format
+type UnifiedAlertingPrometheusConversionSettings struct {
+	// RuleQueryOffset defines a time offset to apply to rule queries during conversion from Prometheus to Grafana format
+	RuleQueryOffset time.Duration
 }
 
 type UnifiedAlertingStateHistorySettings struct {
@@ -380,7 +388,6 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 
 	remoteAlertmanager := iniFile.Section("remote.alertmanager")
 	uaCfgRemoteAM := RemoteAlertmanagerSettings{
-		Enable:   remoteAlertmanager.Key("enabled").MustBool(false),
 		URL:      remoteAlertmanager.Key("url").MustString(""),
 		TenantID: remoteAlertmanager.Key("tenant").MustString(""),
 		Password: remoteAlertmanager.Key("password").MustString(""),
@@ -435,15 +442,19 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	}
 	uaCfg.StateHistory = uaCfgStateHistory
 
+	prometheusConversion := iniFile.Section("unified_alerting.prometheus_conversion")
+	uaCfg.PrometheusConversion = UnifiedAlertingPrometheusConversionSettings{
+		RuleQueryOffset: prometheusConversion.Key("rule_query_offset").MustDuration(time.Minute),
+	}
+
 	rr := iniFile.Section("recording_rules")
 	uaCfgRecordingRules := RecordingRuleSettings{
-		Enabled:               rr.Key("enabled").MustBool(false),
-		URL:                   rr.Key("url").MustString(""),
-		BasicAuthUsername:     rr.Key("basic_auth_username").MustString(""),
-		BasicAuthPassword:     rr.Key("basic_auth_password").MustString(""),
-		Timeout:               rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
-		DefaultDatasourceUID:  rr.Key("default_datasource_uid").MustString(""),
-		RemoteWritePathSuffix: rr.Key("remote_write_path_suffix").MustString("/push"),
+		Enabled:              rr.Key("enabled").MustBool(false),
+		URL:                  rr.Key("url").MustString(""),
+		BasicAuthUsername:    rr.Key("basic_auth_username").MustString(""),
+		BasicAuthPassword:    rr.Key("basic_auth_password").MustString(""),
+		Timeout:              rr.Key("timeout").MustDuration(defaultRecordingRequestTimeout),
+		DefaultDatasourceUID: rr.Key("default_datasource_uid").MustString(""),
 	}
 
 	rrHeaders := iniFile.Section("recording_rules.custom_headers")
@@ -477,6 +488,11 @@ func (cfg *Cfg) ReadUnifiedAlertingSettings(iniFile *ini.File) error {
 	uaCfg.RuleVersionRecordLimit = ua.Key("rule_version_record_limit").MustInt(0)
 	if uaCfg.RuleVersionRecordLimit < 0 {
 		return fmt.Errorf("setting 'rule_version_record_limit' is invalid, only 0 or a positive integer are allowed")
+	}
+
+	uaCfg.DeletedRuleRetention = ua.Key("deleted_rule_retention").MustDuration(30 * 24 * time.Hour)
+	if uaCfg.DeletedRuleRetention < 0 {
+		return fmt.Errorf("setting 'deleted_rule_retention' is invalid, only 0 or a positive duration are allowed")
 	}
 
 	cfg.UnifiedAlerting = uaCfg

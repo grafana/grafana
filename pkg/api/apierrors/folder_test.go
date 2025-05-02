@@ -7,9 +7,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 func TestToFolderErrorResponse(t *testing.T) {
@@ -20,8 +23,8 @@ func TestToFolderErrorResponse(t *testing.T) {
 	}{
 		{
 			name:  "dashboard error",
-			input: dashboards.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"},
-			want:  response.Error(400, "Dashboard Error", dashboards.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"}),
+			input: dashboardaccess.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"},
+			want:  response.Error(400, "Dashboard Error", dashboardaccess.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"}),
 		},
 		{
 			name:  "folder title empty",
@@ -66,12 +69,27 @@ func TestToFolderErrorResponse(t *testing.T) {
 		{
 			name:  "folder max depth reached",
 			input: folder.ErrMaximumDepthReached,
-			want:  response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": "Maximum nested folder depth reached"}),
+			want:  response.JSON(http.StatusBadRequest, util.DynMap{"messageId": "folder.maximum-depth-reached", "message": folder.ErrMaximumDepthReached.Error()}),
 		},
 		{
 			name:  "fallback error",
 			input: errors.New("some error"),
 			want:  response.ErrOrFallback(http.StatusInternalServerError, "Folder API error", errors.New("some error")),
+		},
+		{
+			name: "kubernetes status error",
+			input: &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    412,
+					Message: "the folder has been changed by someone else",
+				},
+			},
+			want: response.Error(412, "the folder has been changed by someone else", &k8sErrors.StatusError{
+				ErrStatus: metav1.Status{
+					Code:    412,
+					Message: "the folder has been changed by someone else",
+				},
+			}),
 		},
 	}
 	for _, tt := range tests {

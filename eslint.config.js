@@ -47,6 +47,8 @@ module.exports = [
       'public/vendor/',
       'scripts/grafana-server/tmp',
       '!.betterer.eslint.config.js',
+      'packages/grafana-ui/src/graveyard', // deprecated UI components slated for removal
+      'public/build-swagger', // swagger build output
     ],
   },
   // Conditionally run the betterer rules if enabled in dev's config
@@ -73,6 +75,7 @@ module.exports = [
       'jsx-a11y': jsxA11yPlugin,
       'no-barrel-files': barrelPlugin,
       '@grafana': grafanaPlugin,
+      unicorn: unicornPlugin,
     },
 
     settings: {
@@ -129,6 +132,8 @@ module.exports = [
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
       '@typescript-eslint/no-redeclare': ['error'],
+      'unicorn/no-empty-file': 'error',
+      'no-constant-condition': 'error',
     },
   },
   {
@@ -254,6 +259,7 @@ module.exports = [
     plugins: {
       unicorn: unicornPlugin,
       react: reactPlugin,
+      '@grafana': grafanaPlugin,
     },
     files: ['public/app/features/alerting/**/*.{ts,tsx,js,jsx}'],
     rules: {
@@ -262,7 +268,30 @@ module.exports = [
       'prefer-const': 'error',
       'react/no-unused-prop-types': 'error',
       'react/self-closing-comp': 'error',
+      'react/jsx-no-useless-fragment': ['error', { allowExpressions: true }],
       'unicorn/no-unused-properties': 'error',
+      'no-nested-ternary': 'error',
+    },
+  },
+  {
+    // Sections of codebase that have all translation markup issues fixed
+    name: 'grafana/i18n-overrides',
+    plugins: {
+      '@grafana': grafanaPlugin,
+    },
+    files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
+    ignores: [
+      'public/app/extensions/**',
+      'public/app/plugins/**',
+      '**/*.story.tsx',
+      '**/*.{test,spec}.{ts,tsx}',
+      '**/__mocks__/',
+      'public/test',
+      '**/spec/**/*.{ts,tsx}',
+    ],
+    rules: {
+      '@grafana/no-untranslated-strings': 'error',
+      '@grafana/no-translation-top-level': 'error',
     },
   },
   {

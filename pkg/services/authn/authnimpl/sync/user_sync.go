@@ -7,6 +7,8 @@ import (
 	"strconv"
 
 	claims "github.com/grafana/authlib/types"
+	"go.opentelemetry.io/otel/attribute"
+	"golang.org/x/sync/singleflight"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
 	"github.com/grafana/grafana/pkg/infra/log"
@@ -17,6 +19,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/quota"
 	"github.com/grafana/grafana/pkg/services/user"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 var (
@@ -44,6 +47,30 @@ var (
 		"user.sync.fetch-not-found",
 		errutil.WithPublicMessage("User not found"),
 	)
+	errMismatchedExternalUID = errutil.Unauthorized(
+		"user.sync.mismatched-externalUID",
+		errutil.WithPublicMessage("Mismatched provisioned identity"),
+	)
+	errEmptyExternalUID = errutil.Unauthorized(
+		"user.sync.empty-externalUID",
+		errutil.WithPublicMessage("Empty externalUID"),
+	)
+	errUnableToRetrieveUserOrAuthInfo = errutil.Internal(
+		"user.sync.unable-to-retrieve-user-or-authinfo",
+		errutil.WithPublicMessage("Unable to retrieve user or authInfo for validation"),
+	)
+	errUnableToRetrieveUser = errutil.Internal(
+		"user.sync.unable-to-retrieve-user",
+		errutil.WithPublicMessage("Unable to retrieve user for validation"),
+	)
+	errUserNotProvisioned = errutil.Forbidden(
+		"user.sync.user-not-provisioned",
+		errutil.WithPublicMessage("User is not provisioned"),
+	)
+	errUserExternalUIDMismatch = errutil.Unauthorized(
+		"user.sync.user-externalUID-mismatch",
+		errutil.WithPublicMessage("User externalUID mismatch"),
+	)
 )
 
 var (
@@ -53,27 +80,98 @@ var (
 )
 
 func ProvideUserSync(userService user.Service, userProtectionService login.UserProtectionService, authInfoService login.AuthInfoService,
-	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles,
+	quotaService quota.Service, tracer tracing.Tracer, features featuremgmt.FeatureToggles, cfg *setting.Cfg,
 ) *UserSync {
+	scimSection := cfg.Raw.Section("auth.scim")
 	return &UserSync{
-		userService:           userService,
-		authInfoService:       authInfoService,
-		userProtectionService: userProtectionService,
-		quotaService:          quotaService,
-		log:                   log.New("user.sync"),
-		tracer:                tracer,
-		features:              features,
+		allowNonProvisionedUsers:  scimSection.Key("allow_non_provisioned_users").MustBool(false),
+		isUserProvisioningEnabled: scimSection.Key("user_sync_enabled").MustBool(false),
+		userService:               userService,
+		authInfoService:           authInfoService,
+		userProtectionService:     userProtectionService,
+		quotaService:              quotaService,
+		log:                       log.New("user.sync"),
+		tracer:                    tracer,
+		features:                  features,
+		lastSeenSF:                &singleflight.Group{},
 	}
 }
 
 type UserSync struct {
-	userService           user.Service
-	authInfoService       login.AuthInfoService
-	userProtectionService login.UserProtectionService
-	quotaService          quota.Service
-	log                   log.Logger
-	tracer                tracing.Tracer
-	features              featuremgmt.FeatureToggles
+	allowNonProvisionedUsers  bool
+	isUserProvisioningEnabled bool
+	userService               user.Service
+	authInfoService           login.AuthInfoService
+	userProtectionService     login.UserProtectionService
+	quotaService              quota.Service
+	log                       log.Logger
+	tracer                    tracing.Tracer
+	features                  featuremgmt.FeatureToggles
+	lastSeenSF                *singleflight.Group
+}
+
+// ValidateUserProvisioningHook validates if a user should be allowed access based on provisioning status and configuration
+func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.Identity, _ *authn.Request) error {
+	log := s.log.FromContext(ctx).New("auth_module", id.AuthenticatedBy, "auth_id", id.AuthID)
+
+	log.Debug("Validating user provisioning")
+	ctx, span := s.tracer.Start(ctx, "user.sync.ValidateUserProvisioningHook")
+	defer span.End()
+
+	// Skip validation if user provisioning is disabled
+	if !s.isUserProvisioningEnabled {
+		log.Debug("User provisioning is disabled, skipping validation")
+		return nil
+	}
+
+	// Skip validation if non-provisioned users are allowed
+	if s.allowNonProvisionedUsers {
+		log.Debug("User provisioning is enabled, but non-provisioned users are allowed, skipping validation")
+		return nil
+	}
+
+	// Skip validation if the auth module is GrafanaComAuthModule
+	if id.AuthenticatedBy == login.GrafanaComAuthModule {
+		log.Debug("User is authenticated via GrafanaComAuthModule, skipping validation")
+		return nil
+	}
+
+	// In order to guarantee the provisioned user is the same as the identity,
+	// we must validate the authinfo.ExternalUID with the identity.ExternalUID
+
+	// Retrieve user and authinfo from database
+	usr, authInfo, err := s.getUser(ctx, id)
+	if err != nil {
+		if errors.Is(err, user.ErrUserNotFound) {
+			return nil
+		}
+		log.Error("Failed to fetch user for validation", "error", err)
+		return errUnableToRetrieveUserOrAuthInfo.Errorf("unable to retrieve user or authInfo for validation")
+	}
+
+	if usr == nil {
+		log.Error("Failed to fetch user for validation", "error", err)
+		return errUnableToRetrieveUser.Errorf("unable to retrieve user for validation")
+	}
+
+	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
+	if usr.IsProvisioned {
+		// The user is provisioned via SAML and the identity is empty, meaning this request is not from the SAML auth flow
+		if authInfo.AuthModule == login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
+			log.Debug("Skipping ExternalUID validation for non-SAML request to SAML-provisioned user")
+			return nil
+		}
+		if authInfo.ExternalUID == "" || authInfo.ExternalUID != id.ExternalUID {
+			log.Error("The provisioned user.ExternalUID does not match the authinfo.ExternalUID")
+			return errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID")
+		}
+		log.Debug("User is provisioned, access granted")
+		return nil
+	}
+
+	// Reject non-provisioned users
+	log.Error("Failed to access user, user is not provisioned")
+	return errUserNotProvisioned.Errorf("user is not provisioned")
 }
 
 // SyncUserHook syncs a user with the database
@@ -186,19 +284,14 @@ func (s *UserSync) SyncLastSeenHook(ctx context.Context, id *authn.Identity, r *
 	}
 
 	goCtx := context.WithoutCancel(ctx)
-	go func(userID int64) {
-		defer func() {
-			if err := recover(); err != nil {
-				s.log.Error("Panic during user last seen sync", "err", err)
-			}
-		}()
-
-		if err := s.userService.UpdateLastSeenAt(goCtx,
-			&user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: r.OrgID}); err != nil &&
-			!errors.Is(err, user.ErrLastSeenUpToDate) {
+	// nolint:dogsled
+	_, _, _ = s.lastSeenSF.Do(fmt.Sprintf("%d-%d", id.GetOrgID(), userID), func() (interface{}, error) {
+		err := s.userService.UpdateLastSeenAt(goCtx, &user.UpdateUserLastSeenAtCommand{UserID: userID, OrgID: id.GetOrgID()})
+		if err != nil && !errors.Is(err, user.ErrLastSeenUpToDate) {
 			s.log.Error("Failed to update last_seen_at", "err", err, "userId", userID)
 		}
-	}(userID)
+		return nil, nil
+	})
 
 	return nil
 }
@@ -233,7 +326,7 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 		return nil
 	}
 
-	// If a user does not a connection to a specific auth module, create it.
+	// If a user does not have a connection to a specific auth module, create it.
 	// This can happen when: using multiple auth client where the same user exists in several or
 	// changing to new auth client
 	if createConnection {
@@ -266,6 +359,8 @@ func (s *UserSync) upsertAuthConnection(ctx context.Context, userID int64, ident
 func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id *authn.Identity, userAuth *login.UserAuth) error {
 	ctx, span := s.tracer.Start(ctx, "user.sync.updateUserAttributes")
 	defer span.End()
+
+	needsConnectionCreation := userAuth == nil
 
 	if errProtection := s.userProtectionService.AllowUserMapping(usr, id.AuthenticatedBy); errProtection != nil {
 		return errUserProtection.Errorf("user mapping not allowed: %w", errProtection)
@@ -307,14 +402,38 @@ func (s *UserSync) updateUserAttributes(ctx context.Context, usr *user.User, id 
 		needsUpdate = true
 	}
 
-	if needsUpdate {
+	span.SetAttributes(
+		attribute.String("identity.ID", id.ID),
+		attribute.String("identity.ExternalUID", id.ExternalUID),
+	)
+	if usr.IsProvisioned {
+		s.log.Debug("User is provisioned", "id.UID", id.UID)
+		needsConnectionCreation = false
+		authInfo, err := s.authInfoService.GetAuthInfo(ctx, &login.GetAuthInfoQuery{UserId: usr.ID, AuthModule: id.AuthenticatedBy})
+		if err != nil {
+			s.log.Error("Error getting auth info", "error", err)
+			return err
+		}
+
+		if id.ExternalUID == "" {
+			s.log.Error("externalUID is empty", "id", id.UID)
+			return errEmptyExternalUID.Errorf("externalUID is empty")
+		}
+
+		if id.ExternalUID != authInfo.ExternalUID {
+			s.log.Error("mismatched externalUID", "provisioned_externalUID", authInfo.ExternalUID, "identity_externalUID", id.ExternalUID)
+			return errMismatchedExternalUID.Errorf("externalUID mistmatch")
+		}
+	}
+
+	if needsUpdate && !usr.IsProvisioned {
 		s.log.FromContext(ctx).Debug("Syncing user info", "id", id.ID, "update", fmt.Sprintf("%v", updateCmd))
 		if err := s.userService.Update(ctx, updateCmd); err != nil {
 			return err
 		}
 	}
 
-	return s.upsertAuthConnection(ctx, usr.ID, id, userAuth == nil)
+	return s.upsertAuthConnection(ctx, usr.ID, id, needsConnectionCreation)
 }
 
 func (s *UserSync) createUser(ctx context.Context, id *authn.Identity) (*user.User, error) {
@@ -362,7 +481,7 @@ func (s *UserSync) getUser(ctx context.Context, identity *authn.Identity) (*user
 	ctx, span := s.tracer.Start(ctx, "user.sync.getUser")
 	defer span.End()
 
-	// Check auth info fist
+	// Check auth info first
 	if identity.AuthID != "" && identity.AuthenticatedBy != "" {
 		query := &login.GetAuthInfoQuery{AuthId: identity.AuthID, AuthModule: identity.AuthenticatedBy}
 		authInfo, errGetAuthInfo := s.authInfoService.GetAuthInfo(ctx, query)

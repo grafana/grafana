@@ -23,7 +23,7 @@ import (
 // 404: notFoundError
 // 500: internalServerError
 func (hs *HTTPServer) GetCurrentOrgQuotas(c *contextmodel.ReqContext) response.Response {
-	return hs.getOrgQuotasHelper(c, c.SignedInUser.GetOrgID())
+	return hs.getOrgQuotasHelper(c, c.GetOrgID())
 }
 
 // swagger:route GET /orgs/{org_id}/quotas orgs getOrgQuota

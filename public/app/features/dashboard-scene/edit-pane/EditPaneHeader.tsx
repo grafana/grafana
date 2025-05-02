@@ -1,28 +1,47 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Menu, Stack, Text, useStyles2, ConfirmButton, Dropdown, Icon } from '@grafana/ui';
+import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 
+import { DashboardEditPane } from './DashboardEditPane';
+
 interface EditPaneHeaderProps {
   element: EditableDashboardElement;
+  editPane: DashboardEditPane;
 }
 
-export function EditPaneHeader({ element }: EditPaneHeaderProps) {
+export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
   const elementInfo = element.getEditableElementInfo();
   const styles = useStyles2(getStyles);
 
   const onCopy = element.onCopy?.bind(element);
   const onDuplicate = element.onDuplicate?.bind(element);
   const onDelete = element.onDelete?.bind(element);
+  const onConfirmDelete = element.onConfirmDelete?.bind(element);
+  // temporary simple solution, should select parent element
+  const onGoBack = () => editPane.clearSelection();
+  const canGoBack = editPane.state.selection;
 
   return (
     <div className={styles.wrapper}>
-      <Text variant="h5">{elementInfo.typeName}</Text>
+      <Stack direction="row" gap={0.5}>
+        {canGoBack && (
+          <IconButton
+            name="arrow-left"
+            size="lg"
+            onClick={onGoBack}
+            tooltip={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
+            aria-label={t('grafana.dashboard.edit-pane.go-back', 'Go back')}
+          />
+        )}
+        <Text>{elementInfo.typeName}</Text>
+      </Stack>
       <Stack direction="row" gap={1}>
-        {(onCopy || onDelete) && (
+        {element.renderActions && element.renderActions()}
+        {(onCopy || onDuplicate) && (
           <Dropdown
             overlay={
               <Menu>
@@ -51,22 +70,15 @@ export function EditPaneHeader({ element }: EditPaneHeaderProps) {
           </Dropdown>
         )}
 
-        {onDelete && (
-          <ConfirmButton
-            onConfirm={onDelete}
-            confirmText="Confirm"
-            confirmVariant="destructive"
+        {(onDelete || onConfirmDelete) && (
+          <Button
+            onClick={onConfirmDelete || onDelete}
             size="sm"
-            closeOnConfirm={true}
-          >
-            <Button
-              size="sm"
-              variant="destructive"
-              fill="outline"
-              icon="trash-alt"
-              tooltip={t('dashboard.layout.common.delete', 'Delete')}
-            />
-          </ConfirmButton>
+            variant="destructive"
+            fill="outline"
+            icon="trash-alt"
+            tooltip={t('dashboard.layout.common.delete', 'Delete')}
+          />
         )}
       </Stack>
     </div>
@@ -79,7 +91,7 @@ function getStyles(theme: GrafanaTheme2) {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      padding: theme.spacing(2),
+      padding: theme.spacing(1, 2),
       borderBottom: `1px solid ${theme.colors.border.weak}`,
     }),
   };

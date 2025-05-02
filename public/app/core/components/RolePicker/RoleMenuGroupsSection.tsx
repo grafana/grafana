@@ -11,6 +11,7 @@ import { isNotDelegatable } from './utils';
 
 interface RoleMenuGroupsSectionProps {
   roles: Role[];
+  isFiltered?: boolean;
   renderedName: string;
   showGroups?: boolean;
   optionGroups: Array<{
@@ -33,6 +34,7 @@ export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSe
   (
     {
       roles,
+      isFiltered,
       renderedName,
       showGroups,
       optionGroups,
@@ -101,6 +103,7 @@ export const RoleMenuGroupsSection = forwardRef<HTMLDivElement, RoleMenuGroupsSe
                 ))
               : roles.map((option) => (
                   <RoleMenuOption
+                    useFilteredDisplayName={isFiltered}
                     data={option}
                     key={option.uid}
                     isSelected={!!(option.uid && !!selectedOptions.find((opt) => opt.uid === option.uid))}

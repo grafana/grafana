@@ -21,8 +21,13 @@ on:
     - 'main'
     - 'release-*.*.*'
 
+permissions: {}
+
 jobs:
   setup:
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
     name: Setup and establish latest
     outputs:
@@ -30,18 +35,16 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
+    env:
+      HEAD_REF: ${{ github.head_ref }}
+      DRY_RUN: ${{ inputs.dry_run }}
+      LATEST: ${{ inputs.latest && '1' || '0' }}
+      VERSION: ${{ inputs.version }}
     runs-on: ubuntu-latest
     steps:
-      # The github-release action expects a `LATEST` value of a string of either '1' or '0'
-    - if: ${{ github.event_name == 'workflow_dispatch' }}
-      run: |
-        echo setting up GITHUB_ENV for ${{ github.event_name }}
-        echo "VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-        echo "DRY_RUN=${{ inputs.dry_run }}" >> $GITHUB_ENV
-        echo "LATEST=${{ inputs.latest && '1' || '0' }}" >> $GITHUB_ENV
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
-        echo "VERSION=$(echo ${{ github.head_ref }} | sed -e 's/release\/.*\///g')" >> $GITHUB_ENV
+        echo "VERSION=$(echo ${HEAD_REF} | sed -e 's/release\/.*\//v/g')" >> $GITHUB_ENV
         echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}" >> $GITHUB_ENV
         echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}" >> $GITHUB_ENV
     - id: output
@@ -58,9 +61,6 @@ jobs:
     name: Create next release branch (Grafana)
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
@@ -68,9 +68,6 @@ jobs:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
@@ -79,9 +76,6 @@ jobs:
       - setup
       - create_next_release_branch_grafana
     uses: ./.github/workflows/migrate-prs.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
       ownerRepo: 'grafana/grafana'
       from: ${{ needs.setup.outputs.release_branch }}
@@ -91,9 +85,6 @@ jobs:
       - setup
       - create_next_release_branch_enterprise
     uses: ./.github/workflows/migrate-prs.yml
-    secrets:
-      GRAFANA_DELIVERY_BOT_APP_ID: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-      GRAFANA_DELIVERY_BOT_APP_PEM: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       from: ${{ needs.setup.outputs.release_branch }}
@@ -101,9 +92,6 @@ jobs:
   post_changelog_on_forum:
     needs: setup
     uses: ./.github/workflows/community-release.yml
-    secrets:
-      GRAFANA_MISC_STATS_API_KEY: ${{ secrets.GRAFANA_MISC_STATS_API_KEY }}
-      GRAFANABOT_FORUM_KEY: ${{ secrets.GRAFANABOT_FORUM_KEY }}
     with:
       version: ${{ needs.setup.outputs.version }}
       dry_run: ${{ needs.setup.outputs.dry_run == 'true' }}
@@ -120,7 +108,10 @@ jobs:
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest
+    env:
+      DRY_RUN: ${{ needs.setup.outputs.dry_run }}
+      VERSION: ${{ needs.setup.outputs.version }}
     steps:
     - run: |
-        echo announce on slack that ${{ needs.setup.outputs.version }} has been released
-        echo dry run: ${{ needs.setup.outputs.dry_run }}
+        echo announce on slack that $VERSION has been released
+        echo dry run: $DRY_RUN

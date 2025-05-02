@@ -43,7 +43,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'v',
     onTrigger: withFocusedPanel(scene, (vizPanel: VizPanel) => {
-      if (!scene.state.viewPanelScene) {
+      if (scene.state.viewPanelScene) {
+        locationService.push(
+          locationUtil.getUrlForPartial(locationService.getLocation(), {
+            viewPanel: undefined,
+          })
+        );
+      } else {
         const url = locationUtil.stripBaseFromUrl(getViewPanelUrl(vizPanel));
         locationService.push(url);
       }
@@ -105,7 +111,15 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
   keybindings.addBinding({
     key: 'i',
     onTrigger: withFocusedPanel(scene, async (vizPanel: VizPanel) => {
-      locationService.push(locationUtil.stripBaseFromUrl(getInspectUrl(vizPanel)));
+      if (scene.state.inspectPanelKey) {
+        locationService.push(
+          locationUtil.getUrlForPartial(locationService.getLocation(), {
+            inspect: undefined,
+          })
+        );
+      } else {
+        locationService.push(locationUtil.stripBaseFromUrl(getInspectUrl(vizPanel)));
+      }
     }),
   });
 
@@ -178,7 +192,13 @@ export function setupKeyboardShortcuts(scene: DashboardScene) {
         const sceneRoot = vizPanel.getRoot();
         if (sceneRoot instanceof DashboardScene) {
           const panelId = getPanelIdForVizPanel(vizPanel);
-          if (!scene.state.editPanel) {
+          if (scene.state.editPanel) {
+            locationService.push(
+              locationUtil.getUrlForPartial(locationService.getLocation(), {
+                editPanel: undefined,
+              })
+            );
+          } else {
             const url = locationUtil.stripBaseFromUrl(getEditPanelUrl(panelId));
             locationService.push(url);
           }

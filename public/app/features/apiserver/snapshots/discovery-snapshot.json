@@ -1,0 +1,295 @@
+{
+  "kind": "APIGroupDiscoveryList",
+  "apiVersion": "apidiscovery.k8s.io/v2",
+  "metadata": {},
+  "items": [
+    {
+      "metadata": { "name": "userstorage.grafana.app", "creationTimestamp": null },
+      "versions": [
+        {
+          "version": "v0alpha1",
+          "resources": [
+            {
+              "resource": "user-storage",
+              "responseKind": { "group": "", "version": "", "kind": "UserStorage" },
+              "scope": "Namespaced",
+              "singularResource": "user-storage",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"]
+            }
+          ],
+          "freshness": "Current"
+        }
+      ]
+    },
+    {
+      "metadata": { "name": "notifications.alerting.grafana.app", "creationTimestamp": null },
+      "versions": [
+        {
+          "version": "v0alpha1",
+          "resources": [
+            {
+              "resource": "receivers",
+              "responseKind": { "group": "", "version": "", "kind": "Receiver" },
+              "scope": "Namespaced",
+              "singularResource": "receiver",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update"]
+            },
+            {
+              "resource": "routingtrees",
+              "responseKind": { "group": "", "version": "", "kind": "RoutingTree" },
+              "scope": "Namespaced",
+              "singularResource": "routingtree",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update"]
+            },
+            {
+              "resource": "templategroups",
+              "responseKind": { "group": "", "version": "", "kind": "TemplateGroup" },
+              "scope": "Namespaced",
+              "singularResource": "templategroup",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update"]
+            },
+            {
+              "resource": "timeintervals",
+              "responseKind": { "group": "", "version": "", "kind": "TimeInterval" },
+              "scope": "Namespaced",
+              "singularResource": "timeinterval",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update"]
+            }
+          ],
+          "freshness": "Current"
+        }
+      ]
+    },
+    {
+      "metadata": { "name": "iam.grafana.app", "creationTimestamp": null },
+      "versions": [
+        {
+          "version": "v0alpha1",
+          "resources": [
+            {
+              "resource": "serviceaccounts",
+              "responseKind": { "group": "", "version": "", "kind": "ServiceAccount" },
+              "scope": "Namespaced",
+              "singularResource": "serviceaccount",
+              "verbs": ["get", "list"],
+              "subresources": [
+                {
+                  "subresource": "tokens",
+                  "responseKind": { "group": "", "version": "", "kind": "UserTeamList" },
+                  "verbs": ["get"]
+                }
+              ]
+            },
+            {
+              "resource": "ssosettings",
+              "responseKind": { "group": "", "version": "", "kind": "SSOSetting" },
+              "scope": "Namespaced",
+              "singularResource": "ssosetting",
+              "verbs": ["delete", "get", "list", "patch", "update"]
+            },
+            {
+              "resource": "teambindings",
+              "responseKind": { "group": "", "version": "", "kind": "TeamBinding" },
+              "scope": "Namespaced",
+              "singularResource": "teambinding",
+              "verbs": ["get", "list"]
+            },
+            {
+              "resource": "teams",
+              "responseKind": { "group": "", "version": "", "kind": "Team" },
+              "scope": "Namespaced",
+              "singularResource": "team",
+              "verbs": ["get", "list"],
+              "subresources": [
+                {
+                  "subresource": "members",
+                  "responseKind": { "group": "", "version": "", "kind": "TeamMemberList" },
+                  "verbs": ["get"]
+                }
+              ]
+            },
+            {
+              "resource": "users",
+              "responseKind": { "group": "", "version": "", "kind": "User" },
+              "scope": "Namespaced",
+              "singularResource": "user",
+              "verbs": ["get", "list"],
+              "subresources": [
+                {
+                  "subresource": "teams",
+                  "responseKind": { "group": "", "version": "", "kind": "UserTeamList" },
+                  "verbs": ["get"]
+                }
+              ]
+            }
+          ],
+          "freshness": "Current"
+        }
+      ]
+    },
+    {
+      "metadata": { "name": "folder.grafana.app", "creationTimestamp": null },
+      "versions": [
+        {
+          "version": "v0alpha1",
+          "resources": [
+            {
+              "resource": "folders",
+              "responseKind": { "group": "", "version": "", "kind": "Folder" },
+              "scope": "Namespaced",
+              "singularResource": "folder",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update"],
+              "subresources": [
+                {
+                  "subresource": "access",
+                  "responseKind": { "group": "", "version": "", "kind": "FolderAccessInfo" },
+                  "verbs": ["get"]
+                },
+                {
+                  "subresource": "counts",
+                  "responseKind": { "group": "", "version": "", "kind": "DescendantCounts" },
+                  "verbs": ["get"]
+                },
+                {
+                  "subresource": "parents",
+                  "responseKind": { "group": "", "version": "", "kind": "FolderInfoList" },
+                  "verbs": ["get"]
+                }
+              ]
+            }
+          ],
+          "freshness": "Current"
+        }
+      ]
+    },
+    {
+      "metadata": { "name": "featuretoggle.grafana.app", "creationTimestamp": null },
+      "versions": [
+        {
+          "version": "v0alpha1",
+          "resources": [
+            {
+              "resource": "features",
+              "responseKind": { "group": "", "version": "", "kind": "Feature" },
+              "scope": "Cluster",
+              "singularResource": "feature",
+              "verbs": ["get", "list"]
+            },
+            {
+              "resource": "featuretoggles",
+              "responseKind": { "group": "", "version": "", "kind": "FeatureToggles" },
+              "scope": "Namespaced",
+              "singularResource": "featuretoggle",
+              "verbs": ["get", "list"]
+            }
+          ],
+          "freshness": "Current"
+        }
+      ]
+    },
+    {
+      "metadata": { "name": "dashboard.grafana.app", "creationTimestamp": null },
+      "versions": [
+        {
+          "version": "v0alpha1",
+          "resources": [
+            {
+              "resource": "dashboards",
+              "responseKind": { "group": "", "version": "", "kind": "Dashboard" },
+              "scope": "Namespaced",
+              "singularResource": "dashboard",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"],
+              "subresources": [
+                {
+                  "subresource": "dto",
+                  "responseKind": { "group": "", "version": "", "kind": "DashboardWithAccessInfo" },
+                  "verbs": ["get"]
+                }
+              ]
+            },
+            {
+              "resource": "librarypanels",
+              "responseKind": { "group": "", "version": "", "kind": "LibraryPanel" },
+              "scope": "Namespaced",
+              "singularResource": "librarypanel",
+              "verbs": ["get", "list"]
+            }
+          ],
+          "freshness": "Current"
+        },
+        {
+          "version": "v1alpha1",
+          "resources": [
+            {
+              "resource": "dashboards",
+              "responseKind": { "group": "", "version": "", "kind": "Dashboard" },
+              "scope": "Namespaced",
+              "singularResource": "dashboard",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"],
+              "subresources": [
+                {
+                  "subresource": "dto",
+                  "responseKind": { "group": "", "version": "", "kind": "DashboardWithAccessInfo" },
+                  "verbs": ["get"]
+                }
+              ]
+            },
+            {
+              "resource": "librarypanels",
+              "responseKind": { "group": "", "version": "", "kind": "LibraryPanel" },
+              "scope": "Namespaced",
+              "singularResource": "librarypanel",
+              "verbs": ["get", "list"]
+            }
+          ],
+          "freshness": "Current"
+        },
+        {
+          "version": "v2alpha1",
+          "resources": [
+            {
+              "resource": "dashboards",
+              "responseKind": { "group": "", "version": "", "kind": "Dashboard" },
+              "scope": "Namespaced",
+              "singularResource": "dashboard",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update", "watch"],
+              "subresources": [
+                {
+                  "subresource": "dto",
+                  "responseKind": { "group": "", "version": "", "kind": "DashboardWithAccessInfo" },
+                  "verbs": ["get"]
+                }
+              ]
+            },
+            {
+              "resource": "librarypanels",
+              "responseKind": { "group": "", "version": "", "kind": "LibraryPanel" },
+              "scope": "Namespaced",
+              "singularResource": "librarypanel",
+              "verbs": ["get", "list"]
+            }
+          ],
+          "freshness": "Current"
+        }
+      ]
+    },
+    {
+      "metadata": { "name": "playlist.grafana.app", "creationTimestamp": null },
+      "versions": [
+        {
+          "version": "v0alpha1",
+          "resources": [
+            {
+              "resource": "playlists",
+              "responseKind": { "group": "", "version": "", "kind": "Playlist" },
+              "scope": "Namespaced",
+              "singularResource": "playlist",
+              "verbs": ["create", "delete", "deletecollection", "get", "list", "patch", "update"]
+            }
+          ],
+          "freshness": "Current"
+        }
+      ]
+    }
+  ]
+}

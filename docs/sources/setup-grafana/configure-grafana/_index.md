@@ -491,11 +491,13 @@ Leave empty when using `database` and Grafana uses the primary database.
 
 ##### `redis`
 
-Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,ssl=false`
+Example connection string: `addr=127.0.0.1:6379,pool_size=100,db=0,username=grafana,password=grafanaRocks,ssl=false`
 
 - `addr` is the host `:` port of the Redis server.
 - `pool_size` (optional) is the number of underlying connections that can be made to Redis.
 - `db` (optional) is the number identifier of the Redis database you want to use.
+- `username` (optional) is the connection identifier to authenticate the current connection.
+- `password` (optional) is the connection secret to authenticate the current connection.
 - `ssl` (optional) is if SSL should be used to connect to Redis server. The value may be `true`, `false`, or `insecure`. Setting the value to `insecure` skips verification of the certificate chain and hostname when making the connection.
 
 ##### `memcache`
@@ -852,6 +854,23 @@ Path to the default home dashboard. If this value is empty, then Grafana uses St
 {{< admonition type="note" >}}
 On Linux, Grafana uses `/usr/share/grafana/public/dashboards/home.json` as the default home dashboard location.
 {{< /admonition >}}
+
+### `[dashboard_cleanup]`
+
+Settings related to cleaning up associated dashboards information if the dashboard was deleted through /apis.
+
+#### `interval`
+
+How often to run the job to cleanup associated resources. The default interval is `30s`. The minimum allowed value is `10s` to ensure the system isn't overloaded.
+
+The interval string must include a unit suffix (ms, s, m, h), e.g. 30s or 1m.
+
+#### `batch_size`
+
+Number of deleted dashboards to process in each batch during the cleanup process.
+Default: `10`, Minimum: `5`, Maximum: `200`.
+
+Increasing this value allows processing more dashboards in each cleanup cycle but may impact system performance.
 
 <hr />
 
@@ -2226,6 +2245,11 @@ The values `jaeger` and `w3c` are supported.
 Add a comma (`,`) between values to specify multiple formats (for example, `"jaeger,w3c"`).
 The default value is `w3c`.
 
+#### `insecure`
+
+Toggles the insecure communication setting, defaults to `true`.
+When set to `false`, the OTLP client will use TLS credentials with the default system cert pool for communication.
+
 <hr>
 
 ### `[external_image_storage]`
@@ -2529,7 +2553,8 @@ Address string of selected the high availability (HA) Live engine. For Redis, it
 ```ini
 [live]
 ha_engine = redis
-ha_engine_address = 127.0.0.1:6379
+ha_engine_address: redis-headless.grafana.svc.cluster.local:6379
+ha_engine_password: $__file{/your/redis/password/secret/mount}
 ```
 
 <hr>
@@ -2752,6 +2777,10 @@ Set the default start of the week, valid values are: `saturday`, `sunday`, `mond
 #### `enabled`
 
 Set this to `false` to disable expressions and hide them in the Grafana UI. Default is `true`.
+
+#### `sql_expression_cell_limit`
+
+Set the maximum number of cells that can be passed to a SQL expression. Default is `100000`.
 
 ### `[geomap]`
 

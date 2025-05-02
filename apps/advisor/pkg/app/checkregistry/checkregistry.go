@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 type CheckService interface {
@@ -25,11 +26,14 @@ type Service struct {
 	pluginRepo            repo.Service
 	pluginPreinstall      plugininstaller.Preinstall
 	managedPlugins        managedplugins.Manager
+	provisionedPlugins    provisionedplugins.Manager
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
-	pluginRepo repo.Service, pluginPreinstall plugininstaller.Preinstall, managedPlugins managedplugins.Manager) *Service {
+	pluginRepo repo.Service, pluginPreinstall plugininstaller.Preinstall, managedPlugins managedplugins.Manager,
+	provisionedPlugins provisionedplugins.Manager,
+) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
 		pluginStore:           pluginStore,
@@ -38,6 +42,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		pluginRepo:            pluginRepo,
 		pluginPreinstall:      pluginPreinstall,
 		managedPlugins:        managedPlugins,
+		provisionedPlugins:    provisionedPlugins,
 	}
 }
 
@@ -48,12 +53,14 @@ func (s *Service) Checks() []checks.Check {
 			s.pluginStore,
 			s.pluginContextProvider,
 			s.pluginClient,
+			s.pluginRepo,
 		),
 		plugincheck.New(
 			s.pluginStore,
 			s.pluginRepo,
 			s.pluginPreinstall,
 			s.managedPlugins,
+			s.provisionedPlugins,
 		),
 	}
 }

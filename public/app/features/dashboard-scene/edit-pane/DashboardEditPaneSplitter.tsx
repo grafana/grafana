@@ -43,19 +43,27 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 0.8,
+      initialSize: 330,
       handleSize: 'sm',
+      usePixels: true,
+      collapseBelowPixels: 250,
       collapsed: isCollapsed,
-
-      paneOptions: {
-        collapseBelowPixels: 250,
-        snapOpenToPixels: 400,
-      },
     });
 
   useEffect(() => {
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
+
+  /**
+   * Enable / disable selection based on dashboard isEditing state
+   */
+  useEffect(() => {
+    if (isEditing) {
+      editPane.enableSelection();
+    } else {
+      editPane.disableSelection();
+    }
+  }, [isEditing, editPane]);
 
   const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const containerStyle: CSSProperties = {};
@@ -67,8 +75,10 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     containerStyle.overflow = 'unset';
   }
 
-  const onBodyRef = (ref: HTMLDivElement) => {
-    dashboard.onSetScrollRef(new DivScrollElement(ref));
+  const onBodyRef = (ref: HTMLDivElement | null) => {
+    if (ref) {
+      dashboard.onSetScrollRef(new DivScrollElement(ref));
+    }
   };
 
   return (
@@ -95,11 +105,15 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
         </div>
         {isEditing && (
           <>
-            <div {...splitterProps} data-edit-pane-splitter={true} />
+            <div
+              {...splitterProps}
+              className={cx(splitterProps.className, styles.splitter)}
+              data-edit-pane-splitter={true}
+            />
             <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
               <DashboardEditPaneRenderer
                 editPane={editPane}
-                isCollapsed={splitterState.collapsed}
+                isCollapsed={isCollapsed}
                 onToggleCollapse={onToggleCollapse}
                 openOverlay={selectionContext.selected.length > 0}
               />
@@ -154,11 +168,18 @@ function getStyles(theme: GrafanaTheme2, headerHeight: number) {
       scrollbarWidth: 'thin',
       // The fixed controls headers is otherwise rendered over the selection outlinem, Maybe there is an other solution
       paddingTop: '2px',
+      // Because the edit pane splitter handle area adds padding we can reduce it here
+      paddingRight: theme.spacing(1),
     }),
     editPane: css({
       flexDirection: 'column',
-      borderLeft: `1px solid ${theme.colors.border.weak}`,
-      background: theme.colors.background.primary,
+      // borderLeft: `1px solid ${theme.colors.border.weak}`,
+      // background: theme.colors.background.primary,
+    }),
+    splitter: css({
+      '&:after': {
+        display: 'none',
+      },
     }),
     controlsWrapperSticky: css({
       [theme.breakpoints.up('md')]: {

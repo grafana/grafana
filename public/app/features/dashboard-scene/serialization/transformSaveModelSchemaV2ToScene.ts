@@ -10,25 +10,19 @@ import {
   GroupByVariable,
   IntervalVariable,
   QueryVariable,
-  SceneDataLayerControls,
-  SceneDataProvider,
-  SceneDataQuery,
-  SceneDataTransformer,
-  SceneQueryRunner,
   SceneRefreshPicker,
   SceneTimePicker,
   SceneTimeRange,
   SceneVariable,
   SceneVariableSet,
   TextBoxVariable,
-  VariableValueSelectors,
 } from '@grafana/scenes';
-import { DataSourceRef } from '@grafana/schema/dist/esm/index.gen';
 import {
   AdhocVariableKind,
+  AnnotationQueryKind,
   ConstantVariableKind,
   CustomVariableKind,
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   DatasourceVariableKind,
   defaultAdhocVariableKind,
   defaultConstantVariableKind,
@@ -42,10 +36,10 @@ import {
   IntervalVariableKind,
   LibraryPanelKind,
   PanelKind,
-  PanelQueryKind,
   QueryVariableKind,
   TextVariableKind,
-} from '@grafana/schema/src/schema/dashboard/v2alpha0';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -55,24 +49,22 @@ import {
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
-import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 import { DashboardMeta } from 'app/types';
 
 import { addPanelsOnLoadBehavior } from '../addToDashboard/addPanelsOnLoadBehavior';
 import { DashboardAnnotationsDataLayer } from '../scene/DashboardAnnotationsDataLayer';
 import { DashboardControls } from '../scene/DashboardControls';
 import { DashboardDataLayerSet } from '../scene/DashboardDataLayerSet';
-import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
 import { registerDashboardMacro } from '../scene/DashboardMacro';
 import { DashboardReloadBehavior } from '../scene/DashboardReloadBehavior';
 import { DashboardScene } from '../scene/DashboardScene';
-import { DashboardScopesFacade } from '../scene/DashboardScopesFacade';
 import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { preserveDashboardSceneStateInLocalStorage } from '../utils/dashboardSessionState';
 import { getIntervalsFromQueryString } from '../utils/utils';
 
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
-import { layoutSerializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { layoutDeserializerRegistry } from './layoutSerializers/layoutSerializerRegistry';
+import { getRuntimeVariableDataSource } from './layoutSerializers/utils';
 import { registerPanelInteractionsReporter } from './transformSaveModelToScene';
 import {
   transformCursorSyncV2ToV1,
@@ -95,13 +87,29 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
-  const { spec: dashboard, metadata } = dto;
+  const { spec: dashboard, metadata, apiVersion } = dto;
+
+  // annotations might not come with the builtIn Grafana annotation, we need to add it
+
+  const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
+  if (grafanaBuiltAnnotation) {
+    dashboard.annotations.unshift(grafanaBuiltAnnotation);
+  }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
+    let annoQuerySpec = annotation.spec;
+    // some annotations will contain in the options properties that need to be
+    // added to the root level annotation spec
+    if (annoQuerySpec?.options) {
+      annoQuerySpec = {
+        ...annoQuerySpec,
+        ...annoQuerySpec.options,
+      };
+    }
     return new DashboardAnnotationsDataLayer({
       key: uniqueId('annotations-'),
       query: {
-        ...annotation.spec,
+        ...annoQuerySpec,
         builtIn: annotation.spec.builtIn ? 1 : 0,
       },
       name: annotation.spec.name,
@@ -139,7 +147,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     showSettings: Boolean(dto.access.canEdit),
     canMakeEditable: canSave && !isDashboardEditable,
     hasUnsavedFolderChange: false,
-    version: parseInt(metadata.resourceVersion, 10),
+    version: metadata.generation,
     k8s: metadata,
   };
 
@@ -150,139 +158,72 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     meta.canSave = false;
   }
 
-  const layoutManager: DashboardLayoutManager = layoutSerializerRegistry
+  const layoutManager: DashboardLayoutManager = layoutDeserializerRegistry
     .get(dashboard.layout.kind)
-    .serializer.deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
+    .deserialize(dashboard.layout, dashboard.elements, dashboard.preload);
 
   //createLayoutManager(dashboard);
 
-  const dashboardScene = new DashboardScene({
-    description: dashboard.description,
-    editable: dashboard.editable,
-    preload: dashboard.preload,
-    id: dashboardId,
-    isDirty: false,
-    links: dashboard.links,
-    meta,
-    tags: dashboard.tags,
-    title: dashboard.title,
-    uid: metadata.name,
-    version: parseInt(metadata.resourceVersion, 10),
-    body: layoutManager,
-    $timeRange: new SceneTimeRange({
-      from: dashboard.timeSettings.from,
-      to: dashboard.timeSettings.to,
-      fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
-      timeZone: dashboard.timeSettings.timezone,
-      weekStart: dashboard.timeSettings.weekStart,
-      UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
-    }),
-    $variables: getVariables(dashboard, meta.isSnapshot ?? false),
-    $behaviors: [
-      new behaviors.CursorSync({
-        sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
+  const dashboardScene = new DashboardScene(
+    {
+      description: dashboard.description,
+      editable: dashboard.editable,
+      preload: dashboard.preload,
+      id: dashboardId,
+      isDirty: false,
+      links: dashboard.links,
+      meta,
+      tags: dashboard.tags,
+      title: dashboard.title,
+      uid: metadata.name,
+      version: metadata.generation,
+      body: layoutManager,
+      $timeRange: new SceneTimeRange({
+        from: dashboard.timeSettings.from,
+        to: dashboard.timeSettings.to,
+        fiscalYearStartMonth: dashboard.timeSettings.fiscalYearStartMonth,
+        timeZone: dashboard.timeSettings.timezone,
+        weekStart: dashboard.timeSettings.weekStart,
+        UNSAFE_nowDelay: dashboard.timeSettings.nowDelay,
       }),
-      new behaviors.SceneQueryController(),
-      registerDashboardMacro,
-      registerPanelInteractionsReporter,
-      new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
-      preserveDashboardSceneStateInLocalStorage,
-      addPanelsOnLoadBehavior,
-      new DashboardScopesFacade({
-        reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboardId?.toString(),
+      $variables: getVariables(dashboard, meta.isSnapshot ?? false),
+      $behaviors: [
+        new behaviors.CursorSync({
+          sync: transformCursorSyncV2ToV1(dashboard.cursorSync),
+        }),
+        new behaviors.SceneQueryController(),
+        registerDashboardMacro,
+        registerPanelInteractionsReporter,
+        new behaviors.LiveNowTimer({ enabled: dashboard.liveNow }),
+        preserveDashboardSceneStateInLocalStorage,
+        addPanelsOnLoadBehavior,
+        new DashboardReloadBehavior({
+          reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange && false,
+          uid: dashboardId?.toString(),
+          version: 1,
+        }),
+      ],
+      $data: new DashboardDataLayerSet({
+        annotationLayers,
       }),
-      new DashboardReloadBehavior({
-        reloadOnParamsChange: config.featureToggles.reloadDashboardsOnParamsChange,
-        uid: dashboardId?.toString(),
-        version: 1,
+      controls: new DashboardControls({
+        timePicker: new SceneTimePicker({
+          quickRanges: dashboard.timeSettings.quickRanges,
+        }),
+        refreshPicker: new SceneRefreshPicker({
+          refresh: dashboard.timeSettings.autoRefresh,
+          intervals: dashboard.timeSettings.autoRefreshIntervals,
+          withText: true,
+        }),
+        hideTimeControls: dashboard.timeSettings.hideTimepicker,
       }),
-    ],
-    $data: new DashboardDataLayerSet({
-      annotationLayers,
-    }),
-    controls: new DashboardControls({
-      variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-      timePicker: new SceneTimePicker({
-        quickRanges: dashboard.timeSettings.quickRanges,
-      }),
-      refreshPicker: new SceneRefreshPicker({
-        refresh: dashboard.timeSettings.autoRefresh,
-        intervals: dashboard.timeSettings.autoRefreshIntervals,
-        withText: true,
-      }),
-      hideTimeControls: dashboard.timeSettings.hideTimepicker,
-    }),
-  });
+    },
+    'v2'
+  );
 
-  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
+  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
 
   return dashboardScene;
-}
-
-function getPanelDataSource(panel: PanelKind): DataSourceRef | undefined {
-  if (!panel.spec.data?.spec.queries?.length) {
-    return undefined;
-  }
-
-  let datasource: DataSourceRef | undefined = undefined;
-  let isMixedDatasource = false;
-
-  panel.spec.data.spec.queries.forEach((query) => {
-    if (!datasource) {
-      datasource = query.spec.datasource;
-    } else if (datasource.uid !== query.spec.datasource?.uid || datasource.type !== query.spec.datasource?.type) {
-      isMixedDatasource = true;
-    }
-  });
-
-  return isMixedDatasource ? { type: 'mixed', uid: MIXED_DATASOURCE_NAME } : datasource;
-}
-
-function panelQueryKindToSceneQuery(query: PanelQueryKind): SceneDataQuery {
-  return {
-    refId: query.spec.refId,
-    datasource: query.spec.datasource,
-    hide: query.spec.hidden,
-    ...query.spec.query.spec,
-  };
-}
-
-export function createPanelDataProvider(panelKind: PanelKind): SceneDataProvider | undefined {
-  const panel = panelKind.spec;
-  const targets = panel.data?.spec.queries ?? [];
-  // Skip setting query runner for panels without queries
-  if (!targets?.length) {
-    return undefined;
-  }
-
-  // Skip setting query runner for panel plugins with skipDataQuery
-  if (config.panels[panel.vizConfig.kind]?.skipDataQuery) {
-    return undefined;
-  }
-
-  let dataProvider: SceneDataProvider | undefined = undefined;
-  const datasource = getPanelDataSource(panelKind);
-
-  dataProvider = new SceneQueryRunner({
-    datasource,
-    queries: targets.map(panelQueryKindToSceneQuery),
-    maxDataPoints: panel.data.spec.queryOptions.maxDataPoints ?? undefined,
-    maxDataPointsFromWidth: true,
-    cacheTimeout: panel.data.spec.queryOptions.cacheTimeout,
-    queryCachingTTL: panel.data.spec.queryOptions.queryCachingTTL,
-    minInterval: panel.data.spec.queryOptions.interval ?? undefined,
-    dataLayerFilter: {
-      panelId: panel.id,
-    },
-    $behaviors: [new DashboardDatasourceBehaviour({})],
-  });
-
-  // Wrap inner data provider in a data transformer
-  return new SceneDataTransformer({
-    $data: dataProvider,
-    transformations: panel.data.spec.transformations.map((transformation) => transformation.spec),
-  });
 }
 
 function getVariables(dashboard: DashboardV2Spec, isSnapshot: boolean): SceneVariableSet | undefined {
@@ -367,7 +308,7 @@ function createSceneVariableFromVariableModel(variable: TypedVariableModelV2): S
       value: variable.spec.current?.value ?? '',
       text: variable.spec.current?.text ?? '',
       query: getDataQueryForVariable(variable),
-      datasource: variable.spec.datasource,
+      datasource: getRuntimeVariableDataSource(variable),
       sort: transformSortVariableToEnumV1(variable.spec.sort),
       refresh: transformVariableRefreshToEnumV1(variable.spec.refresh),
       regex: variable.spec.regex,
@@ -567,4 +508,24 @@ export function getPanelElement(dashboard: DashboardV2Spec, elementName: string)
 
 export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
   return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
+}
+function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
+  const found = dashboard.annotations.some((item) => item.spec.builtIn);
+  if (found) {
+    return;
+  }
+
+  const grafanaBuiltAnnotation: AnnotationQueryKind = {
+    kind: 'AnnotationQuery',
+    spec: {
+      datasource: { uid: '-- Grafana --', type: 'grafana' },
+      name: 'Annotations & Alerts',
+      iconColor: DEFAULT_ANNOTATION_COLOR,
+      enable: true,
+      hide: true,
+      builtIn: true,
+    },
+  };
+
+  return grafanaBuiltAnnotation;
 }

@@ -14,6 +14,14 @@ const options: ComboboxOption[] = [
   { label: 'Option 3', value: '3', description: 'This is option 3' },
   { label: 'Option 4', value: '4' },
 ];
+const optionsWithGroups: ComboboxOption[] = [
+  { label: 'Option 1', value: '1', group: 'Group 1' },
+  { label: 'Option 2', value: '2' },
+  { label: 'Option 3', value: '3', group: 'Group 1' },
+  { label: 'Option 4', value: '4' },
+  { label: 'Option 5', value: '5', group: 'Group 2' },
+  { label: 'Option 6', value: '6', group: 'Group 2' },
+];
 
 describe('Combobox', () => {
   const onChangeHandler = jest.fn();
@@ -149,6 +157,84 @@ describe('Combobox', () => {
     await userEvent.click(input);
 
     expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  describe('groups', () => {
+    it('renders group headers', async () => {
+      const options = [
+        { label: 'Option 1', value: '1', group: 'Group 1' },
+        { label: 'Option 2', value: '2', group: 'Group 1' },
+        { label: 'Option 3', value: '3', group: 'Group 2' },
+        { label: 'Option 4', value: '4', group: 'Group 2' },
+      ];
+
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      expect(screen.getByText('Group 1')).toBeInTheDocument();
+      expect(screen.getByText('Group 2')).toBeInTheDocument();
+    });
+
+    it('sorts options within groups', async () => {
+      const options = [
+        { label: 'Option 1', value: '1', group: 'Group 1' },
+        { label: 'Option 2', value: '2', group: 'Group 2' },
+        { label: 'Option 3', value: '3', group: 'Group 1' },
+        { label: 'Option 4', value: '4', group: 'Group 2' },
+        { label: 'Option 5', value: '5', group: 'Group 2' },
+        { label: 'Option 6', value: '6', group: 'Group 1' },
+      ];
+
+      render(<Combobox options={options} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
+      expect(allHeaders).toHaveLength(2);
+
+      const listbox = await screen.findByRole('listbox');
+      expect(listbox).toHaveTextContent(
+        ['Group 1', 'Option 1', 'Option 3', 'Option 6', 'Group 2', 'Option 2', 'Option 4', 'Option 5'].join('')
+      );
+    });
+
+    it('puts ungrouped options relative to first occurrence', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const listbox = await screen.findByRole('listbox');
+      expect(listbox).toHaveTextContent(
+        ['Group 1', 'Option 1', 'Option 3', 'Option 2', 'Option 4', 'Group 2', 'Option 5', 'Option 6'].join('')
+      );
+    });
+
+    it('does not render group header labels for ungrouped options', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByTestId('combobox-option-group');
+
+      expect(allHeaders[0]).toHaveTextContent('Group 1');
+      expect(allHeaders[1]).toHaveTextContent('');
+    });
+
+    it('does not render a top border for the first group header', async () => {
+      render(<Combobox options={optionsWithGroups} value={null} onChange={onChangeHandler} />);
+
+      const input = screen.getByRole('combobox');
+      await userEvent.click(input);
+
+      const allHeaders = await screen.findAllByRole('presentation');
+
+      expect(allHeaders[0]).toHaveStyle('border-top: none');
+    });
   });
 
   describe('size support', () => {
@@ -428,11 +514,9 @@ describe('Combobox', () => {
       });
 
       const customItem = screen.getByRole('option');
-      const customValue = customItem.getElementsByTagName('span')[0].textContent;
-      const customDescription = customItem.getElementsByTagName('span')[1].textContent;
-      expect(customItem).toBeInTheDocument();
-      expect(customValue).toBe('fir');
-      expect(customDescription).toBe('Use custom value');
+
+      expect(customItem).toHaveTextContent('fir');
+      expect(customItem).toHaveTextContent('Use custom value');
     });
 
     it('should display message when there is an error loading async options', async () => {

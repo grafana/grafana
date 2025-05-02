@@ -12,8 +12,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
-	"xorm.io/core"
 )
 
 // ErrNoElementsOnSlice represents an error there is no element when insert
@@ -120,13 +120,39 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 	}
 
 	table := session.statement.RefTable
-	size := sliceValue.Len()
+	firstElement := sliceValue.Index(0)
+	firstValue := reflect.Indirect(firstElement)
 
 	var colNames []string
-	var colMultiPlaces []string
-	var args []any
 	var cols []*core.Column
 
+	// Find columns that will be in the INSERT statement.
+	for _, col := range table.Columns() {
+		ptrFieldValue, err := col.ValueOfV(&firstValue)
+		if err != nil {
+			return 0, err
+		}
+		fieldValue := *ptrFieldValue
+		if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
+			continue
+		}
+		if col.IsDeleted {
+			continue
+		}
+		if session.statement.omitColumnMap.contain(col.Name) {
+			continue
+		}
+		if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
+			continue
+		}
+
+		colNames = append(colNames, col.Name)
+		cols = append(cols, col)
+	}
+
+	var colMultiPlaces []string
+	var args []any
+	size := sliceValue.Len()
 	for i := 0; i < size; i++ {
 		v := sliceValue.Index(i)
 		vv := reflect.Indirect(v)
@@ -143,105 +169,38 @@ func (session *Session) innerInsertMulti(rowsSlicePtr any) (int64, error) {
 			processor.BeforeInsert()
 		}
 
-		if i == 0 {
-			for _, col := range table.Columns() {
-				ptrFieldValue, err := col.ValueOfV(&vv)
+		for _, col := range cols {
+			ptrFieldValue, err := col.ValueOfV(&vv)
+			if err != nil {
+				return 0, err
+			}
+			fieldValue := *ptrFieldValue
+
+			if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
+				val, t := session.engine.nowTime(col)
+				args = append(args, val)
+
+				var colName = col.Name
+				session.afterClosures = append(session.afterClosures, func(bean any) {
+					col := table.GetColumn(colName)
+					setColumnTime(bean, col, t)
+				})
+			} else if col.IsVersion && session.statement.checkVersion {
+				args = append(args, 1)
+				var colName = col.Name
+				session.afterClosures = append(session.afterClosures, func(bean any) {
+					col := table.GetColumn(colName)
+					setColumnInt(bean, col, 1)
+				})
+			} else {
+				arg, err := session.value2Interface(col, fieldValue)
 				if err != nil {
 					return 0, err
 				}
-				fieldValue := *ptrFieldValue
-				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
-					continue
-				}
-				if col.MapType == core.ONLYFROMDB {
-					continue
-				}
-				if col.IsDeleted {
-					continue
-				}
-				if session.statement.omitColumnMap.contain(col.Name) {
-					continue
-				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
-					continue
-				}
-				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
-					val, t := session.engine.nowTime(col)
-					args = append(args, val)
-
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnTime(bean, col, t)
-					})
-				} else if col.IsVersion && session.statement.checkVersion {
-					args = append(args, 1)
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnInt(bean, col, 1)
-					})
-				} else {
-					arg, err := session.value2Interface(col, fieldValue)
-					if err != nil {
-						return 0, err
-					}
-					args = append(args, arg)
-				}
-
-				colNames = append(colNames, col.Name)
-				cols = append(cols, col)
-				colPlaces = append(colPlaces, "?")
+				args = append(args, arg)
 			}
-		} else {
-			for _, col := range cols {
-				ptrFieldValue, err := col.ValueOfV(&vv)
-				if err != nil {
-					return 0, err
-				}
-				fieldValue := *ptrFieldValue
 
-				if col.IsAutoIncrement && isZero(fieldValue.Interface()) {
-					continue
-				}
-				if col.MapType == core.ONLYFROMDB {
-					continue
-				}
-				if col.IsDeleted {
-					continue
-				}
-				if session.statement.omitColumnMap.contain(col.Name) {
-					continue
-				}
-				if len(session.statement.columnMap) > 0 && !session.statement.columnMap.contain(col.Name) {
-					continue
-				}
-				if (col.IsCreated || col.IsUpdated) && session.statement.UseAutoTime {
-					val, t := session.engine.nowTime(col)
-					args = append(args, val)
-
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnTime(bean, col, t)
-					})
-				} else if col.IsVersion && session.statement.checkVersion {
-					args = append(args, 1)
-					var colName = col.Name
-					session.afterClosures = append(session.afterClosures, func(bean any) {
-						col := table.GetColumn(colName)
-						setColumnInt(bean, col, 1)
-					})
-				} else {
-					arg, err := session.value2Interface(col, fieldValue)
-					if err != nil {
-						return 0, err
-					}
-					args = append(args, arg)
-				}
-
-				colPlaces = append(colPlaces, "?")
-			}
+			colPlaces = append(colPlaces, "?")
 		}
 		colMultiPlaces = append(colMultiPlaces, strings.Join(colPlaces, ", "))
 	}
@@ -345,20 +304,25 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 		return 0, err
 	}
 
-	//// XXX: hack to handle autoincrement in spanner
-	//if len(table.AutoIncrement) > 0 && session.engine.dialect.DBType() == "spanner" {
-	//	var found bool
-	//	for _, col := range colNames {
-	//		if col == table.AutoIncrement {
-	//			found = true
-	//			break
-	//		}
-	//	}
-	//	if !found {
-	//		colNames = append(colNames, table.AutoIncrement)
-	//		args = append(args, rand.Int63n(9e15))
-	//	}
-	//}
+	// If engine has a sequence number generator, use it to produce values for auto-increment columns.
+	if len(table.AutoIncrement) > 0 && session.engine.sequenceGenerator != nil {
+		var found bool
+		for _, col := range colNames {
+			if col == table.AutoIncrement {
+				found = true
+				break
+			}
+		}
+		if !found {
+			seq, err := session.engine.sequenceGenerator.Next(session.ctx, table.Name, table.AutoIncrement)
+			if err != nil {
+				return 0, fmt.Errorf("failed to generate next value for auto_increment columns: %v", err)
+			}
+
+			colNames = append(colNames, table.AutoIncrement)
+			args = append(args, seq)
+		}
+	}
 
 	exprs := session.statement.exprColumns
 	colPlaces := strings.Repeat("?, ", len(colNames))
@@ -597,10 +561,6 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 	args := make([]any, 0, len(table.ColumnsSeq()))
 
 	for _, col := range table.Columns() {
-		if col.MapType == core.ONLYFROMDB {
-			continue
-		}
-
 		if col.IsDeleted {
 			continue
 		}

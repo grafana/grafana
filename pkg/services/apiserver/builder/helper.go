@@ -170,6 +170,8 @@ func SetupConfig(
 			operationAlt = "get" + operationAlt[len("read"):]
 		} else if strings.HasPrefix(operationAlt, "patch") {
 			operationAlt = "update" + operationAlt[len("patch"):]
+		} else if strings.HasPrefix(operationAlt, "put") {
+			operationAlt = "replace" + operationAlt[len("put"):]
 		}
 
 		// Audit our options here
@@ -222,6 +224,7 @@ func SetupConfig(
 	}
 
 	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIConfig.Info.Version = buildVersion
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
@@ -312,6 +315,7 @@ func InstallAPIs(
 
 			var (
 				dualWriterPeriodicDataSyncJobEnabled bool
+				dualWriterMigrationDataSyncDisabled  bool
 				dataSyncerInterval                   = time.Hour
 				dataSyncerRecordsLimit               = 1000
 			)
@@ -320,6 +324,7 @@ func InstallAPIs(
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dualWriterMigrationDataSyncDisabled = resourceConfig.DualWriterMigrationDataSyncDisabled
 				dataSyncerInterval = resourceConfig.DataSyncerInterval
 				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
@@ -340,6 +345,7 @@ func InstallAPIs(
 				Kind:                   key,
 				RequestInfo:            requestInfo,
 				Mode:                   mode,
+				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
 				LegacyStorage:          legacy,
 				Storage:                storage,
 				ServerLockService:      serverLock,
@@ -394,11 +400,12 @@ func InstallAPIs(
 		g := genericapiserver.NewDefaultAPIGroupInfo(group, scheme, metav1.ParameterCodec, codecs)
 		for _, b := range buildersForGroup {
 			if err := b.UpdateAPIGroupInfo(&g, APIGroupOptions{
-				Scheme:           scheme,
-				OptsGetter:       optsGetter,
-				DualWriteBuilder: dualWrite,
-				MetricsRegister:  reg,
-				StorageOptions:   optsregister,
+				Scheme:              scheme,
+				OptsGetter:          optsGetter,
+				DualWriteBuilder:    dualWrite,
+				MetricsRegister:     reg,
+				StorageOptsRegister: optsregister,
+				StorageOpts:         storageOpts,
 			}); err != nil {
 				return err
 			}

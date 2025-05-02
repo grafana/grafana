@@ -120,7 +120,6 @@ func TestStore_Routes(t *testing.T) {
 	t.Run("Routes returns all static routes for non-decommissioned plugins", func(t *testing.T) {
 		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "a-test-renderer", Type: plugins.TypeRenderer}, FS: fakes.NewFakePluginFS("/some/dir")}
 		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "b-test-panel", Type: plugins.TypePanel}, FS: fakes.NewFakePluginFS("/grafana/")}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "c-test-secrets", Type: plugins.TypeSecretsManager}, FS: fakes.NewFakePluginFS("./secrets"), Class: plugins.ClassCore}
 		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "d-test-datasource", Type: plugins.TypeDataSource}, FS: fakes.NewFakePluginFS("../test")}
 		p5 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "e-test-app", Type: plugins.TypeApp}, FS: fakes.NewFakePluginFS("any/path")}
 		p6 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "f-test-app", Type: plugins.TypeApp}}
@@ -130,7 +129,6 @@ func TestStore_Routes(t *testing.T) {
 			Store: map[string]*plugins.Plugin{
 				p1.ID: p1,
 				p2.ID: p2,
-				p3.ID: p3,
 				p4.ID: p4,
 				p5.ID: p5,
 				p6.ID: p6,
@@ -143,27 +141,6 @@ func TestStore_Routes(t *testing.T) {
 
 		rs := ps.Routes(context.Background())
 		require.Equal(t, []*plugins.StaticRoute{sr(p1), sr(p2), sr(p4), sr(p5)}, rs)
-	})
-}
-
-func TestStore_SecretsManager(t *testing.T) {
-	t.Run("Renderer returns a single (non-decommissioned) secrets manager plugin", func(t *testing.T) {
-		p1 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-renderer", Type: plugins.TypeRenderer}}
-		p2 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-panel", Type: plugins.TypePanel}}
-		p3 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-secrets", Type: plugins.TypeSecretsManager}}
-		p4 := &plugins.Plugin{JSONData: plugins.JSONData{ID: "test-datasource", Type: plugins.TypeDataSource}}
-
-		ps := New(&fakes.FakePluginRegistry{
-			Store: map[string]*plugins.Plugin{
-				p1.ID: p1,
-				p2.ID: p2,
-				p3.ID: p3,
-				p4.ID: p4,
-			},
-		}, &fakes.FakeLoader{})
-
-		r := ps.SecretsManager(context.Background())
-		require.Equal(t, p3, r)
 	})
 }
 

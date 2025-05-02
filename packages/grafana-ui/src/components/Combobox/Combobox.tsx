@@ -1,7 +1,7 @@
 import { cx } from '@emotion/css';
-import { useVirtualizer } from '@tanstack/react-virtual';
+import { useVirtualizer, type Range } from '@tanstack/react-virtual';
 import { useCombobox } from 'downshift';
-import { useId, useMemo } from 'react';
+import { useCallback, useId, useMemo } from 'react';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
@@ -9,14 +9,14 @@ import { Icon } from '../Icon/Icon';
 import { AutoSizeInput } from '../Input/AutoSizeInput';
 import { Input, Props as InputProps } from '../Input/Input';
 import { Portal } from '../Portal/Portal';
-import { ScrollContainer } from '../ScrollContainer/ScrollContainer';
 
-import { AsyncError, NotFoundError } from './MessageRows';
+import { ComboboxList } from './ComboboxList';
 import { itemToString } from './filter';
 import { getComboboxStyles, MENU_OPTION_HEIGHT, MENU_OPTION_HEIGHT_DESCRIPTION } from './getComboboxStyles';
 import { ComboboxOption } from './types';
 import { useComboboxFloat } from './useComboboxFloat';
 import { useOptions } from './useOptions';
+import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
@@ -55,6 +55,8 @@ export interface ComboboxBaseProps<T extends string | number>
    * Defaults to full width of container. Number is a multiple of the spacing unit. 'auto' will size the input to the content.
    * */
   width?: number | 'auto';
+
+  ['data-testid']?: string;
 
   /**
    * Called when the input loses focus.
@@ -119,6 +121,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     minWidth,
     maxWidth,
     'aria-labelledby': ariaLabelledBy,
+    'data-testid': dataTestId,
     autoFocus,
     onBlur,
     disabled,
@@ -129,9 +132,11 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   // Value can be an actual scalar Value (string or number), or an Option (value + label), so
   // get a consistent Value from it
   const value = typeof valueProp === 'object' ? valueProp?.value : valueProp;
+  const baseId = useId().replace(/:/g, '--');
 
   const {
     options: filteredOptions,
+    groupStartIndices,
     updateOptions,
     asyncLoading,
     asyncError,
@@ -167,20 +172,54 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     return typeof valueProp === 'object' ? valueProp : { value: valueProp, label: valueProp.toString() };
   }, [selectedItemIndex, isAsync, valueProp, allOptions]);
 
-  const menuId = `downshift-${useId().replace(/:/g, '--')}-menu`;
-  const labelId = `downshift-${useId().replace(/:/g, '--')}-label`;
+  const menuId = `${baseId}-downshift-menu`;
+  const labelId = `${baseId}-downshift-label`;
 
   const styles = useStyles2(getComboboxStyles);
 
-  const virtualizerOptions = {
+  // Injects the group header for the first rendered item into the range to render.
+  // Accepts the range that useVirtualizer wants to render, and then returns indexes
+  // to actually render.
+  const rangeExtractor = useCallback(
+    (range: Range) => {
+      const startIndex = Math.max(0, range.startIndex - range.overscan);
+      const endIndex = Math.min(filteredOptions.length - 1, range.endIndex + range.overscan);
+      const rangeToReturn = Array.from({ length: endIndex - startIndex + 1 }, (_, i) => startIndex + i);
+
+      // If the first item doesn't have a group, no need to find a header for it
+      const firstDisplayedOption = filteredOptions[rangeToReturn[0]];
+      if (firstDisplayedOption?.group) {
+        const groupStartIndex = groupStartIndices.get(firstDisplayedOption.group);
+        if (groupStartIndex !== undefined && groupStartIndex < rangeToReturn[0]) {
+          rangeToReturn.unshift(groupStartIndex);
+        }
+      }
+
+      return rangeToReturn;
+    },
+    [filteredOptions, groupStartIndices]
+  );
+
+  const rowVirtualizer = useVirtualizer({
     count: filteredOptions.length,
     getScrollElement: () => scrollRef.current,
-    estimateSize: (index: number) =>
-      filteredOptions[index].description ? MENU_OPTION_HEIGHT_DESCRIPTION : MENU_OPTION_HEIGHT,
-    overscan: VIRTUAL_OVERSCAN_ITEMS,
-  };
+    estimateSize: (index: number) => {
+      const firstGroupItem = isNewGroup(filteredOptions[index], index > 0 ? filteredOptions[index - 1] : undefined);
+      const hasDescription = 'description' in filteredOptions[index];
+      const hasGroup = 'group' in filteredOptions[index];
 
-  const rowVirtualizer = useVirtualizer(virtualizerOptions);
+      let itemHeight = MENU_OPTION_HEIGHT;
+      if (hasDescription) {
+        itemHeight = MENU_OPTION_HEIGHT_DESCRIPTION;
+      }
+      if (firstGroupItem && hasGroup) {
+        itemHeight += MENU_OPTION_HEIGHT;
+      }
+      return itemHeight;
+    },
+    overscan: VIRTUAL_OVERSCAN_ITEMS,
+    rangeExtractor,
+  });
 
   const {
     isOpen,
@@ -271,8 +310,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
   const { inputRef, floatingRef, floatStyles, scrollRef } = useComboboxFloat(filteredOptions, isOpen);
 
   const isAutoSize = width === 'auto';
-
   const InputComponent = isAutoSize ? AutoSizeInput : Input;
+  const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
 
   const suffixIcon = asyncLoading
     ? 'spinner'
@@ -281,7 +320,29 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
       ? 'search'
       : 'angle-down';
 
-  const placeholder = (isOpen ? itemToString(selectedItem) : null) || placeholderProp;
+  const inputSuffix = (
+    <>
+      {value && value === selectedItem?.value && isClearable && (
+        <Icon
+          name="times"
+          className={styles.clear}
+          title={t('combobox.clear.title', 'Clear value')}
+          tabIndex={0}
+          role="button"
+          onClick={() => {
+            selectItem(null);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              selectItem(null);
+            }
+          }}
+        />
+      )}
+
+      <Icon name={suffixIcon} />
+    </>
+  );
 
   return (
     <div className={isAutoSize ? styles.addaptToParent : undefined}>
@@ -294,91 +355,33 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
         loading={loading}
         invalid={invalid}
         className={styles.input}
-        suffix={
-          <>
-            {!!value && value === selectedItem?.value && isClearable && (
-              <Icon
-                name="times"
-                className={styles.clear}
-                title={t('combobox.clear.title', 'Clear value')}
-                tabIndex={0}
-                role="button"
-                onClick={() => {
-                  selectItem(null);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    selectItem(null);
-                  }
-                }}
-              />
-            )}
-
-            <Icon name={suffixIcon} />
-          </>
-        }
+        suffix={inputSuffix}
         {...getInputProps({
           ref: inputRef,
-          /*  Empty onCall to avoid TS error
-           *  See issue here: https://github.com/downshift-js/downshift/issues/718
-           *  Downshift repo: https://github.com/downshift-js/downshift/tree/master
-           */
-          onChange: noop,
+          onChange: noop, // Empty onCall to avoid TS error https://github.com/downshift-js/downshift/issues/718
           'aria-labelledby': ariaLabelledBy, // Label should be handled with the Field component
           placeholder,
+          'data-testid': dataTestId,
         })}
       />
       <Portal>
         <div
           className={cx(styles.menu, !isOpen && styles.menuClosed)}
-          style={{
-            ...floatStyles,
-          }}
+          style={floatStyles}
           {...getMenuProps({
             ref: floatingRef,
             'aria-labelledby': ariaLabelledBy,
           })}
         >
           {isOpen && (
-            <ScrollContainer showScrollIndicators maxHeight="inherit" ref={scrollRef} padding={0.5}>
-              {!asyncError && (
-                <ul style={{ height: rowVirtualizer.getTotalSize() }} className={styles.menuUlContainer}>
-                  {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                    const item = filteredOptions[virtualRow.index];
-
-                    return (
-                      <li
-                        key={`${item.value}-${virtualRow.index}`}
-                        data-index={virtualRow.index}
-                        className={cx(
-                          styles.optionBasic,
-                          styles.option,
-                          selectedItem && item.value === selectedItem.value && styles.optionSelected,
-                          highlightedIndex === virtualRow.index && styles.optionFocused
-                        )}
-                        style={{
-                          height: virtualRow.size,
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
-                        {...getItemProps({
-                          item: item,
-                          index: virtualRow.index,
-                        })}
-                      >
-                        <div className={styles.optionBody}>
-                          <span className={styles.optionLabel}>{item.label ?? item.value}</span>
-                          {item.description && <span className={styles.optionDescription}>{item.description}</span>}
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-              <div aria-live="polite">
-                {asyncError && <AsyncError />}
-                {filteredOptions.length === 0 && !asyncError && <NotFoundError />}
-              </div>
-            </ScrollContainer>
+            <ComboboxList
+              options={filteredOptions}
+              highlightedIndex={highlightedIndex}
+              selectedItems={selectedItem ? [selectedItem] : []}
+              scrollRef={scrollRef}
+              getItemProps={getItemProps}
+              error={asyncError}
+            />
           )}
         </div>
       </Portal>

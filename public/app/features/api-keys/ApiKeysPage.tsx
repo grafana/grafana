@@ -6,7 +6,7 @@ import { connect, ConnectedProps } from 'react-redux';
 import { InlineField, InlineSwitch, Modal, Button, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { getTimeZone } from 'app/features/profile/state/selectors';
 import { AccessControlAction, ApiKey, ApikeyMigrationResult, StoreState } from 'app/types';
 
@@ -127,7 +127,10 @@ export class ApiKeysPageUnconnected extends PureComponent<Props, State> {
               onSearchChange={this.onSearchQueryChange}
             />
           ) : null}
-          <InlineField disabled={includeExpiredDisabled} label="Include expired keys">
+          <InlineField
+            disabled={includeExpiredDisabled}
+            label={t('api-keys.api-keys-page-unconnected.label-include-expired-keys', 'Include expired keys')}
+          >
             <InlineSwitch id="showExpired" value={includeExpired} onChange={this.onIncludeExpiredChange} />
           </InlineField>
           {apiKeys.length > 0 ? (
@@ -175,52 +178,78 @@ const styles: { [key: string]: React.CSSProperties } = {
 
 export const MigrationSummary: React.FC<MigrationSummaryProps> = ({ visible, data, onDismiss }) => {
   return (
-    <Modal title="Migration summary" isOpen={visible} closeOnBackdropClick={true} onDismiss={onDismiss}>
+    <Modal
+      title={t('api-keys.migration-summary.title-migration-summary', 'Migration summary')}
+      isOpen={visible}
+      closeOnBackdropClick={true}
+      onDismiss={onDismiss}
+    >
       {data.failedApikeyIDs.length === 0 && (
         <div style={styles.migrationSummary}>
-          <p>Migration Successful!</p>
           <p>
-            <strong>Total: </strong>
-            {data.total}
+            <Trans i18nKey="api-keys.migration-summary.migration-successful">Migration Successful!</Trans>
           </p>
           <p>
-            <strong>Migrated: </strong>
-            {data.migrated}
+            <Trans i18nKey="api-keys.migration-summary.total" values={{ total: data.total }}>
+              <strong>Total: </strong>
+              {'{{total}}'}
+            </Trans>
+          </p>
+          <p>
+            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ migrated: data.migrated }}>
+              <strong>Migrated: </strong>
+              {'{{migrated}}'}
+            </Trans>
           </p>
         </div>
       )}
       {data.failedApikeyIDs.length !== 0 && (
         <div style={styles.migrationSummary}>
           <p>
-            Migration Complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
-            assured, all of your API keys are fully functional and operational. Please try again or contact support.
+            <Trans i18nKey="api-keys.migration-summary.migration-complete">
+              Migration complete! Please note, while there might be a few API keys flagged as `failed migrations`, rest
+              assured, all of your API keys are fully functional and operational. Please try again or contact support.
+            </Trans>
           </p>
           <hr />
           <p>
-            <strong>Total: </strong>
-            {data.total}
+            <Trans i18nKey="api-keys.migration-summary.total" values={{ total: data.total }}>
+              <strong>Total: </strong>
+              {'{{total}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Migrated: </strong>
-            {data.migrated}
+            <Trans i18nKey="api-keys.migration-summary.migrated" values={{ migrated: data.migrated }}>
+              <strong>Migrated: </strong>
+              {'{{migrated}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Failed: </strong>
-            {data.failed}
+            <Trans i18nKey="api-keys.migration-summary.failed" values={{ failed: data.failed }}>
+              <strong>Failed: </strong>
+              {'{{failed}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Failed Api Key IDs: </strong>
-            {data.failedApikeyIDs.join(', ')}
+            <Trans i18nKey="api-keys.migration-summary.failed-ids" values={{ ids: data.failedApikeyIDs.join(', ') }}>
+              <strong>Failed api key IDs: </strong>
+              {'{{ids}}'}
+            </Trans>
           </p>
           <p>
-            <strong>Failed Details: </strong>
-            {data.failedDetails.join(', ')}
+            <Trans
+              i18nKey="api-keys.migration-summary.failed-details"
+              values={{ details: data.failedDetails.join(', ') }}
+            >
+              <strong>Failed details: </strong>
+              {'{{details}}'}
+            </Trans>
           </p>
         </div>
       )}
       <Modal.ButtonRow>
         <Button variant="secondary" onClick={onDismiss}>
-          Close
+          <Trans i18nKey="api-keys.migration-summary.close">Close</Trans>
         </Button>
       </Modal.ButtonRow>
     </Modal>

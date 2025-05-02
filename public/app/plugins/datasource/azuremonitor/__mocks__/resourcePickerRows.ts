@@ -105,6 +105,22 @@ export const mockResourcesByResourceGroup = (): ResourceRowGroup => [
     location: 'northeurope',
   },
   {
+    id: 'la-workspace',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace',
+    name: 'la-workspace',
+    typeLabel: 'Microsoft.OperationalInsights',
+    type: ResourceRowType.Resource,
+    location: 'northeurope',
+  },
+  {
+    id: 'la-workspace-1',
+    uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.operationalinsights/workspaces/la-workspace-1',
+    name: 'la-workspace-1',
+    typeLabel: 'Microsoft.OperationalInsights',
+    type: ResourceRowType.Resource,
+    location: 'northeurope',
+  },
+  {
     id: 'app-insights-1',
     uri: '/subscriptions/def-456/resourceGroups/dev-3/providers/microsoft.insights/components/app-insights-1',
     name: 'app-insights-1',

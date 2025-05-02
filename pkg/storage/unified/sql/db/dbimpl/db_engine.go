@@ -11,6 +11,8 @@ import (
 
 	"xorm.io/xorm"
 
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 )
 
@@ -18,6 +20,31 @@ import (
 // driver.
 const tlsConfigName = "db_engine_tls"
 
+func getEngine(cfg *setting.Cfg) (*xorm.Engine, error) {
+	dbSection := cfg.SectionWithEnvOverrides("database")
+	dbType := dbSection.Key("type").String()
+	if dbType == "" {
+		return nil, fmt.Errorf("no database type specified")
+	}
+
+	switch dbType {
+	case dbTypeMySQL, dbTypePostgres, dbTypeSQLite:
+		config, err := sqlstore.NewDatabaseConfig(cfg, nil)
+		if err != nil {
+			return nil, nil
+		}
+
+		engine, err := xorm.NewEngine(dbType, config.ConnectionString)
+		if err != nil {
+			return nil, fmt.Errorf("open database: %w", err)
+		}
+		return engine, nil
+	default:
+		return nil, fmt.Errorf("unsupported database type: %s", dbType)
+	}
+}
+
+// Deprecated: use getEngine instead
 func getEngineMySQL(getter confGetter) (*xorm.Engine, error) {
 	config := mysql.NewConfig()
 	config.User = getter.String("user")
@@ -108,6 +135,7 @@ func configureTLS(getter confGetter, config *mysql.Config) error {
 	return nil
 }
 
+// Deprecated: use getEngine instead
 func getEnginePostgres(getter confGetter) (*xorm.Engine, error) {
 	dsnKV := map[string]string{
 		"user": getter.String("user"),

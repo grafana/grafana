@@ -18,7 +18,12 @@ import (
 func TestRunInstrumentationService(t *testing.T) {
 	cfg := setting.NewCfg()
 	cfg.HTTPPort = "3001"
-	s, err := NewInstrumentationService(log.New("test-logger"), cfg)
+	ms := ModuleServer{
+		log:          log.New("test-logger"),
+		cfg:          cfg,
+		promGatherer: prometheus.DefaultGatherer,
+	}
+	s, err := ms.initInstrumentationServer()
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 300*time.Second)

@@ -1,9 +1,13 @@
 import i18n, { InitOptions, TFunction } from 'i18next';
 import LanguageDetector, { DetectorOptions } from 'i18next-browser-languagedetector';
-import { ReactElement } from 'react';
+import { ReactElement, useMemo } from 'react';
 import { Trans as I18NextTrans, initReactI18next } from 'react-i18next'; // eslint-disable-line no-restricted-imports
 
-import { DEFAULT_LANGUAGE, NAMESPACES, VALID_LANGUAGES } from './constants';
+import { usePluginContext } from '@grafana/data';
+import { DEFAULT_LANGUAGE } from '@grafana/data/unstable';
+import { setTransComponent, setUseTranslateHook, TransProps } from '@grafana/runtime/unstable';
+
+import { NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
 
 let tFunc: TFunction<string[], undefined> | undefined;
@@ -27,6 +31,10 @@ export async function initializeI18n(language: string): Promise<{ language: stri
     fallbackLng: DEFAULT_LANGUAGE,
 
     ns: NAMESPACES,
+    postProcess: [
+      // Add pseudo processing even if we aren't necessarily going to use it
+      'pseudo',
+    ],
   };
 
   i18nInstance = i18n;
@@ -38,14 +46,25 @@ export async function initializeI18n(language: string): Promise<{ language: stri
     options.lng = VALID_LANGUAGES.includes(language) ? language : undefined;
   }
 
-  const loadPromise = i18nInstance
-    .use(loadTranslations)
-    .use(initReactI18next) // passes i18n down to react-i18next
-    .init(options);
+  i18nInstance.use(loadTranslations).use(initReactI18next); // passes i18n down to react-i18next
 
-  await loadPromise;
+  if (process.env.NODE_ENV === 'development') {
+    const { default: Pseudo } = await import('i18next-pseudo');
+    i18nInstance.use(
+      new Pseudo({
+        languageToPseudo: 'pseudo',
+        enabled: true,
+        wrapped: true,
+      })
+    );
+  }
+
+  await i18nInstance.init(options);
 
   tFunc = i18n.getFixedT(null, NAMESPACES);
+
+  setUseTranslateHook(useTranslateInternal);
+  setTransComponent(Trans);
 
   return {
     language: i18nInstance.resolvedLanguage,
@@ -57,14 +76,14 @@ export function changeLanguage(locale: string) {
   return i18n.changeLanguage(validLocale);
 }
 
-type I18NextTransType = typeof I18NextTrans;
-type I18NextTransProps = Parameters<I18NextTransType>[0];
-
-interface TransProps extends I18NextTransProps {
-  i18nKey: string;
-}
-
 export const Trans = (props: TransProps): ReactElement => {
+  const context = usePluginContext();
+
+  // If we are in a plugin context, use the plugin's id as the namespace
+  if (context?.meta?.id) {
+    return <I18NextTrans shouldUnescape ns={context.meta.id} {...props} />;
+  }
+
   return <I18NextTrans shouldUnescape ns={NAMESPACES} {...props} />;
 };
 
@@ -72,6 +91,8 @@ export const Trans = (props: TransProps): ReactElement => {
  * This is a simple wrapper over i18n.t() to provide default namespaces and enforce a consistent API.
  * Note: Don't use this in the top level module scope. This wrapper needs initialization, which is done during Grafana
  * startup, and it will throw if used before.
+ *
+ * This will soon be deprecated in favor of useTranslate()
  * @param id ID of the translation string
  * @param defaultMessage Default message to use if the translation is missing
  * @param values Values to be interpolated into the string
@@ -110,4 +131,19 @@ export function getI18next() {
   }
 
   return i18nInstance || i18n;
+}
+
+// We want to move to a react-only API for translations.
+// This hook doesn't do much now, but we want it to define the API for plugins.
+// Perhaps in the future this will use useTranslation from react-i18next or something else
+// from context
+export function useTranslateInternal() {
+  const context = usePluginContext();
+  if (!context) {
+    return t;
+  }
+
+  const { meta } = context;
+  const pluginT = useMemo(() => getI18next().getFixedT(null, meta.id), [meta.id]);
+  return pluginT;
 }

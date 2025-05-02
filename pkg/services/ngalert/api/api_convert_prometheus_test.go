@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -123,15 +122,13 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		expectedRules := make(map[string]string)
 		for _, rule := range simpleGroup.Rules {
 			if rule.Alert != "" {
-				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Alert)
 				promRuleYAML, err := yaml.Marshal(rule)
 				require.NoError(t, err)
-				expectedRules[title] = string(promRuleYAML)
+				expectedRules[rule.Alert] = string(promRuleYAML)
 			} else if rule.Record != "" {
-				title := fmt.Sprintf("[%s] %s", simpleGroup.Name, rule.Record)
 				promRuleYAML, err := yaml.Marshal(rule)
 				require.NoError(t, err)
-				expectedRules[title] = string(promRuleYAML)
+				expectedRules[rule.Record] = string(promRuleYAML)
 			}
 		}
 
@@ -144,6 +141,11 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			promDefinition, err := r.PrometheusRuleDefinition()
 			require.NoError(t, err)
 			require.Equal(t, expectedDef, promDefinition)
+
+			// Verify provenance was set to ProvenanceConvertedPrometheus
+			prov, err := provenanceStore.GetProvenance(context.Background(), r, 1)
+			require.NoError(t, err)
+			require.Equal(t, models.ProvenanceConvertedPrometheus, prov)
 		}
 	})
 
@@ -341,6 +343,88 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("with disable provenance header should use ProvenanceNone", func(t *testing.T) {
+		provenanceStore := fakes.NewFakeProvisioningStore()
+		srv, _, ruleStore, folderService := createConvertPrometheusSrv(t, withProvenanceStore(provenanceStore))
+
+		// Create a folder in the root
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		// Create request with the X-Disable-Provenance header
+		rc := createRequestCtx()
+		rc.Req.Header.Set("X-Disable-Provenance", "true")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, fldr.Title, simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Get the created rules
+		rules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 2)
+
+		// Verify provenance was set to ProvenanceNone
+		for _, r := range rules {
+			prov, err := provenanceStore.GetProvenance(context.Background(), r, 1)
+			require.NoError(t, err)
+			require.Equal(t, models.ProvenanceNone, prov, "Provenance should be ProvenanceNone when X-Disable-Provenance header is set")
+			// Prometheus rule definition should not be saved when provenance is disabled
+			require.Nil(t, r.Metadata.PrometheusStyleRule)
+		}
+	})
+
+	t.Run("returns error when target datasource does not exist", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		rc.Req.Header.Set(targetDatasourceUIDHeader, "some-data-source")
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusNotFound, response.Status())
+		require.Contains(t, string(response.Body()), "failed to get recording rules target datasource")
+	})
+
+	t.Run("uses target datasource for recording rules", func(t *testing.T) {
+		srv, dsCache, ruleStore, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+		targetDSUID := util.GenerateShortUID()
+		ds := &datasources.DataSource{
+			UID:  targetDSUID,
+			Type: datasources.DS_PROMETHEUS,
+		}
+		dsCache.DataSources = append(dsCache.DataSources, ds)
+		rc.Req.Header.Set(targetDatasourceUIDHeader, targetDSUID)
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Record: "recorded-metric",
+					Expr:   "vector(1)",
+					Labels: map[string]string{
+						"severity": "warning",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		remaining, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, remaining, 1)
+		require.NotNil(t, remaining[0].Record)
+		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
+	})
 }
 
 func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
@@ -386,7 +470,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
 
 		// Create rules in both folders
-		groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+		groupKey := models.GenerateGroupKey(rc.OrgID)
 		groupKey.NamespaceUID = fldr.UID
 		groupKey.RuleGroup = "test-group"
 		rule := models.RuleGen.
@@ -398,7 +482,7 @@ func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {
 		ruleStore.PutRule(context.Background(), rule)
 
 		// Create a rule in another group
-		groupKeyNotFromProm := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+		groupKeyNotFromProm := models.GenerateGroupKey(rc.OrgID)
 		groupKeyNotFromProm.NamespaceUID = fldr.UID
 		groupKeyNotFromProm.RuleGroup = "test-group-2"
 		ruleInOtherFolder := models.RuleGen.
@@ -484,7 +568,7 @@ func TestRouteConvertPrometheusGetNamespace(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+			groupKey := models.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
@@ -571,7 +655,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 		rootFolderUID := ""
 		if withCustomFolderHeader {
 			rootFolderUID = unknownFolderUID
-			rc.Context.Req.Header.Set(folderUIDHeader, unknownFolderUID)
+			rc.Req.Header.Set(folderUIDHeader, unknownFolderUID)
 		}
 
 		t.Run("for non-existent folder should return empty response", func(t *testing.T) {
@@ -612,7 +696,7 @@ func TestRouteConvertPrometheusGetRules(t *testing.T) {
 
 		// Create a Grafana rule for each Prometheus rule
 		for _, promGroup := range []apimodels.PrometheusRuleGroup{promGroup1, promGroup2} {
-			groupKey := models.GenerateGroupKey(rc.SignedInUser.OrgID)
+			groupKey := models.GenerateGroupKey(rc.OrgID)
 			groupKey.NamespaceUID = fldr.UID
 			groupKey.RuleGroup = promGroup.Name
 			promRuleYAML, err := yaml.Marshal(promGroup.Rules[0])
@@ -743,6 +827,29 @@ func TestRouteConvertPrometheusDeleteNamespace(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, remaining)
 		})
+
+		t.Run("with disable provenance header should still be able to delete rules", func(t *testing.T) {
+			provenanceStore := fakes.NewFakeProvisioningStore()
+			srv, ruleStore, fldr, rule := initNamespace("prometheus definition", withProvenanceStore(provenanceStore))
+
+			// Mark the rule as provisioned with API provenance
+			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
+			require.NoError(t, err)
+
+			rc := createRequestCtx()
+			rc.Req.Header.Set("X-Disable-Provenance", "true")
+
+			response := srv.RouteConvertPrometheusDeleteNamespace(rc, fldr.Title)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			// Verify the rule was deleted
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.Error(t, err)
+			require.Nil(t, remaining)
+		})
 	})
 }
 
@@ -854,6 +961,223 @@ func TestRouteConvertPrometheusDeleteRuleGroup(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, remaining)
 		})
+
+		t.Run("with disable provenance header should still be able to delete rules", func(t *testing.T) {
+			provenanceStore := fakes.NewFakeProvisioningStore()
+			srv, ruleStore, fldr, rule := initGroup("", groupName, withProvenanceStore(provenanceStore))
+
+			// Mark the rule as provisioned with API provenance
+			err := provenanceStore.SetProvenance(context.Background(), rule, 1, models.ProvenanceConvertedPrometheus)
+			require.NoError(t, err)
+
+			rc := createRequestCtx()
+			rc.Req.Header.Set("X-Disable-Provenance", "true")
+
+			response := srv.RouteConvertPrometheusDeleteRuleGroup(rc, fldr.Title, groupName)
+			require.Equal(t, http.StatusAccepted, response.Status())
+
+			// Verify the rule was deleted
+			remaining, err := ruleStore.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{
+				UID:   rule.UID,
+				OrgID: rule.OrgID,
+			})
+			require.Error(t, err)
+			require.Nil(t, remaining)
+		})
+	})
+}
+
+func TestRouteConvertPrometheusPostRuleGroups(t *testing.T) {
+	srv, _, ruleStore, folderService := createConvertPrometheusSrv(t)
+
+	req := createRequestCtx()
+	req.Req.Header.Set(datasourceUIDHeader, existingDSUID)
+
+	// Create test prometheus rules
+	promAlertRule := apimodels.PrometheusRule{
+		Alert: "TestAlert",
+		Expr:  "up == 0",
+		For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+		Labels: map[string]string{
+			"severity": "critical",
+		},
+	}
+
+	promRecordingRule := apimodels.PrometheusRule{
+		Record: "TestRecordingRule",
+		Expr:   "up == 0",
+	}
+
+	promGroup1 := apimodels.PrometheusRuleGroup{
+		Name:     "TestGroup1",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules:    []apimodels.PrometheusRule{promAlertRule},
+	}
+
+	promGroup2 := apimodels.PrometheusRuleGroup{
+		Name:     "TestGroup2",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules:    []apimodels.PrometheusRule{promAlertRule},
+	}
+
+	promGroup3 := apimodels.PrometheusRuleGroup{
+		Name:     "TestGroup3",
+		Interval: prommodel.Duration(1 * time.Minute),
+		Rules:    []apimodels.PrometheusRule{promAlertRule, promRecordingRule},
+	}
+
+	promGroups := map[string][]apimodels.PrometheusRuleGroup{
+		"namespace1": {promGroup1, promGroup2},
+		"namespace2": {promGroup3},
+	}
+
+	t.Run("should convert prometheus rules to Grafana rules", func(t *testing.T) {
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify rule content
+		for _, rule := range rules {
+			require.Equal(t, int64(60), rule.IntervalSeconds) // 1 minute interval
+
+			// Check that the rule matches one of our original prometheus rules
+			switch rule.RuleGroup {
+			case "TestGroup1":
+				require.Equal(t, "TestAlert", rule.Title)
+				require.Equal(t, "critical", rule.Labels["severity"])
+				require.Equal(t, 5*time.Minute, rule.For)
+			case "TestGroup2":
+				require.Equal(t, "TestAlert", rule.Title)
+				require.Equal(t, "critical", rule.Labels["severity"])
+				require.Equal(t, 5*time.Minute, rule.For)
+			case "TestGroup3":
+				switch rule.Title {
+				case "TestAlert":
+					require.Equal(t, "critical", rule.Labels["severity"])
+					require.Equal(t, 5*time.Minute, rule.For)
+				case "TestRecordingRule":
+					require.Equal(t, "TestRecordingRule", rule.Record.Metric)
+				default:
+					t.Fatalf("unexpected rule title: %s", rule.Title)
+				}
+			default:
+				t.Fatalf("unexpected rule group: %s", rule.RuleGroup)
+			}
+		}
+	})
+
+	t.Run("should convert Prometheus rules to Grafana rules but pause recording rules", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Header.Set(alertRulesPausedHeader, "false")
+		req.Req.Header.Set(recordingRulesPausedHeader, "true")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify the recording rule is paused
+		for _, rule := range rules {
+			if rule.Record != nil {
+				require.True(t, rule.IsPaused)
+			}
+		}
+	})
+
+	t.Run("should convert Prometheus rules to Grafana rules but pause alert rules", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Header.Set(alertRulesPausedHeader, "true")
+		req.Req.Header.Set(recordingRulesPausedHeader, "false")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify the alert rule is paused
+		for _, rule := range rules {
+			if rule.Record == nil {
+				require.True(t, rule.IsPaused)
+			}
+		}
+	})
+
+	t.Run("should convert Prometheus rules to Grafana rules but pause both alert and recording rules", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		req.Req.Header.Set(recordingRulesPausedHeader, "true")
+		req.Req.Header.Set(alertRulesPausedHeader, "true")
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.GetOrgID(),
+		})
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		// Verify the alert rule is paused
+		for _, rule := range rules {
+			require.True(t, rule.IsPaused)
+		}
+	})
+
+	t.Run("convert Prometheus rules to Grafana rules into a specified target folder", func(t *testing.T) {
+		clear(ruleStore.Rules)
+
+		// Create a target folder to move the rules into
+		fldr := randFolder()
+		fldr.ParentUID = ""
+		folderService.ExpectedFolder = fldr
+		folderService.ExpectedFolders = []*folder.Folder{fldr}
+		ruleStore.Folders[1] = append(ruleStore.Folders[1], fldr)
+
+		req.Req.Header.Del(recordingRulesPausedHeader)
+		req.Req.Header.Del(alertRulesPausedHeader)
+		req.Req.Header.Set(folderUIDHeader, fldr.UID)
+
+		// Call the endpoint
+		response := srv.RouteConvertPrometheusPostRuleGroups(req, promGroups)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		// Verify the rules were created
+		rules, err := ruleStore.ListAlertRules(req.Req.Context(), &models.ListAlertRulesQuery{
+			OrgID: req.GetOrgID(),
+		})
+
+		require.NoError(t, err)
+		require.Len(t, rules, 4)
+
+		for _, rule := range rules {
+			parentFolders, err := folderService.GetParents(context.Background(), folder.GetParentsQuery{UID: rule.NamespaceUID, OrgID: 1})
+			require.NoError(t, err)
+			require.Len(t, parentFolders, 1)
+			require.Equal(t, fldr.UID, parentFolders[0].UID)
+		}
 	})
 }
 
@@ -890,7 +1214,7 @@ func withFeatureToggles(toggles featuremgmt.FeatureToggles) convertPrometheusSrv
 	}
 }
 
-func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, datasources.CacheService, *fakes.RuleStore, *foldertest.FakeService) {
+func createConvertPrometheusSrv(t *testing.T, opts ...convertPrometheusSrvOptionsFunc) (*ConvertPrometheusSrv, *dsfakes.FakeCacheService, *fakes.RuleStore, *foldertest.FakeService) {
 	t.Helper()
 
 	// By default the quota checker will allow the operation
@@ -960,6 +1284,46 @@ func createRequestCtx() *contextmodel.ReqContext {
 	}
 }
 
+// Test parseBooleanHeader function which handles boolean header values
+func TestParseBooleanHeader(t *testing.T) {
+	headerName := "X-Test-Header"
+
+	t.Run("should return false when header is not present", func(t *testing.T) {
+		result, err := parseBooleanHeader("", headerName)
+		require.NoError(t, err)
+		require.False(t, result)
+	})
+
+	t.Run("should return true when header is 'true'", func(t *testing.T) {
+		result, err := parseBooleanHeader("true", headerName)
+		require.NoError(t, err)
+		require.True(t, result)
+	})
+
+	t.Run("should return false when header is 'false'", func(t *testing.T) {
+		result, err := parseBooleanHeader("false", headerName)
+		require.NoError(t, err)
+		require.False(t, result)
+	})
+
+	t.Run("should return true when header is 'TRUE' (case insensitive)", func(t *testing.T) {
+		result, err := parseBooleanHeader("TRUE", headerName)
+		require.NoError(t, err)
+		require.True(t, result)
+	})
+
+	t.Run("should return error when header has invalid value", func(t *testing.T) {
+		_, err := parseBooleanHeader("invalid", headerName)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "Invalid value for header")
+	})
+
+	t.Run("should return error when header is numeric but not 0/1", func(t *testing.T) {
+		_, err := parseBooleanHeader("2", headerName)
+		require.Error(t, err)
+	})
+}
+
 func TestGetWorkingFolderUID(t *testing.T) {
 	t.Run("should return root folder UID when header is not present", func(t *testing.T) {
 		rc := createRequestCtx()
@@ -993,5 +1357,34 @@ func TestGetWorkingFolderUID(t *testing.T) {
 
 		folderUID := getWorkingFolderUID(rc)
 		require.Equal(t, specifiedFolderUID, folderUID)
+	})
+}
+
+func TestGetProvenance(t *testing.T) {
+	t.Run("should return ProvenanceConvertedPrometheus when header is not present", func(t *testing.T) {
+		rc := createRequestCtx()
+		// Ensure the header is not present
+		rc.Req.Header.Del(disableProvenanceHeaderName)
+
+		provenance := getProvenance(rc)
+		require.Equal(t, models.ProvenanceConvertedPrometheus, provenance)
+	})
+
+	t.Run("should return ProvenanceNone when header is present", func(t *testing.T) {
+		rc := createRequestCtx()
+		// Set the disable provenance header
+		rc.Req.Header.Set(disableProvenanceHeaderName, "true")
+
+		provenance := getProvenance(rc)
+		require.Equal(t, models.ProvenanceNone, provenance)
+	})
+
+	t.Run("should return ProvenanceNone when header is present with any value", func(t *testing.T) {
+		rc := createRequestCtx()
+		// Set the disable provenance header with an empty value
+		rc.Req.Header.Set(disableProvenanceHeaderName, "")
+
+		provenance := getProvenance(rc)
+		require.Equal(t, models.ProvenanceNone, provenance)
 	})
 }

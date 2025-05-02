@@ -1,87 +1,170 @@
 import { css, cx } from '@emotion/css';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { Draggable } from '@hello-pangea/dnd';
+import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
-import { clearButtonStyles, Icon, useElementSelection, useStyles2 } from '@grafana/ui';
+import { SceneComponentProps } from '@grafana/scenes';
+import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { isClonedKey } from '../../utils/clone';
-import { getDashboardSceneFor } from '../../utils/utils';
+import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
+import { useIsClone } from '../../utils/clone';
+import { useDashboardState, useInterpolatedTitle } from '../../utils/utils';
+import { DashboardScene } from '../DashboardScene';
 
 import { RowItem } from './RowItem';
-import { RowItemMenu } from './RowItemMenu';
 
 export function RowItemRenderer({ model }: SceneComponentProps<RowItem>) {
-  const { layout, title, isCollapsed, height = 'min', isHeaderHidden, key } = model.useState();
-  const isClone = useMemo(() => isClonedKey(key!), [key]);
-  const dashboard = getDashboardSceneFor(model);
-  const { isEditing, showHiddenElements } = dashboard.useState();
+  const { layout, collapse: isCollapsed, fillScreen, hideHeader: isHeaderHidden, isDropTarget, key } = model.useState();
+  const isClone = useIsClone(model);
+  const { isEditing } = useDashboardState(model);
+  const [isConditionallyHidden, conditionalRenderingClass, conditionalRenderingOverlay] =
+    useIsConditionallyHidden(model);
+  const { isSelected, onSelect, isSelectable } = useElementSelection(key);
+  const title = useInterpolatedTitle(model);
+  const { rows } = model.getParentLayout().useState();
   const styles = useStyles2(getStyles);
   const clearStyles = useStyles2(clearButtonStyles);
-  const titleInterpolated = sceneGraph.interpolate(model, title, undefined, 'text');
-  const ref = useRef<HTMLDivElement>(null);
-  const shouldGrow = !isCollapsed && height === 'expand';
-  const { isSelected, isSelectable, onSelect } = useElementSelection(key);
+  const isTopLevel = model.parent?.parent instanceof DashboardScene;
+  const pointerDistance = usePointerDistance();
+
+  const myIndex = rows.findIndex((row) => row === model);
+
+  const shouldGrow = !isCollapsed && fillScreen;
+  const isHidden = isConditionallyHidden && !isEditing;
 
   // Highlight the full row when hovering over header
   const [selectableHighlight, setSelectableHighlight] = useState(false);
   const onHeaderEnter = useCallback(() => setSelectableHighlight(true), []);
   const onHeaderLeave = useCallback(() => setSelectableHighlight(false), []);
 
+  const isDraggable = !isClone && isEditing;
+
+  if (isHidden) {
+    return null;
+  }
+
   return (
-    <div
-      className={cx(
-        styles.wrapper,
-        isEditing && !isCollapsed && styles.wrapperEditing,
-        isEditing && isCollapsed && styles.wrapperEditingCollapsed,
-        isCollapsed && styles.wrapperCollapsed,
-        shouldGrow && styles.wrapperGrow,
-        !isClone && isSelected && 'dashboard-selected-element',
-        !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element'
-      )}
-      ref={ref}
-      onPointerDown={onSelect}
-    >
-      {(!isHeaderHidden || (isEditing && showHiddenElements)) && (
+    <Draggable key={key!} draggableId={key!} index={myIndex} isDragDisabled={!isDraggable}>
+      {(dragProvided, dragSnapshot) => (
         <div
-          className={cx(styles.rowHeader, 'dashboard-row-header')}
-          onMouseEnter={isSelectable ? onHeaderEnter : undefined}
-          onMouseLeave={isSelectable ? onHeaderLeave : undefined}
-        >
-          <button
-            onClick={() => model.onCollapseToggle()}
-            className={cx(clearStyles, styles.rowTitleButton)}
-            aria-label={
-              isCollapsed
-                ? t('dashboard.rows-layout.row.expand', 'Expand row')
-                : t('dashboard.rows-layout.row.collapse', 'Collapse row')
+          ref={(ref) => {
+            dragProvided.innerRef(ref);
+            model.containerRef.current = ref;
+          }}
+          data-dashboard-drop-target-key={model.state.key}
+          className={cx(
+            styles.wrapper,
+            !isCollapsed && styles.wrapperNotCollapsed,
+            dragSnapshot.isDragging && styles.dragging,
+            isEditing && !isCollapsed && styles.wrapperEditing,
+            isEditing && isCollapsed && styles.wrapperEditingCollapsed,
+            isCollapsed && styles.wrapperCollapsed,
+            shouldGrow && styles.wrapperGrow,
+            conditionalRenderingClass,
+            !isClone && isSelected && 'dashboard-selected-element',
+            !isClone && !isSelected && selectableHighlight && 'dashboard-selectable-element',
+            isDropTarget && 'dashboard-drop-target'
+          )}
+          onPointerDown={(evt) => {
+            evt.stopPropagation();
+            pointerDistance.set(evt);
+          }}
+          onPointerUp={(evt) => {
+            // If we selected and are clicking a button inside row header then don't de-select row
+            if (isSelected && evt.target instanceof Element && evt.target.closest('button')) {
+              // Stop propagation otherwise dashboaed level onPointerDown will de-select row
+              evt.stopPropagation();
+              return;
             }
-            data-testid={selectors.components.DashboardRow.title(titleInterpolated!)}
-          >
-            <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
-            <span className={styles.rowTitle} role="heading">
-              {titleInterpolated}
-            </span>
-          </button>
-          {!isClone && isEditing && <RowItemMenu model={model} />}
+
+            if (pointerDistance.check(evt)) {
+              return;
+            }
+
+            setTimeout(() => onSelect?.(evt));
+          }}
+          {...dragProvided.draggableProps}
+        >
+          {(!isHeaderHidden || isEditing) && (
+            <div
+              className={cx(styles.rowHeader, 'dashboard-row-header')}
+              onMouseEnter={isSelectable ? onHeaderEnter : undefined}
+              onMouseLeave={isSelectable ? onHeaderLeave : undefined}
+              {...dragProvided.dragHandleProps}
+            >
+              <button
+                onClick={() => model.onCollapseToggle()}
+                className={cx(clearStyles, styles.rowTitleButton)}
+                aria-label={
+                  isCollapsed
+                    ? t('dashboard.rows-layout.row.expand', 'Expand row')
+                    : t('dashboard.rows-layout.row.collapse', 'Collapse row')
+                }
+                data-testid={selectors.components.DashboardRow.title(title!)}
+              >
+                <Icon name={isCollapsed ? 'angle-right' : 'angle-down'} />
+                <span
+                  className={cx(
+                    styles.rowTitle,
+                    isHeaderHidden && styles.rowTitleHidden,
+                    !isTopLevel && styles.rowTitleNested,
+                    isCollapsed && styles.rowTitleCollapsed
+                  )}
+                  role="heading"
+                >
+                  {!model.hasUniqueTitle() && (
+                    <Tooltip
+                      content={t('dashboard.rows-layout.row-warning.title-not-unique', 'This title is not unique')}
+                    >
+                      <Icon name="exclamation-triangle" />
+                    </Tooltip>
+                  )}
+                  {title}
+                  {isHeaderHidden && (
+                    <Tooltip
+                      content={t('dashboard.rows-layout.header-hidden-tooltip', 'Row header only visible in edit mode')}
+                    >
+                      <Icon name="eye-slash" />
+                    </Tooltip>
+                  )}
+                </span>
+              </button>
+              {isDraggable && <Icon name="draggabledots" className="dashboard-row-header-drag-handle" />}
+            </div>
+          )}
+          {!isCollapsed && <layout.Component model={layout} />}
+          {conditionalRenderingOverlay}
         </div>
       )}
-      {!isCollapsed && <layout.Component model={layout} />}
-    </div>
+    </Draggable>
   );
 }
 
 function getStyles(theme: GrafanaTheme2) {
   return {
     rowHeader: css({
-      width: '100%',
       display: 'flex',
       gap: theme.spacing(1),
-      padding: theme.spacing(0.5),
+      padding: theme.spacing(0.5, 0.5, 0.5, 0),
       alignItems: 'center',
+      justifyContent: 'space-between',
       marginBottom: theme.spacing(1),
+
+      '& .dashboard-row-header-drag-handle': css({
+        opacity: 0,
+
+        [theme.transitions.handleMotion('no-preference', 'reduce')]: {
+          transition: 'opacity 0.25s',
+        },
+      }),
+
+      '&:hover': css({
+        '& .dashboard-row-header-drag-handle': css({
+          opacity: 1,
+        }),
+      }),
     }),
     rowTitleButton: css({
       display: 'flex',
@@ -93,6 +176,9 @@ function getStyles(theme: GrafanaTheme2) {
       gap: theme.spacing(1),
     }),
     rowTitle: css({
+      display: 'flex',
+      alignItems: 'center',
+      gap: theme.spacing(2),
       fontSize: theme.typography.h5.fontSize,
       fontWeight: theme.typography.fontWeightMedium,
       whiteSpace: 'nowrap',
@@ -102,11 +188,44 @@ function getStyles(theme: GrafanaTheme2) {
       flexGrow: 1,
       minWidth: 0,
     }),
+    rowTitleHidden: css({
+      textDecoration: 'line-through',
+      opacity: 0.6,
+
+      '&:hover': css({
+        opacity: 1,
+      }),
+    }),
+    rowTitleNested: css({
+      fontSize: theme.typography.body.fontSize,
+      fontWeight: theme.typography.fontWeightRegular,
+    }),
+    rowTitleCollapsed: css({
+      color: theme.colors.text.secondary,
+    }),
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
-      width: '100%',
-      minHeight: '100px',
+    }),
+    wrapperNotCollapsed: css({
+      '> div:nth-child(2)': {
+        marginLeft: theme.spacing(3),
+        position: 'relative',
+        width: 'auto',
+
+        '&:before': {
+          content: '""',
+          position: 'absolute',
+          top: `-8px`,
+          bottom: 0,
+          left: '-16px',
+          width: '1px',
+          backgroundColor: theme.colors.border.weak,
+        },
+      },
+    }),
+    dragging: css({
+      cursor: 'move',
     }),
     wrapperEditing: css({
       padding: theme.spacing(0.5),

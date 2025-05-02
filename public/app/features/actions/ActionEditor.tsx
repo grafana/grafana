@@ -2,14 +2,18 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
-import { Switch } from '@grafana/ui/';
-import { Field } from '@grafana/ui/src/components/Forms/Field';
-import { InlineField } from '@grafana/ui/src/components/Forms/InlineField';
-import { InlineFieldRow } from '@grafana/ui/src/components/Forms/InlineFieldRow';
-import { RadioButtonGroup } from '@grafana/ui/src/components/Forms/RadioButtonGroup/RadioButtonGroup';
-import { JSONFormatter } from '@grafana/ui/src/components/JSONFormatter/JSONFormatter';
-import { useStyles2 } from '@grafana/ui/src/themes';
-import { t } from '@grafana/ui/src/utils/i18n';
+import {
+  Switch,
+  Field,
+  InlineField,
+  InlineFieldRow,
+  RadioButtonGroup,
+  JSONFormatter,
+  useStyles2,
+  ColorPicker,
+  useTheme2,
+} from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 
@@ -27,6 +31,7 @@ const LABEL_WIDTH = 13;
 
 export const ActionEditor = memo(({ index, value, onChange, suggestions, showOneClick }: ActionEditorProps) => {
   const styles = useStyles2(getStyles);
+  const theme = useTheme2();
 
   const onTitleChange = (title: string) => {
     onChange(index, { ...value, title });
@@ -90,6 +95,16 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
     });
   };
 
+  const onBackgroundColorChange = (backgroundColor: string) => {
+    onChange(index, {
+      ...value,
+      style: {
+        ...value.style,
+        backgroundColor,
+      },
+    });
+  };
+
   const renderJSON = (data = '{}') => {
     try {
       const json = JSON.parse(data);
@@ -139,6 +154,19 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         />
       </Field>
 
+      <Field label={t('grafana-ui.action-editor.button.style', 'Button style')}>
+        <InlineField
+          label={t('actions.action-editor.button.style.background-color', 'Color')}
+          labelWidth={LABEL_WIDTH}
+          className={styles.colorPicker}
+        >
+          <ColorPicker
+            color={value?.style?.backgroundColor || theme.colors.secondary.main}
+            onChange={onBackgroundColorChange}
+          />
+        </InlineField>
+      </Field>
+
       {showOneClick && (
         <Field
           label={t('grafana-ui.data-link-inline-editor.one-click', 'One click')}
@@ -167,12 +195,12 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
       </InlineFieldRow>
 
       <InlineFieldRow>
-        <InlineField label="URL" labelWidth={LABEL_WIDTH} grow={true}>
+        <InlineField label={t('actions.action-editor.label-url', 'URL')} labelWidth={LABEL_WIDTH} grow={true}>
           <SuggestionsInput
             value={value.fetch.url}
             onChange={onUrlChange}
             suggestions={suggestions}
-            placeholder="URL"
+            placeholder={t('actions.action-editor.placeholder-url', 'URL')}
           />
         </InlineField>
       </InlineFieldRow>
@@ -184,7 +212,7 @@ export const ActionEditor = memo(({ index, value, onChange, suggestions, showOne
         <ParamsEditor value={value?.fetch.queryParams ?? []} onChange={onQueryParamsChange} suggestions={suggestions} />
       </Field>
 
-      <Field label="Headers">
+      <Field label={t('actions.action-editor.label-headers', 'Headers')}>
         <ParamsEditor
           value={value?.fetch.headers ?? []}
           onChange={onHeadersChange}
@@ -228,6 +256,10 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   inputField: css({
     marginRight: 4,
+  }),
+  colorPicker: css({
+    display: 'flex',
+    alignItems: 'center',
   }),
 });
 

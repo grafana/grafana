@@ -1,4 +1,4 @@
-import { PropsWithChildren } from 'react';
+import { PropsWithChildren, ReactNode } from 'react';
 import { useLocation } from 'react-use';
 
 import { Page } from 'app/core/components/Page/Page';
@@ -12,9 +12,10 @@ import { NoAlertManagerWarning } from './NoAlertManagerWarning';
 /**
  * This is the main alerting page wrapper, used by the alertmanager page wrapper and the alert rules list view
  */
-interface AlertingPageWrapperProps extends PageProps {
+type AlertingPageWrapperProps = Omit<PageProps, 'children'> & {
   isLoading?: boolean;
-}
+  children?: ReactNode;
+};
 
 export const AlertingPageWrapper = ({ children, isLoading, ...rest }: AlertingPageWrapperProps) => (
   <Page {...rest}>

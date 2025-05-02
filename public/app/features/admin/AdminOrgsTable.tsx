@@ -4,9 +4,9 @@ import Skeleton from 'react-loading-skeleton';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, ConfirmModal, useStyles2 } from '@grafana/ui';
-import { SkeletonComponent, attachSkeleton } from '@grafana/ui/src/unstable';
+import { SkeletonComponent, attachSkeleton } from '@grafana/ui/unstable';
 import { contextSrv } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, Organization } from 'app/types';
 
 interface Props {
@@ -51,7 +51,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
                 size="sm"
                 icon="times"
                 onClick={() => setDeleteOrg(org)}
-                aria-label="Delete org"
+                aria-label={t('admin.admin-orgs-table.aria-label-delete-org', 'Delete org')}
                 disabled={!canDeleteOrgs}
               />
             </td>
@@ -62,7 +62,7 @@ function AdminOrgsTableComponent({ orgs, onDelete }: Props) {
         <ConfirmModal
           isOpen
           icon="trash-alt"
-          title="Delete"
+          title={t('admin.admin-orgs-table.title-delete', 'Delete')}
           body={
             <div>
               <Trans i18nKey="admin.orgs.delete-body">

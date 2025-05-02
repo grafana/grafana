@@ -2,7 +2,7 @@ import { advanceTo, clear } from 'jest-date-mock';
 import { ComponentClass } from 'react';
 
 import { dateTime, DateTime, PanelProps, TimeRange } from '@grafana/data';
-import { getPanelPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getPanelPlugin } from '@grafana/data/test';
 import { applyPanelTimeOverrides, calculateInnerPanelHeight } from 'app/features/dashboard/utils/panel';
 
 import { PanelModel } from '../state/PanelModel';
@@ -86,7 +86,7 @@ describe('applyPanelTimeOverrides', () => {
   it('Calculate panel height with panel plugin zeroChromePadding', async () => {
     const panelModel = new PanelModel({});
     await panelModel.pluginLoaded(
-      getPanelPlugin({ id: 'table' }, null as unknown as ComponentClass<PanelProps>, null).setNoPadding()
+      getPanelPlugin({ id: 'table' }, null as unknown as ComponentClass<PanelProps>).setNoPadding()
     );
 
     const height = calculateInnerPanelHeight(panelModel, 100);

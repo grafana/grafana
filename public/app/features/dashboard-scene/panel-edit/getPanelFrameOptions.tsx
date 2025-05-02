@@ -84,8 +84,8 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
       )
     );
 
-  if (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions) {
-    descriptor.addCategory(layoutElement.getOptions());
+  if (isDashboardLayoutItem(layoutElement)) {
+    layoutElement.getOptions?.().forEach((category) => descriptor.addCategory(category));
   }
 
   return descriptor;
@@ -108,9 +108,13 @@ function ScenePanelLinksEditor({ panelLinks }: ScenePanelLinksEditorProps) {
   );
 }
 
-export function PanelFrameTitleInput({ panel }: { panel: VizPanel }) {
+export function PanelFrameTitleInput({ panel, isNewElement }: { panel: VizPanel; isNewElement?: boolean }) {
   const { title } = panel.useState();
-  let ref = useEditPaneInputAutoFocus({ noAutoFocus: panel.getPanelContext().app === CoreApp.PanelEditor });
+  const notInPanelEdit = panel.getPanelContext().app !== CoreApp.PanelEditor;
+
+  let ref = useEditPaneInputAutoFocus({
+    autoFocus: notInPanelEdit && isNewElement,
+  });
 
   return (
     <Input
@@ -150,7 +154,7 @@ export function PanelBackgroundSwitch({ panel }: { panel: VizPanel }) {
   );
 }
 
-function setPanelTitle(panel: VizPanel, title: string) {
+export function setPanelTitle(panel: VizPanel, title: string) {
   panel.setState({ title: title, hoverHeader: getUpdatedHoverHeader(title, panel.state.$timeRange) });
 }
 

@@ -1,12 +1,13 @@
 import { startCase, uniq } from 'lodash';
 
-import { AdHocVariableFilter, ScopedVars, SelectableValue } from '@grafana/data';
+import { ScopedVars, SelectableValue } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 import { VariableFormatID } from '@grafana/schema';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { getEscapedSpanNames } from '../datasource';
 import TempoLanguageProvider from '../language_provider';
+import { intrinsics } from '../traceql/traceql';
 import { Scope } from '../types';
 
 export const interpolateFilters = (filters: TraceqlFilter[], scopedVars?: ScopedVars) => {
@@ -80,23 +81,6 @@ export const filterToQuerySection = (f: TraceqlFilter, filters: TraceqlFilter[],
   return `${scopeHelper(f, lp)}${tagHelper(f, filters)}${f.operator}${valueHelper(f)}`;
 };
 
-export const generateQueryFromAdHocFilters = (filters: AdHocVariableFilter[], lp: TempoLanguageProvider) => {
-  return `{${filters
-    .filter((f) => f.key && f.operator && f.value)
-    .map((f) => `${f.key}${f.operator}${adHocValueHelper(f, lp)}`)
-    .join(' && ')}}`;
-};
-
-const adHocValueHelper = (f: AdHocVariableFilter, lp: TempoLanguageProvider) => {
-  if (lp.getIntrinsics().find((t) => t === f.key)) {
-    return f.value;
-  }
-  if (parseInt(f.value, 10).toString() === f.value) {
-    return f.value;
-  }
-  return `"${f.value}"`;
-};
-
 export const getTagWithoutScope = (tag: string) => {
   return tag.replace(/^(event|instrumentation|link|resource|span)\./, '');
 };
@@ -132,13 +116,16 @@ export const getUnscopedTags = (scopes: Scope[]) => {
 };
 
 export const getIntrinsicTags = (scopes: Scope[]) => {
-  return uniq(
-    scopes
-      .map((scope: Scope) =>
-        scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []
-      )
-      .flat()
-  );
+  let tags = scopes
+    .map((scope: Scope) => (scope.name && scope.name === TraceqlSearchScope.Intrinsic && scope.tags ? scope.tags : []))
+    .flat();
+
+  // Add the default intrinsic tags to the list of tags.
+  // This is needed because the /api/v2/search/tags API
+  // may not always return all the default intrinsic tags
+  // but generally has the most up to date list.
+  tags = uniq(tags.concat(intrinsics));
+  return tags;
 };
 
 export const getAllTags = (scopes: Scope[]) => {

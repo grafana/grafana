@@ -6,12 +6,19 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	dashboardV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	common "github.com/grafana/grafana/pkg/apimachinery/apis/common/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/provisioning"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
 func TestScanRow(t *testing.T) {
@@ -25,6 +32,7 @@ func TestScanRow(t *testing.T) {
 	store := &dashboardSqlAccess{
 		namespacer:   func(_ int64) string { return "default" },
 		provisioning: provisioner,
+		log:          log.New("test"),
 	}
 
 	columns := []string{"orgId", "dashboard_id", "name", "folder_uid", "deleted", "plugin_id", "origin_name", "origin_path", "origin_hash", "origin_ts", "created", "createdBy", "createdByID", "updated", "updatedBy", "updatedByID", "version", "message", "data", "api_version"}
@@ -32,7 +40,7 @@ func TestScanRow(t *testing.T) {
 	title := "Test Dashboard"
 	folderUID := "folder123"
 	timestamp := time.Now()
-	k8sTimestamp := v1.Time{Time: timestamp}
+	k8sTimestamp := metav1.Time{Time: timestamp}
 	version := int64(2)
 	message := "updated message"
 	createdUser := "creator"
@@ -91,7 +99,7 @@ func TestScanRow(t *testing.T) {
 
 		require.Equal(t, utils.ManagerKindClassicFP, m.Kind) // nolint:staticcheck
 		require.Equal(t, "provisioner", m.Identity)
-		require.Equal(t, "../"+pathToFile, s.Path) // relative to provisioner
+		require.Equal(t, pathToFile, s.Path)
 		require.Equal(t, "hashing", s.Checksum)
 		require.NoError(t, err)
 		require.Equal(t, int64(100000), s.TimestampMillis)
@@ -118,4 +126,98 @@ func TestScanRow(t *testing.T) {
 		require.Equal(t, "slo", manager.Identity)                                // the ID of the plugin
 		require.Equal(t, "", meta.GetAnnotations()[utils.AnnoKeySourceChecksum]) // hash is not used on plugins
 	})
+}
+
+func TestBuildSaveDashboardCommand(t *testing.T) {
+	testCases := []struct {
+		name          string
+		schemaVersion int
+		expectedAPI   string
+	}{
+		{
+			name:          "with schema version 36 should save as v0",
+			schemaVersion: 36,
+			expectedAPI:   dashboardV0.VERSION,
+		},
+		// {
+		// 	name:          "with schema version 41 should save as v1",
+		// 	schemaVersion: 41,
+		// 	expectedAPI:   dashboardV1.VERSION,
+		// },
+		// {
+		// 	name:          "with empty schema version should save as v0",
+		// 	schemaVersion: 0,
+		// 	expectedAPI:   dashboardV0.VERSION,
+		// },
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockStore := &dashboards.FakeDashboardStore{}
+			access := &dashboardSqlAccess{
+				dashStore: mockStore,
+				log:       log.New("test"),
+			}
+
+			dashSpec := map[string]interface{}{
+				"title": "Test Dashboard",
+				"id":    123,
+			}
+
+			if tc.schemaVersion > 0 {
+				dashSpec["schemaVersion"] = tc.schemaVersion
+			}
+
+			dash := &dashboardV1.Dashboard{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: dashboardV1.APIVERSION,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-dash",
+				},
+				Spec: common.Unstructured{
+					Object: dashSpec,
+				},
+			}
+
+			// fail if no user in context
+			_, _, err := access.buildSaveDashboardCommand(context.Background(), 1, dash)
+			require.Error(t, err)
+
+			ctx := identity.WithRequester(context.Background(), &user.SignedInUser{
+				OrgID:   1,
+				OrgRole: "Admin",
+			})
+			// create new dashboard
+			mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(nil, nil).Once()
+			cmd, created, err := access.buildSaveDashboardCommand(ctx, 1, dash)
+			require.NoError(t, err)
+			require.Equal(t, true, created)
+			require.NotNil(t, cmd)
+			require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
+			_, exists := cmd.Dashboard.CheckGet("id")
+			require.False(t, exists) // id should be removed
+			require.Equal(t, cmd.OrgID, int64(1))
+			require.True(t, cmd.Overwrite)
+			require.Equal(t, tc.expectedAPI, cmd.APIVersion) // verify expected API version
+
+			// now update existing dashboard
+			mockStore.On("GetDashboard", mock.Anything, mock.Anything).Return(
+				&dashboards.Dashboard{
+					ID:         1234,
+					Version:    2,
+					APIVersion: dashboardV1.VERSION,
+				}, nil).Once()
+			cmd, created, err = access.buildSaveDashboardCommand(ctx, 1, dash)
+			require.NoError(t, err)
+			require.Equal(t, false, created)
+			require.NotNil(t, cmd)
+			require.Equal(t, "test-dash", cmd.Dashboard.Get("uid").MustString())
+			require.Equal(t, cmd.Dashboard.Get("id").MustInt64(), int64(1234))       // should set to existing ID
+			require.Equal(t, cmd.Dashboard.Get("version").MustFloat64(), float64(2)) // version must be set - otherwise seen as a new dashboard in NewDashboardFromJson
+			require.Equal(t, tc.expectedAPI, cmd.APIVersion)                         // verify expected API version
+			require.Equal(t, cmd.OrgID, int64(1))
+			require.True(t, cmd.Overwrite)
+		})
+	}
 }

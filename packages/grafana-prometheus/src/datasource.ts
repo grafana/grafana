@@ -56,11 +56,11 @@ import {
   getRangeSnapInterval,
 } from './language_utils';
 import { PrometheusMetricFindQuery } from './metric_find_query';
-import { getInitHints, getQueryHints } from './query_hints';
+import { getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/PromQueryModeller';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
-import { getOriginalMetricName, transformV2 } from './result_transformer';
+import { transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
@@ -483,7 +483,7 @@ export class PrometheusDatasource
       return Promise.resolve([]);
     }
 
-    const timeRange = options?.range ?? this.languageProvider.timeRange ?? getDefaultTimeRange();
+    const timeRange = options?.range ?? getDefaultTimeRange();
 
     const scopedVars = {
       ...this.getIntervalVars(),
@@ -654,6 +654,10 @@ export class PrometheusDatasource
   // it is used in metric_find_query.ts
   // and in Tempo here grafana/public/app/plugins/datasource/tempo/QueryEditor/ServiceGraphSection.tsx
   async getTagKeys(options: DataSourceGetTagKeysOptions<PromQuery>): Promise<MetricFindValue[]> {
+    if (!options.timeRange) {
+      options.timeRange = getDefaultTimeRange();
+    }
+
     if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       const suggestions = await this.languageProvider.fetchSuggestions(
         options.timeRange,
@@ -680,7 +684,10 @@ export class PrometheusDatasource
     }));
     const expr = promQueryModeller.renderLabels(labelFilters);
 
-    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(expr);
+    let labelsIndex: Record<string, string[]> = await this.languageProvider.fetchLabelsWithMatch(
+      options.timeRange,
+      expr
+    );
 
     // filter out already used labels
     return Object.keys(labelsIndex)
@@ -689,9 +696,13 @@ export class PrometheusDatasource
   }
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
-  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>) {
+  async getTagValues(options: DataSourceGetTagValuesOptions<PromQuery>): Promise<MetricFindValue[]> {
+    if (!options.timeRange) {
+      options.timeRange = getDefaultTimeRange();
+    }
+
     const requestId = `[${this.uid}][${options.key}]`;
-    if (config.featureToggles.promQLScope) {
+    if (config.featureToggles.promQLScope && (options?.scopes?.length ?? 0) > 0) {
       return (
         await this.languageProvider.fetchSuggestions(
           options.timeRange,
@@ -715,7 +726,7 @@ export class PrometheusDatasource
 
     if (this.hasLabelsMatchAPISupport()) {
       return (
-        await this.languageProvider.fetchSeriesValuesWithMatch(options.key, expr, requestId, options.timeRange)
+        await this.languageProvider.fetchSeriesValuesWithMatch(options.timeRange, options.key, expr, requestId)
       ).map((v) => ({
         value: v,
         text: v,
@@ -764,10 +775,6 @@ export class PrometheusDatasource
 
   getQueryHints(query: PromQuery, result: unknown[]) {
     return getQueryHints(query.expr ?? '', result, this);
-  }
-
-  getInitHints() {
-    return getInitHints(this);
   }
 
   async loadRules() {
@@ -895,10 +902,6 @@ export class PrometheusDatasource
       start: getPrometheusTime(timeRange.from, false).toString(),
       end: getPrometheusTime(timeRange.to, true).toString(),
     };
-  }
-
-  getOriginalMetricName(labelData: { [key: string]: string }) {
-    return getOriginalMetricName(labelData);
   }
 
   /**
@@ -1062,28 +1065,6 @@ export class PrometheusDatasource
 
     return defaults;
   }
-}
-
-/**
- * Align query range to step.
- * Rounds start and end down to a multiple of step.
- * @param start Timestamp marking the beginning of the range.
- * @param end Timestamp marking the end of the range.
- * @param step Interval to align start and end with.
- * @param utcOffsetSec Number of seconds current timezone is offset from UTC
- */
-export function alignRange(
-  start: number,
-  end: number,
-  step: number,
-  utcOffsetSec: number
-): { end: number; start: number } {
-  const alignedEnd = Math.floor((end + utcOffsetSec) / step) * step - utcOffsetSec;
-  const alignedStart = Math.floor((start + utcOffsetSec) / step) * step - utcOffsetSec;
-  return {
-    end: alignedEnd,
-    start: alignedStart,
-  };
 }
 
 export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {

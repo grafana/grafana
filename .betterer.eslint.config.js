@@ -96,8 +96,14 @@ module.exports = [
     },
   },
   {
-    files: ['**/*.{ts,tsx}'],
-    ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      '**/*.{test,spec}.{ts,tsx}',
+      '**/__mocks__/**',
+      '**/public/test/**',
+      '**/mocks.{ts,tsx}',
+      '**/spec/**/*.{ts,tsx}',
+    ],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
     },
@@ -106,14 +112,6 @@ module.exports = [
     files: ['public/app/**/*.{ts,tsx}'],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
-    },
-  },
-  {
-    files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
-    ignores: ['public/app/plugins/**', '**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test'],
-    rules: {
-      '@grafana/no-untranslated-strings': 'error',
-      '@grafana/no-translation-top-level': 'error',
     },
   },
 ];

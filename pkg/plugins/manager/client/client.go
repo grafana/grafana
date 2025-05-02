@@ -30,6 +30,13 @@ var (
 	errNilSender  = errors.New("sender cannot be nil")
 )
 
+// passthroughErrors contains a list of errors that should be returned directly to the caller without wrapping
+var passthroughErrors = []error{
+	plugins.ErrPluginUnavailable,
+	plugins.ErrMethodNotImplemented,
+	plugins.ErrPluginGrpcResourceExhaustedBase,
+}
+
 type Service struct {
 	pluginRegistry registry.Service
 }
@@ -52,11 +59,15 @@ func (s *Service) QueryData(ctx context.Context, req *backend.QueryDataRequest) 
 
 	resp, err := p.QueryData(ctx, req)
 	if err != nil {
-		if errors.Is(err, plugins.ErrMethodNotImplemented) {
-			return nil, err
+		for _, e := range passthroughErrors {
+			if errors.Is(err, e) {
+				return nil, err
+			}
 		}
 
-		if errors.Is(err, plugins.ErrPluginUnavailable) {
+		// If the error is a plugin grpc connection unavailable error, return it directly
+		// This error is created dynamically based on the context, so we need to check for it here
+		if errors.Is(err, plugins.ErrPluginGrpcConnectionUnavailableBaseFn(ctx)) {
 			return nil, err
 		}
 

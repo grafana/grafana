@@ -107,10 +107,11 @@ func (s *Store) GetUserLabels(ctx context.Context, query login.GetUserLabelsQuer
 
 func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-		AuthId:     cmd.AuthId,
-		Created:    GetTime(),
+		UserId:      cmd.UserId,
+		AuthModule:  cmd.AuthModule,
+		AuthId:      cmd.AuthId,
+		ExternalUID: cmd.ExternalUID,
+		Created:     GetTime(),
 	}
 
 	if cmd.OAuthToken != nil {
@@ -150,10 +151,11 @@ func (s *Store) SetAuthInfo(ctx context.Context, cmd *login.SetAuthInfoCommand) 
 
 func (s *Store) UpdateAuthInfo(ctx context.Context, cmd *login.UpdateAuthInfoCommand) error {
 	authUser := &login.UserAuth{
-		UserId:     cmd.UserId,
-		AuthModule: cmd.AuthModule,
-		AuthId:     cmd.AuthId,
-		Created:    GetTime(),
+		UserId:      cmd.UserId,
+		AuthModule:  cmd.AuthModule,
+		AuthId:      cmd.AuthId,
+		Created:     GetTime(),
+		ExternalUID: cmd.ExternalUID,
 	}
 
 	if cmd.OAuthToken != nil {
