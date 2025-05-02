@@ -633,3 +633,12 @@ describe('Combobox', () => {
     });
   });
 });
+
+// Type test
+(() => {
+  // Handler function does not allow null for option.
+  function onChangeHandlerNoNull(option: ComboboxOption<string>) {}
+  // @ts-expect-error with isClearable set, onChange can pass `null`, so a function that does not accept null
+  // is an error. If this line errors, then the conditional typing for onChange has been broken.
+  return <Combobox options={options} value={null} onChange={onChangeHandlerNoNull} isClearable />;
+})();
