@@ -4,6 +4,7 @@ on:
     types: [created]
   pull_request:
     types: [closed]
+permissions: {}
 jobs:
   config:
     runs-on: "ubuntu-latest"
@@ -31,6 +32,10 @@ jobs:
         ${{ github.event.issue.pull_request && (startsWith(github.event.comment.body, '/deploy-to-hg') || github.event.action == 'closed') }}
     runs-on:
       labels: ubuntu-latest-8-cores
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
     continue-on-error: true
     steps:
       - name: Generate a GitHub app installation token
