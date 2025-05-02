@@ -248,7 +248,8 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
-      // this is an else if because TS can't do (isClearable || selectedItem !== null)
+      // this is an else if because TS can't infer the correct onChange types from
+      // (isClearable || selectedItem !== null)
       if (isClearable) {
         onChange(selectedItem);
       } else if (selectedItem !== null) {
