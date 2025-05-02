@@ -151,9 +151,6 @@ func (s *Service) getFromApiServer(ctx context.Context, q *folder.GetFolderQuery
 	f.ID = dashFolder.ID
 	f.Version = dashFolder.Version
 
-	f.CreatedByUID = q.SignedInUser.GetUID()
-	f.UpdatedByUID = q.SignedInUser.GetUID()
-
 	if q.WithFullpath || q.WithFullpathUIDs {
 		f, err = s.setFullpath(ctx, f, false)
 		if err != nil {
@@ -517,8 +514,6 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 		return nil, dashboards.ErrFolderInvalidUID
 	}
 
-	user := cmd.SignedInUser
-
 	cmd = &folder.CreateFolderCommand{
 		// TODO: Today, if a UID isn't specified, the dashboard store
 		// generates a new UID. The new folder store will need to do this as
@@ -532,14 +527,6 @@ func (s *Service) createOnApiServer(ctx context.Context, cmd *folder.CreateFolde
 	}
 
 	f, err := s.unifiedStore.Create(ctx, *cmd)
-	if err != nil {
-		return nil, err
-	}
-
-	f.CreatedByUID = user.GetUID()
-	f.UpdatedByUID = user.GetUID()
-
-	f, err = s.setFullpath(ctx, f, false)
 	if err != nil {
 		return nil, err
 	}

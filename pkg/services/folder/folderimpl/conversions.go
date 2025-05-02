@@ -13,12 +13,13 @@ import (
 	"github.com/grafana/grafana/pkg/infra/slugify"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user"
 )
 
-func parseUnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.Folder, string, string, error) {
+func mapUnstructuredToFolder(item *unstructured.Unstructured, identifiers map[string]*user.User) (*folder.Folder, error) {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
-		return nil, "", "", err
+		return nil, err
 	}
 
 	info, _ := authlib.ParseNamespace(meta.GetNamespace())
@@ -45,10 +46,20 @@ func parseUnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.F
 		updated = &tmp
 	}
 
-	creator := meta.GetCreatedBy()
-	updater := meta.GetUpdatedBy()
-	if updater == "" {
-		updater = creator
+	createdBy, updatedBy := int64(0), int64(0)
+	createdByUID, updatedByUID := "", ""
+
+	if len(identifiers) > 0 {
+		user, ok := identifiers[meta.GetCreatedBy()]
+		if ok {
+			createdBy = user.ID
+			createdByUID = user.UID
+		}
+		user, ok = identifiers[meta.GetUpdatedBy()]
+		if ok {
+			updatedBy = user.ID
+			updatedByUID = user.UID
+		}
 	}
 
 	manager, _ := meta.GetManagerProperties()
@@ -67,90 +78,93 @@ func parseUnstructuredToLegacyFolder(item *unstructured.Unstructured) (*folder.F
 		Created:      created,
 		Updated:      *updated,
 		OrgID:        info.OrgID,
-	}, creator, updater, nil
+
+		CreatedBy:    createdBy,
+		CreatedByUID: createdByUID,
+		UpdatedBy:    updatedBy,
+		UpdatedByUID: updatedByUID,
+	}, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context, item *unstructured.Unstructured) (*folder.Folder, error) {
-	folder, creatorRaw, updaterRaw, err := parseUnstructuredToLegacyFolder(item)
+	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		return nil, err
 	}
 
-	userUIDtoIDmapping, err := ss.getUserUIDtoIDmappingFromIdentifiers(ctx, []string{creatorRaw, updaterRaw})
+	identifiers := make(map[string]struct{}, 0)
+	identifiers[meta.GetCreatedBy()] = struct{}{}
+	identifiers[meta.GetUpdatedBy()] = struct{}{}
+
+	folderUserIdentifiers, err := ss.getIdentifiersFolder(ctx, identifiers)
 	if err != nil {
 		return nil, err
 	}
 
-	creatorId := getIdFromMapping(creatorRaw, userUIDtoIDmapping)
-	updaterId := getIdFromMapping(updaterRaw, userUIDtoIDmapping)
-
-	if updaterId == 0 {
-		updaterId = creatorId
+	folder, err := mapUnstructuredToFolder(item, folderUserIdentifiers)
+	if err != nil {
+		return nil, err
 	}
 
 	folder.Version = int(item.GetGeneration())
-	folder.CreatedBy = creatorId
-	folder.UpdatedBy = updaterId
-
 	return folder, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Context, unstructuredList *unstructured.UnstructuredList) ([]*folder.Folder, error) {
-	folders := make([]*folder.Folder, 0)
-	identifiers := make([]string, 0)
+	identifiers := make(map[string]struct{}, 0)
 	for _, item := range unstructuredList.Items {
 		meta, err := utils.MetaAccessor(&item)
 		if err != nil {
 			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
 		}
 
-		identifiers = append(identifiers, meta.GetCreatedBy(), meta.GetUpdatedBy())
+		identifiers[meta.GetCreatedBy()] = struct{}{}
+		identifiers[meta.GetUpdatedBy()] = struct{}{}
 	}
 
-	userUIDtoIDmapping, err := ss.getUserUIDtoIDmappingFromIdentifiers(ctx, identifiers)
+	folderUserIdentifiers, err := ss.getIdentifiersFolder(ctx, identifiers)
 	if err != nil {
 		return nil, err
 	}
-
+	folders := make([]*folder.Folder, 0)
 	for _, item := range unstructuredList.Items {
-		folder, creatorRaw, updaterRaw, err := parseUnstructuredToLegacyFolder(&item)
+		folder, err := mapUnstructuredToFolder(&item, folderUserIdentifiers)
 		if err != nil {
 			return nil, err
 		}
-
-		creatorId := getIdFromMapping(creatorRaw, userUIDtoIDmapping)
-		updaterId := getIdFromMapping(updaterRaw, userUIDtoIDmapping)
-
-		if updaterId == 0 {
-			updaterId = creatorId
-		}
-
 		folder.Version = int(item.GetGeneration())
-		folder.CreatedBy = creatorId
-		folder.UpdatedBy = updaterId
 		folders = append(folders, folder)
 	}
 
 	return folders, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) getUserUIDtoIDmappingFromIdentifiers(ctx context.Context, rawIdentifiers []string) (map[string]int64, error) {
-	userUIDs, userIds := parseIdentifiers(rawIdentifiers)
-	allUsers, err := ss.userService.ListByIdOrUID(ctx, userUIDs, userIds)
+func (ss *FolderUnifiedStoreImpl) getIdentifiersFolder(ctx context.Context, identifiers map[string]struct{}) (map[string]*user.User, error) {
+	identifierMap, userUIDs, userIds := separateUIDsAndIDs(identifiers)
+	if len(userUIDs) == 0 && len(userIds) == 0 {
+		return nil, nil
+	}
+
+	users, err := ss.userService.ListByIdOrUID(ctx, userUIDs, userIds)
 	if err != nil {
 		return nil, err
 	}
 
-	mapping := make(map[string]int64)
-	for _, user := range allUsers {
-		mapping[user.UID] = user.ID
-	}
+	userMap := make(map[string]*user.User, len(users))
+	for _, u := range users {
+		if _, ok := identifierMap[fmt.Sprintf("user:%d", u.ID)]; ok {
+			userMap[fmt.Sprintf("user:%d", u.ID)] = u
+		}
 
-	return mapping, nil
+		if _, ok := identifierMap[fmt.Sprintf("user:%s", u.UID)]; ok {
+			userMap[fmt.Sprintf("user:%s", u.UID)] = u
+		}
+	}
+	return userMap, nil
 }
 
-func getIdentifier(rawIdentifier string) string {
-	parts := strings.Split(rawIdentifier, ":")
+func parseIdentifier(identifier string) string {
+	parts := strings.Split(identifier, ":")
 	if len(parts) < 2 {
 		return ""
 	}
@@ -160,41 +174,26 @@ func getIdentifier(rawIdentifier string) string {
 	return parts[1]
 }
 
-func parseIdentifiers(rawIdentifiers []string) ([]string, []int64) {
+func separateUIDsAndIDs(identifiers map[string]struct{}) (map[string]string, []string, []int64) {
 	uids := make([]string, 0)
 	ids := make([]int64, 0)
-	for _, rawIdentifier := range rawIdentifiers {
-		identifier := getIdentifier(rawIdentifier)
-		if identifier == "" {
+	identifierMap := make(map[string]string, 0)
+
+	for identifier := range identifiers {
+		value := parseIdentifier(identifier)
+		if value == "" {
 			continue
 		}
 
-		id, err := strconv.ParseInt(identifier, 10, 64)
+		identifierMap[identifier] = value
+
+		id, err := strconv.ParseInt(value, 10, 64)
 		if err == nil {
 			ids = append(ids, id)
-		} else if identifier != "" {
-			uids = append(uids, identifier)
+		} else {
+			uids = append(uids, value)
 		}
 	}
 
-	return uids, ids
-}
-
-func getIdFromMapping(rawIdentifier string, mapping map[string]int64) int64 {
-	identifier := getIdentifier(rawIdentifier)
-	if identifier == "" {
-		return 0
-	}
-
-	id, err := strconv.ParseInt(identifier, 10, 64)
-	if err == nil {
-		return id
-	}
-
-	uid, ok := mapping[identifier]
-	if ok {
-		return uid
-	}
-
-	return 0
+	return identifierMap, uids, ids
 }
