@@ -11,7 +11,7 @@ interface Props {
   checkedIcon?: IconName;
   checkedLabel?: string;
   disabled?: boolean;
-  'data-testId'?: string;
+  'data-testid'?: string;
   onClick: (evt: MouseEvent<HTMLDivElement>) => void;
 }
 
@@ -23,7 +23,7 @@ export const ToolbarSwitch = ({
   checkedLabel,
   disabled,
   onClick,
-  'data-testId': dataTestId,
+  'data-testid': dataTestId,
 }: Props) => {
   const styles = useStyles2(getStyles);
 
