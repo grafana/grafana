@@ -86,5 +86,5 @@ jobs:
       - run: |
           echo "Redis available on 127.0.0.1:${{ job.services.redis.ports['6379'] }}"
           echo "Nginx available on 127.0.0.1:${{ job.services.nginx.ports['80'] }}"
-          curl 127.0.0.1:6379
           curl 127.0.0.1:8080
+          curl 127.0.0.1:6379
