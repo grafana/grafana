@@ -1,5 +1,6 @@
 import {
   sceneGraph,
+  SceneObject,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
@@ -136,6 +137,10 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
         });
       }),
     });
+  }
+
+  public getOutlineChildren() {
+    return this.state.tabs;
   }
 
   public addNewTab(tab?: TabItem) {
