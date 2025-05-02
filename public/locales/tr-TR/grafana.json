@@ -3671,7 +3671,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3911,6 +3914,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5109,8 +5113,11 @@
       "download-button": "Dosyayı indir",
       "download-successful_toast_message": "JSON dosyanız indirildi",
       "export-externally-label": "Başka bir oturumda kullanmak için panoyu dışa aktarın",
-      "info-text": "Panonuzun JSON'unu içeren bir JSON dosyasını kopyalayın veya indirin",
-      "title": "Pano JSON'unu dışa aktar"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Dışa aktar",
@@ -7083,6 +7090,7 @@
         "reportAbuseTooltip": "Zararlı veya kötü amaçlı eklentilere ilişkin sorunları doğrudan Grafana Labs'a bildirin.",
         "repository": "Depo",
         "signature": "İmza",
+        "sponsorDeveloper": "",
         "status": "Durum"
       },
       "modal": {
@@ -8218,7 +8226,8 @@
       "loading": "Yükleniyor...",
       "save-button": "Dosyaya kaydet",
       "share-externally-label": "Harici olarak paylaşmak için dışa aktar",
-      "view-button": "JSON'u görüntüle"
+      "view-button": "JSON'u görüntüle",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Kütüphane paneli oluşturun."

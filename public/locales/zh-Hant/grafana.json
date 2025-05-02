@@ -3652,7 +3652,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3892,6 +3895,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5088,8 +5092,11 @@
       "download-button": "下載檔案",
       "download-successful_toast_message": "您的 JSON 已下載",
       "export-externally-label": "匯出儀表板以便在另一個執行個體中使用",
-      "info-text": "複製或下載包含儀表板 JSON 的 JSON 檔案",
-      "title": "匯出儀表板 JSON"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "匯出",
@@ -7057,6 +7064,7 @@
         "reportAbuseTooltip": "將與惡意或有害外掛程式相關的問題直接報告給 Grafana Labs。",
         "repository": "存放庫",
         "signature": "簽名",
+        "sponsorDeveloper": "",
         "status": "狀態"
       },
       "modal": {
@@ -8187,7 +8195,8 @@
       "loading": "正在載入…",
       "save-button": "儲存至檔案",
       "share-externally-label": "匯出以外部分享",
-      "view-button": "檢視 JSON"
+      "view-button": "檢視 JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "建立資料庫面板。"
