@@ -11,10 +11,14 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
+permissions: {}
+
 jobs:
   sqlite:
     name: Sqlite
     runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,6 +35,8 @@ jobs:
   mysql:
     name: MySQL
     runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
@@ -63,6 +69,8 @@ jobs:
   postgres:
     name: Postgres
     runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:12.3-alpine

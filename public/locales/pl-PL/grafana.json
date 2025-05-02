@@ -3709,7 +3709,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3949,6 +3952,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5151,8 +5155,11 @@
       "download-button": "Pobierz plik",
       "download-successful_toast_message": "Pobrano plik JSON",
       "export-externally-label": "Eksportuj pulpit, aby użyć go w innej instancji",
-      "info-text": "Skopiuj lub pobierz plik JSON zawierający kod JSON pulpitu",
-      "title": "Eksportuj pulpit JSON"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Eksport",
@@ -7135,6 +7142,7 @@
         "reportAbuseTooltip": "Zgłaszaj sprawy związane ze złośliwymi lub szkodliwymi wtyczkami bezpośrednio do Grafana Labs.",
         "repository": "Repozytorium",
         "signature": "Podpis",
+        "sponsorDeveloper": "",
         "status": "Status"
       },
       "modal": {
@@ -8280,7 +8288,8 @@
       "loading": "Ładowanie…",
       "save-button": "Zapisz do pliku",
       "share-externally-label": "Eksportuj do udostępnienia na zewnątrz",
-      "view-button": "Widok JSON"
+      "view-button": "Widok JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Utwórz panel biblioteki."
