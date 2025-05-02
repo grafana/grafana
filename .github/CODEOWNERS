@@ -732,11 +732,11 @@ embed.go @grafana/grafana-as-code
 /pkg/kinds/ @grafana/grafana-as-code
 /pkg/registry/ @grafana/grafana-as-code
 /pkg/registry/apis/ @grafana/grafana-app-platform-squad
-/pkg/registry/apis/alerting @grafana/grafana-app-platform-squad @grafana/alerting-backend
 /pkg/registry/apis/query @grafana/grafana-datasources-core-services
 /pkg/registry/apis/secret @grafana/grafana-operator-experience-squad
 /pkg/registry/apis/userstorage @grafana/grafana-app-platform-squad @grafana/plugins-platform-backend
 /pkg/registry/apps/advisor @grafana/plugins-platform-backend
+/pkg/registry/apps/alerting @grafana/alerting-backend
 /pkg/codegen/ @grafana/grafana-as-code
 /pkg/codegen/generators @grafana/grafana-as-code
 /pkg/kinds/*/*_gen.go @grafana/grafana-as-code
@@ -812,7 +812,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-upload.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-create-tasks.yml @grafana/grafana-frontend-platform
-/.github/workflows/scripts/crowdin/create-tasks.js @grafana/grafana-frontend-platform
+/.github/workflows/scripts/crowdin/create-tasks.ts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad
