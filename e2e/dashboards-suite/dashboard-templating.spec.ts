@@ -3,6 +3,7 @@ import { e2e } from '../utils';
 describe('Dashboard templating', () => {
   beforeEach(() => {
     e2e.flows.login(Cypress.env('USERNAME'), Cypress.env('PASSWORD'));
+    // Note: Only works in Chrome/Chromium-based browsers
     Cypress.automation('remote:debugger:protocol', {
       command: 'Emulation.setTimezoneOverride',
       params: {
