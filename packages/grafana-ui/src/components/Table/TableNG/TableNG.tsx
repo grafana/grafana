@@ -755,7 +755,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
+        const display = field.display!(field.values[rowIndex]);
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
