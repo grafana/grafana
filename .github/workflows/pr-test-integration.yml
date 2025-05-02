@@ -35,6 +35,6 @@ jobs:
         env:
           MEMCACHED_HOSTS: memcached:11211
         run: |
-          apk add --update build-base
+          sudo apt-get update -yq && sudo apt-get install build-essential
           go clean -testcache
           go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m
