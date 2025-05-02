@@ -221,23 +221,28 @@ func TestPollingNotifier(t *testing.T) {
 			Action:          1,
 		}
 
-		var latestRVsCalled bool
+		var listLatestRVsCalledCounter int
 		listLatestRVs := func(ctx context.Context) (groupResourceRV, error) {
-			latestRVsCalled = true
+			// On the first call return 0, then the highest known RV.
+			var value int64 = 0
+			if listLatestRVsCalledCounter > 0 {
+				value = testEvent.ResourceVersion
+			}
+			listLatestRVsCalledCounter++
 			return groupResourceRV{
 				"test-group": map[string]int64{
-					"test-resource": 0,
+					"test-resource": value,
 				},
 			}, nil
 		}
 
-		var historyPollCalled bool
+		var historyPollCalledCounter int
 		once := sync.Once{}
 		historyPoll := func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
 			// only assert the first time - this may be called multiple times
 			// depending on the host hardware etc, due to timing issues...
+			historyPollCalledCounter++
 			once.Do(func() {
-				historyPollCalled = true
 				require.Equal(t, "test-group", grp)
 				require.Equal(t, "test-resource", res)
 				require.Equal(t, int64(0), since)
@@ -274,8 +279,8 @@ func TestPollingNotifier(t *testing.T) {
 			require.Equal(t, "test-name", event.Key.Name)
 			require.Equal(t, int64(2), event.ResourceVersion)
 			require.Equal(t, "test-folder", event.Folder)
-			require.True(t, latestRVsCalled, "listLatestRVs should be called")
-			require.True(t, historyPollCalled, "historyPoll should be called")
+			require.True(t, listLatestRVsCalledCounter > 0, "listLatestRVs should be called at least once")
+			require.True(t, historyPollCalledCounter == 1, "historyPoll should be called exactly once")
 		case <-time.After(100 * time.Millisecond):
 			t.Fatal("timeout waiting for event")
 		}

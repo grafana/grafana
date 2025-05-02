@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - uses: grafana/writers-toolkit/vale-action@vale-action/v1
+      - uses: grafana/writers-toolkit/vale-action@vale-action/v1 # zizmor: ignore[unpinned-uses]
         with:
           filter: '.Name in ["Grafana.GrafanaCom", "Grafana.WordList", "Grafana.Spelling", "Grafana.ProductPossessives"]'
           token: ${{ secrets.GITHUB_TOKEN }}
