@@ -77,7 +77,7 @@ refs:
 
 # Create and edit dynamic dashboards
 
-{{< docs/experimental product="Next generation dashboards" featureFlag="dashboardNewLayouts" >}}
+{{< docs/experimental product="Dynamic dashboards" featureFlag="dashboardNewLayouts" >}}
 
 Dashboards and panels allow you to show your data in visual form. Each panel needs at least one query to display a visualization.
 
