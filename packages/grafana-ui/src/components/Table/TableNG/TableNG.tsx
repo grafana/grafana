@@ -75,6 +75,7 @@ export function TableNG(props: TableNGProps) {
     data,
     enableSharedCrosshair,
     showTypeIcons,
+    replaceVariables,
   } = props;
 
   const initialSortColumns = useMemo<SortColumn[]>(() => {
@@ -453,6 +454,7 @@ export function TableNG(props: TableNGProps) {
           styles,
           theme,
           showTypeIcons,
+          replaceVariables,
           ...props,
         },
         handlers: {
@@ -664,6 +666,7 @@ export function mapFrameToDataGrid({
     timeRange,
     getActions,
     showTypeIcons,
+    replaceVariables,
   } = options;
   const { onCellExpand, onColumnResize } = handlers;
 
@@ -812,6 +815,7 @@ export function mapFrameToDataGrid({
             getActions={getActions}
             rowBg={rowBg}
             onCellFilterAdded={onCellFilterAdded}
+            replaceVariables={replaceVariables}
           />
         );
       },
