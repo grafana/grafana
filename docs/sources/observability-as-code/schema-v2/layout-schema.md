@@ -92,7 +92,7 @@ The following table explains the usage of the grid layout item JSON fields:
 | x | integer. Position of the item x-axis.  |
 | y | integer. Position of the item y-axis. |
 | width | Width of the item in pixels. |
-| height | Heigh of the item in pixels. |
+| height | Height of the item in pixels. |
 | element | `ElementReference`. Reference to a [`PanelKind`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/json-models/schema-v2/panel-schema/) from `dashboard.spec.elements` expressed as JSON Schema reference. |
 | repeat? | [RepeatOptions](#repeatoptions). Configured repeat options, if any |
 

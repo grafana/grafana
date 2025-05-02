@@ -14,7 +14,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: timsettings schema
+menuTitle: timesettings schema
 title: timesettings
 weight: 600
 ---
