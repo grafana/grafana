@@ -650,6 +650,62 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
+  it('when alias exists sets displayName = alias to prevent downstream auto-naming', async () => {
+    const seriesA = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'A', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        alias: 'Aye',
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: '10',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'time',
+              state: {
+                displayName: 'time',
+                multipleFrames: false,
+              },
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {
+                displayName: 'Aye',
+              },
+              name: 'Aye',
+              type: 'number',
+              values: [11, 12],
+            },
+          ],
+          length: 2,
+        },
+      ]);
+    });
+  });
+
   it('reduces all field', async () => {
     const cfg = {
       id: DataTransformerID.calculateField,
