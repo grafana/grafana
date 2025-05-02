@@ -35,7 +35,7 @@ jobs:
           go-version-file: go.mod
       - name: Run tests
         env:
-          MEMCACHED_HOSTS: memcached:11211
+          MEMCACHED_HOSTS: 127.0.0.1:11211
         run: |
           sudo apt-get update -yq && sudo apt-get install build-essential
           go clean -testcache
