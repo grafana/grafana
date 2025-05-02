@@ -34,8 +34,8 @@ func convertToDataFrame(ctx *mysql.Context, iter mysql.RowIter, schema mysql.Sch
 	for {
 		// Check for context cancellation or timeout
 		select {
-		case <-ctx.Context.Done():
-			return nil, ctx.Context.Err()
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		default:
 		}
 
