@@ -4,7 +4,7 @@ import { useState } from 'react';
 import * as React from 'react';
 import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, ThemeRichColor, ThemeVizColor, ThemeVizHue } from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { allButtonVariants, Button } from '../Button';
