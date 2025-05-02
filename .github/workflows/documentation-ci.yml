@@ -13,6 +13,7 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      security-events: write
     container:
       image: grafana/vale:latest
     steps:
