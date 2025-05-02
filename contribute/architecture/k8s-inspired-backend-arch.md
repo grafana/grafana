@@ -246,7 +246,7 @@ The frontend code is also updated gradually. As Resource API endpoints stabilize
 
 ## 5. So does it all mean I can point `kubectl` directly at the Grafana server and use it to create dashboards?
 
-**Yes, with caveats.** `kubectl` is supported under a dev-mode-only, experimental `grafanaAPIServerEnsureKubectlAccess` feature flag and requires `server.protocol` set to `https`. 
+**Yes, with caveats.** `kubectl` is supported under a dev-mode-only, experimental `grafanaAPIServerEnsureKubectlAccess` feature flag and requires `server.protocol` set to `https`. Enabling `https` causes Grafana to configure its web server with TLS certificates, either loading specified certificate/key files or generating self-signed ones if none are provided.
 
 ```bash
 #!/bin/bash
