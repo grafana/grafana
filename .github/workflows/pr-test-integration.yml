@@ -32,3 +32,27 @@ jobs:
       - run: |
           make gen-go
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+  memcached:
+    name: Memcached
+    runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+    services:
+      memcached:
+        image: memcached:1.6.9-alpine
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - name: Run tests
+        env:
+          MEMCACHED_HOSTS: memcached:11211
+        run: |
+          apk add --update build-base
+          go clean -testcache
+          go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationMemcached -covermode=atomic -timeout=2m
