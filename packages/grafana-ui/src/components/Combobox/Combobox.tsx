@@ -20,7 +20,8 @@ import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-export interface ComboboxBaseProps<T extends string | number>
+
+interface ComboboxStaticProps<T extends string | number>
   extends Pick<
     InputProps,
     'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
@@ -55,24 +56,6 @@ export interface ComboboxBaseProps<T extends string | number>
   onBlur?: () => void;
 }
 
-export type AutoSizeConditionals =
-  | {
-      width: 'auto';
-      /**
-       * Needs to be set when width is 'auto' to prevent the input from shrinking too much
-       */
-      minWidth: number;
-      /**
-       * Recommended to set when width is 'auto' to prevent the input from growing too much.
-       */
-      maxWidth?: number;
-    }
-  | {
-      width?: number;
-      minWidth?: never;
-      maxWidth?: never;
-    };
-
 interface ClearableProps<T extends string | number> {
   /**
    * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
@@ -97,9 +80,28 @@ interface NotClearableProps<T extends string | number> {
   onChange: (option: ComboboxOption<T>) => void;
 }
 
-export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
-  AutoSizeConditionals &
-  (ClearableProps<T> | NotClearableProps<T>);
+export type ComboboxBaseProps<T extends string | number> = (ClearableProps<T> | NotClearableProps<T>) &
+  ComboboxStaticProps<T>;
+
+export type AutoSizeConditionals =
+  | {
+      width: 'auto';
+      /**
+       * Needs to be set when width is 'auto' to prevent the input from shrinking too much
+       */
+      minWidth: number;
+      /**
+       * Recommended to set when width is 'auto' to prevent the input from growing too much.
+       */
+      maxWidth?: number;
+    }
+  | {
+      width?: number;
+      minWidth?: never;
+      maxWidth?: never;
+    };
+
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 const noop = () => {};
 
