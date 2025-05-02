@@ -62,8 +62,28 @@ jobs:
           go-version-file: go.mod
       - name: Run tests
         env:
-          REDIS_URL: redis://127.0.0.1:6379/0
+          REDIS_URL: redis://redis:6379/0
         run: |
           sudo apt-get update -yq  && sudo apt-get install build-essential
           go clean -testcache
           go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m
+  test:
+    name: testing gh services
+    runs-on: ubuntu-latest-8-core
+    services:
+      nginx:
+        image: nginx
+        # Map port 8080 on the Docker host to port 80 on the nginx container
+        ports:
+          - 8080:80
+      redis:
+        image: redis
+        # Map random free TCP port on Docker host to port 6379 on redis container
+        ports:
+          - 6379/tcp
+    steps:
+      - run: |
+          echo "Redis available on 127.0.0.1:${{ job.services.redis.ports['6379'] }}"
+          echo "Nginx available on 127.0.0.1:${{ job.services.nginx.ports['80'] }}"
+          curl 127.0.0.1
+          curl 127.0.0.1:8080
