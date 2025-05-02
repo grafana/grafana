@@ -8,8 +8,6 @@ run:
   timeout: 15m
   concurrency: 10
   allow-parallel-runners: true
-  skip-dirs:
-    - pkg/util/xorm
 linters:
   default: none
   enable:
@@ -295,6 +293,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - pkg/util/xorm
 issues:
   max-same-issues: 0
 formatters:
