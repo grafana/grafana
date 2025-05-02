@@ -140,7 +140,7 @@ export const TimeRangeContent = (props: Props) => {
     return rangeUtil.convertRawToRange(
       { from: value.raw.from, to: value.raw.to },
       timeZone,
-       fiscalYearStartMonth
+      fiscalYearStartMonth
       );
   }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]);
 
