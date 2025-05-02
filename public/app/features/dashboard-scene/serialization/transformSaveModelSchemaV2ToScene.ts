@@ -19,6 +19,7 @@ import {
 } from '@grafana/scenes';
 import {
   AdhocVariableKind,
+  AnnotationQueryKind,
   ConstantVariableKind,
   CustomVariableKind,
   Spec as DashboardV2Spec,
@@ -38,6 +39,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { DEFAULT_ANNOTATION_COLOR } from '@grafana/ui';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyFolder,
@@ -85,7 +87,14 @@ export type TypedVariableModelV2 =
   | AdhocVariableKind;
 
 export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<DashboardV2Spec>): DashboardScene {
-  const { spec: dashboard, metadata } = dto;
+  const { spec: dashboard, metadata, apiVersion } = dto;
+
+  // annotations might not come with the builtIn Grafana annotation, we need to add it
+
+  const grafanaBuiltAnnotation = getGrafanaBuiltInAnnotationDataLayer(dashboard);
+  if (grafanaBuiltAnnotation) {
+    dashboard.annotations.unshift(grafanaBuiltAnnotation);
+  }
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
     let annoQuerySpec = annotation.spec;
@@ -212,7 +221,7 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
     'v2'
   );
 
-  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata);
+  dashboardScene.setInitialSaveModel(dto.spec, dto.metadata, apiVersion);
 
   return dashboardScene;
 }
@@ -499,4 +508,24 @@ export function getPanelElement(dashboard: DashboardV2Spec, elementName: string)
 
 export function getLibraryPanelElement(dashboard: DashboardV2Spec, elementName: string): LibraryPanelKind | undefined {
   return dashboard.elements[elementName].kind === 'LibraryPanel' ? dashboard.elements[elementName] : undefined;
+}
+function getGrafanaBuiltInAnnotationDataLayer(dashboard: DashboardV2Spec) {
+  const found = dashboard.annotations.some((item) => item.spec.builtIn);
+  if (found) {
+    return;
+  }
+
+  const grafanaBuiltAnnotation: AnnotationQueryKind = {
+    kind: 'AnnotationQuery',
+    spec: {
+      datasource: { uid: '-- Grafana --', type: 'grafana' },
+      name: 'Annotations & Alerts',
+      iconColor: DEFAULT_ANNOTATION_COLOR,
+      enable: true,
+      hide: true,
+      builtIn: true,
+    },
+  };
+
+  return grafanaBuiltAnnotation;
 }

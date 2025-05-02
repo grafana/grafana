@@ -1,9 +1,10 @@
 import { FormEvent, useMemo, useState } from 'react';
 
 import { VariableHide } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { locationService } from '@grafana/runtime';
-import { MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
-import { Input, TextArea, Button, Field, Box } from '@grafana/ui';
+import { LocalValueVariable, MultiValueVariable, SceneVariable, SceneVariableSet } from '@grafana/scenes';
+import { Input, TextArea, Button, Field, Box, Stack } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
@@ -24,6 +25,15 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
   public constructor(public variable: SceneVariable) {}
 
   public getEditableElementInfo(): EditableDashboardElementInfo {
+    if (this.variable instanceof LocalValueVariable) {
+      return {
+        typeName: t('dashboard.edit-pane.elements.local-variable', 'Local variable'),
+        icon: 'dollar-alt',
+        instanceName: this.variable.state.name,
+        isHidden: true,
+      };
+    }
+
     const variableEditorDef = getEditableVariableDefinition(this.variable.state.type);
 
     return {
@@ -36,6 +46,10 @@ export class VariableEditableElement implements EditableDashboardElement, BulkAc
 
   public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const variable = this.variable;
+
+    if (variable instanceof LocalValueVariable) {
+      return useLocalVariableOptions(variable);
+    }
 
     const basicOptions = useMemo(() => {
       return new OptionsPaneCategoryDescriptor({ title: '', id: 'variable-options' })
@@ -130,14 +144,27 @@ function VariableNameInput({ variable, isNewElement }: { variable: SceneVariable
 
   return (
     <Field label={t('dashboard.edit-pane.variable.name', 'Name')} invalid={!!nameError} error={nameError}>
-      <Input ref={ref} value={name} onChange={onChange} required onBlur={onBlur} />
+      <Input
+        ref={ref}
+        value={name}
+        onChange={onChange}
+        required
+        onBlur={onBlur}
+        data-testid={selectors.components.PanelEditor.ElementEditPane.variableNameInput}
+      />
     </Field>
   );
 }
 
 function VariableLabelInput({ variable }: VariableInputProps) {
   const { label } = variable.useState();
-  return <Input value={label} onChange={(e) => variable.setState({ label: e.currentTarget.value })} />;
+  return (
+    <Input
+      value={label}
+      onChange={(e) => variable.setState({ label: e.currentTarget.value })}
+      data-testid={selectors.components.PanelEditor.ElementEditPane.variableLabelInput}
+    />
+  );
 }
 
 function VariableDescriptionTextArea({ variable }: VariableInputProps) {
@@ -219,4 +246,35 @@ function OpenOldVariableEditButton({ variable }: VariableInputProps) {
       </Button>
     </Box>
   );
+}
+
+function useLocalVariableOptions(variable: LocalValueVariable): OptionsPaneCategoryDescriptor[] {
+  return useMemo(() => {
+    const category = new OptionsPaneCategoryDescriptor({
+      title: '',
+      id: 'local-variable-options',
+    });
+
+    category.addItem(
+      new OptionsPaneItemDescriptor({
+        title: '',
+        skipField: true,
+        render: () => {
+          return (
+            <Box paddingBottom={1}>
+              <Stack>
+                <Stack>
+                  <span>${variable.state.name}</span>
+                  <span>=</span>
+                  <span>{variable.getValueText()}</span>
+                </Stack>
+              </Stack>
+            </Box>
+          );
+        },
+      })
+    );
+
+    return [category];
+  }, [variable]);
 }

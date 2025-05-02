@@ -177,7 +177,6 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 	resourceClients := resources.NewMockResourceClients(t)
 	mockClients := resources.NewMockClientFactory(t)
 	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
-	resourceClients.On("Folder").Return(nil, nil)
 	mockProgress := jobs.NewMockJobProgressRecorder(t)
 
 	mockCloneFn := NewMockWrapWithCloneFn(t)
@@ -188,40 +187,6 @@ func TestExportWorker_ProcessNotReaderWriter(t *testing.T) {
 	r := NewExportWorker(mockClients, nil, nil, mockCloneFn.Execute)
 	err := r.Process(context.Background(), mockRepo, job, mockProgress)
 	require.EqualError(t, err, "export job submitted targeting repository that is not a ReaderWriter")
-}
-
-func TestExportWorker_ProcessFolderClientError(t *testing.T) {
-	job := v0alpha1.Job{
-		Spec: v0alpha1.JobSpec{
-			Action: v0alpha1.JobActionPush,
-			Push:   &v0alpha1.ExportJobOptions{},
-		},
-	}
-
-	mockRepo := repository.NewMockRepository(t)
-	mockRepo.On("Config").Return(&v0alpha1.Repository{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-repo",
-			Namespace: "test-namespace",
-		},
-		Spec: v0alpha1.RepositorySpec{
-			Workflows: []v0alpha1.Workflow{v0alpha1.WriteWorkflow},
-		},
-	})
-
-	resourceClients := resources.NewMockResourceClients(t)
-	mockClients := resources.NewMockClientFactory(t)
-	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
-	resourceClients.On("Folder").Return(nil, fmt.Errorf("failed to create folder client"))
-
-	mockProgress := jobs.NewMockJobProgressRecorder(t)
-	mockCloneFn := NewMockWrapWithCloneFn(t)
-	mockCloneFn.On("Execute", context.Background(), mockRepo, mock.Anything, mock.Anything, mock.Anything).Return(func(ctx context.Context, repo repository.Repository, cloneOpts repository.CloneOptions, pushOpts repository.PushOptions, fn func(repository.Repository, bool) error) error {
-		return fn(repo, true)
-	})
-	r := NewExportWorker(mockClients, nil, nil, mockCloneFn.Execute)
-	err := r.Process(context.Background(), mockRepo, job, mockProgress)
-	require.EqualError(t, err, "create folder client: failed to create folder client")
 }
 
 func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
@@ -244,7 +209,6 @@ func TestExportWorker_ProcessRepositoryResourcesError(t *testing.T) {
 	})
 
 	resourceClients := resources.NewMockResourceClients(t)
-	resourceClients.On("Folder").Return(nil, nil)
 	mockClients := resources.NewMockClientFactory(t)
 	mockClients.On("Clients", context.Background(), "test-namespace").Return(resourceClients, nil)
 
@@ -288,7 +252,6 @@ func TestExportWorker_ProcessCloneAndPushOptions(t *testing.T) {
 	mockClients := resources.NewMockClientFactory(t)
 	mockResourceClients := resources.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
-	mockResourceClients.On("Folder").Return(nil, nil)
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)
@@ -339,7 +302,6 @@ func TestExportWorker_ProcessExportFnError(t *testing.T) {
 	mockClients := resources.NewMockClientFactory(t)
 	mockResourceClients := resources.NewMockResourceClients(t)
 	mockClients.On("Clients", mock.Anything, "test-namespace").Return(mockResourceClients, nil)
-	mockResourceClients.On("Folder").Return(nil, nil)
 
 	mockRepoResources := resources.NewMockRepositoryResourcesFactory(t)
 	mockRepoResourcesClient := resources.NewMockRepositoryResources(t)

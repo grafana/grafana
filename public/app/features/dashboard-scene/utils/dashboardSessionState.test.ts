@@ -29,6 +29,17 @@ describe('dashboardSessionState', () => {
       expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
     });
 
+    it('should do nothing if dashboard version is 0', () => {
+      const scene = buildTestScene();
+      scene.setState({ version: 0 });
+
+      const deactivate = scene.activate();
+      expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
+
+      deactivate();
+      expect(window.sessionStorage.getItem(PRESERVED_SCENE_STATE_KEY)).toBeNull();
+    });
+
     it('should capture dashboard scene state and save it to session storage on deactivation', () => {
       const scene = buildTestScene();
 
@@ -79,6 +90,19 @@ describe('dashboardSessionState', () => {
 
       window.sessionStorage.setItem(PRESERVED_SCENE_STATE_KEY, '?var-customVar=b&from=now-5m&to=now&timezone=browser');
       const scene = buildTestScene();
+
+      restoreDashboardStateFromLocalStorage(scene);
+
+      expect(locationService.getLocation().search).toBe('?var-customVar=b&from=now-6h&to=now&timezone=browser');
+    });
+
+    it('should not restore state if dashboard version is 0', () => {
+      window.sessionStorage.setItem(
+        PRESERVED_SCENE_STATE_KEY,
+        '?var-customVarNotOnDB=b&from=now-5m&to=now&timezone=browser'
+      );
+      const scene = buildTestScene();
+      scene.setState({ version: 0 });
 
       restoreDashboardStateFromLocalStorage(scene);
 

@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"xorm.io/builder"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"xorm.io/builder"
 )
 
 func (session *Session) genQuerySQL(sqlOrArgs ...interface{}) (string, []interface{}, error) {

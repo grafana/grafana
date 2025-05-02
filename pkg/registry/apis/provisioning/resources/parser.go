@@ -263,30 +263,33 @@ func (f *ParsedResource) Run(ctx context.Context) error {
 		return err
 	}
 
-	// We may have already called DryRun that also calls get
-	if f.DryRunResponse != nil && f.Action != "" {
-		// FIXME: shouldn't we check for the specific error?
-		f.Existing, _ = f.Client.Get(ctx, f.Obj.GetName(), metav1.GetOptions{})
-	}
-
 	fieldValidation := "Strict"
 	if f.GVR == DashboardResource {
 		fieldValidation = "Ignore" // FIXME: temporary while we improve validation
 	}
 
-	// Run update or create
-	if f.Existing == nil {
+	// If we have already tried loading existing, start with create
+	if f.DryRunResponse != nil && f.Existing == nil {
 		f.Action = provisioning.ResourceActionCreate
 		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
 			FieldValidation: fieldValidation,
 		})
-	} else {
-		f.Action = provisioning.ResourceActionUpdate
-		f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+		if err == nil {
+			return nil // it worked, return
+		}
+	}
+
+	// Try update, otherwise create
+	f.Action = provisioning.ResourceActionUpdate
+	f.Upsert, err = f.Client.Update(ctx, f.Obj, metav1.UpdateOptions{
+		FieldValidation: fieldValidation,
+	})
+	if apierrors.IsNotFound(err) {
+		f.Action = provisioning.ResourceActionCreate
+		f.Upsert, err = f.Client.Create(ctx, f.Obj, metav1.CreateOptions{
 			FieldValidation: fieldValidation,
 		})
 	}
-
 	return err
 }
 

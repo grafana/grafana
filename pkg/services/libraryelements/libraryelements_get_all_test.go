@@ -14,7 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search/sort"
 )
 
-func TestGetAllLibraryElements(t *testing.T) {
+func TestIntegration_GetAllLibraryElements(t *testing.T) {
 	testScenario(t, "When an admin tries to get all library panels and none exists, it should return none",
 		func(t *testing.T, sc scenarioContext) {
 			resp := sc.service.getAllHandler(sc.reqContext)
@@ -964,13 +964,14 @@ func TestGetAllLibraryElements(t *testing.T) {
 			require.NoError(t, err)
 			sc.reqContext.Req.Form.Add("perPage", "1")
 			sc.reqContext.Req.Form.Add("page", "1")
-			sc.reqContext.Req.Form.Add("searchString", "description")
+			sc.reqContext.Req.Form.Add("searchString", "DeScRiPtIoN") // mixed case to test case-insensitive search.
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			var result libraryElementsSearch
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
+			require.Equal(t, int64(1), result.Result.TotalCount)
 			var expected = libraryElementsSearch{
 				Result: libraryElementsSearchResult{
 					TotalCount: 1,
@@ -1039,13 +1040,14 @@ func TestGetAllLibraryElements(t *testing.T) {
 
 			err := sc.reqContext.Req.ParseForm()
 			require.NoError(t, err)
-			sc.reqContext.Req.Form.Add("searchString", "Library Panel")
+			sc.reqContext.Req.Form.Add("searchString", "library PANEL") // mixed-case to test case-insensitive search.
 			resp = sc.service.getAllHandler(sc.reqContext)
 			require.Equal(t, 200, resp.Status())
 
 			var result libraryElementsSearch
 			err = json.Unmarshal(resp.Body(), &result)
 			require.NoError(t, err)
+			require.Equal(t, int64(2), result.Result.TotalCount)
 			var expected = libraryElementsSearch{
 				Result: libraryElementsSearchResult{
 					TotalCount: 2,

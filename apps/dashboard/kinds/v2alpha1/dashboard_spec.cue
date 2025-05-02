@@ -78,7 +78,7 @@ AnnotationPanelFilter: {
 	exclude?: bool | *false
 
 	// Panel IDs that should be included or excluded
-	ids: [...uint8]
+	ids: [...uint32]
 }
 
 // "Off" for no shared crosshair or tooltip (default).
@@ -704,6 +704,10 @@ VariableRefresh: *"never" | "onDashboardLoad" | "onTimeRangeChanged"
 // Accepted values are `dontHide` (show label and value), `hideLabel` (show value only), `hideVariable` (show nothing).
 VariableHide: *"dontHide" | "hideLabel" | "hideVariable"
 
+// Determine the origin of the adhoc variable filter
+// Accepted values are `dashboard` (filter originated from dashboard), or `scope` (filter originated from scope).
+FilterOrigin: "dashboard" | "scope"
+
 // FIXME: should we introduce this? --- Variable value option
 VariableValueOption: {
 	label:  string
@@ -915,6 +919,7 @@ AdHocFilterWithLabels: {
 	keyLabel?: string
 	valueLabels?: [...string]
 	forceEdit?: bool
+	origin?: FilterOrigin
 	// @deprecated
 	condition?: string
 }

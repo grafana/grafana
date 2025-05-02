@@ -219,8 +219,6 @@ For more information on Cloud Access Policies and how to use them, see [Access p
 
 ### Grafana Alerting Notification action definitions
 
-To use these permissions, enable the `alertingApiServer` feature toggle.
-
 | Action                                       | Applicable scopes                  | Description                                                                                                 |
 | -------------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------- |
 | `alert.notifications.receivers:read`         | `receivers:*`<br>`receivers:uid:*` | Read contact points.                                                                                        |

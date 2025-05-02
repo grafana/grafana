@@ -61,6 +61,14 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 	return res, nil
 }
 
+func (c *check) Item(ctx context.Context, id string) (any, error) {
+	p, exists := c.PluginStore.Plugin(ctx, id)
+	if !exists {
+		return nil, fmt.Errorf("plugin %s not found", id)
+	}
+	return p, nil
+}
+
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
@@ -118,6 +126,7 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
@@ -190,6 +199,7 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{

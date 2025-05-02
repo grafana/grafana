@@ -136,8 +136,12 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
           <span>{`${trace.spans.length} spans`}</span>
           {getTooltip(
             <>
-              <div>Services: {services}</div>
-              <div>Depth: {depth}</div>
+              <div>
+                <Trans i18nKey="explore.next-prev-result.services">Services: {{ services }}</Trans>
+              </div>
+              <div>
+                <Trans i18nKey="explore.next-prev-result.depth">Depth: {{ depth }}</Trans>
+              </div>
             </>
           )}
         </>
@@ -175,9 +179,16 @@ export default memo(function NextPrevResult(props: NextPrevResultProps) {
               {getTooltip(
                 <>
                   <div>
-                    Services: {new Set(matchedServices).size}/{services}
+                    <Trans
+                      i18nKey="explore.next-prev-result.services-span-filter-matches"
+                      values={{ total: new Set(matchedServices).size }}
+                    >
+                      Services: {'{{total}}'}/{{ services }}
+                    </Trans>
                   </div>
-                  <div>Depth: {depth}</div>
+                  <div>
+                    <Trans i18nKey="explore.next-prev-result.depth-span-filter-matches">Depth: {{ depth }}</Trans>
+                  </div>
                 </>
               )}
             </>

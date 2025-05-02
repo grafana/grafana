@@ -155,7 +155,7 @@ func (fm *FolderManager) GetFolder(ctx context.Context, name string) (*unstructu
 // If the folder already exists, the function is called with created set to false.
 // If the folder is created, the function is called with created set to true.
 func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error {
-	return tree.Walk(ctx, func(ctx context.Context, folder Folder) error {
+	return tree.Walk(ctx, func(ctx context.Context, folder Folder, parent string) error {
 		p := folder.Path
 		if path != "" {
 			p = safepath.Join(path, p)
@@ -175,6 +175,8 @@ func (fm *FolderManager) EnsureFolderTreeExists(ctx context.Context, ref, path s
 		if err := fm.repo.Create(ctx, p, ref, nil, msg); err != nil {
 			return fn(folder, true, fmt.Errorf("write folder in repo: %w", err))
 		}
+		// Add it to the existing tree
+		fm.tree.Add(folder, parent)
 
 		return fn(folder, true, nil)
 	})

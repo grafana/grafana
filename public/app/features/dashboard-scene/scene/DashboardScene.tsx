@@ -725,17 +725,23 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
   };
 
   /** Hacky temp function until we refactor transformSaveModelToScene a bit */
-  setInitialSaveModel(model?: Dashboard, meta?: DashboardMeta): void;
-  setInitialSaveModel(model?: DashboardV2Spec, meta?: DashboardWithAccessInfo<DashboardV2Spec>['metadata']): void;
+  setInitialSaveModel(model?: Dashboard, meta?: DashboardMeta, apiVersion?: string): void;
+  setInitialSaveModel(
+    model?: DashboardV2Spec,
+    meta?: DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+    apiVersion?: string
+  ): void;
   public setInitialSaveModel(
     saveModel?: Dashboard | DashboardV2Spec,
-    meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata']
+    meta?: DashboardMeta | DashboardWithAccessInfo<DashboardV2Spec>['metadata'],
+    apiVersion?: string
   ): void {
     this.serializer.initializeElementMapping(saveModel);
     this.serializer.initializeDSReferencesMapping(saveModel);
     const sortedModel = sortedDeepCloneWithoutNulls(saveModel);
     this.serializer.initialSaveModel = sortedModel;
     this.serializer.metadata = meta;
+    this.serializer.apiVersion = apiVersion;
   }
 
   public getTrackingInformation() {
@@ -775,7 +781,7 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     const { meta } = this.state;
     const spec = this.getSaveAsModel(options);
 
-    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2alpha1' : 'v1alpha1'; // get from the dashboard?
+    const apiVersion = this.serializer instanceof V2DashboardSerializer ? 'v2alpha1' : 'v1beta1'; // get from the dashboard?
     return {
       apiVersion: `dashboard.grafana.app/${apiVersion}`,
       kind: 'Dashboard',
