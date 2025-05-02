@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { VariableType } from '@grafana/data';
 import { TextBoxVariable } from '@grafana/scenes';
 
 import { TextBoxVariableEditor } from './TextBoxVariableEditor';
