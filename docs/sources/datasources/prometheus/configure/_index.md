@@ -186,7 +186,7 @@ Following are optional configuration settings you can configure for more control
 
 **Query editor:**
 
-- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. `Builder` mode helps you build queries using a visual interface. `Code` mode is geared for the experienced Prometheus user with prior expertise in PromQL. For more details on editor types refer to [Prometheus query editor](ref:prom-query-editor).
+- **Default editor** - Sets the default query editor. Options are `Builder` or `Code`. `Builder` mode helps you build queries using a visual interface. `Code` mode is geared for the experienced Prometheus user with prior expertise in PromQL. For more details on editor types refer to [Prometheus query editor](ref:prom-query-editor).You can switch easily code editors in the Query editor UI.
 - **Disable metrics lookup** - Toggle on to disable the metrics chooser and metric and label support in the query field's autocomplete. This can improve performance for large Prometheus instances.
 
 **Performance:**
@@ -195,7 +195,7 @@ Following are optional configuration settings you can configure for more control
 - **Cache level** - Sets the browser caching level for editor queries. There are four options: `Low`, `Medium`, `High`, or `None`. Higher cache settings are recommended for high cardinality data sources.
 - **Incremental querying (beta)** - Toggle on to enable incremental querying. Enabling this feature changes the default behavior of relative queries. Instead of always requesting fresh data from the Prometheus instance, Grafana will cache query results and only fetch new records. This helps reduce database and network load.
   - **Query overlap window** - If you are using incremental querying, specify a duration (e.g., 10m, 120s, or 0s). The default is `10m`. This is a buffer of time added to incremental queries and this value is added to the duration of each incremental request.
-- **Disable recording rules (beta)** - Toggle to disable the recording rules. Enable this option to improve dashboard performance.
+- **Disable recording rules (beta)** - Toggle on to disable the recording rules. When recording rules are disabled, Grafana fetch and parse recording rules from Prometheus, improving dashboard performance by reducing processing overhead..
 
 **Other settings:**
 
@@ -250,7 +250,6 @@ Once you have provisioned a data source you cannot edit it.
       - name: Prometheus
         type: prometheus
         access: proxy
-        # Access mode - proxy (server in the UI) or direct (browser in the UI).
         url: http://localhost:9090
         jsonData:
           httpMethod: POST
