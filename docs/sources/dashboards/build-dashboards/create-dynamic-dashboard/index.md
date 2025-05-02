@@ -6,9 +6,11 @@ labels:
     - oss
   stage:
     - experimental
-menuTitle: Create a next gen dashboard
-title: Create a next generation dashboard
-description: Create and edit a next generation dashboard
+_build:
+  list: false
+noindex: true
+title: Create a dynamic dashboard
+description: Create and edit a dynamic dashboard
 weight: 900
 refs:
   built-in-special-data-sources:
@@ -73,7 +75,7 @@ refs:
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/configure-overrides/
 ---
 
-# Create and edit next generation dashboards
+# Create and edit dynamic dashboards
 
 {{< docs/experimental product="Next generation dashboards" featureFlag="dashboardNewLayouts" >}}
 
