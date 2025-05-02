@@ -327,9 +327,11 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 		whereParams = append(whereParams, acFilter.Args...)
 
 		if query.Query != "" {
-			queryWithWildcards := "%" + query.Query + "%"
-			whereConditions = append(whereConditions, "(email "+s.sqlStore.GetDialect().LikeStr()+" ? OR name "+s.sqlStore.GetDialect().LikeStr()+" ? OR login "+s.sqlStore.GetDialect().LikeStr()+" ?)")
-			whereParams = append(whereParams, queryWithWildcards, queryWithWildcards, queryWithWildcards)
+			sql1, param1 := s.sqlStore.GetDialect().LikeOperator("email", true, query.Query, true)
+			sql2, param2 := s.sqlStore.GetDialect().LikeOperator("name", true, query.Query, true)
+			sql3, param3 := s.sqlStore.GetDialect().LikeOperator("login", true, query.Query, true)
+			whereConditions = append(whereConditions, fmt.Sprintf("(%s OR %s OR %s)", sql1, sql2, sql3))
+			whereParams = append(whereParams, param1, param2, param3)
 		}
 
 		switch query.Filter {
@@ -348,10 +350,9 @@ func (s *ServiceAccountsStoreImpl) SearchOrgServiceAccounts(ctx context.Context,
 				"is_disabled = ?")
 			whereParams = append(whereParams, s.sqlStore.GetDialect().BooleanValue(true))
 		case serviceaccounts.FilterOnlyExternal:
-			whereConditions = append(
-				whereConditions,
-				"login "+s.sqlStore.GetDialect().LikeStr()+" ?")
-			whereParams = append(whereParams, serviceaccounts.ExtSvcLoginPrefix(query.OrgID)+"%")
+			sql, param := s.sqlStore.GetDialect().LikeOperator("login", false, serviceaccounts.ExtSvcLoginPrefix(query.OrgID), true)
+			whereConditions = append(whereConditions, sql)
+			whereParams = append(whereParams, param)
 		default:
 			s.log.Warn("Invalid filter user for service account filtering", "service account search filtering", query.Filter)
 		}

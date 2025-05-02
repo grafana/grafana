@@ -34,9 +34,15 @@ func writeStarredSQL(query SearchInQueryHistoryQuery, sqlStore db.DB, builder *d
 }
 
 func writeFiltersSQL(query SearchInQueryHistoryQuery, user *user.SignedInUser, sqlStore db.DB, builder *db.SQLBuilder) {
-	params := []any{user.OrgID, user.UserID, query.From, query.To, "%" + query.SearchString + "%", "%" + query.SearchString + "%"}
+	queriesSQL, queriesParam := sqlStore.GetDialect().LikeOperator("query_history.queries", true, query.SearchString, true)
+	commentSQL, commentParam := sqlStore.GetDialect().LikeOperator("query_history.comment", true, query.SearchString, true)
+	params := []any{user.OrgID, user.UserID, query.From, query.To, queriesParam, commentParam}
 	var sql bytes.Buffer
-	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (query_history.queries " + sqlStore.GetDialect().LikeStr() + " ? OR query_history.comment " + sqlStore.GetDialect().LikeStr() + " ?) ")
+	sql.WriteString(" WHERE query_history.org_id = ? AND query_history.created_by = ? AND query_history.created_at >= ? AND query_history.created_at <= ? AND (")
+	sql.WriteString(queriesSQL)
+	sql.WriteString(" OR ")
+	sql.WriteString(commentSQL)
+	sql.WriteString(") ")
 
 	if len(query.DatasourceUIDs) > 0 {
 		q := "?" + strings.Repeat(",?", len(query.DatasourceUIDs)-1)

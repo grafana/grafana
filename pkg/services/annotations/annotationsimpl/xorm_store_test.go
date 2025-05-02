@@ -533,7 +533,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Should find tags by key", func(t *testing.T) {
 			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 1,
-				Tag:   "server",
+				Tag:   "SeRvEr", // Use mixed-case to test LIKE case-insensitivity
 			})
 			require.NoError(t, err)
 			require.Len(t, result.Tags, 1)
@@ -544,7 +544,7 @@ func TestIntegrationAnnotations(t *testing.T) {
 		t.Run("Should find tags by value", func(t *testing.T) {
 			result, err := store.GetTags(context.Background(), annotations.TagsQuery{
 				OrgID: 1,
-				Tag:   "outage",
+				Tag:   "Outage", // Use mixed-case to test LIKE case-insensitivity
 			})
 			require.NoError(t, err)
 			require.Len(t, result.Tags, 2)

@@ -31,10 +31,6 @@ func (db *PostgresDialect) Quote(name string) string {
 	return "\"" + name + "\""
 }
 
-func (db *PostgresDialect) LikeStr() string {
-	return "ILIKE"
-}
-
 func (db *PostgresDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
 	param := pattern
 	if wildcardBefore {
