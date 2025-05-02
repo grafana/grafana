@@ -44,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": "Color"
+        }
+      },
       "label-headers": "Headers",
       "label-url": "URL",
       "placeholder-url": "URL"
@@ -3666,7 +3671,10 @@
         "export": {
           "arrow": "Export",
           "title": "Export",
-          "tooltip": "Export as JSON"
+          "tooltip": {
+            "as-code": "Export as code",
+            "json": "Export as JSON"
+          }
         },
         "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
@@ -3906,6 +3914,7 @@
     },
     "constant-variable-form": {
       "constant-options": "Constant options",
+      "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "custom-variable-form": {
@@ -5104,8 +5113,11 @@
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
-      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Export dashboard JSON"
+      "export-format": "Format",
+      "export-mode": "Model",
+      "export-remove-ds-refs": "Remove deployment details",
+      "info-text": "Copy or download a file containing the definition of your dashboard",
+      "title": "Export dashboard"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -5242,7 +5254,8 @@
     "action-editor": {
       "button": {
         "confirm": "Confirm",
-        "confirm-action": "Confirm action"
+        "confirm-action": "Confirm action",
+        "style": "Button style"
       },
       "inline": {
         "add-action": "Add action",
@@ -7077,6 +7090,7 @@
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
         "repository": "Repository",
         "signature": "Signature",
+        "sponsorDeveloper": "Sponsor this developer",
         "status": "Status"
       },
       "modal": {
@@ -7816,8 +7830,8 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "Interval = {intervalDesc}",
-      "collapsed-max-data-points": "MD = {mdDesc}",
+      "collapsed-interval": "Interval = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Hide time info",
       "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
@@ -8212,7 +8226,8 @@
       "loading": "Loading...",
       "save-button": "Save to file",
       "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON"
+      "view-button": "View JSON",
+      "view-button-yaml": "View YAML"
     },
     "library": {
       "info": "Create library panel."
