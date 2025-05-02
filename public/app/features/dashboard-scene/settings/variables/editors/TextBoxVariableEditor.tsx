@@ -1,11 +1,11 @@
+import { noop } from 'lodash';
 import { FormEvent } from 'react';
 
 import { SceneVariable, TextBoxVariable } from '@grafana/scenes';
+import { t } from 'app/core/internationalization';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { TextBoxVariableForm } from '../components/TextBoxVariableForm';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { t } from 'i18next';
-import { noop } from 'lodash';
 
 interface TextBoxVariableEditorProps {
   variable: TextBoxVariable;

@@ -1,10 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { VariableType } from '@grafana/data';
 import { TextBoxVariable } from '@grafana/scenes';
 
 import { TextBoxVariableEditor } from './TextBoxVariableEditor';
-import { VariableType } from '@grafana/data';
 
 describe('TextBoxVariableEditor', () => {
   let textBoxVar: TextBoxVariable;
@@ -49,8 +49,8 @@ describe('TextBoxVariableEditor', () => {
       type: 'textbox',
       value: 'initial value test',
     });
-    render(<TextBoxVariableEditor variable={variable} onChange={onChange} inline={true}/>);
-  
+    render(<TextBoxVariableEditor variable={variable} onChange={onChange} inline={true} />);
+
     const input = screen.getByDisplayValue(variable.state.value);
     expect(input).toBeInTheDocument();
     expect(input).toHaveValue(variable.state.value);

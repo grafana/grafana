@@ -16,7 +16,7 @@ interface TextBoxVariableFormProps {
 export function TextBoxVariableForm({ defaultValue, value, onChange, onBlur, inline }: TextBoxVariableFormProps) {
   return (
     <>
-      { !inline && (
+      {!inline && (
         <VariableLegend>
           <Trans i18nKey="dashboard-scene.text-box-variable-form.text-options">Text options</Trans>
         </VariableLegend>
@@ -25,7 +25,7 @@ export function TextBoxVariableForm({ defaultValue, value, onChange, onBlur, inl
       <VariableTextField
         value={value}
         defaultValue={defaultValue}
-        name={inline ? undefined : "Default value"}
+        name={inline ? undefined : 'Default value'}
         placeholder={t('dashboard-scene.text-box-variable-form.placeholder-default-value-if-any', '(optional)')}
         onChange={onChange}
         onBlur={onBlur}
