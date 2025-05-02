@@ -3709,7 +3709,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3949,6 +3952,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5151,8 +5155,11 @@
       "download-button": "Stáhnout soubor",
       "download-successful_toast_message": "JSON byl stažen",
       "export-externally-label": "Exportovat nástěnku pro použití v jiné instanci",
-      "info-text": "Zkopírujte nebo stáhněte soubor JSON obsahující JSON vaší nástěnky",
-      "title": "Exportovat JSON nástěnky"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Exportovat",
@@ -7135,6 +7142,7 @@
         "reportAbuseTooltip": "Nahlaste problémy související se škodlivými pluginy přímo společnosti Grafana Labs.",
         "repository": "Úložiště",
         "signature": "Podpis",
+        "sponsorDeveloper": "",
         "status": "Stav"
       },
       "modal": {
@@ -8280,7 +8288,8 @@
       "loading": "Načítání…",
       "save-button": "Uložit do souboru",
       "share-externally-label": "Exportovat pro externí sdílení",
-      "view-button": "Zobrazit JSON"
+      "view-button": "Zobrazit JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Vytvořit panel knihovny."

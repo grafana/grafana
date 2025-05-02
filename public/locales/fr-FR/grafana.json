@@ -3671,7 +3671,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3911,6 +3914,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5109,8 +5113,11 @@
       "download-button": "Télécharger le fichier",
       "download-successful_toast_message": "Votre JSON a été téléchargé",
       "export-externally-label": "Exporter le tableau de bord pour l'utiliser dans une autre instance",
-      "info-text": "Copier ou télécharger un fichier JSON contenant le JSON de votre tableau de bord",
-      "title": "Exporter le tableau de bord JSON"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Exporter",
@@ -7083,6 +7090,7 @@
         "reportAbuseTooltip": "Signalez les problèmes liés à des plugins malveillants ou nuisibles directement à Grafana Labs.",
         "repository": "Référentiel",
         "signature": "Signature",
+        "sponsorDeveloper": "",
         "status": "Statut"
       },
       "modal": {
@@ -8218,7 +8226,8 @@
       "loading": "Chargement en cours...",
       "save-button": "Enregistrer dans un fichier",
       "share-externally-label": "Exporter pour un partage externe",
-      "view-button": "Afficher au format JSON"
+      "view-button": "Afficher au format JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Créer un panneau de bibliothèque."
