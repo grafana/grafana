@@ -18,6 +18,9 @@ src_dir := $(tools_dir)/src
 
 define compile_tool
 $(shell \
+  if [ ! -d $(tools_cache_dir) ]; then \
+    mkdir -p $(tools_cache_dir); \
+  fi; \
   if [ ! -f $(tools_cache_dir)/$(1).path ]; then \
     (cd $(src_dir)/$(1) && GOWORK=off go tool -n $(2) > $(tools_cache_dir)/$(1).path); \
   fi; \
