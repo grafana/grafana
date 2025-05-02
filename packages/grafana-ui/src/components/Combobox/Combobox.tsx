@@ -248,11 +248,18 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
+      // `selectedItem` type is `ComboboxOption<T> | null`
+      // It can be null when `selectItem()` is called with null, and we never do that unless `isClearable` is true.
+      // So, when `isClearable` is false, `selectedItem` is always non-null. However, the types don't reflect that,
+      // which is why the conditions are needed.
+      //
       // this is an else if because TS can't infer the correct onChange types from
       // (isClearable || selectedItem !== null)
       if (isClearable) {
+        // onChange argument type allows null
         onChange(selectedItem);
       } else if (selectedItem !== null) {
+        // onChange argument type *does not* allow null
         onChange(selectedItem);
       }
     },
