@@ -100,7 +100,7 @@ const useTimeZones = (includeInternal: boolean | InternalTimeZones[]): Selectabl
         options.push({
           label: name,
           value: info.zone,
-          searchIndex: getSearchIndex(info, now),
+          searchIndex: getSearchIndex(name, info, now),
         });
 
         return options;
@@ -164,12 +164,16 @@ const useFilterBySearchIndex = () => {
   }, []);
 };
 
-const getSearchIndex = (info: TimeZoneInfo, timestamp: number): string => {
+const getSearchIndex = (label: string, info: TimeZoneInfo, timestamp: number): string => {
   const parts: string[] = [
-    toLower(info.name),
+    toLower(info.zone),
     toLower(info.abbreviation),
     toLower(formatUtcOffset(timestamp, info.zone)),
   ];
+
+  if (label !== info.zone) {
+    parts.push(toLower(label));
+  }
 
   for (const country of info.countries) {
     parts.push(toLower(country.name));
