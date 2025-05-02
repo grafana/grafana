@@ -267,12 +267,18 @@ export const calculateFieldTransformer: DataTransformerInfo<CalculateFieldTransf
             return frame;
           }
 
-          const field = {
+          const field: Field = {
             name: getNameFromOptions(options),
             type: FieldType.number,
             config: {},
             values,
           };
+
+          if (options.alias?.length) {
+            // this prevents downstream auto-renames when there is an explicit alias
+            field.config.displayName = options.alias;
+          }
+
           let fields: Field[] = [];
 
           // Replace all fields with the single field
