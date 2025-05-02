@@ -5,7 +5,9 @@ const BASE_URL = '/';
 export const api = createApi({
   reducerPath: 'grafanaAlertingAPI',
   baseQuery: fetchBaseQuery({
-    baseUrl: BASE_URL,
+    // Set URL correctly so MSW can intercept requests
+    // https://mswjs.io/docs/runbook#rtk-query-requests-are-not-intercepted
+    baseUrl: new URL(BASE_URL, location.origin).href,
   }),
   endpoints: () => ({}),
 });

@@ -1,7 +1,7 @@
 import { HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
 import { config } from '@grafana/runtime';
-import server from 'app/features/alerting/unified/mockApi';
+import server from '@grafana/test-utils/server';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
 import {
   getAlertmanagerConfigHandler,

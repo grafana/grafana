@@ -3558,6 +3558,28 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@grafana/test-utils@workspace:*, @grafana/test-utils@workspace:packages/grafana-test-utils":
+  version: 0.0.0-use.local
+  resolution: "@grafana/test-utils@workspace:packages/grafana-test-utils"
+  dependencies:
+    "@grafana/tsconfig": "npm:^2.0.0"
+    "@reduxjs/toolkit": "npm:2.5.1"
+    "@testing-library/dom": "npm:10.4.0"
+    "@testing-library/jest-dom": "npm:6.6.3"
+    "@testing-library/react": "npm:16.2.0"
+    "@testing-library/user-event": "npm:14.6.1"
+    "@types/node": "npm:22.12.0"
+    "@types/react": "npm:18.3.18"
+    history: "npm:4.10.1"
+    msw: "npm:2.7.0"
+    react: "npm:18.3.1"
+    react-redux: "npm:9.2.0"
+    react-router-dom: "npm:5.3.4"
+    react-router-dom-v5-compat: "npm:^6.26.1"
+    typescript: "npm:5.7.3"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/tsconfig@npm:^2.0.0":
   version: 2.0.0
   resolution: "@grafana/tsconfig@npm:2.0.0"
@@ -17672,6 +17694,7 @@ __metadata:
     "@grafana/scenes-react": "npm:6.10.2"
     "@grafana/schema": "workspace:*"
     "@grafana/sql": "workspace:*"
+    "@grafana/test-utils": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@grafana/ui": "workspace:*"
     "@hello-pangea/dnd": "npm:17.0.0"

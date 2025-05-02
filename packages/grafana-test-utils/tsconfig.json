@@ -5,8 +5,7 @@
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "rootDirs": ["."],
-    "moduleResolution": "bundler",
-    "types": ["node", "jest", "@testing-library/jest-dom"]
+    "moduleResolution": "bundler"
   },
   "ts-node": {
     "compilerOptions": {
@@ -16,5 +15,5 @@
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["typings/jest", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"]
+  "include": ["src/**/*.ts*"]
 }

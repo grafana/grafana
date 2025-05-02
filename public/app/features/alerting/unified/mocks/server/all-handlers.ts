@@ -23,6 +23,7 @@ import silenceHandlers from 'app/features/alerting/unified/mocks/server/handlers
 
 /**
  * Array of all mock handlers that are required across Alerting tests
+ * @deprecated Move to `@grafana/test-utils` instead
  */
 const allHandlers = [
   ...accessControlHandlers,

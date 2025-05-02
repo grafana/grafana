@@ -21,10 +21,13 @@ window.__grafana_app_bundle_loaded = true;
 import app from './app';
 
 const prepareInit = async () => {
-  if (process.env.frontend_dev_mock_api) {
-    return import('test/mock-api/worker').then((workerModule) => {
-      workerModule.default.start({ onUnhandledRequest: 'bypass' });
-    });
+  if (process.env.NODE_ENV === 'development') {
+    // TODO: Move Alerting handlers into @grafana/test-utils/handlers
+    const { default: alertingHandlers } = await import('./features/alerting/unified/mocks/server/all-handlers');
+    const { default: worker } = await import('@grafana/test-utils/worker');
+
+    worker.use(...alertingHandlers);
+    worker.start({ onUnhandledRequest: 'bypass' });
   }
   return Promise.resolve();
 };

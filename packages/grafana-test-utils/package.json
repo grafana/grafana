@@ -1,0 +1,67 @@
+{
+  "author": "Grafana Labs",
+  "license": "Apache-2.0",
+  "name": "@grafana/test-utils",
+  "version": "12.0.0-pre",
+  "description": "Grafana test utils & Mock API",
+  "keywords": [
+    "grafana",
+    "typescript",
+    "msw",
+    "mock api"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/grafana/grafana.git",
+    "directory": "packages/grafana-test-utils"
+  },
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "module": "src/index.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts"
+    },
+    "./server": {
+      "import": "./src/server/index.ts",
+      "require": "./src/server/index.ts"
+    },
+    "./worker": {
+      "import": "./src/worker/index.ts",
+      "require": "./src/worker/index.ts"
+    },
+    "./handlers": {
+      "import": "./src/handlers/index.ts",
+      "require": "./src/handlers/index.ts"
+    },
+    "./unstable": {
+      "import": "./src/unstable.ts",
+      "require": "./src/unstable.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --emitDeclarationOnly false --noEmit"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "2.5.1",
+    "@testing-library/dom": "10.4.0",
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.2.0",
+    "@testing-library/user-event": "14.6.1",
+    "history": "4.10.1",
+    "msw": "2.7.0",
+    "react": "18.3.1",
+    "react-redux": "9.2.0",
+    "react-router-dom": "5.3.4",
+    "react-router-dom-v5-compat": "^6.26.1"
+  },
+  "devDependencies": {
+    "@grafana/tsconfig": "^2.0.0",
+    "@types/node": "22.12.0",
+    "@types/react": "18.3.18",
+    "typescript": "5.7.3"
+  }
+}
