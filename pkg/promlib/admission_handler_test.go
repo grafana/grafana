@@ -104,7 +104,6 @@ func Test_MutateAdmission(t *testing.T) {
 				Group: "grafana-plugin-sdk-go",
 				Kind:  "DataSourceInstanceSettings",
 			},
-			ObjectBytes: []byte(`{"foo":"bar"}`),
 		}
 
 		actual, err := s.MutateAdmission(context.Background(), req)
