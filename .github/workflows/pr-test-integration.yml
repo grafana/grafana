@@ -22,6 +22,8 @@ jobs:
     services:
       memcached:
         image: memcached:1.6.9-alpine
+        ports:
+          - 11211:11211
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
