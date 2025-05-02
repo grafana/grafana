@@ -3,14 +3,15 @@ package promlib
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"testing"
+
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/datasource"
 	"github.com/grafana/grafana-plugin-sdk-go/genproto/pluginv2"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"net/http"
-	"testing"
 )
 
 func Test_ValidateAdmission(t *testing.T) {
@@ -91,6 +92,28 @@ func Test_MutateAdmission(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 
+	t.Run("should return an error when object bytes is nil", func(t *testing.T) {
+		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
+		logger := backend.NewLoggerWith("logger", "test")
+		s := &Service{
+			im:     datasource.NewInstanceManager(newInstanceSettings(httpProvider, logger, mockExtendClientOpts)),
+			logger: logger,
+		}
+
+		expected := getBadRequest("missing datasource settings")
+
+		req := &backend.AdmissionRequest{
+			Kind: backend.GroupVersionKind{
+				Group: "grafana-plugin-sdk-go",
+				Kind:  "DataSourceInstanceSettings",
+			},
+		}
+
+		actual, err := s.MutateAdmission(context.Background(), req)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, actual)
+	})
+
 	t.Run("should return an error when protobuf payload conversion fails", func(t *testing.T) {
 		httpProvider := getMockProvider[*healthCheckSuccessRoundTripper]()
 		logger := backend.NewLoggerWith("logger", "test")
@@ -104,6 +127,7 @@ func Test_MutateAdmission(t *testing.T) {
 				Group: "grafana-plugin-sdk-go",
 				Kind:  "DataSourceInstanceSettings",
 			},
+			ObjectBytes: []byte(`{"foo":"bar"}`),
 		}
 
 		actual, err := s.MutateAdmission(context.Background(), req)
