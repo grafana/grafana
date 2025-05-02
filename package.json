@@ -268,7 +268,7 @@
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
     "@grafana/saga-icons": "workspace:*",
-    "@grafana/scenes": "git+https://github.com/oodle-ai/scenes.git#e14c477b82bce55b43b5dec5cc443faeed1dd65a",
+    "@grafana/scenes": "git+https://github.com/oodle-ai/scenes.git#f651aee7464ccb8c2bf03c626648c462a81913a0",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
     "@grafana/ui": "workspace:*",
