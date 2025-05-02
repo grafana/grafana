@@ -21,13 +21,6 @@ brew install go
 brew install node@22
 ```
 
-In the repository enable and install yarn via corepack
-
-```
-corepack enable
-corepack install
-```
-
 ### Windows
 
 If you are running Grafana on Windows 10, we recommend installing the Windows Subsystem for Linux (WSL). For installation instructions, refer to our [Grafana setup guide for Windows environment](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/).
@@ -42,6 +35,15 @@ We recommend using the Git command-line interface to download the source code fo
 For alternative ways of cloning the Grafana repository, refer to [GitHub's documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository).
 
 > **Caution:** Do not use `go get` to download Grafana. Recent versions of Go have added behavior which isn't compatible with the way the Grafana repository is structured.
+
+### Set up yarn
+
+In the repository enable and install yarn via corepack
+
+```
+corepack enable
+corepack install
+```
 
 ### Configure precommit hooks
 

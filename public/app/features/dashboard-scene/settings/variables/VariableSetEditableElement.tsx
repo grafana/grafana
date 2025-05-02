@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneVariable, SceneVariableSet } from '@grafana/scenes';
 import { Stack, Button, useStyles2, Text, Box, Card } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
@@ -87,7 +88,14 @@ function VariableList({ set }: { set: SceneVariableSet }) {
       ))}
       {canAdd && (
         <Box paddingBottom={1} display={'flex'}>
-          <Button fullWidth icon="plus" size="sm" variant="secondary" onClick={setIsAdding}>
+          <Button
+            fullWidth
+            icon="plus"
+            size="sm"
+            variant="secondary"
+            onClick={setIsAdding}
+            data-testid={selectors.components.PanelEditor.ElementEditPane.addVariableButton}
+          >
             <Trans i18nKey="dashboard.edit-pane.variables.add-variable">Add variable</Trans>
           </Button>
         </Box>
@@ -115,6 +123,7 @@ function VariableTypeSelection({ onAddVariable }: VariableTypeSelectionProps) {
           onClick={() => onAddVariable(option.value!)}
           key={option.value}
           title={t('dashboard.edit-pane.variables.select-type-card-tooltip', 'Click to select type')}
+          data-testid={selectors.components.PanelEditor.ElementEditPane.variableType(option.value!)}
         >
           <Card.Heading>{option.label}</Card.Heading>
           <Card.Description className={styles.cardDescription}>{option.description}</Card.Description>
