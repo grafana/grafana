@@ -83,7 +83,7 @@ To view the JSON representation of a dashboard:
 },
 ```
 
-The dashboard json sample shown uses the default `GridLayoutKind`.
+The dashboard JSON sample shown uses the default `GridLayoutKind`.
 The JSON in a new dashboard for the other three layout options, `AutoGridLayout`, `RowsLayout`, and `TabsLayout`, are as follows:
 
 **`AutoGridLayout`**
