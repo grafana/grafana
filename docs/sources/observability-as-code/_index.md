@@ -1,6 +1,4 @@
 ---
-cascade:
-  noindex: true
 description: Overview of Observability as Code including description, key features, and explanation of benefits.
 keywords:
   - observability
