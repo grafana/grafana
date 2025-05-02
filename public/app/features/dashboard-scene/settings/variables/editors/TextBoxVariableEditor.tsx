@@ -10,17 +10,17 @@ import { noop } from 'lodash';
 interface TextBoxVariableEditorProps {
   variable: TextBoxVariable;
   onChange: (variable: TextBoxVariable) => void;
-  hideLabel?: boolean;
+  inline?: boolean;
 }
 
-export function TextBoxVariableEditor({ variable, hideLabel }: TextBoxVariableEditorProps) {
+export function TextBoxVariableEditor({ variable, inline }: TextBoxVariableEditorProps) {
   const { value } = variable.useState();
 
   const onTextValueChange = (e: FormEvent<HTMLInputElement>) => {
     variable.setState({ value: e.currentTarget.value });
   };
 
-  return <TextBoxVariableForm defaultValue={value} onBlur={onTextValueChange} inline={true} />;
+  return <TextBoxVariableForm defaultValue={value} onBlur={onTextValueChange} inline={inline} />;
 }
 
 export function getTextBoxVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
@@ -32,7 +32,7 @@ export function getTextBoxVariableOptions(variable: SceneVariable): OptionsPaneI
   return [
     new OptionsPaneItemDescriptor({
       title: t('dashboard-scene.textbox-variable-form.label-value', 'Value'),
-      render: () => <TextBoxVariableEditor onChange={noop} variable={variable} hideLabel={true} />,
+      render: () => <TextBoxVariableEditor onChange={noop} variable={variable} inline={true} />,
     }),
   ];
 }
