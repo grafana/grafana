@@ -203,7 +203,7 @@ jobs:
 
 This GitHub Action automates the deployment of a Grafana dashboard using the Foundation SDK and the `grafanactl` CLI tool.
 
-### 1. Checkout and Set Up Go
+### 1. Checkout and set up Go
 
 The first few steps:
 
@@ -211,15 +211,15 @@ The first few steps:
 - Install Go 1.24.2 using the `actions/setup-go` action.
 - Verify Go is properly installed.
 
-### 2. Download and Install `grafanactl`
+### 2. Download and install `grafanactl`
 
 This step downloads the `grafanactl` CLI from GitHub using a version defined in `vars.GRAFANACTL_VERSION`. It unpacks the tarball, makes it executable, and moves it to a location in the system `PATH`.
 
-### 3. Generate the Dashboard JSON
+### 3. Generate the dashboard JSON
 
 Runs the dashboard generator (`main.go`) from the `./github-actions-example` directory. This should produce a `dashboard.json` file that contains the Grafana dashboard definition.
 
-### 4. Deploy the Dashboard with `grafanactl`
+### 4. Deploy the dashboard with `grafanactl`
 
 If `dashboard.json` exists, it is deployed to your Grafana instance using:
 
@@ -233,7 +233,7 @@ This command authenticates against Grafana using the following environment varia
 - `GRAFANA_STACK_ID`: Your Grafana stack ID
 - `GRAFANA_TOKEN`: A Grafana service account token with sufficient permissions
 
-### GitHub Variables and Secrets Used
+### GitHub variables and secrets used
 
 These are configured in your repository under **Settings → Security → Secrets and variables → Actions**:
 
