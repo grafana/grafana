@@ -47,6 +47,8 @@ var legacyListWith3itemsObj2IsDifferent = &example.PodList{TypeMeta: metav1.Type
 		*legacyObj3,
 	}}
 
+var empty = &example.PodList{}
+
 var storageListWith3items = &example.PodList{TypeMeta: metav1.TypeMeta{Kind: "foo"}, ListMeta: metav1.ListMeta{},
 	Items: []example.Pod{
 		*storageObj1,
@@ -173,6 +175,16 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 					m.On("List", mock.Anything, mock.Anything).Return(storageListWith3itemsMissingFoo2, nil)
 					m.On("Update", mock.Anything, "foo2", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(exampleObj, false, nil)
 					m.On("Delete", mock.Anything, "foo4", mock.Anything, mock.Anything).Return(exampleObj, false, nil)
+				},
+				expectedOutcome: true,
+			},
+			{
+				name: "no items in legacy to sync",
+				setupLegacyFn: func(m *mock.Mock) {
+					m.On("List", mock.Anything, mock.Anything).Return(empty, nil)
+				},
+				setupStorageFn: func(m *mock.Mock) {
+					m.On("List", mock.Anything, mock.Anything).Return(empty, nil)
 				},
 				expectedOutcome: true,
 			},
