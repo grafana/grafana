@@ -173,9 +173,9 @@ SAML authentication is not affected by an expired license.
 
 Enterprise plugins might stop working.
 
-#### White labeling
+#### Custom branding
 
-The white labeling feature is turned off, meaning that any white labeling options will not have any effect.
+The Custom branding feature is turned off, meaning that any custom branding options will not have any effect.
 
 #### Usage insights
 
