@@ -721,10 +721,8 @@ steps:
       from_secret: docker_password
     DOCKER_USER:
       from_secret: docker_username
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   failure: ignore
@@ -2190,10 +2188,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -2494,10 +2490,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -3555,10 +3549,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -5664,20 +5656,8 @@ kind: secret
 name: dagger_token
 ---
 get:
-  name: app-id
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
-kind: secret
-name: delivery-bot-app-id
----
-get:
-  name: app-installation-id
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
-kind: secret
-name: delivery-bot-app-installation-id
----
-get:
-  name: app-private-key
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+  name: PRIVATE_KEY
+  path: ci/data/repo/grafana/grafana/delivery-bot-app
 kind: secret
 name: delivery-bot-app-private-key
 ---
@@ -5688,6 +5668,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 5c567df7b937f9f6fe4ae12c6acb0ff931712032eac2c9e727cd38f083ff31ad
+hmac: 78ac28b59a6da5289b69c043c12032c3820755dc0d6f1757ec77f0d1eff29650
 
 ...
