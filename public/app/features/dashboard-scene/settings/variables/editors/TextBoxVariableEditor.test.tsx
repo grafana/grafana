@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { TextBoxVariable } from '@grafana/scenes';
 
 import { TextBoxVariableEditor } from './TextBoxVariableEditor';
+import { VariableType } from '@grafana/data';
 
 describe('TextBoxVariableEditor', () => {
   let textBoxVar: TextBoxVariable;
@@ -42,11 +43,17 @@ describe('TextBoxVariableEditor', () => {
 
   it('renders inline', () => {
     const onChange = jest.fn();
-    render(<TextBoxVariableEditor variable={textBoxVar} onChange={onChange} inline={true}/>);
+    const variable = new TextBoxVariable({
+      name: 'textBoxVar',
+      label: 'textBoxVar',
+      type: 'textbox',
+      value: 'initial value test',
+    });
+    render(<TextBoxVariableEditor variable={variable} onChange={onChange} inline={true}/>);
   
-    const input = screen.getByRole('textbox', { name: undefined });
+    const input = screen.getByDisplayValue(variable.state.value);
     expect(input).toBeInTheDocument();
-    expect(input).toHaveValue('initial value test');
+    expect(input).toHaveValue(variable.state.value);
 
     const legend = screen.queryByText('Text options');
     expect(legend).not.toBeInTheDocument();
