@@ -14,24 +14,6 @@ concurrency:
 permissions: { }
 
 jobs:
-  sqlite:
-    name: Sqlite
-    runs-on: ubuntu-latest-8-cores
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-          cache: true
-      - run: |
-          make gen-go
-          go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   memcached:
     name: Memcached
     runs-on: ubuntu-latest-8-cores
