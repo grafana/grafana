@@ -99,6 +99,7 @@ export type SpanDetailRowProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  datasourceUid: string;
   visibleSpanIds: string[];
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
@@ -144,6 +145,7 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
       focusedSpanId,
       createFocusSpanLink,
       datasourceType,
+      datasourceUid,
       visibleSpanIds,
       traceFlameGraphs,
       setTraceFlameGraphs,
@@ -194,6 +196,7 @@ export class UnthemedSpanDetailRow extends PureComponent<SpanDetailRowProps> {
               focusedSpanId={focusedSpanId}
               createFocusSpanLink={createFocusSpanLink}
               datasourceType={datasourceType}
+              datasourceUid={datasourceUid}
               traceFlameGraphs={traceFlameGraphs}
               setTraceFlameGraphs={setTraceFlameGraphs}
               setRedrawListView={setRedrawListView}

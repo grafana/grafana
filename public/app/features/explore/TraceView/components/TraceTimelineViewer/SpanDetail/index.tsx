@@ -51,7 +51,7 @@ import DetailState from './DetailState';
 import { getSpanDetailLinkButtons } from './SpanDetailLinkButtons';
 import SpanFlameGraph from './SpanFlameGraph';
 
-const useResourceAttributesExtensionLinks = (process: TraceProcess) => {
+const useResourceAttributesExtensionLinks = (process: TraceProcess, datasourceType: string, datasourceUid: string) => {
   // Stable context for useMemo inside usePluginLinks
   const context: PluginExtensionResourceAttributesContext = useMemo(() => {
     const processTagsMap = (process.tags ?? []).reduce<Record<string, string>>((acc, tag) => {
@@ -60,9 +60,15 @@ const useResourceAttributesExtensionLinks = (process: TraceProcess) => {
     }, {});
 
     return {
+      // Rename to attributes?
       tags: processTagsMap,
+      // Add data source uid
+      datasource: {
+        type: datasourceType,
+        uid: datasourceUid,
+      },
     };
-  }, [process.tags]);
+  }, [process.tags, datasourceType, datasourceUid]);
 
   const { links } = usePluginLinks({
     extensionPointId: PluginExtensionPoints.ResourceAttributes,
@@ -198,6 +204,7 @@ export type SpanDetailProps = {
   focusedSpanId?: string;
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   datasourceType: string;
+  datasourceUid: string;
   traceFlameGraphs: TraceFlameGraphs;
   setTraceFlameGraphs: (flameGraphs: TraceFlameGraphs) => void;
   setRedrawListView: (redraw: {}) => void;
@@ -224,6 +231,7 @@ export default function SpanDetail(props: SpanDetailProps) {
     createSpanLink,
     createFocusSpanLink,
     datasourceType,
+    datasourceUid,
     traceFlameGraphs,
     setTraceFlameGraphs,
     traceToProfilesOptions,
@@ -337,7 +345,7 @@ export default function SpanDetail(props: SpanDetailProps) {
 
   const focusSpanLink = createFocusSpanLink(traceID, spanID);
 
-  const resourceLinksGetter = useResourceAttributesExtensionLinks(process);
+  const resourceLinksGetter = useResourceAttributesExtensionLinks(process, datasourceType, datasourceUid);
 
   return (
     <div data-testid="span-detail-component">

@@ -72,6 +72,7 @@ export type TProps = {
   trace: Trace;
   traceToProfilesOptions?: TraceToProfilesOptions;
   datasourceType: string;
+  datasourceUid: string;
   spanBarOptions: SpanBarOptions | undefined;
   updateNextViewRangeTime: (update: ViewRangeTimeUpdate) => void;
   updateViewRangeTime: TUpdateViewRangeTimeFunction;
@@ -222,6 +223,7 @@ export class UnthemedTraceTimelineViewer extends PureComponent<TProps, State> {
           topOfViewRef={topOfViewRef}
           focusedSpanIdForSearch={focusedSpanIdForSearch}
           datasourceType={this.props.datasourceType}
+          datasourceUid={this.props.datasourceUid}
         />
       </div>
     );

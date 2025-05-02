@@ -104,6 +104,7 @@ type TVirtualizedTraceViewOwnProps = {
   createFocusSpanLink: (traceId: string, spanId: string) => LinkModel;
   topOfViewRef?: RefObject<HTMLDivElement>;
   datasourceType: string;
+  datasourceUid: string;
   headerHeight: number;
   criticalPath: CriticalPathSection[];
   traceFlameGraphs: TraceFlameGraphs;
@@ -557,6 +558,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
       createFocusSpanLink,
       theme,
       datasourceType,
+      datasourceUid,
       traceFlameGraphs,
       setTraceFlameGraphs,
       setRedrawListView,
@@ -599,6 +601,7 @@ export class UnthemedVirtualizedTraceView extends React.Component<VirtualizedTra
           focusedSpanId={focusedSpanId}
           createFocusSpanLink={createFocusSpanLink}
           datasourceType={datasourceType}
+          datasourceUid={datasourceUid}
           visibleSpanIds={visibleSpanIds}
           traceFlameGraphs={traceFlameGraphs}
           setTraceFlameGraphs={setTraceFlameGraphs}
