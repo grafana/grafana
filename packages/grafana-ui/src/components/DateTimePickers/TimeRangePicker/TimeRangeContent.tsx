@@ -73,7 +73,7 @@ export const TimeRangeContent = (props: Props) => {
 
   // Synchronize internal state with external value
   useEffect(() => {
-    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone,fiscalYearStartMonth);
+    const [fromValue, toValue] = valueToState(value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth);
     setFrom(fromValue);
     setTo(toValue);
   }, [value.raw.from, value.raw.to, timeZone, fiscalYearStartMonth]); // fiscalYearStartMonth is included here because valueToState depends on it
