@@ -29,6 +29,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+  recovery-threshold:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
   modify-the-no-data-or-error-state:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
@@ -192,9 +197,9 @@ You can toggle between **Default** and **Advanced** options. If the [Default vs.
 
    b. Click **Preview** to verify that the expression is successful.
 
-1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
+1. To add a [recovery threshold](ref:recovery-threshold), enable the **Custom recovery threshold** toggle and enter a value that defines when the alert should recover—transition to `Normal` state from the `Alerting` or `Pending` state.
 
-   You can only add one recovery threshold in a query and it must be the alert condition.
+   You can only add one recovery threshold, and it must be part of the alert condition.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your [alert condition](ref:alert-condition).
    {{< /collapse >}}

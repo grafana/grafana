@@ -145,7 +145,7 @@ func (r *localRepository) Validate() field.ErrorList {
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	path := field.NewPath("spec", "localhost", "path")
+	path := field.NewPath("spec", "local", "path")
 	if r.config.Spec.Local.Path == "" {
 		return fromFieldError(field.Required(path, "no path is configured")), nil
 	}

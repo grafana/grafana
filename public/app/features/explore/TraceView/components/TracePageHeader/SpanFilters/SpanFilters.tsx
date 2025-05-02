@@ -18,7 +18,7 @@ import React, { useState, useEffect, memo, useCallback } from 'react';
 import { GrafanaTheme2, SelectableValue, toOption } from '@grafana/data';
 import { IntervalInput } from '@grafana/o11y-ds-frontend';
 import { Collapse, HorizontalGroup, Icon, InlineField, InlineFieldRow, Select, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { defaultFilters, SearchProps } from '../../../useSearch';
 import { getTraceServiceNames, getTraceSpanNames } from '../../../utils/tags';
@@ -111,11 +111,14 @@ export const SpanFilters = memo((props: SpanFilterProps) => {
   const collapseLabel = (
     <>
       <Tooltip
-        content="Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in."
+        content={t(
+          'explore.span-filters.tooltip-collapse',
+          'Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in.'
+        )}
         placement="right"
       >
         <span className={styles.collapseLabel}>
-          Span Filters
+          <Trans i18nKey="explore.span-filters.label-collapse">Span Filters</Trans>
           <Icon size="md" name="info-circle" />
         </span>
       </Tooltip>

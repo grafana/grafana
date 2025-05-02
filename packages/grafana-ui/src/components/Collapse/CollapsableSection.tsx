@@ -38,8 +38,11 @@ export const CollapsableSection = ({
   contentDataTestId,
   unmountContentWhenClosed = true,
 }: Props) => {
-  const [open, toggleOpen] = useState<boolean>(isOpen);
+  const [internalOpenState, toggleInternalOpenState] = useState<boolean>(isOpen);
   const styles = useStyles2(collapsableSectionStyles);
+
+  const isControlled = isOpen !== undefined && onToggle !== undefined;
+  const isSectionOpen = isControlled ? isOpen : internalOpenState;
 
   const onClick = (e: React.MouseEvent) => {
     if (e.target instanceof HTMLElement && e.target.tagName === 'A') {
@@ -49,8 +52,11 @@ export const CollapsableSection = ({
     e.preventDefault();
     e.stopPropagation();
 
-    onToggle?.(!open);
-    toggleOpen(!open);
+    onToggle?.(!isOpen);
+
+    if (!isControlled) {
+      toggleInternalOpenState(!internalOpenState);
+    }
   };
   const { current: id } = useRef(uniqueId());
 
@@ -60,7 +66,7 @@ export const CollapsableSection = ({
     <div
       id={`collapse-content-${id}`}
       className={cx(styles.content, contentClassName, {
-        [styles.contentHidden]: !open && !unmountContentWhenClosed,
+        [styles.contentHidden]: !unmountContentWhenClosed && !isSectionOpen,
       })}
       data-testid={contentDataTestId}
     >
@@ -79,21 +85,21 @@ export const CollapsableSection = ({
           id={`collapse-button-${id}`}
           className={styles.button}
           onClick={onClick}
-          aria-expanded={open && !loading}
+          aria-expanded={isSectionOpen && !loading}
           aria-controls={`collapse-content-${id}`}
           aria-labelledby={buttonLabelId}
         >
           {loading ? (
             <Spinner className={styles.spinner} />
           ) : (
-            <Icon name={open ? 'angle-up' : 'angle-down'} className={styles.icon} />
+            <Icon name={isSectionOpen ? 'angle-up' : 'angle-down'} className={styles.icon} />
           )}
         </button>
         <div className={styles.label} id={`collapse-label-${id}`} data-testid={headerDataTestId}>
           {label}
         </div>
       </div>
-      {unmountContentWhenClosed ? open && content : content}
+      {unmountContentWhenClosed ? isSectionOpen && content : content}
     </>
   );
 };

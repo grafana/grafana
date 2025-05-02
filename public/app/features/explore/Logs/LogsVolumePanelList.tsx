@@ -153,7 +153,9 @@ export const LogsVolumePanelList = ({
           severity="info"
           title={t('explore.logs-volume-panel-list.title-no-logs-volume-available', 'No logs volume available')}
         >
-          No volume information available for the current queries and time range.
+          <Trans i18nKey="explore.logs-volumne-panel-list.body-no-logs-volume-available">
+            No volume information available for the current queries and time range.
+          </Trans>
         </Alert>
       </div>
     );

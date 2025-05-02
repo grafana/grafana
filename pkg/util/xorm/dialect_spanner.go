@@ -11,8 +11,8 @@ import (
 	spannerclient "cloud.google.com/go/spanner"
 	_ "github.com/googleapis/go-sql-spanner"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
-	"google.golang.org/grpc/codes"
 	"github.com/grafana/grafana/pkg/util/xorm/core"
+	"google.golang.org/grpc/codes"
 )
 
 func init() {

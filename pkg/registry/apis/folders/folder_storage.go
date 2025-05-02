@@ -38,6 +38,7 @@ type folderStorage struct {
 	cfg                  *setting.Cfg
 	features             featuremgmt.FeatureToggles
 	folderPermissionsSvc accesscontrol.FolderPermissionsService
+	acService            accesscontrol.Service
 	store                grafanarest.Storage
 }
 
@@ -139,7 +140,7 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 
 	var permissions []accesscontrol.SetResourcePermissionCommand
 
-	if user.IsIdentityType(claims.TypeUser) {
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
 		userID, err := user.GetInternalID()
 		if err != nil {
 			return err
@@ -157,5 +158,13 @@ func (s *folderStorage) setDefaultFolderPermissions(ctx context.Context, orgID i
 		}...)
 	}
 	_, err := s.folderPermissionsSvc.SetPermissions(ctx, orgID, uid, permissions...)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if user.IsIdentityType(claims.TypeUser, claims.TypeServiceAccount) {
+		s.acService.ClearUserPermissionCache(user)
+	}
+
+	return nil
 }
