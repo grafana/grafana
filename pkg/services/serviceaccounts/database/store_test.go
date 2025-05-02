@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -334,7 +335,7 @@ func TestIntegrationStore_MigrateApiKeys(t *testing.T) {
 			desc:            "api key should be migrated to service account token",
 			serviceAccounts: []user.CreateUserCommand{},
 			key:             tests.TestApiKey{Name: "test1", Role: org.RoleEditor, OrgId: 1},
-			expectedLogin:   "sa-autogen-1-test1",
+			expectedLogin:   "sa-AuToGeN-1-test1", // Using mixed-case to test case-insensitive search.
 			expectedErr:     nil,
 		},
 		{
@@ -343,7 +344,7 @@ func TestIntegrationStore_MigrateApiKeys(t *testing.T) {
 				{Login: "sa-autogen-1-test2"},
 			},
 			key:           tests.TestApiKey{Name: "test2", Role: org.RoleEditor, OrgId: 1},
-			expectedLogin: "sa-autogen-1-test2-001",
+			expectedLogin: "sa-AuToGeN-1-test2-001", // Using mixed-case to test case-insensitive search.
 			expectedErr:   nil,
 		},
 		{
@@ -361,7 +362,7 @@ func TestIntegrationStore_MigrateApiKeys(t *testing.T) {
 				{Login: "sa-autogen-1-test3-009"},
 			},
 			key:           tests.TestApiKey{Name: "test3", Role: org.RoleEditor, OrgId: 1},
-			expectedLogin: "sa-autogen-1-test3-010",
+			expectedLogin: "sa-AuToGeN-1-test3-010", // Using mixed-case to test case-insensitive search.
 			expectedErr:   nil,
 		},
 		{
@@ -429,7 +430,7 @@ func TestIntegrationStore_MigrateApiKeys(t *testing.T) {
 				require.Equal(t, int64(1), serviceAccounts.TotalCount)
 				saMigrated := serviceAccounts.ServiceAccounts[0]
 				require.Equal(t, string(key.Role), saMigrated.Role)
-				require.Equal(t, c.expectedLogin, saMigrated.Login)
+				require.Equal(t, strings.ToLower(c.expectedLogin), saMigrated.Login)
 
 				tokens, err := store.ListTokens(context.Background(), &serviceaccounts.GetSATokensQuery{
 					OrgID:            &key.OrgID,
@@ -700,7 +701,7 @@ func TestIntegrationServiceAccountsStoreImpl_SearchOrgServiceAccounts(t *testing
 			desc: "should return service accounts with sa-1-satest login",
 			query: &serviceaccounts.SearchOrgServiceAccountsQuery{
 				OrgID:        orgID,
-				Query:        "sa-1-satest",
+				Query:        "SA-1-SaTeSt", // Using mixed-case to test case-insensitive search
 				SignedInUser: userWithPerm,
 				Filter:       serviceaccounts.FilterIncludeAll,
 				CountTokens:  true,

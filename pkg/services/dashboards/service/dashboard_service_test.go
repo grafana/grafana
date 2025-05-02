@@ -2578,6 +2578,7 @@ func TestCleanUpDashboard(t *testing.T) {
 
 			ctx := context.Background()
 			dashboardUID := "dash-uid"
+			dashboardID := int64(1)
 			orgID := int64(1)
 
 			// Setup mocks
@@ -2587,11 +2588,12 @@ func TestCleanUpDashboard(t *testing.T) {
 				fakeStore.On("CleanupAfterDelete", mock.Anything, &dashboards.DeleteDashboardCommand{
 					OrgID: orgID,
 					UID:   dashboardUID,
+					ID:    dashboardID,
 				}).Return(tc.cleanupError).Maybe()
 			}
 
 			// Execute
-			err := service.CleanUpDashboard(ctx, dashboardUID, orgID)
+			err := service.CleanUpDashboard(ctx, dashboardUID, dashboardID, orgID)
 
 			// Assert
 			if tc.expectedError != nil {
