@@ -30,6 +30,7 @@ rootForEnterpriseSuite="./e2e/extensions-suite"
 rootForOldArch="./e2e/old-arch"
 rootForKubernetesDashboards="./e2e/dashboards-suite"
 rootForSearchDashboards="./e2e/dashboards-search-suite"
+rootForEditDashboards="./e2e/dashboards-edit-v2-suite"
 
 declare -A cypressConfig=(
   [screenshotsFolder]=./e2e/"${args[0]}"/screenshots
@@ -134,6 +135,25 @@ case "$1" in
     "dashboards-search")
       env[kubernetesDashboards]=true
       cypressConfig[specPattern]=$rootForSearchDashboards/$testFilesForSingleSuite
+      cypressConfig[video]=false
+          case "$2" in
+            "debug")
+                echo -e "Debug mode"
+                env[SLOWMO]=1
+                PARAMS="--no-exit"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+            "dev")
+                echo "Dev mode"
+                CMD="cypress open"
+                enterpriseSuite=$(basename "${args[2]}")
+                ;;
+          esac
+      ;;
+      "dashboards-edit-v2")
+      env[kubernetesDashboards]=true
+      env[dashboardNewLayouts]=true
+      cypressConfig[specPattern]=$rootForEditDashboards/$testFilesForSingleSuite
       cypressConfig[video]=false
           case "$2" in
             "debug")

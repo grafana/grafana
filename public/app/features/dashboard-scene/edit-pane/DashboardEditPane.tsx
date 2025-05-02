@@ -3,6 +3,7 @@ import { Resizable } from 're-resizable';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
 import {
   clearButtonStyles,
@@ -273,11 +274,12 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
           <button
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
             className={cx(clearButton, styles.outlineCollapseButton)}
+            data-testid={selectors.components.PanelEditor.Outline.section}
           >
             <Text weight="medium">
               <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
             </Text>
-            <Icon name="angle-up" />
+            <Icon name={outlineCollapsed ? 'angle-up' : 'angle-down'} />
           </button>
           {!outlineCollapsed && (
             <div className={styles.outlineContainer}>
