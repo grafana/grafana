@@ -68,10 +68,27 @@ weight: -49
 
 # What’s new in Grafana v12.0
 
-Welcome to Grafana 12.0! ...
+Welcome to Grafana 12.0! This release contains some major improvements: most notably, the ability to version control and edit your dashboards the same way you do your code through a pull request workflow using Git sync. We are also introducing a new dashboards schema to support other exciting features such as dynamic dashboards. Read on to learn about SCIM (System for Cross-domain Identity Management) for enabling seamless synchronization of Grafana Teams directly from your Identity Provider (IdP), improvements to the Drilldown apps, including the GA of Traces Drilldown and the introduction of Investigations, SQL expressions for data sources, faster table panel visualizations, and much more!
 
 <!-- {{< youtube id=TODO >}} -->
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v12.0, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v12.0/).
+
+## Breaking changes in Grafana v12.0
+
+For Grafana v12.0, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/latest/whatsnew/whats-new-in-v12-0/#breaking-changes) to help you upgrade with greater confidence. For our purposes, a breaking change is any change that requires users or operators to do something. This includes:
+
+- Changes in one part of the system that could cause other components to fail
+- Deprecations or removal of a feature
+- Changes to an API that could break automation
+- Changes that affect some plugins or functions of Grafana
+- Migrations that can’t be rolled back
+
+For each change, the provided information:
+
+- Helps you determine if you’re affected
+- Describes the change or relevant background information
+- Guides you in how to mitigate for the change or migrate
+- Provides more learning resources
 
 {{< docs/whats-new  >}}
