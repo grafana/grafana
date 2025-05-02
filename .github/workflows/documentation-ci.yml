@@ -4,9 +4,16 @@ on:
     branches: ["main"]
     paths: ["docs/sources/**"]
   workflow_dispatch:
+
+permissions: {}
+
 jobs:
   vale:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      security-events: write
     container:
       image: grafana/vale:latest
     steps:
