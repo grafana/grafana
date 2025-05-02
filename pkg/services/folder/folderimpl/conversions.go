@@ -106,7 +106,6 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 		return nil, err
 	}
 
-	folder.Version = int(item.GetGeneration())
 	return folder, nil
 }
 
@@ -132,7 +131,6 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 		if err != nil {
 			return nil, err
 		}
-		folder.Version = int(item.GetGeneration())
 		folders = append(folders, folder)
 	}
 
