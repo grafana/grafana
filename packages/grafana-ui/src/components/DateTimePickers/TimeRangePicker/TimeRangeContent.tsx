@@ -99,11 +99,11 @@ export const TimeRangeContent = (props: Props) => {
 
   const onChange = useCallback(
     (from: DateTime | string, to: DateTime | string) => {
-      const [fromValue, toValue] = valueToState(from, to, timeZone);
+      const [fromValue, toValue] = valueToState(from, to, timeZone, fiscalYearStartMonth);
       setFrom(fromValue);
       setTo(toValue);
     },
-    [timeZone]
+    [timeZone, fiscalYearStartMonth]
   );
 
   const submitOnEnter = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -130,7 +130,7 @@ export const TimeRangeContent = (props: Props) => {
       return;
     }
 
-    const [fromValue, toValue] = valueToState(range.from, range.to, timeZone);
+    const [fromValue, toValue] = valueToState(range.from, range.to, timeZone, fiscalYearStartMonth);
     setFrom(fromValue);
     setTo(toValue);
   };
@@ -242,7 +242,7 @@ export const TimeRangeContent = (props: Props) => {
   );
 };
 
-function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
+function isRangeInvalid(from: string, to: string, timezone?: string, fiscalYearStartMonth?: number): boolean {
   const raw: RawTimeRange = { from, to };
   const timeRange = rangeUtil.convertRawToRange(raw, timezone, fiscalYearStartMonth); 
   const valid = timeRange.from.isSame(timeRange.to) || timeRange.from.isBefore(timeRange.to);
@@ -253,14 +253,15 @@ function isRangeInvalid(from: string, to: string, timezone?: string): boolean {
 function valueToState(
   rawFrom: DateTime | string,
   rawTo: DateTime | string,
-  timeZone?: TimeZone
+  timeZone?: TimeZone,
+  fiscalYearStartMonth?: number
 ): [InputState, InputState] {
   const fromValue = valueAsString(rawFrom, timeZone);
   const toValue = valueAsString(rawTo, timeZone);
   const fromInvalid = !isValid(fromValue, false, timeZone);
   const toInvalid = !isValid(toValue, true, timeZone);
   // If "To" is invalid, we should not check the range anyways, fiscalYearStartMonth passed into rangeInvalid calculation
-  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone, fiscalYearStartMonth)) && !toInvalid;
+  const rangeInvalid = isRangeInvalid(fromValue, toValue, timeZone, fiscalYearStartMonth) && !toInvalid;
 
   return [
     {
