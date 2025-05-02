@@ -22,11 +22,13 @@ jobs:
         with:
           repository: 'grafana/grafana-build'
           ref: 'main'
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           path: ./grafana
+          persist-credentials: false
       - run: echo "GRAFANA_GO_VERSION=$(grep "go 1." grafana/go.work |  cut -d\  -f2)" >> "$GITHUB_ENV"
-      - uses: dagger/dagger-for-github@8.0.0
+      - uses: dagger/dagger-for-github@e47aba410ef9bb9ed81a4d2a97df31061e5e842e
         with:
           verb: run
           args: go run ./cmd artifacts -a targz:grafana:linux/amd64 --grafana-dir=grafana --go-version=${GRAFANA_GO_VERSION} > out.txt
@@ -42,6 +44,7 @@ jobs:
   e2e-matrix:
     name: ${{ matrix.suite }}
     strategy:
+      fail-fast: false
       matrix:
         suite:
           - various-suite
@@ -57,6 +60,7 @@ jobs:
   e2e-matrix-old-arch:
     name: ${{ matrix.suite }} (old arch)
     strategy:
+      fail-fast: false
       matrix:
         suite:
           - old-arch/various-suite
