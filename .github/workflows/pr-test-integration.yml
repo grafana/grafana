@@ -69,7 +69,7 @@ jobs:
           go list -f '{{.Dir}}/...' -m  | xargs go test -run IntegrationRedis -covermode=atomic -timeout=2m
   test:
     name: testing gh services
-    runs-on: ubuntu-latest-8-core
+    runs-on: ubuntu-latest-8-cores
     services:
       nginx:
         image: nginx
