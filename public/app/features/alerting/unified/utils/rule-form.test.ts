@@ -245,6 +245,28 @@ describe('cleanAnnotations', () => {
     const output = cleanAnnotations([{ key: ' spaces ', value: ' spaces too  ' }]);
     expect(output).toStrictEqual([{ key: 'spaces', value: 'spaces too' }]);
   });
+
+  describe('deals well with hidden unicode characters and', () => {
+    it('should replace NBSP, ZWSP, BOM with spaces', () => {
+      const output = cleanAnnotations([{ key: 'foo', value: 'foo\u00a0bar\u200bbaz\ufeffqux' }]);
+      expect(output).toStrictEqual([{ key: 'foo', value: 'foo bar baz qux' }]);
+    });
+
+    it('should remove control characters except \\n and \\t', () => {
+      const output = cleanAnnotations([{ key: 'foo', value: 'foo\u0000bar\u0008baz\nqux\tend' }]);
+      expect(output).toStrictEqual([{ key: 'foo', value: 'foobarbaz\nqux\tend' }]);
+    });
+
+    it('should remove bidirectional control characters', () => {
+      const output = cleanAnnotations([{ key: 'foo', value: 'foo\u202abar\u202ebaz\u2066qux\u2069end' }]);
+      expect(output).toStrictEqual([{ key: 'foo', value: 'foobarbazquxend' }]);
+    });
+
+    it('should leave valid text unchanged', () => {
+      const output = cleanAnnotations([{ key: 'foo', value: 'normal text {{123}} !@#' }]);
+      expect(output).toStrictEqual([{ key: 'foo', value: 'normal text {{123}} !@#' }]);
+    });
+  });
 });
 
 describe('cleanLabels', () => {

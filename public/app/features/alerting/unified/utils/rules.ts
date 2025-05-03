@@ -228,6 +228,18 @@ export function getAnnotations(rule?: AlertingRule): Annotations {
   return rule?.annotations ?? {};
 }
 
+export function sanitizeAnnotationContent(content: string): string {
+  return (
+    content
+      // Replace NBSP, ZWSP, and BOM with regular ASCII space
+      .replace(/[\u00a0\u200b\ufeff]/g, ' ')
+      // Remove control characters (except \n and \t)
+      .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/g, '')
+      // Remove bidirectional control characters (e.g. RLO, LRO, FSI, PDI)
+      .replace(/[\u202a-\u202e\u2066-\u2069]/g, '')
+  );
+}
+
 export interface RulePluginOrigin {
   pluginId: string;
 }

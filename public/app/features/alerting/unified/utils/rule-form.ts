@@ -58,7 +58,12 @@ import {
   isSupportedExternalRulesSourceType,
 } from './datasource';
 import { arrayToRecord, recordToArray } from './misc';
-import { isGrafanaAlertingRuleByType, isGrafanaRecordingRuleByType, rulerRuleType } from './rules';
+import {
+  isGrafanaAlertingRuleByType,
+  isGrafanaRecordingRuleByType,
+  rulerRuleType,
+  sanitizeAnnotationContent,
+} from './rules';
 import { parseInterval } from './time';
 
 export type PromOrLokiQuery = PromQuery | LokiQuery;
@@ -218,7 +223,13 @@ export function formValuesToRulerGrafanaRuleDTO(values: RuleFormValues): Postabl
 }
 
 export const cleanAnnotations = (kvs: KVObject[]) =>
-  kvs.map(trimKeyAndValue).filter(({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value));
+  kvs
+    .map(trimKeyAndValue)
+    .map(({ key, value }) => ({
+      key,
+      value: sanitizeAnnotationContent(value),
+    }))
+    .filter(({ key, value }: KVObject): Boolean => Boolean(key) && Boolean(value));
 
 export const cleanLabels = (kvs: KVObject[]) =>
   kvs.map(trimKeyAndValue).filter(({ key }: KVObject): Boolean => Boolean(key));
