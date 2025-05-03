@@ -7,9 +7,10 @@ export enum UnaryOperationID {
   Round = 'round',
   Floor = 'floor',
   Ceil = 'ceil',
+  Percent = 'percent',
 }
 
-export type UnaryOperation = (value: number) => number;
+export type UnaryOperation = (value: number, total?: number) => number;
 
 interface UnaryOperatorInfo extends RegistryItem {
   operation: UnaryOperation;
@@ -53,6 +54,12 @@ export const unaryOperators = new Registry<UnaryOperatorInfo>(() => {
       name: 'Ceiling',
       operation: (value: number) => Math.ceil(value),
       unaryOperationID: UnaryOperationID.Ceil,
+    },
+    {
+      id: UnaryOperationID.Percent,
+      name: 'Percentage',
+      operation: (value: number, total = 1) => value / (total || 1),
+      unaryOperationID: UnaryOperationID.Percent,
     },
   ];
 });
