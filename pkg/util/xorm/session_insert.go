@@ -820,7 +820,7 @@ func (s *snowflake) Generate() int64 {
 	defer s.mu.Unlock()
 	currentTime := time.Since(s.epoch).Milliseconds()
 	if currentTime == s.lastTime {
-		s.sequence = (s.sequence + 1) & 4095
+		s.sequence = (s.sequence + 1) & 0xfff
 		if s.sequence == 0 {
 			// wait for next millisecond, we are not using time.Sleep() here due to its low resolution (often >4ms)
 			for currentTime <= s.lastTime {
