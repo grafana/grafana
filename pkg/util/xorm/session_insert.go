@@ -803,22 +803,28 @@ type snowflake struct {
 	nodeID   int64
 	sequence int64
 	lastTime int64
+	epoch    time.Time
 }
 
-// NewSnowflake creates a new instance with a random node ID (0-1023)
-const snowflakeEpoch = 1288834974657       // 2010-11-04 01:42:54.657 UTC
-func newSnowflake(nodeID int64) *snowflake { return &snowflake{nodeID: nodeID & 0x3ff} }
+// newSnowflake creates a new instance with a random node ID (0-1023)
+// It forcefully converts epoch time (in milliseconds) to monotonic time
+func newSnowflake(nodeID int64) *snowflake {
+	const snowflakeEpoch = 1288834974657 // 2010-11-04 01:42:54.657 UTC
+	epoch := time.Unix(snowflakeEpoch/1000, (snowflakeEpoch%1000)*1000000)
+	now := time.Now()
+	return &snowflake{nodeID: nodeID & 0x3ff, epoch: now.Add(epoch.Sub(now))}
+}
 
 func (s *snowflake) Generate() int64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	currentTime := time.Now().UnixMilli() - snowflakeEpoch
+	currentTime := time.Since(s.epoch).Milliseconds()
 	if currentTime == s.lastTime {
 		s.sequence = (s.sequence + 1) & 4095
 		if s.sequence == 0 {
+			// wait for next millisecond, we are not using time.Sleep() here due to its low resolution (often >4ms)
 			for currentTime <= s.lastTime {
-				time.Sleep(time.Millisecond)
-				currentTime = time.Now().UnixMilli() - snowflakeEpoch
+				currentTime = time.Since(s.epoch).Milliseconds()
 			}
 		}
 	} else {
