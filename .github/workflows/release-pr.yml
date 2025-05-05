@@ -88,8 +88,8 @@ jobs:
         with:
           ref: main
           fetch-depth: '0'
-          fetch-tags: 'false'
           path: .grafana-main
+
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
@@ -101,7 +101,7 @@ jobs:
           git config --local --add --bool push.autoSetupRemote true
 
       - name: Create branch
-        run: git checkout -b "release/${{ github.run_id }}/$VERSION"
+        run: git checkout -b "release/${{ github.run_number }}/$VERSION"
       - name: Generate changelog token
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         id: generate_changelog_token
