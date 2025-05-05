@@ -41,6 +41,7 @@ jobs:
   push-changelog-to-main:
     permissions:
       contents: write
+      id-token: write
       pull-requests: write
     name: Create PR to main to update the changelog
     uses: ./.github/workflows/changelog.yml
@@ -54,6 +55,7 @@ jobs:
   create-prs:
     permissions:
       contents: write
+      id-token: write
       pull-requests: write
     name: Create Release PR
     runs-on: ubuntu-latest
