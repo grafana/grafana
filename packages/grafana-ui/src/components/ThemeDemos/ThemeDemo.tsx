@@ -2,8 +2,9 @@
 import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
+import tinycolor from 'tinycolor2';
 
-import { GrafanaTheme2, ThemeRichColor } from '@grafana/data';
+import { GrafanaTheme2, ThemeRichColor, ThemeVizHue } from '@grafana/data';
 
 import { useTheme2 } from '../../themes/ThemeContext';
 import { allButtonVariants, Button } from '../Button';
@@ -74,6 +75,8 @@ export const ThemeDemo = () => {
     t.colors.info,
   ];
 
+  const vizColors = t.visualization.hues;
+
   const selectOptions = [
     { label: 'Item 1', value: 'Item 1' },
     { label: 'Item 2', value: 'Item 2' },
@@ -137,6 +140,27 @@ export const ThemeDemo = () => {
               <tbody>
                 {richColors.map((color) => (
                   <RichColorDemo key={color.name} color={color} theme={t} />
+                ))}
+              </tbody>
+            </table>
+          </DemoBox>
+        </CollapsableSection>
+        <CollapsableSection label="Viz hues" isOpen={true}>
+          <DemoBox bg="primary">
+            <table className={colorsTableStyle}>
+              <thead>
+                <tr>
+                  <td>name</td>
+                  <td>super-light</td>
+                  <td>light</td>
+                  <td>primary</td>
+                  <td>semi-dark</td>
+                  <td>dark</td>
+                </tr>
+              </thead>
+              <tbody>
+                {vizColors.map((color) => (
+                  <VizHuesDemo key={color.name} color={color} theme={t} />
                 ))}
               </tbody>
             </table>
@@ -225,6 +249,33 @@ export const ThemeDemo = () => {
     </div>
   );
 };
+
+interface VizHuesDemoProps {
+  color: ThemeVizHue;
+  theme: GrafanaTheme2;
+}
+
+export function VizHuesDemo({ theme, color }: VizHuesDemoProps) {
+  return (
+    <tr>
+      <td>{color.name}</td>
+      {color.shades.map((shade) => (
+        <td>
+          <div
+            className={css({
+              background: shade.color,
+              borderRadius: theme.shape.radius.default,
+              color: tinycolor(shade.color).isLight() ? 'black' : 'white',
+              padding: theme.spacing(1),
+            })}
+          >
+            {shade.color}
+          </div>
+        </td>
+      ))}
+    </tr>
+  );
+}
 
 interface RichColorDemoProps {
   theme: GrafanaTheme2;
