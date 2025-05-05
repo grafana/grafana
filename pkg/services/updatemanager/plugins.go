@@ -225,16 +225,17 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
-	if s.updateStrategy == setting.PluginUpdateStrategyLatest {
-		return s.canUpdateLatest(plugin, gcomVersion)
-	}
+	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+		if s.updateStrategy == setting.PluginUpdateStrategyLatest {
+			return s.canUpdateLatest(plugin, gcomVersion)
+		}
 
-	if s.updateStrategy == setting.PluginUpdateStrategyMinor {
-		return s.canUpdateMinor(plugin, gcomVersion)
+		if s.updateStrategy == setting.PluginUpdateStrategyMinor {
+			return s.canUpdateMinor(plugin, gcomVersion)
+		}
 	}
 
 	return s.canUpdateLatest(plugin, gcomVersion)
-
 }
 
 func (s *PluginsService) canUpdateLatest(plugin pluginstore.Plugin, gcomVersion string) bool {
