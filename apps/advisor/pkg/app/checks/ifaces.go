@@ -29,5 +29,5 @@ type Step interface {
 	// Explains the action that needs to be taken to resolve the issue
 	Resolution() string
 	// Run executes the step for an item and returns a report
-	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportFailure, error)
+	Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) ([]advisorv0alpha1.CheckReportFailure, error)
 }

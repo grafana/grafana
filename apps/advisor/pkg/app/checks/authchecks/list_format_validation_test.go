@@ -195,25 +195,27 @@ func TestListFormatValidation_Run(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			failure, err := validator.Run(ctx, spec, tt.objToCheck)
+			failures, err := validator.Run(ctx, spec, tt.objToCheck)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectedError)
-				require.Nil(t, failure)
+				require.Nil(t, failures)
 				return
 			}
 
 			require.NoError(t, err)
 			if tt.expectedFailure != nil {
-				require.NotNil(t, failure, "Expected a failure report, but got nil")
+				require.NotNil(t, failures, "Expected a failure report, but got nil")
+				require.Len(t, failures, 1, "Expected exactly one failure report")
+				failure := failures[0]
 				require.Equal(t, tt.expectedFailure.Severity, failure.Severity)
 				require.Equal(t, tt.expectedFailure.StepID, failure.StepID)
 				require.Equal(t, tt.expectedFailure.Item, failure.Item)
 				require.Equal(t, tt.expectedFailure.ItemID, failure.ItemID)
 				require.ElementsMatch(t, tt.expectedFailure.Links, failure.Links)
 			} else {
-				require.Nil(t, failure, "Expected no failure report, but got one: %+v", failure)
+				require.Empty(t, failures, "Expected no failure reports, but got some: %+v", failures)
 			}
 		})
 	}

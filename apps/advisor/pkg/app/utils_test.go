@@ -262,7 +262,7 @@ type mockStep struct {
 	panics bool
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportFailure, error) {
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) ([]advisorv0alpha1.CheckReportFailure, error) {
 	if m.panics {
 		panic("panic")
 	}
@@ -270,7 +270,7 @@ func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item
 		return nil, m.err
 	}
 	if _, ok := items.(error); ok {
-		return &advisorv0alpha1.CheckReportFailure{}, nil
+		return []advisorv0alpha1.CheckReportFailure{{}}, nil
 	}
 	return nil, nil
 }

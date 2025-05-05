@@ -180,7 +180,7 @@ func (m *mockStep) Resolution() string {
 	return ""
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportFailure, error) {
+func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) ([]advisorv0alpha1.CheckReportFailure, error) {
 	return nil, nil
 }
 
