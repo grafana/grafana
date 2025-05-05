@@ -11,6 +11,7 @@ import {
 } from '@grafana/data';
 import { SortOrder, TooltipDisplayMode } from '@grafana/schema';
 import { TextLink, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { renderValue } from 'app/plugins/panel/geomap/utils/uiUtils';
 
 import { ExemplarHoverView } from './ExemplarHoverView';
@@ -138,7 +139,9 @@ export const DataHoverView = ({
           ))}
           {links.map((link, i) => (
             <tr key={i}>
-              <th>Link</th>
+              <th>
+                <Trans i18nKey="visualization.data-hover-view.link">Link</Trans>
+              </th>
               <td colSpan={2}>
                 <TextLink href={link.href} external={link.target === '_blank'} weight={'medium'} inline={false}>
                   {link.title}

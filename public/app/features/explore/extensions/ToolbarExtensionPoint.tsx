@@ -18,7 +18,12 @@ type Props = {
   extensionsToShow: 'queryless' | 'basic';
 };
 
-const QUERYLESS_APPS = ['grafana-pyroscope-app', 'grafana-lokiexplore-app', 'grafana-exploretraces-app'];
+const QUERYLESS_APPS = [
+  'grafana-pyroscope-app',
+  'grafana-lokiexplore-app',
+  'grafana-exploretraces-app',
+  'grafana-metricsdrilldown-app',
+];
 
 export function ToolbarExtensionPoint(props: Props): ReactElement | null {
   const { exploreId, extensionsToShow } = props;

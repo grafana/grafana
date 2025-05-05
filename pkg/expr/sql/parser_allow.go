@@ -60,13 +60,16 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.BinaryExpr, *sqlparser.UnaryExpr:
 		return
 
-	case sqlparser.BoolVal:
+	case sqlparser.BoolVal, *sqlparser.NullVal:
 		return
 
 	case *sqlparser.CaseExpr, *sqlparser.When:
 		return
 
-	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns:
+	case *sqlparser.CharExpr:
+		return
+
+	case sqlparser.ColIdent, *sqlparser.ColName, sqlparser.Columns, sqlparser.ColumnType:
 		return
 
 	case sqlparser.Comments: // TODO: understand why some are pointer vs not
@@ -81,6 +84,18 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ConvertExpr, *sqlparser.ConvertType:
 		return
 
+	case *sqlparser.CollateExpr:
+		return
+
+	case sqlparser.Exprs:
+		return
+
+	case *sqlparser.ExtractFuncExpr:
+		return
+
+	case *sqlparser.GroupConcatExpr:
+		return
+
 	case sqlparser.GroupBy:
 		return
 
@@ -93,10 +108,16 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.Into:
 		return
 
+	case *sqlparser.IsExpr:
+		return
+
 	case *sqlparser.JoinTableExpr, sqlparser.JoinCondition:
 		return
 
-	case *sqlparser.Select, sqlparser.SelectExprs:
+	case *sqlparser.JSONTableExpr, *sqlparser.JSONTableSpec, *sqlparser.JSONTableColDef:
+		return
+
+	case *sqlparser.Select, sqlparser.SelectExprs, *sqlparser.ParenSelect:
 		return
 
 	case *sqlparser.SetOp:
@@ -120,13 +141,22 @@ func allowedNode(node sqlparser.SQLNode) (b bool) {
 	case *sqlparser.ParenExpr:
 		return
 
+	case *sqlparser.RangeCond:
+		return
+
 	case *sqlparser.Subquery:
 		return
 
 	case sqlparser.TableName, sqlparser.TableExprs, sqlparser.TableIdent:
 		return
 
+	case *sqlparser.TimestampFuncExpr:
+		return
+
 	case *sqlparser.TrimExpr:
+		return
+
+	case sqlparser.ValTuple:
 		return
 
 	case *sqlparser.With:
@@ -156,6 +186,12 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "variance", "var_pop":
 		return
+	case "group_concat":
+		return
+	case "row_number", "rank", "dense_rank", "lead", "lag":
+		return
+	case "first_value", "last_value":
+		return
 
 	// Mathematical functions
 	case "abs":
@@ -166,7 +202,13 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "mod", "log", "log10", "exp":
 		return
-	case "sign":
+	case "sign", "ln", "truncate":
+		return
+	case "sin", "cos", "tan":
+		return
+	case "asin", "acos", "atan", "atan2":
+		return
+	case "rand", "pi":
 		return
 
 	// String functions
@@ -174,13 +216,27 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "lower", "upper":
 		return
-	case "substring":
+	case "substring", "substring_index":
+		return
+	case "left", "right":
+		return
+	case "ltrim", "rtrim":
+		return
+	case "replace", "reverse":
+		return
+	case "lcase", "ucase", "mid", "repeat":
+		return
+	case "position", "instr", "locate":
+		return
+	case "ascii", "ord", "char":
+		return
+	case "regexp_substr":
 		return
 
 	// Date functions
 	case "str_to_date":
 		return
-	case "date_format", "now", "curdate", "curtime":
+	case "date_format":
 		return
 	case "date_add", "date_sub":
 		return
@@ -190,9 +246,27 @@ func allowedFunction(f *sqlparser.FuncExpr) (b bool) {
 		return
 	case "unix_timestamp", "from_unixtime":
 		return
+	case "extract", "hour", "minute", "second":
+		return
+	case "dayname", "monthname", "dayofweek", "dayofmonth", "dayofyear":
+		return
+	case "week", "quarter", "time_to_sec", "sec_to_time":
+		return
+	case "timestampdiff", "timestampadd":
+		return
 
 	// Type conversion
-	case "cast":
+	case "cast", "convert":
+		return
+
+	// JSON functions
+	case "json_extract", "json_object", "json_array", "json_merge_patch", "json_valid":
+		return
+	case "json_contains", "json_length", "json_type", "json_keys":
+		return
+	case "json_search", "json_quote", "json_unquote":
+		return
+	case "json_set", "json_insert", "json_replace", "json_remove":
 		return
 
 	default:

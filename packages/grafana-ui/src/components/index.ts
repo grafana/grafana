@@ -21,6 +21,7 @@ export { TabbedContainer, type TabConfig } from './TabbedContainer/TabbedContain
 
 export { ClipboardButton } from './ClipboardButton/ClipboardButton';
 export { Cascader, type CascaderOption } from './Cascader/Cascader';
+export { Carousel } from './Carousel/Carousel';
 export { ButtonCascader } from './ButtonCascader/ButtonCascader';
 export { InlineToast } from './InlineToast/InlineToast';
 
@@ -101,6 +102,7 @@ export {
   type TableImageCellOptions,
   type TableJsonViewCellOptions,
 } from './Table/types';
+
 export { TableInputCSV } from './TableInputCSV/TableInputCSV';
 export { TabsBar } from './Tabs/TabsBar';
 export { Tab, type TabProps } from './Tabs/Tab';
@@ -336,5 +338,6 @@ export {
   useElementSelection,
   type ElementSelectionContextState,
   type ElementSelectionContextItem,
+  type ElementSelectionOnSelectOptions,
   type UseElementSelectionResult,
 } from './ElementSelectionContext/ElementSelectionContext';

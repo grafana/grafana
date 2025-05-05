@@ -2,7 +2,7 @@ import { PureComponent } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, LoadingPlaceholder, ScrollContainer } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { UserDTO, UserOrg } from 'app/types';
 
 export interface Props {
@@ -17,7 +17,11 @@ export class UserOrganizations extends PureComponent<Props> {
     const { isLoading, orgs, user } = this.props;
 
     if (isLoading) {
-      return <LoadingPlaceholder text="Loading organizations..." />;
+      return (
+        <LoadingPlaceholder
+          text={t('profile.user-organizations.text-loading-organizations', 'Loading organizations...')}
+        />
+      );
     }
 
     if (orgs.length === 0) {

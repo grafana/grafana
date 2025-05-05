@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
@@ -185,8 +186,11 @@ func TestIntegration_DashboardPermissionFilter(t *testing.T) {
 			t.Run(tt.desc+" with features "+strings.Join(keys, ","), func(t *testing.T) {
 				filter := permissions.NewAccessControlDashboardPermissionFilter(usr, tt.permission, tt.queryType, features, recursiveQueriesAreSupported, store.GetDialect())
 
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+
 				var result int
-				err = store.WithDbSession(context.Background(), func(sess *sqlstore.DBSession) error {
+				err = store.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
 					q, params := filter.Where()
 					recQry, recQryParams := filter.With()
 					params = append(recQryParams, params...)
@@ -441,7 +445,9 @@ func TestIntegration_DashboardNestedPermissionFilter(t *testing.T) {
 			expectedResult: []string{"parent"},
 		},
 	}
-
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
 	t.Cleanup(func() {
@@ -554,7 +560,9 @@ func TestIntegration_DashboardNestedPermissionFilter_WithSelfContainedPermission
 			expectedResult: []string{"parent"},
 		},
 	}
-
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 	origNewGuardian := guardian.New
 	guardian.MockDashboardGuardian(&guardian.FakeDashboardGuardian{CanViewValue: true, CanSaveValue: true})
 	t.Cleanup(func() {
@@ -666,6 +674,10 @@ func TestIntegration_DashboardNestedPermissionFilter_WithActionSets(t *testing.T
 			},
 			expectedResult: []string{"subfolder"},
 		},
+	}
+
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
 	}
 
 	origNewGuardian := guardian.New
@@ -839,7 +851,7 @@ func setupNestedTest(t *testing.T, usr *user.SignedInUser, perms []accesscontrol
 	fStore := folderimpl.ProvideStore(db)
 	folderSvc := folderimpl.ProvideService(
 		fStore, actest.FakeAccessControl{ExpectedEvaluate: true}, bus.ProvideBus(tracing.InitializeTracerForTest()), dashStore, folderimpl.ProvideDashboardFolderStore(db),
-		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+		nil, db, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 	// create parent folder
 	parent, err := folderSvc.Create(context.Background(), &folder.CreateFolderCommand{

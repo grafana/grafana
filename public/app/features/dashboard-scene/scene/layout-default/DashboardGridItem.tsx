@@ -1,5 +1,5 @@
 import { isEqual } from 'lodash';
-import { createRef } from 'react';
+import React from 'react';
 import { Unsubscribable } from 'rxjs';
 
 import {
@@ -21,8 +21,8 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 
 import { getCloneKey } from '../../utils/clone';
 import { getMultiVariableValues } from '../../utils/utils';
-import { Point, Rect } from '../layout-manager/utils';
-import { DashboardLayoutItem, IntermediateLayoutItem } from '../types/DashboardLayoutItem';
+import { scrollCanvasElementIntoView } from '../layouts-shared/scrollCanvasElementIntoView';
+import { DashboardLayoutItem } from '../types/DashboardLayoutItem';
 import { DashboardRepeatsProcessedEvent } from '../types/DashboardRepeatsProcessedEvent';
 
 import { getDashboardGridItemOptions } from './DashboardGridItemEditor';
@@ -49,12 +49,10 @@ export class DashboardGridItem
   protected _variableDependency = new DashboardGridItemVariableDependencyHandler(this);
 
   public readonly isDashboardLayoutItem = true;
+  public containerRef = React.createRef<HTMLDivElement>();
 
   private _prevRepeatValues?: VariableValueSingle[];
-
   private _gridSizeSub: Unsubscribable | undefined;
-
-  public containerRef = createRef<HTMLElement>();
 
   public constructor(state: DashboardGridItemState) {
     super(state);
@@ -88,6 +86,10 @@ export class DashboardGridItem
 
   public getOptions(): OptionsPaneCategoryDescriptor[] {
     return getDashboardGridItemOptions(this);
+  }
+
+  public setElementBody(body: VizPanel): void {
+    this.setState({ body });
   }
 
   public editingStarted() {
@@ -250,15 +252,7 @@ export class DashboardGridItem
     return this.state.variableName !== undefined;
   }
 
-  public toIntermediate(): IntermediateLayoutItem {
-    throw new Error('Method not implemented.');
-  }
-
-  public distanceToPoint?(point: Point): number {
-    throw new Error('Method not implemented.');
-  }
-
-  public boundingBox?(): Rect | undefined {
-    throw new Error('Method not implemented.');
+  public scrollIntoView() {
+    scrollCanvasElementIntoView(this, this.containerRef);
   }
 }

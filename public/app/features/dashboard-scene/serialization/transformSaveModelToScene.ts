@@ -9,7 +9,6 @@ import {
   SceneGridRow,
   SceneTimeRange,
   SceneVariableSet,
-  VariableValueSelectors,
   SceneRefreshPicker,
   SceneObject,
   VizPanelMenu,
@@ -17,13 +16,13 @@ import {
   VizPanelState,
   SceneGridItemLike,
   SceneDataLayerProvider,
-  SceneDataLayerControls,
   UserActionEvent,
   SceneInteractionProfileEvent,
   SceneObjectState,
 } from '@grafana/scenes';
 import { isWeekStart } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { K8S_V1_DASHBOARD_API_CONFIG } from 'app/features/dashboard/api/v1';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { DashboardDTO, DashboardDataDTO } from 'app/types';
@@ -41,7 +40,6 @@ import { VizPanelLinks, VizPanelLinksMenu } from '../scene/PanelLinks';
 import { panelLinksBehavior, panelMenuBehavior } from '../scene/PanelMenuBehavior';
 import { PanelNotices } from '../scene/PanelNotices';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
-import { AngularDeprecation } from '../scene/angular/AngularDeprecation';
 import { DashboardGridItem, RepeatDirection } from '../scene/layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../scene/layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../scene/layout-default/RowRepeaterBehavior';
@@ -72,7 +70,12 @@ export function transformSaveModelToScene(rsp: DashboardDTO): DashboardScene {
 
   const scene = createDashboardSceneFromDashboardModel(oldModel, rsp.dashboard);
   // TODO: refactor createDashboardSceneFromDashboardModel to work on Dashboard schema model
-  scene.setInitialSaveModel(rsp.dashboard);
+
+  const apiVersion = config.featureToggles.kubernetesDashboards
+    ? `${K8S_V1_DASHBOARD_API_CONFIG.group}/${K8S_V1_DASHBOARD_API_CONFIG.version}`
+    : undefined;
+
+  scene.setInitialSaveModel(rsp.dashboard, rsp.meta, apiVersion);
 
   return scene;
 }
@@ -176,7 +179,7 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
   let variables: SceneVariableSet | undefined;
   let annotationLayers: SceneDataLayerProvider[] = [];
   let alertStatesLayer: AlertStatesDataLayer | undefined;
-  const uid = dto.uid;
+  const uid = oldModel.uid;
   const serializerVersion = config.featureToggles.dashboardNewLayouts ? 'v2' : 'v1';
 
   if (oldModel.templating?.list?.length) {
@@ -279,7 +282,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
       $behaviors: behaviorList,
       $data: new DashboardDataLayerSet({ annotationLayers, alertStatesLayer }),
       controls: new DashboardControls({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
         timePicker: new SceneTimePicker({
           quickRanges: oldModel.timepicker.quick_ranges,
         }),
@@ -307,9 +309,6 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const titleItems: SceneObject[] = [];
 
-  if (config.featureToggles.angularDeprecationUI) {
-    titleItems.push(new AngularDeprecation());
-  }
   titleItems.push(
     new VizPanelLinks({
       rawLinks: panel.links,
@@ -323,12 +322,13 @@ export function buildGridItemForPanel(panel: PanelModel): DashboardGridItem {
 
   const vizPanelState: VizPanelState = {
     key: getVizPanelKeyForPanelId(panel.id),
-    title: panel.title,
+    title: panel.title?.substring(0, 5000),
     description: panel.description,
     pluginId: panel.type ?? 'timeseries',
     options: panel.options ?? {},
     fieldConfig: panel.fieldConfig,
     pluginVersion: panel.pluginVersion,
+    seriesLimit: config.panelSeriesLimit,
     displayMode: panel.transparent ? 'transparent' : undefined,
     // To be replaced with it's own option persited option instead derived
     hoverHeader: !panel.title && !timeOverrideShown,

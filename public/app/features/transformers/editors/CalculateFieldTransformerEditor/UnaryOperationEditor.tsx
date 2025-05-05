@@ -1,10 +1,7 @@
 import { unaryOperators, SelectableValue, UnaryOperationID } from '@grafana/data';
-import {
-  UnaryOptions,
-  CalculateFieldMode,
-  CalculateFieldTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/calculateField';
+import { UnaryOptions, CalculateFieldMode, CalculateFieldTransformerOptions } from '@grafana/data/internal';
 import { InlineField, InlineFieldRow, InlineLabel, Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -55,18 +52,26 @@ export const UnaryOperationEditor = (props: {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Operation" labelWidth={LABEL_WIDTH}>
+        <InlineField
+          label={t('transformers.unary-operation-editor.label-operation', 'Operation')}
+          labelWidth={LABEL_WIDTH}
+        >
           <Select options={ops} value={unary?.operator ?? ops[0].value} onChange={onUnaryOperationChanged} />
         </InlineField>
-        <InlineField label="(" labelWidth={2}>
+        <InlineField
+          // eslint-disable-next-line @grafana/no-untranslated-strings
+          label="("
+          labelWidth={2}
+        >
           <Select
-            placeholder="Field"
+            placeholder={t('transformers.unary-operation-editor.placeholder-field', 'Field')}
             className="min-width-11"
             options={fieldName}
             value={unary?.fieldName}
             onChange={onUnaryValueChanged}
           />
         </InlineField>
+        {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
         <InlineLabel width={2}>)</InlineLabel>
       </InlineFieldRow>
     </>

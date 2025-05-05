@@ -65,10 +65,12 @@ export function useOptions<T extends string | number>(rawOptions: AsyncOptions<T
     (opts: Array<ComboboxOption<T>>) => {
       let currentOptions: Array<ComboboxOption<T>> = opts;
       if (createCustomValue && userTypedSearch) {
-        //Since the label of a normal option does not have to match its value and a custom option has the same value and label,
-        //we just focus on the value to check if the option already exists
+        // Since the label of a normal option does not have to match its value and a custom option has the same value and label,
+        // we just focus on the value to check if the option already exists
         const customValueExists = opts.some((opt) => opt.value === userTypedSearch);
         if (!customValueExists) {
+          // Make sure to clone the array first to avoid mutating the original array!
+          currentOptions = currentOptions.slice();
           currentOptions.unshift({
             label: userTypedSearch,
             value: userTypedSearch as T,
@@ -150,20 +152,12 @@ export function sortByGroup<T extends string | number>(options: Array<ComboboxOp
 
   let currentIndex = 0;
 
-  // Fill result array with grouped options
+  // Fill result array with grouped and undefined grouped options
   for (const [group, groupOptions] of groupedOptions) {
     if (group) {
       groupStartIndices.set(group, currentIndex);
-      for (const option of groupOptions) {
-        result[currentIndex++] = option;
-      }
     }
-  }
-
-  // Add ungrouped options at the end
-  const ungrouped = groupedOptions.get(undefined);
-  if (ungrouped) {
-    for (const option of ungrouped) {
+    for (const option of groupOptions) {
       result[currentIndex++] = option;
     }
   }

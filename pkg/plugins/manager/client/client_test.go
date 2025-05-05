@@ -50,8 +50,8 @@ func TestQueryData(t *testing.T) {
 				shouldPassThrough: false,
 			},
 			{
-				err:               plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
-				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBase.Errorf("unavailable"),
+				err:               plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
+				expectedError:     plugins.ErrPluginGrpcConnectionUnavailableBaseFn(context.Background()).Errorf("unavailable"),
 				shouldPassThrough: true,
 			},
 			{

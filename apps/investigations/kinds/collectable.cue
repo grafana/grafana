@@ -8,7 +8,7 @@ package investigations
 	title:          string
 	origin:         string
 	type:           string
-	queries:        [...#Query] // +listType=atomic
+	queries:        [...string] // +listType=atomic
 	timeRange:      #TimeRange
 	datasource:     #DatasourceRef
 	url:            string
@@ -16,6 +16,8 @@ package investigations
 
 	note: 	        string
 	noteUpdatedAt:  string
+
+	fieldConfig:    string
 }
 
 #CollectableSummary: {
@@ -24,16 +26,6 @@ package investigations
 	logoPath: string
 	origin: string
 }
-
-// Query represents a data query
-#Query: {
-	refId:               string
-	queryType:           string
-	editorMode:          string
-	supportingQueryType: string
-	legendFormat:        string
-	expr:               string
-} 
 
 // TimeRange represents a time range with both absolute and relative values
 #TimeRange: {

@@ -1,7 +1,6 @@
 import { isEmpty } from 'lodash';
 
-import { createMonitoringLogger } from '@grafana/runtime';
-import { config, reportInteraction } from '@grafana/runtime/src';
+import { config, createMonitoringLogger, reportInteraction } from '@grafana/runtime';
 import { contextSrv } from 'app/core/core';
 
 import { RuleNamespace } from '../../../types/unified-alerting';
@@ -35,23 +34,27 @@ const { logInfo, logError, logMeasurement, logWarning } = createMonitoringLogger
 
 export { logError, logInfo, logMeasurement, logWarning };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function withPerformanceLogging<TFunc extends (...args: any[]) => Promise<any>>(
-  type: string,
-  func: TFunc,
-  context: Record<string, string>
-): (...args: Parameters<TFunc>) => Promise<Awaited<ReturnType<TFunc>>> {
-  return async function (...args) {
-    const startLoadingTs = performance.now();
+/**
+ * Utility function to measure performance of async operations
+ * @param func Function to measure
+ * @param measurementName Name of the measurement for logging
+ * @param context Context for logging
+ */
+export function withPerformanceLogging<TArgs extends unknown[], TReturn>(
+  func: (...args: TArgs) => Promise<TReturn>,
+  measurementName: string,
+  context: Record<string, string> = {}
+): (...args: TArgs) => Promise<TReturn> {
+  return async function (...args: TArgs): Promise<TReturn> {
+    const startMark = `${measurementName}:start`;
+    performance.mark(startMark);
 
     const response = await func(...args);
-    const loadTimesMs = performance.now() - startLoadingTs;
 
+    const loadTimeMeasure = performance.measure(measurementName, startMark);
     logMeasurement(
-      type,
-      {
-        loadTimesMs,
-      },
+      measurementName,
+      { duration: loadTimeMeasure.duration, loadTimesMs: loadTimeMeasure.duration },
       context
     );
 
@@ -216,6 +219,22 @@ export const trackRuleVersionsRestoreFail = async (
   payload: RuleVersionComparisonProps & { origin: Origin; error: Error }
 ) => {
   reportInteraction('grafana_alerting_rule_versions_restore_error', { ...payload });
+};
+
+export const trackDeletedRuleRestoreSuccess = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_success');
+};
+
+export const trackDeletedRuleRestoreFail = async () => {
+  reportInteraction('grafana_alerting_deleted_rule_restore_error');
+};
+
+export const trackImportToGMASuccess = async () => {
+  reportInteraction('grafana_alerting_import_to_gma_success');
+};
+
+export const trackImportToGMAError = async () => {
+  reportInteraction('grafana_alerting_import_to_gma_error');
 };
 
 interface RulesSearchInteractionPayload {

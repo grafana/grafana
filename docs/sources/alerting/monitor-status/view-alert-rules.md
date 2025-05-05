@@ -61,7 +61,11 @@ For details on how rule states and alert instance states are displayed, refer to
 
 ## View, compare and restore alert rules versions.
 
-You can view, compare, and restore previous alert rule versions. The number of alert rule versions is limited to a maximum of 10 alert rule versions for free users, and a maximum of 100 stored alert rule versions for paid tier users.
+You can view, compare, and restore previous alert rule versions.
+
+{{< admonition type="note" >}}
+In Grafana OSS and Enterprise, the number of alert rule versions is limited. Free users are allowed a maximum of 10 alert rule versions, while paid users have a maximum of 100 stored alert rule versions.
+{{< /admonition >}}
 
 To view or restore previous versions for an alert rule, complete the following steps.
 

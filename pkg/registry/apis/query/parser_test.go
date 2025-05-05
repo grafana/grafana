@@ -3,6 +3,7 @@ package query
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -164,6 +165,93 @@ func TestQuerySplitting(t *testing.T) {
 			})
 		}
 	})
+}
+
+func TestSqlInputs(t *testing.T) {
+	parser := newQueryParser(
+		expr.NewExpressionQueryReader(featuremgmt.WithFeatures(featuremgmt.FlagSqlExpressions)),
+		nil,
+		tracing.InitializeTracerForTest(),
+		log.NewNopLogger(),
+	)
+
+	parsedRequestInfo, err := parser.parseRequest(context.Background(), &query.QueryDataRequest{
+		QueryDataRequest: data.QueryDataRequest{
+			Queries: []data.DataQuery{
+				data.NewDataQuery(map[string]any{
+					"refId": "A",
+					"datasource": &data.DataSourceRef{
+						Type: "prometheus",
+						UID:  "local-prom",
+					},
+				}),
+				data.NewDataQuery(map[string]any{
+					"refId": "B",
+					"datasource": &data.DataSourceRef{
+						Type: "__expr__",
+						UID:  "__expr__",
+					},
+					"type":       "sql",
+					"expression": "Select time, value + 10 from A",
+				}),
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Equal(t, parsedRequestInfo.SqlInputs["B"], struct{}{})
+}
+
+func TestGrafanaDS(t *testing.T) {
+	ctx := context.Background()
+	parser := newQueryParser(expr.NewExpressionQueryReader(featuremgmt.WithFeatures()),
+		&noLegacyRetriever{}, tracing.InitializeTracerForTest(), log.NewNopLogger())
+
+	t.Run("grafana ds without type", func(t *testing.T) {
+		parsed, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							UID: "grafana",
+						},
+					},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, parsed.Requests, 1)
+		require.Equal(t, "grafana", parsed.Requests[0].PluginId)
+		require.Equal(t, "grafana", parsed.Requests[0].UID)
+	})
+
+	t.Run("grafana ds with different type", func(t *testing.T) {
+		parsed, err := parser.parseRequest(ctx, &query.QueryDataRequest{
+			QueryDataRequest: data.QueryDataRequest{
+				Queries: []data.DataQuery{{
+					CommonQueryProperties: data.CommonQueryProperties{
+						RefID: "A",
+						Datasource: &data.DataSourceRef{
+							UID:  "grafana",
+							Type: "datasource",
+						},
+					},
+				}},
+			},
+		})
+		require.NoError(t, err)
+		require.Len(t, parsed.Requests, 1)
+		require.Equal(t, "grafana", parsed.Requests[0].PluginId)
+		require.Equal(t, "grafana", parsed.Requests[0].UID)
+	})
+}
+
+type noLegacyRetriever struct{}
+
+var errNoLegacy = errors.New("legacy dds retriever reached, it should not")
+
+func (s *noLegacyRetriever) GetDataSourceFromDeprecatedFields(ctx context.Context, name string, id int64) (*data.DataSourceRef, error) {
+	return nil, errNoLegacy
 }
 
 type legacyDataSourceRetriever struct{}

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
@@ -78,7 +78,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     actionIcons.push(
       <Stack key="is-deleting">
         <Spinner />
-        deleting
+        <Trans i18nKey="alerting.rules-group.deleting">Deleting</Trans>
       </Stack>
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
@@ -193,7 +193,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
         {
           // eslint-disable-next-line
           <div className={styles.groupName} onClick={() => setIsCollapsed(!isCollapsed)}>
-            {isFederated && <Badge color="purple" text="Federated" />} {groupName}
+            {isFederated && <Badge color="purple" text={t('alerting.rules-group.text-federated', 'Federated')} />}{' '}
+            {groupName}
           </div>
         }
         <div className={styles.spacer} />
@@ -204,7 +205,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
           <>
             <div className={styles.actionsSeparator}>|</div>
             <div className={styles.actionIcons}>
-              <Badge color="purple" text="Provisioned" />
+              <Badge color="purple" text={t('alerting.rules-group.text-provisioned', 'Provisioned')} />
             </div>
           </>
         )}

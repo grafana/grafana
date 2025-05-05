@@ -9,7 +9,7 @@ import {
   ScopedVars,
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from './types';

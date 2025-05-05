@@ -3,7 +3,7 @@ package dtos
 import (
 	"time"
 
-	dashboardsV0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboardsV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -34,7 +34,7 @@ type DashboardMeta struct {
 	FolderUrl              string                             `json:"folderUrl"`
 	Provisioned            bool                               `json:"provisioned"`
 	ProvisionedExternalId  string                             `json:"provisionedExternalId"`
-	AnnotationsPermissions *dashboardsV0.AnnotationPermission `json:"annotationsPermissions"`
+	AnnotationsPermissions *dashboardsV1.AnnotationPermission `json:"annotationsPermissions"`
 	PublicDashboardEnabled bool                               `json:"publicDashboardEnabled,omitempty"`
 }
 

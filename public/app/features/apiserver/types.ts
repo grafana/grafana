@@ -55,6 +55,9 @@ export const AnnoKeySourceTimestamp = 'grafana.app/sourceTimestamp';
 // for auditing... when saving from the UI, mark which version saved it from where
 export const AnnoKeySavedFromUI = 'grafana.app/saved-from-ui';
 
+// Grant permissions to the created resource
+export const AnnoKeyGrantPermissions = 'grafana.app/grant-permissions';
+
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeySlug = 'grafana.app/slug';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
@@ -100,7 +103,7 @@ type GrafanaClientAnnotations = {
   [AnnoKeySavedFromUI]?: string;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
-
+  [AnnoKeyGrantPermissions]?: string;
   // TODO: This should be provided by the API
   // This is the dashboard ID for the Gcom API. This set when a dashboard is created through importing a dashboard from Grafana.com.
   [AnnoKeyDashboardGnetId]?: string;
@@ -232,14 +235,19 @@ export interface ResourceEvent<T = object, S = object, K = string> {
   object: Resource<T, S, K>;
 }
 
+export type ResourceClientWriteParams = {
+  dryRun?: 'All';
+  fieldValidation?: 'Ignore' | 'Warn' | 'Strict';
+};
+
 export interface ResourceClient<T = object, S = object, K = string> {
-  create(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
   get(name: string): Promise<Resource<T, S, K>>;
-  watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
-  subresource<S>(name: string, path: string): Promise<S>;
-  list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
-  update(obj: ResourceForCreate<T, K>): Promise<Resource<T, S, K>>;
+  create(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
+  update(obj: ResourceForCreate<T, K>, params?: ResourceClientWriteParams): Promise<Resource<T, S, K>>;
   delete(name: string, showSuccessAlert?: boolean): Promise<MetaStatus>;
+  list(opts?: ListOptions): Promise<ResourceList<T, S, K>>;
+  subresource<S>(name: string, path: string, params?: Record<string, unknown>): Promise<S>;
+  watch(opts?: WatchOptions): Observable<ResourceEvent<T, S, K>>;
 }
 
 export interface K8sAPIGroup {

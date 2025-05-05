@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 
-import { config, FetchError, isFetchError } from '@grafana/runtime/src';
+import { config, FetchError, isFetchError } from '@grafana/runtime';
 import { createBaseQuery } from 'app/api/createBaseQuery';
 import { notifyApp } from 'app/core/actions';
 import { createErrorNotification, createSuccessNotification } from 'app/core/copy/appNotification';

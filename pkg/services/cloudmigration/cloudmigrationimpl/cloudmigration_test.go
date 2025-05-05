@@ -343,6 +343,12 @@ func Test_GetSnapshotStatusFromGMS(t *testing.T) {
 		snapshot, err = s.GetSnapshot(context.Background(), cloudmigration.GetSnapshotsQuery{
 			SnapshotUID: snapshotUID,
 			SessionUID:  sessionUID,
+			SnapshotResultQueryParams: cloudmigration.SnapshotResultQueryParams{
+				ResultLimit: 10,
+				ResultPage:  1,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			},
 		})
 		require.NoError(t, err)
 		require.NotNil(t, snapshot)
@@ -424,32 +430,6 @@ func Test_OnlyQueriesStatusFromGMSWhenRequired(t *testing.T) {
 		require.Eventually(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() == i+1 }, time.Second, 10*time.Millisecond)
 	}
 	assert.Never(t, func() bool { return gmsClientMock.GetSnapshotStatusCallCount() > 2 }, time.Second, 10*time.Millisecond)
-}
-
-func Test_DeletedDashboardsNotMigrated(t *testing.T) {
-	t.Parallel()
-
-	s := setUpServiceTest(t, false).(*Service)
-
-	// modify what the mock returns for just this test case
-	dashMock := s.dashboardService.(*dashboards.FakeDashboardService)
-	dashMock.On("GetAllDashboardsByOrgId", mock.Anything, int64(1)).Return(
-		[]*dashboards.Dashboard{
-			{UID: "1", OrgID: 1, Data: simplejson.New()},
-			{UID: "2", OrgID: 1, Data: simplejson.New(), Deleted: time.Now()},
-		},
-		nil,
-	)
-
-	data, err := s.getMigrationDataJSON(context.TODO(), &user.SignedInUser{OrgID: 1})
-	assert.NoError(t, err)
-	dashCount := 0
-	for _, it := range data.Items {
-		if it.Type == cloudmigration.DashboardDataType {
-			dashCount++
-		}
-	}
-	assert.Equal(t, 1, dashCount)
 }
 
 // Implementation inspired by ChatGPT, OpenAI's language model.
@@ -926,14 +906,12 @@ func setUpServiceTest(t *testing.T, withDashboardMock bool, cfgOverrides ...conf
 
 	featureToggles := featuremgmt.WithFeatures(
 		featuremgmt.FlagOnPremToCloudMigrations,
-		featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
 	)
 
 	sqlStore := sqlstore.NewTestStore(t,
 		sqlstore.WithCfg(cfg),
 		sqlstore.WithFeatureFlags(
 			featuremgmt.FlagOnPremToCloudMigrations,
-			featuremgmt.FlagDashboardRestore, // needed for skipping creating soft-deleted dashboards in the snapshot.
 		),
 	)
 

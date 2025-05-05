@@ -68,7 +68,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   namespace = 'default';
   windowTitlePrefix = '';
   buildInfo: BuildInfo;
-  newPanelTitle = '';
   bootData: BootData;
   externalUserMngLinkUrl = '';
   externalUserMngLinkName = '';
@@ -79,7 +78,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
   feedbackLinksEnabled = true;
   disableLoginForm = false;
   defaultDatasource = ''; // UID
-  angularSupportEnabled = false;
   authProxyEnabled = false;
   exploreEnabled = false;
   queryHistoryEnabled = false;
@@ -160,6 +158,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
     minInterval: '',
     alertStateHistoryBackend: undefined,
     alertStateHistoryPrimary: undefined,
+    recordingRulesEnabled: false,
   };
   applicationInsightsConnectionString?: string;
   applicationInsightsEndpointUrl?: string;
@@ -185,6 +184,7 @@ export class GrafanaBootConfig implements GrafanaConfig {
   rudderstackIntegrationsUrl: undefined;
   analyticsConsoleReporting = false;
   dashboardPerformanceMetrics: string[] = [];
+  panelSeriesLimit = 0;
   sqlConnectionLimits = {
     maxOpenConns: 100,
     maxIdleConns: 100,
@@ -209,6 +209,12 @@ export class GrafanaBootConfig implements GrafanaConfig {
    */
   language: string | undefined;
 
+  /**
+   * Locale used in Grafana's UI. Default to 'es-US' in the backend and overwritten when the user select a different one in SharedPreferences.
+   * This is the locale that is used for date formatting and other locale-specific features.
+   */
+  locale: string;
+
   constructor(options: GrafanaBootConfig) {
     this.bootData = options.bootData;
 
@@ -216,7 +222,6 @@ export class GrafanaBootConfig implements GrafanaConfig {
       datasources: {},
       windowTitlePrefix: 'Grafana - ',
       panels: {},
-      newPanelTitle: 'Panel Title',
       playlist_timespan: '1m',
       unsaved_changes_warning: true,
       appUrl: '',
@@ -241,15 +246,16 @@ export class GrafanaBootConfig implements GrafanaConfig {
     overrideFeatureTogglesFromUrl(this);
     overrideFeatureTogglesFromLocalStorage(this);
 
-    if (this.featureToggles.disableAngular) {
-      this.angularSupportEnabled = false;
-    }
-
     // Creating theme after applying feature toggle overrides in case we need to toggle anything
     this.theme2 = getThemeById(this.bootData.user.theme);
     this.bootData.user.lightTheme = this.theme2.isLight;
     this.theme = this.theme2.v1;
+
+    this.locale = options.bootData.user.locale;
   }
+  geomapDefaultBaseLayer?: MapLayerOptions<any> | undefined;
+  listDashboardScopesEndpoint?: string | undefined;
+  listScopesEndpoint?: string | undefined;
 }
 
 // localstorage key: grafana.featureToggles

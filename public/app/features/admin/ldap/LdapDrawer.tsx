@@ -413,10 +413,8 @@ export const LdapDrawerComponent = ({
                 <Field label={t('ldap-drawer.extra-security-section.client-cert-label', 'Client certificate path')}>
                   <Input
                     id="client-cert"
-                    placeholder={t(
-                      'ldap-drawer.extra-security-section.client-cert-placeholder',
-                      '/path/to/client_cert.pem'
-                    )}
+                    // eslint-disable-next-line @grafana/no-untranslated-strings
+                    placeholder="/path/to/client_cert.pem"
                     type="text"
                     {...register(`${serverConfig}.client_cert`)}
                   />

@@ -22,7 +22,7 @@ DashboardV2Spec: {
 
   elements: [ElementReference.name]: Element
 
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
 
   // Links with references to other dashboards or external websites.
   links: [...DashboardLink]
@@ -64,7 +64,6 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-
   libraryPanel: LibraryPanelRef
 }
 
@@ -236,7 +235,7 @@ DynamicConfigValue: {
 }
 
 // Matcher is a predicate configuration. Based on the config a set of field(s) or values is filtered in order to apply override / transformation.
-// It comes with in id ( to resolve implementation from registry) and a configuration that’s specific to a particular matcher type.
+// It comes with in id ( to resolve implementation from registry) and a configuration that's specific to a particular matcher type.
 MatcherConfig: {
   // The matcher id. This is used to find the matcher implementation from registry.
   id: string | *""
@@ -394,6 +393,7 @@ AnnotationQuerySpec: {
   name: string
   builtIn?: bool | *false
   filter?: AnnotationPanelFilter
+  options?: [string]: _ // Catch-all field for datasource-specific properties
 }
 
 AnnotationQueryKind: {
@@ -494,7 +494,12 @@ RowRepeatOptions: {
   value: string
 }
 
-ResponsiveGridRepeatOptions: {
+TabRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
+AutoGridRepeatOptions: {
   mode: RepeatMode
   value: string
 }
@@ -515,7 +520,7 @@ GridLayoutItemKind: {
 
 GridLayoutRowKind: {
   kind: "GridLayoutRow"
-  spec: GridLayoutRowSpec 
+  spec: GridLayoutRowSpec
 }
 
 GridLayoutRowSpec: {
@@ -551,31 +556,37 @@ RowsLayoutRowKind: {
 
 RowsLayoutRowSpec: {
   title?: string
-  collapsed: bool
+  collapse?: bool
+  hideHeader?: bool
+  fillScreen?: bool
   repeat?: RowRepeatOptions
   conditionalRendering?: ConditionalRenderingGroupKind
-  layout: GridLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind | RowsLayoutKind
+  layout: GridLayoutKind | AutoGridLayoutKind | TabsLayoutKind | RowsLayoutKind
 }
 
-ResponsiveGridLayoutKind: {
-  kind: "ResponsiveGridLayout"
-  spec: ResponsiveGridLayoutSpec
+AutoGridLayoutKind: {
+  kind: "AutoGridLayout"
+  spec: AutoGridLayoutSpec
 }
 
-ResponsiveGridLayoutSpec: {
-  row: string,
-  col: string,
-  items: [...ResponsiveGridLayoutItemKind]
+AutoGridLayoutSpec: {
+	maxColumnCount?: number | *3
+	columnWidthMode: "narrow" | *"standard" | "wide" | "custom"
+	columnWidth?: number
+	rowHeightMode: "short" | *"standard" | "tall" | "custom"
+	rowHeight?: number
+	fillScreen?: bool | *false
+	items: [...AutoGridLayoutItemKind]
 }
 
-ResponsiveGridLayoutItemKind: {
-  kind: "ResponsiveGridLayoutItem"
-  spec: ResponsiveGridLayoutItemSpec
+AutoGridLayoutItemKind: {
+  kind: "AutoGridLayoutItem"
+  spec: AutoGridLayoutItemSpec
 }
 
-ResponsiveGridLayoutItemSpec: {
+AutoGridLayoutItemSpec: {
   element: ElementReference
-  repeat?: ResponsiveGridRepeatOptions
+  repeat?: AutoGridRepeatOptions
   conditionalRendering?: ConditionalRenderingGroupKind
 }
 
@@ -595,7 +606,9 @@ TabsLayoutTabKind: {
 
 TabsLayoutTabSpec: {
   title?: string
-  layout: GridLayoutKind | RowsLayoutKind | ResponsiveGridLayoutKind | TabsLayoutKind
+  layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+  repeat?: TabRepeatOptions
+  conditionalRendering?: ConditionalRenderingGroupKind
 }
 
 PanelSpec: {
@@ -922,8 +935,9 @@ ConditionalRenderingGroupKind: {
 }
 
 ConditionalRenderingGroupSpec: {
+  visibility: "show" | "hide"
   condition: "and" | "or"
-  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeIntervalKind]
+  items: [...ConditionalRenderingVariableKind | ConditionalRenderingDataKind | ConditionalRenderingTimeRangeSizeKind]
 }
 
 ConditionalRenderingVariableKind: {
@@ -946,11 +960,11 @@ ConditionalRenderingDataSpec: {
   value: bool
 }
 
-ConditionalRenderingTimeIntervalKind: {
-  kind: "ConditionalRenderingTimeInterval"
-  spec: ConditionalRenderingTimeIntervalSpec
-} 
+ConditionalRenderingTimeRangeSizeKind: {
+  kind: "ConditionalRenderingTimeRangeSize"
+  spec: ConditionalRenderingTimeRangeSizeSpec
+}
 
-ConditionalRenderingTimeIntervalSpec: {
+ConditionalRenderingTimeRangeSizeSpec: {
   value: string
 }

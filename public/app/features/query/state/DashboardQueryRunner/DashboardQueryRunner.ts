@@ -43,7 +43,7 @@ class DashboardQueryRunnerImpl implements DashboardQueryRunner {
     this.executeRun = this.executeRun.bind(this);
     this.results = new ReplaySubject<DashboardQueryRunnerWorkerResult>(1);
     this.runs = new Subject<DashboardQueryRunnerOptions>();
-    this.cancellationStream = new Subject<any>();
+    this.cancellationStream = new Subject<AnnotationQuery>();
     this.runsSubscription = this.runs.subscribe((options) => this.executeRun(options));
     this.eventsSubscription = dashboard.events.subscribe(RefreshEvent, (event) => {
       this.run({ dashboard: this.dashboard, range: this.timeSrv.timeRange() });

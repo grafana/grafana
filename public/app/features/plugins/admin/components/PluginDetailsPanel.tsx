@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
-import { PageInfoItem } from '@grafana/runtime/src/components/PluginPage';
+import { PageInfoItem } from '@grafana/runtime/internal';
 import {
   Stack,
   Text,
@@ -35,12 +35,23 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
   const normalizeURL = (url: string | undefined) => url?.replace(/\/$/, '');
 
   const customLinks = plugin.details?.links?.filter((link) => {
-    const customLinksFiltered = ![plugin.url, plugin.details?.licenseUrl, plugin.details?.documentationUrl]
+    const customLinksFiltered = ![
+      plugin.url,
+      plugin.details?.licenseUrl,
+      plugin.details?.documentationUrl,
+      plugin.details?.raiseAnIssueUrl,
+      plugin.details?.sponsorshipUrl,
+    ]
       .map(normalizeURL)
       .includes(normalizeURL(link.url));
     return customLinksFiltered;
   });
-  const shouldRenderLinks = plugin.url || plugin.details?.licenseUrl || plugin.details?.documentationUrl;
+  const shouldRenderLinks =
+    plugin.url ||
+    plugin.details?.licenseUrl ||
+    plugin.details?.documentationUrl ||
+    plugin.details?.raiseAnIssueUrl ||
+    plugin.details?.sponsorshipUrl;
 
   const styles = useStyles2(getStyles);
 
@@ -67,7 +78,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
             {plugin.updatedAt && (
               <Stack direction="column" gap={0.5}>
                 <Text color="secondary">
-                  <Trans i18nKey="plugins.details.labels.updatedAt">Last updated:</Trans>
+                  <Trans i18nKey="plugins.details.labels.latestReleaseDate">Latest release date:</Trans>
                 </Text>{' '}
                 <Text>
                   {formatDate(new Date(plugin.updatedAt), { day: 'numeric', month: 'short', year: 'numeric' })}
@@ -92,10 +103,17 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
         </Box>
         {shouldRenderLinks && (
           <>
-            <Box padding={2} borderColor="medium" borderStyle="solid">
+            <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-regular-links">
               <Stack direction="column" gap={2}>
                 {plugin.url && (
-                  <LinkButton href={plugin.url} variant="secondary" fill="solid" icon="code-branch" target="_blank">
+                  <LinkButton
+                    href={plugin.url}
+                    variant="secondary"
+                    fill="solid"
+                    icon="code-branch"
+                    target="_blank"
+                    data-testid="plugin-details-repository-link"
+                  >
                     <Trans i18nKey="plugins.details.labels.repository">Repository</Trans>
                   </LinkButton>
                 )}
@@ -106,6 +124,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                     fill="solid"
                     icon="bug"
                     target="_blank"
+                    data-testid="plugin-details-raise-issue-link"
                   >
                     <Trans i18nKey="plugins.details.labels.raiseAnIssue">Raise an issue</Trans>
                   </LinkButton>
@@ -117,6 +136,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                     fill="solid"
                     icon={'document-info'}
                     target="_blank"
+                    data-testid="plugin-details-license-link"
                   >
                     <Trans i18nKey="plugins.details.labels.license">License</Trans>
                   </LinkButton>
@@ -128,8 +148,21 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                     fill="solid"
                     icon={'list-ui-alt'}
                     target="_blank"
+                    data-testid="plugin-details-documentation-link"
                   >
                     <Trans i18nKey="plugins.details.labels.documentation">Documentation</Trans>
+                  </LinkButton>
+                )}
+                {plugin.details?.sponsorshipUrl && (
+                  <LinkButton
+                    href={plugin.details?.sponsorshipUrl}
+                    variant="secondary"
+                    fill="solid"
+                    icon={'heart'}
+                    target="_blank"
+                    data-testid="plugin-details-sponsorship-link"
+                  >
+                    <Trans i18nKey="plugins.details.labels.sponsorDeveloper">Sponsor this developer</Trans>
                   </LinkButton>
                 )}
               </Stack>
@@ -137,7 +170,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
           </>
         )}
         {customLinks && customLinks?.length > 0 && (
-          <Box padding={2} borderColor="medium" borderStyle="solid">
+          <Box padding={2} borderColor="medium" borderStyle="solid" data-testid="plugin-details-custom-links">
             <CollapsableSection
               isOpen={true}
               label={
@@ -213,6 +246,7 @@ export function PluginDetailsPanel(props: Props): React.ReactElement | null {
                 This feature is for reporting malicious or harmful behaviour within plugins. For plugin concerns, email
                 us at:{' '}
               </Trans>
+              {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
               <TextLink href="mailto:integrations+report-plugin@grafana.com">integrations@grafana.com</TextLink>
             </Text>
             <Text>

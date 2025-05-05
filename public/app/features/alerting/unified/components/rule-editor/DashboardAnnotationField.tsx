@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Icon, useStyles2 } from '@grafana/ui';
+import { Icon, Text, useStyles2 } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { DashboardDataDTO } from 'app/types';
 
 import { makeDashboardLink, makePanelLink } from '../../utils/misc';
@@ -41,7 +42,13 @@ const DashboardAnnotationField = ({
         </a>
       )}
 
-      {!dashboard && <span className={styles.noLink}>Dashboard {dashboardUid} </span>}
+      {!dashboard && (
+        <Text color="secondary">
+          <Trans i18nKey="alerting.annotations.dashboard-annotation-field.dashboard" values={{ dashboardUid }}>
+            Dashboard {{ dashboardUid }}
+          </Trans>
+        </Text>
+      )}
 
       {panel && (
         <a href={panelLink} className={styles.link} target="_blank" rel="noreferrer" data-testid="panel-annotation">
@@ -49,7 +56,16 @@ const DashboardAnnotationField = ({
         </a>
       )}
 
-      {!panel && <span className={styles.noLink}> - Panel {panelId}</span>}
+      {!panel && (
+        <>
+          <span> - </span>
+          <Text color="secondary">
+            <Trans i18nKey="alerting.annotations.dashboard-annotation-field.panel" values={{ panelId }}>
+              Panel {{ panelId }}
+            </Trans>
+          </Text>
+        </>
+      )}
 
       {(dashboard || panel) && (
         <>

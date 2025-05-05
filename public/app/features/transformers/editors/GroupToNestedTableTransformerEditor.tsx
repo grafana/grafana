@@ -16,12 +16,11 @@ import {
   GroupByFieldOptions,
   GroupByOperationID,
   GroupByTransformerOptions,
-} from '@grafana/data/src/transformations/transformers/groupBy';
-import {
   GroupToNestedTableTransformerOptions,
   SHOW_NESTED_HEADERS_DEFAULT,
-} from '@grafana/data/src/transformations/transformers/groupToNestedTable';
+} from '@grafana/data/internal';
 import { useTheme2, Select, StatsPicker, InlineField, Field, Switch, Alert, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { useAllFieldNamesFromDataFrames } from '../utils';
 
@@ -90,7 +89,13 @@ export const GroupToNestedTableTransformerEditor = ({
   return (
     <Stack direction="column">
       {showCalcAlert && (
-        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+        <Alert
+          title={t(
+            'transformers.group-to-nested-table-transformer-editor.title-calc-alert',
+            'Calculations will not have an effect if no fields are being grouped on.'
+          )}
+          severity="warning"
+        />
       )}
       <div>
         {fieldNames.map((key) => (
@@ -103,8 +108,14 @@ export const GroupToNestedTableTransformerEditor = ({
         ))}
       </div>
       <Field
-        label="Show field names in nested tables"
-        description="If enabled nested tables will show field names as a table header"
+        label={t(
+          'transformers.group-to-nested-table-transformer-editor.label-show-field-names-in-nested-tables',
+          'Show field names in nested tables'
+        )}
+        description={t(
+          'transformers.group-to-nested-table-transformer-editor.description-show-field-names',
+          'If enabled nested tables will show field names as a table header'
+        )}
       >
         <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
       </Field>
@@ -135,13 +146,19 @@ export const GroupByFieldConfiguration = ({ fieldName, config, onConfigChange }:
     <InlineField className={styles.label} label={fieldName} grow shrink>
       <Stack gap={0.5} direction="row" wrap={false}>
         <div className={styles.operation}>
-          <Select options={options} value={config?.operation} placeholder="Ignored" onChange={onChange} isClearable />
+          <Select
+            options={options}
+            value={config?.operation}
+            placeholder={t('transformers.group-by-field-configuration.placeholder-ignored', 'Ignored')}
+            onChange={onChange}
+            isClearable
+          />
         </div>
 
         {config?.operation === GroupByOperationID.aggregate && (
           <StatsPicker
             className={styles.aggregations}
-            placeholder="Select Stats"
+            placeholder={t('transformers.group-by-field-configuration.placeholder-select-stats', 'Select stats')}
             allowMultiple
             stats={config.aggregations}
             onChange={(stats) => {

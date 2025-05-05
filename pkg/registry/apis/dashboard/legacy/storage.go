@@ -9,10 +9,11 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 func getDashboardFromEvent(event resource.WriteEvent) (*dashboard.Dashboard, error) {
@@ -118,7 +119,8 @@ func (a *dashboardSqlAccess) WriteEvent(ctx context.Context, event resource.Writ
 					rv = int64(after.Version)
 				}
 			} else {
-				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash)
+				failOnExisting := event.Type == resource.WatchEvent_ADDED
+				after, _, err := a.SaveDashboard(ctx, info.OrgID, dash, failOnExisting)
 				if err != nil {
 					return 0, err
 				}
@@ -210,6 +212,12 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 			Code: http.StatusNotFound,
 		}
 	} else {
+		meta, err := utils.MetaAccessor(dash)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+		}
+		rsp.Folder = meta.GetFolder()
+
 		rsp.Value, err = json.Marshal(dash)
 		if err != nil {
 			rsp.Error = resource.AsErrorResult(err)
@@ -221,6 +229,9 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 
 // List implements AppendingStore.
 func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.ListRequest, cb func(resource.ListIterator) error) (int64, error) {
+	if req.ResourceVersion != 0 {
+		return 0, apierrors.NewBadRequest("List with explicit resourceVersion is not supported with this storage backend")
+	}
 	opts := req.Options
 	info, err := claims.ParseNamespace(opts.Key.Namespace)
 	if err == nil {
@@ -264,6 +275,7 @@ func (a *dashboardSqlAccess) ListIterator(ctx context.Context, req *resource.Lis
 	if err != nil {
 		return 0, err
 	}
+	listRV *= 1000 // Convert to microseconds
 	rows, err := a.getRows(ctx, sql, query)
 	if rows != nil {
 		defer func() {

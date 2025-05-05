@@ -12,9 +12,8 @@ import {
   LoadingState,
   StreamingDataFrame,
 } from '@grafana/data';
-import { getStreamingFrameOptions } from '@grafana/data/src/dataframe/StreamingDataFrame';
-import { LiveDataStreamOptions, StreamingFrameAction, StreamingFrameOptions } from '@grafana/runtime/src/services/live';
-import { toDataQueryError } from '@grafana/runtime/src/utils/toDataQueryError';
+import { getStreamingFrameOptions } from '@grafana/data/internal';
+import { LiveDataStreamOptions, StreamingFrameAction, StreamingFrameOptions, toDataQueryError } from '@grafana/runtime';
 
 import { StreamingResponseDataType } from '../data/utils';
 

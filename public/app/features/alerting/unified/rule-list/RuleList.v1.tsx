@@ -6,7 +6,7 @@ import { urlUtil } from '@grafana/data';
 import { logInfo } from '@grafana/runtime';
 import { Button, LinkButton, Stack } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
@@ -28,6 +28,8 @@ import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRul
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getAllRulesSourceNames } from '../utils/datasource';
 import { createRelativeUrl } from '../utils/url';
+
+import { RuleListPageTitle } from './RuleListPageTitle';
 
 const VIEWS = {
   groups: RuleListGroupView,
@@ -123,6 +125,7 @@ const RuleListV1 = () => {
     <AlertingPageWrapper
       navId="alert-list"
       isLoading={false}
+      renderTitle={(title) => <RuleListPageTitle title={title} />}
       actions={
         hasAlertRulesCreated && (
           <Stack gap={1}>
@@ -142,7 +145,9 @@ const RuleListV1 = () => {
                 variant="secondary"
                 onClick={() => setExpandAll(!expandAll)}
               >
-                {expandAll ? 'Collapse all' : 'Expand all'}
+                {expandAll
+                  ? t('alerting.rule-list-v1.collapse-all', 'Collapse all')
+                  : t('alerting.rule-list-v1.expand-all', 'Expand all')}
               </Button>
             )}
           </Stack>
@@ -191,7 +196,7 @@ function ExportNewRuleButton() {
       href={url}
       icon="download-alt"
       variant="secondary"
-      tooltip="Export new grafana rule"
+      tooltip={t('alerting.export-new-rule-button.tooltip-export-new-grafana-rule', 'Export new grafana rule')}
       onClick={() => logInfo(LogMessages.exportNewGrafanaRule)}
     >
       <Trans i18nKey="alerting.list-view.section.grafanaManaged.export-new-rule">Export rule definition</Trans>

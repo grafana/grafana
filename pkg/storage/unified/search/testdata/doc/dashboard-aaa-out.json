@@ -31,7 +31,7 @@
     ],
     "errors_last_1_days": 1,
     "errors_last_7_days": 1,
-    "legacy_id": 141,
+    "grafana.app/deprecatedInternalID": 141,
     "link_count": 0,
     "panel_types": [
       "barchart",

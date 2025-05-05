@@ -42,6 +42,8 @@ __debug_bin*
 /devenv/docker/blocks/auth/saml-enterprise
 /devenv/docker/blocks/auth/signer
 /devenv/docker/blocks/spanner_tests
+/devenv/docker/blocks/spanner_tests_multi
+/devenv/docker/blocks/mt-db
 
 /tmp
 tools/phantomjs/phantomjs
@@ -96,6 +98,9 @@ conf/custom.ini
 
 /conf/provisioning/**/*.yaml
 !/conf/provisioning/**/sample.yaml
+
+# sample yaml files
+!/conf/provisioning/sample/*.yaml
 
 /conf/ldap_dev.toml
 /conf/ldap_freeipa.toml

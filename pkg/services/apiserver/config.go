@@ -24,10 +24,15 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	}
 
 	if cfg.Env == setting.Dev {
-		defaultLogLevel = 10
 		port = 6443
 		ip = net.ParseIP("0.0.0.0")
 		apiURL = fmt.Sprintf("https://%s:%d", ip, port)
+	}
+
+	// if grafana log level is set to debug, also increase the api server log level to 7,
+	// which will log the request headers & more details about the request
+	if cfg.Raw.Section("log").Key("level").MustString("info") == "debug" {
+		defaultLogLevel = 7
 	}
 
 	host := net.JoinHostPort(cfg.HTTPAddr, strconv.Itoa(port))
@@ -56,6 +61,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	o.StorageOptions.DataPath = apiserverCfg.Key("storage_path").MustString(filepath.Join(cfg.DataPath, "grafana-apiserver"))
 	o.StorageOptions.Address = apiserverCfg.Key("address").MustString(o.StorageOptions.Address)
 	o.StorageOptions.BlobStoreURL = apiserverCfg.Key("blob_url").MustString(o.StorageOptions.BlobStoreURL)
+	o.StorageOptions.BlobThresholdBytes = apiserverCfg.Key("blob_threshold_bytes").MustInt(o.StorageOptions.BlobThresholdBytes)
 
 	// unified storage configs look like
 	// [unified_storage.<group>.<resource>]

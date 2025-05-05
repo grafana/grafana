@@ -11,7 +11,7 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	"github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	dashv0 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -55,7 +55,7 @@ func ProvideService(cfg *setting.Cfg, db db.DB, dashboardService dashboards.Dash
 		k8sclient: client.NewK8sHandler(
 			dual,
 			request.GetNamespaceMapper(cfg),
-			v0alpha1.DashboardResourceInfo.GroupVersionResource(),
+			dashv0.DashboardResourceInfo.GroupVersionResource(),
 			restConfigProvider.GetRestConfig,
 			dashboardStore,
 			userService,
@@ -276,13 +276,9 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 		return nil, dashboards.ErrDashboardNotFound
 	}
 
-	dashboards := make([]*dashver.DashboardVersionDTO, len(out.Items))
-	for i, item := range out.Items {
-		dash, err := s.UnstructuredToLegacyDashboardVersion(ctx, &item, orgID)
-		if err != nil {
-			return nil, err
-		}
-		dashboards[i] = dash
+	dashboards, err := s.UnstructuredToLegacyDashboardVersionList(ctx, out.Items, orgID)
+	if err != nil {
+		return nil, err
 	}
 
 	return &dashver.DashboardVersionResponse{
@@ -292,6 +288,51 @@ func (s *Service) listHistoryThroughK8s(ctx context.Context, orgID int64, dashbo
 }
 
 func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*dashver.DashboardVersionDTO, error) {
+	obj, err := utils.MetaAccessor(item)
+	if err != nil {
+		return nil, err
+	}
+	users, err := s.k8sclient.GetUsersFromMeta(ctx, []string{obj.GetCreatedBy(), obj.GetUpdatedBy()})
+	if err != nil {
+		return nil, err
+	}
+	return s.unstructuredToLegacyDashboardVersionWithUsers(item, users)
+}
+
+func (s *Service) UnstructuredToLegacyDashboardVersionList(ctx context.Context, items []unstructured.Unstructured, orgID int64) ([]*dashver.DashboardVersionDTO, error) {
+	// get users ahead of time to do just one db call, rather than 2 per item in the list
+	userMeta := []string{}
+	for _, item := range items {
+		obj, err := utils.MetaAccessor(&item)
+		if err != nil {
+			return nil, err
+		}
+		if obj.GetCreatedBy() != "" {
+			userMeta = append(userMeta, obj.GetCreatedBy())
+		}
+		if obj.GetUpdatedBy() != "" {
+			userMeta = append(userMeta, obj.GetUpdatedBy())
+		}
+	}
+
+	users, err := s.k8sclient.GetUsersFromMeta(ctx, userMeta)
+	if err != nil {
+		return nil, err
+	}
+
+	versions := make([]*dashver.DashboardVersionDTO, len(items))
+	for i, item := range items {
+		version, err := s.unstructuredToLegacyDashboardVersionWithUsers(&item, users)
+		if err != nil {
+			return nil, err
+		}
+		versions[i] = version
+	}
+
+	return versions, nil
+}
+
+func (s *Service) unstructuredToLegacyDashboardVersionWithUsers(item *unstructured.Unstructured, users map[string]*user.User) (*dashver.DashboardVersionDTO, error) {
 	spec, ok := item.Object["spec"].(map[string]any)
 	if !ok {
 		return nil, errors.New("error parsing dashboard from k8s response")
@@ -312,19 +353,21 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 		spec["version"] = dashVersion
 	}
 
-	createdBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetCreatedBy())
-	if err != nil {
-		return nil, err
+	var createdBy *user.User
+	if creator, ok := users[obj.GetCreatedBy()]; ok {
+		createdBy = creator
 	}
-
 	// if updated by is set, then this version of the dashboard was "created"
 	// by that user
-	if obj.GetUpdatedBy() != "" {
-		updatedBy, err := s.k8sclient.GetUserFromMeta(ctx, obj.GetUpdatedBy())
-		if err == nil && updatedBy != nil {
-			createdBy = updatedBy
-		}
+	if updater, ok := users[obj.GetUpdatedBy()]; ok {
+		createdBy = updater
 	}
+
+	createdByID := int64(0)
+	if createdBy != nil {
+		createdByID = createdBy.ID
+	}
+
 	created := obj.GetCreationTimestamp().Time
 	if updated, err := obj.GetUpdatedTimestamp(); err == nil && updated != nil {
 		created = *updated
@@ -335,20 +378,18 @@ func (s *Service) UnstructuredToLegacyDashboardVersion(ctx context.Context, item
 		return nil, err
 	}
 
-	out := dashver.DashboardVersionDTO{
+	return &dashver.DashboardVersionDTO{
 		ID:            dashVersion,
 		DashboardID:   obj.GetDeprecatedInternalID(), // nolint:staticcheck
 		DashboardUID:  uid,
 		Created:       created,
-		CreatedBy:     createdBy.ID,
+		CreatedBy:     createdByID,
 		Message:       obj.GetMessage(),
 		RestoredFrom:  restoreVer,
 		Version:       int(dashVersion),
 		ParentVersion: int(parentVersion),
 		Data:          simplejson.NewFromAny(spec),
-	}
-
-	return &out, nil
+	}, nil
 }
 
 var restoreMsg = "Restored from version "

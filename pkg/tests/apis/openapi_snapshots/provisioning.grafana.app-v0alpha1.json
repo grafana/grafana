@@ -1092,92 +1092,6 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/export": {
-      "post": {
-        "tags": [
-          "Repository"
-        ],
-        "description": "Export from grafana into the remote repository",
-        "operationId": "createRepositoryExport",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "identifier"
-                ],
-                "properties": {
-                  "branch": {
-                    "description": "Target branch for export (only git)",
-                    "type": "string"
-                  },
-                  "folder": {
-                    "description": "The source folder (or empty) to export",
-                    "type": "string"
-                  },
-                  "identifier": {
-                    "description": "Include the identifier in the exported metadata",
-                    "type": "boolean",
-                    "default": false
-                  },
-                  "path": {
-                    "description": "Prefix in target file system",
-                    "type": "string"
-                  }
-                }
-              },
-              "example": {
-                "folder": "grafan-folder-ref",
-                "branch": "target-branch",
-                "path": "path/in/tree",
-                "identifier": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Job"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the Job",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/files/": {
       "get": {
         "tags": [
@@ -1356,6 +1270,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1452,6 +1374,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1547,6 +1477,14 @@
             "description": "optional message sent with any changes",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -1756,36 +1694,63 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/migrate": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/jobs": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "List recent jobs",
+        "operationId": "getRepositoryJobs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobList"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
       "post": {
         "tags": [
           "Repository"
         ],
-        "description": "Export from grafana into the remote repository",
-        "operationId": "createRepositoryMigrate",
+        "description": "Register a job for this repository",
+        "operationId": "createRepositoryJobs",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "required": [
-                  "identifier"
-                ],
-                "properties": {
-                  "history": {
-                    "description": "Preserve history (if possible)",
-                    "type": "boolean"
-                  },
-                  "identifier": {
-                    "description": "Include the identifier in the exported metadata",
-                    "type": "boolean",
-                    "default": false
+                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec"
+              },
+              "examples": {
+                "incremental": {
+                  "summary": "Pull (incremental)",
+                  "description": "look for changes since the last sync",
+                  "value": {
+                    "pull": {
+                      "incremental": true
+                    }
+                  }
+                },
+                "pull": {
+                  "summary": "Pull from repository",
+                  "description": "pull all files",
+                  "value": {
+                    "pull": {
+                      "incremental": false
+                    }
                   }
                 }
-              },
-              "example": {
-                "history": true,
-                "identifier": false
               }
             }
           }
@@ -1794,7 +1759,7 @@
           "200": {
             "description": "OK",
             "content": {
-              "*/*": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
                 }
@@ -1806,14 +1771,14 @@
         "x-kubernetes-group-version-kind": {
           "group": "provisioning.grafana.app",
           "version": "v0alpha1",
-          "kind": "Job"
+          "kind": "Repository"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the Job",
+          "description": "name of the Repository",
           "required": true,
           "schema": {
             "type": "string",
@@ -1832,7 +1797,66 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/render/{path}": {
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/jobs/{uid}": {
+      "get": {
+        "tags": [
+          "Repository"
+        ],
+        "description": "Get job by UID",
+        "operationId": "getRepositoryJobsWithPath",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
+                }
+              }
+            }
+          }
+        },
+        "x-kubernetes-action": "connect",
+        "x-kubernetes-group-version-kind": {
+          "group": "provisioning.grafana.app",
+          "version": "v0alpha1",
+          "kind": "Repository"
+        }
+      },
+      "parameters": [
+        {
+          "name": "name",
+          "in": "path",
+          "description": "name of the Repository",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "namespace",
+          "in": "path",
+          "description": "object name and auth scope, such as for teams and projects",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        },
+        {
+          "name": "uid",
+          "in": "path",
+          "description": "Original Job UID",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "uniqueItems": true
+          }
+        }
+      ]
+    },
+    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/render/{guid}": {
       "get": {
         "tags": [
           "Repository"
@@ -1876,9 +1900,9 @@
           }
         },
         {
-          "name": "path",
+          "name": "guid",
           "in": "path",
-          "description": "path to the resource",
+          "description": "Image GUID",
           "required": true,
           "schema": {
             "type": "string",
@@ -2226,77 +2250,6 @@
         }
       ]
     },
-    "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/sync": {
-      "post": {
-        "tags": [
-          "Repository"
-        ],
-        "description": "Sync from repository into Grafana",
-        "operationId": "createRepositorySync",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "incremental"
-                ],
-                "properties": {
-                  "incremental": {
-                    "description": "Incremental synchronization for versioned repositories",
-                    "type": "boolean",
-                    "default": false
-                  }
-                }
-              },
-              "example": {
-                "incremental": false
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.Job"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "connect",
-        "x-kubernetes-group-version-kind": {
-          "group": "provisioning.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Job"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the Job",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
     "/apis/provisioning.grafana.app/v0alpha1/namespaces/{namespace}/repositories/{name}/test": {
       "post": {
         "tags": [
@@ -2543,11 +2496,26 @@
           }
         }
       },
-      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
         "type": "object",
         "required": [
-          "identifier"
+          "type"
         ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ExportJobOptions": {
+        "type": "object",
         "properties": {
           "branch": {
             "description": "Target branch for export (only git)",
@@ -2556,11 +2524,6 @@
           "folder": {
             "description": "The source folder (or empty) to export",
             "type": "string"
-          },
-          "identifier": {
-            "description": "Include the identifier in the exported metadata",
-            "type": "boolean",
-            "default": false
           },
           "path": {
             "description": "Prefix in target file system",
@@ -2880,15 +2843,10 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.JobSpec": {
         "type": "object",
-        "required": [
-          "action",
-          "repository"
-        ],
         "properties": {
           "action": {
-            "description": "Possible enum values:\n - `\"migrate\"` Migration task -- this will migrate an full instance from SQL \u003e Git\n - `\"pr\"` Process a pull request -- apply comments with preview images, links etc\n - `\"pull\"` Sync the remote branch with the grafana instance\n - `\"push\"` Export from grafana into the remote repository",
+            "description": "Possible enum values:\n - `\"migrate\"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.\n - `\"pr\"` adds additional useful information to a PR, such as comments with preview links and rendered images.\n - `\"pull\"` replicates the remote branch in the local copy of the repository.\n - `\"push\"` replicates the local copy of the repository in the remote branch.",
             "type": "string",
-            "default": "",
             "enum": [
               "migrate",
               "pr",
@@ -2929,9 +2887,8 @@
             ]
           },
           "repository": {
-            "description": "The the repository reference (for now also in labels)",
-            "type": "string",
-            "default": ""
+            "description": "The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request",
+            "type": "string"
           }
         }
       },
@@ -3018,18 +2975,10 @@
       },
       "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.MigrateJobOptions": {
         "type": "object",
-        "required": [
-          "identifier"
-        ],
         "properties": {
           "history": {
             "description": "Preserve history (if possible)",
             "type": "boolean"
-          },
-          "identifier": {
-            "description": "Include the identifier in the exported metadata",
-            "type": "boolean",
-            "default": false
           }
         }
       },
@@ -3037,6 +2986,7 @@
         "type": "object",
         "properties": {
           "hash": {
+            "description": "The specific commit hash that triggered this notice",
             "type": "string"
           },
           "pr": {
@@ -3277,20 +3227,19 @@
         "required": [
           "name",
           "title",
-          "readOnly",
           "type",
-          "target"
+          "target",
+          "workflows"
         ],
         "properties": {
+          "branch": {
+            "description": "For git, this is the target branch",
+            "type": "string"
+          },
           "name": {
             "description": "The k8s name for this repository",
             "type": "string",
             "default": ""
-          },
-          "readOnly": {
-            "description": "Edit options within the repository",
-            "type": "boolean",
-            "default": false
           },
           "target": {
             "description": "When syncing, where values are saved\n\nPossible enum values:\n - `\"folder\"` Resources will be saved into a folder managed by this repository It will contain a copy of everything from the remote The folder k8s name will be the same as the repository k8s name\n - `\"instance\"` Resources are saved in the global context Only one repository may specify the `instance` target When this exists, the UI will promote writing to the instance repo rather than the grafana database (where possible)",
@@ -3314,6 +3263,18 @@
               "github",
               "local"
             ]
+          },
+          "workflows": {
+            "description": "The supported workflows",
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": "",
+              "enum": [
+                "branch",
+                "write"
+              ]
+            }
           }
         }
       },
@@ -3843,20 +3804,16 @@
             "format": "int32",
             "default": 0
           },
-          "details": {
-            "description": "Optional details",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
           "errors": {
-            "description": "Error descriptions",
+            "description": "Field related errors",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails"
+                }
+              ]
             }
           },
           "kind": {
@@ -3932,6 +3889,10 @@
             "format": "byte"
           },
           "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastEvent": {
             "type": "integer",
             "format": "int64"
           },

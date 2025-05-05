@@ -13,7 +13,7 @@ import {
   SplitOpen,
   TimeRange,
 } from '@grafana/data';
-import { reportInteraction } from '@grafana/runtime/src';
+import { reportInteraction } from '@grafana/runtime';
 import { InlineField, Select, Themeable2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -503,7 +503,7 @@ export function LogsTableWrap(props: Props) {
             >
               <Select
                 inputId={'explore_logs_table_frame_selector'}
-                aria-label={'Select query by name'}
+                aria-label={t('explore.logs-table-wrap.aria-label-select-query-by-name', 'Select query by name')}
                 value={currentDataFrame.refId}
                 options={logsFrames.map((frame) => {
                   return {

@@ -5,12 +5,12 @@ import { Icon, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
 import { ScopesDashboardsTree } from './ScopesDashboardsTree';
-import { OnFolderUpdate, SuggestedDashboardsFolder, SuggestedDashboardsFoldersMap } from './types';
+import { OnFolderUpdate, SuggestedNavigationsFolder, SuggestedNavigationsFoldersMap } from './types';
 
 export interface ScopesDashboardsTreeFolderItemProps {
-  folder: SuggestedDashboardsFolder;
+  folder: SuggestedNavigationsFolder;
   folderPath: string[];
-  folders: SuggestedDashboardsFoldersMap;
+  folders: SuggestedNavigationsFoldersMap;
   onFolderUpdate: OnFolderUpdate;
 }
 
@@ -70,7 +70,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       marginTop: theme.spacing(0.25),
     }),
     children: css({
-      paddingLeft: theme.spacing(4),
+      paddingLeft: theme.spacing(3),
     }),
   };
 };

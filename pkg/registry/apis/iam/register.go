@@ -30,6 +30,7 @@ import (
 )
 
 var _ builder.APIGroupBuilder = (*IdentityAccessManagementAPIBuilder)(nil)
+var _ builder.APIGroupRouteProvider = (*IdentityAccessManagementAPIBuilder)(nil)
 
 // This is used just so wire has something unique to return
 type IdentityAccessManagementAPIBuilder struct {
@@ -182,7 +183,7 @@ func (b *IdentityAccessManagementAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenA
 	return oas, nil
 }
 
-func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes() *builder.APIRoutes {
+func (b *IdentityAccessManagementAPIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	defs := b.GetOpenAPIDefinitions()(func(path string) spec.Ref { return spec.Ref{} })
 	return b.display.GetAPIRoutes(defs)
 }

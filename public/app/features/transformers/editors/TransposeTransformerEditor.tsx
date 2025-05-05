@@ -5,16 +5,20 @@ import {
   TransformerUIProps,
   TransformerCategory,
 } from '@grafana/data';
-import { TransposeTransformerOptions } from '@grafana/data/src/transformations/transformers/transpose';
+import { TransposeTransformerOptions } from '@grafana/data/internal';
 import { InlineField, InlineFieldRow, Input } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIProps<TransposeTransformerOptions>) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label={'First field name'} labelWidth={24}>
+        <InlineField
+          label={t('transformers.transpose-transfomer-editor.label-first-field-name', 'First field name')}
+          labelWidth={24}
+        >
           <Input
-            placeholder="Field"
+            placeholder={t('transformers.transpose-transfomer-editor.placeholder-field', 'Field')}
             value={options.firstFieldName}
             onChange={(e) => onChange({ ...options, firstFieldName: e.currentTarget.value })}
             width={25}
@@ -22,9 +26,13 @@ export const TransposeTransfomerEditor = ({ options, onChange }: TransformerUIPr
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Remaining fields name'} tooltip={'Name for value fields'} labelWidth={24}>
+        <InlineField
+          label={t('transformers.transpose-transfomer-editor.label-remaining-fields-name', 'Remaining fields name')}
+          tooltip={t('transformers.transpose-transfomer-editor.tooltip-name-for-value-fields', 'Name for value fields')}
+          labelWidth={24}
+        >
           <Input
-            placeholder="Value"
+            placeholder={t('transformers.transpose-transfomer-editor.placeholder-value', 'Value')}
             value={options.restFieldsName}
             onChange={(e) => onChange({ ...options, restFieldsName: e.currentTarget.value })}
             width={25}

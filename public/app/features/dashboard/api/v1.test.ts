@@ -8,17 +8,20 @@ import { K8sDashboardAPI } from './v1';
 
 const mockDashboardDto: DashboardWithAccessInfo<DashboardDataDTO> = {
   kind: 'DashboardWithAccessInfo',
-  apiVersion: 'v1alpha1',
+  apiVersion: 'v1beta1',
 
   metadata: {
     name: 'dash-uid',
     resourceVersion: '1',
     creationTimestamp: '1',
     annotations: {},
+    generation: 1,
   },
   spec: {
     title: 'test',
-    uid: 'test',
+    // V1 API doesn't return the uid or version in the spec
+    // setting it as empty string here because it's required in DashboardDataDTO
+    uid: '',
     schemaVersion: 0,
   },
   access: {},
@@ -140,6 +143,17 @@ describe('v1 dashboard API', () => {
     expect(result.meta.folderTitle).toBe('New Folder');
     expect(result.meta.folderUrl).toBe('/folder/url');
     expect(result.meta.folderUid).toBe('new-folder');
+  });
+
+  it('should correctly set uid and version in the spec', async () => {
+    const api = new K8sDashboardAPI();
+    // we are fetching the mockDashboardDTO, which doesn't have a uid or version
+    // and this is expected because V1 API doesn't return the uid or version in the spec
+    // however, we need these fields to be set in the dashboard object to avoid creating duplicates when editing an existing dashboard
+    // getDashboardDTO should set the uid and version from the metadata.name (uid) and metadata.generation (version)
+    const result = await api.getDashboardDTO('dash-uid');
+    expect(result.dashboard.uid).toBe('dash-uid');
+    expect(result.dashboard.version).toBe(1);
   });
 
   it('throws an error if folder is not found', async () => {
@@ -279,7 +293,7 @@ describe('v1 dashboard API', () => {
       await expect(api.getDashboardDTO('test')).rejects.toThrow('backend conversion not yet implemented');
     });
 
-    it.each(['v0alpha1', 'v1alpha1'])('should not throw for %s conversion errors', async (correctStoredVersion) => {
+    it.each(['v0alpha1', 'v1beta1'])('should not throw for %s conversion errors', async (correctStoredVersion) => {
       const mockDashboardWithError = {
         ...mockDashboardDto,
         status: {

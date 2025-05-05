@@ -332,7 +332,7 @@ export function OldFolderPicker(props: Props) {
           value={newFolderValue}
           onChange={onNewFolderChange}
           onKeyDown={onKeyDown}
-          placeholder="Press enter to confirm new folder."
+          placeholder={t('folder-picker.input-placeholder', 'Press enter to confirm new folder')}
           onBlur={onBlur}
         />
       </>

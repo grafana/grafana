@@ -24,6 +24,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -62,7 +64,7 @@ jobs:
             --report-output log \
             --grafana-version "$(git rev-parse HEAD)" \
             --suite-name grafana-oss-unit-tests \
-            /tmp/unit.log
+            /tmp/unit.log || true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

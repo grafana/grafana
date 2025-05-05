@@ -37,7 +37,7 @@ import {
   TooltipDisplayMode,
   useStyles2,
 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { LogMessages, logInfo } from '../../../Analytics';
 
@@ -62,6 +62,7 @@ export const StateFilterValues = {
   firing: 'Alerting',
   normal: 'Normal',
   pending: 'Pending',
+  recovering: 'Recovering',
 } as const;
 
 export const CentralAlertHistoryScene = () => {
@@ -86,7 +87,7 @@ export const CentralAlertHistoryScene = () => {
       value: StateFilterValues.all,
       label: 'End state:',
       hide: VariableHide.dontHide,
-      query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending}`,
+      query: `All : ${StateFilterValues.all}, To Firing : ${StateFilterValues.firing},To Normal : ${StateFilterValues.normal},To Pending : ${StateFilterValues.pending},To Recovering : ${StateFilterValues.recovering}`,
     });
 
     //custom variable for filtering by the previous state
@@ -95,7 +96,7 @@ export const CentralAlertHistoryScene = () => {
       value: StateFilterValues.all,
       label: 'Start state:',
       hide: VariableHide.dontHide,
-      query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending}`,
+      query: `All : ${StateFilterValues.all}, From Firing : ${StateFilterValues.firing},From Normal : ${StateFilterValues.normal},From Pending : ${StateFilterValues.pending},From Recovering : ${StateFilterValues.recovering}`,
     });
 
     return new EmbeddedScene({
@@ -235,7 +236,7 @@ export function ClearFilterButtonObjectRenderer({ model }: SceneComponentProps<C
   };
 
   return (
-    <Tooltip content="Clear filter">
+    <Tooltip content={t('alerting.clear-filter-button-object-renderer.content-clear-filter', 'Clear filter')}>
       <Button variant={'secondary'} icon="times" onClick={onClearFilter}>
         <Trans i18nKey="alerting.central-alert-history.filter.clear">Clear filters</Trans>
       </Button>

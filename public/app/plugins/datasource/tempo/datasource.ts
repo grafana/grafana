@@ -264,7 +264,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
       this._request('/api/status/buildinfo').pipe(
         map((response) => response),
         catchError((error) => {
-          console.error('Failure in retrieving build information', error.data.message);
+          console.error('Failure in retrieving build information', error?.data?.message);
           return of({ error, data: { version: null } }); // unknown version
         })
       )
@@ -468,7 +468,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
                     statusCode: err.status,
                     statusText: err.statusText,
                   });
-                  return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+                  return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
                 })
               )
             );
@@ -658,7 +658,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
             statusCode: err.status,
             statusText: err.statusText,
           });
-          return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+          return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
         })
       );
     }
@@ -696,11 +696,11 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           streaming: false,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
           query: query ?? '',
-          error: getErrorMessage(err.data.message),
+          error: getErrorMessage(err?.data?.message),
           statusCode: err.status,
           statusText: err.statusText,
         });
-        return of({ error: { message: getErrorMessage(err.data.message) }, data: [] });
+        return of({ error: { message: getErrorMessage(err?.data?.message) }, data: [] });
       })
     );
   }
@@ -733,7 +733,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           streaming: true,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
           query: query ?? '',
-          error: getErrorMessage(error.data.message),
+          error: getErrorMessage(error?.data?.message),
           statusCode: error.status,
           statusText: error.statusText,
         });
@@ -778,7 +778,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           streaming: true,
           latencyMs: Math.round(performance.now() - startTime), // rounded to nearest millisecond
           query: query ?? '',
-          error: getErrorMessage(error.data.message),
+          error: getErrorMessage(error?.data?.message),
           statusCode: error.status,
           statusText: error.statusText,
         });
@@ -850,7 +850,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           catchError((err) => {
             return of({
               status: 'error',
-              message: getErrorMessage(err.data.message, 'Unable to connect with Tempo'),
+              message: getErrorMessage(err?.data?.message, 'Unable to connect with Tempo'),
             });
           })
         )
@@ -896,7 +896,7 @@ export class TempoDatasource extends DataSourceWithBackend<TempoQuery, TempoJson
           catchError((err) => {
             return of({
               status: 'error',
-              message: getErrorMessage(err.data.message, 'Test for streaming failed, consider disabling streaming'),
+              message: getErrorMessage(err?.data?.message, 'Test for streaming failed, consider disabling streaming'),
             });
           })
         )
@@ -1549,7 +1549,12 @@ export function buildExpr(
       query = serviceMapQueryMatch[1];
     }
     // map serviceGraph metric tags to serviceGraphView metric tags
-    query = query.replace('client', 'service').replace('server', 'service');
+    query = query
+      // client_deployment_environment="prod" -> deployment_environment="prod"
+      .replaceAll('client_', '')
+      .replaceAll('server_', '')
+      .replace('client', 'service') // client="fooservice" -> service="fooservice"
+      .replace('server', 'service');
     return query.includes('span_name')
       ? metric.params.concat(query)
       : metric.params
