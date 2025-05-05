@@ -117,6 +117,7 @@ jobs:
         if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         uses: ./.grafana-main/.github/actions/changelog
         with:
+          previous: ${{inputs.previous_version}}
           github_token: ${{ steps.generate_changelog_token.outputs.token }}
           target: v${{ env.VERSION }}
           output_file: changelog_items.md
