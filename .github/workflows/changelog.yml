@@ -81,6 +81,7 @@ jobs:
           ref: main
           sparse-checkout: |
             .github/workflows
+            .github/actions
             CHANGELOG.md
             .nvmrc
             .prettierignore
