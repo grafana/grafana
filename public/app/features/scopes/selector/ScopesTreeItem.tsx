@@ -75,7 +75,7 @@ export function ScopesTreeItem({
                     label=""
                     data-testid={`scopes-tree-${type}-${childNode.name}-radio`}
                     onClick={() => {
-                      onNodeSelectToggle(childNodePath);
+                      onNodeSelectToggle({ path: childNodePath });
                     }}
                   />
                 ) : (
@@ -83,7 +83,7 @@ export function ScopesTreeItem({
                     checked={selected}
                     data-testid={`scopes-tree-${type}-${childNode.name}-checkbox`}
                     onChange={() => {
-                      onNodeSelectToggle(childNodePath);
+                      onNodeSelectToggle({ path: childNodePath });
                     }}
                   />
                 )
