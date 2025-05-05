@@ -1,11 +1,13 @@
-import { FormEvent } from 'react';
-import * as React from 'react';
+import { useState, FormEvent } from 'react';
 
 import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
-import { QueryVariable, sceneGraph } from '@grafana/scenes';
+import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
+import { Button, Modal } from '@grafana/ui';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
+import { t } from 'app/core/internationalization';
 
 interface QueryVariableEditorProps {
   variable: QueryVariable;
@@ -85,5 +87,56 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
       allowCustomValue={allowCustomValue}
       onAllowCustomValueChange={onAllowCustomValueChange}
     />
+  );
+}
+
+export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
+  if (!(variable instanceof QueryVariable)) {
+    console.warn('getQueryVariableOptions: variable is not a QueryVariable');
+    return [];
+  }
+
+  return [
+    new OptionsPaneItemDescriptor({
+      title: t('dashboard-scene.query-variable-form.label-value', 'Value'),
+      render: () => <Editor variable={variable} />,
+    }),
+  ];
+}
+
+function Editor({ variable }: { variable: QueryVariable }) {
+  // const { value: dsConfig } = useAsync(async () => {
+  //   const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
+  //   const VariableQueryEditor = await getVariableQueryEditor(datasource);
+  //   const defaultQuery = datasource?.variables?.getDefaultQuery?.();
+
+  //   if (!query && defaultQuery) {
+  //     const query =
+  //       typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };
+  //     onQueryChange(query);
+  //   }
+
+  //   return { datasource, VariableQueryEditor };
+  // }, [datasourceRef]);
+  // const { datasource, VariableQueryEditor } = dsConfig ?? {};
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  const onOpen = () => {
+    setIsOpen(true);
+  };
+
+  return (
+    <>
+      <Button variant="secondary" fill="outline" onClick={onOpen}>Open Editor</Button>
+      <Modal title="Query Variable" isOpen={isOpen}>
+        <QueryVariableEditor variable={variable} onRunQuery={() => {}} />
+      <Modal.ButtonRow>
+        <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+          Done
+        </Button>
+      </Modal.ButtonRow>
+    </Modal>
+    </>
   );
 }

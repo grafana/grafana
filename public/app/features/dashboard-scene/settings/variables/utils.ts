@@ -30,7 +30,7 @@ import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
-import { QueryVariableEditor } from './editors/QueryVariableEditor';
+import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
@@ -58,6 +58,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Query',
     description: 'Values are fetched from a data source query',
     editor: QueryVariableEditor,
+    getOptions: getQueryVariableOptions,
   },
   constant: {
     name: 'Constant',
