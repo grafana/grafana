@@ -293,6 +293,7 @@ linters:
       - third_party$
       - builtin$
       - examples$
+      - pkg/util/xorm
 issues:
   max-same-issues: 0
 formatters:

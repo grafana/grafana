@@ -2,7 +2,7 @@ name: run-dashboard-search-e2e
 
 on:
   workflow_run:
-    workflows: 
+    workflows:
       - trigger-dashboard-search-e2e
     types:
       - completed
@@ -11,6 +11,8 @@ on:
 env:
   ARCH: linux-amd64
 
+permissions: {}
+
 jobs:
   setup:
     runs-on: ubuntu-latest
@@ -18,9 +20,14 @@ jobs:
     outputs:
       ini_files: ${{ steps.get_files.outputs.ini_files }}
 
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Pin Go version to mod file
         uses: actions/setup-go@v5
         with:
@@ -44,7 +51,7 @@ jobs:
         run: yarn install --immutable
       - name: Install Cypress dependencies
         if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        uses: cypress-io/github-action@v6
+        uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           runTests: false
       - name: Cache Grafana Build and Dependencies
@@ -81,10 +88,15 @@ jobs:
         matrix:
           ini_file: ${{ fromJson(needs.setup.outputs.ini_files) }}
 
+      permissions:
+        contents: read
+        id-token: write
+
       steps:
         - name: Checkout repository
           uses: actions/checkout@v4
-
+          with:
+            persist-credentials: false
         - name: Restore Cached Node Modules
           uses: actions/cache@v3
           with:

@@ -35,7 +35,7 @@ type DashboardService interface {
 	CountInFolders(ctx context.Context, orgID int64, folderUIDs []string, user identity.Requester) (int64, error)
 	GetAllDashboards(ctx context.Context) ([]*Dashboard, error)
 	GetAllDashboardsByOrgId(ctx context.Context, orgID int64) ([]*Dashboard, error)
-	CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error
+	CleanUpDashboard(ctx context.Context, dashboardUID string, dashboardId int64, orgId int64) error
 	CountDashboardsInOrg(ctx context.Context, orgID int64) (int64, error)
 	SetDefaultPermissions(ctx context.Context, dto *SaveDashboardDTO, dash *Dashboard, provisioned bool)
 	UnstructuredToLegacyDashboard(ctx context.Context, item *unstructured.Unstructured, orgID int64) (*Dashboard, error)
