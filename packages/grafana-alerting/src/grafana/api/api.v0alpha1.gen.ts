@@ -1,4 +1,4 @@
-import { api } from './api';
+import { api } from './api.v0alpha1';
 export const addTagTypes = ['API Discovery', 'Receiver', 'RoutingTree', 'TemplateGroup', 'TimeInterval'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
@@ -458,7 +458,7 @@ const injectedRtkApi = api
     }),
     overrideExisting: false,
   });
-export { injectedRtkApi as alertingAPI };
+export { injectedRtkApi as alertingAPIv0alpha1 };
 export type GetApiResourcesApiResponse = /** status 200 OK */ IoK8SApimachineryPkgApisMetaV1ApiResourceList;
 export type GetApiResourcesApiArg = void;
 export type ListReceiverApiResponse =

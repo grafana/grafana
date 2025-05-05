@@ -6,8 +6,8 @@ import { MergeDeep, MergeExclusive, OverrideProperties } from 'type-fest';
 import {
   ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisReceiverV0Alpha1Receiver as ContactPointV0Alpha1,
   ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisReceiverV0Alpha1Integration as IntegrationV0Alpha1,
-  ListReceiverApiResponse,
-} from '../api.gen';
+  ListReceiverApiResponse as ListReceiverApiResponsev0Alpha1,
+} from '../api/api.v0alpha1.gen';
 
 type GenericIntegration = OverrideProperties<
   IntegrationV0Alpha1,
@@ -68,8 +68,8 @@ export type ContactPoint = MergeDeep<
   }
 >;
 
-export type EnhancedListReceiverResponse = OverrideProperties<
-  ListReceiverApiResponse,
+export type EnhancedListReceiverv0alpha1ApiResponse = OverrideProperties<
+  ListReceiverApiResponsev0Alpha1,
   {
     items: ContactPoint[];
   }
