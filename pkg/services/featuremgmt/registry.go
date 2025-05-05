@@ -451,16 +451,6 @@ var (
 			Owner:        hostedGrafanaTeam,
 		},
 		{
-			Name:              "alertingInsights",
-			Description:       "Show the new alerting insights landing page",
-			FrontendOnly:      true,
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaAlertingSquad,
-			Expression:        "true", // enabled by default
-			AllowSelfServe:    false,
-			HideFromAdminPage: true, // This is moving away from being a feature toggle.
-		},
-		{
 			Name:        "externalCorePlugins",
 			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageGeneralAvailability,
@@ -589,15 +579,6 @@ var (
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:            "recoveryThreshold",
-			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
 		},
 		{
 			Name:         "lokiStructuredMetadata",
@@ -1747,12 +1728,18 @@ var (
 			FrontendOnly: true,
 		},
 		{
-
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "multiTenantFrontend",
+			Description:  "Register MT frontend",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "alertingListViewV2PreviewToggle",
@@ -1767,6 +1754,16 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
+		},
+		{
+			Name:              "alertingBulkActionsInUI",
+			Description:       "Enables the alerting bulk actions in the UI",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 	}
 )

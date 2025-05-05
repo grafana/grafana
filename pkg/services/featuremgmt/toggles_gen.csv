@@ -58,7 +58,6 @@ sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,fal
 libraryPanelRBAC,experimental,@grafana/dashboards-squad,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false
 wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false
-alertingInsights,GA,@grafana/alerting-squad,false,false,true
 externalCorePlugins,GA,@grafana/plugins-platform-backend,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
@@ -77,7 +76,6 @@ queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,fals
 queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
-recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
@@ -229,5 +227,7 @@ unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
+multiTenantFrontend,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
+alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true

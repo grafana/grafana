@@ -41,12 +41,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled  | Yes                |
 | `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                   | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                            | Yes                |
-| `alertingInsights`                     | Show the new alerting insights landing page                                                                                         | Yes                |
 | `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                         | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                              | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                    | Yes                |
 | `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                              | Yes                |
-| `recoveryThreshold`                    | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                                            | Yes                |
 | `lokiStructuredMetadata`               | Enables the loki data source to request structured metadata from the Loki server                                                    | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
