@@ -23,15 +23,21 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+type RenderExtraBuilder struct {
+	ExtraBuilder
+}
+
 func ProvidePreviewScreenshots(
 	render rendering.Service,
 	unified resource.ResourceClient,
-) ExtraBuilder {
-	return func(b *APIBuilder) Extra {
-		return &renderConnector{
-			render:  render,
-			unified: unified,
-		}
+) RenderExtraBuilder {
+	return RenderExtraBuilder{
+		ExtraBuilder: func(b *APIBuilder) Extra {
+			return &renderConnector{
+				render:  render,
+				unified: unified,
+			}
+		},
 	}
 }
 

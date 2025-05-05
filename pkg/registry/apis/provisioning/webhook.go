@@ -33,6 +33,10 @@ import (
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
 
+type WebhookExtraBuilder struct {
+	ExtraBuilder
+}
+
 func ProvideWebhooks(
 	cfg *setting.Cfg,
 	client ClientGetter,
@@ -41,24 +45,26 @@ func ProvideWebhooks(
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 	ghFactory *github.Factory,
-) ExtraBuilder {
+) WebhookExtraBuilder {
 	urlProvider := func(namespace string) string {
 		return cfg.AppURL
 	}
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
 
-	return func(b *APIBuilder) Extra {
-		return NewWebhookConnector(
-			client,
-			getter,
-			jobs,
-			isPublic,
-			urlProvider,
-			b,
-			secrets.NewSingleTenant(secretsSvc),
-			ghFactory,
-		)
+	return WebhookExtraBuilder{
+		ExtraBuilder: func(b *APIBuilder) Extra {
+			return NewWebhookConnector(
+				client,
+				getter,
+				jobs,
+				isPublic,
+				urlProvider,
+				b,
+				secrets.NewSingleTenant(secretsSvc),
+				ghFactory,
+			)
+		},
 	}
 }
 

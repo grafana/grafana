@@ -17,8 +17,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
-func mergeProvisioningExtras(builders ...provisioning.ExtraBuilder) []provisioning.ExtraBuilder {
-	return builders
+func MergeProvisioningExtras(webhook provisioning.WebhookExtraBuilder, render provisioning.RenderExtraBuilder) []provisioning.ExtraBuilder {
+	return []provisioning.ExtraBuilder{
+		webhook.ExtraBuilder,
+		render.ExtraBuilder,
+	}
 }
 
 var WireSet = wire.NewSet(
@@ -38,7 +41,7 @@ var WireSet = wire.NewSet(
 	iam.RegisterAPIService,
 	provisioning.ProvideWebhooks,
 	provisioning.ProvidePreviewScreenshots,
-	mergeProvisioningExtras,
+	MergeProvisioningExtras,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
