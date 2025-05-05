@@ -62,7 +62,7 @@ git reset --hard v9.0.5
 
 Cherry-pick all of our NI-specific commits from the archive branch. The first commit should have the message:
 
-_Add "iframeNavigate" postMessage calls_.
+_init ni/grafana fork_.
 
 ```
 # git cherry-pick X^..Y where X is the first commit and Y is the latest on the archive branch you created above
@@ -71,3 +71,28 @@ git cherry-pick 095cea2^..d919979
 
 Carefully resolve any merge conflicts. Run `git cherry-pick --skip` for any changes that were accepted upstream since the last version bump.
 Once the cherry pick is completed, force push main (`git push -f`). If you are not an admin, ask one to do this step for you.
+
+If you find you need to update `main` multiple times during the same release upgrade process (you may find issues that need resolution after initial attempt), or as part of the cherry-pick process you inadvertently introduced new commits, you can/should collapse those commits into a single commit (the most recent commit) using `git rebase -i (commit before first new commit)`.
+
+### Tips and Tricks
+
+#### Setup
+
+First, make sure to read and follow the directions of the [Developer Guide](./contribute/developer-guide.md). 
+
+#### Windows users
+
+As of Grafana 11, you should be using a later version of node (e.g. 22), as the noted version in the [linked blog](https://grafana.com/blog/2021/03/03/how-to-set-up-a-grafana-development-environment-on-a-windows-pc-using-wsl/) of 14.15.5 will fail to compile the backend and frontend code. Using a newer version of Go (more recent than the noted 1.15) may also be needed (e.g. 1.23).
+
+In Docker Desktop make sure to enable the WSL distribution you intend to use (via Settings->Resources->WSL integration).
+
+#### Compiling/running backend
+
+In Visual Studio Code, you may want to add the WSL extension (Microsoft). In an Ubuntu (or appropriate WSL distro) terminal, you may have to run `make run` for the first compile of the backend (which is a long process). Successive compiles, after you alter either configuration files (like `defaults.ini`, or more appropriately `custom.ini`), or  backend code (e.g. Go files in the `pkg` folder directory) can normally be successful using **`make run-go`**, which is a _much_ faster compile process.
+
+Generally, you will want to use the [**`ni.ini`** configuration file](./conf/ni.ini) when starting the backend, which has settings to enable it to run within the SLE Grafana web app. To do this, you _must_ copy it to a file named **`custom.ini`** in the same directory. This file will be ignored by Github.
+
+#### Compiling/running frontend
+
+Instead of using `yarn start` as the blog indicates, you can likely start with just using **`yarn start:noLint`** which avoids both the linting and type-checking process. This is a substantially faster compile process than using `yarn start`.
+
