@@ -34,7 +34,6 @@ export function SaveDashboardForm({ dashboard, drawer, changeInfo }: Props) {
   const onSave = async (overwrite: boolean) => {
     const result = await onSaveDashboard(dashboard, { ...options, overwrite });
     if (result.status === 'success') {
-      console.log({ options });
       dashboard.closeModal();
       drawer.state.onSaveSuccess?.();
     }
