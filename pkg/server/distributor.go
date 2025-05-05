@@ -55,7 +55,11 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	grpcServer := distributor.grpcHandler.GetServer()
 
 	resource.RegisterResourceStoreServer(grpcServer, distributorServer)
+	// TODO how to do this
+	// resource.RegisterBulkStoreServer(grpcServer, distributorServer)
 	resource.RegisterResourceIndexServer(grpcServer, distributorServer)
+	resource.RegisterManagedObjectIndexServer(grpcServer, distributorServer)
+	resource.RegisterBlobStoreServer(grpcServer, distributorServer)
 	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
 	_, err = grpcserver.ProvideReflectionService(ms.cfg, distributor.grpcHandler)
 	if err != nil {
@@ -176,6 +180,47 @@ func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.Resour
 	// }
 
 	// return client.Watch(ctx, r)
+}
+
+// TODO how to do this
+// func (ds *DistributorServer) BulkProcess(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
+// 	return nil
+// }
+
+func (ds *DistributorServer) CountManagedObjects(ctx context.Context, r *resource.CountManagedObjectsRequest) (*resource.CountManagedObjectsResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.CountManagedObjects(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) ListManagedObjects(ctx context.Context, r *resource.ListManagedObjectsRequest) (*resource.ListManagedObjectsResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.ListManagedObjects(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) PutBlob(ctx context.Context, r *resource.PutBlobRequest) (*resource.PutBlobResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.PutBlob(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) GetBlob(ctx context.Context, r *resource.GetBlobRequest) (*resource.GetBlobResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Resource.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.GetBlob(userutils.InjectOrgID(ctx, "1"), r)
 }
 
 func (ds *DistributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (resource.ResourceClient, error) {
