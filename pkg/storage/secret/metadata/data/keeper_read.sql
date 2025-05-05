@@ -13,8 +13,7 @@ SELECT
   {{ .Ident "payload" }}
 FROM
   {{ .Ident "secret_keeper" }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Name }}
 {{ if .IsForUpdate }}
 {{ .SelectFor "UPDATE" }}

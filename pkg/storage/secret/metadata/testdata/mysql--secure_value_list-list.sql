@@ -17,7 +17,6 @@ SELECT
   `external_id`
 FROM
   `secret_secure_value`
-WHERE 1 = 1 AND
-  `namespace` = 'ns'
+WHERE `namespace` = 'ns'
 ORDER BY `updated` DESC
 ;
