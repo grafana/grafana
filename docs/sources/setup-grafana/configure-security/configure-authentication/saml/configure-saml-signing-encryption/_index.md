@@ -13,11 +13,11 @@ weight: 530
 
 # Configure SAML signing and encryption
 
-Grafana supports signed and encrypted assertions, and does _not_ support encrypted requests.
+Grafana supports signed and encrypted responses, and _only_ supports signed requests.
 
 ## Certificate and private key
 
-Commonly, the certificate and key are embedded in the IDP metadata and refreshed as needed by Grafana automatically. However, if your IdP expects signed requests, you must supply a certificate and private key.
+Commonly, the certificate and key are embedded in the IdP metadata and refreshed as needed by Grafana automatically. However, if your IdP expects signed requests, you must supply a certificate and private key.
 
 The SAML SSO standard uses asymmetric encryption to exchange information between the SP (Grafana) and the IdP. To perform such encryption, you need a public part and a private part. In this case, the X.509 certificate provides the public part, while the private key provides the private part. The private key needs to be issued in a [PKCS#8](https://en.wikipedia.org/wiki/PKCS_8) format.
 

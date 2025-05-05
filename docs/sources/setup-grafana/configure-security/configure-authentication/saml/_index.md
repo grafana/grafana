@@ -145,7 +145,7 @@ assertion_attribute_name = $__saml{firstName} $__saml{lastName}
 
 ## SAML Name ID
 
-The `name_id_format` configuration field specifies the format of the NameID element in the SAML assertion.
+The `name_id_format` configuration field specifies the requested format of the NameID element in the SAML assertion.
 
 By default, this is set to `urn:oasis:names:tc:SAML:2.0:nameid-format:transient` and does not need to be specified in the configuration file.
 
@@ -171,7 +171,7 @@ Grafana supports three ways of specifying the IdP metadata.
 
 ## Maximum issue delay
 
-Prevents SAML response replay attacks and internal clock skews between the SP (Grafana) and the IdP. You can set a maximum amount of time between the IdP issuing a response and the SP (Grafana) processing it.
+Prevents SAML response replay attacks and internal clock skews between the SP (Grafana) and the IdP. You can set a maximum amount of time between the SP issuing the AuthnRequest and the SP (Grafana) processing it.
 
 The configuration options is specified as a duration, such as `max_issue_delay = 90s` or `max_issue_delay = 1h`.
 
@@ -214,11 +214,11 @@ To allow Grafana to initiate a POST request to the IdP, update the `content_secu
 For Grafana Cloud instances, please contact Grafana Support to update the `content_security_policy_template` and `content_security_policy_report_only_template` settings of your Grafana instance. Please provide the metadata URL/file of your IdP.
 {{< /admonition >}}
 
-## IdP-initiated Single Sign-On (SSO)
+## IdP-initiated login
 
 By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via the login page in Grafana). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
-IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
+IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated login, Grafana receives unsolicited SAML responses and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated login is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated login and keeping it disabled whenever possible.
 
 ## Advanced configuration
 

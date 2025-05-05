@@ -54,7 +54,7 @@ You can specify multiple organizations both for the IdP and Grafana:
 
 You can use `*` as the SAML Organization if you want all your users to be in some Grafana organizations with a default role:
 
-- `org_mapping = *:2:Editor` to map all users to `2` in Grafana as Editors.
+- `org_mapping = *:2:Editor` to map all users to the organization which ID is `2` in Grafana as Editors.
 
 You can use `*` as the Grafana organization in the mapping if you want all users from a given SAML Organization to be added to all existing Grafana organizations.
 

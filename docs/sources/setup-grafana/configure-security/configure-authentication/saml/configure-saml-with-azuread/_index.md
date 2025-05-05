@@ -19,7 +19,7 @@ Grafana supports user authentication through Microsoft Entra ID. This topic show
 {{< admonition type="note" >}}
 If an Entra ID user belongs to more than 150 groups, a Graph API endpoint is used instead.
 
-Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use OIDC/OAuth workflows.
+Grafana versions 11.1 and below, do not support fetching the groups from the Graph API endpoint. As a result, users with more than 150 groups will not be able to retrieve their groups. Instead, it is recommended that you use the Azure AD connector.
 
 As of Grafana 11.2, the SAML integration offers a mechanism to retrieve user groups from the Graph API.
 
@@ -37,7 +37,7 @@ If you have users that belong to more than 150 groups, configure a registered ap
 
 ## Generate self-signed certificates
 
-Entra ID requires a certificate to sign the SAML requests. You can generate a self-signed certificate using the following command:
+Entra ID requires a certificate to verify the SAML requests' signature. You can generate a private key and a self-signed certificate using the following command (the private key used to sign the requests and the certificate contains the public key for verification):
 
 ```sh
 $ openssl req -x509 -newkey rsa:4096 -keyout key.pem -out cert.pem -days 365 -nodes
@@ -91,12 +91,12 @@ While an Entra ID tenant can be configured in Grafana via SAML, some additional 
 
 > For the following configuration, the URL `https://localhost` will be used as the Grafana URL. Replace it with your Grafana instance URL.
 
-### Create a new Application registration
+### Create a new App registration
 
 This app registration will be used as a Service Account to retrieve more information about the user from the Entra ID.
 
-1. Go to the [Entra ID portal](https://portal.azure.com/#home) and sign in with your Entra ID account.
-1. In the left-hand navigation pane, select the Azure Active Directory service, and then select **App registrations**.
+1. Go to the [Azure portal](https://portal.azure.com/#home) and sign in with your Entra ID account.
+1. In the left-hand navigation pane, select the Microsoft Entra ID service, and then select **App registrations**.
 1. Click the **New registration** button.
 1. In the **Register an application** pane, enter a name for the application.
 1. In the **Supported account types** section, select the account types that can use the application.
