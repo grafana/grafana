@@ -1,4 +1,4 @@
-import { Observable, debounce, defer, finalize, first, interval, map, of } from 'rxjs';
+import { Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -11,6 +11,7 @@ import {
   PanelData,
   DataFrame,
   LoadingState,
+  Field,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -78,6 +79,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
+        debounceTime(50),
         map((result) => {
           return {
             data: this.getDataFramesForQueryTopic(result.data, query),
@@ -104,7 +106,19 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         },
       }));
     } else {
-      return [...data.series, ...annotations];
+      const series = data.series.map((s) => {
+        return {
+          ...s,
+          fields: s.fields.map((field: Field) => ({
+            ...field,
+            state: {
+              ...field.state,
+            },
+          })),
+        };
+      });
+
+      return [...series, ...annotations];
     }
   }
 
