@@ -273,11 +273,6 @@ export interface FeatureToggles {
   */
   wargamesTesting?: boolean;
   /**
-  * Show the new alerting insights landing page
-  * @default true
-  */
-  alertingInsights?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
@@ -1013,6 +1008,10 @@ export interface FeatureToggles {
   * Enables auto-updating of users installed plugins
   */
   pluginsAutoUpdate?: boolean;
+  /**
+  * Register MT frontend
+  */
+  multiTenantFrontend?: boolean;
   /**
   * Enables the alerting list view v2 preview toggle
   */

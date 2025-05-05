@@ -243,10 +243,6 @@ const (
 	// Placeholder feature flag for internal testing
 	FlagWargamesTesting = "wargamesTesting"
 
-	// FlagAlertingInsights
-	// Show the new alerting insights landing page
-	FlagAlertingInsights = "alertingInsights"
-
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -922,6 +918,10 @@ const (
 	// FlagPluginsAutoUpdate
 	// Enables auto-updating of users installed plugins
 	FlagPluginsAutoUpdate = "pluginsAutoUpdate"
+
+	// FlagMultiTenantFrontend
+	// Register MT frontend
+	FlagMultiTenantFrontend = "multiTenantFrontend"
 
 	// FlagAlertingListViewV2PreviewToggle
 	// Enables the alerting list view v2 preview toggle

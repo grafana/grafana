@@ -75,6 +75,7 @@ export function TableNG(props: TableNGProps) {
     data,
     enableSharedCrosshair,
     showTypeIcons,
+    replaceVariables,
   } = props;
 
   const initialSortColumns = useMemo<SortColumn[]>(() => {
@@ -195,16 +196,16 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(
-    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+    () => props.data.fields.reduce<ColumnTypes>((acc, { name, type }) => ({ ...acc, [name]: type }), {}),
     [props.data.fields]
   );
 
   // Create a map of column key to text wrap
   const textWraps = useMemo(
     () =>
-      props.data.fields.reduce(
+      props.data.fields.reduce<{ [key: string]: boolean }>(
         (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.cellOptions?.wrapText ?? false }),
-        {} as { [key: string]: boolean }
+        {}
       ),
     [props.data.fields]
   );
@@ -242,15 +243,12 @@ export function TableNG(props: TableNGProps) {
   }, [props.data.fields]);
 
   const fieldDisplayType = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, { config, name }) => {
-        if (config?.custom?.cellOptions?.type) {
-          acc[name] = config.custom.cellOptions.type;
-        }
-        return acc;
-      },
-      {} as Record<string, TableCellDisplayMode>
-    );
+    return props.data.fields.reduce<Record<string, TableCellDisplayMode>>((acc, { config, name }) => {
+      if (config?.custom?.cellOptions?.type) {
+        acc[name] = config.custom.cellOptions.type;
+      }
+      return acc;
+    }, {});
   }, [props.data.fields]);
 
   // Clean up fieldsData to simplify
@@ -456,6 +454,7 @@ export function TableNG(props: TableNGProps) {
           styles,
           theme,
           showTypeIcons,
+          replaceVariables,
           ...props,
         },
         handlers: {
@@ -667,6 +666,7 @@ export function mapFrameToDataGrid({
     timeRange,
     getActions,
     showTypeIcons,
+    replaceVariables,
   } = options;
   const { onCellExpand, onColumnResize } = handlers;
 
@@ -748,7 +748,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
+        const display = field.display!(field.values[rowIndex]);
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
@@ -815,6 +815,7 @@ export function mapFrameToDataGrid({
             getActions={getActions}
             rowBg={rowBg}
             onCellFilterAdded={onCellFilterAdded}
+            replaceVariables={replaceVariables}
           />
         );
       },
@@ -1002,6 +1003,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     '::-webkit-scrollbar-thumb': {
       backgroundColor: 'rgba(204, 204, 220, 0.16)',
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: '4px',
     },
     '::-webkit-scrollbar-track': {
