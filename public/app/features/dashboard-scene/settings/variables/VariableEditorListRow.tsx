@@ -146,7 +146,12 @@ function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactE
   const styles = useStyles2(getStyles);
   if (passed) {
     return (
-      <Tooltip content="This variable is referenced by other variables or dashboard.">
+      <Tooltip
+        content={t(
+          'dashboard-scene.variable-check-indicator.content-variable-referenced-other-variables-dashboard',
+          'This variable is referenced by other variables or dashboard.'
+        )}
+      >
         <Icon
           name="check"
           className={styles.iconPassed}
@@ -160,7 +165,12 @@ function VariableCheckIndicator({ passed }: VariableCheckIndicatorProps): ReactE
   }
 
   return (
-    <Tooltip content="This variable is not referenced by other variables or dashboard.">
+    <Tooltip
+      content={t(
+        'dashboard-scene.variable-check-indicator.content-variable-not-referenced-other-variables-dashboard',
+        'This variable is not referenced by other variables or dashboard.'
+      )}
+    >
       <Icon
         name="exclamation-triangle"
         className={styles.iconFailed}
