@@ -21,13 +21,12 @@ on:
     - 'main'
     - 'release-*.*.*'
 
-permissions: {}
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
   setup:
-    permissions:
-      contents: read
-      id-token: write
     if: ${{ github.event_name == 'workflow_dispatch' || (github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/')) }}
     name: Setup and establish latest
     outputs:
@@ -79,18 +78,12 @@ jobs:
     name: Create next release branch (Grafana)
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
-    permissions:
-      contents: write
-      id-token: write
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
       token: ${{ needs.setup.outputs.token }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
-    permissions:
-      contents: write
-      id-token: write
     needs: setup
     uses: ./.github/workflows/create-next-release-branch.yml
     with:
@@ -98,9 +91,6 @@ jobs:
       source: ${{ needs.setup.outputs.release_branch }}
       token: ${{ needs.setup.outputs.token }}
   migrate_prs_grafana:
-    permissions:
-      pull-requests: write
-      id-token: write
     needs:
       - setup
       - create_next_release_branch_grafana
@@ -111,9 +101,6 @@ jobs:
       to: ${{ needs.create_next_release_branch_grafana.outputs.branch }}
       token: ${{ needs.setup.outputs.token }}
   migrate_prs_enterprise:
-    permissions:
-      pull-requests: write
-      id-token: write
     needs:
       - setup
       - create_next_release_branch_enterprise
@@ -142,9 +129,6 @@ jobs:
   post_on_slack:
     needs: setup
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
     env:
       DRY_RUN: ${{ needs.setup.outputs.dry_run }}
       VERSION: ${{ needs.setup.outputs.version }}
