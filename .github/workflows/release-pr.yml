@@ -172,7 +172,7 @@ jobs:
 
       - name: Git push
         if: inputs.dry_run != true
-        run: git push --set-upstream origin "release/${{ github.run_id }}/$VERSION"
+        run: git push
       - name: Create PR
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
