@@ -75,6 +75,3 @@ Grafana extracts Loki label names and values from the Graphite queries according
 Queries using tags with `seriesByTags()` are also transformed without any additional setup.
 
 ## Get the most out of the data source
-
-
-

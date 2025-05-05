@@ -49,7 +49,7 @@ For general documentation on querying data sources in Grafana, see [Query and tr
 
 - **Series** - Select a metric from the drop-down.
 
-- **Functions** - Graphite uses functions to manipulate data. Click the **+ sign** to view a list of function in the drop-down. You can create a query with multiple functions. 
+- **Functions** - Graphite uses functions to manipulate data. Click the **+ sign** to view a list of function in the drop-down. You can create a query with multiple functions.
 
 To view the raw query, click the **Pencil icon** in the upper right. Click the click the **Pencil icon** again to continue adding series and functions.
 
@@ -63,7 +63,7 @@ You can also select a wildcard and still continue.
 
 ## Functions
 
-Click the **+ sign** next to **Function** to add a function from the drop-down. You can also search by typing the first few letters of the function name. 
+Click the **+ sign** next to **Function** to add a function from the drop-down. You can also search by typing the first few letters of the function name.
 
 After selecting a function, it is added to your query, and your cursor automatically moves to the first parameter field.
 
@@ -80,7 +80,7 @@ To remove a function simply click on it, then click the **X icon** above it.
 
 Some functions like `aliasByNode` support an optional second argument. To add this argument, hover your mouse over the argument and a dialog box appears. To remove the second optional parameter, click on it to delete it.
 
-Refer to [Functions](https://graphite.readthedocs.io/en/latest/functions.html) in the Graphite documentation for more information. 
+Refer to [Functions](https://graphite.readthedocs.io/en/latest/functions.html) in the Graphite documentation for more information.
 
 {{% admonition type="warning" %}}
 Some functions accept a second argument that can itself be another function returning a series. If you need to add a second argument that is a function, Grafana recommends using a series reference from a second query instead of embedding the function directly.
