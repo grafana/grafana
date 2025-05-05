@@ -2,6 +2,7 @@ package checkregistry
 
 import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
+	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/authchecks"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/datasourcecheck"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks/plugincheck"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -12,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
 
 type CheckService interface {
@@ -27,12 +29,13 @@ type Service struct {
 	pluginPreinstall      plugininstaller.Preinstall
 	managedPlugins        managedplugins.Manager
 	provisionedPlugins    provisionedplugins.Manager
+	ssoSettingsSvc        ssosettings.Service
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	pluginRepo repo.Service, pluginPreinstall plugininstaller.Preinstall, managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager,
+	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service,
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
@@ -43,6 +46,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		pluginPreinstall:      pluginPreinstall,
 		managedPlugins:        managedPlugins,
 		provisionedPlugins:    provisionedPlugins,
+		ssoSettingsSvc:        ssoSettingsSvc,
 	}
 }
 
@@ -62,6 +66,7 @@ func (s *Service) Checks() []checks.Check {
 			s.managedPlugins,
 			s.provisionedPlugins,
 		),
+		authchecks.New(s.ssoSettingsSvc),
 	}
 }
 
