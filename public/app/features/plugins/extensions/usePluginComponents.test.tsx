@@ -112,6 +112,11 @@ describe('usePluginComponents()', () => {
     );
   });
 
+  afterEach(() => {
+    jest.clearAllMocks();
+    jest.restoreAllMocks();
+  });
+
   it('should return an empty array if there are no extensions registered for the extension point', () => {
     const { result } = renderHook(
       () =>
@@ -257,12 +262,11 @@ describe('usePluginComponents()', () => {
 
     // Should be possible to render the component if it doesn't want to change the props
     const rendered = render(<Component foo={originalFoo} />);
-    expect(await rendered.findByText('Foo')).toBeVisible();
+    expect(rendered.getByText('Foo')).toBeVisible();
 
     // Check if it throws a TypeError due to trying to change the prop
     jest.spyOn(console, 'error').mockImplementation(() => {});
     expect(() => render(<Component foo={originalFoo} override />)).toThrow(TypeError);
-    jest.spyOn(console, 'error').mockRestore();
 
     // Check if the original property hasn't been changed
     expect(originalFoo.foo2.foo3.foo4).toBe('bar');
