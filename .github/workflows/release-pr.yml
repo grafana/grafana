@@ -15,7 +15,7 @@ on:
       version:
         required: true
         type: string
-        description: The version of Grafana that is being released
+        description: The version of Grafana that is being released (without the `v` prefix)`
       target:
         required: true
         type: string
@@ -76,7 +76,7 @@ jobs:
           # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
           repo_secrets: |
             GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - run: echo "RELEASE_BRANCH=release-${VERSION:1}" >> $GITHUB_ENV
+      - run: echo "RELEASE_BRANCH=release-${VERSION}" >> $GITHUB_ENV
       - name: Checkout Grafana
         uses: actions/checkout@v4
         with:
@@ -166,7 +166,7 @@ jobs:
           version: 'patch'
 
       - name: Add package.json changes
-        if: ${{ inputs.bump == true || inputs.bump == 'true' }}
+        if: ${{ inputs.bump == true || inputs.bump == 'true" }}
         run: |
           git add package.json lerna.json yarn.lock packages public
           test -e e2e/test-plugins && git add e2e/test-plugins
