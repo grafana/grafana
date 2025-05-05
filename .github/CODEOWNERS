@@ -826,7 +826,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/run-e2e-suite.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/skye-add-to-project.yml @grafana/grafana-frontend-platform
-/.github/workflows/zizmor.yml @grafana/grafana-developer-enablement-squad
 /.github/zizmor.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
