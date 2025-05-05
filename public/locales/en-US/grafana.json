@@ -2657,6 +2657,10 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "Folder not found",
+      "title-ruler-namespace-error": "Cannot load rules"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
