@@ -49,12 +49,14 @@ func (ms *ModuleServer) initDistributor() (services.Service, error) {
 	}
 
 	distributorServer := &DistributorServer{
-		ring: ms.storageRing,
+		ring:       ms.storageRing,
 		clientPool: ms.storageRingClientPool,
 	}
+	grpcServer := distributor.grpcHandler.GetServer()
 
-	resource.RegisterResourceIndexServer(distributor.grpcHandler.GetServer(), distributorServer)
-	grpc_health_v1.RegisterHealthServer(distributor.grpcHandler.GetServer(), healthService)
+	resource.RegisterResourceStoreServer(grpcServer, distributorServer)
+	resource.RegisterResourceIndexServer(grpcServer, distributorServer)
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
 	_, err = grpcserver.ProvideReflectionService(ms.cfg, distributor.grpcHandler)
 	if err != nil {
 		return nil, err
@@ -102,31 +104,98 @@ var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceS
 })
 
 func (ds *DistributorServer) Search(ctx context.Context, r *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
-	ringHasher := fnv.New32a()
-	_, err := ringHasher.Write([]byte(r.Options.Key.Namespace))
+	client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
-		fmt.Println("error hashing namespace ", err)
 		return nil, err
 	}
-	rs, err := ds.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
 
+	return client.Search(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) GetStats(ctx context.Context, r *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
-		fmt.Println("err getting replication set ", err)
+		return nil, err
+	}
+
+	return client.GetStats(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) Read(ctx context.Context, r *resource.ReadRequest) (*resource.ReadResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Read(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) Create(ctx context.Context, r *resource.CreateRequest) (*resource.CreateResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Create(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) Update(ctx context.Context, r *resource.UpdateRequest) (*resource.UpdateResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Update(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) Delete(ctx context.Context, r *resource.DeleteRequest) (*resource.DeleteResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Delete(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) (*resource.ListResponse, error) {
+	client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.List(userutils.InjectOrgID(ctx, "1"), r)
+}
+
+// func (ds *DistributorServer) Watch(ctx context.Context, r *resource.WatchRequest) (resource.ResourceStore_WatchClient, error) {
+func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
+	// TODO figure out what to do here. what's commented doesn't work
+	return nil
+	// client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return client.Watch(ctx, r)
+}
+
+func (ds *DistributorServer) getClientToDistributeRequest(ctx context.Context, namespace string) (resource.ResourceClient, error) {
+	ringHasher := fnv.New32a()
+	_, err := ringHasher.Write([]byte(namespace))
+	if err != nil {
+		return nil, err
+	}
+
+	rs, err := ds.ring.Get(ringHasher.Sum32(), ringOp, nil, nil, nil)
+	if err != nil {
 		return nil, err
 	}
 
 	client, err := ds.clientPool.GetClientForInstance(rs.Instances[0])
 	if err != nil {
-		fmt.Println("error getting client from pool: ", err)
 		return nil, err
 	}
 
-	return client.(*resource.RingClient).Client.Search(userutils.InjectOrgID(ctx, "1"), r)
-}
-
-func (ds *DistributorServer) GetStats(ctx context.Context, r *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
-	fmt.Println("get stats!!")
-	return nil, nil
+	return client.(*resource.RingClient).Client, nil
 }
 
 type healthServer struct{}
