@@ -11,6 +11,7 @@ import {
   PanelData,
   DataFrame,
   LoadingState,
+  Field,
 } from '@grafana/data';
 import { SceneDataProvider, SceneDataTransformer, SceneObject } from '@grafana/scenes';
 import {
@@ -104,7 +105,19 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
         },
       }));
     } else {
-      return [...data.series, ...annotations];
+      const series = data.series.map((s) => {
+        return {
+          ...s,
+          fields: s.fields.map((field: Field) => ({
+            ...field,
+            state: {
+              ...field.state,
+            },
+          })),
+        };
+      });
+
+      return [...series, ...annotations];
     }
   }
 
