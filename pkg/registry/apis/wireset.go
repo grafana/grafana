@@ -17,6 +17,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
+func mergeProvisioningExtras(builders ...provisioning.ExtraBuilder) []provisioning.ExtraBuilder {
+	return builders
+}
+
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
@@ -32,8 +36,9 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	provisioning.ProvidePreviewScreenshots,
 	provisioning.ProvideWebhooks,
+	provisioning.ProvidePreviewScreenshots,
+	mergeProvisioningExtras,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,
