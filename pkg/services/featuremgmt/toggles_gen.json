@@ -159,7 +159,8 @@
       "metadata": {
         "name": "alertingInsights",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2023-09-14T12:58:04Z"
+        "creationTimestamp": "2023-09-14T12:58:04Z",
+        "deletionTimestamp": "2025-05-05T08:01:40Z"
       },
       "spec": {
         "description": "Show the new alerting insights landing page",
