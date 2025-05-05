@@ -45,7 +45,7 @@ func TestFolderConversions(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := time.Parse(time.RFC3339, "2022-12-02T02:02:02Z")
-	created = created.UTC()
+	created = created.Local()
 	require.NoError(t, err)
 
 	fake := usertest.NewUserServiceFake()
@@ -232,7 +232,7 @@ func TestFolderListConversions(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := time.Parse(time.RFC3339, "2022-12-02T02:02:02Z")
-	created = created.UTC()
+	created = created.Local()
 	require.NoError(t, err)
 
 	fake := usertest.NewUserServiceFake()

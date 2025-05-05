@@ -1565,8 +1565,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20250418140648-7268b2b6d9f1 h1:xdTzIQqFJxzRLgODsFMAT/8LIWtqCXLqltaWo6AmFVA=
-github.com/grafana/alerting v0.0.0-20250418140648-7268b2b6d9f1/go.mod h1:XTbf+jPVVMC1C2NuSGa3hIVbO+KSQD0qHjiUr1GoWVI=
+github.com/grafana/alerting v0.0.0-20250425150043-be11a2ae18bb h1:Nkqatz7R7K/2YaK+7pw8CAYgylKfksPVeT7gMARKjwI=
+github.com/grafana/alerting v0.0.0-20250425150043-be11a2ae18bb/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
 github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a h1:irEH0Abl6mKbkPx/xtmB5Wai4ipzEB6hGPNsLya/p9Y=
 github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAhdDOiSEyrMaYaHwnJpM8w9QKzVQZIBzLNmM=
@@ -1589,8 +1589,7 @@ github.com/grafana/grafana-app-sdk v0.35.1 h1:zEXubzsQrxGBOzXJJMBwhEClC/tvPi0sfK
 github.com/grafana/grafana-app-sdk v0.35.1/go.mod h1:Zx5MkVppYK+ElSDUAR6+fjzOVo6I/cIgk+ty+LmNOxI=
 github.com/grafana/grafana-app-sdk/logging v0.35.1 h1:taVpl+RoixTYl0JBJGhH+fPVmwA9wvdwdzJTZsv9buM=
 github.com/grafana/grafana-app-sdk/logging v0.35.1/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
-github.com/grafana/grafana-aws-sdk v0.38.0 h1:OALlZ3FvmzKHICQe0C1cuAMdyhSFkVYxHdxJsleotwc=
-github.com/grafana/grafana-aws-sdk v0.38.0/go.mod h1:j3vi+cXYHEFqjhBGrI6/lw1TNM+dl0Y3f0cSnDOPy+s=
+github.com/grafana/grafana-aws-sdk v0.38.1 h1:4fU28F/UIs3YYuS52bBzTOKpFIIYGJZmgM6PO7IEj90=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
 github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 h1:S4kHwr//AqhtL9xHBtz1gqVgZQeCRGTxjgsRBAkpjKY=
@@ -1629,8 +1628,6 @@ github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250422074709-7c
 github.com/grafana/grafana/pkg/storage/unified/apistore v0.0.0-20250422074709-7c8433fbb2c2/go.mod h1:LivE9S7HU1uU0cZ99wG77ZgPmOPZYuFWfZ68Lh59gPU=
 github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250422074709-7c8433fbb2c2 h1:1f8d/Jy/9kv4bqtI5dQjxhpzFBWFrmtPXAPjOd8e6WA=
 github.com/grafana/grafana/pkg/storage/unified/resource v0.0.0-20250422074709-7c8433fbb2c2/go.mod h1:c1wMG6p6/zlMsi1KoOGYNMdFW2f8xM690CSZcl2i4eI=
-github.com/grafana/grafana/pkg/util/xorm v0.0.1 h1:72QZjxWIWpSeOF8ob4aMV058kfgZyeetkAB8dmeti2o=
-github.com/grafana/grafana/pkg/util/xorm v0.0.1/go.mod h1:eNfbB9f2jM8o9RfwqwjY8SYm5tvowJ8Ly+iE4P9rXII=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32 h1:NznuPwItog+rwdVg8hAuGKP29ndRSzJAwhxKldkP8oQ=
 github.com/grafana/jsonparser v0.0.0-20240425183733-ea80629e1a32/go.mod h1:796sq+UcONnSlzA3RtlBZ+b/hrerkZXiEmO8oMjyRwY=
 github.com/grafana/loki/pkg/push v0.0.0-20231124142027-e52380921608 h1:ZYk42718kSXOiIKdjZKljWLgBpzL5z1yutKABksQCMg=
@@ -3193,7 +3190,6 @@ google.golang.org/appengine v1.1.0/go.mod h1:EbEs0AVv82hx2wNQdGPgUI5lhzA/G0D9Ywl
 google.golang.org/appengine v1.3.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.4.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.5.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
-google.golang.org/appengine v1.6.0/go.mod h1:xpcJRLb0r/rnEns0DIKYYv+WjYCduHsrkT7/EB5XEv4=
 google.golang.org/appengine v1.6.1/go.mod h1:i06prIuMbXzDqacNJfV5OdTW448YApPu5ww/cMBSeb0=
 google.golang.org/appengine v1.6.5/go.mod h1:8WjMMxjGQR8xUklV/ARdw2HLXBOI7O7uCIDZVag1xfc=
 google.golang.org/appengine v1.6.6/go.mod h1:8WjMMxjGQR8xUklV/ARdw2HLXBOI7O7uCIDZVag1xfc=
@@ -3596,5 +3592,3 @@ sigs.k8s.io/yaml v1.4.0 h1:Mk1wCc2gy/F0THH0TAp1QYyJNzRm2KCLy3o5ASXVI5E=
 sigs.k8s.io/yaml v1.4.0/go.mod h1:Ejl7/uTz7PSA4eKMyQCUTnhZYNmLIl+5c2lQPGR2BPY=
 xorm.io/builder v0.3.6 h1:ha28mQ2M+TFx96Hxo+iq6tQgnkC9IZkM6D8w9sKHHF8=
 xorm.io/builder v0.3.6/go.mod h1:LEFAPISnRzG+zxaxj2vPicRwz67BdhFreKg8yv8/TgU=
-xorm.io/core v0.7.3 h1:W8ws1PlrnkS1CZU1YWaYLMQcQilwAmQXU0BJDJon+H0=
-xorm.io/core v0.7.3/go.mod h1:jJfd0UAEzZ4t87nbQYtVjmqpIODugN6PD2D9E+dJvdM=
