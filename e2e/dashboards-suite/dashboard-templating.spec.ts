@@ -7,7 +7,7 @@ describe('Dashboard templating', () => {
     Cypress.automation('remote:debugger:protocol', {
       command: 'Emulation.setTimezoneOverride',
       params: {
-        timezoneId: 'America/New_York', // OR  'UTC'
+        timezoneId: 'Pacific/Easter', // OR  'UTC'
       },
     });
   });
