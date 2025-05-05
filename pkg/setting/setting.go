@@ -543,21 +543,29 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage              map[string]UnifiedStorageConfig
-	IndexPath                   string
-	IndexWorkers                int
-	IndexMaxBatchSize           int
-	IndexFileThreshold          int
-	IndexMinCount               int
-	SprinklesApiServer          string
-	SprinklesApiServerPageLimit int
-	CACertPath                  string
-	HttpsSkipVerify             bool
+	UnifiedStorage                             map[string]UnifiedStorageConfig
+	IndexPath                                  string
+	IndexWorkers                               int
+	IndexMaxBatchSize                          int
+	IndexFileThreshold                         int
+	IndexMinCount                              int
+	EnableSharding                             bool
+	MemberlistBindAddr                         string
+	MemberlistAdvertiseAddr                    string
+	MemberlistJoinMember                       string
+	MemberlistClusterLabel                     string
+	MemberlistClusterLabelVerificationDisabled bool
+	InstanceID                                 string
+	SprinklesApiServer                         string
+	SprinklesApiServerPageLimit                int
+	CACertPath                                 string
+	HttpsSkipVerify                            bool
 }
 
 type UnifiedStorageConfig struct {
 	DualWriterMode                       rest.DualWriterMode
 	DualWriterPeriodicDataSyncJobEnabled bool
+	DualWriterMigrationDataSyncDisabled  bool
 	// DataSyncerInterval defines how often the data syncer should run for a resource on the grafana instance.
 	DataSyncerInterval time.Duration
 	// DataSyncerRecordsLimit defines how many records will be processed at max during a sync invocation.

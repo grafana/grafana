@@ -307,7 +307,27 @@ func TestIntegrationDeviceService_SearchDevice(t *testing.T) {
 				UserAgent: "",
 			},
 		},
-	}
+		{
+			name: "device with IPv6 address and case-insensitive search",
+			insertDevices: []*anonstore.Device{
+				{
+					DeviceID: "32mdo31deeqwes",
+					ClientIP: "[2001:db8:3333:4444:cccc:DDDD:eeee:FFFF]:1000", // Using mixed-case to test case insensitivity
+				},
+			},
+			searchQuery: anonstore.SearchDeviceQuery{
+				Query: "CCCC", // Different case to test case insensitivity
+				Page:  1,
+				Limit: 50,
+				From:  fixedTime,
+				To:    fixedTime.Add(1 * time.Hour),
+			},
+			expectedCount: 1,
+			expectedDevice: &anonstore.Device{
+				DeviceID: "32mdo31deeqwes",
+				ClientIP: "[2001:db8:3333:4444:cccc:DDDD:eeee:FFFF]:1000",
+			},
+		}}
 	store := db.InitTestDB(t)
 	cfg := setting.NewCfg()
 	cfg.Anonymous.Enabled = true
