@@ -58,11 +58,13 @@ export const ConfigEditor = (props: Props) => {
           <ConfigSubSection title="Querying">
             <Field
               label="Minimal step"
+              htmlFor="minimal-step"
               description="Minimal step used for metric query. Should be the same or higher as the scrape interval setting in the Pyroscope database."
               error="Value is not valid, you can use number with time unit specifier: y, M, w, d, h, m, s"
               invalid={!!options.jsonData.minStep && !/^\d+(ms|[Mwdhmsy])$/.test(options.jsonData.minStep)}
             >
               <Input
+                id="minimal-step"
                 value={options.jsonData.minStep}
                 spellCheck={false}
                 placeholder="15s"
