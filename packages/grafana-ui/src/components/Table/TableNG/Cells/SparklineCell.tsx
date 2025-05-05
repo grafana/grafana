@@ -101,6 +101,7 @@ export const SparklineCell = (props: SparklineCellProps) => {
           textAlign: 'right',
           marginRight: theme.spacing(1),
         }}
+        className={styles.valueContainer}
         value={displayValue}
       />
     );
@@ -156,5 +157,8 @@ const getStyles = (theme: GrafanaTheme2, justifyContent: Property.JustifyContent
     width: '100%',
     alignItems: 'center',
     justifyContent,
+  }),
+  valueContainer: css({
+    div: { width: 'inherit' },
   }),
 });
