@@ -25,16 +25,18 @@ import { addInvitee } from '../invites/state/actions';
 
 const tooltipMessage = (
   <>
-    You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find more
-    information in&nbsp;
-    <TextLink
-      href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
-      variant="bodySmall"
-      external
-    >
-      our documentation
-    </TextLink>
-    .
+    <Trans i18nKey="org.user-invite-form.tooltip">
+      You can now select the &quot;No basic role&quot; option and add permissions to your custom needs. You can find
+      more information in&nbsp;
+      <TextLink
+        href="https://grafana.com/docs/grafana/latest/administration/roles-and-permissions/#organization-roles"
+        variant="bodySmall"
+        external
+      >
+        our documentation
+      </TextLink>
+      .
+    </Trans>
   </>
 );
 

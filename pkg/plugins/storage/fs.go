@@ -53,8 +53,7 @@ func (fs *FS) Extract(ctx context.Context, pluginID string, dirNameFunc DirNameG
 	deps := make([]*Dependency, 0, len(pluginJSON.Dependencies.Plugins))
 	for _, plugin := range pluginJSON.Dependencies.Plugins {
 		deps = append(deps, &Dependency{
-			ID:      plugin.ID,
-			Version: plugin.Version,
+			ID: plugin.ID,
 		})
 	}
 

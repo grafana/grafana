@@ -8,11 +8,6 @@ import (
 	"time"
 
 	"github.com/fullstorydev/grpchan/inprocgrpc"
-	authnlib "github.com/grafana/authlib/authn"
-	authzlib "github.com/grafana/authlib/authz"
-	authzv1 "github.com/grafana/authlib/authz/proto/v1"
-	"github.com/grafana/authlib/cache"
-	authlib "github.com/grafana/authlib/types"
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
@@ -21,6 +16,11 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"k8s.io/client-go/rest"
 
+	authnlib "github.com/grafana/authlib/authn"
+	authzlib "github.com/grafana/authlib/authz"
+	authzv1 "github.com/grafana/authlib/authz/proto/v1"
+	"github.com/grafana/authlib/cache"
+	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -60,6 +60,13 @@ func ProvideAuthZClient(
 		return nil, errors.New("authZGRPCServer feature toggle is required for cloud and grpc mode")
 	}
 
+	// Provisioning uses mode 4 (read+write only to unified storage)
+	// For G12 launch, we can disable caching for this and find a more scalable solution soon
+	// most likely this would involve passing the RV (timestamp!) in each check method
+	if features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		authCfg.cacheTTL = 0
+	}
+
 	switch authCfg.mode {
 	case clientModeCloud:
 		rbacClient, err := newRemoteRBACClient(authCfg, tracer)
@@ -69,6 +76,11 @@ func ProvideAuthZClient(
 		return rbacClient, err
 	default:
 		sql := legacysql.NewDatabaseProvider(db)
+
+		rbacSettings := rbac.Settings{CacheTTL: authCfg.cacheTTL}
+		if cfg != nil {
+			rbacSettings.AnonOrgRole = cfg.Anonymous.OrgRole
+		}
 
 		// Register the server
 		server := rbac.NewService(
@@ -86,6 +98,7 @@ func ProvideAuthZClient(
 			tracer,
 			reg,
 			cache.NewLocalCache(cache.Config{Expiry: 5 * time.Minute, CleanupInterval: 10 * time.Minute}),
+			rbacSettings,
 		)
 
 		channel := &inprocgrpc.Channel{}
@@ -98,7 +111,11 @@ func ProvideAuthZClient(
 			return ctx, nil
 		}))
 		authzv1.RegisterAuthzServiceServer(channel, server)
-		rbacClient := newRBACClient(channel, tracer)
+		rbacClient := authzlib.NewClient(
+			channel,
+			authzlib.WithCacheClientOption(&NoopCache{}),
+			authzlib.WithTracerClientOption(tracer),
+		)
 
 		if features.IsEnabledGlobally(featuremgmt.FlagZanzana) {
 			return zanzana.WithShadowClient(rbacClient, zanzanaClient, reg)
@@ -153,18 +170,18 @@ func newRemoteRBACClient(clientCfg *authzClientSettings, tracer trace.Tracer) (a
 		return nil, fmt.Errorf("failed to create authz client to remote server: %w", err)
 	}
 
-	return newRBACClient(conn, tracer), nil
-}
-
-func newRBACClient(conn grpc.ClientConnInterface, tracer trace.Tracer) authlib.AccessClient {
-	return authzlib.NewClient(
-		conn,
-		authzlib.WithCacheClientOption(cache.NewLocalCache(cache.Config{
-			Expiry:          30 * time.Second,
+	// Client side cache
+	var authzCache cache.Cache = &NoopCache{}
+	if clientCfg.cacheTTL != 0 {
+		authzCache = cache.NewLocalCache(cache.Config{
+			Expiry:          clientCfg.cacheTTL,
 			CleanupInterval: 2 * time.Minute,
-		})),
-		authzlib.WithTracerClientOption(tracer),
-	)
+		})
+	}
+
+	client := authzlib.NewClient(conn, authzlib.WithCacheClientOption(authzCache), authzlib.WithTracerClientOption(tracer))
+
+	return client, nil
 }
 
 func RegisterRBACAuthZService(
@@ -207,6 +224,7 @@ func RegisterRBACAuthZService(
 		tracer,
 		reg,
 		cache,
+		rbac.Settings{CacheTTL: cfg.CacheTTL}, // anonymous org role can only be set in-proc
 	)
 
 	srv := handler.GetServer()
@@ -232,4 +250,18 @@ func (t tokenExhangeRoundTripper) RoundTrip(r *http.Request) (*http.Response, er
 
 	r.Header.Set("X-Access-Token", "Bearer "+res.Token)
 	return t.rt.RoundTrip(r)
+}
+
+type NoopCache struct{}
+
+func (lc *NoopCache) Get(ctx context.Context, key string) ([]byte, error) {
+	return nil, cache.ErrNotFound
+}
+
+func (lc *NoopCache) Set(ctx context.Context, key string, data []byte, exp time.Duration) error {
+	return nil
+}
+
+func (lc *NoopCache) Delete(ctx context.Context, key string) error {
+	return nil
 }

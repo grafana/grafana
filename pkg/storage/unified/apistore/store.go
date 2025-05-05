@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,9 +28,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-
-	"github.com/bwmarrin/snowflake"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -46,6 +46,8 @@ const (
 
 var _ storage.Interface = (*Storage)(nil)
 
+type DefaultPermissionSetter = func(ctx context.Context, key *resource.ResourceKey, id authtypes.AuthInfo, obj utils.GrafanaMetaAccessor) error
+
 // Optional settings that apply to a single resource
 type StorageOptions struct {
 	// ????: should we constrain this to only dashboards for now?
@@ -57,6 +59,9 @@ type StorageOptions struct {
 
 	// Add internalID label when missing
 	RequireDeprecatedInternalID bool
+
+	// Temporary fix to support adding default permissions AfterCreate
+	Permissions DefaultPermissionSetter
 }
 
 // Storage implements storage.Interface and storage resources as JSON files on disk.
@@ -70,9 +75,10 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store     resource.ResourceClient
-	getKey    func(string) (*resource.ResourceKey, error)
-	snowflake *snowflake.Node // used to enforce internal ids
+	store          resource.ResourceClient
+	getKey         func(string) (*resource.ResourceKey, error)
+	snowflake      *snowflake.Node    // used to enforce internal ids
+	configProvider RestConfigProvider // used for provisioning
 
 	versioner storage.Versioner
 
@@ -86,6 +92,10 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*clientrest.Config, error)
+}
+
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
@@ -97,18 +107,20 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	configProvider RestConfigProvider,
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
-		store:        store,
-		gr:           config.GroupResource,
-		codec:        config.Codec,
-		keyFunc:      keyFunc,
-		newFunc:      newFunc,
-		newListFunc:  newListFunc,
-		getAttrsFunc: getAttrsFunc,
-		trigger:      trigger,
-		indexers:     indexers,
+		store:          store,
+		gr:             config.GroupResource,
+		codec:          config.Codec,
+		keyFunc:        keyFunc,
+		newFunc:        newFunc,
+		newListFunc:    newListFunc,
+		getAttrsFunc:   getAttrsFunc,
+		trigger:        trigger,
+		indexers:       indexers,
+		configProvider: configProvider,
 
 		getKey: keyParser,
 
@@ -164,15 +176,23 @@ func (s *Storage) convertToObject(data []byte, obj runtime.Object) (runtime.Obje
 // set to the read value from database.
 func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, out runtime.Object, ttl uint64) error {
 	var err error
+	var permissions string
 	req := &resource.CreateRequest{}
-	req.Value, err = s.prepareObjectForStorage(ctx, obj)
+	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_ADDED, key, obj, out)
 	}
+
 	req.Key, err = s.getKey(key)
 	if err != nil {
 		return err
 	}
+
+	grantPermissions, err := afterCreatePermissionCreator(ctx, req.Key, permissions, obj, s.opts.Permissions)
+	if err != nil {
+		return err
+	}
+
 	rsp, err := s.store.Create(ctx, req)
 	if err != nil {
 		return resource.GetError(resource.AsErrorResult(err))
@@ -201,6 +221,11 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 				panic(err)
 			}
 		})
+	}
+
+	// Synchronous AfterCreate permissions -- allows users to become "admin" of the thing they made
+	if grantPermissions != nil {
+		return grantPermissions(ctx)
 	}
 
 	return nil
@@ -262,7 +287,7 @@ func (s *Storage) Delete(
 		return fmt.Errorf("unable to read object %w", err)
 	}
 	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_DELETED, key, out, out)
 	}
 
 	rsp, err := s.store.Delete(ctx, cmd)
@@ -562,7 +587,7 @@ func (s *Storage) GuaranteedUpdate(
 
 	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
 
 	var rv uint64

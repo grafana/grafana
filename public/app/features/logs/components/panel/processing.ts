@@ -1,11 +1,11 @@
 import Prism, { Grammar } from 'prismjs';
 
 import { dateTimeFormat, LogLevel, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { escapeUnescapedString, sortLogRows } from '../../utils';
 import { FieldDef, getAllFields } from '../logParser';
 
-import { GetFieldLinksFn } from './LogList';
 import { generateLogGrammar } from './grammar';
 
 export interface LogListModel extends LogRowModel {

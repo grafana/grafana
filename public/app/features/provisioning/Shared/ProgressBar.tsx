@@ -31,7 +31,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   filler: css({
     height: '100%',
-    background: theme.colors.gradients.brandHorizontal,
+    background: theme.colors.success.text,
     [theme.transitions.handleMotion('no-preference', 'reduce')]: {
       transition: 'width 0.5s ease-in-out',
     },

@@ -80,7 +80,12 @@ export function LabelsSubForm({ dataSourceName, onClose, initialLabels }: Labels
     <FormProvider {...formAPI}>
       <form onSubmit={formAPI.handleSubmit(onSave)}>
         <Stack direction="column" gap={4}>
-          <Text>{getLabelText(type)}</Text>
+          <Stack direction="column" gap={1}>
+            <Text>{getLabelText(type)}</Text>
+            <Text variant="bodySmall" color="secondary">
+              {getDescriptionText()}
+            </Text>
+          </Stack>
           <Stack direction="column" gap={1}>
             <LabelsWithSuggestions dataSourceName={dataSourceName} />
             <Space v={2} />
@@ -434,6 +439,13 @@ function getLabelText(type: RuleFormType) {
         'Add labels to your rule for searching, silencing, or routing to a notification policy.'
       );
   return text;
+}
+
+function getDescriptionText() {
+  return t(
+    'alerting.labels-sub-form.description',
+    'Select a label key/value from the options below, or type a new one and press Enter.'
+  );
 }
 
 const getStyles = (theme: GrafanaTheme2) => {

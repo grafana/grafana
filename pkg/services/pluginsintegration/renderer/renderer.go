@@ -76,7 +76,7 @@ func (p *Plugin) Start(ctx context.Context) error {
 }
 
 func (p *Plugin) Version() string {
-	return p.plugin.JSONData.Info.Version
+	return p.plugin.Info.Version
 }
 
 func (m *Manager) Renderer(ctx context.Context) (rendering.Plugin, bool) {

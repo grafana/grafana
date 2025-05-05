@@ -28,6 +28,8 @@ export const frameItemDummy: CanvasElementItem = {
   }),
 
   display: () => {
+    // never shown to end user
+    // eslint-disable-next-line @grafana/no-untranslated-strings
     return <div>FRAME!</div>;
   },
 };

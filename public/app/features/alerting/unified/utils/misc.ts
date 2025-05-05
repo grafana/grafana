@@ -19,6 +19,7 @@ import {
   DataSourceRuleGroupIdentifier,
   FilterState,
   RuleIdentifier,
+  RuleWithLocation,
   RulesSource,
   SilenceFilterState,
 } from 'app/types/unified-alerting';
@@ -53,6 +54,15 @@ export function createViewLinkV2(
   const identifier = ruleId.fromRule(ruleSourceName, groupIdentifier.namespace.name, groupIdentifier.groupName, rule);
 
   return rulesNav.detailsPageLink(ruleSourceName, identifier, returnTo ? { returnTo } : undefined);
+}
+
+export function createViewLinkFromRuleWithLocation(ruleWithLocation: RuleWithLocation) {
+  const ruleSourceName = ruleWithLocation.ruleSourceName;
+  const identifier = ruleId.fromRuleWithLocation(ruleWithLocation);
+  const paramId = encodeURIComponent(ruleId.stringifyIdentifier(identifier));
+  const paramSource = encodeURIComponent(ruleSourceName);
+
+  return createRelativeUrl(`/alerting/${paramSource}/${paramId}/view`);
 }
 
 export function createExploreLink(datasource: DataSourceRef, query: string) {

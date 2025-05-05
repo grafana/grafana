@@ -44,20 +44,29 @@ SCIM offers several advantages for managing users and teams in Grafana:
 - **Reduced administrative overhead**: Eliminate manual user management tasks and reduce the risk of human error
 - **Enhanced security**: Automatically disable access when users leave your organization
 
-## Identity provider consistency
+## Authentication and access requirements
 
-Grafana follows the best practice of not mixing different identity providers and SSO methods. When you enable SCIM in Grafana, you must use the same identity provider for both authentication and user provisioning. This means that users attempting to log in through other authentication methods like LDAP or OAuth will be blocked from accessing Grafana.
+When you enable SCIM in Grafana, the following requirements and restrictions apply:
 
-Users with Basic Auth credentials and those using their grafana.com accounts will still be able to log in successfully.
+1. **Use the same identity provider**: You must use the same identity provider for both authentication and user provisioning. For example, if you use Azure AD for SCIM, you must also use Azure AD for authentication.
+
+2. **Authentication restrictions**:
+
+   - Users attempting to log in through other methods (LDAP, OAuth) will be blocked
+   - By default, users who are not provisioned through SCIM cannot access Grafana
+   - You can allow non-SCIM users by setting `allow_non_provisioned_users = true`
+
+3. **Exceptions**: Users with Basic Auth credentials and those using their Grafana Cloud accounts can still log in regardless of these restrictions.
 
 ## Configure SCIM in Grafana
 
 The table below describes all SCIM configuration options. Like any other Grafana configuration, you can apply these options as [environment variables](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#override-configuration-with-environment-variables).
 
-| Setting              | Required | Description                                                                                                                                                                                | Default |
-| -------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
-| `user_sync_enabled`  | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `true`  |
-| `group_sync_enabled` | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
+| Setting                       | Required | Description                                                                                                                                                                                | Default |
+| ----------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------- |
+| `user_sync_enabled`           | Yes      | Enable SCIM user provisioning. When enabled, Grafana will create, update, and deactivate users based on SCIM requests from your identity provider.                                         | `false` |
+| `group_sync_enabled`          | No       | Enable SCIM group provisioning. When enabled, Grafana will create, update, and delete teams based on SCIM requests from your identity provider. Cannot be enabled if Team Sync is enabled. | `false` |
+| `allow_non_provisioned_users` | No       | Allow non SCIM provisioned users to sign in to Grafana.                                                                                                                                    | `false` |
 
 {{< admonition type="warning" >}}
 **Team Sync Compatibility**:

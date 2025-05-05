@@ -18,9 +18,9 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -118,7 +118,7 @@ func ProvideService(
 		k8sHandler := client.NewK8sHandler(
 			dual,
 			request.GetNamespaceMapper(cfg),
-			v0alpha1.FolderResourceInfo.GroupVersionResource(),
+			folderv1.FolderResourceInfo.GroupVersionResource(),
 			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
@@ -136,7 +136,7 @@ func ProvideService(
 		dashHandler := client.NewK8sHandler(
 			dual,
 			request.GetNamespaceMapper(cfg),
-			dashboardalpha1.DashboardResourceInfo.GroupVersionResource(),
+			dashboardv1.DashboardResourceInfo.GroupVersionResource(),
 			restConfig.GetRestConfig,
 			dashboardStore,
 			userService,
@@ -387,11 +387,11 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
 	// Escape forward slashes in the title
 	escapedSlash := "\\/"
-	title := strings.Replace(f.Title, "/", escapedSlash, -1)
+	title := strings.ReplaceAll(f.Title, "/", escapedSlash)
 	f.Fullpath = title
 	f.FullpathUIDs = f.UID
 	for _, p := range parents {
-		pt := strings.Replace(p.Title, "/", escapedSlash, -1)
+		pt := strings.ReplaceAll(p.Title, "/", escapedSlash)
 		f.Fullpath = f.Fullpath + "/" + pt
 		f.FullpathUIDs = f.FullpathUIDs + "/" + p.UID
 	}
@@ -768,7 +768,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 	var userID int64
 	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
@@ -918,7 +918,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	var userID int64
 	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
@@ -1441,7 +1441,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	var userID int64
 	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
 	}
 

@@ -168,7 +168,11 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
           }}
         />
         <Field label={t('auth-config.provider-config-form.label-enabled', 'Enabled')} hidden={true}>
-          <Switch {...register('enabled')} id="enabled" label={'Enabled'} />
+          <Switch
+            {...register('enabled')}
+            id="enabled"
+            label={t('auth-config.provider-config-form.enabled-label-enabled', 'Enabled')}
+          />
         </Field>
         <Stack gap={2} direction={'column'}>
           {sections
@@ -211,7 +215,9 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
             </Button>
 
             <Button type={'submit'} disabled={isSaving} variant={'secondary'} onClick={() => onSaveAttempt(false)}>
-              {isSaving ? 'Saving...' : 'Save'}
+              {isSaving
+                ? t('auth-config.provider-config-form.saving', 'Saving...')
+                : t('auth-config.provider-config-form.save', 'Save')}
             </Button>
             <LinkButton href={'/admin/authentication'} variant={'secondary'}>
               <Trans i18nKey="auth-config.provider-config-form.discard">Discard</Trans>
@@ -244,8 +250,10 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
                 </Trans>
               </span>
               <small>
-                After resetting these settings Grafana will use the provider configuration from the system (config
-                file/environment variables) if any.
+                <Trans i18nKey="auth-config.provider-config-form.reset-configuration-description">
+                  After resetting these settings Grafana will use the provider configuration from the system (config
+                  file/environment variables) if any.
+                </Trans>
               </small>
             </Stack>
           }

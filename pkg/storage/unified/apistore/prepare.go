@@ -39,30 +39,35 @@ func formatBytes(numBytes int) string {
 }
 
 // Called on create
-func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) ([]byte, error) {
+func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime.Object) ([]byte, string, error) {
 	info, ok := authtypes.AuthInfoFrom(ctx)
 	if !ok {
-		return nil, errors.New("missing auth info")
+		return nil, "", errors.New("missing auth info")
 	}
 
 	obj, err := utils.MetaAccessor(newObject)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if obj.GetName() == "" {
-		return nil, storage.NewInvalidObjError("", "missing name")
+		return nil, "", storage.NewInvalidObjError("", "missing name")
 	}
 	if obj.GetResourceVersion() != "" {
-		return nil, storage.ErrResourceVersionSetOnCreate
+		return nil, "", storage.ErrResourceVersionSetOnCreate
 	}
 	if obj.GetUID() == "" {
 		obj.SetUID(types.UID(uuid.NewString()))
 	}
 	if obj.GetFolder() != "" && !s.opts.EnableFolderSupport {
-		return nil, apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+		return nil, "", apierrors.NewBadRequest(fmt.Sprintf("folders are not supported for: %s", s.gr.String()))
+	}
+
+	grantPermisions := obj.GetAnnotation(utils.AnnoKeyGrantPermissions)
+	if grantPermisions != "" {
+		obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // remove the annotation
 	}
 	if err := checkManagerPropertiesOnCreate(info, obj); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if s.opts.RequireDeprecatedInternalID {
@@ -88,9 +93,11 @@ func (s *Storage) prepareObjectForStorage(ctx context.Context, newObject runtime
 
 	var buf bytes.Buffer
 	if err = s.codec.Encode(newObject, &buf); err != nil {
-		return nil, err
+		return nil, "", err
 	}
-	return s.handleLargeResources(ctx, obj, buf)
+
+	val, err := s.handleLargeResources(ctx, obj, buf)
+	return val, grantPermisions, err
 }
 
 // Called on update
@@ -130,7 +137,8 @@ func (s *Storage) prepareObjectForUpdate(ctx context.Context, updateObject runti
 
 	obj.SetCreatedBy(previous.GetCreatedBy())
 	obj.SetCreationTimestamp(previous.GetCreationTimestamp())
-	obj.SetResourceVersion("") // removed from saved JSON because the RV is not yet calculated
+	obj.SetResourceVersion("")                           // removed from saved JSON because the RV is not yet calculated
+	obj.SetAnnotation(utils.AnnoKeyGrantPermissions, "") // Grant is ignored for update requests
 
 	// for dashboards, a mutation hook will set it if it didn't exist on the previous obj
 	// avoid setting it back to 0

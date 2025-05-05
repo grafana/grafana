@@ -1,6 +1,6 @@
-import { ScalarParameter, TabularParameter, Function, EntityGroup } from '@kusto/monaco-kusto';
+import { EntityGroup, Function, ScalarParameter, TabularParameter } from '@kusto/monaco-kusto';
 
-import { AzureDataSourceSecureJsonData, AzureDataSourceJsonData } from '@grafana/azure-sdk';
+import { AzureDataSourceJsonData, AzureDataSourceSecureJsonData } from '@grafana/azure-sdk';
 import { DataSourceInstanceSettings, DataSourceSettings, PanelData, SelectableValue, TimeRange } from '@grafana/data';
 
 import Datasource from '../datasource';
@@ -468,4 +468,61 @@ export enum AggregateFunctions {
   Max = 'max',
   Min = 'min',
   Percentile = 'percentile',
+}
+
+export enum TablePlan {
+  Analytics = 'Analytics',
+  Basic = 'Basic',
+}
+
+export interface GetLogAnalyticsTableSuccessResponse {
+  properties: {
+    totalRetentionInDays: number;
+    archiveRetentionInDays: number;
+    lastPlanModifiedDate?: string;
+    plan: TablePlan;
+    restoredLogs?: Record<string, string | undefined>;
+    retentionInDaysAsDefault: boolean;
+    totalRetentionInDaysAsDefault: boolean;
+    schema: {
+      tableSubType: string;
+      name: string;
+      tableType: string;
+      columns: Array<Record<string, string | undefined>>;
+      standardColumns: Array<Record<string, string | undefined>>;
+      solutions: string[];
+      isTroubleshootingAllowed: boolean;
+      description?: string;
+      displayName?: string;
+      labels?: string[];
+      source?: string;
+    };
+    resultStatistics: Record<string, string | number | undefined>;
+    provisioningState: string;
+    retentionInDays: number;
+    searchResults?: Record<string, string | number | undefined>;
+    systemData?: Record<string, string | number | undefined>;
+  };
+  id: string;
+  name: string;
+  type?: string;
+}
+
+export interface GetLogAnalyticsTableErrorResponse {
+  error: {
+    target: string;
+    message: string;
+    code: string;
+  };
+}
+
+export type GetLogAnalyticsTableResponse = GetLogAnalyticsTableSuccessResponse | GetLogAnalyticsTableErrorResponse;
+
+export function instanceOfLogAnalyticsTableError(
+  response: GetLogAnalyticsTableSuccessResponse | GetLogAnalyticsTableErrorResponse
+): response is GetLogAnalyticsTableErrorResponse {
+  if (!response) {
+    return false;
+  }
+  return response.hasOwnProperty('error');
 }

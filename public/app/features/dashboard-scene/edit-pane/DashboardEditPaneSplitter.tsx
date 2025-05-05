@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 import React, { CSSProperties, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { config, useChromeHeaderHeight } from '@grafana/runtime';
 import { useSceneObjectState } from '@grafana/scenes';
 import { ElementSelectionContext, useStyles2 } from '@grafana/ui';
@@ -43,19 +44,27 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
     useSnappingSplitter({
       direction: 'row',
       dragPosition: 'end',
-      initialSize: 0.8,
+      initialSize: 330,
       handleSize: 'sm',
+      usePixels: true,
+      collapseBelowPixels: 250,
       collapsed: isCollapsed,
-
-      paneOptions: {
-        collapseBelowPixels: 150,
-        snapOpenToPixels: 400,
-      },
     });
 
   useEffect(() => {
     setIsCollapsed(splitterState.collapsed);
   }, [splitterState.collapsed, setIsCollapsed]);
+
+  /**
+   * Enable / disable selection based on dashboard isEditing state
+   */
+  useEffect(() => {
+    if (isEditing) {
+      editPane.enableSelection();
+    } else {
+      editPane.disableSelection();
+    }
+  }, [isEditing, editPane]);
 
   const { selectionContext } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const containerStyle: CSSProperties = {};
@@ -90,7 +99,11 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
           <NavToolbarActions dashboard={dashboard} />
           <div className={cx(!isEditing && styles.controlsWrapperSticky)}>{controls}</div>
           <div className={styles.bodyWrapper}>
-            <div className={cx(styles.body, isEditing && styles.bodyEditing)} ref={onBodyRef}>
+            <div
+              className={cx(styles.body, isEditing && styles.bodyEditing)}
+              data-testid={selectors.components.DashboardEditPaneSplitter.primaryBody}
+              ref={onBodyRef}
+            >
               {body}
             </div>
           </div>
@@ -105,7 +118,7 @@ export function DashboardEditPaneSplitter({ dashboard, isEditing, body, controls
             <div {...secondaryProps} className={cx(secondaryProps.className, styles.editPane)}>
               <DashboardEditPaneRenderer
                 editPane={editPane}
-                isCollapsed={splitterState.collapsed}
+                isCollapsed={isCollapsed}
                 onToggleCollapse={onToggleCollapse}
                 openOverlay={selectionContext.selected.length > 0}
               />

@@ -1,4 +1,5 @@
 SELECT
+    "guid",
     "namespace",
     "group",
     "resource",

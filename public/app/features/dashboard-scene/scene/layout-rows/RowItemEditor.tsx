@@ -16,7 +16,7 @@ import { useEditPaneInputAutoFocus } from '../layouts-shared/utils';
 
 import { RowItem } from './RowItem';
 
-export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] {
+export function useEditOptions(model: RowItem, isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
   const { layout } = model.useState();
 
   const rowCategory = useMemo(
@@ -24,8 +24,9 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
       new OptionsPaneCategoryDescriptor({ title: '', id: 'row-options' })
         .addItem(
           new OptionsPaneItemDescriptor({
-            title: t('dashboard.rows-layout.row-options.row.title', 'Title'),
-            render: () => <RowTitleInput row={model} />,
+            title: '',
+            skipField: true,
+            render: () => <RowTitleInput row={model} isNewElement={isNewElement} />,
           })
         )
         .addItem(
@@ -40,7 +41,7 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
             render: () => <RowHeaderSwitch row={model} />,
           })
         ),
-    [model]
+    [model, isNewElement]
   );
 
   const repeatCategory = useMemo(
@@ -78,13 +79,14 @@ export function getEditOptions(model: RowItem): OptionsPaneCategoryDescriptor[] 
   return editOptions;
 }
 
-function RowTitleInput({ row }: { row: RowItem }) {
-  const { title, isNew } = row.useState();
-  const ref = useEditPaneInputAutoFocus({ autoFocus: isNew });
+function RowTitleInput({ row, isNewElement }: { row: RowItem; isNewElement: boolean }) {
+  const { title } = row.useState();
+  const ref = useEditPaneInputAutoFocus({ autoFocus: isNewElement });
   const hasUniqueTitle = row.hasUniqueTitle();
 
   return (
     <Field
+      label={t('dashboard.rows-layout.row-options.row.title', 'Title')}
       invalid={!hasUniqueTitle}
       error={
         !hasUniqueTitle ? t('dashboard.rows-layout.row-options.title-not-unique', 'Title should be unique') : undefined

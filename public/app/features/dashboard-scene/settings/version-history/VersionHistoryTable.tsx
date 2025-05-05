@@ -3,7 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
@@ -46,7 +46,11 @@ export const VersionHistoryTable = ({ versions, canCompare, onCheck, onRestore }
             <tr key={version.id}>
               <td>
                 <Checkbox
-                  aria-label={`Toggle selection of version ${version.version}`}
+                  aria-label={t(
+                    'dashboard-scene.version-history-table.aria-label-toggle-selection',
+                    'Toggle selection of version {{version}}',
+                    { version: version.version }
+                  )}
                   className={css({
                     display: 'inline',
                   })}

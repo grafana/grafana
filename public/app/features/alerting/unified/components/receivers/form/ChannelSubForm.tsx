@@ -230,7 +230,11 @@ export function ChannelSubForm<R extends ChannelValues>({
             customValidators={customValidators}
           />
           {!!(mandatoryOptions?.length && optionalOptions?.length) && (
-            <CollapsibleSection label={`Optional ${notifier.dto.name} settings`}>
+            <CollapsibleSection
+              label={t('alerting.channel-sub-form.label-section', 'Optional {{name}} settings', {
+                name: notifier.dto.name,
+              })}
+            >
               {notifier.dto.info !== '' && (
                 <Alert title="" severity="info">
                   {notifier.dto.info}

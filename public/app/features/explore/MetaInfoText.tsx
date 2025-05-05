@@ -26,6 +26,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     marginRight: `calc(${theme.spacing(2)} / 2)`,
     fontSize: theme.typography.bodySmall.fontSize,
     fontWeight: theme.typography.fontWeightMedium,
+    whiteSpace: 'nowrap',
   }),
   metaValue: css({
     fontFamily: theme.typography.fontFamilyMonospace,

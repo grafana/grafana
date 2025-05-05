@@ -1,5 +1,5 @@
 import { useObservable } from 'react-use';
-import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 
 import { AppEvents, NavModel, NavModelItem, PageLayoutType, UrlQueryValue } from '@grafana/data';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
@@ -14,13 +14,14 @@ import { buildBreadcrumbs } from '../Breadcrumbs/utils';
 
 import { logDuplicateUnifiedHistoryEntryEvent } from './History/eventsTracking';
 import { ReturnToPreviousProps } from './ReturnToPrevious/ReturnToPrevious';
-import { HistoryEntry, TOP_BAR_LEVEL_HEIGHT } from './types';
+import { HistoryEntry } from './types';
 
 export interface AppChromeState {
   chromeless?: boolean;
   sectionNav: NavModel;
   pageNav?: NavModelItem;
   actions?: React.ReactNode;
+  breadcrumbActions?: React.ReactNode;
   megaMenuOpen: boolean;
   megaMenuDocked: boolean;
   kioskMode: KioskMode | null;
@@ -57,21 +58,6 @@ export class AppChromeService {
     layout: PageLayoutType.Canvas,
     returnToPrevious: this.returnToPreviousData,
   });
-
-  public headerHeightObservable = this.state
-    .pipe(
-      map(({ actions, chromeless, kioskMode }) => {
-        if (kioskMode || chromeless) {
-          return 0;
-        } else if (actions) {
-          return TOP_BAR_LEVEL_HEIGHT * 2;
-        } else {
-          return TOP_BAR_LEVEL_HEIGHT;
-        }
-      })
-    )
-    // only emit if the state has actually changed
-    .pipe(distinctUntilChanged());
 
   public setMatchedRoute(route: RouteDescriptor) {
     if (this.currentRoute !== route) {

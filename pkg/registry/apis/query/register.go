@@ -17,6 +17,7 @@ import (
 	claims "github.com/grafana/authlib/types"
 	query "github.com/grafana/grafana/pkg/apis/query/v0alpha1"
 	"github.com/grafana/grafana/pkg/expr"
+	"github.com/grafana/grafana/pkg/expr/metrics"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
@@ -43,7 +44,7 @@ type QueryAPIBuilder struct {
 	authorizer authorizer.Authorizer
 
 	tracer     tracing.Tracer
-	metrics    *queryMetrics
+	metrics    *metrics.ExprMetrics
 	parser     *queryParser
 	client     clientapi.DataSourceClientSupplier
 	registry   query.DataSourceApiServerRegistry
@@ -83,7 +84,7 @@ func NewQueryAPIBuilder(features featuremgmt.FeatureToggles,
 		authorizer:           ar,
 		registry:             registry,
 		parser:               newQueryParser(reader, legacy, tracer, log.New("query_parser")),
-		metrics:              newQueryMetrics(registerer),
+		metrics:              metrics.NewQueryServiceExpressionsMetrics(registerer),
 		tracer:               tracer,
 		features:             features,
 		queryTypes:           queryTypes,

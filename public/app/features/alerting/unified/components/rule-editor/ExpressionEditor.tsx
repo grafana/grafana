@@ -11,6 +11,8 @@ import { Alert, Button, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { LokiQuery } from 'app/plugins/datasource/loki/types';
 
+import { isSupportedExternalRulesSourceType } from '../../utils/datasource';
+
 import { CloudAlertPreview } from './CloudAlertPreview';
 import { usePreview } from './PreviewRule';
 
@@ -60,8 +62,19 @@ export const ExpressionEditor = ({
   const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
 
   if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
-    const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
-    return <div>Could not load query editor due to: {errorMessage}</div>;
+    const errorMessage =
+      error?.message ||
+      t(
+        'alerting.expression-editor.error-no-component',
+        'Data source plugin does not export any Query Editor component'
+      );
+    return (
+      <div>
+        <Trans i18nKey="alerting.expression-editor.could-not-load-editor">
+          Could not load query editor due to: {{ errorMessage }}
+        </Trans>
+      </div>
+    );
   }
 
   const previewLoaded = alertPreview?.data.state === LoadingState.Done;
@@ -130,16 +143,17 @@ type QueryMappers<T extends DataQuery = DataQuery> = {
 export function useQueryMappers(dataSourceName: string): QueryMappers {
   return useMemo(() => {
     const settings = getDataSourceSrv().getInstanceSettings(dataSourceName);
-
-    switch (settings?.type) {
-      case 'loki':
-      case 'prometheus':
-        return {
-          mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
-          mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
-        };
-      default:
-        throw new Error(`${dataSourceName} is not supported as an expression editor`);
+    if (!settings) {
+      throw new Error(`Datasource ${dataSourceName} not found`);
     }
+
+    if (!isSupportedExternalRulesSourceType(settings.type)) {
+      throw new Error(`${settings.type} is not supported as an expression editor`);
+    }
+
+    return {
+      mapToValue: (query: DataQuery) => (query as PromQuery | LokiQuery).expr,
+      mapToQuery: (existing: DataQuery, value: string | undefined) => ({ ...existing, expr: value }),
+    };
   }, [dataSourceName]);
 }

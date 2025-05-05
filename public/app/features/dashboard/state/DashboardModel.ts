@@ -1188,7 +1188,14 @@ export class DashboardModel implements TimeModel {
   toggleExemplarsForAll() {
     for (const panel of this.panels) {
       for (const target of panel.targets) {
-        if (!(target.datasource && target.datasource.type === 'prometheus')) {
+        if (
+          !(
+            target.datasource &&
+            (target.datasource.type === 'prometheus' ||
+              target.datasource.type === 'grafana-amazonprometheus-datasource' ||
+              target.datasource.type === 'grafana-azureprometheus-datasource')
+          )
+        ) {
           continue;
         }
 

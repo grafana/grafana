@@ -2,7 +2,6 @@ import { render, screen, waitFor, within } from 'test/test-utils';
 import { byRole, byTestId, byText } from 'testing-library-selector';
 
 import { setAlertmanagerConfig } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
-import { testWithFeatureToggles } from 'app/features/alerting/unified/test/test-utils';
 import { AccessControlAction } from 'app/types/accessControl';
 
 import { MatcherOperator } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -114,13 +113,7 @@ const folder: Folder = {
   title: 'title',
 };
 
-describe.each([
-  // k8s API enabled
-  true,
-  // k8s API disabled
-  false,
-])('NotificationPreview with alertingApiServer=%p', (apiServerEnabled) => {
-  apiServerEnabled ? testWithFeatureToggles(['alertingApiServer']) : testWithFeatureToggles([]);
+describe('NotificationPreview', () => {
   jest.retryTimes(2);
 
   it('should render notification preview without alert manager label, when having only one alert manager configured to receive alerts', async () => {

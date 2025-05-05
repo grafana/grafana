@@ -206,7 +206,7 @@ func Auth(options *AuthOptions) web.Handler {
 			if !forceLogin {
 				orgIDValue := c.Req.URL.Query().Get("orgId")
 				orgID, err := strconv.ParseInt(orgIDValue, 10, 64)
-				if err == nil && orgID > 0 && orgID != c.SignedInUser.GetOrgID() {
+				if err == nil && orgID > 0 && orgID != c.GetOrgID() {
 					forceLogin = true
 				}
 			}

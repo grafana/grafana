@@ -1,4 +1,4 @@
-go 1.24.1
+go 1.24.2
 
 // The `skip:golangci-lint` comment tag is used to exclude the package from the `golangci-lint` GitHub Action.
 // The module at the root of the repo (`.`) is excluded because ./pkg/... is included manually in the `golangci-lint` configuration.
@@ -15,11 +15,11 @@ use (
 	./apps/advisor
 	./apps/alerting/notifications
 	./apps/dashboard
+	./apps/folder
 	./apps/investigations
 	./apps/playlist
 	./pkg/aggregator
 	./pkg/apimachinery
-	./pkg/apis/folder
 	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
 	./pkg/apiserver
 	./pkg/build
@@ -30,12 +30,7 @@ use (
 	./pkg/semconv
 	./pkg/storage/unified/apistore
 	./pkg/storage/unified/resource
-	./pkg/util/xorm // skip:golangci-lint
 )
-
-// when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
-// but we don't want to change all the imports. so we use replace to handle this situation
-replace xorm.io/xorm => ./pkg/util/xorm
 
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.126.0
 

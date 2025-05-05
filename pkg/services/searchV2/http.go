@@ -35,7 +35,7 @@ func (s *searchHTTPService) RegisterHTTPRoutes(storageRoute routing.RouteRegiste
 func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Response {
 	ctx, span := tracer.Start(c.Req.Context(), "searchV2.doQuery")
 	defer span.End()
-	searchReadinessCheckResp := s.search.IsReady(ctx, c.SignedInUser.GetOrgID())
+	searchReadinessCheckResp := s.search.IsReady(ctx, c.GetOrgID())
 	if !searchReadinessCheckResp.IsReady {
 		dashboardSearchNotServedRequestsCounter.With(prometheus.Labels{
 			"reason": searchReadinessCheckResp.Reason,
@@ -60,7 +60,7 @@ func (s *searchHTTPService) doQuery(c *contextmodel.ReqContext) response.Respons
 		return response.Error(http.StatusBadRequest, "error parsing body", err)
 	}
 
-	resp := s.search.doDashboardQuery(ctx, c.SignedInUser, c.SignedInUser.GetOrgID(), *query)
+	resp := s.search.doDashboardQuery(ctx, c.SignedInUser, c.GetOrgID(), *query)
 
 	if resp.Error != nil {
 		return response.Error(http.StatusInternalServerError, "error handling search request", resp.Error)

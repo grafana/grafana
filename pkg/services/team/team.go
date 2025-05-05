@@ -25,13 +25,13 @@ type Service interface {
 }
 
 func UIDToIDHandler(teamService Service) func(ctx context.Context, orgID int64, resourceID string) (string, error) {
-	return func(ctx context.Context, orgID int64, resourceID string) (string, error) {
-		// if teamID is empty or is an integer, we assume it's a team id and we don't need to resolve it
-		_, err := strconv.ParseInt(resourceID, 10, 64)
-		if resourceID == "" || err == nil {
-			return resourceID, nil
+	return func(ctx context.Context, orgID int64, teamIDorUID string) (string, error) {
+		// if teamIDorUID is empty or is an integer, we assume it's a team ID, and we don't need to resolve it
+		_, err := strconv.ParseInt(teamIDorUID, 10, 64)
+		if teamIDorUID == "" || err == nil {
+			return teamIDorUID, nil
 		}
-		team, err := teamService.GetTeamByID(ctx, &GetTeamByIDQuery{UID: resourceID, OrgID: orgID})
+		team, err := teamService.GetTeamByID(ctx, &GetTeamByIDQuery{UID: teamIDorUID, OrgID: orgID})
 		if err != nil {
 			return "", err
 		}
@@ -44,9 +44,9 @@ func MiddlewareTeamUIDResolver(teamService Service, paramName string) web.Handle
 	handler := UIDToIDHandler(teamService)
 
 	return func(c *contextmodel.ReqContext) {
-		// Get team id from request, fetch team and replace teamId with team id
-		teamID := web.Params(c.Req)[paramName]
-		id, err := handler(c.Req.Context(), c.OrgID, teamID)
+		// Get team id from request, fetch team and replace team UID with team ID
+		teamIDorUID := web.Params(c.Req)[paramName]
+		id, err := handler(c.Req.Context(), c.OrgID, teamIDorUID)
 		if err == nil {
 			gotParams := web.Params(c.Req)
 			gotParams[paramName] = id

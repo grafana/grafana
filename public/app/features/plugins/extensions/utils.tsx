@@ -4,10 +4,7 @@ import * as React from 'react';
 import { useAsync } from 'react-use';
 
 import {
-  type PluginExtensionLinkConfig,
-  type PluginExtensionConfig,
   type PluginExtensionEventHelpers,
-  PluginExtensionTypes,
   type PluginExtensionOpenModalOptions,
   isDateTime,
   dateTime,
@@ -23,17 +20,11 @@ import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
-import { ShowModalReactEvent } from 'app/types/events';
+import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
 import { ExtensionsLog, log } from './logs/log';
 import { AddedLinkRegistryItem } from './registry/AddedLinksRegistry';
 import { assertIsNotPromise, assertLinkPathIsValid, assertStringProps, isPromise } from './validators';
-
-export function isPluginExtensionLinkConfig(
-  extension: PluginExtensionConfig | undefined
-): extension is PluginExtensionLinkConfig {
-  return typeof extension === 'object' && 'type' in extension && extension['type'] === PluginExtensionTypes.link;
-}
 
 export function handleErrorsInFn(fn: Function, errorMessagePrefix = '') {
   return (...args: unknown[]) => {
@@ -482,6 +473,15 @@ export function getLinkExtensionOnClick(
       const helpers: PluginExtensionEventHelpers = {
         context,
         openModal: createOpenModalFunction(pluginId),
+        openSidebar: (componentTitle, context) => {
+          appEvents.publish(
+            new OpenExtensionSidebarEvent({
+              props: context,
+              pluginId,
+              componentTitle,
+            })
+          );
+        },
       };
 
       log.debug(`onClick '${config.title}' at '${extensionPointId}'`);

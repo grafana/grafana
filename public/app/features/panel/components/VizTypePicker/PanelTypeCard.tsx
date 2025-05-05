@@ -50,7 +50,9 @@ const PanelTypeCardComponent = ({
       aria-label={selectors.components.PluginVisualization.item(plugin.name)}
       data-testid={selectors.components.PluginVisualization.item(plugin.name)}
       onClick={isDisabled ? undefined : onClick}
-      title={isCurrent ? 'Click again to close this section' : plugin.name}
+      title={
+        isCurrent ? t('panel.panel-type-card.title-click-to-close', 'Click again to close this section') : plugin.name
+      }
     >
       <img className={cx(styles.img, { [styles.disabled]: isDisabled })} src={plugin.info.logos.small} alt="" />
 

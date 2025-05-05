@@ -1,6 +1,6 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { useMemo } from 'react';
-import { Link } from 'react-router-dom-v5-compat';
+import { Link, useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, IconName, locationUtil } from '@grafana/data';
 import { Icon, useStyles2 } from '@grafana/ui';
@@ -14,10 +14,22 @@ export interface ScopesNavigationTreeLinkProps {
 export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTreeLinkProps) {
   const styles = useStyles2(getStyles);
   const linkIcon = useMemo(() => getLinkIcon(to), [to]);
+  const isDashboard = to.startsWith('/d/');
+
+  // For dashboards, the title is appended to the path. We need to diregard this
+  const currentPath = isDashboard ? useLocation().pathname.split('/').slice(0, 3).join('/') : useLocation().pathname;
+
+  const isCurrent = to.startsWith(currentPath);
 
   return (
-    <Link to={to} className={styles.container} data-testid={`scopes-dashboards-${id}`} role="treeitem">
-      <Icon name={linkIcon} className={styles.icon} /> {title}
+    <Link
+      to={to}
+      className={cx(styles.container, isCurrent && styles.current)}
+      data-testid={`scopes-dashboards-${id}`}
+      role="treeitem"
+      key={id}
+    >
+      <Icon name={linkIcon} /> {title}
     </Link>
   );
 }
@@ -48,21 +60,33 @@ const getStyles = (theme: GrafanaTheme2) => {
   return {
     container: css({
       display: 'flex',
-      alignItems: 'flex-start',
+      alignItems: 'center',
       gap: theme.spacing(1),
-      padding: theme.spacing(0.5, 0),
+      padding: theme.spacing(0.75, 0),
       textAlign: 'left',
+      paddingLeft: theme.spacing(1),
+
       wordBreak: 'break-word',
 
-      '&:last-child': css({
-        paddingBottom: 0,
-      }),
       '&:hover, &:focus': css({
         textDecoration: 'underline',
       }),
     }),
-    icon: css({
-      marginTop: theme.spacing(0.25),
+    current: css({
+      position: 'relative',
+      background: theme.colors.action.selected,
+      borderRadius: `0 ${theme.shape.radius.default} ${theme.shape.radius.default} 0`,
+      '&::before': {
+        backgroundImage: theme.colors.gradients.brandVertical,
+        borderRadius: theme.shape.radius.default,
+        content: '" "',
+        display: 'block',
+        height: '100%',
+        position: 'absolute',
+        width: theme.spacing(0.5),
+        top: 0,
+        left: 0,
+      },
     }),
   };
 };

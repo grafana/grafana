@@ -34,13 +34,16 @@ export const ScopesSelector = () => {
   const { nodes, loadingNodeName, selectedScopes, opened, treeScopes } = selectorServiceState;
   const { scopesService, scopesSelectorService, scopesDashboardsService } = services;
   const { readOnly, drawerOpened, loading } = scopes.state;
-  const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect } = scopesSelectorService;
+  const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect, getRecentScopes } =
+    scopesSelectorService;
+
+  const recentScopes = getRecentScopes();
 
   const dashboardsIconLabel = readOnly
     ? t('scopes.dashboards.toggle.disabled', 'Suggested dashboards list is disabled due to read only mode')
     : drawerOpened
       ? t('scopes.dashboards.toggle.collapse', 'Collapse suggested dashboards list')
-      : t('scopes.dashboards.toggle..expand', 'Expand suggested dashboards list');
+      : t('scopes.dashboards.toggle.expand', 'Expand suggested dashboards list');
 
   return (
     <div className={styles.container}>
@@ -74,14 +77,21 @@ export const ScopesSelector = () => {
               {loading ? (
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
-                <ScopesTree
-                  nodes={nodes}
-                  nodePath={['']}
-                  loadingNodeName={loadingNodeName}
-                  scopes={treeScopes}
-                  onNodeUpdate={updateNode}
-                  onNodeSelectToggle={toggleNodeSelect}
-                />
+                <>
+                  <ScopesTree
+                    nodes={nodes}
+                    nodePath={['']}
+                    loadingNodeName={loadingNodeName}
+                    scopes={treeScopes}
+                    onNodeUpdate={updateNode}
+                    onNodeSelectToggle={toggleNodeSelect}
+                    recentScopes={recentScopes}
+                    onRecentScopesSelect={(recentScopeSet) => {
+                      scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scope.metadata.name));
+                      scopesSelectorService.closeAndApply();
+                    }}
+                  />
+                </>
               )}
             </div>
 

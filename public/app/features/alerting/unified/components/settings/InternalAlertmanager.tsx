@@ -30,6 +30,7 @@ export default function InternalAlertmanager({ onEditConfiguration }: Props) {
       onEditConfiguration={handleEditConfiguration}
       onEnable={handleEnable}
       onDisable={handleDisable}
+      readOnly
     />
   );
 }

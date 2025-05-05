@@ -4,24 +4,24 @@ package migrator
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/spanner"
+	database "cloud.google.com/go/spanner/admin/database/apiv1"
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
-	"github.com/grafana/dskit/concurrency"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"google.golang.org/grpc/codes"
-	"xorm.io/core"
 
-	"xorm.io/xorm"
-
-	_ "embed"
-
-	database "cloud.google.com/go/spanner/admin/database/apiv1"
+	"github.com/grafana/dskit/concurrency"
+	utilspanner "github.com/grafana/grafana/pkg/util/spanner"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 )
 
 type SpannerDialect struct {
@@ -35,14 +35,26 @@ func init() {
 
 func NewSpannerDialect() Dialect {
 	d := SpannerDialect{d: core.QueryDialect(Spanner)}
-	d.BaseDialect.dialect = &d
-	d.BaseDialect.driverName = Spanner
+	d.dialect = &d
+	d.driverName = Spanner
 	return &d
 }
 
 func (s *SpannerDialect) AutoIncrStr() string      { return s.d.AutoIncrStr() }
 func (s *SpannerDialect) Quote(name string) string { return s.d.Quote(name) }
 func (s *SpannerDialect) SupportEngine() bool      { return s.d.SupportEngine() }
+
+func (s *SpannerDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {
+	param := strings.ToLower(pattern)
+	if wildcardBefore {
+		param = "%" + param
+	}
+	if wildcardAfter {
+		param = param + "%"
+	}
+	return fmt.Sprintf("LOWER(%s) LIKE ?", column), param
+}
+
 func (s *SpannerDialect) IndexCheckSQL(tableName, indexName string) (string, []any) {
 	return s.d.IndexCheckSql(tableName, indexName)
 }
@@ -171,11 +183,11 @@ func (s *SpannerDialect) CleanDB(engine *xorm.Engine) error {
 	}
 
 	// Collect all DROP statements.
-	var statements []string
 	changeStreams, err := s.findChangeStreams(engine)
 	if err != nil {
 		return err
 	}
+	statements := make([]string, 0, len(tables)+len(changeStreams))
 	for _, cs := range changeStreams {
 		statements = append(statements, fmt.Sprintf("DROP CHANGE STREAM `%s`", cs))
 	}
@@ -290,12 +302,13 @@ func (s *SpannerDialect) executeDDLStatements(ctx context.Context, engine *xorm.
 		return err
 	}
 
-	opts := xorm.SpannerConnectorConfigToClientOptions(cfg)
+	opts := utilspanner.ConnectorConfigToClientOptions(cfg)
 
 	databaseAdminClient, err := database.NewDatabaseAdminClient(ctx, opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create database admin client: %v", err)
 	}
+	//nolint:errcheck // If the databaseAdminClient.Close fails, we simply don't care.
 	defer databaseAdminClient.Close()
 
 	databaseName := fmt.Sprintf("projects/%s/instances/%s/databases/%s", cfg.Project, cfg.Instance, cfg.Database)
@@ -329,6 +342,7 @@ func (s *SpannerDialect) findChangeStreams(engine *xorm.Engine) ([]string, error
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck // If the rows.Close fails, we simply don't care.
 	defer rows.Close()
 	for rows.Next() {
 		var name string

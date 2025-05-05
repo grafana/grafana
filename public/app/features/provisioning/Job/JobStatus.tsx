@@ -2,17 +2,17 @@ import { Spinner, Stack, Text } from '@grafana/ui';
 import { Job, useListJobQuery } from 'app/api/clients/provisioning';
 import { Trans } from 'app/core/internationalization';
 
-import { ActiveJobStatus } from './ActiveJobStatus';
+import { StepStatusInfo } from '../Wizard/types';
+
 import { FinishedJobStatus } from './FinishedJobStatus';
+import { JobContent } from './JobContent';
 
 export interface JobStatusProps {
   watch: Job;
-  onStatusChange?: (success: boolean) => void;
-  onRunningChange?: (isRunning: boolean) => void;
-  onErrorChange?: (error: string | null) => void;
+  onStatusChange: (status: StepStatusInfo, error?: string) => void;
 }
 
-export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChange }: JobStatusProps) {
+export function JobStatus({ watch, onStatusChange }: JobStatusProps) {
   const activeQuery = useListJobQuery({
     fieldSelector: `metadata.name=${watch.metadata?.name}`,
     watch: true,
@@ -35,26 +35,18 @@ export function JobStatus({ watch, onStatusChange, onRunningChange, onErrorChang
     );
   }
 
+  if (activeQuery.isError) {
+    onStatusChange({ status: 'error', error: 'Error fetching active job' });
+    return null;
+  }
+
   if (activeJob) {
-    return (
-      <ActiveJobStatus
-        job={activeJob}
-        onStatusChange={onStatusChange}
-        onRunningChange={onRunningChange}
-        onErrorChange={onErrorChange}
-      />
-    );
+    return <JobContent job={activeJob} isFinishedJob={false} />;
   }
 
   if (shouldCheckFinishedJobs) {
     return (
-      <FinishedJobStatus
-        jobUid={watch.metadata?.uid!}
-        repositoryName={repoLabel}
-        onStatusChange={onStatusChange}
-        onRunningChange={onRunningChange}
-        onErrorChange={onErrorChange}
-      />
+      <FinishedJobStatus jobUid={watch.metadata?.uid!} repositoryName={repoLabel} onStatusChange={onStatusChange} />
     );
   }
 

@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cloudwatch"
-	cloudwatchtypes "github.com/aws/aws-sdk-go-v2/service/cloudwatch/types"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/service/cloudwatch"
 
 	"github.com/grafana/grafana/pkg/tsdb/cloudwatch/models"
 )
@@ -16,13 +15,13 @@ func (e *cloudWatchExecutor) buildMetricDataInput(ctx context.Context, startTime
 	metricDataInput := &cloudwatch.GetMetricDataInput{
 		StartTime: aws.Time(startTime),
 		EndTime:   aws.Time(endTime),
-		ScanBy:    cloudwatchtypes.ScanByTimestampAscending,
+		ScanBy:    aws.String("TimestampAscending"),
 	}
 
 	shouldSetLabelOptions := len(queries) > 0 && len(queries[0].TimezoneUTCOffset) > 0
 
 	if shouldSetLabelOptions {
-		metricDataInput.LabelOptions = &cloudwatchtypes.LabelOptions{
+		metricDataInput.LabelOptions = &cloudwatch.LabelOptions{
 			Timezone: aws.String(queries[0].TimezoneUTCOffset),
 		}
 	}

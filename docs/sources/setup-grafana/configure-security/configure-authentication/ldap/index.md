@@ -18,9 +18,9 @@ weight: 300
 The LDAP integration in Grafana allows your Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 [Enhanced LDAP authentication](../enhanced-ldap/) is available in [Grafana Cloud](/docs/grafana-cloud/) and in [Grafana Enterprise](../../../../introduction/grafana-enterprise/).
-{{% /admonition %}}
+{{< /admonition >}}
 
 Refer to [Role-based access control](../../../../administration/roles-and-permissions/access-control/) to understand how you can control access with role-based permissions.
 
@@ -73,7 +73,7 @@ skip_org_role_sync = true
 
 ## Grafana LDAP Configuration
 
-Depending on which LDAP server you're using and how that's configured your Grafana LDAP configuration may vary.
+Depending on which LDAP server you're using and how that's configured, your Grafana LDAP configuration may vary.
 See [configuration examples](#configuration-examples) for more information.
 
 **LDAP specific configuration file (ldap.toml) example:**
@@ -130,9 +130,9 @@ member_of = "memberOf"
 email =  "email"
 ```
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Whenever you modify the ldap.toml file, you must restart Grafana in order for the change(s) to take effect.
-{{% /admonition %}}
+{{< /admonition >}}
 
 ### Using environment variables
 
@@ -236,10 +236,10 @@ org_role = "Viewer"
 | `org_id`        | No       | The Grafana organization database id. Setting this allows for multiple group_dn's to be assigned to the same `org_role` provided the `org_id` differs | `1` (default org id) |
 | `grafana_admin` | No       | When `true` makes user of `group_dn` Grafana server admin. A Grafana server admin has admin access over all organizations and users.                  | `false`              |
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 Commenting out a group mapping requires also commenting out the header of
 said group or it will fail validation as an empty mapping.
-{{% /admonition %}}
+{{< /admonition >}}
 
 Example:
 
@@ -273,7 +273,7 @@ To configure `group_search_filter`:
 
 **Active Directory example:**
 
-Active Directory groups store the Distinguished Names (DNs) of members, so your filter will need to know the DN for the user based only on the submitted username.
+Active Directory groups store the Distinguished Names (DNs) of members, so your filter needs to know the DN for the user based only on the submitted username.
 Multiple DN templates are searched by combining filters with the LDAP OR-operator. Two examples:
 
 ```bash
@@ -288,7 +288,7 @@ group_search_filter = "(|(member:1.2.840.113556.1.4.1941:=CN=%s,[user container/
 group_search_filter_user_attribute = "cn"
 ```
 
-For more information on AD searches see [Microsoft's Search Filter Syntax](https://docs.microsoft.com/en-us/windows/desktop/adsi/search-filter-syntax) documentation.
+For more information on AD searches refer to [Microsoft's Search Filter Syntax](https://docs.microsoft.com/en-us/windows/desktop/adsi/search-filter-syntax) documentation.
 
 For troubleshooting, changing `member_of` in `[servers.attributes]` to "dn" will show you more accurate group memberships when [debug is enabled](#troubleshooting).
 
@@ -409,12 +409,13 @@ email =  "mail"
 
 #### Port requirements
 
-In above example SSL is enabled and an encrypted port have been configured. If your Active Directory don't support SSL please change `enable_ssl = false` and `port = 389`.
-Please inspect your Active Directory configuration and documentation to find the correct settings. For more information about Active Directory and port requirements see [link](<https://technet.microsoft.com/en-us/library/dd772723(v=ws.10)>).
+In the previous example, SSL is enabled and an encrypted port has been configured. If your Active Directory doesn't support SSL, use `enable_ssl = false` and `port = 389` instead.
+
+Inspect your Active Directory configuration and documentation to find the correct settings. For more information about Active Directory and port requirements, refer to the [Microsoft documentation](https://learn.microsoft.com/en-us/troubleshoot/windows-server/networking/service-overview-and-network-port-requirements#active-directory-local-security-authority).
 
 ## Troubleshooting
 
-To troubleshoot and get more log info enable LDAP debug logging in the [main config file](../../../configure-grafana/).
+To troubleshoot and get more log information, enable LDAP debug logging in the [`grafana.ini` or `custom.ini`](../../../configure-grafana/) file:
 
 ```bash
 [log]

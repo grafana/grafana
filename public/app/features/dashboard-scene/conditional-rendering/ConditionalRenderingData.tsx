@@ -6,7 +6,7 @@ import { ConditionalRenderingDataKind } from '@grafana/schema/dist/esm/schema/da
 import { Combobox, ComboboxOption } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 
 import { ConditionalRenderingBase, ConditionalRenderingBaseState } from './ConditionalRenderingBase';
 import { ConditionalRenderingSerializerRegistryItem, DataConditionValue, ItemsWithConditionalRendering } from './types';

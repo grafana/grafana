@@ -32,8 +32,14 @@ export const ControlledLogsTable = ({
   const theme = useTheme2();
   const styles = getStyles(theme);
 
+  if (!splitOpen || !width || !updatePanelState) {
+    console.error('<ControlledLogsTable>: Missing required props.');
+    return;
+  }
+
   return (
     <div className={styles.logRowsContainer}>
+      <LogListControls eventBus={eventBus} visualisationType={visualisationType} />
       <div className={styles.logRows} data-testid="logRowsTable">
         {/* Width should be full width minus logs navigation and padding */}
         <LogsTableWrap
@@ -51,7 +57,6 @@ export const ControlledLogsTable = ({
           datasourceType={datasourceType}
         />
       </div>
-      <LogListControls eventBus={eventBus} visualisationType={visualisationType} />
     </div>
   );
 };
@@ -64,6 +69,7 @@ const getStyles = (theme: GrafanaTheme2) => {
     }),
     logRowsContainer: css({
       display: 'flex',
+      flexDirection: 'row-reverse',
     }),
   };
 };

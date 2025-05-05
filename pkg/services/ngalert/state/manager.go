@@ -247,9 +247,8 @@ func (st *Manager) DeleteStateByRuleUID(ctx context.Context, ruleKey ngModels.Al
 			startsAt = now
 		}
 		s.SetNormal(reason, startsAt, now)
-		// Set Resolved property so the scheduler knows to send a postable alert
-		// to Alertmanager.
-		if oldState == eval.Alerting || oldState == eval.Error || oldState == eval.NoData || oldState == eval.Recovering {
+		// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
+		if s.ShouldBeResolved(oldState) {
 			s.ResolvedAt = &now
 		} else {
 			s.ResolvedAt = nil
@@ -535,7 +534,8 @@ func (st *Manager) deleteStaleStatesFromCache(logger log.Logger, evaluatedAt tim
 		s.EndsAt = evaluatedAt
 		s.LastEvaluationTime = evaluatedAt
 
-		if oldState == eval.Alerting {
+		// By setting ResolvedAt we trigger the scheduler to send a resolved notification to the Alertmanager.
+		if s.ShouldBeResolved(oldState) {
 			s.ResolvedAt = &evaluatedAt
 			image := takeImageFn("stale state")
 			if image != nil {

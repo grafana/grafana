@@ -5,6 +5,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, Tooltip, useStyles2 } from '@grafana/ui';
 
+import { Trans } from '../../../../../core/internationalization';
 import { CombinedRule } from '../../../../../types/unified-alerting';
 import { checkEvaluationIntervalGlobalLimit } from '../../utils/config';
 import { rulerRuleType } from '../../utils/rules';
@@ -30,9 +31,14 @@ export function RuleConfigStatus({ rule }: RuleConfigStatusProps) {
       theme="error"
       content={
         <div>
-          A minimum evaluation interval of{' '}
-          <span className={styles.globalLimitValue}>{config.unifiedAlerting.minInterval}</span> has been configured in
-          Grafana and will be used instead of the {rule.group.interval} interval configured for the Rule Group.
+          <Trans
+            i18nKey="alerting.rule-config-status.tooltip-min-interval"
+            values={{ minInterval: config.unifiedAlerting.minInterval, ruleInterval: rule.group.interval }}
+          >
+            A minimum evaluation interval of <span className={styles.globalLimitValue}>{'{{minInterval}}'}</span> has
+            been configured in Grafana and will be used instead of the {'{{ruleInterval}}'} interval configured for the
+            Rule Group.
+          </Trans>
         </div>
       }
     >
