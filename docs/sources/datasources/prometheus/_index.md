@@ -101,7 +101,7 @@ refs:
 
 # Prometheus data source
 
-Prometheus is an open-source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting.
+Prometheus is an open source database that uses a telemetry collector agent to scrape and store metrics used for monitoring and alerting.
 
 Grafana provides native support for Prometheus, so you don't need to install a plugin.
 
