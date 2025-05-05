@@ -110,7 +110,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 
 	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("getting row: %w", err)
+		return nil, fmt.Errorf("getting row for %s in namespace %s: %w", name, namespace, err)
 	}
 	defer func() { _ = res.Close() }()
 
