@@ -212,7 +212,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		}
 		am.log.Debug("Completed readiness check for remote Alertmanager, starting state upload", "url", am.url)
 
-		if err := am.CompareAndSendState(ctx); err != nil {
+		if err := am.SendState(ctx); err != nil {
 			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
 		}
 		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
@@ -328,22 +328,22 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 	return nil
 }
 
-// CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
-// If the states are different, it updates the remote Alertmanager's state with that of the internal Alertmanager.
-func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
+// SendState gets the Alertmanager's internal state and sends it to the remote Alertmanager.
+func (am *Alertmanager) SendState(ctx context.Context) error {
+	am.metrics.StateSyncsTotal.Inc()
+
 	state, err := am.getFullState(ctx)
 	if err != nil {
+		am.metrics.StateSyncErrorsTotal.Inc()
 		return err
 	}
 
-	if am.shouldSendState(ctx, state) {
-		am.metrics.StateSyncsTotal.Inc()
-		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
-			am.metrics.StateSyncErrorsTotal.Inc()
-			return err
-		}
-		am.metrics.LastStateSync.SetToCurrentTime()
+	if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
+		am.metrics.StateSyncErrorsTotal.Inc()
+		return err
 	}
+
+	am.metrics.LastStateSync.SetToCurrentTime()
 	return nil
 }
 
@@ -677,17 +677,4 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		return true
 	}
 	return md5.Sum(rawRemote) != hash
-}
-
-// shouldSendState compares the remote Alertmanager state with our local one.
-// It returns true if the states are different.
-func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool {
-	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
-	if err != nil {
-		// Log the error and return true so we try to upload our state anyway.
-		am.log.Warn("Unable to get the remote Alertmanager state for comparison, sending the state without comparing", "err", err)
-		return true
-	}
-
-	return rs.State != state
 }
