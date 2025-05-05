@@ -31,12 +31,13 @@ on:
         type: string
         required: true
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   main:
+    permissions: 
+      contents: read
+      id-token: write
     runs-on: ubuntu-latest
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
