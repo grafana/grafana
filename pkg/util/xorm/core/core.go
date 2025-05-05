@@ -34,7 +34,7 @@ type Column struct {
 	Indexes         map[string]int
 	IsPrimaryKey    bool
 	IsAutoIncrement bool
-	IsSnowflakeID   bool
+	IsRandomID      bool
 	IsCreated       bool
 	IsUpdated       bool
 	IsDeleted       bool
@@ -1581,7 +1581,7 @@ type Table struct {
 	Indexes       map[string]*Index
 	PrimaryKeys   []string
 	AutoIncrement string
-	Snowflake     string
+	RandomID      string
 	Created       map[string]bool
 	Updated       string
 	Deleted       string
@@ -1697,8 +1697,8 @@ func (table *Table) AddColumn(col *Column) {
 	if col.IsAutoIncrement {
 		table.AutoIncrement = col.Name
 	}
-	if col.IsSnowflakeID {
-		table.Snowflake = col.Name
+	if col.IsRandomID {
+		table.RandomID = col.Name
 	}
 	if col.IsCreated {
 		table.Created[col.Name] = true

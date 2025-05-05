@@ -319,16 +319,16 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 			colNames = append(colNames, table.AutoIncrement)
 			args = append(args, seq)
 		}
-	} else if len(table.Snowflake) > 0 {
-		found := slices.Contains(colNames, table.Snowflake)
+	} else if len(table.RandomID) > 0 {
+		found := slices.Contains(colNames, table.RandomID)
 		if !found {
-			id := session.engine.snowflake()
-			colNames = append(colNames, table.Snowflake)
+			id := session.engine.randomIDGen()
+			colNames = append(colNames, table.RandomID)
 			args = append(args, id)
-			// Set snowflakeID back to the bean.
-			col := table.GetColumn(table.Snowflake)
+			// Set random ID back to the bean.
+			col := table.GetColumn(table.RandomID)
 			if col == nil {
-				return 0, fmt.Errorf("column %s not found in table %s", table.Snowflake, table.Name)
+				return 0, fmt.Errorf("column %s not found in table %s", table.RandomID, table.Name)
 			}
 			idValue, err := col.ValueOf(bean)
 			if err != nil {
@@ -604,7 +604,7 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 		}
 		fieldValue := *fieldValuePtr
 
-		if col.IsAutoIncrement || col.IsSnowflakeID {
+		if col.IsAutoIncrement || col.IsRandomID {
 			switch fieldValue.Type().Kind() {
 			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
 				if fieldValue.Int() == 0 {

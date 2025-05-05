@@ -34,22 +34,22 @@ type tagHandler func(ctx *tagContext) error
 var (
 	// defaultTagHandlers enumerates all the default tag handler
 	defaultTagHandlers = map[string]tagHandler{
-		"PK":        PKTagHandler,
-		"NULL":      NULLTagHandler,
-		"NOT":       IgnoreTagHandler,
-		"AUTOINCR":  AutoIncrTagHandler,
-		"SNOWFLAKE": SnowflakeIDTagHandler,
-		"DEFAULT":   DefaultTagHandler,
-		"CREATED":   CreatedTagHandler,
-		"UPDATED":   UpdatedTagHandler,
-		"DELETED":   DeletedTagHandler,
-		"VERSION":   VersionTagHandler,
-		"UTC":       UTCTagHandler,
-		"LOCAL":     LocalTagHandler,
-		"NOTNULL":   NotNullTagHandler,
-		"INDEX":     IndexTagHandler,
-		"UNIQUE":    UniqueTagHandler,
-		"COMMENT":   CommentTagHandler,
+		"PK":       PKTagHandler,
+		"NULL":     NULLTagHandler,
+		"NOT":      IgnoreTagHandler,
+		"AUTOINCR": AutoIncrTagHandler,
+		"RANDOMID": RandomIDTagHandler,
+		"DEFAULT":  DefaultTagHandler,
+		"CREATED":  CreatedTagHandler,
+		"UPDATED":  UpdatedTagHandler,
+		"DELETED":  DeletedTagHandler,
+		"VERSION":  VersionTagHandler,
+		"UTC":      UTCTagHandler,
+		"LOCAL":    LocalTagHandler,
+		"NOTNULL":  NotNullTagHandler,
+		"INDEX":    IndexTagHandler,
+		"UNIQUE":   UniqueTagHandler,
+		"COMMENT":  CommentTagHandler,
 	}
 )
 
@@ -89,9 +89,9 @@ func AutoIncrTagHandler(ctx *tagContext) error {
 	return nil
 }
 
-// SnowflakeIDTagHandler describes snowflake id tag handler
-func SnowflakeIDTagHandler(ctx *tagContext) error {
-	ctx.col.IsSnowflakeID = true
+// RandomIDTagHandler describes snowflake id tag handler
+func RandomIDTagHandler(ctx *tagContext) error {
+	ctx.col.IsRandomID = true
 	return nil
 }
 

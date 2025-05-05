@@ -44,7 +44,7 @@ type Engine struct {
 
 	defaultContext    context.Context
 	sequenceGenerator SequenceGenerator // If not nil, this generator is used to generate auto-increment values for inserts.
-	snowflake         func() int64
+	randomIDGen       func() int64
 }
 
 // CondDeleted returns the conditions whether a record is soft deleted.

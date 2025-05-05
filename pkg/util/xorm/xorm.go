@@ -96,7 +96,7 @@ func NewEngine(driverName string, dataSourceName string) (*Engine, error) {
 		tagHandlers:     defaultTagHandlers,
 		defaultContext:  context.Background(),
 		timestampFormat: "2006-01-02 15:04:05",
-		snowflake:       newSnowflake(rand.Int64N(1024)).Generate,
+		randomIDGen:     newSnowflake(rand.Int64N(1024)).Generate,
 	}
 
 	switch uri.DbType {
