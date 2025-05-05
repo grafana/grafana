@@ -1565,8 +1565,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20250425150043-be11a2ae18bb h1:Nkqatz7R7K/2YaK+7pw8CAYgylKfksPVeT7gMARKjwI=
-github.com/grafana/alerting v0.0.0-20250425150043-be11a2ae18bb/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
+github.com/grafana/alerting v0.0.0-20250505150639-5170675f966b h1:eMM1Yzzh9BRa3mmyOwDEuh1bb5TBj5zoNRQD49UpEJc=
+github.com/grafana/alerting v0.0.0-20250505150639-5170675f966b/go.mod h1:Vi8h9l/CscipGxin6ryaY0D9Ga3n94G8BBUUurdQHF8=
 github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a h1:irEH0Abl6mKbkPx/xtmB5Wai4ipzEB6hGPNsLya/p9Y=
 github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAhdDOiSEyrMaYaHwnJpM8w9QKzVQZIBzLNmM=
@@ -1590,6 +1590,7 @@ github.com/grafana/grafana-app-sdk v0.35.1/go.mod h1:Zx5MkVppYK+ElSDUAR6+fjzOVo6
 github.com/grafana/grafana-app-sdk/logging v0.35.1 h1:taVpl+RoixTYl0JBJGhH+fPVmwA9wvdwdzJTZsv9buM=
 github.com/grafana/grafana-app-sdk/logging v0.35.1/go.mod h1:Y/bvbDhBiV/tkIle9RW49pgfSPIPSON8Q4qjx3pyqDk=
 github.com/grafana/grafana-aws-sdk v0.38.1 h1:4fU28F/UIs3YYuS52bBzTOKpFIIYGJZmgM6PO7IEj90=
+github.com/grafana/grafana-aws-sdk v0.38.1/go.mod h1:j3vi+cXYHEFqjhBGrI6/lw1TNM+dl0Y3f0cSnDOPy+s=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6 h1:OfCkitCuomzZKW1WYHrG8MxKwtMhALb7jqoj+487eTg=
 github.com/grafana/grafana-azure-sdk-go/v2 v2.1.6/go.mod h1:V7y2BmsWxS3A9Ohebwn4OiSfJJqi//4JQydQ8fHTduo=
 github.com/grafana/grafana-cloud-migration-snapshot v1.6.0 h1:S4kHwr//AqhtL9xHBtz1gqVgZQeCRGTxjgsRBAkpjKY=
