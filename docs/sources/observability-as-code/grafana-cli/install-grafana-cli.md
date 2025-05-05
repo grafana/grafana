@@ -1,7 +1,4 @@
 ---
-_build:
-  list: false
-noindex: true
 cascade:
   noindex: true
 description: Installation guide for Grafana CLI, a command line tool for managing Grafana Observability as Code
