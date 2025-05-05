@@ -558,6 +558,9 @@ type Cfg struct {
 	SprinklesApiServerPageLimit                int
 	CACertPath                                 string
 	HttpsSkipVerify                            bool
+
+	// Secrets Management
+	SecretsManagement SecretsManagerSettings
 }
 
 type UnifiedStorageConfig struct {
@@ -1367,6 +1370,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
+	cfg.readSecretsManagerSettings()
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")
