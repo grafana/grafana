@@ -428,9 +428,6 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/querybuilder/components/LabelParamEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "packages/grafana-prometheus/src/querybuilder/components/MetricSelect.tsx:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
-    ],
     "packages/grafana-prometheus/src/querybuilder/components/PromQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -651,11 +648,6 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Table/TableNG/TableNG.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "packages/grafana-ui/src/components/Table/TableNG/TableNG.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Do not use any type assertions.", "2"]
     ],
     "packages/grafana-ui/src/components/Table/TableNG/utils.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1085,9 +1077,6 @@ exports[`better eslint`] = {
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/browse-dashboards/api/browseDashboardsAPI.ts:5381": [
-      [0, 0, 0, "Do not re-export imported variable (\`@reduxjs/toolkit/query/react\`)", "0"]
-    ],
     "public/app/features/browse-dashboards/state/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
@@ -1115,9 +1104,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/connections/tabs/ConnectData/NoAccessModal/index.tsx:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
-    ],
-    "public/app/features/connections/tabs/ConnectData/Search/Search.tsx:5381": [
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "0"]
     ],
     "public/app/features/connections/tabs/ConnectData/Search/index.tsx:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
@@ -1656,15 +1642,6 @@ exports[`better eslint`] = {
     "public/app/features/dimensions/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/explore/RichHistory/RichHistorySettingsTab.tsx:5381": [
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "0"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "1"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "2"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "3"]
-    ],
-    "public/app/features/explore/ShortLinkButtonMenu.tsx:5381": [
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "0"]
-    ],
     "public/app/features/explore/TraceView/TraceView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
@@ -1738,8 +1715,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./external.utils\`)", "0"]
     ],
     "public/app/features/explore/spec/helper/setup.tsx:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/explore/state/time.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1777,14 +1753,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/inspector/InspectDataTab.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
-    ],
-    "public/app/features/inspector/InspectJSONTab.tsx:5381": [
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "0"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "1"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "2"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "3"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "4"],
-      [0, 0, 0, "Do not use the t() function outside of a component or function", "5"]
     ],
     "public/app/features/inspector/InspectStatsTab.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]

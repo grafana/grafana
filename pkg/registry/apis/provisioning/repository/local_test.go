@@ -56,6 +56,7 @@ func TestLocalResolver(t *testing.T) {
 		"client.go",
 		"factory.go",
 		"impl.go",
+		"impl_test.go",
 		"mock_client.go",
 		"mock_commit_file.go",
 		"mock_repository_content.go",

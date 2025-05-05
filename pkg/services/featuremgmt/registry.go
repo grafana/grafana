@@ -87,13 +87,6 @@ var (
 			HideFromAdminPage: true,
 		},
 		{
-			Name:            "disableSecretsCompatibility",
-			Description:     "Disable duplicated secret storage in legacy tables",
-			Stage:           FeatureStageExperimental,
-			RequiresRestart: true,
-			Owner:           hostedGrafanaTeam,
-		},
-		{
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			Stage:       FeatureStageExperimental,
@@ -458,16 +451,6 @@ var (
 			Owner:        hostedGrafanaTeam,
 		},
 		{
-			Name:              "alertingInsights",
-			Description:       "Show the new alerting insights landing page",
-			FrontendOnly:      true,
-			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaAlertingSquad,
-			Expression:        "true", // enabled by default
-			AllowSelfServe:    false,
-			HideFromAdminPage: true, // This is moving away from being a feature toggle.
-		},
-		{
 			Name:        "externalCorePlugins",
 			Description: "Allow core plugins to be loaded as external",
 			Stage:       FeatureStageGeneralAvailability,
@@ -567,21 +550,21 @@ var (
 			Name:            "queryService",
 			Description:     "Register /apis/query.grafana.app/ -- will eventually replace /api/ds/query",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // Adds a route at startup
 		},
 		{
 			Name:            "queryServiceRewrite",
 			Description:     "Rewrite requests targeting /ds/query to the query service",
 			Stage:           FeatureStageExperimental,
-			Owner:           grafanaAppPlatformSquad,
+			Owner:           grafanaDatasourcesCoreServicesSquad,
 			RequiresRestart: true, // changes the API routing
 		},
 		{
 			Name:         "queryServiceFromUI",
 			Description:  "Routes requests to the new query service",
 			Stage:        FeatureStageExperimental,
-			Owner:        grafanaAppPlatformSquad,
+			Owner:        grafanaDatasourcesCoreServicesSquad,
 			FrontendOnly: true, // and can change at startup
 		},
 		{
@@ -596,15 +579,6 @@ var (
 			Description: "Runs CloudWatch metrics queries as separate batches",
 			Stage:       FeatureStagePublicPreview,
 			Owner:       awsDatasourcesSquad,
-		},
-		{
-			Name:            "recoveryThreshold",
-			Description:     "Enables feature recovery threshold (aka hysteresis) for threshold server-side expression",
-			Stage:           FeatureStageGeneralAvailability,
-			FrontendOnly:    false,
-			Owner:           grafanaAlertingSquad,
-			RequiresRestart: true,
-			Expression:      "true",
 		},
 		{
 			Name:         "lokiStructuredMetadata",
@@ -1305,13 +1279,6 @@ var (
 			Owner:       grafanaFrontendPlatformSquad,
 		},
 		{
-			Name:        "prometheusUsesCombobox",
-			Description: "Use new **Combobox** component for Prometheus query editor",
-			Stage:       FeatureStageGeneralAvailability,
-			Owner:       grafanaOSSBigTent,
-			Expression:  "true", // enabled by default
-		},
-		{
 			Name:        "azureMonitorDisableLogLimit",
 			Description: "Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.",
 			Stage:       FeatureStageGeneralAvailability,
@@ -1660,10 +1627,11 @@ var (
 		{
 			Name:              "unifiedStorageHistoryPruner",
 			Description:       "Enables the unified storage history pruner",
-			Stage:             FeatureStageExperimental,
+			Stage:             FeatureStageGeneralAvailability,
 			Owner:             grafanaSearchAndStorageSquad,
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
+			Expression:        "true", // will be removed soon
 		},
 		{
 			Name:        "azureMonitorLogsBuilderEditor",
@@ -1760,12 +1728,18 @@ var (
 			FrontendOnly: true,
 		},
 		{
-
 			Name:         "pluginsAutoUpdate",
 			Description:  "Enables auto-updating of users installed plugins",
 			Stage:        FeatureStageExperimental,
 			FrontendOnly: false,
 			Owner:        grafanaPluginsPlatformSquad,
+		},
+		{
+			Name:         "multiTenantFrontend",
+			Description:  "Register MT frontend",
+			Stage:        FeatureStageExperimental,
+			FrontendOnly: false,
+			Owner:        grafanaFrontendPlatformSquad,
 		},
 		{
 			Name:         "alertingListViewV2PreviewToggle",
@@ -1780,6 +1754,16 @@ var (
 			Stage:       FeatureStageExperimental,
 			Owner:       grafanaAlertingSquad,
 			Expression:  "false",
+		},
+		{
+			Name:              "alertingBulkActionsInUI",
+			Description:       "Enables the alerting bulk actions in the UI",
+			FrontendOnly:      true,
+			Stage:             FeatureStageGeneralAvailability,
+			Owner:             grafanaAlertingSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			Expression:        "true", // enabled by default
 		},
 	}
 )

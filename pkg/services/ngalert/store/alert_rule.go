@@ -11,7 +11,7 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -114,10 +114,10 @@ func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64,
 		rows, err := sess.SQL(fmt.Sprintf(`
 		SELECT v1.* FROM alert_rule_version AS v1
 			INNER JOIN (
-			    SELECT rule_guid, MAX(id) AS id 
-			    FROM alert_rule_version 
-			    WHERE rule_org_id = ? 
-			      AND rule_uid IN (%s) 
+			    SELECT rule_guid, MAX(id) AS id
+			    FROM alert_rule_version
+			    WHERE rule_org_id = ?
+			      AND rule_uid IN (%s)
 			    GROUP BY rule_guid
 			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
 		`, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
@@ -453,14 +453,7 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 			if _, err := sess.Insert(&ruleVersions); err != nil {
 				return fmt.Errorf("failed to create new rule versions: %w", err)
 			}
-
-			for _, rule := range ruleVersions {
-				// delete old versions of alert rule
-				_, err = st.deleteOldAlertRuleVersions(ctx, rule.RuleUID, rule.RuleOrgID, st.Cfg.RuleVersionRecordLimit)
-				if err != nil {
-					st.Logger.Warn("Failed to delete old alert rule versions", "org", rule.RuleOrgID, "rule", rule.RuleUID, "error", err)
-				}
-			}
+			st.deleteOldAlertRuleVersions(ctx, sess, ruleVersions)
 		}
 		if len(keys) > 0 {
 			_ = st.Bus.Publish(ctx, &RuleChangeEvent{
@@ -471,50 +464,31 @@ func (st DBstore) UpdateAlertRules(ctx context.Context, user *ngmodels.UserUID, 
 	})
 }
 
-func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, ruleUID string, orgID int64, limit int) (int64, error) {
-	if limit < 0 {
-		return 0, fmt.Errorf("failed to delete old alert rule versions: limit is set to '%d' but needs to be > 0", limit)
+func (st DBstore) deleteOldAlertRuleVersions(ctx context.Context, sess *db.Session, versions []alertRuleVersion) {
+	if st.Cfg.RuleVersionRecordLimit < 1 {
+		return
 	}
-
-	if limit < 1 {
-		return 0, nil
-	}
-
-	var affectedRows int64
-	err := st.SQLStore.WithDbSession(ctx, func(sess *db.Session) error {
-		highest := &alertRuleVersion{}
-		ok, err := sess.Table("alert_rule_version").Desc("id").Where("rule_org_id = ?", orgID).Where("rule_uid = ?", ruleUID).Limit(1, limit).Get(highest)
-		if err != nil {
-			return err
+	logger := st.Logger.FromContext(ctx)
+	for _, rv := range versions {
+		deleteTo := rv.Version - int64(st.Cfg.RuleVersionRecordLimit)
+		// if the last version is less that retention, do nothing
+		if deleteTo <= 1 {
+			continue
 		}
-		if !ok {
-			// No alert rule versions past the limit exist. Nothing to clean up.
-			affectedRows = 0
-			return nil
-		}
-
-		res, err := sess.Exec(`
-			DELETE FROM
-				alert_rule_version
-			WHERE
-				rule_org_id = ? AND rule_uid = ?
-			AND
-				id <= ?
-		`, orgID, ruleUID, highest.ID)
+		logger := logger.New("org_id", rv.RuleOrgID, "rule_uid", rv.RuleUID, "version", rv.Version, "limit", st.Cfg.RulesPerRuleGroupLimit)
+		res, err := sess.Exec(`DELETE FROM alert_rule_version WHERE rule_guid = ? AND version <= ?`, rv.RuleGUID, deleteTo)
 		if err != nil {
-			return err
+			logger.Error("Failed to delete old alert rule versions", "error", err)
+			return
 		}
 		rows, err := res.RowsAffected()
 		if err != nil {
-			return err
+			rows = -1
 		}
-		affectedRows = rows
-		if affectedRows > 0 {
-			st.Logger.Info("Deleted old alert_rule_version(s)", "org", orgID, "limit", limit, "delete_count", affectedRows)
+		if rows != 0 {
+			logger.Info("Deleted old alert_rule_version(s)", "deleted", rows)
 		}
-		return nil
-	})
-	return affectedRows, err
+	}
 }
 
 // preventIntermediateUniqueConstraintViolations prevents unique constraint violations caused by an intermediate update.
@@ -1041,7 +1015,8 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 		// this escapes escaped double quote (\") to \\\"
 		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
 	}
-	return sess.And(fmt.Sprintf("notification_settings %s ?", st.SQLStore.GetDialect().LikeStr()), "%"+search+"%"), nil
+	sql, param := st.SQLStore.GetDialect().LikeOperator("notification_settings", true, search, true)
+	return sess.And(sql, param), nil
 }
 
 func (st DBstore) filterImportedPrometheusRules(value bool, sess *xorm.Session) (*xorm.Session, error) {

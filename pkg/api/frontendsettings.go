@@ -28,6 +28,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+// GetBootdataAPI returns the same data we currently have rendered into index.html
+// NOTE: this should not be added to the public API docs, and is useful for a transition
+// towards a fully static index.html -- this will likely be replaced with multiple calls
+func (hs *HTTPServer) GetBootdata(c *contextmodel.ReqContext) {
+	data, err := hs.setIndexViewData(c)
+	if err != nil {
+		c.Handle(hs.Cfg, http.StatusInternalServerError, "Failed to get settings", err)
+		return
+	}
+	c.JSON(http.StatusOK, data)
+}
+
 // Returns a file that is easy to check for changes
 // Any changes to the file means we should refresh the frontend
 func (hs *HTTPServer) GetFrontendAssets(c *contextmodel.ReqContext) {

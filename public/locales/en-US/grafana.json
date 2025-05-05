@@ -1,7 +1,5 @@
 {
   "_comment": "The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.",
-  "{{pageStart}} - {{pageEnd}} of {{numPages}}": "{{pageStart}} - {{pageEnd}} of {{numPages}}",
-  "{{url}} or {{target}} or {{path}}": "{{url}} or {{target}} or {{path}}",
   "access-control": {
     "add-permission": {
       "built-in-aria-label": "Built-in role picker",
@@ -23,7 +21,9 @@
     "permission-list-item": {
       "inherited": "Inherited from folder",
       "locked-aria-label": "Locked permission indicator",
-      "remove-aria-label": "Remove permission for {{identifier}}"
+      "remove-aria-label": "Remove permission for {{identifier}}",
+      "tooltip-inherited-permission": "Inherited permission",
+      "tooltip-provisioned-permission": "Provisioned permission"
     },
     "permissions": {
       "add-label": "Add a permission",
@@ -44,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": "Color"
+        }
+      },
       "label-headers": "Headers",
       "label-url": "URL",
       "placeholder-url": "URL"
@@ -72,6 +77,7 @@
       "confirm-modal-body-2": "We advise understanding the implications of each feature change before making modifications.",
       "get-stage-cell": {
         "beta": "Beta",
+        "content-general-availability": "General availability",
         "deprecated": "Deprecated",
         "ga": "GA"
       },
@@ -130,6 +136,12 @@
       "test-mapping-heading": "Test user mapping",
       "test-mapping-run-button": "Run"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "Connection is available",
+        "content-connection-is-not-available": "Connection is not available"
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": "Connection error"
     },
@@ -163,6 +175,9 @@
       "title": "LDAP Synchronization"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": "No matching organizations found"
+      },
       "no-org-found": "No match"
     },
     "ldap-user-info": {
@@ -286,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "Grafana Admin",
         "title-edit-user": "Edit user"
       },
       "edit-aria-label": "Edit user: {{name}}",
       "edit-tooltip": "Edit user",
       "last-seen-never": "Never",
-      "no-licensed-roles": "Not assigned"
+      "no-licensed-roles": "Not assigned",
+      "tooltip-assigned-role": "A licensed role will be assigned when this user signs in"
     }
   },
   "alert-labels": {
@@ -410,12 +427,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "Delete",
         "edit-yaml": "Edit YAML",
-        "save": "Save rule",
-        "save-exit": "Save rule and exit"
-      },
-      "title-delete-rule": "Delete rule"
+        "save": "Save"
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "name",
@@ -447,6 +461,7 @@
       "unprocessed-the-alert-is-received": "Unprocessed: The alert is received but its notification has not been processed yet."
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "Alert evaluation is currently paused",
       "paused": "Paused"
     },
     "alert-warning": {
@@ -542,6 +557,9 @@
       "user-id": "User ID {{uid}}",
       "warning-restore-manually": "You are manually restoring an old version of this alert rule. Please review the changes carefully before saving the rule definition.",
       "warning-restore-manually-title": "Restoring rule manually"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": "This policy matches all labels"
     },
     "am-root-route-form": {
       "am-group-description-label": "The waiting time before sending the first notification for a new group of alerts. Default 30 seconds.",
@@ -654,6 +672,9 @@
     "classic-condition-viewer": {
       "of": "OF",
       "when": "WHEN"
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": "Clear filter"
     },
     "clone-rule-button": {
       "title-copy": "Copy"
@@ -781,6 +802,9 @@
     "contactPointFilter": {
       "label": "Contact point"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": "This route will continue matching other policies"
+    },
     "copy-to-clipboard": "Copy \"{{label}}\" to clipboard",
     "create-metadata": {
       "view-dashboard": "View dashboard",
@@ -809,6 +833,10 @@
       "current-selection-dashboard": "Dashboard: {{dashboardTitle}} ({{ dashboardUid }}) in folder {{ folderTitle }}",
       "current-selection-panel": "Panel: {{ panelTitle }} ({{ panelId }})",
       "fallback-dashboards-string": "Dashboards",
+      "panel-row": {
+        "content-panel-valid-identifier": "This panel does not have a valid identifier.",
+        "tooltip-alert-tab-support": "The alert tab and alert annotations are only supported on graph and timeseries panels."
+      },
       "placeholder-search-dashboard": "Search dashboard",
       "placeholder-search-panel": "Search panel",
       "select-dashboard-available-panels": "Select a dashboard to get a list of available panels",
@@ -830,9 +858,11 @@
       "update-datasource": "Update datasource"
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
       "declare-incident": "Declare Incident"
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "Grafana Incident is not installed or is not configured correctly",
       "label-declare-incident": "Declare incident"
     },
     "delete-rule-modal": {
@@ -868,6 +898,9 @@
       },
       "unknown": "Unknown"
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": "You do not appear to have any compatible datasources."
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluations to start alerting",
       "pending-period": "Pending period",
@@ -898,12 +931,21 @@
       "text-loading-template": "Loading template...",
       "title-failed-to-fetch-notification-template": "Failed to fetch notification template"
     },
+    "editor": {
+      "edit-alert-rule": "Edit alert rule",
+      "edit-recording-rule": "Edit recording rule",
+      "new-alert-rule": "New alert rule",
+      "new-recording-rule": "New recording rule"
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "Failed to update your configuration:",
       "title-something-went-wrong": "Something went wrong"
     },
+    "error-summary-button": {
+      "content-show-all-errors": "Show all errors"
+    },
     "evaluation-behavior-summary": {
-      "evaluate": "Every {{every}}",
+      "evaluate": "Every {{interval}}",
       "label-evaluate": "Evaluate",
       "label-evaluation-time": "Evaluation time",
       "label-last-evaluation": "Last evaluation",
@@ -932,7 +974,6 @@
     "existing-rule-editor": {
       "sorry-permission": "Sorry! You do not have permission to edit this rule.",
       "sorry-this-rule-does-not-exist": "Sorry! This rule does not exist.",
-      "text-loading-rule": "Loading rule...",
       "title-cannot-edit-rule": "Cannot edit rule",
       "title-failed-to-load-rule": "Failed to load rule",
       "title-rule-not-found": "Rule not found"
@@ -970,7 +1011,8 @@
     "expression-result": {
       "aria-label-nextpage": "next-page",
       "aria-label-previouspage": "previous-page",
-      "no-data": "No data"
+      "no-data": "No data",
+      "page-counter": "{{pageStart}} - {{pageEnd}} of {{numPages}}"
     },
     "federated-rule-warning": {
       "experimental": "Federated rule groups are currently an experimental feature.",
@@ -1182,6 +1224,9 @@
     "group-loader": {
       "group-load-failed": "Failed to load rules from group {{ groupName }} in {{ namespaceName }}"
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": "The group is being deleted"
+    },
     "header": {
       "tooltip-remove": "Remove expression \"{{refId}}\""
     },
@@ -1351,7 +1396,8 @@
       "common-labels": "Common labels",
       "error-unable-to-fetch": "Unable to fetch alert state history",
       "loading": "Loading...",
-      "title-error-fetching-the-state-history": "Error fetching the state history"
+      "title-error-fetching-the-state-history": "Error fetching the state history",
+      "tooltip-common-labels": "Common labels are the ones attached to all of the alert instances"
     },
     "manage-permissions": {
       "button": "Manage permissions",
@@ -1444,6 +1490,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "Add another time range",
+      "content-this-time-interval-is-disabled": "This time interval is disabled",
       "description-time-range": "The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time)",
       "label-end-time": "End time",
       "label-start-time": "Start time",
@@ -1599,6 +1646,9 @@
     "plugin-integrations": {
       "tailored-apps": "Speed up your alerts creation now by using one of our tailored apps"
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": "This rule is managed by the {{pluginName}} plugin"
+    },
     "policies": {
       "aria-label-collapse": "Collapse",
       "aria-label-expand": "Expand",
@@ -1698,6 +1748,9 @@
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": "Unable to check the rule status"
     },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": "Provisioned items cannot be edited in the UI"
+    },
     "provisioning": {
       "badge-tooltip-provenance": "This resource has been provisioned via {{provenance}} and cannot be edited through the UI",
       "badge-tooltip-standard": "This resource has been provisioned and cannot be edited through the UI",
@@ -1730,7 +1783,7 @@
       "min-interval": "Min. Interval = {{minInterval}}"
     },
     "query-preview": {
-      "relative-time-range": "{{from}} to now"
+      "relative-time-range": "<0>{{from}}</0> to now"
     },
     "queryAndExpressionsStep": {
       "disableAdvancedOptions": {
@@ -1933,14 +1986,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "Stop alerting when above",
-          "stop-alerting-bellow": "Stop alerting when below",
-          "stop-alerting-equal": "Stop alerting when equal to",
-          "stop-alerting-inside-range": "Stop alerting when inside range",
-          "stop-alerting-less": "Stop alerting when less than",
-          "stop-alerting-more": "Stop alerting when more than",
-          "stop-alerting-not-equal": "Stop alerting when not equal to",
-          "stop-alerting-outside-range": "Stop alerting when outside range",
+          "stop-alerting-above": "Stop alerting (or pending state) when above",
+          "stop-alerting-bellow": "Stop alerting (or pending state) when below",
+          "stop-alerting-equal": "Stop alerting (or pending state) when equal to",
+          "stop-alerting-inside-range": "Stop alerting (or pending state) when inside range",
+          "stop-alerting-less": "Stop alerting (or pending state) when less than",
+          "stop-alerting-more": "Stop alerting (or pending state) when more than",
+          "stop-alerting-not-equal": "Stop alerting (or pending state) when not equal to",
+          "stop-alerting-outside-range": "Stop alerting (or pending state) when outside range",
           "title": "Custom recovery threshold"
         }
       }
@@ -2040,7 +2093,10 @@
       "for": "for {{duration}}",
       "na": "n/a",
       "paused": "Paused",
-      "recording-rule": "Recording rule"
+      "recording-rule": "Recording rule",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": "Recording rule evaluation is currently paused"
+      }
     },
     "rule-stats": {
       "error_one": "{{count}} error",
@@ -2284,6 +2340,8 @@
       "refresh": "Refresh"
     },
     "template-row": {
+      "content-templatefiles": "template_files",
+      "content-templates": "templates",
       "tooltip-copy-template-group": "Copy template group",
       "tooltip-delete-template-group": "Delete template group",
       "tooltip-edit-template-group": "Edit template group",
@@ -2307,7 +2365,7 @@
       },
       "misconfigured-badge-text": "Misconfigured",
       "misconfigured-warning": "This template is misconfigured.",
-      "misconfigured-warning-details": "Templates must be defined in both the <1></1> and <4></4> sections of your alertmanager configuration."
+      "misconfigured-warning-details": "Templates must be defined in both the <2></2> and <5></5> sections of your alertmanager configuration."
     },
     "templates-picker": {
       "button-edit": "Edit {{name}}",
@@ -2332,7 +2390,7 @@
     },
     "threshold-expression-viewer": {
       "input": "Input",
-      "stop-alerting-when": "Stop alerting when "
+      "stop-alerting-when": "Stop alerting (or pending state) when "
     },
     "timeseries-row": {
       "time-series-data": "Time series data",
@@ -2351,6 +2409,10 @@
     },
     "type-selector-button": {
       "add-expression": "Add expression"
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "Unknown contact point",
+      "unknown-contact-point-tooltip": "Details could not be found. This may be because you do not have access to the contact point"
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": "Unknown rule type"
@@ -2452,6 +2514,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "Delete API key",
+      "content-this-api-key-has-expired": "This API key has expired.",
       "expires": "Expires",
       "last-used-at": "Last used at",
       "migrate-to-service-account": "Migrate to service account",
@@ -2682,9 +2745,6 @@
       "clear": "Clear search and filters",
       "text": "No results found for your query"
     },
-    "soft-delete": {
-      "success": "Dashboard {{name}} moved to Recently deleted"
-    },
     "text-this-repository-is-read-only": "If you have direct access to the target, copy the JSON and paste it there."
   },
   "canvas": {
@@ -2725,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Change theme...",
+      "change-theme": "Change theme",
       "dark-theme": "Dark",
-      "light-theme": "Light"
+      "light-theme": "Light",
+      "scopes": "Scopes"
     },
     "empty-state": {
       "message": "No results found"
+    },
+    "scopes": {
+      "apply-selected-scopes": "Apply",
+      "selected-scopes-label": "Scopes: "
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -3174,6 +3239,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dashboard",
+        "local-variable": "Local variable",
         "multiple-elements": "Multiple elements",
         "multiple-elements-delete-text": "Are you sure you want to delete these elements?",
         "multiple-panels": "Multiple panels",
@@ -3610,7 +3676,10 @@
         "export": {
           "arrow": "Export",
           "title": "Export",
-          "tooltip": "Export as JSON"
+          "tooltip": {
+            "as-code": "Export as code",
+            "json": "Export as JSON"
+          }
         },
         "mark-favorite": "Mark as favorite",
         "more-save-options": "More save options",
@@ -3850,6 +3919,7 @@
     },
     "constant-variable-form": {
       "constant-options": "Constant options",
+      "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "custom-variable-form": {
@@ -4158,7 +4228,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "This variable is not referenced by any variable or dashboard.",
-      "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
+      "aria-label-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard.",
+      "content-variable-not-referenced-other-variables-dashboard": "This variable is not referenced by other variables or dashboard.",
+      "content-variable-referenced-other-variables-dashboard": "This variable is referenced by other variables or dashboard."
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "Variable editor form",
@@ -4218,6 +4290,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "Compare versions",
+      "content-select-two-versions-to-start-comparing": "Select two versions to start comparing",
       "show-more-versions": "Show more versions"
     },
     "visualization-button": {
@@ -4289,7 +4362,7 @@
       "hide-time-picker": "Hide time picker",
       "now-delay-description": "Exclude recent data that may be incomplete.",
       "now-delay-label": "Now delay",
-      "refresh-live-dashboards-description": "Continuously re-draw panels where the time range references 'now'",
+      "refresh-live-dashboards-description": "Continuously update panels when the time range includes the current time",
       "refresh-live-dashboards-label": "Refresh live dashboards",
       "time-options-label": "Time options",
       "time-zone-label": "Time zone",
@@ -4571,6 +4644,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "Correlations editor in Explore is an experimental feature.",
       "exit-correlation-editor": "Exit correlation editor",
       "save": "Save"
     },
@@ -4728,6 +4802,9 @@
       "label-select-query": "Select query",
       "tooltip-select-query-visualize-table": "Select a query to visualize in the table"
     },
+    "logs-volume-panel": {
+      "content-streaming": "Streaming"
+    },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "Reload log volume",
       "loading": "Loading...",
@@ -4738,9 +4815,6 @@
     },
     "logs-volumne-panel-list": {
       "body-no-logs-volume-available": "No volume information available for the current queries and time range."
-    },
-    "make-datasource-setup": {
-      "aria-label-query": "query"
     },
     "next": "Next",
     "next-prev-result": {
@@ -4781,7 +4855,6 @@
       "newest-first": "Newest first",
       "oldest-first": "Oldest first",
       "query-history": "Query history",
-      "query-library": "Query library",
       "settings": "Settings",
       "starred": "Starred"
     },
@@ -4864,8 +4937,6 @@
     "rich-history-utils": {
       "a-week-ago": "a week ago",
       "days-ago": "{{num}} days ago",
-      "default-from": "now-1h",
-      "default-to": "now",
       "today": "today",
       "two-weeks-ago": "two weeks ago",
       "yesterday": "yesterday"
@@ -4933,6 +5004,7 @@
       "label-tags": "Tags",
       "placeholder-all-service-names": "All service names",
       "placeholder-all-span-names": "All span names",
+      "tooltip-collapse": "Filter your spans below. You can continue to apply filters until you have narrowed down your resulting spans to the select few you are most interested in.",
       "tooltip-duration": "Filter by duration. Accepted units are {{units}}",
       "tooltip-tags": "Filter by tags, process tags or log fields in your spans."
     },
@@ -5002,7 +5074,8 @@
       "title-share-thoughts-about-tracing-grafana": "Share your thoughts about tracing in Grafana."
     },
     "trace-page-header": {
-      "text-partial-trace": "Partial trace"
+      "text-partial-trace": "Partial trace",
+      "tooltip-url": "{{url}} or {{target}} or {{path}}"
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "Clear filters button",
@@ -5010,7 +5083,8 @@
       "label-show-paths": "Show critical path only switch"
     },
     "trace-view": {
-      "no-data": "No data"
+      "no-data": "No data",
+      "tooltip-copy-icon": "Copied"
     },
     "trace-view-container": {
       "title-trace": "Trace"
@@ -5044,8 +5118,11 @@
       "download-button": "Download file",
       "download-successful_toast_message": "Your JSON has been downloaded",
       "export-externally-label": "Export the dashboard to use in another instance",
-      "info-text": "Copy or download a JSON file containing the JSON of your dashboard",
-      "title": "Export dashboard JSON"
+      "export-format": "Format",
+      "export-mode": "Model",
+      "export-remove-ds-refs": "Remove deployment details",
+      "info-text": "Copy or download a file containing the definition of your dashboard",
+      "title": "Export dashboard"
     },
     "menu": {
       "export-as-json-label": "Export",
@@ -5080,6 +5157,7 @@
     },
     "math": {
       "available-math-functions": "Available math functions",
+      "run-math-operations": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<10></10>Example: <12>{{example}}</12>",
       "tooltip-footer": "See our additional documentation on <2>Math expressions</2>.",
       "tooltip-title": "Math operator",
       "tooltip-trigger": "Expression"
@@ -5123,7 +5201,8 @@
       "default-password-alert": "Continuing to use the default password exposes you to security risks.",
       "new-password-label": "New password",
       "skip-button": "Skip",
-      "submit-button": "Submit"
+      "submit-button": "Submit",
+      "tooltip-skip-button": "If you skip you will be prompted to change password next time you log in."
     },
     "contact-admin": "Did you forget your username or email? Contact your Grafana administrator.",
     "email-sent": "An email with a reset link has been sent to the email address. You should receive it shortly.",
@@ -5180,7 +5259,8 @@
     "action-editor": {
       "button": {
         "confirm": "Confirm",
-        "confirm-action": "Confirm action"
+        "confirm-action": "Confirm action",
+        "style": "Button style"
       },
       "inline": {
         "add-action": "Add action",
@@ -5387,7 +5467,11 @@
       "previous-page": "previous page"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": "toggle collapse panel"
+      "aria-label-toggle-collapse": "toggle collapse panel",
+      "tooltip-cancel": "Cancel query",
+      "tooltip-cancel-loading": "Cancel query",
+      "tooltip-stop-streaming": "Stop streaming",
+      "tooltip-streaming": "Streaming"
     },
     "panel-menu": {
       "label": "Menu for panel {{ title }}",
@@ -5969,7 +6053,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "more",
-      "see-details": "See log details"
+      "see-details": "See log details",
+      "tooltip-error": "Error: {{errorMessage}}"
     },
     "log-rows": {
       "disable-popover": {
@@ -6946,7 +7031,8 @@
       "label-search": "Search",
       "label-state": "State",
       "label-type": "Type",
-      "subtitle": "Extend the Grafana experience with panel plugins and apps. To find more data sources go to <2>Connections</2>."
+      "subtitle": "Extend the Grafana experience with panel plugins and apps. To find more data sources go to <2>Connections</2>.",
+      "tooltip-filter-disabled": "This filter has been disabled because the Grafana server cannot access grafana.com"
     },
     "catalog": {
       "no-updates-available": "No updates available",
@@ -6955,7 +7041,7 @@
         "available-header": "Available",
         "button": "Update all ({{length}})",
         "cloud-update-message": "* It may take a few minutes for the plugins to be available for usage.",
-        "error": "Error updating plugin:",
+        "error": "Error updating plugin: {{errorMessage}}",
         "error-status-text": "failed - see error messages",
         "header": "The following plugins have update available",
         "installed-header": "Installed",
@@ -7009,6 +7095,7 @@
         "reportAbuseTooltip": "Report issues related to malicious or harmful plugins directly to Grafana Labs.",
         "repository": "Repository",
         "signature": "Signature",
+        "sponsorDeveloper": "Sponsor this developer",
         "status": "Status"
       },
       "modal": {
@@ -7164,6 +7251,9 @@
     },
     "feature-toggles-age": {
       "enable-in-config": "Enable profile in the Grafana config file."
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": "Login details locked because they are managed in another system."
     },
     "user-organizations": {
       "text-loading-organizations": "Loading organizations..."
@@ -7341,7 +7431,6 @@
     },
     "getting-started": {
       "alert-temporary-outage": "When you connect your whole instance, dashboards will be unavailable while running the migration. We recommend warning your users before starting the process.",
-      "engaging-graphic": "Engaging graphic",
       "modal-description-public-access": "Set up public access to your Grafana instance to enable GitHub integration",
       "modal-description-required-features": "Enable required Grafana features for provisioning",
       "modal-title-set-up-public-access": "Set up public access",
@@ -7746,8 +7835,8 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "Interval = {intervalDesc}",
-      "collapsed-max-data-points": "MD = {mdDesc}",
+      "collapsed-interval": "Interval = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Hide time info",
       "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
@@ -7896,13 +7985,6 @@
     "error-unexpected-title": "An unexpected error happened",
     "reload-button": "Reload",
     "title": "Unable to find application file"
-  },
-  "Run math operations on one or more queries": {
-    " You reference the query by {{refExample}} ie": {
-      " {{ref1}}, {{ref2}}, {{ref3}}etc": {
-        "<10></10>Example: <12>{{example}}</12>": "Run math operations on one or more queries. You reference the query by {{refExample}} ie. {{ref1}}, {{ref2}}, {{ref3}}etc.<10></10>Example: <12>{{example}}</12>"
-      }
-    }
   },
   "sandbox": {
     "test-stuff-page": {
@@ -8106,10 +8188,12 @@
       "title-disable-service-account": "Disable service account"
     },
     "token-expiration": {
+      "content-this-token-has-expired": "This token has expired",
       "expired-label": "Expired",
       "never": "Never"
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "This token has been publicly exposed. Please rotate this token",
       "revoked-label": "Revoked"
     }
   },
@@ -8147,7 +8231,8 @@
       "loading": "Loading...",
       "save-button": "Save to file",
       "share-externally-label": "Export for sharing externally",
-      "view-button": "View JSON"
+      "view-button": "View JSON",
+      "view-button-yaml": "View YAML"
     },
     "library": {
       "info": "Create library panel."
@@ -8515,7 +8600,7 @@
     "range-content": {
       "apply-button": "Apply time range",
       "default-error": "Please enter a past date or \"{{now}}\"",
-      "fiscal-year": "Fiscal year",
+      "fiscal-year": "Fiscal year: {{from}} - {{to}}",
       "from-input": "From",
       "open-input-calendar": "Open calendar",
       "range-error": "\"From\" can't be after \"To\"",
@@ -8533,15 +8618,11 @@
       "apply": "Apply time range",
       "aria-role": "Time range selection",
       "default-title": "Time ranges",
-      "example": "Example: to select a time range from 10 minutes ago to now",
-      "example-details": "From: now-10m To: now",
       "example-title": "Example time ranges",
       "from-label": "From",
       "from-to": "{{timeOptionFrom}} to {{timeOptionTo}}",
-      "more-info": "For more information see <2>docs <1></1></2>.",
-      "specify": "Specify time range <1></1>",
+      "specify": "Specify time range",
       "submit-button-label": "TimePicker submit button",
-      "supported-formats": "Supported formats: <1>now-[digit]s/m/h/d/w</1>",
       "to-label": "To"
     },
     "zone": {
@@ -8891,6 +8972,7 @@
       "message": "No users found"
     },
     "token-revoked-modal": {
+      "auto-revoked": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account.",
       "resume-message": "<0>To resume your session, sign in again.</0>Contact your administrator or visit the license page to review your quota if you are repeatedly signed out automatically.",
       "sign-in": "Sign in",
       "title-you-have-been-automatically-signed-out": "You have been automatically signed out"
@@ -8970,6 +9052,7 @@
       "loading": "Loading...",
       "no-unknowns": "No renamed or missing variables found.",
       "renamed-or-missing-variables": "Renamed or missing variables",
+      "tooltip-renamed-or-missing-variables": "Click to expand a list with all variable references that have been renamed or are missing from the dashboard.",
       "variable": "Variable"
     },
     "variable-check-indicator": {
@@ -9021,6 +9104,5 @@
     "data-hover-view": {
       "link": "Link"
     }
-  },
-  "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account": "Your session token was automatically revoked because you have reached <2>the maximum number of {{numSessions}} concurrent sessions</2> for your account."
+  }
 }

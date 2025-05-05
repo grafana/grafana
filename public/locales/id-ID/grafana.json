@@ -1,6 +1,5 @@
 {
   "_comment": "Kode ini adalah sumber kebenaran untuk frasa bahasa Inggris. Kode ini harus diperbarui dalam komponen secara langsung, dan bentuk jamak tambahan disebutkan dalam file ini.",
-  "{{pageStart}} - {{pageEnd}} of {{numPages}}": "",
   "access-control": {
     "add-permission": {
       "built-in-aria-label": "",
@@ -22,7 +21,9 @@
     "permission-list-item": {
       "inherited": "Diwarisi dari folder",
       "locked-aria-label": "",
-      "remove-aria-label": ""
+      "remove-aria-label": "",
+      "tooltip-inherited-permission": "",
+      "tooltip-provisioned-permission": ""
     },
     "permissions": {
       "add-label": "Tambahkan izin",
@@ -43,6 +44,11 @@
   },
   "actions": {
     "action-editor": {
+      "button": {
+        "style": {
+          "background-color": ""
+        }
+      },
       "label-headers": "",
       "label-url": "",
       "placeholder-url": ""
@@ -71,6 +77,7 @@
       "confirm-modal-body-2": "",
       "get-stage-cell": {
         "beta": "",
+        "content-general-availability": "",
         "deprecated": "",
         "ga": ""
       },
@@ -129,6 +136,12 @@
       "test-mapping-heading": "Uji pemetaan pengguna",
       "test-mapping-run-button": "Jalankan"
     },
+    "ldap-connection-status": {
+      "columns": {
+        "content-connection-is-available": "",
+        "content-connection-is-not-available": ""
+      }
+    },
     "ldap-error-box": {
       "title-connection-error": ""
     },
@@ -162,6 +175,9 @@
       "title": "Sinkronisasi LDAP"
     },
     "ldap-user-groups": {
+      "columns": {
+        "content-no-matching-organizations-found": ""
+      },
       "no-org-found": ""
     },
     "ldap-user-info": {
@@ -285,12 +301,14 @@
     },
     "users-table": {
       "columns": {
+        "content-grafana-admin": "",
         "title-edit-user": ""
       },
       "edit-aria-label": "",
       "edit-tooltip": "",
       "last-seen-never": "Tidak pernah",
-      "no-licensed-roles": "Tidak ditugaskan"
+      "no-licensed-roles": "Tidak ditugaskan",
+      "tooltip-assigned-role": ""
     }
   },
   "alert-labels": {
@@ -405,12 +423,9 @@
     },
     "alert-rule-form": {
       "action-buttons": {
-        "delete": "",
         "edit-yaml": "",
-        "save": "",
-        "save-exit": ""
-      },
-      "title-delete-rule": ""
+        "save": ""
+      }
     },
     "alert-rule-name-and-metric": {
       "aria-label-name": "",
@@ -442,6 +457,7 @@
       "unprocessed-the-alert-is-received": ""
     },
     "alert-state-tag": {
+      "content-alert-evaluation-is-currently-paused": "",
       "paused": ""
     },
     "alert-warning": {
@@ -537,6 +553,9 @@
       "user-id": "ID Pengguna {{uid}} ",
       "warning-restore-manually": "Anda secara manual memulihkan versi lama dari aturan peringatan ini. Tinjau perubahan dengan saksama sebelum menyimpan definisi aturan.",
       "warning-restore-manually-title": "Memulihkan aturan secara manual"
+    },
+    "all-matches-indicator": {
+      "content-this-policy-matches-all-labels": ""
     },
     "am-root-route-form": {
       "am-group-description-label": "",
@@ -649,6 +668,9 @@
     "classic-condition-viewer": {
       "of": "",
       "when": ""
+    },
+    "clear-filter-button-object-renderer": {
+      "content-clear-filter": ""
     },
     "clone-rule-button": {
       "title-copy": ""
@@ -774,6 +796,9 @@
     "contactPointFilter": {
       "label": "Titik kontak"
     },
+    "continue-matching-indicator": {
+      "content-route-continue-matching-other-policies": ""
+    },
     "copy-to-clipboard": "Salin \"{{label}}\" ke papan klip",
     "create-metadata": {
       "view-dashboard": "",
@@ -802,6 +827,10 @@
       "current-selection-dashboard": "",
       "current-selection-panel": "",
       "fallback-dashboards-string": "",
+      "panel-row": {
+        "content-panel-valid-identifier": "",
+        "tooltip-alert-tab-support": ""
+      },
       "placeholder-search-dashboard": "",
       "placeholder-search-panel": "",
       "select-dashboard-available-panels": "",
@@ -823,9 +852,11 @@
       "update-datasource": ""
     },
     "declare-incident-button": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "declare-incident": ""
     },
     "declare-incident-menu-item": {
+      "content-grafana-incident-installed-configured-correctly": "",
       "label-declare-incident": ""
     },
     "delete-rule-modal": {
@@ -861,6 +892,9 @@
       },
       "unknown": ""
     },
+    "disabled-tooltip": {
+      "content-appear-compatible-datasources": ""
+    },
     "draggable-rules-table": {
       "evals-to-start-alerting": "Evaluasi untuk mulai memperingatkan",
       "pending-period": "Periode tertunda",
@@ -891,9 +925,18 @@
       "text-loading-template": "",
       "title-failed-to-fetch-notification-template": ""
     },
+    "editor": {
+      "edit-alert-rule": "",
+      "edit-recording-rule": "",
+      "new-alert-rule": "",
+      "new-recording-rule": ""
+    },
     "error-modal": {
       "failed-to-update-your-configuration": "",
       "title-something-went-wrong": ""
+    },
+    "error-summary-button": {
+      "content-show-all-errors": ""
     },
     "evaluation-behavior-summary": {
       "evaluate": "",
@@ -925,7 +968,6 @@
     "existing-rule-editor": {
       "sorry-permission": "",
       "sorry-this-rule-does-not-exist": "",
-      "text-loading-rule": "",
       "title-cannot-edit-rule": "",
       "title-failed-to-load-rule": "",
       "title-rule-not-found": ""
@@ -963,7 +1005,8 @@
     "expression-result": {
       "aria-label-nextpage": "",
       "aria-label-previouspage": "",
-      "no-data": ""
+      "no-data": "",
+      "page-counter": ""
     },
     "federated-rule-warning": {
       "experimental": "",
@@ -1175,6 +1218,9 @@
     "group-loader": {
       "group-load-failed": ""
     },
+    "group-status": {
+      "content-the-group-is-being-deleted": ""
+    },
     "header": {
       "tooltip-remove": ""
     },
@@ -1343,7 +1389,8 @@
       "common-labels": "",
       "error-unable-to-fetch": "",
       "loading": "",
-      "title-error-fetching-the-state-history": ""
+      "title-error-fetching-the-state-history": "",
+      "tooltip-common-labels": ""
     },
     "manage-permissions": {
       "button": "Kelola izin",
@@ -1436,6 +1483,7 @@
     },
     "mute-timing-time-range": {
       "add-another-time-range": "",
+      "content-this-time-interval-is-disabled": "",
       "description-time-range": "",
       "label-end-time": "",
       "label-start-time": "",
@@ -1591,6 +1639,9 @@
     "plugin-integrations": {
       "tailored-apps": ""
     },
+    "plugin-origin-badge": {
+      "tooltip-managed-by-plugin": ""
+    },
     "policies": {
       "aria-label-collapse": "",
       "aria-label-expand": "",
@@ -1687,6 +1738,9 @@
     },
     "prometheus-consistency-check": {
       "title-unable-to-check-the-rule-status": ""
+    },
+    "provisioned-tooltip": {
+      "content-provisioned-items-cannot-edited": ""
     },
     "provisioning": {
       "badge-tooltip-provenance": "Sumber daya ini telah disediakan melalui {{provenance}} dan tidak dapat diedit melalui UI",
@@ -1922,14 +1976,14 @@
       },
       "threshold": {
         "recovery": {
-          "stop-alerting-above": "Hentikan alerting saat di atas",
-          "stop-alerting-bellow": "Hentikan alerting saat di bawah ini",
-          "stop-alerting-equal": "Hentikan alerting saat sama dengan",
-          "stop-alerting-inside-range": "Hentikan alerting saat berada dalam rentang",
-          "stop-alerting-less": "Hentikan alerting saat kurang dari",
-          "stop-alerting-more": "Hentikan alerting saat lebih dari",
-          "stop-alerting-not-equal": "Hentikan alerting saat tidak sama dengan",
-          "stop-alerting-outside-range": "Hentikan alerting saat berada di luar rentang",
+          "stop-alerting-above": "",
+          "stop-alerting-bellow": "",
+          "stop-alerting-equal": "",
+          "stop-alerting-inside-range": "",
+          "stop-alerting-less": "",
+          "stop-alerting-more": "",
+          "stop-alerting-not-equal": "",
+          "stop-alerting-outside-range": "",
           "title": "Ambang batas pemulihan kustom"
         }
       }
@@ -1994,6 +2048,10 @@
         "title": "Aturan peringatan"
       },
       "rulerrule-loading-error": "Gagal memuat aturan",
+      "toggle": {
+        "go-back-to-old-look": "",
+        "try-out-the-new-look": ""
+      },
       "unknown-rule-type": ""
     },
     "rule-list-errors": {
@@ -2023,7 +2081,10 @@
       "for": "",
       "na": "",
       "paused": "Dijeda",
-      "recording-rule": "Aturan pencatatan"
+      "recording-rule": "Aturan pencatatan",
+      "recording-rule-state": {
+        "content-recording-rule-evaluation-is-currently-paused": ""
+      }
     },
     "rule-stats": {
       "firing": "",
@@ -2266,6 +2327,8 @@
       "refresh": ""
     },
     "template-row": {
+      "content-templatefiles": "",
+      "content-templates": "",
       "tooltip-copy-template-group": "",
       "tooltip-delete-template-group": "",
       "tooltip-edit-template-group": "",
@@ -2289,7 +2352,7 @@
       },
       "misconfigured-badge-text": "Salah konfigurasi",
       "misconfigured-warning": "Templat ini salah dikonfigurasi.",
-      "misconfigured-warning-details": "Templat harus ditentukan di bagian <1></1> dan <4></4> dari konfigurasi alertmanager Anda."
+      "misconfigured-warning-details": ""
     },
     "templates-picker": {
       "button-edit": "",
@@ -2333,6 +2396,10 @@
     },
     "type-selector-button": {
       "add-expression": ""
+    },
+    "unknown-contact-point-details": {
+      "unknown-contact-point": "",
+      "unknown-contact-point-tooltip": ""
     },
     "unknown-rule-list-item": {
       "title-unknown-rule-type": ""
@@ -2434,6 +2501,7 @@
     },
     "api-keys-table": {
       "aria-label-delete-api-key": "",
+      "content-this-api-key-has-expired": "",
       "expires": "",
       "last-used-at": "",
       "migrate-to-service-account": "",
@@ -2500,6 +2568,18 @@
       "configuration-required": "",
       "refer-documentation-configure-authentication": ""
     },
+    "fields": {
+      "allowed-groups-description": "",
+      "allowed-groups-description-oauth": "",
+      "api-url-description": "",
+      "team-ids-description": "",
+      "team-ids-description-oauth": "",
+      "team-ids-github": "",
+      "team-ids-other": "",
+      "teams-url-description": "",
+      "teams-url-description-oauth": "",
+      "use-pkce-description": ""
+    },
     "provider-card": {
       "text-badge-enabled": "",
       "text-badge-not-enabled": ""
@@ -2513,6 +2593,8 @@
       "label-enabled": "",
       "reset-configuration": "",
       "reset-configuration-description": "",
+      "save": "",
+      "saving": "",
       "title-more-actions": "",
       "title-reset": "",
       "tooltip-more-actions": ""
@@ -2645,14 +2727,14 @@
       "clear": "Hapus pencarian dan filter",
       "text": "Hasil untuk kueri Anda tidak ditemukan"
     },
-    "soft-delete": {
-      "success": "Dasbor {{name}} dipindahkan ke Baru dihapus"
-    },
     "text-this-repository-is-read-only": ""
   },
   "canvas": {
     "not-found-display": {
       "not-found": ""
+    },
+    "text-display": {
+      "double-click-to-set": ""
     }
   },
   "carousel": {
@@ -2929,7 +3011,9 @@
     },
     "annotation-settings-list": {
       "aria-label-delete": "",
+      "built-in": "",
       "data-source": "",
+      "disabled": "",
       "new-query": "",
       "query-name": "",
       "tooltip-move-down": "",
@@ -3042,6 +3126,7 @@
       }
     },
     "confirm-plugin-dashboard-save-modal": {
+      "body-plugin-dashboard": "",
       "cancel": "",
       "overwrite": "",
       "title-plugin-dashboard": ""
@@ -3064,6 +3149,7 @@
       }
     },
     "dashboard-validation": {
+      "body-dashboard-failed-schema-validation": "",
       "title-checking-dashboard-validity": "",
       "title-dashboard-failed-schema-validation": "",
       "title-error-checking-dashboard-validity": ""
@@ -3130,6 +3216,7 @@
     "edit-pane": {
       "elements": {
         "dashboard": "Dasbor",
+        "local-variable": "",
         "multiple-elements": "",
         "multiple-elements-delete-text": "",
         "multiple-panels": "",
@@ -3198,6 +3285,7 @@
     },
     "gen-aihistory": {
       "aria-label-send-custom-feedback": "",
+      "footer-text": "",
       "placeholder-tell-ai-what-to-do-next": ""
     },
     "get-field-override-categories": {
@@ -3288,8 +3376,12 @@
       "make-editable": ""
     },
     "minimalistic-pagination": {
+      "page-count": "",
       "tooltip-next": "",
       "tooltip-previous": ""
+    },
+    "new-dashboard-with-ds": {
+      "not-found": ""
     },
     "new-panel": {
       "configure-button": "",
@@ -3352,9 +3444,12 @@
       "go-back-to-queries": ""
     },
     "public-dashboard-not-available": {
+      "does-not-exist": "",
+      "paused": "",
       "try-again-later": ""
     },
     "revert-dashboard-modal": {
+      "body-restore-version": "",
       "title-restore-version": ""
     },
     "row-options-button": {
@@ -3416,6 +3511,8 @@
       "description": "",
       "label-copy-tags": "",
       "label-folder": "",
+      "save": "",
+      "saving": "",
       "title": ""
     },
     "save-dashboard-button": {
@@ -3432,19 +3529,30 @@
       "label-details": ""
     },
     "save-dashboard-error-proxy": {
-      "title-conflict": ""
+      "body-name-exists": "",
+      "body-version-mismatch": "",
+      "title-name-exists": "",
+      "title-version-mismatch": ""
     },
     "save-dashboard-form": {
       "cancel": "",
       "label-current-range-dashboard-default": "",
       "label-current-variable-values-dashboard-default": "",
       "no-changes-to-save": "",
-      "placeholder-describe-changes": ""
+      "placeholder-describe-changes": "",
+      "save": "",
+      "saving": ""
     },
     "save-provisioned-dashboard-form": {
       "cancel": "",
+      "cannot-be-saved": "",
       "copy-json-to-clipboard": "",
-      "save-json-to-file": ""
+      "file-path": "",
+      "save-json-to-file": "",
+      "see-docs": ""
+    },
+    "share-public-dashboard-loader": {
+      "loading-configuration": ""
     },
     "solo-panel": {
       "loading-initializing-dashboard": "",
@@ -3544,7 +3652,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3623,6 +3734,9 @@
       "title-delete": ""
     },
     "transformation-picker": {
+      "info": "",
+      "info-graph-not-suitable": "",
+      "info-switch-to-table": "",
       "placeholder-search-for-transformation": "",
       "read-more": "",
       "title-transformations": ""
@@ -3647,6 +3761,9 @@
       "discard": "",
       "title-unsaved-changes": ""
     },
+    "untheme-dashboard-row": {
+      "dashboard-datasource": ""
+    },
     "unthemed-dashboard-row": {
       "aria-label-delete-row": "",
       "learn-more": ""
@@ -3658,7 +3775,10 @@
       "tags-expected-strings": "tag array yang diharapkan dari string"
     },
     "version-history-comparison": {
-      "label-view-json-diff": ""
+      "button-restore": "",
+      "label-view-json-diff": "",
+      "new-updated-by": "",
+      "old-updated-by": ""
     },
     "version-history-table": {
       "aria-label-toggle-selection": "",
@@ -3757,8 +3877,10 @@
       "title-annotation-support-source": ""
     },
     "annotation-settings-list": {
+      "built-in": "",
       "data-source": "",
       "delete-aria-label": "",
+      "disabled": "",
       "new-query": "",
       "query-name": "",
       "tooltip-move-down": "",
@@ -3773,6 +3895,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -3819,6 +3942,8 @@
     },
     "data-source-variable-form": {
       "data-source-options": "",
+      "description-instance-name-filter": "",
+      "example-instance-name-filter": "",
       "selection-options": ""
     },
     "description-label": {
@@ -3879,7 +4004,12 @@
         "title-plugin-dashboard": "",
         "title-someone-else-has-updated-this-dashboard": "",
         "would-still-dashboard": ""
-      }
+      },
+      "save-and-overwrite": ""
+    },
+    "library-viz-panel-info": {
+      "last-edited": "",
+      "usage-count_other": ""
     },
     "name-already-exists-error": {
       "body-name-already-exists": "",
@@ -3889,6 +4019,7 @@
       "alert": {
         "title-errors-loading-rules": ""
       },
+      "error-failed-to-load": "",
       "text-loading-rules": "",
       "title-dashboard-not-saved": ""
     },
@@ -3918,7 +4049,10 @@
       "title-close": ""
     },
     "provisioned-delete-modal": {
+      "cannot-be-deleted": "",
+      "file-path": "",
       "ok": "",
+      "see-docs": "",
       "title-cannot-delete-provisioned-dashboard": ""
     },
     "provisioned-resource-delete-modal": {
@@ -3931,12 +4065,20 @@
       "query": ""
     },
     "query-variable-editor-form": {
+      "description-examples": "",
+      "description-optional": "",
       "label-data-source": "",
       "query-options": "",
       "selection-options": ""
     },
     "revert-dashboard-modal": {
+      "body-restore-version": "",
       "title-restore-version": ""
+    },
+    "save-button": {
+      "save": "",
+      "save-and-overwrite": "",
+      "saving": ""
     },
     "save-dashboard-as-form": {
       "aria-label-save-dashboard-description-field": "",
@@ -3990,17 +4132,20 @@
       "discard": "",
       "loading-connected-dashboards": "",
       "placeholder-search-affected-dashboards": "",
-      "update-all": ""
+      "update-all": "",
+      "affected-dashboards_other": ""
     },
     "save-provisioned-dashboard-form": {
       "api-error": "Kesalahan saat menyimpan dasbor",
       "api-success": "Perubahan dasbor disimpan",
       "cancel": "Batalkan",
+      "cannot-be-saved": "",
       "copy-json-message": "Jika Anda memiliki akses langsung ke target, salin JSON dan tempel di sana.",
       "copy-json-to-clipboard": "",
       "dashboard-comment-placeholder-describe-changes-optional": "Tambahkan catatan untuk menjelaskan perubahan Anda (opsional)",
       "description-branch-name-in-git-hub": "Nama cabang di GitHub",
       "description-inside-repository": "Jalur file di dalam repositori (.json atau .yaml)",
+      "file-path": "",
       "label-branch": "Cabang",
       "label-comment": "Komentar",
       "label-description": "Deskripsi",
@@ -4011,6 +4156,7 @@
       "save": "Simpan",
       "save-json-to-file": "",
       "saving": "Menyimpan...",
+      "see-docs": "",
       "title-required": "Judul dasbor wajib diisi",
       "title-same-as-folder": "Nama dasbor tidak boleh sama dengan nama folder",
       "title-this-repository-is-read-only": "Repositori ini hanya dapat dibaca",
@@ -4028,6 +4174,9 @@
     },
     "share-button": {
       "aria-label-sharedropdownmenu": ""
+    },
+    "solo-panel-page": {
+      "loading": ""
     },
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "",
@@ -4053,7 +4202,9 @@
     },
     "variable-check-indicator": {
       "aria-label-variable-referenced-dashboard": "",
-      "aria-label-variable-referenced-other-variables-dashboard": ""
+      "aria-label-variable-referenced-other-variables-dashboard": "",
+      "content-variable-not-referenced-other-variables-dashboard": "",
+      "content-variable-referenced-other-variables-dashboard": ""
     },
     "variable-editor-form": {
       "aria-label-variable-editor-form": "",
@@ -4088,10 +4239,18 @@
       "preview-of-values": "",
       "show-more": ""
     },
+    "version-history": {
+      "comparison": {
+        "button-restore": ""
+      }
+    },
     "version-history-comparison": {
-      "label-view-json-diff": ""
+      "label-view-json-diff": "",
+      "new-version-updated": "",
+      "old-version-updated": ""
     },
     "version-history-header": {
+      "compare-versions": "",
       "latest": "",
       "tooltip-reset-version": ""
     },
@@ -4105,6 +4264,7 @@
     },
     "versions-history-buttons": {
       "compare-versions": "",
+      "content-select-two-versions-to-start-comparing": "",
       "show-more-versions": ""
     },
     "visualization-button": {
@@ -4176,7 +4336,7 @@
       "hide-time-picker": "Sembunyikan pemilih waktu",
       "now-delay-description": "Kecualikan data terbaru yang mungkin tidak lengkap.",
       "now-delay-label": "Sekarang tunda",
-      "refresh-live-dashboards-description": "Terus menggambar ulang panel ketika rentang waktu mengacu pada 'sekarang'",
+      "refresh-live-dashboards-description": "",
       "refresh-live-dashboards-label": "Muat ulang dasbor langsung",
       "time-options-label": "Opsi waktu",
       "time-zone-label": "Zona waktu",
@@ -4267,6 +4427,7 @@
     },
     "button-row": {
       "delete": "",
+      "save-and-test": "",
       "test": ""
     },
     "cloud-info-box": {
@@ -4289,6 +4450,9 @@
     },
     "data-source-picker": {
       "aria-label-select-a-data-source": ""
+    },
+    "data-source-plugin-config-page": {
+      "page-not-found": ""
     },
     "data-source-plugin-state": {
       "plugin-state": ""
@@ -4426,8 +4590,12 @@
     }
   },
   "explore": {
+    "accordian-logs": {
+      "footer": ""
+    },
     "accordian-references": {
-      "references": ""
+      "references": "",
+      "view-linked-span": ""
     },
     "add-to-dashboard": "Tambahkan ke dasbor",
     "basic-extensions": {
@@ -4436,6 +4604,7 @@
     "clear": "",
     "confirm-navigation-modal": {
       "cancel": "",
+      "new-tab": "",
       "open": "",
       "open-in-new-tab": ""
     },
@@ -4449,6 +4618,7 @@
       }
     },
     "correlation-editor-mode-bar": {
+      "content-correlations-editor-explore-experimental-feature": "",
       "exit-correlation-editor": "",
       "save": ""
     },
@@ -4456,9 +4626,14 @@
       "add-transformation": "",
       "aria-label-delete-transformation": "",
       "aria-label-edit-transformation": "",
+      "body-correlation-details": "",
+      "expression": "",
       "label-description": "",
+      "label-description-header": "",
       "label-label": "",
-      "title-correlation-details": ""
+      "title-correlation-details": "",
+      "tooltip-transformations": "",
+      "transformations": ""
     },
     "correlation-transformation-add-modal": {
       "add-transformation": "",
@@ -4484,10 +4659,13 @@
       "title-unsaved-changes-to-correlation": ""
     },
     "draggable-manager-demo": {
+      "click-and-drag-gray-divider": "",
       "click-horizontally-somewhere-colored-below": "",
+      "drag-value": "",
       "draggable-manager-demo": "",
       "dragging-a-divider": "",
-      "dragging-a-sub-region": ""
+      "dragging-a-sub-region": "",
+      "value": ""
     },
     "drilldownInfo": {
       "action": "Buka Grafana Drilldown",
@@ -4518,6 +4696,10 @@
       "outline": "",
       "tooltip-content-outline": ""
     },
+    "feature-toggle-page": {
+      "description-explore-disabled": "",
+      "title-explore-disabled": ""
+    },
     "get-matches-metadata": {
       "matches": ""
     },
@@ -4528,10 +4710,15 @@
     },
     "live-logs": {
       "clear-logs": "",
-      "exit-live-mode": ""
+      "exit-live-mode": "",
+      "last-line-received": "",
+      "pause": "",
+      "resume": ""
     },
     "live-tail-button": {
+      "live": "",
       "pause-the-live-stream": "",
+      "paused": "",
       "start-live-stream-your-logs": "",
       "stop-and-exit-the-live-stream": ""
     },
@@ -4560,12 +4747,14 @@
       "show-original-line": ""
     },
     "logs-sample-panel": {
+      "label": "",
       "logs-sample-is-loading": "",
       "no-logs-sample-data": "",
       "open-in-split-view-button": {
         "open-logs-in-split-view": ""
       },
-      "title-failed-sample-query": ""
+      "title-failed-sample-query": "",
+      "tooltip": ""
     },
     "logs-table-available-fields": {
       "title-label-percentage": ""
@@ -4574,7 +4763,9 @@
       "no-fields": ""
     },
     "logs-table-multi-select": {
-      "fields": ""
+      "fields": "",
+      "reset": "",
+      "selected-fields": ""
     },
     "logs-table-nav-field": {
       "aria-label-drag-and-drop-icon": "",
@@ -4585,6 +4776,9 @@
       "label-select-query": "",
       "tooltip-select-query-visualize-table": ""
     },
+    "logs-volume-panel": {
+      "content-streaming": ""
+    },
     "logs-volume-panel-list": {
       "label-reload-log-volume": "",
       "loading": "",
@@ -4593,13 +4787,17 @@
       "title-showing-partial-data": "",
       "title-unable-to-show-log-volume": ""
     },
-    "make-datasource-setup": {
-      "aria-label-query": ""
+    "logs-volumne-panel-list": {
+      "body-no-logs-volume-available": ""
     },
     "next": "",
     "next-prev-result": {
       "aria-label-next": "",
-      "aria-label-prev": ""
+      "aria-label-prev": "",
+      "depth": "",
+      "depth-span-filter-matches": "",
+      "services": "",
+      "services-span-filter-matches": ""
     },
     "no-data-source-call-to-action": {
       "cta-element": {
@@ -4615,6 +4813,7 @@
       "aria-label-go-queryless": ""
     },
     "raw-list-container": {
+      "item-count": "",
       "label-expand-results": ""
     },
     "raw-list-item": {
@@ -4630,7 +4829,6 @@
       "newest-first": "Terbaru lebih dulu",
       "oldest-first": "Terlama lebih dulu",
       "query-history": "Riwayat kueri",
-      "query-library": "Pustaka kueri",
       "settings": "Pengaturan",
       "starred": "Dibintangi"
     },
@@ -4713,8 +4911,6 @@
     "rich-history-utils": {
       "a-week-ago": "seminggu yang lalu",
       "days-ago": "{{num}} hari yang lalu",
-      "default-from": "sekarang—1 jam",
-      "default-to": "sekarang",
       "today": "hari ini",
       "two-weeks-ago": "dua minggu yang lalu",
       "yesterday": "kemarin"
@@ -4746,6 +4942,9 @@
     },
     "show-critical-path-only": "",
     "show-matches-only": "",
+    "span-bar": {
+      "tooltip-critical-path": ""
+    },
     "span-bar-section": {
       "description-link": "",
       "title-span-bar": ""
@@ -4772,12 +4971,14 @@
       "aria-label-select-service-name-operator": "",
       "aria-label-select-span-name": "",
       "aria-label-select-span-name-operator": "",
+      "label-collapse": "",
       "label-duration": "",
       "label-service-name": "",
       "label-span-name": "",
       "label-tags": "",
       "placeholder-all-service-names": "",
       "placeholder-all-span-names": "",
+      "tooltip-collapse": "",
       "tooltip-duration": "",
       "tooltip-tags": ""
     },
@@ -4815,6 +5016,9 @@
       "tooltip-expand": "",
       "tooltip-expand-all": ""
     },
+    "timeline-header-row": {
+      "title": ""
+    },
     "toolbar": {
       "add-to-extensions": "Tambahkan",
       "add-to-queryless-extensions": "Buka tanpa kueri",
@@ -4844,7 +5048,8 @@
       "title-share-thoughts-about-tracing-grafana": ""
     },
     "trace-page-header": {
-      "text-partial-trace": ""
+      "text-partial-trace": "",
+      "tooltip-url": ""
     },
     "trace-page-search-bar": {
       "aria-label-clear-filters": "",
@@ -4852,12 +5057,14 @@
       "label-show-paths": ""
     },
     "trace-view": {
-      "no-data": ""
+      "no-data": "",
+      "tooltip-copy-icon": ""
     },
     "trace-view-container": {
       "title-trace": ""
     },
     "unconnected-node-graph-container": {
+      "count-warning": "",
       "title-node-graph": ""
     },
     "unthemed-logs": {
@@ -4885,8 +5092,11 @@
       "download-button": "Unduh file",
       "download-successful_toast_message": "JSON Anda telah diunduh",
       "export-externally-label": "Ekspor dasbor untuk digunakan di instans lain",
-      "info-text": "Salin atau unduh file JSON yang berisi JSON dasbor Anda",
-      "title": "Ekspor JSON dasbor"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Ekspor",
@@ -4911,11 +5121,20 @@
     "classic-conditions": {
       "label-conditions": ""
     },
+    "condition": {
+      "of": "",
+      "to": "",
+      "when": ""
+    },
     "expression-query-editor": {
       "label-operation": ""
     },
     "math": {
-      "available-math-functions": ""
+      "available-math-functions": "",
+      "run-math-operations": "",
+      "tooltip-footer": "",
+      "tooltip-title": "",
+      "tooltip-trigger": ""
     },
     "reduce": {
       "label-function": "",
@@ -4956,7 +5175,8 @@
       "default-password-alert": "",
       "new-password-label": "",
       "skip-button": "Lewati",
-      "submit-button": "Kirim"
+      "submit-button": "Kirim",
+      "tooltip-skip-button": ""
     },
     "contact-admin": "Lupa nama pengguna atau email Anda? Hubungi administrator Grafana Anda.",
     "email-sent": "Email dengan tautan pengaturan ulang telah dikirim ke alamat email. Anda akan segera menerimanya.",
@@ -4994,6 +5214,12 @@
     },
     "essentials": {
       "title-essentials": ""
+    },
+    "progress-bar": {
+      "steps-status": ""
+    },
+    "progress-status": {
+      "your-progress": ""
     }
   },
   "grafana": {
@@ -5007,7 +5233,8 @@
     "action-editor": {
       "button": {
         "confirm": "Konfirmasi",
-        "confirm-action": "Konfirmasi tindakan"
+        "confirm-action": "Konfirmasi tindakan",
+        "style": ""
       },
       "inline": {
         "add-action": "Tambah tindakan",
@@ -5214,7 +5441,11 @@
       "previous-page": "halaman sebelumnya"
     },
     "panel-chrome": {
-      "aria-label-toggle-collapse": ""
+      "aria-label-toggle-collapse": "",
+      "tooltip-cancel": "",
+      "tooltip-cancel-loading": "",
+      "tooltip-stop-streaming": "",
+      "tooltip-streaming": ""
     },
     "panel-menu": {
       "label": "Menu untuk panel {{ title }} ",
@@ -5385,7 +5616,13 @@
   },
   "inspector": {
     "inspect-data-tab": {
+      "loading": "",
       "no-data": ""
+    },
+    "inspect-error-tab": {
+      "error-status-message": "",
+      "error-status-no-message": "",
+      "error-trace-message": ""
     },
     "inspect-jsontab": {
       "apply": "",
@@ -5401,7 +5638,9 @@
     },
     "query-inspector": {
       "query-inspector": "",
-      "text-loading-query-inspector": ""
+      "text-loading-query-inspector": "",
+      "count-frames_other": "",
+      "count-rows_other": ""
     }
   },
   "invites": {
@@ -5413,6 +5652,11 @@
       "name": ""
     },
     "signup-invited-page": {
+      "complete-following": "",
+      "custom-has-invited-you": "",
+      "default-has-invited-you": "",
+      "greeting-custom": "",
+      "greeting-default": "",
       "label-email": "",
       "label-name": "",
       "label-password": "",
@@ -5608,6 +5852,10 @@
     "has-connected-dashboards": {
       "dashboard-name": ""
     },
+    "library-panel-info": {
+      "last-edited": "",
+      "usage-count_other": ""
+    },
     "library-panels-search": {
       "placeholder-search-by-name-or-description": ""
     },
@@ -5633,12 +5881,14 @@
       "success": "Panel pustaka disimpan"
     },
     "save-library-panel-modal": {
+      "affected-dashboards": "",
       "cancel": "",
       "dashboard-name": "",
       "discard": "",
       "loading-connected-dashboards": "",
       "placeholder-search-affected-dashboards": "",
-      "update-all": ""
+      "update-all": "",
+      "num-affected_other": ""
     }
   },
   "link": {
@@ -5663,6 +5913,7 @@
   "live": {
     "dashboard-changed-modal": {
       "continue-editing": "",
+      "description": "",
       "discard-local-changes": "",
       "title-dashboard-changed": ""
     },
@@ -5741,6 +5992,9 @@
       "collapse": "",
       "expand": ""
     },
+    "log-labels-list": {
+      "log-line": ""
+    },
     "log-line-menu": {
       "copy-link": "Salin tautan ke baris log",
       "copy-log": "Salin baris log",
@@ -5768,7 +6022,8 @@
     "log-row-message": {
       "ellipsis": "… ",
       "more": "lainnya",
-      "see-details": "Lihat detail log"
+      "see-details": "Lihat detail log",
+      "tooltip-error": ""
     },
     "log-rows": {
       "disable-popover": {
@@ -5830,6 +6085,8 @@
       "aria-label-no-details": ""
     },
     "un-themed-log-details-row": {
+      "filter-out": "",
+      "filter-out-query": "",
       "title-copy-value-to-clipboard": "",
       "toggle-field-button": {
         "tooltip-field-instead-message": "",
@@ -5837,6 +6094,10 @@
       },
       "tooltip-adhoc-statistics": "",
       "tooltip-hide-adhoc-statistics": ""
+    },
+    "un-themed-log-label-stats": {
+      "field-log-stats": "",
+      "label-log-stats": ""
     }
   },
   "manage-dashbaords": {
@@ -5858,6 +6119,7 @@
       "options": ""
     },
     "import-dashboard-overview-un-connected": {
+      "importing-from": "",
       "published-by": "",
       "updated-on": ""
     },
@@ -5917,6 +6179,9 @@
       "button": "Migrasikan instans ini ke Cloud",
       "header": "Biarkan kami mengelola tumpukan Grafana Anda"
     },
+    "dashboard-info": {
+      "dashboard": ""
+    },
     "delete-migration-token-confirm": {
       "body": "Jika Anda sudah menggunakan token ini dengan instalasi yang dikelola sendiri, instalasi itu tidak akan dapat lagi mengunggah konten.",
       "confirm-button": "Hapus token",
@@ -5932,6 +6197,7 @@
       "title": "Putuskan koneksi dari tumpukan cloud"
     },
     "folder-info": {
+      "folder": "",
       "unable-to-load-folder": ""
     },
     "get-started": {
@@ -6554,6 +6820,7 @@
   "org": {
     "new-org-page": {
       "create": "",
+      "description": "",
       "label-organization-name": "",
       "placeholder-org-name": ""
     },
@@ -6562,6 +6829,9 @@
       "label-organization-profile": "",
       "update-organization-name": ""
     },
+    "select-org-page": {
+      "description": ""
+    },
     "user-invite-form": {
       "back": "",
       "label-email-or-username": "",
@@ -6569,7 +6839,11 @@
       "label-send-invite-email": "",
       "placeholder-optional": "",
       "role": "",
-      "submit": ""
+      "submit": "",
+      "tooltip": ""
+    },
+    "user-invite-page": {
+      "sub-title": ""
     }
   },
   "org-picker": {
@@ -6612,7 +6886,9 @@
       "title-not-found": ""
     },
     "panel-renderer": {
+      "failed-to-load-plugin": "",
       "loading-plugin-panel": "",
+      "no-panel-component": "",
       "no-panel-data": ""
     },
     "panel-type-card": {
@@ -6639,7 +6915,14 @@
     "select-placeholder": ""
   },
   "playlist": {
+    "playlist-table-rows": {
+      "aria-label-playlist-item": "",
+      "multiple-dashboards-found": "",
+      "no-dashboards-found": "",
+      "not-found": ""
+    },
     "start-modal": {
+      "button-start": "",
       "description-customize-dashboard-elements-visibility": "",
       "description-panel-heights-adjusted-screen": "",
       "label-autofit": "",
@@ -6699,6 +6982,11 @@
       "message": "Daftar putar tidak ditemukan"
     }
   },
+  "plugin": {
+    "plugin-details-deprecated-warning": {
+      "body-deprecated": ""
+    }
+  },
   "plugins": {
     "app-root-page": {
       "access-denied": {
@@ -6712,7 +7000,8 @@
       "label-search": "",
       "label-state": "",
       "label-type": "",
-      "subtitle": ""
+      "subtitle": "",
+      "tooltip-filter-disabled": ""
     },
     "catalog": {
       "no-updates-available": "Tidak ada pembaruan yang tersedia",
@@ -6721,7 +7010,7 @@
         "available-header": "Tersedia",
         "button": "Perbarui semua ({{length}})",
         "cloud-update-message": "* Mungkin perlu beberapa menit agar plugin tersedia untuk digunakan.",
-        "error": "Kesalahan saat memperbarui plugin:",
+        "error": "",
         "error-status-text": "gagal - melihat pesan kesalahan",
         "header": "Plugin berikut memiliki pembaruan yang tersedia",
         "installed-header": "Diinstal",
@@ -6775,6 +7064,7 @@
         "reportAbuseTooltip": "Laporkan masalah yang terkait dengan plugin jahat atau berbahaya langsung ke Grafana Labs.",
         "repository": "Repositori",
         "signature": "Tanda Tangan",
+        "sponsorDeveloper": "",
         "status": "Status"
       },
       "modal": {
@@ -6802,6 +7092,12 @@
       "add-new-data-source": "",
       "title-button-disabled": ""
     },
+    "install-controls": {
+      "install": "",
+      "installing": "",
+      "update": "",
+      "updating": ""
+    },
     "install-controls-button": {
       "title-uninstall-modal": ""
     },
@@ -6820,6 +7116,7 @@
       "label-severity": ""
     },
     "not-found-plugin": {
+      "body-plugin-not-found": "",
       "title-plugin-not-found": ""
     },
     "plugin-actions": {
@@ -6834,12 +7131,17 @@
       "tooltip-plugin-deprecated-longer-receives-updates": ""
     },
     "plugin-details-body": {
+      "needs-service-account": "",
       "page-not-found": ""
     },
     "plugin-details-deprecated-warning": {
       "title-deprecated": ""
     },
+    "plugin-details-header-dependencies": {
+      "grafana-dependency": ""
+    },
     "plugin-details-signature": {
+      "body-invalid-plugin-signature": "",
       "read-more-about-plugins-signing": "",
       "title-invalid-plugin-signature": ""
     },
@@ -6870,6 +7172,8 @@
       "update-available": ""
     },
     "plugin-usage": {
+      "body-missing-feature-toggle-panel-title-search": "",
+      "num-usages": "",
       "title-missing-feature-toggle-panel-title-search": "",
       "title-not-used-yet": ""
     },
@@ -6886,7 +7190,9 @@
     },
     "version-list": {
       "grafana-dependency": "",
+      "installed-version": "",
       "last-updated": "",
+      "latest-compatible-version": "",
       "no-version-history-was-found": "",
       "version": ""
     }
@@ -6909,6 +7215,15 @@
     },
     "change-theme": "Ubah tema",
     "enable-kiosk-mode": "",
+    "feature-toggle-page": {
+      "profile-not-enabled": ""
+    },
+    "feature-toggles-age": {
+      "enable-in-config": ""
+    },
+    "input-suffix": {
+      "content-login-details-locked-because-managed-another": ""
+    },
     "user-organizations": {
       "text-loading-organizations": ""
     },
@@ -7052,6 +7367,8 @@
       "repository-config-exists-configuration": ""
     },
     "file-status-page": {
+      "save": "",
+      "saving": "",
       "title-error-loading-file": ""
     },
     "files-view": {
@@ -7082,7 +7399,6 @@
     },
     "getting-started": {
       "alert-temporary-outage": "",
-      "engaging-graphic": "",
       "modal-description-public-access": "",
       "modal-description-required-features": "",
       "modal-title-set-up-public-access": "",
@@ -7178,13 +7494,16 @@
       "checked": "",
       "finished": "",
       "health": "",
+      "healthy": "",
       "job-id": "",
       "last-ref": "",
       "messages": "",
+      "not-available": "",
       "pull-status": "",
       "resources": "",
       "started": "",
       "status": "",
+      "unhealthy": "",
       "view-folder": "",
       "webhook": "",
       "webhook-events": "",
@@ -7474,31 +7793,41 @@
       "hidden": "",
       "query-name-div-title-edit-query-name": ""
     },
+    "query-error-alert": {
+      "trace-id": ""
+    },
     "query-group": {
       "add-query": "",
       "expression": "",
       "title-data-source-help": ""
     },
     "query-group-options-editor": {
+      "collapsed-interval": "",
+      "collapsed-max-data-points": "",
       "hide-time-info": "",
       "Query options-title-query-options": "",
       "relative-time": "",
+      "relative-time-tooltip": "",
       "render-cache-timeout-option": {
         "cache-timeout": ""
       },
       "render-interval-option": {
         "interval": "",
+        "interval-tooltip": "",
         "min-interval": "",
+        "min-interval-tooltip": "",
         "time-range-max-data-points": ""
       },
       "render-max-data-points-option": {
         "max-data-points": "",
+        "max-data-points-tooltip": "",
         "width-of-panel": ""
       },
       "render-query-caching-ttloption": {
         "cache-ttl": ""
       },
-      "time-shift": ""
+      "time-shift": "",
+      "time-shift-tooltip": ""
     },
     "query-group-top-section": {
       "data-source": "",
@@ -7677,6 +8006,9 @@
     }
   },
   "search": {
+    "action-row": {
+      "panel-type": ""
+    },
     "actions": {
       "include-panels": "Sertakan panel",
       "remove-datasource-filter": "Sumber data: {{datasource}}",
@@ -7800,6 +8132,9 @@
       "label-roles": "",
       "used-by": ""
     },
+    "service-account-profile-row": {
+      "edit": ""
+    },
     "service-account-role-row": {
       "aria-label-role": ""
     },
@@ -7817,10 +8152,12 @@
       "title-disable-service-account": ""
     },
     "token-expiration": {
+      "content-this-token-has-expired": "",
       "expired-label": "",
       "never": ""
     },
     "token-revoked": {
+      "content-token-publicly-exposed-please-rotate": "",
       "revoked-label": ""
     }
   },
@@ -7858,7 +8195,8 @@
       "loading": "Memuat...",
       "save-button": "Simpan ke file",
       "share-externally-label": "Ekspor untuk berbagi secara eksternal",
-      "view-button": "Lihat JSON"
+      "view-button": "Lihat JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Buat panel pustaka."
@@ -8226,7 +8564,7 @@
     "range-content": {
       "apply-button": "Gunakan rentang waktu",
       "default-error": "",
-      "fiscal-year": "Tahun fiskal",
+      "fiscal-year": "",
       "from-input": "Dari",
       "open-input-calendar": "Buka kalender",
       "range-error": "\"Dari\" tidak boleh setelah \"Hingga\"",
@@ -8244,15 +8582,11 @@
       "apply": "Gunakan rentang waktu",
       "aria-role": "Pemilihan rentang waktu",
       "default-title": "Rentang waktu",
-      "example": "Contoh: untuk memilih rentang waktu dari 10 menit yang lalu hingga sekarang",
-      "example-details": "Dari: sekarang-10m Ke: sekarang",
       "example-title": "Contoh rentang waktu",
       "from-label": "Dari",
       "from-to": " {{timeOptionFrom}} hingga{{timeOptionTo}} ",
-      "more-info": "Untuk informasi selengkapnya lihat <2>dokumen <1></1></2>.",
-      "specify": "Sebutkan rentang waktu <1></1>",
+      "specify": "",
       "submit-button-label": "Tombol kirim TimePicker",
-      "supported-formats": "Format yang didukung: <1>sekarang- [digit]d/m/j/h/m</1>",
       "to-label": "Ke"
     },
     "zone": {
@@ -8324,6 +8658,7 @@
       "generate-enum-values-from-data": ""
     },
     "enum-mapping-row": {
+      "click-to-edit": "",
       "remove-enum-row-aria-label-delete-enum-row": "",
       "remove-enum-row-tooltip-delete": ""
     },
@@ -8378,10 +8713,13 @@
       "label-format": "",
       "label-set-timezone": "",
       "label-time-field": "",
+      "tooltip-format": "",
       "tooltip-timezone-manually": ""
     },
     "get-tooltips": {
-      "json-value": ""
+      "description": "",
+      "json-value": "",
+      "valid-paths": ""
     },
     "group-by-field-configuration": {
       "placeholder-ignored": "",
@@ -8598,6 +8936,7 @@
       "message": "Pengguna tidak ditemukan"
     },
     "token-revoked-modal": {
+      "auto-revoked": "",
       "resume-message": "",
       "sign-in": "",
       "title-you-have-been-automatically-signed-out": ""
@@ -8677,6 +9016,7 @@
       "loading": "Memuat...",
       "no-unknowns": "Tidak ada variabel yang diganti namanya atau hilang.",
       "renamed-or-missing-variables": "Variabel yang diganti namanya atau hilang",
+      "tooltip-renamed-or-missing-variables": "",
       "variable": "Variabel"
     },
     "variable-check-indicator": {
@@ -8692,7 +9032,8 @@
       "general": "",
       "placeholder-descriptive-text": "",
       "placeholder-label-name": "",
-      "placeholder-variable-name": ""
+      "placeholder-variable-name": "",
+      "run-query": ""
     },
     "variable-editor-list": {
       "definition": "",

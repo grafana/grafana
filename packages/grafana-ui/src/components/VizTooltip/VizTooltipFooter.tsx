@@ -73,7 +73,7 @@ const renderDataLinks = makeRenderLinksOrActions<LinkModel>(
 
 const renderActions = makeRenderLinksOrActions<ActionModel>(
   (title) => <Trans i18nKey="grafana-ui.viz-tooltip.footer-click-to-action">Click to {{ actionTitle: title }}</Trans>,
-  (item, i, styles) => <ActionButton key={i} action={item} variant="secondary" />
+  (item, i) => <ActionButton key={i} action={item} variant="secondary" />
 );
 
 export const VizTooltipFooter = ({ dataLinks, actions = [], annotate }: VizTooltipFooterProps) => {
@@ -116,6 +116,12 @@ const getStyles = (theme: GrafanaTheme2) => ({
     '&:hover': {
       textDecoration: 'underline',
       background: 'none',
+    },
+
+    height: 'auto',
+    '& span': {
+      whiteSpace: 'normal',
+      textAlign: 'left',
     },
   }),
   oneClickWrapper: css({

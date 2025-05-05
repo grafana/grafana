@@ -33,6 +33,7 @@ const FILTER_LEVELS: LogLevel[] = [
   LogLevel.warning,
   LogLevel.error,
   LogLevel.critical,
+  LogLevel.unknown,
 ];
 
 export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props) => {
@@ -232,6 +233,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           />
           {visualisationType === 'logs' && (
             <>
+              <div className={styles.divider} />
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <IconButton
                   name={'filter'}
@@ -252,6 +254,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               </Dropdown>
+              <div className={styles.divider} />
               <IconButton
                 name="clock-nine"
                 aria-pressed={showTime}
@@ -264,7 +267,8 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 }
                 size="lg"
               />
-              {showUniqueLabels !== undefined && (
+              {/* When this is used in a Plugin context, app is unknown */}
+              {showUniqueLabels !== undefined && app !== CoreApp.Unknown && (
                 <IconButton
                   name="tag-alt"
                   aria-pressed={showUniqueLabels}
@@ -344,7 +348,6 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                 <IconButton
                   name="download-alt"
                   className={styles.controlButton}
-                  aria-pressed={wrapLogMessage}
                   tooltip={t('logs.logs-controls.download', 'Download logs')}
                   size="lg"
                 />
@@ -389,6 +392,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingTop: theme.spacing(0.75),
       paddingLeft: theme.spacing(1),
       borderLeft: `solid 1px ${theme.colors.border.medium}`,
+      overflow: 'hidden',
     }),
     scrollToTopButton: css({
       margin: 0,

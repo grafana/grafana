@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -806,8 +805,8 @@ func permissionScenario(t *testing.T, desc string, fn permissionScenarioFunc) {
 			featuremgmt.WithFeatures(),
 			folderPermissions,
 			ac,
+			actest.FakeService{},
 			folderService,
-			folder.NewFakeStore(),
 			nil,
 			client.MockTestRestConfig{},
 			nil,
@@ -902,8 +901,8 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		ac,
+		actest.FakeService{},
 		folderService,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,
@@ -976,8 +975,8 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		features,
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{ExpectedEvaluate: true},
+		actest.FakeService{},
 		folderService,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,
@@ -1058,8 +1057,8 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		actest.FakeAccessControl{ExpectedEvaluate: true},
+		actest.FakeService{},
 		folderService,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,
