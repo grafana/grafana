@@ -14,6 +14,10 @@ type QueryTemplate struct {
 	// Longer description for why it is interesting
 	Description string `json:"description,omitempty"`
 
+	// The tags that can be used to filter the template
+	// +listType=set
+	Tags []string `json:"tags,omitempty"`
+
 	// The variables that can be used to render
 	// +listType=map
 	// +listMapKey=key
