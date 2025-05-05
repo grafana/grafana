@@ -243,10 +243,6 @@ const (
 	// Placeholder feature flag for internal testing
 	FlagWargamesTesting = "wargamesTesting"
 
-	// FlagAlertingInsights
-	// Show the new alerting insights landing page
-	FlagAlertingInsights = "alertingInsights"
-
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
