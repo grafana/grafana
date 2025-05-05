@@ -31,7 +31,7 @@ export function MetricSelector() {
             data-testid={selectors.components.DataSource.Prometheus.queryEditor.code.metricsBrowser.selectMetric}
           />
         </div>
-        <Label description="Set to 'none' to remove limit and show all labels for a selected metric. Removing the limit may cause performance issues.">
+        <Label description="Set to 0 (zero) to remove limit and show all labels for a selected metric. Removing the limit may cause performance issues.">
           Series limit
         </Label>
         <div>
