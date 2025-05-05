@@ -652,10 +652,10 @@ func (g *AlertRuleGenerator) GenerateQuery() AlertQuery {
 			From: Duration(time.Duration(f) * time.Minute),
 			To:   Duration(time.Duration(t) * time.Minute),
 		},
-		RefID:     util.GenerateShortUID(),
-		QueryType: util.GenerateShortUID(),
+		RefID:          util.GenerateShortUID(),
+		QueryType:      util.GenerateShortUID(),
 		DatasourceType: "prometheus",
-		IsMTQuery: true,
+		IsMTQuery:      true,
 	}
 }
 
