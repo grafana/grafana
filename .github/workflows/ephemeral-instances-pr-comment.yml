@@ -50,5 +50,5 @@ jobs:
           registry: "${{ env.REGISTRY }}"
           gcp-service-account-key: ${{ env.GCP_SA_ACCOUNT_KEY_BASE64 }}
           ephemeral-org-id: ephemeral
-          oss-or-enterprise: enterprise
+          oss-or-enterprise: oss
           verbose: true
