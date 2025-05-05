@@ -11,15 +11,11 @@ import {
 import { stringifyErrorLike } from '../../utils/misc';
 interface Props {
   folderUID: string;
-  /**
-   * Method invoked after the request to notify that the bulk action has been completed
-   */
-  onActionSucceed?: () => void;
   action: 'pause' | 'unpause';
   executeAction: (folderUID: string) => Promise<void>;
   isLoading: boolean;
 }
-export function FolderActionMenuItem({ folderUID, onActionSucceed, executeAction, isLoading, action }: Props) {
+export function FolderActionMenuItem({ folderUID, executeAction, isLoading, action }: Props) {
   const notifyApp = useAppNotification();
   const label =
     action === 'pause'
@@ -40,9 +36,7 @@ export function FolderActionMenuItem({ folderUID, onActionSucceed, executeAction
           error: stringifyErrorLike(error),
         })
       );
-      return;
     }
-    onActionSucceed?.();
   };
 
   return <Menu.Item label={label} icon={icon} disabled={isLoading} onClick={onActionClick} />;
