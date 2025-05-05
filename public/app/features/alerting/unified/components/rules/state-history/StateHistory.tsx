@@ -42,11 +42,20 @@ const StateHistory = ({ ruleUID }: Props) => {
   const styles = useStyles2(getStyles);
 
   if (loading && !error) {
-    return <LoadingPlaceholder text={'Loading history...'} />;
+    return <LoadingPlaceholder text={t('alerting.state-history.text-loading-history', 'Loading history...')} />;
   }
 
   if (error && !loading) {
-    return <Alert title={'Failed to fetch alert state history'}>{error.message}</Alert>;
+    return (
+      <Alert
+        title={t(
+          'alerting.state-history.title-failed-to-fetch-alert-state-history',
+          'Failed to fetch alert state history'
+        )}
+      >
+        {error.message}
+      </Alert>
+    );
   }
 
   const columns: Array<DynamicTableColumnProps<StateHistoryRowItem>> = [
@@ -91,8 +100,13 @@ const StateHistory = ({ ruleUID }: Props) => {
                 <Tooltip
                   content={
                     <div>
-                      Filter each state history group either by exact match or a regular expression, ex:{' '}
-                      <code>{`region=eu-west-1`}</code> or <code>{`/region=us-.+/`}</code>
+                      <Trans i18nKey="alerting.state-history.filter-group-tooltip">
+                        Filter each state history group either by exact match or a regular expression, for example:
+                      </Trans>
+                      <div>
+                        <code>{`region=eu-west-1`}</code>
+                        <code>{`/region=us-.+/`}</code>
+                      </div>
                     </div>
                   }
                 >

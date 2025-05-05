@@ -121,7 +121,11 @@ export function AlertmanagerCard({
         <Stack direction="row" gap={1}>
           {/* ⚠️ provisioned Data sources cannot have their "enable" / "disable" actions but we should still allow editing of the configuration */}
           <Button onClick={onEditConfiguration} icon={readOnly ? 'eye' : 'edit'} variant="secondary" fill="outline">
-            {readOnly ? 'View configuration' : 'Edit configuration'}
+            {readOnly ? (
+              <Trans i18nKey="alerting.alertmanager-card.view-configuration">View configuration</Trans>
+            ) : (
+              <Trans i18nKey="alerting.alertmanager-card.edit-configuration">Edit configuration</Trans>
+            )}
           </Button>
           {showActions ? (
             <>

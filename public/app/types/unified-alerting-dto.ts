@@ -124,7 +124,12 @@ interface PromRuleDTOBase {
   evaluationTime?: number;
   lastEvaluation?: string;
   lastError?: string;
-  uid?: string;
+}
+
+interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
+  uid: string;
+  folderUid: string;
+  queriedDatasourceUIDs?: string[];
 }
 
 export interface PromAlertingRuleDTO extends PromRuleDTOBase {
@@ -162,15 +167,10 @@ export interface PromRuleGroupDTO<TRule = PromRuleDTO> {
   lastEvaluation?: string;
 }
 
-export interface GrafanaPromAlertingRuleDTO extends PromAlertingRuleDTO {
-  uid: string;
-  folderUid: string;
-}
+export interface GrafanaPromAlertingRuleDTO extends GrafanaPromRuleDTOBase, PromAlertingRuleDTO {}
 
-export interface GrafanaPromRecordingRuleDTO extends PromRecordingRuleDTO {
-  uid: string;
-  folderUid: string;
-}
+export interface GrafanaPromRecordingRuleDTO extends GrafanaPromRuleDTOBase, PromRecordingRuleDTO {}
+
 export type GrafanaPromRuleDTO = GrafanaPromAlertingRuleDTO | GrafanaPromRecordingRuleDTO;
 
 export interface GrafanaPromRuleGroupDTO extends PromRuleGroupDTO<GrafanaPromRuleDTO> {
@@ -185,11 +185,14 @@ export interface PromResponse<T> {
   warnings?: string[];
 }
 
-export type PromRulesResponse = PromResponse<{
-  groups: PromRuleGroupDTO[];
-  groupNextToken?: string;
-  totals?: AlertGroupTotals;
-}>;
+export interface PromRulesResponse extends PromResponse<{ groups: PromRuleGroupDTO[]; groupNextToken?: string }> {}
+
+export interface GrafanaPromRulesResponse
+  extends PromResponse<{
+    groups: GrafanaPromRuleGroupDTO[];
+    groupNextToken?: string;
+    totals?: AlertGroupTotals;
+  }> {}
 
 // Ruler rule DTOs
 interface RulerRuleBaseDTO {

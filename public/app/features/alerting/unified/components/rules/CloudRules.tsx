@@ -75,7 +75,7 @@ export const CloudRules = ({ namespaces, expandAll }: Props) => {
               <div />
             )}
             <Stack gap={1}>
-              {canMigrateToGMA && <MigrateToGMAButton />}
+              {canMigrateToGMA && hasSomeResults && <MigrateToGMAButton />}
               <CreateRecordingRuleButton />
             </Stack>
           </div>

@@ -3,7 +3,7 @@ import { css, cx } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import { useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { Branding } from '../../../../core/components/Branding/Branding';
 import { getLoginStyles } from '../../../../core/components/Login/LoginLayout';
@@ -21,8 +21,14 @@ export const PublicDashboardNotAvailable = ({ paused }: { paused?: boolean }) =>
         <Branding.LoginLogo className={loginStyles.loginLogo} />
         <p className={styles.title} data-testid={selectors.title}>
           {paused
-            ? 'This dashboard has been paused by the administrator'
-            : 'The dashboard you are trying to access does not exist'}
+            ? t(
+                'dashboard.public-dashboard-not-available.paused',
+                'This dashboard has been paused by the administrator'
+              )
+            : t(
+                'dashboard.public-dashboard-not-available.does-not-exist',
+                'The dashboard you are trying to access does not exist'
+              )}
         </p>
         {paused && (
           <p className={styles.description} data-testid={selectors.pausedDescription}>

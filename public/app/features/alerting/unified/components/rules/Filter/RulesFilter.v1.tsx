@@ -18,6 +18,7 @@ import {
   trackRulesSearchComponentInteraction,
   trackRulesSearchInputInteraction,
 } from '../../../Analytics';
+import { shouldUseAlertingListViewV2 } from '../../../featureToggles';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useAlertingHomePageExtensions } from '../../../plugins/useAlertingHomePageExtensions';
 import { RuleHealth } from '../../../search/rulesSearchParser';
@@ -39,6 +40,13 @@ const RuleHealthOptions: SelectableValue[] = [
   { label: 'No Data', value: RuleHealth.NoData },
   { label: 'Error', value: RuleHealth.Error },
 ];
+
+// Contact point selector is not supported in Alerting ListView V2 yet
+const canRenderContactPointSelector =
+  (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
+    config.featureToggles.alertingSimplifiedRouting &&
+    shouldUseAlertingListViewV2() === false) ??
+  false;
 
 interface RulesFilerProps {
   onClear?: () => void;
@@ -122,10 +130,6 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
     trackRulesSearchComponentInteraction('contactPoint');
   };
 
-  const canRenderContactPointSelector =
-    (contextSrv.hasPermission(AccessControlAction.AlertingReceiversRead) &&
-      config.featureToggles.alertingSimplifiedRouting) ??
-    false;
   const searchIcon = <Icon name={'search'} />;
 
   return (
@@ -143,12 +147,16 @@ const RulesFilter = ({ onClear = () => undefined }: RulesFilerProps) => {
                   content={
                     <div>
                       <p>
-                        Data sources containing configured alert rules are Mimir or Loki data sources where alert rules
-                        are stored and evaluated in the data source itself.
+                        <Trans i18nKey="alerting.rules-filter.configured-alert-rules">
+                          Data sources containing configured alert rules are Mimir or Loki data sources where alert
+                          rules are stored and evaluated in the data source itself.
+                        </Trans>
                       </p>
                       <p>
-                        In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
-                        alert rules in the Grafana UI as well as in the data source where they were configured.
+                        <Trans i18nKey="alerting.rules-filter.manage-alerts">
+                          In these data sources, you can select Manage alerts via Alerting UI to be able to manage these
+                          alert rules in the Grafana UI as well as in the data source where they were configured.
+                        </Trans>
                       </p>
                     </div>
                   }
@@ -351,7 +359,11 @@ function SearchQueryHelp() {
 
   return (
     <div>
-      <div>Search syntax allows to query alert rules by the parameters defined below.</div>
+      <div>
+        <Trans i18nKey="alerting.search-query-help.search-syntax">
+          Search syntax allows to query alert rules by the parameters defined below.
+        </Trans>
+      </div>
       <hr />
       <div className={styles.grid}>
         <div>

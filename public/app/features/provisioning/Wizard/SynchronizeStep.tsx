@@ -6,33 +6,37 @@ import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioni
 import { t, Trans } from 'app/core/internationalization';
 
 import { JobStatus } from '../Job/JobStatus';
-import { StepStatus } from '../hooks/useStepStatus';
 
-import { WizardFormData } from './types';
+import { StepStatusInfo, WizardFormData } from './types';
 
 export interface SynchronizeStepProps {
-  onStepUpdate: (status: StepStatus, error?: string) => void;
+  onStepStatusUpdate: (info: StepStatusInfo) => void;
   requiresMigration: boolean;
 }
 
-export function SynchronizeStep({ onStepUpdate, requiresMigration }: SynchronizeStepProps) {
+export function SynchronizeStep({ onStepStatusUpdate, requiresMigration }: SynchronizeStepProps) {
   const [createJob] = useCreateRepositoryJobsMutation();
-  const { getValues, register } = useFormContext<WizardFormData>();
-  const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
+  const { getValues, register, watch } = useFormContext<WizardFormData>();
+  const repoType = watch('repository.type');
+  const supportsHistory = requiresMigration && repoType === 'github';
   const [job, setJob] = useState<Job>();
 
   const startSynchronization = async () => {
+    const [history, repoName] = getValues(['migrate.history', 'repositoryName']);
     if (!repoName) {
-      onStepUpdate('error', t('provisioning.synchronize-step.error-no-repository-name', 'No repository name provided'));
+      onStepStatusUpdate({
+        status: 'error',
+        error: t('provisioning.synchronize-step.error-no-repository-name', 'No repository name provided'),
+      });
       return;
     }
 
     try {
-      onStepUpdate('running');
+      onStepStatusUpdate({ status: 'running' });
       const jobSpec = requiresMigration
         ? {
             migrate: {
-              history,
+              history: history && supportsHistory,
             },
           }
         : {
@@ -47,37 +51,22 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
       }).unwrap();
 
       if (!response?.metadata?.name) {
-        return onStepUpdate('error', t('provisioning.synchronize-step.error-no-job-id', 'Failed to start job'));
+        return onStepStatusUpdate({
+          status: 'error',
+          error: t('provisioning.synchronize-step.error-no-job-id', 'Failed to start job'),
+        });
       }
       setJob(response);
     } catch (error) {
-      onStepUpdate('error', t('provisioning.synchronize-step.error-starting-job', 'Error starting job'));
+      onStepStatusUpdate({
+        status: 'error',
+        error: t('provisioning.synchronize-step.error-starting-job', 'Error starting job'),
+      });
     }
   };
 
   if (job) {
-    return (
-      <JobStatus
-        watch={job}
-        onStatusChange={(success) => {
-          if (success) {
-            onStepUpdate('success');
-          } else {
-            onStepUpdate('error', t('provisioning.synchronize-step.error-job-failed', 'Job failed'));
-          }
-        }}
-        onRunningChange={(isRunning) => {
-          if (isRunning) {
-            onStepUpdate('running');
-          }
-        }}
-        onErrorChange={(error) => {
-          if (error) {
-            onStepUpdate('error', error);
-          }
-        }}
-      />
-    );
+    return <JobStatus watch={job} onStatusChange={onStepStatusUpdate} />;
   }
 
   return (
@@ -123,7 +112,7 @@ export function SynchronizeStep({ onStepUpdate, requiresMigration }: Synchronize
           </li>
         </ul>
       </Alert>
-      {requiresMigration && (
+      {supportsHistory && (
         <>
           <Text element="h3">
             <Trans i18nKey="provisioning.synchronize-step.synchronization-options">Synchronization options</Trans>

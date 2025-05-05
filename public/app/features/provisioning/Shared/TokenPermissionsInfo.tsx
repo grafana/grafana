@@ -11,7 +11,7 @@ export function TokenPermissionsInfo() {
     <div className={styles.container}>
       {/* GitHub UI is English only, so these strings are not translated */}
       {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
-      <Stack gap={0.5}>
+      <Stack gap={0.5} wrap={'wrap'}>
         <Trans i18nKey="provisioning.token-permissions-info.go-to">Go to</Trans>
         <TextLink external href="https://github.com/settings/personal-access-tokens/new">
           GitHub Personal Access Tokens

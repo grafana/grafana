@@ -110,8 +110,8 @@ func (l *LegacyBindingStore) List(ctx context.Context, options *internalversion.
 		list.Items = append(list.Items, mapToBindingObject(ns, b))
 	}
 
-	list.ListMeta.Continue = common.OptionalFormatInt(res.Continue)
-	list.ListMeta.ResourceVersion = common.OptionalFormatInt(res.RV)
+	list.Continue = common.OptionalFormatInt(res.Continue)
+	list.ResourceVersion = common.OptionalFormatInt(res.RV)
 
 	return &list, nil
 }

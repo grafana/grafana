@@ -121,7 +121,7 @@ func TestCapabilities(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			rs.Cfg.RendererUrl = tt.rendererUrl
+			rs.Cfg.RendererServerUrl = tt.rendererUrl
 			rs.version = tt.rendererVersion
 			res, err := rs.HasCapability(context.Background(), tt.capabilityName)
 

@@ -4,13 +4,7 @@ import CacheProvider from 'react-inlinesvg/provider';
 import { Provider } from 'react-redux';
 import { Route, Routes } from 'react-router-dom-v5-compat';
 
-import {
-  config,
-  navigationLogger,
-  reportInteraction,
-  SidecarContext_EXPERIMENTAL,
-  sidecarServiceSingleton_EXPERIMENTAL,
-} from '@grafana/runtime';
+import { config, navigationLogger, reportInteraction } from '@grafana/runtime';
 import { ErrorBoundaryAlert, PortalContainer, TimeRangeProvider } from '@grafana/ui';
 import { getAppRoutes } from 'app/routes/routes';
 import { store } from 'app/store/store';
@@ -26,7 +20,7 @@ import { LiveConnectionWarning } from './features/live/LiveConnectionWarning';
 import { ExtensionRegistriesProvider } from './features/plugins/extensions/ExtensionRegistriesContext';
 import { pluginExtensionRegistries } from './features/plugins/extensions/registry/setup';
 import { ScopesContextProvider } from './features/scopes/ScopesContextProvider';
-import { ExperimentalSplitPaneRouterWrapper, RouterWrapper } from './routes/RoutesWrapper';
+import { RouterWrapper } from './routes/RoutesWrapper';
 
 interface AppWrapperProps {
   app: GrafanaApp;
@@ -125,24 +119,18 @@ export class AppWrapper extends Component<AppWrapperProps, AppWrapperState> {
                   options={{ enableHistory: true, callbacks: { onSelectAction: commandPaletteActionSelected } }}
                 >
                   <MaybeTimeRangeProvider>
-                    <SidecarContext_EXPERIMENTAL.Provider value={sidecarServiceSingleton_EXPERIMENTAL}>
-                      <ScopesContextProvider>
-                        <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
-                          <MaybeExtensionSidebarProvider>
-                            <GlobalStylesWrapper />
-                            <div className="grafana-app">
-                              {config.featureToggles.appSidecar ? (
-                                <ExperimentalSplitPaneRouterWrapper {...routerWrapperProps} />
-                              ) : (
-                                <RouterWrapper {...routerWrapperProps} />
-                              )}
-                              <LiveConnectionWarning />
-                              <PortalContainer />
-                            </div>
-                          </MaybeExtensionSidebarProvider>
-                        </ExtensionRegistriesProvider>
-                      </ScopesContextProvider>
-                    </SidecarContext_EXPERIMENTAL.Provider>
+                    <ScopesContextProvider>
+                      <ExtensionRegistriesProvider registries={pluginExtensionRegistries}>
+                        <MaybeExtensionSidebarProvider>
+                          <GlobalStylesWrapper />
+                          <div className="grafana-app">
+                            <RouterWrapper {...routerWrapperProps} />
+                            <LiveConnectionWarning />
+                            <PortalContainer />
+                          </div>
+                        </MaybeExtensionSidebarProvider>
+                      </ExtensionRegistriesProvider>
+                    </ScopesContextProvider>
                   </MaybeTimeRangeProvider>
                 </KBarProvider>
               </CacheProvider>

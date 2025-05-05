@@ -1,6 +1,7 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
@@ -12,6 +13,7 @@ import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 
 import { addNewRowTo, addNewTabTo } from './addNew';
+import { useClipboardState } from './useClipboardState';
 import { ungroupLayout } from './utils';
 
 export interface Props {
@@ -20,10 +22,17 @@ export interface Props {
 
 export function CanvasGridAddActions({ layoutManager }: Props) {
   const styles = useStyles2(getStyles);
+  const { hasCopiedPanel } = useClipboardState();
 
   return (
     <div className={cx(styles.addAction, 'dashboard-canvas-add-button')}>
-      <Button variant="primary" fill="text" icon="plus" onClick={() => layoutManager.addPanel(getDefaultVizPanel())}>
+      <Button
+        variant="primary"
+        fill="text"
+        icon="plus"
+        data-testid={selectors.components.CanvasGridAddActions.addPanel}
+        onClick={() => layoutManager.addPanel(getDefaultVizPanel())}
+      >
         <Trans i18nKey="dashboard.canvas-actions.add-panel">Add panel</Trans>
       </Button>
       <Dropdown
@@ -55,8 +64,19 @@ export function CanvasGridAddActions({ layoutManager }: Props) {
           <Trans i18nKey="dashboard.canvas-actions.group-panels">Group panels</Trans>
         </Button>
       </Dropdown>
-      {}
       {renderUngroupAction(layoutManager)}
+      {hasCopiedPanel && layoutManager.pastePanel && (
+        <Button
+          variant="primary"
+          fill="text"
+          icon="clipboard-alt"
+          onClick={() => {
+            layoutManager.pastePanel?.();
+          }}
+        >
+          <Trans i18nKey="dashboard.canvas-actions.paste-panel">Paste panel</Trans>
+        </Button>
+      )}
     </div>
   );
 }

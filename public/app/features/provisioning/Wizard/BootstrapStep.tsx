@@ -1,78 +1,66 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import {
-  Alert,
-  Box,
-  Card,
-  Field,
-  FieldSet,
-  Icon,
-  Input,
-  LoadingPlaceholder,
-  Stack,
-  Switch,
-  Text,
-  Tooltip,
-} from '@grafana/ui';
+import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
 import { t, Trans } from 'app/core/internationalization';
 
-import { StepStatus } from '../hooks/useStepStatus';
-
-import { getState } from './actions';
-import { ModeOption, WizardFormData } from './types';
+import { getResourceStats, useModeOptions } from './actions';
+import { StepStatusInfo, WizardFormData } from './types';
 
 interface Props {
   onOptionSelect: (requiresMigration: boolean) => void;
-  onStepUpdate: (status: StepStatus, error?: string) => void;
+  onStepStatusUpdate: (info: StepStatusInfo) => void;
   settingsData?: RepositoryViewList;
   repoName: string;
 }
 
-export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props) {
+export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepStatusUpdate }: Props) {
   const {
     register,
     control,
     setValue,
     watch,
+    getValues,
     formState: { errors },
   } = useFormContext<WizardFormData>();
 
-  const selectedTarget = watch('repository.sync.target');
-  const repoType = watch('repository.type');
-
   const resourceStats = useGetResourceStatsQuery();
   const filesQuery = useGetRepositoryFilesQuery({ name: repoName });
-  const [selectedOption, setSelectedOption] = useState<ModeOption | null>(null);
-
-  const state = useMemo(() => {
-    return getState(repoName, settingsData, filesQuery.data, resourceStats.data);
-  }, [repoName, settingsData, resourceStats.data, filesQuery.data]);
+  const selectedTarget = watch('repository.sync.target');
+  const options = useModeOptions(repoName, settingsData);
+  const { resourceCount, resourceCountString, fileCount } = useMemo(
+    () => getResourceStats(filesQuery.data, resourceStats.data),
+    [filesQuery.data, resourceStats.data]
+  );
 
   useEffect(() => {
-    if (state.actions.length && !selectedOption) {
-      const first = state.actions[0];
-      setSelectedOption(first);
-      onOptionSelect(first.operation === 'migrate');
-      setValue('repository.sync.target', first.target);
+    // Pick a name nice name based on type+settings
+    const repository = getValues('repository');
+    switch (repository.type) {
+      case 'github':
+        const name = repository.url ?? 'github';
+        setValue('repository.title', name.replace('https://github.com/', ''));
+        break;
+      case 'local':
+        setValue('repository.title', repository.path ?? 'local');
+        break;
     }
-  }, [state, selectedOption, setValue, onOptionSelect]);
+  }, [getValues, setValue]);
 
-  const handleOptionSelect = useCallback(
-    (option: ModeOption) => {
-      // Select the new option and update form state
-      setSelectedOption(option);
-      setValue('repository.sync.target', option.target);
+  useEffect(() => {
+    const isLoading = resourceStats.isLoading || filesQuery.isLoading;
+    onStepStatusUpdate({ status: isLoading ? 'running' : 'idle' });
+  }, [filesQuery.isLoading, onStepStatusUpdate, resourceStats.isLoading]);
 
-      if (option.operation === 'migrate') {
-        setValue('migrate.history', true);
-        setValue('migrate.identifier', true);
-      }
-      onOptionSelect(option.operation === 'migrate');
-    },
-    [setValue, onOptionSelect]
-  );
+  // Auto select the first option on mount
+  useEffect(() => {
+    const { target } = options[0];
+    setValue('repository.sync.target', target);
+    onOptionSelect(settingsData?.legacyStorage || resourceCount > 0);
+    // Only run this effect on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (resourceStats.isLoading || filesQuery.isLoading) {
     return (
@@ -83,9 +71,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
       </Box>
     );
   }
-
-  // Show the history selection
-  const canIncludeHistory = repoType === 'github' && settingsData?.legacyStorage;
 
   return (
     <Stack direction="column" gap={2}>
@@ -98,9 +83,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
               </Text>
               <Stack direction="row" gap={2}>
                 <Text variant="h4">
-                  {state.resourceCount > 0
-                    ? state.resourceCountString
-                    : t('provisioning.bootstrap-step.empty', 'Empty')}
+                  {resourceCount > 0 ? resourceCountString : t('provisioning.bootstrap-step.empty', 'Empty')}
                 </Text>
               </Stack>
             </Stack>
@@ -109,8 +92,8 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 <Trans i18nKey="provisioning.bootstrap-step.ext-storage">External storage</Trans>
               </Text>
               <Text variant="h4">
-                {state.fileCount > 0
-                  ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: state.fileCount })
+                {fileCount > 0
+                  ? t('provisioning.bootstrap-step.files-count', '{{count}} files', { count: fileCount })
                   : t('provisioning.bootstrap-step.empty', 'Empty')}
               </Text>
             </Stack>
@@ -120,16 +103,16 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
         <Controller
           name="repository.sync.target"
           control={control}
-          render={() => (
+          render={({ field: { ref, onChange, ...field } }) => (
             <>
-              {state.actions.map((action, index) => (
+              {options.map((action, index) => (
                 <Card
-                  key={`${action.target}-${action.operation}`}
-                  isSelected={action === selectedOption}
+                  key={action.target}
+                  isSelected={action.target === selectedTarget}
                   onClick={() => {
-                    handleOptionSelect(action);
+                    onChange(action.target);
                   }}
-                  autoFocus={index === 0}
+                  {...field}
                 >
                   <Card.Heading>{action.label}</Card.Heading>
                   <Card.Description>
@@ -143,54 +126,6 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
             </>
           )}
         />
-
-        {/* Add migration options */}
-        {selectedOption?.operation === 'migrate' && (
-          <>
-            {Boolean(state.resourceCount) && (
-              <Alert severity="info" title={t('provisioning.bootstrap-step.title-note', 'Note')}>
-                <Trans i18nKey="provisioning.bootstrap-step.dashboards-unavailable-while-running-process">
-                  Dashboards will be unavailable while running this process
-                </Trans>
-              </Alert>
-            )}
-            {Boolean(state.fileCount) && Boolean(state.resourceCount) && (
-              <Alert
-                title={t('provisioning.bootstrap-step.title-files-exist-in-the-target', 'Files exist in the target')}
-                severity="info"
-              >
-                <Trans
-                  i18nKey="provisioning.bootstrap-step.resources-will-be-added"
-                  defaults="The {{count}} resources in grafana will be added to the repository. Grafana will then include both the current resources and anything from the repository when done."
-                  values={{ count: state.resourceCount }}
-                />
-              </Alert>
-            )}
-            {canIncludeHistory && (
-              <FieldSet label={t('provisioning.bootstrap-step.label-migrate-options', 'Migrate options')}>
-                <Stack direction="column" gap={2}>
-                  {canIncludeHistory && (
-                    <Stack direction="row" gap={2} alignItems="center">
-                      <Switch {...register('migrate.history')} defaultChecked={true} />
-                      <Text>
-                        <Trans i18nKey="provisioning.bootstrap-step.include-history">Include history</Trans>
-                      </Text>
-                      <Tooltip
-                        content={t(
-                          'provisioning.bootstrap-step.tooltip-include-history',
-                          'Include complete dashboard version history'
-                        )}
-                        placement="top"
-                      >
-                        <Icon name="info-circle" />
-                      </Tooltip>
-                    </Stack>
-                  )}
-                </Stack>
-              </FieldSet>
-            )}
-          </>
-        )}
 
         {/* Only show title field if folder sync */}
         {selectedTarget === 'folder' && (
@@ -213,7 +148,7 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName }: Props)
                 'My repository connection'
               )}
               // Autofocus the title field if it's the only available option
-              autoFocus={state.actions.length === 1 && state.actions[0].target === 'folder'}
+              autoFocus={options.length === 1 && options[0].target === 'folder'}
             />
           </Field>
         )}

@@ -70,7 +70,10 @@ export const LabelsAsFieldsTransformerEditor = ({
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label={'Mode'} labelWidth={labelWidth}>
+        <InlineField
+          label={t('transformers.labels-as-fields-transformer-editor.label-mode', 'Mode')}
+          labelWidth={labelWidth}
+        >
           <RadioButtonGroup
             options={modes}
             value={options.mode ?? LabelsToFieldsMode.Columns}
@@ -79,8 +82,12 @@ export const LabelsAsFieldsTransformerEditor = ({
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Labels'} labelWidth={labelWidth}>
-          <Stack gap={1} wrap={'wrap'}>
+        <InlineField
+          label={t('transformers.labels-as-fields-transformer-editor.label-labels', 'Labels')}
+          labelWidth={labelWidth}
+          shrink={true}
+        >
+          <Stack gap={0.5} wrap={'wrap'}>
             {labelNames.map((o, i) => {
               const label = o.label!;
               return (
@@ -98,7 +105,7 @@ export const LabelsAsFieldsTransformerEditor = ({
       {options.mode !== LabelsToFieldsMode.Rows && (
         <InlineFieldRow>
           <InlineField
-            label={'Value field name'}
+            label={t('transformers.labels-as-fields-transformer-editor.label-value-field-name', 'Value field name')}
             labelWidth={labelWidth}
             tooltip={t(
               'transformers.labels-as-fields-transformer-editor.tooltip-replace-value-field-label',

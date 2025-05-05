@@ -136,7 +136,10 @@ export const CreateTokenModal = ({ isOpen, token, serviceAccountLogin, onCreateT
         <>
           <Field
             label={t('serviceaccounts.create-token-modal.label-token', 'Token')}
-            description="Copy the token now as you will not be able to see it again. Losing a token requires creating a new one."
+            description={t(
+              'serviceaccounts.create-token-modal.description-token',
+              'Copy the token now as you will not be able to see it again. Losing a token requires creating a new one.'
+            )}
           >
             <div className={styles.modalTokenRow}>
               <Input name="tokenValue" value={token} readOnly />

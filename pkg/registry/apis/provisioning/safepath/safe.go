@@ -25,7 +25,7 @@ const (
 // - Forward slash for path separation
 // - Dots for file extensions and current directory
 // - Underscores and hyphens for file/folder names
-var validPathPattern = regexp.MustCompile(`^[a-zA-Z0-9/_.-]+$`)
+var validPathPattern = regexp.MustCompile(`^[a-zA-Z0-9 /_.-]+$`)
 
 func IsSafe(path string) error {
 	// Check path length

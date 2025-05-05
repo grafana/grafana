@@ -75,6 +75,7 @@ export function TableNG(props: TableNGProps) {
     data,
     enableSharedCrosshair,
     showTypeIcons,
+    replaceVariables,
   } = props;
 
   const initialSortColumns = useMemo<SortColumn[]>(() => {
@@ -195,16 +196,16 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(
-    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+    () => props.data.fields.reduce<ColumnTypes>((acc, { name, type }) => ({ ...acc, [name]: type }), {}),
     [props.data.fields]
   );
 
   // Create a map of column key to text wrap
   const textWraps = useMemo(
     () =>
-      props.data.fields.reduce(
+      props.data.fields.reduce<{ [key: string]: boolean }>(
         (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.cellOptions?.wrapText ?? false }),
-        {} as { [key: string]: boolean }
+        {}
       ),
     [props.data.fields]
   );
@@ -242,15 +243,12 @@ export function TableNG(props: TableNGProps) {
   }, [props.data.fields]);
 
   const fieldDisplayType = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, { config, name }) => {
-        if (config?.custom?.cellOptions?.type) {
-          acc[name] = config.custom.cellOptions.type;
-        }
-        return acc;
-      },
-      {} as Record<string, TableCellDisplayMode>
-    );
+    return props.data.fields.reduce<Record<string, TableCellDisplayMode>>((acc, { config, name }) => {
+      if (config?.custom?.cellOptions?.type) {
+        acc[name] = config.custom.cellOptions.type;
+      }
+      return acc;
+    }, {});
   }, [props.data.fields]);
 
   // Clean up fieldsData to simplify
@@ -399,12 +397,7 @@ export function TableNG(props: TableNGProps) {
     if (!expandedRows.includes(rowIdx)) {
       setExpandedRows([...expandedRows, rowIdx]);
     } else {
-      const currentExpandedRows = expandedRows;
-      const indexToRemove = currentExpandedRows.indexOf(rowIdx);
-      if (indexToRemove > -1) {
-        currentExpandedRows.splice(indexToRemove, 1);
-        setExpandedRows(currentExpandedRows);
-      }
+      setExpandedRows(expandedRows.filter((id) => id !== rowIdx));
     }
     setResizeTrigger((prev) => prev + 1);
   };
@@ -461,6 +454,7 @@ export function TableNG(props: TableNGProps) {
           styles,
           theme,
           showTypeIcons,
+          replaceVariables,
           ...props,
         },
         handlers: {
@@ -503,7 +497,10 @@ export function TableNG(props: TableNGProps) {
         return 0;
       } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
-        return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
+
+        // Ensure we have a minimum height for the nested table even if data is empty
+        const rowCount = row.data?.length ?? 0;
+        return Math.max(defaultRowHeight, defaultRowHeight * (rowCount + headerCount));
       }
       return getRowHeight(row, cellHeightCalc, avgCharWidth, defaultRowHeight, fieldsData);
     },
@@ -669,6 +666,7 @@ export function mapFrameToDataGrid({
     timeRange,
     getActions,
     showTypeIcons,
+    replaceVariables,
   } = options;
   const { onCellExpand, onColumnResize } = handlers;
 
@@ -714,7 +712,7 @@ export function mapFrameToDataGrid({
             calcsRef,
             options: { ...options },
             handlers: { onCellExpand, onColumnResize },
-            availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
+            availableWidth,
           });
           expandedRecords = frameToRecords(row.data);
         }
@@ -725,7 +723,8 @@ export function mapFrameToDataGrid({
             rows={expandedRecords}
             columns={expandedColumns}
             rowHeight={defaultRowHeight}
-            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
+            className={styles.dataGrid}
+            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH - 1 }}
             headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
           />
         );
@@ -749,7 +748,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
+        const display = field.display!(field.values[rowIndex]);
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
@@ -816,6 +815,7 @@ export function mapFrameToDataGrid({
             getActions={getActions}
             rowBg={rowBg}
             onCellFilterAdded={onCellFilterAdded}
+            replaceVariables={replaceVariables}
           />
         );
       },
@@ -865,28 +865,26 @@ export function mapFrameToDataGrid({
     });
   });
 
-  // INFO: This loop calculates the width for each column in less than a millisecond.
+  // set columns that are at minimum width
   let sharedWidth = availableWidth / fieldCountWithoutWidth;
-
-  // First pass: Assign minimum widths to columns that need it
-  columns.forEach((column) => {
-    if (!column.width && column.minWidth! > sharedWidth) {
-      column.width = column.minWidth;
-      availableWidth -= column.width!;
-      fieldCountWithoutWidth -= 1;
+  for (let i = fieldCountWithoutWidth; i > 0; i--) {
+    for (const column of columns) {
+      if (!column.width && column.minWidth! > sharedWidth) {
+        column.width = column.minWidth;
+        availableWidth -= column.width!;
+        fieldCountWithoutWidth -= 1;
+        sharedWidth = availableWidth / fieldCountWithoutWidth;
+      }
     }
-  });
+  }
 
-  // Recalculate shared width after assigning minimum widths
-  sharedWidth = availableWidth / fieldCountWithoutWidth;
-
-  // Second pass: Assign shared width to remaining columns
-  columns.forEach((column) => {
+  // divide up the rest of the space
+  for (const column of columns) {
     if (!column.width) {
       column.width = sharedWidth;
     }
-    column.minWidth = COLUMN.MIN_WIDTH; // Ensure min-width is always set
-  });
+    column.minWidth = COLUMN.MIN_WIDTH;
+  }
 
   return columns;
 }
@@ -980,6 +978,8 @@ const getStyles = (theme: GrafanaTheme2) => ({
       '--rdg-summary-border-color': theme.colors.border.medium,
 
       '.rdg-cell': {
+        // Prevent collisions with custom cell components
+        zIndex: 2,
         borderRight: 'none',
       },
     },
@@ -1003,6 +1003,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     '::-webkit-scrollbar-thumb': {
       backgroundColor: 'rgba(204, 204, 220, 0.16)',
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: '4px',
     },
     '::-webkit-scrollbar-track': {

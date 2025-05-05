@@ -5,7 +5,6 @@ import { clickSelectOption } from 'test/helpers/selectOptionInTest';
 import { render, screen, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId, byText } from 'testing-library-selector';
 
-import { config } from '@grafana/runtime';
 import { disablePlugin } from 'app/features/alerting/unified/mocks/server/configure';
 import {
   setOnCallFeatures,
@@ -58,49 +57,40 @@ describe('GrafanaReceiverForm', () => {
     ]);
   });
 
-  describe('alertingApiServer', () => {
-    beforeEach(() => {
-      config.featureToggles.alertingApiServer = true;
+  it('handles nested secure fields correctly', async () => {
+    const capturedRequests = captureRequests(
+      (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
+    );
+    const { user } = renderWithProvider(<GrafanaReceiverForm />);
+    const { type, click } = user;
+
+    await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
+
+    // Select MQTT receiver and fill out basic required fields for contact point
+    await clickSelectOption(await byTestId('items.0.type').find(), 'MQTT');
+    await type(screen.getByLabelText(/^name/i), 'mqtt contact point');
+    await type(screen.getByLabelText(/broker url/i), 'broker url');
+    await type(screen.getByLabelText(/topic/i), 'topic');
+
+    // Fill out fields that we know will be nested secure fields
+    await click(screen.getByText(/optional mqtt settings/i));
+    await click(screen.getByRole('button', { name: /^Add$/i }));
+    await type(screen.getByLabelText(/ca certificate/i), 'some cert');
+
+    await click(screen.getByRole('button', { name: /save contact point/i }));
+
+    const [request] = await capturedRequests;
+    const postRequestbody = await request.clone().json();
+
+    const integrationPayload = postRequestbody.spec.integrations[0];
+    expect(integrationPayload.settings.tlsConfig).toEqual({
+      // Expect the payload to have included the value of a secret field
+      caCertificate: 'some cert',
+      // And to not have removed other values (which would happen if we incorrectly merged settings together)
+      insecureSkipVerify: false,
     });
-    afterEach(() => {
-      config.featureToggles.alertingApiServer = false;
-    });
 
-    it('handles nested secure fields correctly', async () => {
-      const capturedRequests = captureRequests(
-        (req) => req.url.includes('/v0alpha1/namespaces/default/receivers') && req.method === 'POST'
-      );
-      const { user } = renderWithProvider(<GrafanaReceiverForm />);
-      const { type, click } = user;
-
-      await waitFor(() => expect(ui.loadingIndicator.query()).not.toBeInTheDocument());
-
-      // Select MQTT receiver and fill out basic required fields for contact point
-      await clickSelectOption(await byTestId('items.0.type').find(), 'MQTT');
-      await type(screen.getByLabelText(/^name/i), 'mqtt contact point');
-      await type(screen.getByLabelText(/broker url/i), 'broker url');
-      await type(screen.getByLabelText(/topic/i), 'topic');
-
-      // Fill out fields that we know will be nested secure fields
-      await click(screen.getByText(/optional mqtt settings/i));
-      await click(screen.getByRole('button', { name: /^Add$/i }));
-      await type(screen.getByLabelText(/ca certificate/i), 'some cert');
-
-      await click(screen.getByRole('button', { name: /save contact point/i }));
-
-      const [request] = await capturedRequests;
-      const postRequestbody = await request.clone().json();
-
-      const integrationPayload = postRequestbody.spec.integrations[0];
-      expect(integrationPayload.settings.tlsConfig).toEqual({
-        // Expect the payload to have included the value of a secret field
-        caCertificate: 'some cert',
-        // And to not have removed other values (which would happen if we incorrectly merged settings together)
-        insecureSkipVerify: false,
-      });
-
-      expect(postRequestbody).toMatchSnapshot();
-    });
+    expect(postRequestbody).toMatchSnapshot();
   });
 
   describe('OnCall contact point', () => {

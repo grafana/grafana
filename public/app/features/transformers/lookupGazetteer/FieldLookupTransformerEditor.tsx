@@ -12,6 +12,7 @@ import {
 } from '@grafana/data';
 import { InlineField, InlineFieldRow } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 import { GazetteerPathEditor, GazetteerPathEditorConfigSettings } from 'app/features/geo/editor/GazetteerPathEditor';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
@@ -57,7 +58,7 @@ export const FieldLookupTransformerEditor = ({ input, options, onChange }: Trans
   return (
     <div>
       <InlineFieldRow>
-        <InlineField label={'Field'} labelWidth={12}>
+        <InlineField label={t('transformers.field-lookup-transformer-editor.label-field', 'Field')} labelWidth={12}>
           <FieldNamePicker
             context={{ data: input }}
             value={options?.lookupField ?? ''}
@@ -67,7 +68,7 @@ export const FieldLookupTransformerEditor = ({ input, options, onChange }: Trans
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label={'Lookup'} labelWidth={12}>
+        <InlineField label={t('transformers.field-lookup-transformer-editor.label-lookup', 'Lookup')} labelWidth={12}>
           <GazetteerPathEditor
             value={options?.gazetteer ?? ''}
             context={{ data: input }}

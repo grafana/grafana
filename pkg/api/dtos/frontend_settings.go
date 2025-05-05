@@ -194,6 +194,7 @@ type FrontendSettingsDTO struct {
 	AnalyticsConsoleReporting bool `json:"analyticsConsoleReporting"`
 
 	DashboardPerformanceMetrics []string `json:"dashboardPerformanceMetrics"`
+	PanelSeriesLimit            int      `json:"panelSeriesLimit"`
 
 	FeedbackLinksEnabled                bool     `json:"feedbackLinksEnabled"`
 	ApplicationInsightsConnectionString string   `json:"applicationInsightsConnectionString"`

@@ -18,25 +18,24 @@ import { VariableValuesPreview } from 'app/features/dashboard-scene/settings/var
 import { VariableNameConstraints } from 'app/features/variables/editor/types';
 
 import { VariableTypeSelect } from './components/VariableTypeSelect';
-import { EditableVariableType, getVariableEditor, hasVariableOptions, isEditableVariableType } from './utils';
+import {
+  EditableVariableType,
+  getVariableEditor,
+  hasVariableOptions,
+  isEditableVariableType,
+  validateVariableName,
+} from './utils';
 
 interface VariableEditorFormProps {
   variable: SceneVariable;
   onTypeChange: (type: EditableVariableType) => void;
   onGoBack: () => void;
   onDelete: (variableName: string) => void;
-  onValidateVariableName: (name: string, key: string | undefined) => [true, string] | [false, null];
 }
-export function VariableEditorForm({
-  variable,
-  onTypeChange,
-  onGoBack,
-  onDelete,
-  onValidateVariableName,
-}: VariableEditorFormProps) {
+export function VariableEditorForm({ variable, onTypeChange, onGoBack, onDelete }: VariableEditorFormProps) {
   const styles = useStyles2(getStyles);
-  const [nameError, setNameError] = useState<string | null>(null);
-  const { name, type, label, description, hide, key } = variable.useState();
+  const [nameError, setNameError] = useState<string>();
+  const { name, type, label, description, hide } = variable.useState();
   const EditorToRender = isEditableVariableType(type) ? getVariableEditor(type) : undefined;
   const [runQueryState, onRunQuery] = useAsyncFn(async () => {
     await lastValueFrom(variable.validateAndUpdate!());
@@ -49,12 +48,12 @@ export function VariableEditorForm({
 
   const onNameChange = useCallback(
     (e: FormEvent<HTMLInputElement>) => {
-      const [, errorMessage] = onValidateVariableName(e.currentTarget.value, key);
-      if (nameError !== errorMessage) {
-        setNameError(errorMessage);
+      const result = validateVariableName(variable, e.currentTarget.value);
+      if (result.errorMessage !== nameError) {
+        setNameError(result.errorMessage);
       }
     },
-    [key, nameError, onValidateVariableName]
+    [variable, nameError]
   );
 
   const onNameBlur = (e: FormEvent<HTMLInputElement>) => {

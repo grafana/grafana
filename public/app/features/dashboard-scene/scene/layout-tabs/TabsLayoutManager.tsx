@@ -1,4 +1,5 @@
 import {
+  sceneGraph,
   SceneObjectBase,
   SceneObjectState,
   SceneObjectUrlSyncConfig,
@@ -14,8 +15,10 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeTabsLayout } from '../../serialization/layoutSerializers/TabsLayoutSerializer';
+import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { RowItem } from '../layout-rows/RowItem';
+import { RowItemRepeaterBehavior } from '../layout-rows/RowItemRepeaterBehavior';
 import { RowsLayoutManager } from '../layout-rows/RowsLayoutManager';
 import { getTabFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -23,6 +26,7 @@ import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
 
 import { TabItem } from './TabItem';
+import { TabItemRepeaterBehavior } from './TabItemRepeaterBehavior';
 import { TabsLayoutManagerRenderer } from './TabsLayoutManagerRenderer';
 
 interface TabsLayoutManagerState extends SceneObjectState {
@@ -122,11 +126,20 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    throw new Error('Method not implemented.');
+    return this.clone({
+      tabs: this.state.tabs.map((tab) => {
+        const key = joinCloneKeys(ancestorKey, tab.state.key!);
+
+        return tab.clone({
+          key,
+          layout: tab.state.layout.cloneLayout(key, isSource),
+        });
+      }),
+    });
   }
 
   public addNewTab(tab?: TabItem) {
-    const newTab = tab ?? new TabItem({ isNew: true });
+    const newTab = tab ?? new TabItem({});
     const existingNames = new Set(this.state.tabs.map((tab) => tab.state.title).filter((title) => title !== undefined));
     const newTitle = generateUniqueTitle(newTab.state.title, existingNames);
     if (newTitle !== newTab.state.title) {
@@ -149,7 +162,19 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
   }
 
   public activateRepeaters() {
-    this.state.tabs.forEach((tab) => tab.getLayout().activateRepeaters?.());
+    this.state.tabs.forEach((tab) => {
+      if (!tab.isActive) {
+        tab.activate();
+      }
+
+      const behavior = (tab.state.$behaviors ?? []).find((b) => b instanceof TabItemRepeaterBehavior);
+
+      if (!behavior?.isActive) {
+        behavior?.activate();
+      }
+
+      tab.getLayout().activateRepeaters?.();
+    });
   }
 
   public shouldUngroup(): boolean {
@@ -210,7 +235,21 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
 
     if (layout instanceof RowsLayoutManager) {
       for (const row of layout.state.rows) {
-        tabs.push(new TabItem({ layout: row.state.layout.clone(), title: row.state.title }));
+        if (isClonedKey(row.state.key!)) {
+          continue;
+        }
+
+        const conditionalRendering = row.state.conditionalRendering;
+        conditionalRendering?.clearParent();
+
+        const behavior = row.state.$behaviors?.find((b) => b instanceof RowItemRepeaterBehavior);
+        const $behaviors = !behavior
+          ? undefined
+          : [new TabItemRepeaterBehavior({ variableName: behavior.state.variableName })];
+
+        tabs.push(
+          new TabItem({ layout: row.state.layout.clone(), title: row.state.title, conditionalRendering, $behaviors })
+        );
       }
     } else {
       layout.clearParent();
@@ -245,7 +284,7 @@ export class TabsLayoutManager extends SceneObjectBase<TabsLayoutManagerState> i
     const duplicateTitles = new Set<string | undefined>();
 
     this.state.tabs.forEach((tab) => {
-      const title = tab.state.title;
+      const title = sceneGraph.interpolate(tab, tab.state.title);
       const count = (titleCounts.get(title) ?? 0) + 1;
       titleCounts.set(title, count);
       if (count > 1) {

@@ -5,7 +5,7 @@ import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Button, Dropdown, Icon, Menu, MenuItem, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { GrafanaReceiversExporter } from '../export/GrafanaReceiversExporter';
 
@@ -64,7 +64,7 @@ export const ReceiversSection = ({
           {showMore && (
             <Dropdown overlay={newMenu}>
               <Button variant="secondary">
-                More
+                <Trans i18nKey="alerting.receivers-section.button-more">More</Trans>
                 <Icon name="angle-down" />
               </Button>
             </Dropdown>

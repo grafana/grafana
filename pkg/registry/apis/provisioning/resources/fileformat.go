@@ -19,8 +19,11 @@ import (
 )
 
 var (
-	ErrUnableToReadResourceBytes       = errors.New("unable to read bytes as a resource")
-	ErrClassicResourceIsAlreadyK8sForm = errors.New("classic resource is already structured with apiVersion and kind")
+	ErrUnableToReadResourceBytes        = errors.New("unable to read bytes as a resource")
+	ErrUnableToReadPanelsMissing        = errors.New("panels property is required")
+	ErrUnableToReadSchemaVersionMissing = errors.New("schemaVersion property is required")
+	ErrUnableToReadTagsMissing          = errors.New("tags property is required")
+	ErrClassicResourceIsAlreadyK8sForm  = errors.New("classic resource is already structured with apiVersion and kind")
 )
 
 // This reads a "classic" file format and will convert it to an unstructured k8s resource
@@ -37,7 +40,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 			return nil, nil, "", err
 		}
 	} else {
-		return nil, nil, "", fmt.Errorf("classic resource must be JSON")
+		return nil, nil, "", fmt.Errorf("unable to read file")
 	}
 
 	// regular version headers exist
@@ -64,7 +67,7 @@ func ReadClassicResource(ctx context.Context, info *repository.FileInfo) (*unstr
 		value["tags"] != nil {
 		gvk := &schema.GroupVersionKind{
 			Group:   dashboard.GROUP,
-			Version: dashboard.VERSION, // v1
+			Version: "v0alpha1", // no schema
 			Kind:    "Dashboard"}
 		return &unstructured.Unstructured{
 			Object: map[string]interface{}{

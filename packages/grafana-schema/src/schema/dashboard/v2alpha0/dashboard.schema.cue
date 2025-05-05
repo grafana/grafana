@@ -64,7 +64,6 @@ LibraryPanelSpec: {
   id: number
   // Title for the library panel in the dashboard
   title: string
-
   libraryPanel: LibraryPanelRef
 }
 
@@ -495,6 +494,11 @@ RowRepeatOptions: {
   value: string
 }
 
+TabRepeatOptions: {
+  mode: RepeatMode,
+  value: string
+}
+
 AutoGridRepeatOptions: {
   mode: RepeatMode
   value: string
@@ -603,6 +607,7 @@ TabsLayoutTabKind: {
 TabsLayoutTabSpec: {
   title?: string
   layout: GridLayoutKind | RowsLayoutKind | AutoGridLayoutKind | TabsLayoutKind
+  repeat?: TabRepeatOptions
   conditionalRendering?: ConditionalRenderingGroupKind
 }
 

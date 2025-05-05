@@ -125,7 +125,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		if p, ok := services.PluginVersionInstalled(pluginID, version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, version)
 			for _, depP := range p.JSONData.Dependencies.Plugins {
-				if err := doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+				if err := doInstallPlugin(ctx, depP.ID, "", o, installing); err != nil {
 					return err
 				}
 			}
@@ -159,7 +159,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 		if p, ok := services.PluginVersionInstalled(pluginID, archiveInfo.Version, o.pluginDir); ok {
 			services.Logger.Successf("Plugin %s v%s already installed.", pluginID, archiveInfo.Version)
 			for _, depP := range p.JSONData.Dependencies.Plugins {
-				if err = doInstallPlugin(ctx, depP.ID, depP.Version, o, installing); err != nil {
+				if err = doInstallPlugin(ctx, depP.ID, "", o, installing); err != nil {
 					return err
 				}
 			}
@@ -179,7 +179,7 @@ func doInstallPlugin(ctx context.Context, pluginID, version string, o pluginInst
 
 	for _, dep := range extractedArchive.Dependencies {
 		services.Logger.Infof("Fetching %s dependency %s...", pluginID, dep.ID)
-		err = doInstallPlugin(ctx, dep.ID, dep.Version, pluginInstallOpts{
+		err = doInstallPlugin(ctx, dep.ID, "", pluginInstallOpts{
 			insecure:  o.insecure,
 			repoURL:   o.repoURL,
 			pluginDir: o.pluginDir,

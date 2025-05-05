@@ -27,9 +27,9 @@ import (
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana-app-sdk/logging"
 	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	apiutils "github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/apiserver/readonly"
 	grafanaregistry "github.com/grafana/grafana/pkg/apiserver/registry/generic"
@@ -49,6 +49,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources/signature"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	"github.com/grafana/grafana/pkg/services/apiserver"
@@ -125,6 +126,7 @@ func NewAPIBuilder(
 
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
+	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
 	return &APIBuilder{
 		urlProvider:         urlProvider,
@@ -135,10 +137,10 @@ func NewAPIBuilder(
 		ghFactory:           ghFactory,
 		clients:             clients,
 		parsers:             parsers,
-		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients),
+		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
 		render:              render,
 		clonedir:            clonedir,
-		resourceLister:      resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus),
+		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
 		storageStatus:       storageStatus,
 		unified:             unified,
@@ -167,9 +169,8 @@ func RegisterAPIService(
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 ) (*APIBuilder, error) {
-	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) &&
-		!features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) {
-		return nil, nil // skip registration unless opting into experimental apis OR the feature specifically
+	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
+		return nil, nil
 	}
 
 	folderResolver := &repository.LocalFolderResolver{
@@ -329,7 +330,7 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		return fmt.Errorf("failed to create job storage: %w", err)
 	}
 
-	b.jobs, err = jobs.NewStore(realJobStore, time.Second*30)
+	b.jobs, err = jobs.NewJobStore(realJobStore, 30*time.Second) // FIXME: this timeout
 	if err != nil {
 		return fmt.Errorf("failed to create job store: %w", err)
 	}
@@ -519,7 +520,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			// Informer with resync interval used for health check and reconciliation
 			sharedInformerFactory := informers.NewSharedInformerFactory(c, 60*time.Second)
 			repoInformer := sharedInformerFactory.Provisioning().V0alpha1().Repositories()
-			go repoInformer.Informer().Run(postStartHookCtx.Context.Done())
+			go repoInformer.Informer().Run(postStartHookCtx.Done())
 
 			b.client = c.ProvisioningV0alpha1()
 
@@ -537,30 +538,60 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repository.WrapWithCloneAndPushIfPossible,
 			)
 
+			statusPatcher := controller.NewRepositoryStatusPatcher(b.GetClient())
+			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
-				b.GetClient(),
-				b.parsers,
 				b.clients,
-				b.resourceLister,
+				b.repositoryResources,
 				b.storageStatus,
+				statusPatcher.Patch,
+				syncer,
 			)
-			migrationWorker := migrate.NewMigrationWorker(
-				b.legacyMigrator,
+			signerFactory := signature.NewSignerFactory(b.clients)
+			legacyResources := migrate.NewLegacyResourcesMigrator(
+				b.repositoryResources,
 				b.parsers,
+				b.legacyMigrator,
+				signerFactory,
 				b.clients,
-				b.storageStatus,
-				b.unified,
+				export.ExportAll,
+			)
+			storageSwapper := migrate.NewStorageSwapper(b.unified, b.storageStatus)
+			legacyMigrator := migrate.NewLegacyMigrator(
+				legacyResources,
+				storageSwapper,
+				syncWorker,
+				repository.WrapWithCloneAndPushIfPossible,
+			)
+
+			cleaner := migrate.NewNamespaceCleaner(b.clients)
+			unifiedStorageMigrator := migrate.NewUnifiedStorageMigrator(
+				cleaner,
 				exportWorker,
 				syncWorker,
 			)
 
-			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified, b.isPublic, b.urlProvider)
-			previewer := pullrequest.NewPreviewer(renderer, b.urlProvider)
-			pullRequestWorker := pullrequest.NewPullRequestWorker(b.parsers, previewer)
+			migrationWorker := migrate.NewMigrationWorker(
+				legacyMigrator,
+				unifiedStorageMigrator,
+				b.storageStatus,
+			)
 
-			driver := jobs.NewJobDriver(time.Second*28, time.Second*30, time.Second*30, b.jobs, b, b.jobHistory,
+			// Pull request worker
+			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
+			evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
+			commenter := pullrequest.NewCommenter()
+			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+
+			driver, err := jobs.NewJobDriver(
+				time.Minute*20, // Max time for each job
+				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
+				time.Second*30, // Periodically look for new jobs
+				b.jobs, b, b.jobHistory,
 				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+			if err != nil {
+				return err
+			}
 			go driver.Run(postStartHookCtx.Context)
 
 			repoController, err := controller.NewRepositoryController(
@@ -699,6 +730,15 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 					In:          "query",
 					Description: "optional message sent with any changes",
 					Schema:      spec.StringProperty(),
+					Required:    false,
+				},
+			},
+			{
+				ParameterProps: spec3.ParameterProps{
+					Name:        "skipDryRun",
+					In:          "query",
+					Description: "do not pro-actively verify the payload",
+					Schema:      spec.BooleanProperty(),
 					Required:    false,
 				},
 			},

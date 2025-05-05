@@ -18,23 +18,20 @@ export interface WizardFormData {
 }
 
 export type Target = SyncOptions['target'];
-export type Operation = 'pull' | 'migrate';
 
 export interface ModeOption {
   target: Target;
-  operation: Operation;
   label: string;
   description: string;
-  disabledReason?: string;
   subtitle: string;
 }
 
 export interface SystemState {
   resourceCount: number;
   resourceCountString: string;
-
   fileCount: number;
   actions: ModeOption[];
-  disabled: ModeOption[];
-  folderConnected?: boolean;
 }
+
+export type StepStatus = 'idle' | 'running' | 'error' | 'success';
+export type StepStatusInfo = { status: StepStatus } | { status: 'error'; error: string };

@@ -157,6 +157,7 @@ export interface TableCellNGProps {
   value: TableCellValue;
   rowBg: Function | undefined;
   onCellFilterAdded?: TableFilterActionCallback;
+  replaceVariables?: InterpolateFunction;
 }
 
 /* ------------------------- Specialized Cell Props ------------------------- */
@@ -205,6 +206,12 @@ export interface JSONCellProps {
 export interface DataLinksCellProps {
   field: Field;
   rowIdx: number;
+}
+
+export interface GeoCellProps {
+  value: TableCellValue;
+  justifyContent: Property.JustifyContent;
+  height: number;
 }
 
 export interface ActionCellProps {

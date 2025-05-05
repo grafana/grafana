@@ -74,6 +74,21 @@ func New(cfg app.Config) (app.App, error) {
 									}
 								}()
 							}
+							if req.Action == resource.AdmissionActionUpdate {
+								go func() {
+									log.Debug("Updating check", "namespace", req.Object.GetNamespace(), "name", req.Object.GetName())
+									requester, err := identity.GetRequester(ctx)
+									if err != nil {
+										log.Error("Error getting requester", "error", err)
+										return
+									}
+									ctx = identity.WithRequester(context.Background(), requester)
+									err = processCheckRetry(ctx, client, req.Object, check)
+									if err != nil {
+										log.Error("Error processing check retry", "error", err)
+									}
+								}()
+							}
 						}
 						return nil
 					},
