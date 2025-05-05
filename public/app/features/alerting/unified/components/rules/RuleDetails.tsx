@@ -116,6 +116,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         >
           <Tooltip
             placement="top"
+            // eslint-disable-next-line @grafana/no-untranslated-strings
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
@@ -133,7 +134,12 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           label={t('alerting.evaluation-behavior-summary.label-evaluation-time', 'Evaluation time')}
           horizontal={true}
         >
-          <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
+          <Tooltip
+            placement="top"
+            // eslint-disable-next-line @grafana/no-untranslated-strings
+            content={`${lastEvaluationDuration}s`}
+            theme="info"
+          >
             <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
           </Tooltip>
         </DetailsField>
