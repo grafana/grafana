@@ -102,6 +102,26 @@ describe('DashboardDatasource', () => {
 
     expect(first).not.toHaveBeenCalled();
   });
+
+  it('Should not mutate field state in dataframe', () => {
+    const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
+
+    let rsp: DataQueryResponse | undefined;
+
+    const test = observable.subscribe({ next: (data) => (rsp = data) });
+
+    // modifying series in dashboard DS should not affect the original dataframe
+    rsp!.data[0].fields[0].state = {
+      calcs: { sum: 3 },
+    };
+
+    test.unsubscribe();
+
+    observable.subscribe({ next: (data) => (rsp = data) });
+
+    // on further emissions the result should be the unmodified original dataframe
+    expect(rsp!.data[0].fields[0].state).toEqual({});
+  });
 });
 
 function setup(query: DashboardQuery, requestId?: string) {
