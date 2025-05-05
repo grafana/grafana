@@ -14976,8 +14976,8 @@ __metadata:
   linkType: hard
 
 "downshift@npm:^9.0.6":
-  version: 9.0.8
-  resolution: "downshift@npm:9.0.8"
+  version: 9.0.9
+  resolution: "downshift@npm:9.0.9"
   dependencies:
     "@babel/runtime": "npm:^7.24.5"
     compute-scroll-into-view: "npm:^3.1.0"
@@ -14986,7 +14986,7 @@ __metadata:
     tslib: "npm:^2.6.2"
   peerDependencies:
     react: ">=16.12.0"
-  checksum: 10/9dc4577e780c54742ba4dde11f481f0d839f001b309200fbe4db112385b227ccd9cd2ef97d9e995379fa70249f0664a562240e415b9966f18c8a5cb7ce435f2c
+  checksum: 10/6abc7a585f002f0ebaba1ec42f6102b940257f294d0a33bf189387a316afa24254f0d49c4d5d2553a2263b4e42f497297a8c66dab9bebe24b3dce11fa1456d20
   languageName: node
   linkType: hard
 
@@ -17882,7 +17882,7 @@ __metadata:
     node-notifier: "npm:10.0.1"
     nx: "npm:20.7.1"
     ol: "npm:7.4.0"
-    ol-ext: "npm:4.0.26"
+    ol-ext: "npm:4.0.31"
     openapi-types: "npm:^12.1.3"
     pdf-parse: "npm:^1.1.1"
     plop: "npm:^4.0.1"
@@ -17894,7 +17894,7 @@ __metadata:
     prettier: "npm:3.4.2"
     prismjs: "npm:1.30.0"
     rc-slider: "npm:11.1.8"
-    rc-tree: "npm:5.13.0"
+    rc-tree: "npm:5.13.1"
     re-resizable: "npm:6.10.3"
     react: "npm:18.3.1"
     react-diff-viewer-continued: "npm:^3.4.0"
@@ -23454,12 +23454,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ol-ext@npm:4.0.26":
-  version: 4.0.26
-  resolution: "ol-ext@npm:4.0.26"
+"ol-ext@npm:4.0.31":
+  version: 4.0.31
+  resolution: "ol-ext@npm:4.0.31"
   peerDependencies:
     ol: ">= 5.3.0"
-  checksum: 10/68ecf27895e8cb0d4b179151836e853a0d8ce224e27448db10d11844afbea0e85781e2c9d6a9c1e65063f5a81d54755f8002c7f9259506a5bddc020024d5b931
+  checksum: 10/f254e3a7035e6ab65a3abdb1e2d694426f2eca0136402f79409d6374c718f81f86ea90bfc1012d64a09ddc40fcfbc6f5e4f59174b7026026812904ceb6ec8074
   languageName: node
   linkType: hard
 
@@ -25658,9 +25658,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rc-tree@npm:5.13.0, rc-tree@npm:~5.13.0":
-  version: 5.13.0
-  resolution: "rc-tree@npm:5.13.0"
+"rc-tree@npm:5.13.1, rc-tree@npm:~5.13.0":
+  version: 5.13.1
+  resolution: "rc-tree@npm:5.13.1"
   dependencies:
     "@babel/runtime": "npm:^7.10.1"
     classnames: "npm:2.x"
@@ -25670,7 +25670,7 @@ __metadata:
   peerDependencies:
     react: "*"
     react-dom: "*"
-  checksum: 10/c8615773780f6855e8bd5398620187a3956c1a3a145c07bbbcd3a73a6d6c3f6b5d74c38dafdfea4f82cfd51846b1358ca3e98279a353dfa2814617bc5ab7abc0
+  checksum: 10/27d11b1bda077e14dff4dd3d17ea246145f52b4c4157a17f9a8d8c55a0e440fbf9a0eef76d07e1fdc70501b28a7d0009e08bc4594130340ee4df0978dda4820f
   languageName: node
   linkType: hard
 
