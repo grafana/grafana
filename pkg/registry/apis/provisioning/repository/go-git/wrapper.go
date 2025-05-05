@@ -378,12 +378,14 @@ func (g *GoGitRepo) maybeCommit(ctx context.Context, message string) error {
 	}
 	sig := repository.GetAuthorSignature(ctx)
 	if sig != nil && sig.Name != "" {
-		opts.Author = &object.Signature{
-			Name:  sig.Name,
-			Email: sig.Email,
-			When:  sig.When,
-		}
+		opts.Author.Name = sig.Name
+		opts.Author.Email = sig.Email
+		opts.Author.When = sig.When
 	}
+	if opts.Author.When.IsZero() {
+		opts.Author.When = time.Now()
+	}
+
 	_, err := g.tree.Commit(message, opts)
 	if errors.Is(err, git.ErrEmptyCommit) {
 		return nil // empty commit is fine -- no change
