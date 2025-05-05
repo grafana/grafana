@@ -120,6 +120,20 @@ func TestService_Run(t *testing.T) {
 			shouldInstall:    true,
 			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", URL: "https://example.com/myplugin.tar.gz"}},
 		},
+		{
+			name:             "Should not update a plugin if the current version is greater than the latest version",
+			shouldInstall:    false,
+			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.1"}}}},
+			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0"},
+		},
+		{
+			name:             "Should not update a plugin if the current version is equal to the latest version, ignoring the prerelease",
+			shouldInstall:    false,
+			pluginsToInstall: []setting.InstallPlugin{{ID: "myplugin", Version: ""}},
+			existingPlugins:  []*plugins.Plugin{{JSONData: plugins.JSONData{ID: "myplugin", Info: plugins.Info{Version: "1.0.0"}}}},
+			latestPlugin:     &repo.PluginArchiveInfo{Version: "1.0.0-rc.1"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
