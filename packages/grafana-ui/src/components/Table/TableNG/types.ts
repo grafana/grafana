@@ -11,6 +11,7 @@ import {
   ActionModel,
   InterpolateFunction,
   FieldType,
+  DataFrameWithValue,
 } from '@grafana/data';
 import { TableCellOptions, TableCellHeight, TableFieldOptions } from '@grafana/schema';
 
@@ -66,6 +67,7 @@ export type TableCellValue =
   | Date // FieldType.time
   | DataFrame // For nested data
   | DataFrame[] // For nested frames
+  | DataFrameWithValue // For sparklines
   | undefined; // For undefined values
 
 export interface TableRow {
