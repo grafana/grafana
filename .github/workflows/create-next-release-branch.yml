@@ -10,6 +10,10 @@ on:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
         type: string
         required: true
+      token:
+        description: GitHub used token to create new branches
+        type: string
+        required: true
     outputs:
       branch:
         description: The new branch that was created
@@ -20,6 +24,10 @@ on:
         description: Owner/repo of the repository where the branch is created (e.g. 'grafana/grafana')
       source:
         description: The release branch to increment (eg providing `release-11.2.3` will result in `release-11.2.4` being created)
+        type: string
+        required: true
+      token:
+        description: GitHub used token to create new branches
         type: string
         required: true
 
@@ -33,23 +41,10 @@ jobs:
     outputs:
       branch: ${{ steps.branch.outputs.branch }}
     steps:
-      - name: "Get vault secrets"
-        id: vault-secrets
-        uses: grafana/shared-workflows/actions/get-vault-secrets@main
-        with:
-          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
-          repo_secrets: |
-            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-      - name: "Generate token"
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Create release branch
         id: branch
         uses: grafana/grafana-github-actions-go/bump-release@main # zizmor: ignore[unpinned-uses]
         with:
           ownerRepo: ${{ inputs.ownerRepo }}
           source: ${{ inputs.source }}
-          token: ${{ steps.generate_token.outputs.token }}
+          token: ${{ inputs.token }}
