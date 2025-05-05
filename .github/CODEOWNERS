@@ -165,7 +165,7 @@
 /pkg/services/tag/ @grafana/grafana-search-and-storage
 /pkg/services/team/ @grafana/access-squad
 /pkg/services/temp_user/ @grafana/grafana-backend-group
-/pkg/services/updatechecker/ @grafana/grafana-backend-group
+/pkg/services/updatemanager/ @grafana/grafana-backend-group
 /pkg/services/user/ @grafana/access-squad
 /pkg/services/validations/ @grafana/grafana-backend-group
 /pkg/setting/ @grafana/grafana-backend-services-squad
