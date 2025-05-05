@@ -35,7 +35,8 @@ jobs:
       release_branch: ${{ steps.output.outputs.release_branch }}
       dry_run: ${{ steps.output.outputs.dry_run }}
       latest: ${{ steps.output.outputs.latest }}
-      token: ${{ steps.generate_token.outputs.token }}
+      private_key: ${{ steps.output.outputs.delivery_bot_pem }}
+      app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
     env:
       HEAD_REF: ${{ github.head_ref }}
       DRY_RUN: ${{ inputs.dry_run }}
@@ -50,12 +51,6 @@ jobs:
         # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
         repo_secrets: |
           GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
-    - name: "Generate token"
-      id: generate_token
-      uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-      with:
-        app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
-        private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
         {
@@ -82,7 +77,6 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana'
       source: ${{ needs.setup.outputs.release_branch }}
-      token: ${{ needs.setup.outputs.token }}
   create_next_release_branch_enterprise:
     name: Create next release branch (Grafana Enterprise)
     needs: setup
@@ -90,7 +84,6 @@ jobs:
     with:
       ownerRepo: 'grafana/grafana-enterprise'
       source: ${{ needs.setup.outputs.release_branch }}
-      token: ${{ needs.setup.outputs.token }}
   migrate_prs_grafana:
     needs:
       - setup
@@ -100,7 +93,6 @@ jobs:
       ownerRepo: 'grafana/grafana'
       from: ${{ needs.setup.outputs.release_branch }}
       to: ${{ needs.create_next_release_branch_grafana.outputs.branch }}
-      token: ${{ needs.setup.outputs.token }}
   migrate_prs_enterprise:
     needs:
       - setup
@@ -110,7 +102,6 @@ jobs:
       ownerRepo: 'grafana/grafana-enterprise'
       from: ${{ needs.setup.outputs.release_branch }}
       to: ${{ needs.create_next_release_branch_enterprise.outputs.branch }}
-      token: ${{ needs.setup.outputs.token }}
   post_changelog_on_forum:
     needs: setup
     uses: ./.github/workflows/community-release.yml
