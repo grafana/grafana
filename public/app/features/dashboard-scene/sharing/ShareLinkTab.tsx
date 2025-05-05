@@ -213,18 +213,13 @@ function ShareLinkTabRenderer({ model }: SceneComponentProps<ShareLinkTab>) {
           title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
           bottomSpacing={0}
         >
-          <Trans i18nKey="share-modal.link.render-instructions">
-            To render a panel image, you must install the{' '}
-            <a
-              href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="external-link"
-            >
-              Grafana image renderer plugin
-            </a>
-            . Please contact your Grafana administrator to install the plugin.
-          </Trans>
+          {/* @PERCONA */}
+          {/* We modified this text and link */}
+          To render a panel image, you must install the{' '}
+          <a href="https://per.co.na/share_png" target="_blank" rel="noopener noreferrer" className="external-link">
+            Image Renderer plugin
+          </a>
+          . Please contact your PMM administrator to install the plugin.
         </Alert>
       )}
     </>

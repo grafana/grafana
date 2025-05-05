@@ -179,15 +179,13 @@ export class ShareLink extends PureComponent<Props, State> {
             title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
             bottomSpacing={0}
           >
-            <Trans i18nKey="share-modal.link.render-instructions">
-              {/* @PERCONA */}
-              {/* We modified this text and link */}
-              To render a panel image, you must install the&nbsp;
-              <a href="https://per.co.na/share_png" target="_blank" rel="noopener noreferrer" className="external-link">
-                Image Renderer plugin
-              </a>
-              . Please contact your PMM administrator to install the plugin.
-            </Trans>
+            {/* @PERCONA */}
+            {/* We modified this text and link */}
+            To render a panel image, you must install the{' '}
+            <a href="https://per.co.na/share_png" target="_blank" rel="noopener noreferrer" className="external-link">
+              Image Renderer plugin
+            </a>
+            . Please contact your PMM administrator to install the plugin.
           </Alert>
         )}
       </>
