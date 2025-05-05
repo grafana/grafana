@@ -50,6 +50,7 @@ jobs:
         with:
           repository: "grafana/grafana-github-actions"
           path: "./actions"
+          persist-credentials: false
 
       - name: "Install Actions from library"
         run: "npm install --production --prefix ./actions"
