@@ -273,11 +273,6 @@ export interface FeatureToggles {
   */
   wargamesTesting?: boolean;
   /**
-  * Show the new alerting insights landing page
-  * @default true
-  */
-  alertingInsights?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
