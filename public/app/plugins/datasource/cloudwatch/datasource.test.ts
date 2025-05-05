@@ -233,7 +233,7 @@ describe('datasource', () => {
 
     it('should interpolate variables in the query', async () => {
       const { datasource, queryMock } = setupMockedDataSource({
-        variables: [fieldsVariable, regionVariable],
+        variables: [fieldsVariable, regionVariable, logGroupNamesVariable],
       });
       await lastValueFrom(
         datasource
@@ -245,6 +245,7 @@ describe('datasource', () => {
                 queryMode: 'Logs',
                 region: '$region',
                 expression: 'fields $fields',
+                logGroups: [{ name: '$groups', arn: '$groups' }],
                 logGroupNames: ['/some/group'],
               },
             ],
@@ -261,6 +262,10 @@ describe('datasource', () => {
       );
       expect(queryMock.mock.calls[0][0].targets[0]).toMatchObject({
         queryString: 'fields templatedField',
+        logGroups: [
+          { name: 'templatedGroup-arn-1', arn: 'templatedGroup-arn-1' },
+          { name: 'templatedGroup-arn-2', arn: 'templatedGroup-arn-2' },
+        ],
         logGroupNames: ['/some/group'],
         region: 'templatedRegion',
       });
@@ -374,21 +379,23 @@ describe('datasource', () => {
     });
 
     it('should replace correct variables in CloudWatchLogsQuery', () => {
-      const { datasource, templateService } = setupMockedDataSource();
-      templateService.replace = jest.fn();
-      const variableName = 'someVar';
+      const { datasource, templateService } = setupMockedDataSource({ variables: [logGroupNamesVariable] });
+      templateService.replace = jest.fn().mockImplementation(() => 'resolved1|resolved2');
       const logQuery: CloudWatchLogsQuery = {
         queryMode: 'Logs',
-        expression: `$${variableName}`,
-        region: `$${variableName}`,
+        expression: `$expressionVar`,
+        region: `$regionVar`,
+        logGroups: [{ name: '$groups', arn: '$groups' }],
         id: '',
         refId: '',
       };
 
       datasource.interpolateVariablesInQueries([logQuery], {});
 
-      expect(templateService.replace).toHaveBeenCalledWith(`$${variableName}`, {});
-      expect(templateService.replace).toHaveBeenCalledTimes(1);
+      expect(templateService.replace).toHaveBeenNthCalledWith(1, '$regionVar', {});
+      expect(templateService.replace).toHaveBeenNthCalledWith(2, '$groups', {}, 'pipe');
+      expect(templateService.replace).toHaveBeenNthCalledWith(3, '$expressionVar', {}, undefined);
+      expect(templateService.replace).toHaveBeenCalledTimes(3);
     });
 
     it('should replace correct variables in CloudWatchMetricsQuery', () => {
