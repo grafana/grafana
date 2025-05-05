@@ -166,7 +166,7 @@ jobs:
           version: 'patch'
 
       - name: Add package.json changes
-        if: ${{ inputs.bump == true || inputs.bump == 'true" }}
+        if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         run: |
           git add package.json lerna.json yarn.lock packages public
           test -e e2e/test-plugins && git add e2e/test-plugins
