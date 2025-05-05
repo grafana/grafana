@@ -239,11 +239,6 @@ func TestApplyConfig(t *testing.T) {
 	require.Equal(t, 2, configSyncs)
 	require.Equal(t, 1, stateSyncs)
 
-	// Failing to add the auto-generated routes should result in an error.
-	_, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
-	require.ErrorIs(t, am.ApplyConfig(ctx, config), errTest)
-	require.Equal(t, 2, configSyncs)
-
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
 	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
@@ -258,6 +253,11 @@ func TestApplyConfig(t *testing.T) {
 	require.Equal(t, 3, configSyncs)
 	require.Equal(t, am.smtpFrom, configSent.SmtpFrom)
 
+	// Failing to add the auto-generated routes should result in an error.
+	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
+	require.NoError(t, err)
+	require.ErrorIs(t, am.ApplyConfig(ctx, config), errTest)
+	require.Equal(t, 3, configSyncs)
 }
 
 func TestCompareAndSendConfiguration(t *testing.T) {
