@@ -23,6 +23,16 @@ export const versionedComponents = {
       '9.4.0': (title: string) => `data-testid ${title} breadcrumb`,
     },
   },
+  CanvasGridAddActions: {
+    addPanel: {
+      '12.1.0': 'data-testid CanvasGridAddActions add-panel',
+    },
+  },
+  DashboardEditPaneSplitter: {
+    primaryBody: {
+      '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
+    },
+  },
   TimePicker: {
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
@@ -544,7 +554,6 @@ export const versionedComponents = {
         '12.0.0': (type: string) => `data-testid outline item ${type}`,
       },
     },
-
     ElementEditPane: {
       variableType: {
         '12.0.0': (type?: string) => `data-testid variable type ${type}`,
