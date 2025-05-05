@@ -1,4 +1,4 @@
-import { Observable, debounce, defer, finalize, first, interval, map, of } from 'rxjs';
+import { Observable, debounce, debounceTime, defer, finalize, first, interval, map, of } from 'rxjs';
 
 import {
   DataSourceApi,
@@ -79,6 +79,7 @@ export class DashboardDatasource extends DataSourceApi<DashboardQuery> {
       const cleanUp = activateSceneObjectAndParentTree(sourceDataProvider!);
 
       return sourceDataProvider!.getResultsStream!().pipe(
+        debounceTime(50),
         map((result) => {
           return {
             data: this.getDataFramesForQueryTopic(result.data, query),
