@@ -11,8 +11,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/app"
 )
 
-var ()
-
 var appManifestData = app.ManifestData{
 	AppName: "dashboard",
 	Group:   "dashboard.grafana.app",
@@ -27,7 +25,7 @@ var appManifestData = app.ManifestData{
 				},
 
 				{
-					Name: "v1alpha1",
+					Name: "v1beta1",
 				},
 
 				{

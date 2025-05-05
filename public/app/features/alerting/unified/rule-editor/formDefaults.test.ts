@@ -10,7 +10,10 @@ import { MANUAL_ROUTING_KEY, getDefaultQueries } from '../utils/rule-form';
 import { formValuesFromQueryParams, getDefaultFormValues, getDefautManualRouting } from './formDefaults';
 import { isAlertQueryOfAlertData } from './formProcessing';
 
-jest.mock('../utils/datasource');
+jest.mock('../utils/datasource', () => ({
+  ...jest.requireActual('../utils/datasource'),
+  getDefaultOrFirstCompatibleDataSource: jest.fn(),
+}));
 
 const mocks = {
   getDefaultOrFirstCompatibleDataSource: jest.mocked(getDefaultOrFirstCompatibleDataSource),

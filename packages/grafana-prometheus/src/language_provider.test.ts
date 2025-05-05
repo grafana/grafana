@@ -1,7 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/language_provider.test.ts
 import { AbstractLabelOperator, dateTime, TimeRange } from '@grafana/data';
 
-import { DEFAULT_SERIES_LIMIT } from './components/PrometheusMetricsBrowser';
+import { DEFAULT_SERIES_LIMIT } from './components/metrics-browser/types';
 import { Label } from './components/monaco-query-field/monaco-completion-provider/situation';
 import { PrometheusDatasource } from './datasource';
 import LanguageProvider, { removeQuotesIfExist } from './language_provider';

@@ -18,11 +18,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol/acimpl"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	accesscontrolmock "github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/database"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/folder/folderimpl"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/publicdashboards"
@@ -797,6 +797,7 @@ func permissionScenario(t *testing.T, desc string, fn permissionScenarioFunc) {
 			nil,
 			dualwrite.ProvideTestService(),
 			sort.ProvideService(),
+			apiserver.WithoutRestConfig,
 		)
 		dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 		dashboardService, err := ProvideDashboardServiceImpl(
@@ -804,8 +805,8 @@ func permissionScenario(t *testing.T, desc string, fn permissionScenarioFunc) {
 			featuremgmt.WithFeatures(),
 			folderPermissions,
 			ac,
+			actest.FakeService{},
 			folderService,
-			folder.NewFakeStore(),
 			nil,
 			client.MockTestRestConfig{},
 			nil,
@@ -890,6 +891,7 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		nil,
 		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
+		apiserver.WithoutRestConfig,
 	)
 	dashboardPermissions := accesscontrolmock.NewMockedPermissionsService()
 	dashboardPermissions.On("SetPermissions",
@@ -899,8 +901,8 @@ func callSaveWithResult(t *testing.T, cmd dashboards.SaveDashboardCommand, sqlSt
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		ac,
+		actest.FakeService{},
 		folderService,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,
@@ -966,14 +968,15 @@ func saveTestDashboard(t *testing.T, title string, orgID int64, folderUID string
 		nil,
 		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
+		apiserver.WithoutRestConfig,
 	)
 	service, err := ProvideDashboardServiceImpl(
 		cfg, dashboardStore, folderStore,
 		features,
 		accesscontrolmock.NewMockedPermissionsService(),
 		actest.FakeAccessControl{ExpectedEvaluate: true},
+		actest.FakeService{},
 		folderService,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,
@@ -1046,6 +1049,7 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		nil,
 		dualwrite.ProvideTestService(),
 		sort.ProvideService(),
+		apiserver.WithoutRestConfig,
 	)
 	folderPermissions.On("SetPermissions", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]accesscontrol.ResourcePermission{}, nil)
 	service, err := ProvideDashboardServiceImpl(
@@ -1053,8 +1057,8 @@ func saveTestFolder(t *testing.T, title string, orgID int64, sqlStore db.DB) *da
 		featuremgmt.WithFeatures(),
 		folderPermissions,
 		actest.FakeAccessControl{ExpectedEvaluate: true},
+		actest.FakeService{},
 		folderService,
-		folder.NewFakeStore(),
 		nil,
 		client.MockTestRestConfig{},
 		nil,

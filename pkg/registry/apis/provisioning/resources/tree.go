@@ -7,8 +7,8 @@ import (
 
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
@@ -16,14 +16,26 @@ import (
 // FolderTree contains the entire set of folders (at a given snapshot in time) of the Grafana instance.
 // The folders are portrayed as a tree, where a folder has a parent, up until the root folder.
 // The root folder is special-cased as a folder that exists, but is not itself stored. It has no ID, no title, and no data, but will return `true` for OK bools.
-type FolderTree struct {
+//
+//go:generate mockery --name FolderTree --structname MockFolderTree --inpackage --filename tree_mock.go --with-expecter
+type FolderTree interface {
+	In(folder string) bool
+	DirPath(folder, baseFolder string) (Folder, bool)
+	Add(folder Folder, parent string)
+	AddUnstructured(item *unstructured.Unstructured) error
+	Count() int
+	Walk(ctx context.Context, fn WalkFunc) error
+}
+
+type folderTree struct {
 	tree    map[string]string
 	folders map[string]Folder
+	count   int
 }
 
 // In determines if the given folder is in the tree at all. That is, it answers "does the folder even exist in the Grafana instance?"
 // An empty folder string means the root folder, and is special-cased to always return true.
-func (t *FolderTree) In(folder string) bool {
+func (t *folderTree) In(folder string) bool {
 	_, ok := t.tree[folder]
 	return ok || folder == ""
 }
@@ -35,7 +47,7 @@ func (t *FolderTree) In(folder string) bool {
 //
 // If In(folder) or In(baseFolder) is false, this will return ok=false, because it would be undefined behaviour.
 // If baseFolder is not a parent of folder, ok=false is returned.
-func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
+func (t *folderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 	if !t.In(folder) || !t.In(baseFolder) {
 		return Folder{}, false
 	}
@@ -57,20 +69,26 @@ func (t *FolderTree) DirPath(folder, baseFolder string) (fid Folder, ok bool) {
 			ok = true
 			break
 		}
+		// FIXME: missing slash here
 		fid.Path = safepath.Join(t.folders[parent].Title, fid.Path)
 		parent = t.tree[parent]
 	}
 	return fid, ok
 }
 
-func (t *FolderTree) Add(folder Folder, parent string) {
+func (t *folderTree) Add(folder Folder, parent string) {
 	t.tree[folder.ID] = parent
 	t.folders[folder.ID] = folder
+	t.count++
 }
 
-type WalkFunc func(ctx context.Context, folder Folder) error
+func (t *folderTree) Count() int {
+	return t.count
+}
 
-func (t *FolderTree) Walk(ctx context.Context, fn WalkFunc) error {
+type WalkFunc func(ctx context.Context, folder Folder, parent string) error
+
+func (t *folderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	toWalk := make([]Folder, 0, len(t.folders))
 	for _, folder := range t.folders {
 		folder, _ := t.DirPath(folder.ID, "")
@@ -83,7 +101,7 @@ func (t *FolderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	})
 
 	for _, folder := range toWalk {
-		if err := fn(ctx, folder); err != nil {
+		if err := fn(ctx, folder, t.tree[folder.ID]); err != nil {
 			return err
 		}
 	}
@@ -91,32 +109,30 @@ func (t *FolderTree) Walk(ctx context.Context, fn WalkFunc) error {
 	return nil
 }
 
-func NewEmptyFolderTree() *FolderTree {
-	return &FolderTree{
+func NewEmptyFolderTree() FolderTree {
+	return &folderTree{
 		tree:    make(map[string]string, 0),
 		folders: make(map[string]Folder, 0),
 	}
 }
 
-func (t *FolderTree) AddUnstructured(item *unstructured.Unstructured, skipRepo string) error {
+func (t *folderTree) AddUnstructured(item *unstructured.Unstructured) error {
 	meta, err := utils.MetaAccessor(item)
 	if err != nil {
 		return fmt.Errorf("extract meta accessor: %w", err)
 	}
-	manager, _ := meta.GetManagerProperties()
-	if manager.Identity == skipRepo {
-		return nil // skip it... already in tree?
-	}
+
 	folder := Folder{
 		Title: meta.FindTitle(item.GetName()),
 		ID:    item.GetName(),
 	}
 	t.tree[folder.ID] = meta.GetFolder()
 	t.folders[folder.ID] = folder
+	t.count++
 	return nil
 }
 
-func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) *FolderTree {
+func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) FolderTree {
 	tree := make(map[string]string, len(resources.Items))
 	folderIDs := make(map[string]Folder, len(resources.Items))
 	for _, rf := range resources.Items {
@@ -132,8 +148,9 @@ func NewFolderTreeFromResourceList(resources *provisioning.ResourceList) *Folder
 		}
 	}
 
-	return &FolderTree{
-		tree,
-		folderIDs,
+	return &folderTree{
+		tree:    tree,
+		folders: folderIDs,
+		count:   len(resources.Items),
 	}
 }

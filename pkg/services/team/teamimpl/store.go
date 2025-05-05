@@ -17,7 +17,7 @@ import (
 )
 
 type store interface {
-	Create(name, email string, orgID int64) (team.Team, error)
+	Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error)
 	Update(ctx context.Context, cmd *team.UpdateTeamCommand) error
 	Delete(ctx context.Context, cmd *team.DeleteTeamCommand) error
 	Search(ctx context.Context, query *team.SearchTeamsQuery) (team.SearchTeamQueryResult, error)
@@ -71,22 +71,26 @@ func getTeamSelectSQLBase(db db.DB, filteredUsers []string) string {
 		team.uid,
 		team.org_id,
 		team.name as name,
-		team.email as email, ` +
+		team.email as email,
+		team.external_uid as external_uid,
+		team.is_provisioned as is_provisioned, ` +
 		getTeamMemberCount(db, filteredUsers) +
 		` FROM team as team `
 }
 
-func (ss *xormStore) Create(name, email string, orgID int64) (team.Team, error) {
+func (ss *xormStore) Create(ctx context.Context, cmd *team.CreateTeamCommand) (team.Team, error) {
 	t := team.Team{
-		UID:     util.GenerateShortUID(),
-		Name:    name,
-		Email:   email,
-		OrgID:   orgID,
-		Created: time.Now(),
-		Updated: time.Now(),
+		UID:           util.GenerateShortUID(),
+		Name:          cmd.Name,
+		Email:         cmd.Email,
+		OrgID:         cmd.OrgID,
+		ExternalUID:   cmd.ExternalUID,
+		IsProvisioned: cmd.IsProvisioned,
+		Created:       time.Now(),
+		Updated:       time.Now(),
 	}
-	err := ss.db.WithTransactionalDbSession(context.Background(), func(sess *db.Session) error {
-		if isNameTaken, err := isTeamNameTaken(orgID, name, 0, sess); err != nil {
+	err := ss.db.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
+		if isNameTaken, err := isTeamNameTaken(cmd.OrgID, cmd.Name, 0, sess); err != nil {
 			return err
 		} else if isNameTaken {
 			return team.ErrTeamNameTaken
@@ -182,8 +186,6 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		Teams: make([]*team.TeamDTO, 0),
 	}
 	err := ss.db.WithDbSession(ctx, func(sess *db.Session) error {
-		queryWithWildcards := "%" + query.Query + "%"
-
 		var sql bytes.Buffer
 		params := make([]any, 0)
 
@@ -197,8 +199,9 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		params = append(params, query.OrgID)
 
 		if query.Query != "" {
-			sql.WriteString(` and team.name ` + ss.db.GetDialect().LikeStr() + ` ?`)
-			params = append(params, queryWithWildcards)
+			like, param := ss.db.GetDialect().LikeOperator("team.name", true, query.Query, true)
+			sql.WriteString(" and " + like)
+			params = append(params, param)
 		}
 
 		if query.Name != "" {
@@ -246,7 +249,8 @@ func (ss *xormStore) Search(ctx context.Context, query *team.SearchTeamsQuery) (
 		countSess.Where("team.org_id=?", query.OrgID)
 
 		if query.Query != "" {
-			countSess.Where(`name `+ss.db.GetDialect().LikeStr()+` ?`, queryWithWildcards)
+			like, param := ss.db.GetDialect().LikeOperator("name", true, query.Query, true)
+			countSess.Where(like, param)
 		}
 
 		if query.Name != "" {

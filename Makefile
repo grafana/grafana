@@ -8,7 +8,7 @@ WIRE_TAGS = "oss"
 include .bingo/Variables.mk
 
 GO = go
-GO_VERSION = 1.24.1
+GO_VERSION = 1.24.2
 GO_LINT_FILES ?= $(shell ./scripts/go-workspace/golangci-lint-includes.sh)
 GO_TEST_FILES ?= $(shell ./scripts/go-workspace/test-includes.sh)
 SH_FILES ?= $(shell find ./scripts -name *.sh)
@@ -148,6 +148,13 @@ gen-cue: ## Do all CUE/Thema code generation
 	@echo "generate code from .cue files"
 	go generate ./kinds/gen.go
 	go generate ./public/app/plugins/gen.go
+	@echo "// This file is managed by Grafana - DO NOT EDIT MANUALLY" > apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@echo "// Source: kinds/dashboard/dashboard_kind.cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@echo "// To sync changes, run: make gen-cue" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@echo "" >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@cat kinds/dashboard/dashboard_kind.cue >> apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue
+	@cp apps/dashboard/pkg/apis/dashboard/v1beta1/dashboard_kind.cue apps/dashboard/pkg/apis/dashboard/v0alpha1/dashboard_kind.cue
+
 
 .PHONY: gen-cuev2
 gen-cuev2: ## Do all CUE code generation
@@ -158,7 +165,7 @@ gen-cuev2: ## Do all CUE code generation
 # For now, we want to use an explicit list of apps to generate code for.
 #
 # APPS_DIRS=$(shell find ./apps -mindepth 1 -maxdepth 1 -type d | sort)
-APPS_DIRS := ./apps/dashboard
+APPS_DIRS := ./apps/dashboard ./apps/folder ./apps/alerting/notifications
 
 .PHONY: gen-apps
 gen-apps: ## Generate code for Grafana App SDK apps
@@ -358,7 +365,7 @@ lint-go-diff:
 		$(XARGSR) dirname | \
 		sort -u | \
 		sed 's,^,./,' | \
-		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.toml
+		$(XARGSR) $(GO) tool golangci-lint run --config .golangci.yml
 
 # with disabled SC1071 we are ignored some TCL,Expect `/usr/bin/env expect` scripts
 .PHONY: shellcheck

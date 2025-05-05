@@ -5,92 +5,67 @@ import (
 	"errors"
 	"fmt"
 
-	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/client-go/dynamic"
 
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-// FIXME: revise logging in this method
-func (r *exportJob) loadFolders(ctx context.Context) error {
-	logger := r.logger
-	r.progress.SetMessage(ctx, "reading folder tree")
+// ExportFolders will load the full folder tree into memory and update the repositoryResources tree
+func ExportFolders(ctx context.Context, repoName string, options provisioning.ExportJobOptions, folderClient dynamic.ResourceInterface, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	// Load and write all folders
+	// FIXME: we load the entire tree in memory
+	progress.SetMessage(ctx, "read folder tree from API server")
 
-	repoName := r.target.Config().Name
-
-	// TODO: should this be logging or message or both?
-	r.progress.SetMessage(ctx, "read folder tree from unified storage")
-	client, err := r.client.Folder()
-	if err != nil {
-		return err
-	}
-
-	rawList, err := client.List(ctx, metav1.ListOptions{Limit: 10000})
-	if err != nil {
-		return fmt.Errorf("failed to list folders: %w", err)
-	}
-	if rawList.GetContinue() != "" {
-		return fmt.Errorf("unable to list all folders in one request: %s", rawList.GetContinue())
-	}
-
-	for _, item := range rawList.Items {
-		err = r.folderTree.AddUnstructured(&item, repoName)
+	tree := resources.NewEmptyFolderTree()
+	if err := resources.ForEach(ctx, folderClient, func(item *unstructured.Unstructured) error {
+		if tree.Count() >= resources.MaxNumberOfFolders {
+			return errors.New("too many folders")
+		}
+		meta, err := utils.MetaAccessor(item)
 		if err != nil {
-			r.progress.Record(ctx, jobs.JobResourceResult{
-				Name:     item.GetName(),
-				Resource: folders.RESOURCE,
-				Group:    folders.GROUP,
-				Error:    err,
-			})
+			return fmt.Errorf("extract meta accessor: %w", err)
 		}
+
+		manager, _ := meta.GetManagerProperties()
+		if manager.Identity == repoName {
+			return nil // skip it... already in tree?
+		}
+
+		return tree.AddUnstructured(item)
+	}); err != nil {
+		return fmt.Errorf("load folder tree: %w", err)
 	}
 
-	// create folders first is required so that empty folders exist when finished
-	r.progress.SetMessage(ctx, "write folders")
-
-	err = r.folderTree.Walk(ctx, func(ctx context.Context, folder resources.Folder) error {
-		p := folder.Path
-		if r.path != "" {
-			p = safepath.Join(r.path, p)
-		}
-		logger := logger.With("path", p)
-
+	progress.SetMessage(ctx, "write folders to repository")
+	err := repositoryResources.EnsureFolderTreeExists(ctx, options.Branch, options.Path, tree, func(folder resources.Folder, created bool, err error) error {
 		result := jobs.JobResourceResult{
+			Action:   repository.FileActionCreated,
 			Name:     folder.ID,
-			Resource: folders.RESOURCE,
-			Group:    folders.GROUP,
-			Path:     p,
+			Resource: resources.FolderResource.Resource,
+			Group:    resources.FolderResource.Group,
+			Path:     folder.Path,
+			Error:    err,
 		}
 
-		_, err := r.target.Read(ctx, p, r.ref)
-		if err != nil && !(errors.Is(err, repository.ErrFileNotFound) || apierrors.IsNotFound(err)) {
-			result.Error = fmt.Errorf("failed to check if folder exists before writing: %w", err)
-			return result.Error
-		} else if err == nil {
-			logger.Info("folder already exists")
+		if !created {
 			result.Action = repository.FileActionIgnored
-			r.progress.Record(ctx, result)
-			return nil
 		}
 
-		result.Action = repository.FileActionCreated
-		msg := fmt.Sprintf("export folder %s", p)
-		// Create with an empty body will make a folder (or .keep file if unsupported)
-		if err := r.target.Create(ctx, p, r.ref, nil, msg); err != nil {
-			result.Error = fmt.Errorf("failed to write folder in repo: %w", err)
-			r.progress.Record(ctx, result)
-			return result.Error
+		progress.Record(ctx, result)
+		if err := progress.TooManyErrors(); err != nil {
+			return err
 		}
 
-		r.progress.Record(ctx, result)
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("failed to write folders: %w", err)
+		return fmt.Errorf("write folders to repository: %w", err)
 	}
+
 	return nil
 }

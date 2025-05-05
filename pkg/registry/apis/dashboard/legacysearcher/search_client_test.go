@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/selection"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
@@ -72,11 +72,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
-					{
-						Name:        unisearch.DASHBOARD_LEGACY_ID,
-						Type:        resource.ResourceTableColumnDefinition_INT64,
-						Description: "Deprecated legacy id of the dashboard",
-					},
+					searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 				},
 				Rows: []*resource.ResourceTableRow{
 					{
@@ -149,11 +145,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
-					{
-						Name:        unisearch.DASHBOARD_LEGACY_ID,
-						Type:        resource.ResourceTableColumnDefinition_INT64,
-						Description: "Deprecated legacy id of the dashboard",
-					},
+					searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 					{
 						Name: "views_total",
 						Type: resource.ResourceTableColumnDefinition_INT64,
@@ -218,11 +210,7 @@ func TestDashboardSearchClient_Search(t *testing.T) {
 					searchFields.Field(resource.SEARCH_FIELD_TITLE),
 					searchFields.Field(resource.SEARCH_FIELD_FOLDER),
 					searchFields.Field(resource.SEARCH_FIELD_TAGS),
-					{
-						Name:        unisearch.DASHBOARD_LEGACY_ID,
-						Type:        resource.ResourceTableColumnDefinition_INT64,
-						Description: "Deprecated legacy id of the dashboard",
-					},
+					searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
 					{
 						Name: "errors_last_30_days",
 						Type: resource.ResourceTableColumnDefinition_INT64,

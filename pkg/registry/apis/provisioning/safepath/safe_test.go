@@ -19,6 +19,11 @@ func TestIsSafe(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name:    "character space",
+			path:    "path/to/my file.json",
+			wantErr: nil,
+		},
+		{
 			name:    "valid path with extension",
 			path:    "path/to/file.json",
 			wantErr: nil,
@@ -63,11 +68,6 @@ func TestIsSafe(t *testing.T) {
 		{
 			name:    "invalid special character hash",
 			path:    "path/to/file#.json",
-			wantErr: ErrInvalidCharacters,
-		},
-		{
-			name:    "invalid character space",
-			path:    "path/to/my file.json",
 			wantErr: ErrInvalidCharacters,
 		},
 		{
@@ -229,6 +229,74 @@ func TestIsSafe(t *testing.T) {
 			err := IsSafe(tt.path)
 			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("IsSafe() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSafeSegment(t *testing.T) {
+	tests := []struct {
+		name     string
+		path     string
+		wantPath string
+	}{
+		{
+			name:     "empty path",
+			path:     "",
+			wantPath: "",
+		},
+		{
+			name:     "simple valid path",
+			path:     "path/to/file.txt",
+			wantPath: "path/to/file.txt",
+		},
+		{
+			name:     "path with valid special characters",
+			path:     "my-path/some_file/test.json",
+			wantPath: "my-path/some_file/test.json",
+		},
+		{
+			name:     "path with trailing slash",
+			path:     "path/to/folder/",
+			wantPath: "path/to/folder/",
+		},
+		{
+			name:     "path with multiple extensions",
+			path:     "path/to/file.min.js",
+			wantPath: "path/to/file.min.js",
+		},
+		{
+			name:     "path with invalid characters",
+			path:     "path/to/file#.txt",
+			wantPath: "path/to/",
+		},
+		{
+			name:     "path with traversal attempt",
+			path:     "path/../file.txt",
+			wantPath: "path/",
+		},
+		{
+			name:     "path with hidden file",
+			path:     "path/to/.hidden",
+			wantPath: "path/to/",
+		},
+		{
+			name:     "path with percent character",
+			path:     "path/to/%20file.txt",
+			wantPath: "path/to/",
+		},
+		{
+			name:     "path with double slashes",
+			path:     "path//to/file.txt",
+			wantPath: "path/",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotPath := SafeSegment(tt.path)
+			if gotPath != tt.wantPath {
+				t.Errorf("SafeSegment() = %v, want %v", gotPath, tt.wantPath)
 			}
 		})
 	}

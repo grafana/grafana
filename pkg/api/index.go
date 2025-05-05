@@ -23,6 +23,25 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type URLPrefs struct {
+	Language string
+	Locale   string
+	Theme    string
+}
+
+// URL prefs take precedence over any saved user preferences
+func getURLPrefs(c *contextmodel.ReqContext) URLPrefs {
+	language := c.Query("lang")
+	theme := c.Query("theme")
+	locale := c.Query("locale")
+
+	return URLPrefs{
+		Language: language,
+		Locale:   locale,
+		Theme:    theme,
+	}
+}
+
 func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexViewData, error) {
 	c, span := hs.injectSpan(c, "api.setIndexViewData")
 	defer span.End()
@@ -32,9 +51,9 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		return nil, err
 	}
 
-	userID, _ := identity.UserIdentifier(c.SignedInUser.GetID())
+	userID, _ := identity.UserIdentifier(c.GetID())
 
-	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.SignedInUser.GetOrgID(), Teams: c.Teams}
+	prefsQuery := pref.GetPreferenceWithDefaultsQuery{UserID: userID, OrgID: c.GetOrgID(), Teams: c.Teams}
 	prefs, err := hs.preferenceService.GetWithDefaults(c.Req.Context(), &prefsQuery)
 	if err != nil {
 		return nil, err
@@ -50,16 +69,28 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 	// Locale is used for some number and date/time formatting, whereas language is used just for
 	// translating words in the interface
 	acceptLangHeader := c.Req.Header.Get("Accept-Language")
-	locale := "en-US"
-	language := "" // frontend will set the default language
+	locale := "en-US" // default to en formatting, but use the accept-lang header or user's preference
+	language := ""    // frontend will set the default language
+	urlPrefs := getURLPrefs(c)
 
-	if prefs.JSONData.Language != "" {
+	if urlPrefs.Language != "" {
+		language = urlPrefs.Language
+	} else if prefs.JSONData.Language != "" {
 		language = prefs.JSONData.Language
 	}
 
 	if len(acceptLangHeader) > 0 {
 		parts := strings.Split(acceptLangHeader, ",")
 		locale = parts[0]
+	}
+
+	if hs.Features.IsEnabled(c.Req.Context(), featuremgmt.FlagLocaleFormatPreference) {
+		locale = "en" // default to "en", not "en-US", matching the locale code
+		if urlPrefs.Locale != "" {
+			locale = urlPrefs.Locale
+		} else if prefs.JSONData.Locale != "" {
+			locale = prefs.JSONData.Locale
+		}
 	}
 
 	appURL := hs.Cfg.AppURL
@@ -82,7 +113,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 		weekStart = *prefs.WeekStart
 	}
 
-	theme := hs.getThemeForIndexData(prefs.Theme, c.Query("theme"))
+	theme := hs.getThemeForIndexData(prefs.Theme, urlPrefs.Theme)
 	assets, err := webassets.GetWebAssets(c.Req.Context(), hs.Cfg, hs.License)
 	if err != nil {
 		return nil, err
@@ -97,13 +128,13 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 			UID:                        c.UserUID, // << not set yet
 			IsSignedIn:                 c.IsSignedIn,
 			Login:                      c.Login,
-			Email:                      c.SignedInUser.GetEmail(),
+			Email:                      c.GetEmail(),
 			Name:                       c.Name,
-			OrgId:                      c.SignedInUser.GetOrgID(),
+			OrgId:                      c.GetOrgID(),
 			OrgName:                    c.OrgName,
-			OrgRole:                    c.SignedInUser.GetOrgRole(),
+			OrgRole:                    c.GetOrgRole(),
 			OrgCount:                   hs.getUserOrgCount(c, userID),
-			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.SignedInUser.GetEmail()),
+			GravatarUrl:                dtos.GetGravatarUrl(hs.Cfg, c.GetEmail()),
 			IsGrafanaAdmin:             c.IsGrafanaAdmin,
 			Theme:                      theme.ID,
 			LightTheme:                 theme.Type == "light",
@@ -171,7 +202,7 @@ func (hs *HTTPServer) setIndexViewData(c *contextmodel.ReqContext) (*dtos.IndexV
 
 func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dtos.AnalyticsSettings {
 	// Anonymous users do not have an email or auth info
-	if !c.SignedInUser.IsIdentityType(claims.TypeUser) {
+	if !c.IsIdentityType(claims.TypeUser) {
 		return dtos.AnalyticsSettings{Identifier: "@" + hs.Cfg.AppURL}
 	}
 
@@ -179,10 +210,10 @@ func (hs *HTTPServer) buildUserAnalyticsSettings(c *contextmodel.ReqContext) dto
 		return dtos.AnalyticsSettings{}
 	}
 
-	identifier := c.SignedInUser.GetEmail() + "@" + hs.Cfg.AppURL
+	identifier := c.GetEmail() + "@" + hs.Cfg.AppURL
 
-	if authenticatedBy := c.SignedInUser.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
-		identifier = c.SignedInUser.GetAuthID()
+	if authenticatedBy := c.GetAuthenticatedBy(); authenticatedBy == login.GrafanaComAuthModule {
+		identifier = c.GetAuthID()
 	}
 
 	return dtos.AnalyticsSettings{

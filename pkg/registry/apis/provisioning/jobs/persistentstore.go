@@ -8,10 +8,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana-app-sdk/logging"
-	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +16,11 @@ import (
 	"k8s.io/apimachinery/pkg/selection"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+
+	"github.com/grafana/grafana-app-sdk/logging"
+	"github.com/grafana/grafana/pkg/apimachinery/identity"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/apifmt"
 )
 
 const (
@@ -27,8 +28,6 @@ const (
 	// The label must be formatted as milliseconds from Epoch. This grants a natural ordering, allowing for less-than operators in label selectors.
 	// The natural ordering would be broken if the number rolls over into 1 more digit. This won't happen before Nov, 2286.
 	LabelJobClaim = "provisioning.grafana.app/claim"
-	// LabelJobOriginalName contains the Job's name as a label. This allows for label selectors to find the archived version of a job.
-	LabelJobOriginalName = "provisioning.grafana.app/original-name"
 	// LabelRepository contains the repository name as a label. This allows for label selectors to find the archived version of a job.
 	LabelRepository = "provisioning.grafana.app/repository"
 )
@@ -54,13 +53,16 @@ var (
 	}
 )
 
+// Queue is a job queue abstraction.
+//
+//go:generate mockery --name Queue --structname MockQueue --inpackage --filename queue_mock.go --with-expecter
 type Queue interface {
 	// Insert adds a new job to the queue.
 	//
 	// The job name is not honoured. It will be overwritten with a name that fits the job.
 	//
 	// This saves it if it is a new job, or fails with `apierrors.IsAlreadyExists(err) == true` if one already exists.
-	Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error)
+	Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error)
 }
 
 var _ Queue = (*persistentStore)(nil)
@@ -77,11 +79,11 @@ type jobStorage interface {
 // When persistentStore claims a job, it will update the status of it. This does a ResourceVersion check to ensure it is atomic; if the job has been claimed by another worker, the claim will fail.
 // When a job is completed, it is moved to the historic job store by first deleting it from the job store and then creating it in the historic job store. We are fine with the job being lost if the historic job store fails to create it.
 type persistentStore struct {
-	jobStore         jobStorage
-	historicJobStore rest.Creater
+	jobStore jobStorage
 
 	// clock is a function that returns the current time.
 	clock func() time.Time
+
 	// expiry is the time after which a job is considered abandoned.
 	// If a job is abandoned, it will have its claim cleaned up periodically.
 	expiry time.Duration
@@ -92,9 +94,8 @@ type persistentStore struct {
 	notifications chan struct{}
 }
 
-func NewStore(
+func NewJobStore(
 	jobStore jobStorage,
-	historicJobStore rest.Creater,
 	expiry time.Duration,
 ) (*persistentStore, error) {
 	if expiry <= 0 {
@@ -102,8 +103,7 @@ func NewStore(
 	}
 
 	return &persistentStore{
-		jobStore:         jobStore,
-		historicJobStore: historicJobStore,
+		jobStore: jobStore,
 
 		clock:  time.Now,
 		expiry: expiry,
@@ -205,6 +205,7 @@ func (s *persistentStore) Claim(ctx context.Context) (job *provisioning.Job, rol
 			}
 
 			// Rollback the claim.
+			refetchedJob = refetchedJob.DeepCopy()
 			delete(refetchedJob.Labels, LabelJobClaim)
 			refetchedJob.Status.State = provisioning.JobStatePending
 
@@ -273,28 +274,6 @@ func (s *persistentStore) Complete(ctx context.Context, job *provisioning.Job) e
 		job.Labels = make(map[string]string)
 	}
 	delete(job.Labels, LabelJobClaim)
-	// We also need a new, unique name.
-	job.Labels[LabelJobOriginalName] = job.GetName()
-	job.Labels[LabelRepository] = job.Spec.Repository
-	job.GenerateName = job.Name + "-"
-	job.Name = ""
-	// We also reset the UID as this is not the same object.
-	job.ObjectMeta.UID = ""
-	// We aren't allowed to write with ResourceVersion set.
-	job.ResourceVersion = ""
-
-	historicJob := &provisioning.HistoricJob{
-		ObjectMeta: job.ObjectMeta,
-		Spec:       job.Spec,
-		Status:     job.Status,
-	}
-	_, err = s.historicJobStore.Create(ctx, historicJob, nil, &metav1.CreateOptions{})
-	if err != nil {
-		// We're not going to return this as it is not critical. Not ideal, but not critical.
-		logger.Warn("failed to create historic job", "historic_job", *historicJob, "error", err)
-	} else {
-		logger.Debug("created historic job", "historic_job", *historicJob)
-	}
 
 	logger.Debug("job completion done")
 	return nil
@@ -376,9 +355,26 @@ func (s *persistentStore) cleanupClaims(ctx context.Context) error {
 	return nil
 }
 
-func (s *persistentStore) Insert(ctx context.Context, job *provisioning.Job) (*provisioning.Job, error) {
+func (s *persistentStore) Insert(ctx context.Context, namespace string, spec provisioning.JobSpec) (*provisioning.Job, error) {
+	if spec.Repository == "" {
+		return nil, errors.New("missing repository in job")
+	}
+
+	job := &provisioning.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: namespace,
+			Labels: map[string]string{
+				LabelRepository: spec.Repository,
+			},
+		},
+		Spec: spec,
+	}
+	if err := mutateJobAction(job); err != nil {
+		return nil, err
+	}
 	s.generateJobName(job) // Side-effect: updates the job's name.
 
+	ctx = request.WithNamespace(ctx, job.GetNamespace())
 	obj, err := s.jobStore.Create(ctx, job, nil, &metav1.CreateOptions{})
 	if apierrors.IsAlreadyExists(err) {
 		return nil, apifmt.Errorf("job '%s' in '%s' already exists: %w", job.GetName(), job.GetNamespace(), err)
@@ -408,9 +404,9 @@ func (s *persistentStore) InsertNotifications() chan struct{} {
 // generateJobName creates and updates the job's name to one that fits it.
 func (s *persistentStore) generateJobName(job *provisioning.Job) {
 	switch job.Spec.Action {
-	case provisioning.JobActionMigrate, provisioning.JobActionSync:
-		// Sync and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
-		job.Name = job.Spec.Repository + "-syncmigrate"
+	case provisioning.JobActionMigrate, provisioning.JobActionPull:
+		// Pull and migrate jobs should never run at the same time. Hence, the name encapsulates them both (and the spec differentiates them).
+		job.Name = job.Spec.Repository + "-sync"
 	case provisioning.JobActionPullRequest:
 		var pr int
 		if job.Spec.PullRequest != nil {
@@ -421,4 +417,29 @@ func (s *persistentStore) generateJobName(job *provisioning.Job) {
 	default:
 		job.Name = fmt.Sprintf("%s-%s", job.Spec.Repository, job.Spec.Action)
 	}
+}
+
+func mutateJobAction(job *provisioning.Job) error {
+	kinds := map[provisioning.JobAction]any{}
+	spec := job.Spec
+	if spec.Migrate != nil {
+		job.Spec.Action = provisioning.JobActionMigrate
+		kinds[provisioning.JobActionMigrate] = spec.Migrate
+	}
+	if spec.Pull != nil {
+		job.Spec.Action = provisioning.JobActionPull
+		kinds[provisioning.JobActionPull] = spec.Pull
+	}
+	if spec.Push != nil {
+		job.Spec.Action = provisioning.JobActionPush
+		kinds[provisioning.JobActionPush] = spec.Push
+	}
+	if spec.PullRequest != nil {
+		job.Spec.Action = provisioning.JobActionPullRequest
+		kinds[provisioning.JobActionPullRequest] = spec.PullRequest
+	}
+	if len(kinds) > 1 {
+		return apierrors.NewBadRequest("multiple job types found")
+	}
+	return nil
 }

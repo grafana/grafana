@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneDataLayerControls, SceneVariableSet, TextBoxVariable, VariableValueSelectors } from '@grafana/scenes';
+import { SceneVariableSet, TextBoxVariable } from '@grafana/scenes';
 
 import { DashboardControls, DashboardControlsState } from './DashboardControls';
 import { DashboardScene } from './DashboardScene';
@@ -10,7 +10,6 @@ describe('DashboardControls', () => {
   describe('Given a standard scene', () => {
     it('should initialize with default values', () => {
       const scene = buildTestScene();
-      expect(scene.state.variableControls).toEqual([]);
       expect(scene.state.timePicker).toBeDefined();
       expect(scene.state.refreshPicker).toBeDefined();
     });
@@ -38,9 +37,7 @@ describe('DashboardControls', () => {
     });
 
     it('should render visible controls', async () => {
-      const scene = buildTestScene({
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
-      });
+      const scene = buildTestScene({});
       const renderer = render(<scene.Component model={scene} />);
 
       expect(await renderer.findByTestId(selectors.pages.Dashboard.Controls)).toBeInTheDocument();
@@ -55,7 +52,6 @@ describe('DashboardControls', () => {
         hideTimeControls: true,
         hideVariableControls: true,
         hideLinksControls: true,
-        variableControls: [new VariableValueSelectors({}), new SceneDataLayerControls()],
       });
       const renderer = render(<scene.Component model={scene} />);
 

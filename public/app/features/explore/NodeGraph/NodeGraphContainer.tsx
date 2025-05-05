@@ -6,8 +6,11 @@ import { useToggle, useWindowSize } from 'react-use';
 import { applyFieldOverrides, DataFrame, GrafanaTheme2, SplitOpen } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
 import { useStyles2, useTheme2, PanelChrome } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
+import { layeredLayoutThreshold } from 'app/plugins/panel/nodeGraph/NodeGraph';
 
 import { NodeGraph } from '../../../plugins/panel/nodeGraph';
+import { LayoutAlgorithm } from '../../../plugins/panel/nodeGraph/panelcfg.gen';
 import { useCategorizeFrames } from '../../../plugins/panel/nodeGraph/useCategorizeFrames';
 import { StoreState } from '../../../types';
 import { useLinks } from '../utils/links';
@@ -57,6 +60,10 @@ export function UnconnectedNodeGraphContainer(props: Props) {
   const { nodes } = useCategorizeFrames(frames);
   const [collapsed, toggleCollapsed] = useToggle(true);
 
+  // Determine default layout algorithm based on node count
+  const nodeCount = nodes[0]?.length || 0;
+  const layoutAlgorithm = nodeCount > layeredLayoutThreshold ? LayoutAlgorithm.Force : LayoutAlgorithm.Layered;
+
   const toggled = () => {
     toggleCollapsed();
     reportInteraction('grafana_traces_node_graph_panel_clicked', {
@@ -80,12 +87,17 @@ export function UnconnectedNodeGraphContainer(props: Props) {
 
   const countWarning =
     withTraceView && nodes[0]?.length > 1000 ? (
-      <span className={styles.warningText}> ({nodes[0].length} nodes, can be slow to load)</span>
+      <span className={styles.warningText}>
+        {' '}
+        <Trans i18nKey="explore.unconnected-node-graph-container.count-warning" values={{ numNodes: nodes[0].length }}>
+          ({'{{numNodes}}'} nodes, can be slow to load)
+        </Trans>
+      </span>
     ) : null;
 
   return (
     <PanelChrome
-      title={`Node graph`}
+      title={t('explore.unconnected-node-graph-container.title-node-graph', 'Node graph')}
       titleItems={countWarning}
       // We allow collapsing this only when it is shown together with trace view.
       collapsible={!!withTraceView}
@@ -103,7 +115,7 @@ export function UnconnectedNodeGraphContainer(props: Props) {
               }
         }
       >
-        <NodeGraph dataFrames={frames} getLinks={getLinks} />
+        <NodeGraph dataFrames={frames} getLinks={getLinks} layoutAlgorithm={layoutAlgorithm} />
       </div>
     </PanelChrome>
   );

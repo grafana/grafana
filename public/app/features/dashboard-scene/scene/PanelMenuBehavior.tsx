@@ -4,11 +4,13 @@ import {
   LinkModel,
   PanelMenuItem,
   PanelPlugin,
+  PluginExtensionLink,
   PluginExtensionPanelContext,
   PluginExtensionPoints,
+  PluginExtensionTypes,
   urlUtil,
 } from '@grafana/data';
-import { config, getPluginLinkExtensions, locationService } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { LocalValueVariable, sceneGraph, SceneGridRow, VizPanel, VizPanelMenu } from '@grafana/scenes';
 import { DataQuery, OptionsWithLegend } from '@grafana/schema';
 import appEvents from 'app/core/app_events';
@@ -22,8 +24,10 @@ import { scenesPanelToRuleFormValues } from 'app/features/alerting/unified/utils
 import { getTrackingSource, shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { InspectTab } from 'app/features/inspector/types';
 import { getScenePanelLinksSupplier } from 'app/features/panel/panellinks/linkSuppliers';
+import { createPluginExtensionsGetter } from 'app/features/plugins/extensions/getPluginExtensions';
+import { pluginExtensionRegistries } from 'app/features/plugins/extensions/registry/setup';
+import { GetPluginExtensions } from 'app/features/plugins/extensions/types';
 import { createExtensionSubMenu } from 'app/features/plugins/extensions/utils';
-import { addDataTrailPanelAction } from 'app/features/trails/Integrations/dashboardIntegration';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
@@ -38,6 +42,21 @@ import { getDashboardSceneFor, getPanelIdForVizPanel, getQueryRunnerFor, isLibra
 import { DashboardScene } from './DashboardScene';
 import { VizPanelLinks, VizPanelLinksMenu } from './PanelLinks';
 import { UnlinkLibraryPanelModal } from './UnlinkLibraryPanelModal';
+
+let getPluginExtensions: GetPluginExtensions;
+
+function setupGetPluginExtensions() {
+  if (getPluginExtensions) {
+    return getPluginExtensions;
+  }
+
+  getPluginExtensions = createPluginExtensionsGetter(pluginExtensionRegistries);
+
+  return getPluginExtensions;
+}
+
+// Define the category for metrics drilldown links
+const METRICS_DRILLDOWN_CATEGORY = 'metrics-drilldown';
 
 /**
  * Behavior is called when VizPanelMenu is activated (ie when it's opened).
@@ -276,31 +295,55 @@ export function panelMenuBehavior(menu: VizPanelMenu) {
       });
     }
 
-    if (config.featureToggles.exploreMetrics) {
-      await addDataTrailPanelAction(dashboard, panel, items);
-    }
-
     if (exploreMenuItem) {
       items.push(exploreMenuItem);
     }
 
     items.push(getInspectMenuItem(plugin, panel, dashboard));
 
-    // TODO: make sure that this works reliably with the reactive extension registry
-    // (we need to be able to know in advance what extensions should be loaded for this extension point, and make it possible to await for them.)
-    const { extensions } = getPluginLinkExtensions({
+    setupGetPluginExtensions();
+
+    const { extensions } = getPluginExtensions({
       extensionPointId: PluginExtensionPoints.DashboardPanelMenu,
       context: createExtensionContext(panel, dashboard),
       limitPerPlugin: 3,
     });
 
     if (extensions.length > 0 && !dashboard.state.isEditing) {
-      items.push({
-        text: 'Extensions',
-        iconClassName: 'plug',
-        type: 'submenu',
-        subMenu: createExtensionSubMenu(extensions),
-      });
+      const linkExtensions = extensions.filter((extension) => extension.type === PluginExtensionTypes.link);
+
+      // Separate metrics drilldown links from other links
+      const [metricsDrilldownLinks, otherLinks] = linkExtensions.reduce<[PluginExtensionLink[], PluginExtensionLink[]]>(
+        ([metricsDrilldownLinks, otherLinks], link) => {
+          if (link.category === METRICS_DRILLDOWN_CATEGORY) {
+            metricsDrilldownLinks.push(link);
+          } else {
+            otherLinks.push(link);
+          }
+          return [metricsDrilldownLinks, otherLinks];
+        },
+        [[], []]
+      );
+
+      // Add specific "Metrics drilldown" menu
+      if (metricsDrilldownLinks.length > 0) {
+        items.push({
+          text: 'Metrics drilldown',
+          iconClassName: 'code-branch',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(metricsDrilldownLinks),
+        });
+      }
+
+      // Add generic "Extensions" menu for other links
+      if (otherLinks.length > 0) {
+        items.push({
+          text: 'Extensions',
+          iconClassName: 'plug',
+          type: 'submenu',
+          subMenu: createExtensionSubMenu(otherLinks),
+        });
+      }
     }
 
     if (moreSubMenu.length) {

@@ -6,7 +6,6 @@ import { featureEnabled } from '@grafana/runtime';
 import { Card, Grid, useStyles2, Stack, Badge } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import {
-  PluginAngularBadge,
   PluginDeprecatedBadge,
   PluginDisabledBadge,
   PluginInstalledBadge,
@@ -108,7 +107,6 @@ export const CardGrid = ({ items, onClickItem }: CardGridProps) => {
               {item.isInstalled && <PluginInstalledBadge />}
               {item.isDisabled && <PluginDisabledBadge error={item.error} />}
               {isPluginUpdatable(item) && <PluginUpdateAvailableBadge plugin={item} />}
-              {item.angularDetected && <PluginAngularBadge />}
             </Stack>
           </Card.Meta>
         </Card>

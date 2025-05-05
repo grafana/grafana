@@ -10,6 +10,7 @@ import { TextDimensionConfig, TextDimensionMode } from '@grafana/schema';
 import { Button, InlineField, InlineFieldRow, RadioButtonGroup } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { StringValueEditor } from 'app/core/components/OptionsUI/string';
+import { t } from 'app/core/internationalization';
 
 import { TextDimensionOptions } from '../types';
 
@@ -70,13 +71,21 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Source" labelWidth={labelWidth} grow={true}>
+        <InlineField
+          label={t('dimensions.text-dimension-editor.label-source', 'Source')}
+          labelWidth={labelWidth}
+          grow={true}
+        >
           <RadioButtonGroup value={mode} options={textOptions} onChange={onModeChange} fullWidth />
         </InlineField>
       </InlineFieldRow>
       {mode !== TextDimensionMode.Fixed && (
         <InlineFieldRow>
-          <InlineField label="Field" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.text-dimension-editor.label-field', 'Field')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <FieldNamePicker
               context={context}
               value={value.field ?? ''}
@@ -88,7 +97,11 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
       )}
       {mode === TextDimensionMode.Fixed && (
         <InlineFieldRow key={value?.fixed}>
-          <InlineField label={'Value'} labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.text-dimension-editor.label-value', 'Value')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <StringValueEditor
               context={context}
               value={value?.fixed}
@@ -103,7 +116,11 @@ export const TextDimensionEditor = ({ value, context, onChange }: Props) => {
       )}
       {mode === TextDimensionMode.Template && (
         <InlineFieldRow>
-          <InlineField label="Template" labelWidth={labelWidth} grow={true}>
+          <InlineField
+            label={t('dimensions.text-dimension-editor.label-template', 'Template')}
+            labelWidth={labelWidth}
+            grow={true}
+          >
             <StringValueEditor // This could be a code editor
               context={context}
               value={value?.fixed}

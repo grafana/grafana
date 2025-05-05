@@ -113,4 +113,13 @@ export default class UrlBuilder {
 
     return url;
   }
+
+  static buildAzureMonitorGetLogsTableUrl(
+    baseUrl: string,
+    resourceUri: string,
+    tableName: string,
+    apiVersion = '2025-02-01'
+  ) {
+    return `${baseUrl}${resourceUri}/tables/${tableName}?api-version=${apiVersion}`;
+  }
 }

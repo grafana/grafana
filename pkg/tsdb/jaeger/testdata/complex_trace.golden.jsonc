@@ -1,0 +1,375 @@
+//  🌟 This was machine generated.  Do not edit. 🌟
+//  
+//  Frame[0] {
+//      "typeVersion": [
+//          0,
+//          0
+//      ],
+//      "custom": {
+//          "traceFormat": "jaeger"
+//      },
+//      "preferredVisualisationType": "trace"
+//  }
+//  Name: test
+//  Dimensions: 13 Fields by 3 Rows
+//  +------------------+------------------+--------------------+--------------------------------+-------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------+-------------------------+
+//  | Name: traceID    | Name: spanID     | Name: parentSpanID | Name: operationName            | Name: serviceName | Name: serviceTags                                                                                                                                                      | Name: startTime       | Name: duration  | Name: logs                                                                                                                                                                    | Name: references        | Name: tags                                                                                                                                                                                                         | Name: warnings                                         | Name: stackTraces       |
+//  | Labels:          | Labels:          | Labels:            | Labels:                        | Labels:           | Labels:                                                                                                                                                                | Labels:               | Labels:         | Labels:                                                                                                                                                                       | Labels:                 | Labels:                                                                                                                                                                                                            | Labels:                                                | Labels:                 |
+//  | Type: []string   | Type: []string   | Type: []*string    | Type: []string                 | Type: []string    | Type: []json.RawMessage                                                                                                                                                | Type: []float64       | Type: []float64 | Type: []json.RawMessage                                                                                                                                                       | Type: []json.RawMessage | Type: []json.RawMessage                                                                                                                                                                                            | Type: []json.RawMessage                                | Type: []json.RawMessage |
+//  +------------------+------------------+--------------------+--------------------------------+-------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------+-------------------------+
+//  | 3fa414edcef6ad90 | 3fa414edcef6ad90 | null               | HTTP GET - api_traces_traceid  | tempo-querier     | [{"key":"cluster","type":"string","value":"ops-tools1"},{"key":"container","type":"string","value":"tempo-query"},{"key":"version","type":"string","value":"1.2.3"}]   | 1.605873894680409e+12 | 1049.141        | [{"timestamp":1605873894681000,"fields":[{"key":"event","type":"string","value":"error"},{"key":"message","type":"string","value":"Internal server error"}],"name":""}]       | []                      | [{"key":"sampler.type","type":"string","value":"probabilistic"},{"key":"sampler.param","type":"float64","value":1},{"key":"error","type":"bool","value":true},{"key":"http.status_code","type":"int","value":500}] | ["High latency detected","Error rate above threshold"] | null                    |
+//  | 3fa414edcef6ad90 | 0f5c1808567e4403 | 3fa414edcef6ad90   | /tempopb.Querier/FindTraceByID | tempo-querier     | [{"key":"cluster","type":"string","value":"ops-tools1"},{"key":"container","type":"string","value":"tempo-query"},{"key":"version","type":"string","value":"1.2.3"}]   | 1.605873894680587e+12 | 1.847           | [{"timestamp":1605873894680700,"fields":[{"key":"event","type":"string","value":"error"},{"key":"message","type":"string","value":"gRPC error: INTERNAL"}],"name":""}]        | []                      | [{"key":"component","type":"string","value":"gRPC"},{"key":"span.kind","type":"string","value":"client"},{"key":"error","type":"bool","value":true},{"key":"grpc.status_code","type":"int","value":13}]            | ["gRPC call failed","Retry attempt 3"]                 | null                    |
+//  | 3fa414edcef6ad90 | 1a2b3c4d5e6f7g8h | 0f5c1808567e4403   | db.query                       | tempo-storage     | [{"key":"cluster","type":"string","value":"ops-tools1"},{"key":"container","type":"string","value":"tempo-storage"},{"key":"version","type":"string","value":"2.0.1"}] | 1.6058738946808e+12   | 0.5             | [{"timestamp":1605873894680850,"fields":[{"key":"event","type":"string","value":"error"},{"key":"message","type":"string","value":"Database connection timeout"}],"name":""}] | []                      | [{"key":"db.type","type":"string","value":"postgresql"},{"key":"db.statement","type":"string","value":"SELECT * FROM traces WHERE id = $1"},{"key":"error","type":"bool","value":true}]                            | ["Database connection slow","Query timeout"]           | null                    |
+//  +------------------+------------------+--------------------+--------------------------------+-------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-----------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+-------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+--------------------------------------------------------+-------------------------+
+//  
+//  
+//  🌟 This was machine generated.  Do not edit. 🌟
+{
+  "status": 200,
+  "frames": [
+    {
+      "schema": {
+        "name": "test",
+        "meta": {
+          "typeVersion": [
+            0,
+            0
+          ],
+          "custom": {
+            "traceFormat": "jaeger"
+          },
+          "preferredVisualisationType": "trace"
+        },
+        "fields": [
+          {
+            "name": "traceID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "spanID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "parentSpanID",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string",
+              "nullable": true
+            }
+          },
+          {
+            "name": "operationName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "serviceName",
+            "type": "string",
+            "typeInfo": {
+              "frame": "string"
+            }
+          },
+          {
+            "name": "serviceTags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "startTime",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "duration",
+            "type": "number",
+            "typeInfo": {
+              "frame": "float64"
+            }
+          },
+          {
+            "name": "logs",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "references",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "tags",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "warnings",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          },
+          {
+            "name": "stackTraces",
+            "type": "other",
+            "typeInfo": {
+              "frame": "json.RawMessage"
+            }
+          }
+        ]
+      },
+      "data": {
+        "values": [
+          [
+            "3fa414edcef6ad90",
+            "3fa414edcef6ad90",
+            "3fa414edcef6ad90"
+          ],
+          [
+            "3fa414edcef6ad90",
+            "0f5c1808567e4403",
+            "1a2b3c4d5e6f7g8h"
+          ],
+          [
+            null,
+            "3fa414edcef6ad90",
+            "0f5c1808567e4403"
+          ],
+          [
+            "HTTP GET - api_traces_traceid",
+            "/tempopb.Querier/FindTraceByID",
+            "db.query"
+          ],
+          [
+            "tempo-querier",
+            "tempo-querier",
+            "tempo-storage"
+          ],
+          [
+            [
+              {
+                "key": "cluster",
+                "type": "string",
+                "value": "ops-tools1"
+              },
+              {
+                "key": "container",
+                "type": "string",
+                "value": "tempo-query"
+              },
+              {
+                "key": "version",
+                "type": "string",
+                "value": "1.2.3"
+              }
+            ],
+            [
+              {
+                "key": "cluster",
+                "type": "string",
+                "value": "ops-tools1"
+              },
+              {
+                "key": "container",
+                "type": "string",
+                "value": "tempo-query"
+              },
+              {
+                "key": "version",
+                "type": "string",
+                "value": "1.2.3"
+              }
+            ],
+            [
+              {
+                "key": "cluster",
+                "type": "string",
+                "value": "ops-tools1"
+              },
+              {
+                "key": "container",
+                "type": "string",
+                "value": "tempo-storage"
+              },
+              {
+                "key": "version",
+                "type": "string",
+                "value": "2.0.1"
+              }
+            ]
+          ],
+          [
+            1605873894680.409,
+            1605873894680.587,
+            1605873894680.8
+          ],
+          [
+            1049.141,
+            1.847,
+            0.5
+          ],
+          [
+            [
+              {
+                "timestamp": 1605873894681000,
+                "fields": [
+                  {
+                    "key": "event",
+                    "type": "string",
+                    "value": "error"
+                  },
+                  {
+                    "key": "message",
+                    "type": "string",
+                    "value": "Internal server error"
+                  }
+                ],
+                "name": ""
+              }
+            ],
+            [
+              {
+                "timestamp": 1605873894680700,
+                "fields": [
+                  {
+                    "key": "event",
+                    "type": "string",
+                    "value": "error"
+                  },
+                  {
+                    "key": "message",
+                    "type": "string",
+                    "value": "gRPC error: INTERNAL"
+                  }
+                ],
+                "name": ""
+              }
+            ],
+            [
+              {
+                "timestamp": 1605873894680850,
+                "fields": [
+                  {
+                    "key": "event",
+                    "type": "string",
+                    "value": "error"
+                  },
+                  {
+                    "key": "message",
+                    "type": "string",
+                    "value": "Database connection timeout"
+                  }
+                ],
+                "name": ""
+              }
+            ]
+          ],
+          [
+            [],
+            [],
+            []
+          ],
+          [
+            [
+              {
+                "key": "sampler.type",
+                "type": "string",
+                "value": "probabilistic"
+              },
+              {
+                "key": "sampler.param",
+                "type": "float64",
+                "value": 1
+              },
+              {
+                "key": "error",
+                "type": "bool",
+                "value": true
+              },
+              {
+                "key": "http.status_code",
+                "type": "int",
+                "value": 500
+              }
+            ],
+            [
+              {
+                "key": "component",
+                "type": "string",
+                "value": "gRPC"
+              },
+              {
+                "key": "span.kind",
+                "type": "string",
+                "value": "client"
+              },
+              {
+                "key": "error",
+                "type": "bool",
+                "value": true
+              },
+              {
+                "key": "grpc.status_code",
+                "type": "int",
+                "value": 13
+              }
+            ],
+            [
+              {
+                "key": "db.type",
+                "type": "string",
+                "value": "postgresql"
+              },
+              {
+                "key": "db.statement",
+                "type": "string",
+                "value": "SELECT * FROM traces WHERE id = $1"
+              },
+              {
+                "key": "error",
+                "type": "bool",
+                "value": true
+              }
+            ]
+          ],
+          [
+            [
+              "High latency detected",
+              "Error rate above threshold"
+            ],
+            [
+              "gRPC call failed",
+              "Retry attempt 3"
+            ],
+            [
+              "Database connection slow",
+              "Query timeout"
+            ]
+          ],
+          [
+            null,
+            null,
+            null
+          ]
+        ]
+      }
+    }
+  ]
+}

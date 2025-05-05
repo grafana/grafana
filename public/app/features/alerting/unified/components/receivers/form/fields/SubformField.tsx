@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
@@ -46,7 +47,7 @@ export const SubformField = ({
             <ActionIcon
               data-testid={`${name}.delete-button`}
               icon="trash-alt"
-              tooltip="delete"
+              tooltip={t('alerting.subform-field.tooltip-delete', 'delete')}
               onClick={() => setShow(false)}
               className={styles.deleteIcon}
             />
@@ -78,7 +79,7 @@ export const SubformField = ({
           onClick={() => setShow(true)}
           data-testid={`${name}.add-button`}
         >
-          Add
+          <Trans i18nKey="alerting.subform-field.add">Add</Trans>
         </Button>
       )}
     </div>

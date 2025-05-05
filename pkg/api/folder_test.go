@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 	clientrest "k8s.io/client-go/rest"
 
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
@@ -618,7 +618,7 @@ func TestGetFolderLegacyAndUnifiedStorage(t *testing.T) {
 
 				cfg := setting.NewCfg()
 				cfg.UnifiedStorage = map[string]setting.UnifiedStorageConfig{
-					folderv0alpha1.RESOURCEGROUP: {
+					folders.RESOURCEGROUP: {
 						DualWriterMode: tc.unifiedStorageMode,
 					},
 				}

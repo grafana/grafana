@@ -91,7 +91,12 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
     switch (stage) {
       case 'GA':
         return (
-          <Tooltip content={'General availability'}>
+          <Tooltip
+            content={t(
+              'admin.admin-feature-toggles-table.get-stage-cell.content-general-availability',
+              'General availability'
+            )}
+          >
             <div>
               <Trans i18nKey="admin.admin-feature-toggles-table.get-stage-cell.ga">GA</Trans>
             </div>
@@ -155,7 +160,9 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
       {allowEditing && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '0 0 5px 0' }}>
           <Button disabled={!hasModifications() || isSaving} onClick={showSaveChangesModal(true)} ref={saveButtonRef}>
-            {isSaving ? 'Saving...' : 'Save Changes'}
+            {isSaving
+              ? t('admin.admin-feature-toggles-table.saving', 'Saving...')
+              : t('admin.admin-feature-toggles-table.save-changes', 'Save changes')}
           </Button>
           <ConfirmModal
             isOpen={showSaveModel}
@@ -166,10 +173,16 @@ export function AdminFeatureTogglesTable({ featureToggles, allowEditing, onUpdat
             body={
               <div>
                 <p>
-                  Some features are stable (GA) and enabled by default, whereas some are currently in their preliminary
-                  Beta phase, available for early adoption.
+                  <Trans i18nKey="admin.admin-feature-toggles-table.confirm-modal-body-1">
+                    Some features are stable (GA) and enabled by default, whereas some are currently in their
+                    preliminary Beta phase, available for early adoption.
+                  </Trans>
                 </p>
-                <p>We advise understanding the implications of each feature change before making modifications.</p>
+                <p>
+                  <Trans i18nKey="admin.admin-feature-toggles-table.confirm-modal-body-2">
+                    We advise understanding the implications of each feature change before making modifications.
+                  </Trans>
+                </p>
               </div>
             }
             confirmText="Save changes"

@@ -5,25 +5,60 @@ import (
 	"fmt"
 	"sync"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
-	folders "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	dashboardV2 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v2alpha1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	iam "github.com/grafana/grafana/pkg/apis/iam/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 )
 
-type ClientFactory struct {
+var (
+	UserResource        = iam.UserResourceInfo.GroupVersionResource()
+	FolderResource      = folders.FolderResourceInfo.GroupVersionResource()
+	DashboardResource   = dashboardV1.DashboardResourceInfo.GroupVersionResource()
+	DashboardResourceV2 = dashboardV2.DashboardResourceInfo.GroupVersionResource()
+
+	// SupportedProvisioningResources is the list of resources that can fully managed from the UI
+	SupportedProvisioningResources = []schema.GroupVersionResource{FolderResource, DashboardResource}
+
+	// SupportsFolderAnnotation is the list of resources that can be saved in a folder
+	SupportsFolderAnnotation = []schema.GroupResource{FolderResource.GroupResource(), DashboardResource.GroupResource()}
+)
+
+// ClientFactory is a factory for creating clients for a given namespace
+//
+//go:generate mockery --name ClientFactory --structname MockClientFactory --inpackage --filename client_factory_mock.go --with-expecter
+type ClientFactory interface {
+	Clients(ctx context.Context, namespace string) (ResourceClients, error)
+}
+
+type clientFactory struct {
 	configProvider apiserver.RestConfigProvider
 }
 
-func NewClientFactory(configProvider apiserver.RestConfigProvider) *ClientFactory {
-	return &ClientFactory{configProvider}
+// TODO: Rename to NamespacedClients
+// ResourceClients provides access to clients within a namespace
+//
+//go:generate mockery --name ResourceClients --structname MockResourceClients --inpackage --filename clients_mock.go --with-expecter
+type ResourceClients interface {
+	ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error)
+	ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error)
+
+	Folder() (dynamic.ResourceInterface, error)
+	User() (dynamic.ResourceInterface, error)
 }
 
-func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*ResourceClients, error) {
+func NewClientFactory(configProvider apiserver.RestConfigProvider) ClientFactory {
+	return &clientFactory{configProvider}
+}
+
+func (f *clientFactory) Clients(ctx context.Context, namespace string) (ResourceClients, error) {
 	restConfig, err := f.configProvider.GetRestConfig(ctx)
 	if err != nil {
 		return nil, err
@@ -43,7 +78,7 @@ func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*Resourc
 		return nil, err
 	}
 
-	return &ResourceClients{
+	return &resourceClients{
 		namespace:  namespace,
 		discovery:  discovery,
 		dynamic:    client,
@@ -52,7 +87,7 @@ func (f *ClientFactory) Clients(ctx context.Context, namespace string) (*Resourc
 	}, nil
 }
 
-type ResourceClients struct {
+type resourceClients struct {
 	namespace string
 
 	dynamic   dynamic.Interface
@@ -70,7 +105,7 @@ type clientInfo struct {
 	client dynamic.ResourceInterface
 }
 
-func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
+func (c *resourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.ResourceInterface, schema.GroupVersionResource, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -93,7 +128,10 @@ func (c *ResourceClients) ForKind(gvk schema.GroupVersionKind) (dynamic.Resource
 	return info.client, info.gvr, nil
 }
 
-func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
+// ForResource returns a client for a resource.
+// If the resource has a version, it will be used.
+// If the resource does not have a version, the preferred version will be used.
+func (c *resourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.ResourceInterface, schema.GroupVersionKind, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
 
@@ -139,29 +177,40 @@ func (c *ResourceClients) ForResource(gvr schema.GroupVersionResource) (dynamic.
 	return info.client, info.gvk, nil
 }
 
-func (c *ResourceClients) Folder() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    folders.GROUP,
-		Version:  folders.VERSION,
-		Resource: folders.RESOURCE,
-	})
+func (c *resourceClients) Folder() (dynamic.ResourceInterface, error) {
+	client, _, err := c.ForResource(FolderResource)
+	return client, err
+}
+
+func (c *resourceClients) User() (dynamic.ResourceInterface, error) {
+	v, _, err := c.ForResource(UserResource)
 	return v, err
 }
 
-func (c *ResourceClients) User() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    iam.GROUP,
-		Version:  iam.VERSION,
-		Resource: iam.UserResourceInfo.GroupResource().Resource,
-	})
-	return v, err
-}
+// ForEach applies the function to each resource returned from the list operation
+func ForEach(ctx context.Context, client dynamic.ResourceInterface, fn func(item *unstructured.Unstructured) error) error {
+	var continueToken string
+	for ctx.Err() == nil {
+		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
+		if err != nil {
+			return fmt.Errorf("error executing list: %w", err)
+		}
 
-func (c *ResourceClients) Dashboard() (dynamic.ResourceInterface, error) {
-	v, _, err := c.ForResource(schema.GroupVersionResource{
-		Group:    dashboard.GROUP,
-		Version:  dashboard.VERSION,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-	})
-	return v, err
+		for _, item := range list.Items {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
+			if err := fn(&item); err != nil {
+				return err
+			}
+		}
+
+		continueToken = list.GetContinue()
+		if continueToken == "" {
+			break
+		}
+	}
+
+	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/folder"
+	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -93,7 +94,8 @@ func TestComputeFullPath(t *testing.T) {
 func TestGetParents(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	store := FolderUnifiedStoreImpl{
-		k8sclient: mockCli,
+		k8sclient:   mockCli,
+		userService: usertest.NewUserServiceFake(),
 	}
 
 	ctx := context.Background()
@@ -187,7 +189,8 @@ func TestGetParents(t *testing.T) {
 func TestGetChildren(t *testing.T) {
 	mockCli := new(client.MockK8sHandler)
 	store := FolderUnifiedStoreImpl{
-		k8sclient: mockCli,
+		k8sclient:   mockCli,
+		userService: usertest.NewUserServiceFake(),
 	}
 
 	ctx := context.Background()
@@ -384,5 +387,55 @@ func TestGetChildren(t *testing.T) {
 		})
 		require.NoError(t, err)
 		require.Len(t, result, 1)
+	})
+
+	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
+		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
+			Options: &resource.ListOptions{
+				Fields: []*resource.Requirement{
+					{
+						Key:      resource.SEARCH_FIELD_FOLDER,
+						Operator: string(selection.In),
+						Values:   []string{"folder1"},
+					},
+				},
+			},
+			Limit:  folderSearchLimit, // should default to folderSearchLimit
+			Offset: 0,                 // should be set as limit * (page - 1)
+			Page:   1,                 // should be set to 1 by default
+		}).Return(&resource.ResourceSearchResponse{
+			Results: &resource.ResourceTable{
+				Columns: []*resource.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+				},
+				Rows: []*resource.ResourceTableRow{
+					{
+						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Cells: [][]byte{[]byte("folder1")},
+					},
+					{
+						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Cells: [][]byte{[]byte("folder1")},
+					},
+				},
+			},
+			TotalHits: 1,
+		}, nil).Once()
+		// only get the parent folder in this request
+		mockCli.On("Get", mock.Anything, "folder1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+			Object: map[string]interface{}{
+				"metadata": map[string]interface{}{"name": "folder1"},
+			},
+		}, nil).Once()
+
+		// don't set page or limit - should be automatically added
+		result, err := store.GetChildren(ctx, folder.GetChildrenQuery{
+			UID:   "folder1",
+			OrgID: orgID,
+		})
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		require.Equal(t, "folder2", result[0].UID)
+		require.Equal(t, "folder3", result[1].UID)
 	})
 }

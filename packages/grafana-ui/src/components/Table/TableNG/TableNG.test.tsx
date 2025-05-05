@@ -27,7 +27,7 @@ const createBasicDataFrame = (): DataFrame => {
           },
         },
         // Add display function
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -52,7 +52,7 @@ const createBasicDataFrame = (): DataFrame => {
           },
         },
         // Add display function
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
           color: undefined,
@@ -179,7 +179,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -202,7 +202,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: Number(value),
           color: undefined,
@@ -225,7 +225,7 @@ const createSortingTestDataFrame = (): DataFrame => {
             },
           },
         },
-        display: (value: any) => ({
+        display: (value: unknown) => ({
           text: String(value),
           numeric: 0,
           color: undefined,
@@ -1196,8 +1196,8 @@ describe('TableNG', () => {
       const cells = container.querySelectorAll('[role="gridcell"]');
       const cellStyles = window.getComputedStyle(cells[0]);
 
-      // In the getStyles function, when textWrap is true, whiteSpace is set to 'break-spaces'
-      expect(cellStyles.getPropertyValue('white-space')).toBe('break-spaces');
+      // In the getStyles function, when textWrap is true, whiteSpace is set to 'pre-line'
+      expect(cellStyles.getPropertyValue('white-space')).toBe('pre-line');
     });
   });
 
@@ -1249,24 +1249,26 @@ describe('TableNG', () => {
 
   describe('Cell inspection', () => {
     it('shows inspect icon when hovering over a cell with inspection enabled', () => {
-      const fieldConfig = {
-        defaults: {
-          custom: {
-            inspect: true,
-            cellOptions: {
-              wrapText: false,
+      const inspectDataFrame = {
+        ...createBasicDataFrame(),
+        fields: createBasicDataFrame().fields.map((field) => ({
+          ...field,
+          config: {
+            ...field.config,
+            custom: {
+              ...field.config.custom,
+              inspect: true,
             },
           },
-        },
-        overrides: [],
+        })),
       };
 
       // Render the component
       const { container } = render(
         <TableNG
           enableVirtualization={false}
-          fieldConfig={fieldConfig}
-          data={createBasicDataFrame()}
+          // fieldConfig={inspectDataFrame.fields[0].config}
+          data={inspectDataFrame}
           width={800}
           height={600}
         />
@@ -1333,7 +1335,7 @@ describe('TableNG', () => {
       // Add color to the display values
       const originalDisplay = frame.fields[0].display;
       const expectedColor = '#ff0000'; // Red color
-      frame.fields[0].display = (value: any) => {
+      frame.fields[0].display = (value: unknown) => {
         const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
         return {
           ...displayValue,
@@ -1370,7 +1372,7 @@ describe('TableNG', () => {
 
       // Add color to the display values
       const originalDisplay = frame.fields[0].display;
-      frame.fields[0].display = (value: any) => {
+      frame.fields[0].display = (value: unknown) => {
         const displayValue = originalDisplay ? originalDisplay(value) : { text: String(value), numeric: 0 };
         return {
           ...displayValue,

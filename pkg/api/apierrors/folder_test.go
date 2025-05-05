@@ -7,6 +7,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/response"
 	"github.com/grafana/grafana/pkg/services/dashboards"
+	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/stretchr/testify/require"
@@ -22,8 +23,8 @@ func TestToFolderErrorResponse(t *testing.T) {
 	}{
 		{
 			name:  "dashboard error",
-			input: dashboards.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"},
-			want:  response.Error(400, "Dashboard Error", dashboards.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"}),
+			input: dashboardaccess.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"},
+			want:  response.Error(400, "Dashboard Error", dashboardaccess.DashboardErr{StatusCode: 400, Reason: "Dashboard Error", Status: "error"}),
 		},
 		{
 			name:  "folder title empty",

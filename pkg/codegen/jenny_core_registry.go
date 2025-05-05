@@ -51,6 +51,6 @@ func (jenny *CoreRegistryJenny) Generate(cueFiles ...SchemaForGen) (codejen.File
 }
 
 func getSchemaName(pkg string) (string, error) {
-	pkg = strings.Replace(pkg, "-", "_", -1)
+	pkg = strings.ReplaceAll(pkg, "-", "_")
 	return strings.ToLower(pkg), nil
 }

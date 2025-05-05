@@ -14,7 +14,7 @@ import {
   rangeUtil,
 } from '@grafana/data';
 import { DataSourceSrv, DataSourceWithBackend, FetchResponse } from '@grafana/runtime';
-import { ExpressionDatasourceRef } from '@grafana/runtime/src/utils/DataSourceWithBackend';
+import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { DataQuery } from '@grafana/schema';
 import { BackendSrv } from 'app/core/services/backend_srv';
 import {

@@ -12,7 +12,7 @@ import (
 
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/tracing"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -30,7 +30,7 @@ var logger = slog.Default().With("logger", "legacy.grpc.Authenticator")
 // var _ interceptors.Authenticator = (*Authenticator)(nil)
 
 type Authenticator struct {
-	Tracer tracing.Tracer
+	Tracer trace.Tracer
 }
 
 func (f *Authenticator) Authenticate(ctx context.Context) (context.Context, error) {

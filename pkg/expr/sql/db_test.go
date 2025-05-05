@@ -4,6 +4,7 @@ package sql
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -194,15 +195,92 @@ func TestQueryFramesDateTimeSelect(t *testing.T) {
 }
 
 func TestErrorsFromGoMySQLServerAreFlagged(t *testing.T) {
-	const GmsNotImplemented = "STDDEV" // not implemented in go-mysql-server as of 2025-03-18
+	const GmsNotImplemented = "TRUNCATE" // not implemented in go-mysql-server as of 2025-04-11
 
 	db := DB{}
 
-	query := `SELECT ` + GmsNotImplemented + `(1);`
+	query := `SELECT ` + GmsNotImplemented + `(123.456, 2);`
 
 	_, err := db.QueryFrames(context.Background(), "sqlExpressionRefId", query, nil)
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "error in go-mysql-server")
+}
+
+func TestFrameToSQLAndBack_JSONRoundtrip(t *testing.T) {
+	expectedFrame := &data.Frame{
+		RefID: "json_test",
+		Name:  "json_test",
+		Fields: []*data.Field{
+			data.NewField("id", nil, []int64{1, 2}),
+			data.NewField("payload", nil, []json.RawMessage{
+				json.RawMessage(`{"foo":1}`),
+				json.RawMessage(`{"bar":"baz"}`),
+			}),
+		},
+	}
+
+	db := DB{}
+
+	query := `SELECT * FROM json_test`
+
+	resultFrame, err := db.QueryFrames(context.Background(), "json_test", query, data.Frames{expectedFrame})
+	require.NoError(t, err)
+
+	// Use custom compare options that ignore Name and RefID
+	opts := append(
+		data.FrameTestCompareOptions(),
+		cmp.FilterPath(func(p cmp.Path) bool {
+			return p.String() == "Name" || p.String() == "RefID"
+		}, cmp.Ignore()),
+	)
+
+	if diff := cmp.Diff(expectedFrame, resultFrame, opts...); diff != "" {
+		require.FailNowf(t, "Frame mismatch (-want +got):\n%s", diff)
+	}
+}
+
+func TestQueryFrames_JSONFilter(t *testing.T) {
+	input := &data.Frame{
+		RefID: "A",
+		Name:  "A",
+		Fields: []*data.Field{
+			data.NewField("title", nil, []string{"Bug report", "Feature request"}),
+			data.NewField("labels", nil, []json.RawMessage{
+				json.RawMessage(`["type/bug", "priority/high"]`),
+				json.RawMessage(`["type/feature", "priority/low"]`),
+			}),
+		},
+	}
+
+	expected := &data.Frame{
+		RefID: "B",
+		Name:  "B",
+		Fields: []*data.Field{
+			data.NewField("title", nil, []string{"Bug report"}),
+			data.NewField("labels", nil, []json.RawMessage{
+				json.RawMessage(`["type/bug", "priority/high"]`),
+			}),
+		},
+	}
+
+	db := DB{}
+
+	query := `SELECT title, labels FROM A WHERE json_contains(labels, '"type/bug"')`
+
+	result, err := db.QueryFrames(context.Background(), "B", query, data.Frames{input})
+	require.NoError(t, err)
+
+	// Use custom compare options that ignore Name and RefID
+	opts := append(
+		data.FrameTestCompareOptions(),
+		cmp.FilterPath(func(p cmp.Path) bool {
+			return p.String() == "Name" || p.String() == "RefID"
+		}, cmp.Ignore()),
+	)
+
+	if diff := cmp.Diff(expected, result, opts...); diff != "" {
+		require.FailNowf(t, "Result mismatch (-want +got):\n%s", diff)
+	}
 }
 
 // p is a utility for pointers from constants

@@ -1,48 +1,11 @@
 import { api } from './baseAPI';
-export const addTagTypes = ['HistoricJob', 'Job', 'Repository', 'Provisioning'] as const;
+export const addTagTypes = ['Job', 'Repository', 'Provisioning'] as const;
 const injectedRtkApi = api
   .enhanceEndpoints({
     addTagTypes,
   })
   .injectEndpoints({
     endpoints: (build) => ({
-      listHistoricJob: build.query<ListHistoricJobApiResponse, ListHistoricJobApiArg>({
-        query: (queryArg) => ({
-          url: `/historicjobs`,
-          params: {
-            allowWatchBookmarks: queryArg.allowWatchBookmarks,
-            continue: queryArg['continue'],
-            fieldSelector: queryArg.fieldSelector,
-            labelSelector: queryArg.labelSelector,
-            limit: queryArg.limit,
-            pretty: queryArg.pretty,
-            resourceVersion: queryArg.resourceVersion,
-            resourceVersionMatch: queryArg.resourceVersionMatch,
-            sendInitialEvents: queryArg.sendInitialEvents,
-            timeoutSeconds: queryArg.timeoutSeconds,
-            watch: queryArg.watch,
-          },
-        }),
-        providesTags: ['HistoricJob'],
-      }),
-      getHistoricJob: build.query<GetHistoricJobApiResponse, GetHistoricJobApiArg>({
-        query: (queryArg) => ({
-          url: `/historicjobs/${queryArg.name}`,
-          params: {
-            pretty: queryArg.pretty,
-          },
-        }),
-        providesTags: ['HistoricJob'],
-      }),
-      getHistoricJobStatus: build.query<GetHistoricJobStatusApiResponse, GetHistoricJobStatusApiArg>({
-        query: (queryArg) => ({
-          url: `/historicjobs/${queryArg.name}/status`,
-          params: {
-            pretty: queryArg.pretty,
-          },
-        }),
-        providesTags: ['HistoricJob'],
-      }),
       listJob: build.query<ListJobApiResponse, ListJobApiArg>({
         query: (queryArg) => ({
           url: `/jobs`,
@@ -65,15 +28,6 @@ const injectedRtkApi = api
       getJob: build.query<GetJobApiResponse, GetJobApiArg>({
         query: (queryArg) => ({
           url: `/jobs/${queryArg.name}`,
-          params: {
-            pretty: queryArg.pretty,
-          },
-        }),
-        providesTags: ['Job'],
-      }),
-      getJobStatus: build.query<GetJobStatusApiResponse, GetJobStatusApiArg>({
-        query: (queryArg) => ({
-          url: `/jobs/${queryArg.name}/status`,
           params: {
             pretty: queryArg.pretty,
           },
@@ -177,10 +131,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      createRepositoryExport: build.mutation<CreateRepositoryExportApiResponse, CreateRepositoryExportApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/export`, method: 'POST', body: queryArg.body }),
-        invalidatesTags: ['Repository'],
-      }),
       getRepositoryFiles: build.query<GetRepositoryFilesApiResponse, GetRepositoryFilesApiArg>({
         query: (queryArg) => ({
           url: `/repositories/${queryArg.name}/files/`,
@@ -210,6 +160,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -225,6 +176,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -239,6 +191,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -264,15 +217,23 @@ const injectedRtkApi = api
         }),
         providesTags: ['Repository'],
       }),
-      createRepositoryMigrate: build.mutation<CreateRepositoryMigrateApiResponse, CreateRepositoryMigrateApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/migrate`, method: 'POST', body: queryArg.body }),
+      getRepositoryJobs: build.query<GetRepositoryJobsApiResponse, GetRepositoryJobsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs` }),
+        providesTags: ['Repository'],
+      }),
+      createRepositoryJobs: build.mutation<CreateRepositoryJobsApiResponse, CreateRepositoryJobsApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs`, method: 'POST', body: queryArg.jobSpec }),
         invalidatesTags: ['Repository'],
+      }),
+      getRepositoryJobsWithPath: build.query<GetRepositoryJobsWithPathApiResponse, GetRepositoryJobsWithPathApiArg>({
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/jobs/${queryArg.uid}` }),
+        providesTags: ['Repository'],
       }),
       getRepositoryRenderWithPath: build.query<
         GetRepositoryRenderWithPathApiResponse,
         GetRepositoryRenderWithPathApiArg
       >({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.path}` }),
+        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/render/${queryArg.guid}` }),
         providesTags: ['Repository'],
       }),
       getRepositoryResources: build.query<GetRepositoryResourcesApiResponse, GetRepositoryResourcesApiArg>({
@@ -302,10 +263,6 @@ const injectedRtkApi = api
         }),
         invalidatesTags: ['Repository'],
       }),
-      createRepositorySync: build.mutation<CreateRepositorySyncApiResponse, CreateRepositorySyncApiArg>({
-        query: (queryArg) => ({ url: `/repositories/${queryArg.name}/sync`, method: 'POST', body: queryArg.body }),
-        invalidatesTags: ['Repository'],
-      }),
       createRepositoryTest: build.mutation<CreateRepositoryTestApiResponse, CreateRepositoryTestApiArg>({
         query: (queryArg) => ({ url: `/repositories/${queryArg.name}/test`, method: 'POST', body: queryArg.body }),
         invalidatesTags: ['Repository'],
@@ -330,65 +287,6 @@ const injectedRtkApi = api
     overrideExisting: false,
   });
 export { injectedRtkApi as generatedAPI };
-export type ListHistoricJobApiResponse = /** status 200 OK */ HistoricJobList;
-export type ListHistoricJobApiArg = {
-  /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
-  allowWatchBookmarks?: boolean;
-  /** The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the "next key".
-    
-    This field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications. */
-  continue?: string;
-  /** A selector to restrict the list of returned objects by their fields. Defaults to everything. */
-  fieldSelector?: string;
-  /** A selector to restrict the list of returned objects by their labels. Defaults to everything. */
-  labelSelector?: string;
-  /** limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.
-    
-    The server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned. */
-  limit?: number;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-  /** resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersion?: string;
-  /** resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.
-    
-    Defaults to unset */
-  resourceVersionMatch?: string;
-  /** `sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic "Bookmark" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `"k8s.io/initial-events-end": "true"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.
-    
-    When `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan
-      is interpreted as "data at least as new as the provided `resourceVersion`"
-      and the bookmark event is send when the state is synced
-      to a `resourceVersion` at least as fresh as the one provided by the ListOptions.
-      If `resourceVersion` is unset, this is interpreted as "consistent read" and the
-      bookmark event is send when the state is synced at least to the moment
-      when request started being processed.
-    - `resourceVersionMatch` set to any other value or unset
-      Invalid error is returned.
-    
-    Defaults to true if `resourceVersion=""` or `resourceVersion="0"` (for backward compatibility reasons) and to false otherwise. */
-  sendInitialEvents?: boolean;
-  /** Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity. */
-  timeoutSeconds?: number;
-  /** Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion. */
-  watch?: boolean;
-};
-export type GetHistoricJobApiResponse = /** status 200 OK */ HistoricJob;
-export type GetHistoricJobApiArg = {
-  /** name of the HistoricJob */
-  name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-};
-export type GetHistoricJobStatusApiResponse = /** status 200 OK */ HistoricJob;
-export type GetHistoricJobStatusApiArg = {
-  /** name of the HistoricJob */
-  name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-};
 export type ListJobApiResponse = /** status 200 OK */ JobList;
 export type ListJobApiArg = {
   /** allowWatchBookmarks requests watch events with type "BOOKMARK". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored. */
@@ -436,13 +334,6 @@ export type ListJobApiArg = {
 };
 export type GetJobApiResponse = /** status 200 OK */ Job;
 export type GetJobApiArg = {
-  /** name of the Job */
-  name: string;
-  /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
-  pretty?: string;
-};
-export type GetJobStatusApiResponse = /** status 200 OK */ Job;
-export type GetJobStatusApiArg = {
   /** name of the Job */
   name: string;
   /** If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget). */
@@ -597,21 +488,6 @@ export type DeleteRepositoryApiArg = {
   /** Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground. */
   propagationPolicy?: string;
 };
-export type CreateRepositoryExportApiResponse = /** status 200 OK */ Job;
-export type CreateRepositoryExportApiArg = {
-  /** name of the Job */
-  name: string;
-  body: {
-    /** Target branch for export (only git) */
-    branch?: string;
-    /** The source folder (or empty) to export */
-    folder?: string;
-    /** Include the identifier in the exported metadata */
-    identifier: boolean;
-    /** Prefix in target file system */
-    path?: string;
-  };
-};
 export type GetRepositoryFilesApiResponse = /** status 200 OK */ {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
@@ -645,6 +521,8 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
   body: {
     [key: string]: any;
   };
@@ -659,6 +537,8 @@ export type CreateRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
   body: {
     [key: string]: any;
   };
@@ -673,6 +553,8 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {
@@ -690,23 +572,30 @@ export type GetRepositoryHistoryWithPathApiArg = {
   /** branch or commit hash */
   ref?: string;
 };
-export type CreateRepositoryMigrateApiResponse = /** status 200 OK */ Job;
-export type CreateRepositoryMigrateApiArg = {
-  /** name of the Job */
+export type GetRepositoryJobsApiResponse = /** status 200 OK */ JobList;
+export type GetRepositoryJobsApiArg = {
+  /** name of the Repository */
   name: string;
-  body: {
-    /** Preserve history (if possible) */
-    history?: boolean;
-    /** Include the identifier in the exported metadata */
-    identifier: boolean;
-  };
+};
+export type CreateRepositoryJobsApiResponse = /** status 200 OK */ Job;
+export type CreateRepositoryJobsApiArg = {
+  /** name of the Repository */
+  name: string;
+  jobSpec: JobSpec;
+};
+export type GetRepositoryJobsWithPathApiResponse = /** status 200 OK */ Job;
+export type GetRepositoryJobsWithPathApiArg = {
+  /** name of the Repository */
+  name: string;
+  /** Original Job UID */
+  uid: string;
 };
 export type GetRepositoryRenderWithPathApiResponse = unknown;
 export type GetRepositoryRenderWithPathApiArg = {
   /** name of the Repository */
   name: string;
-  /** path to the resource */
-  path: string;
+  /** Image GUID */
+  guid: string;
 };
 export type GetRepositoryResourcesApiResponse = /** status 200 OK */ ResourceList;
 export type GetRepositoryResourcesApiArg = {
@@ -733,15 +622,6 @@ export type ReplaceRepositoryStatusApiArg = {
   /** fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered. */
   fieldValidation?: string;
   repository: Repository;
-};
-export type CreateRepositorySyncApiResponse = /** status 200 OK */ Job;
-export type CreateRepositorySyncApiArg = {
-  /** name of the Job */
-  name: string;
-  body: {
-    /** Incremental synchronization for versioned repositories */
-    incremental: boolean;
-  };
 };
 export type CreateRepositoryTestApiResponse = /** status 200 OK */ TestResults;
 export type CreateRepositoryTestApiArg = {
@@ -856,10 +736,9 @@ export type ObjectMeta = {
 export type MigrateJobOptions = {
   /** Preserve history (if possible) */
   history?: boolean;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
 };
 export type PullRequestJobOptions = {
+  /** The specific commit hash that triggered this notice */
   hash?: string;
   /** Pull request number (when appropriate) */
   pr?: number;
@@ -877,18 +756,16 @@ export type ExportJobOptions = {
   branch?: string;
   /** The source folder (or empty) to export */
   folder?: string;
-  /** Include the identifier in the exported metadata */
-  identifier: boolean;
   /** Prefix in target file system */
   path?: string;
 };
 export type JobSpec = {
   /** Possible enum values:
-     - `"migrate"` Migration task -- this will migrate an full instance from SQL > Git
-     - `"pr"` Process a pull request -- apply comments with preview images, links etc
-     - `"pull"` Sync the remote branch with the grafana instance
-     - `"push"` Export from grafana into the remote repository */
-  action: 'migrate' | 'pr' | 'pull' | 'push';
+     - `"migrate"` acts like JobActionExport, then JobActionPull. It also tries to preserve the history.
+     - `"pr"` adds additional useful information to a PR, such as comments with preview links and rendered images.
+     - `"pull"` replicates the remote branch in the local copy of the repository.
+     - `"push"` replicates the local copy of the repository in the remote branch. */
+  action?: 'migrate' | 'pr' | 'pull' | 'push';
   /** Required when the action is `migrate` */
   migrate?: MigrateJobOptions;
   /** Pull request options */
@@ -897,8 +774,8 @@ export type JobSpec = {
   pull?: SyncJobOptions;
   /** Required when the action is `push` */
   push?: ExportJobOptions;
-  /** The the repository reference (for now also in labels) */
-  repository: string;
+  /** The the repository reference (for now also in labels) This value is required, but will be popuplated from the job making the request */
+  repository?: string;
 };
 export type JobResourceSummary = {
   create?: number;
@@ -931,7 +808,7 @@ export type JobStatus = {
   /** Summary of processed actions */
   summary?: JobResourceSummary[];
 };
-export type HistoricJob = {
+export type Job = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
@@ -949,23 +826,6 @@ export type ListMeta = {
   resourceVersion?: string;
   /** Deprecated: selfLink is a legacy read-only field that is no longer populated by the system. */
   selfLink?: string;
-};
-export type HistoricJobList = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  items?: HistoricJob[];
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ListMeta;
-};
-export type Job = {
-  /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
-  apiVersion?: string;
-  /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
-  kind?: string;
-  metadata?: ObjectMeta;
-  spec?: JobSpec;
-  status?: JobStatus;
 };
 export type JobList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1066,6 +926,7 @@ export type SyncStatus = {
 export type WebhookStatus = {
   encryptedSecret?: string;
   id?: number;
+  lastEvent?: number;
   secret?: string;
   subscribedEvents?: string[];
   url?: string;
@@ -1244,15 +1105,18 @@ export type ResourceList = {
   kind?: string;
   metadata?: ListMeta;
 };
+export type ErrorDetails = {
+  detail?: string;
+  field?: string;
+  type: string;
+};
 export type TestResults = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
   apiVersion?: string;
   /** HTTP status code */
   code: number;
-  /** Optional details */
-  details?: Unstructured;
-  /** Error descriptions */
-  errors?: string[];
+  /** Field related errors */
+  errors?: ErrorDetails[];
   /** Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds */
   kind?: string;
   /** Is the connection healthy */
@@ -1271,10 +1135,10 @@ export type WebhookResponse = {
   kind?: string;
 };
 export type RepositoryView = {
+  /** For git, this is the target branch */
+  branch?: string;
   /** The k8s name for this repository */
   name: string;
-  /** Edit options within the repository */
-  readOnly: boolean;
   /** When syncing, where values are saved
     
     Possible enum values:
@@ -1289,6 +1153,8 @@ export type RepositoryView = {
      - `"github"`
      - `"local"` */
   type: 'github' | 'local';
+  /** The supported workflows */
+  workflows: ('branch' | 'write')[];
 };
 export type RepositoryViewList = {
   /** APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources */
@@ -1319,19 +1185,14 @@ export type ResourceStats = {
   metadata?: any;
 };
 export const {
-  useListHistoricJobQuery,
-  useGetHistoricJobQuery,
-  useGetHistoricJobStatusQuery,
   useListJobQuery,
   useGetJobQuery,
-  useGetJobStatusQuery,
   useListRepositoryQuery,
   useCreateRepositoryMutation,
   useDeletecollectionRepositoryMutation,
   useGetRepositoryQuery,
   useReplaceRepositoryMutation,
   useDeleteRepositoryMutation,
-  useCreateRepositoryExportMutation,
   useGetRepositoryFilesQuery,
   useGetRepositoryFilesWithPathQuery,
   useReplaceRepositoryFilesWithPathMutation,
@@ -1339,12 +1200,13 @@ export const {
   useDeleteRepositoryFilesWithPathMutation,
   useGetRepositoryHistoryQuery,
   useGetRepositoryHistoryWithPathQuery,
-  useCreateRepositoryMigrateMutation,
+  useGetRepositoryJobsQuery,
+  useCreateRepositoryJobsMutation,
+  useGetRepositoryJobsWithPathQuery,
   useGetRepositoryRenderWithPathQuery,
   useGetRepositoryResourcesQuery,
   useGetRepositoryStatusQuery,
   useReplaceRepositoryStatusMutation,
-  useCreateRepositorySyncMutation,
   useCreateRepositoryTestMutation,
   useGetRepositoryWebhookQuery,
   useCreateRepositoryWebhookMutation,

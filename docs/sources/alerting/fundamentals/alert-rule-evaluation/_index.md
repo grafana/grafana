@@ -20,6 +20,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/
+  import-ds-rules:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/
 ---
 
 # Alert rule evaluation
@@ -29,21 +34,23 @@ The criteria determining when an alert rule fires are based on two settings:
 - [Evaluation group](#evaluation-group): how frequently the alert rule is evaluated.
 - [Pending period](#pending-period): how long the condition must be met to start firing.
 
-{{< figure src="/media/docs/alerting/alert-rule-evaluation.png" max-width="750px" alt="Set the evaluation behavior of the alert rule in Grafana." caption="Set alert rule evaluation" >}}
+{{< figure src="/media/docs/alerting/alert-rule-evaluation-2.png" max-width="750px" alt="Set the evaluation behavior of the alert rule in Grafana." caption="Set alert rule evaluation" >}}
 
 ## Evaluation group
 
-Every alert rule is assigned to an evaluation group. You can assign the alert rule to an existing evaluation group or create a new one.
+Every alert rule and recording rule is assigned to an evaluation group. You can assign the rule to an existing evaluation group or create a new one.
 
-Each evaluation group contains an **evaluation interval** that determines how frequently the alert rule is checked. For instance, the evaluation may occur every `10s`, `30s`, `1m`, `10m`, etc.
+Each evaluation group contains an **evaluation interval** that determines how frequently the rule is checked. For instance, the evaluation may occur every `10s`, `30s`, `1m`, `10m`, etc.
 
 **Evaluation strategies**
 
-Alert rules in different groups can be evaluated simultaneously.
+Rules in different groups can be evaluated simultaneously.
 
-- **Grafana-managed** alert rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
+- **Grafana-managed** rules within the same group are evaluated concurrently—they are evaluated at different times over the same evaluation interval but display the same evaluation timestamp.
 
-- **Data-source managed** alert rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
+- **Data source-managed** rules within the same group are evaluated sequentially, one after the other—this is useful to ensure that recording rules are evaluated before alert rules.
+
+- **Grafana-managed rules [imported from data source-managed rules](ref:import-ds-rules)** are evaluated sequentially, like data source-managed rules.
 
 ## Pending period
 
@@ -52,6 +59,12 @@ You can set a pending period to prevent unnecessary alerts from temporary issues
 The pending period specifies how long the condition must be met before firing, ensuring the condition is consistently met over a consecutive period.
 
 You can also set the pending period to zero to skip it and have the alert fire immediately once the condition is met.
+
+## Keep firing for
+
+You can set a period to keep an alert firing after the threshold is no longer breached. This sets the alert to a Recovering state. In a Recovering state, the alert won’t fire again if the threshold is breached. The Keep firing timer is then reset and the alert transitions back to Alerting state.
+
+The Keep firing for period helps reduce repeated firing-resolving-firing notification scenarios caused by flapping alerts.
 
 ## Evaluation example
 

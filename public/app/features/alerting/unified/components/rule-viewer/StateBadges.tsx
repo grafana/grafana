@@ -44,6 +44,10 @@ export const StateBadge = ({ state, health }: StateBadgeProps) => {
       color = 'warning';
       stateLabel = 'Pending';
       break;
+    case PromAlertingRuleState.Recovering:
+      color = 'warning';
+      stateLabel = 'Recovering';
+      break;
   }
 
   // if the rule is in "error" health we don't really care about the state

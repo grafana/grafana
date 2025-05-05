@@ -37,7 +37,7 @@ const mapStateToProps = (state: StoreState, ownProps: OwnProps) => ({
 const mapDispatchToProps = (dispatch: ThunkDispatch) => {
   return {
     ...bindActionCreators({ variableEditorMount, variableEditorUnMount, changeVariableName, updateOptions }, dispatch),
-    changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: any) =>
+    changeVariableProp: (identifier: KeyedVariableIdentifier, propName: string, propValue: unknown) =>
       dispatch(
         toKeyedAction(
           identifier.rootStateKey,
@@ -229,7 +229,7 @@ export class VariableEditorEditorUnConnected extends PureComponent<Props, State>
                 disabled={loading}
                 variant="secondary"
               >
-                Run query
+                <Trans i18nKey="variables.variable-editor-editor-un-connected.run-query">Run query</Trans>
                 {loading && (
                   <Icon
                     className={styles.spin}

@@ -1625,23 +1625,20 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 		t.Skip("skipping integration test")
 	}
 	usr := models.UserUID("test")
-	cfg := setting.NewCfg()
-	cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{
+	cfg := setting.UnifiedAlertingSettings{
 		BaseInterval: time.Duration(rand.Int63n(100)+1) * time.Second,
 	}
 	sqlStore := db.InitTestDB(t)
-	folderService := setupFolderService(t, sqlStore, cfg, featuremgmt.WithFeatures())
+	folderService := setupFolderService(t, sqlStore, setting.NewCfg(), featuremgmt.WithFeatures())
 	b := &fakeBus{}
-	store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg.UnifiedAlerting, b)
+
 	generator := models.RuleGen
-	generator = generator.With(generator.WithIntervalMatching(store.Cfg.BaseInterval), generator.WithUniqueOrgID())
+	generator = generator.With(generator.WithIntervalMatching(cfg.BaseInterval), generator.WithUniqueOrgID())
 
 	t.Run("when calling the cleanup with fewer records than the limit all records should stay", func(t *testing.T) {
-		alertingCfgSnapshot := cfg.UnifiedAlerting
-		defer func() {
-			cfg.UnifiedAlerting = alertingCfgSnapshot
-		}()
-		cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: alertingCfgSnapshot.BaseInterval, RuleVersionRecordLimit: 10}
+		cfg := setting.UnifiedAlertingSettings{BaseInterval: cfg.BaseInterval, RuleVersionRecordLimit: 10}
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg, b)
+
 		rule := createRule(t, store, generator)
 		firstNewRule := models.CopyRule(rule)
 		firstNewRule.Title = util.GenerateShortUID()
@@ -1685,42 +1682,26 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 	})
 
 	t.Run("only oldest records surpassing the limit should be deleted", func(t *testing.T) {
-		alertingCfgSnapshot := cfg.UnifiedAlerting
-		defer func() {
-			cfg.UnifiedAlerting = alertingCfgSnapshot
-		}()
-		cfg.UnifiedAlerting = setting.UnifiedAlertingSettings{BaseInterval: alertingCfgSnapshot.BaseInterval, RuleVersionRecordLimit: 1}
+		cfg := setting.UnifiedAlertingSettings{BaseInterval: cfg.BaseInterval, RuleVersionRecordLimit: 2}
+		store := createTestStore(sqlStore, folderService, &logtest.Fake{}, cfg, b)
 		rule := createRule(t, store, generator)
-		oldRule := models.CopyRule(rule)
-		oldRule.Title = "old-record"
-		err := store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule,
-			New:      *oldRule,
-		}}) // first entry in `rule_version_history` table happens here
-		require.NoError(t, err)
 
-		rule.Version = rule.Version + 1
-		middleRule := models.CopyRule(rule)
-		middleRule.Title = "middle-record"
-		err = store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule,
-			New:      *middleRule,
-		}}) // second entry in `rule_version_history` table happens here
-		require.NoError(t, err)
+		for i := 0; i < 4; i++ {
+			r, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
+			require.NoError(t, err)
+			rn := models.CopyRule(r)
+			rn.Title = util.GenerateShortUID()
+			err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
+				{
+					Existing: r,
+					New:      *rn,
+				},
+			})
+			require.NoError(t, err)
+		}
 
-		rule.Version = rule.Version + 1
-		newerRule := models.CopyRule(rule)
-		newerRule.Title = "newer-record"
-		err = store.UpdateAlertRules(context.Background(), &usr, []models.UpdateRule{{
-			Existing: rule,
-			New:      *newerRule,
-		}}) // second entry in `rule_version_history` table happens here
+		rule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: rule.UID})
 		require.NoError(t, err)
-
-		// only the `old-record` should be deleted since limit is set to 1 and there are total 2 records
-		rowsAffected, err := store.deleteOldAlertRuleVersions(context.Background(), rule.UID, rule.OrgID, 1)
-		require.NoError(t, err)
-		require.Equal(t, int64(2), rowsAffected)
 
 		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
 			var alertRuleVersions []*alertRuleVersion
@@ -1729,21 +1710,12 @@ func TestIntegration_AlertRuleVersionsCleanup(t *testing.T) {
 				return err
 			}
 			require.NoError(t, err)
-			assert.Len(t, alertRuleVersions, 1)
-			assert.Equal(t, "newer-record", alertRuleVersions[0].Title)
+			assert.Len(t, alertRuleVersions, 2)
+			assert.Equal(t, rule.Title, alertRuleVersions[0].Title)
+			assert.Equal(t, rule.Version, alertRuleVersions[0].Version)
 			return err
 		})
 		require.NoError(t, err)
-	})
-
-	t.Run("limit set to 0 should not fail", func(t *testing.T) {
-		count, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, 0)
-		require.NoError(t, err)
-		require.Equal(t, int64(0), count)
-	})
-	t.Run("limit set to negative should fail", func(t *testing.T) {
-		_, err := store.deleteOldAlertRuleVersions(context.Background(), "", 1, -1)
-		require.Error(t, err)
 	})
 }
 
@@ -1834,24 +1806,26 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 	gen := models.RuleGen
 	gen = gen.With(gen.WithIntervalMatching(store.Cfg.BaseInterval), gen.WithOrgID(orgID))
 
-	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate()})
+	result, err := store.InsertAlertRules(context.Background(), &models.AlertingUserUID, []models.AlertRule{gen.Generate(), gen.Generate()})
 	require.NoError(t, err)
-	rule, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	rule1, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	require.NoError(t, err)
+	rule2, err := store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[1].UID})
 	require.NoError(t, err)
 
 	clk.Add(1 * time.Hour)
-	rule2 := models.CopyRule(rule, gen.WithTitle(util.GenerateShortUID()))
+	rule1v2 := models.CopyRule(rule1, gen.WithTitle(util.GenerateShortUID()))
 	err = store.UpdateAlertRules(context.Background(), &models.AlertingUserUID, []models.UpdateRule{
 		{
-			Existing: rule,
-			New:      *rule2,
+			Existing: rule1,
+			New:      *rule1v2,
 		},
 	})
 	require.NoError(t, err)
-	rule2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
+	rule1v2, err = store.GetAlertRuleByUID(context.Background(), &models.GetAlertRuleByUIDQuery{UID: result[0].UID})
 	require.NoError(t, err)
 
-	versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rule.GUID)
+	versions, err := store.GetAlertRuleVersions(context.Background(), orgID, rule1.GUID)
 	require.NoError(t, err)
 	require.Len(t, versions, 2)
 
@@ -1861,16 +1835,29 @@ func TestIntegration_ListDeletedRules(t *testing.T) {
 		require.Empty(t, list)
 	})
 
+	// delete the second rule
 	clk.Add(1 * time.Hour)
-	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule.UID)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule2.UID)
 	require.NoError(t, err)
+
+	// and the first rule hour later
+	clk.Add(1 * time.Hour)
+	err = store.DeleteAlertRulesByUID(context.Background(), orgID, util.Pointer(models.UserUID("test")), false, rule1.UID)
+	require.NoError(t, err)
+
+	t.Run("should return deleted rules sorted by date desc", func(t *testing.T) {
+		list, err := store.ListDeletedRules(context.Background(), orgID)
+		require.NoError(t, err)
+		require.Len(t, list, 2)
+		require.Equal(t, rule1.GUID, list[0].GUID)
+		require.Equal(t, rule2.GUID, list[1].GUID)
+	})
 
 	t.Run("should return the last deleted rule", func(t *testing.T) {
 		list, err := store.ListDeletedRules(context.Background(), orgID)
 		require.NoError(t, err)
-		require.Len(t, list, 1)
 		assert.Empty(t, list[0].UID)
-		assert.Empty(t, rule2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
+		assert.Empty(t, rule1v2.Diff(list[0], "ID", "UID", "DashboardUID", "PanelID", "Updated", "UpdatedBy")) // ignore updated because it's not
 		assert.Equal(t, list[0].Updated.UTC(), clk.Now().UTC())
 		assert.EqualValues(t, list[0].UpdatedBy, util.Pointer(models.UserUID("test")))
 	})

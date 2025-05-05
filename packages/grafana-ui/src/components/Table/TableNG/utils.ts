@@ -3,6 +3,7 @@ import { Property } from 'csstype';
 import React from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
 import tinycolor from 'tinycolor2';
+import { varPreLine } from 'uwrap';
 
 import {
   FieldType,
@@ -22,6 +23,7 @@ import {
   TableCellDisplayMode,
   TableCellHeight,
   TableCellOptions,
+  TableSortByFieldState,
 } from '@grafana/schema';
 
 import { TableCellInspectorMode } from '../..';
@@ -44,14 +46,14 @@ import {
 export function getCellHeight(
   text: string,
   cellWidth: number, // width of the cell without padding
-  osContext: OffscreenCanvasRenderingContext2D | null,
+  ctx: CanvasRenderingContext2D,
   lineHeight: number,
   defaultRowHeight: number,
   padding = 0
 ) {
   const PADDING = padding * 2;
 
-  if (osContext !== null && typeof text === 'string') {
+  if (typeof text === 'string') {
     const words = text.split(/\s/);
     const lines = [];
     let currentLine = '';
@@ -60,7 +62,7 @@ export function getCellHeight(
     for (let i = 0; i < words.length; i++) {
       const currentWord = words[i];
       // TODO: this method is not accurate
-      let lineWidth = osContext.measureText(currentLine + ' ' + currentWord).width;
+      let lineWidth = ctx.measureText(currentLine + ' ' + currentWord).width;
 
       // if line width is less than the cell width, add the word to the current line and continue
       // else add the current line to the lines array and start a new line with the current word
@@ -97,6 +99,26 @@ export function getCellHeight(
   return defaultRowHeight;
 }
 
+export type CellHeightCalculator = (text: string, cellWidth: number) => number;
+
+export function getCellHeightCalculator(
+  // should be pre-configured with font and letterSpacing
+  ctx: CanvasRenderingContext2D,
+  lineHeight: number,
+  defaultRowHeight: number,
+  padding = 0
+) {
+  const { count } = varPreLine(ctx);
+
+  return (text: string, cellWidth: number) => {
+    const effectiveCellWidth = Math.max(cellWidth, 20); // Minimum width to work with
+    const TOTAL_PADDING = padding * 2;
+    const numLines = count(text, effectiveCellWidth);
+    const totalHeight = numLines * lineHeight + TOTAL_PADDING;
+    return Math.max(totalHeight, defaultRowHeight);
+  };
+}
+
 export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellHeight | undefined): number {
   const bodyFontSize = theme.typography.fontSize;
   const lineHeight = theme.typography.body.lineHeight;
@@ -119,39 +141,41 @@ export function getDefaultRowHeight(theme: GrafanaTheme2, cellHeight: TableCellH
  */
 export function getRowHeight(
   row: TableRow,
-  columnTypes: ColumnTypes,
-  headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
-  osContext: OffscreenCanvasRenderingContext2D | null,
-  lineHeight: number,
+  calc: CellHeightCalculator,
+  avgCharWidth: number,
   defaultRowHeight: number,
-  padding: number
+  fieldsData: {
+    headersLength: number;
+    textWraps: { [key: string]: boolean };
+    columnTypes: ColumnTypes;
+    columnWidths: Record<string, number>;
+    fieldDisplayType: Record<string, TableCellDisplayMode>;
+  }
 ): number {
-  /**
-   * 0. loop through all cells in row
-   * 1. find text cell in row
-   * 2. find width of text cell
-   * 3. calculate height based on width and text length
-   * 4. return biggest height
-   */
-
-  let biggestHeight = defaultRowHeight;
+  let maxLines = 1;
+  let maxLinesCol = '';
 
   for (const key in row) {
-    if (isTextCell(key, columnTypes)) {
-      if (Object.keys(headerCellRefs.current).length === 0 || !headerCellRefs.current[key]) {
-        return biggestHeight;
-      }
-      const cellWidth = headerCellRefs.current[key].offsetWidth;
-      const cellText = String(row[key] ?? '');
-      const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
+    if (
+      fieldsData.columnTypes[key] === FieldType.string &&
+      fieldsData.textWraps[key] &&
+      fieldsData.fieldDisplayType[key] !== TableCellDisplayMode.Image
+    ) {
+      const cellText = row[key] as string;
 
-      if (newCellHeight > biggestHeight) {
-        biggestHeight = newCellHeight;
+      if (cellText != null) {
+        const charsPerLine = fieldsData.columnWidths[key] / avgCharWidth;
+        const approxLines = cellText.length / charsPerLine;
+
+        if (approxLines > maxLines) {
+          maxLines = approxLines;
+          maxLinesCol = key;
+        }
       }
     }
   }
 
-  return biggestHeight;
+  return maxLinesCol === '' ? defaultRowHeight : calc(row[maxLinesCol] as string, fieldsData.columnWidths[maxLinesCol]);
 }
 
 export function isTextCell(key: string, columnTypes: Record<string, string>): boolean {
@@ -163,25 +187,23 @@ export function shouldTextOverflow(
   row: TableRow,
   columnTypes: ColumnTypes,
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>,
-  osContext: OffscreenCanvasRenderingContext2D | null,
+  ctx: CanvasRenderingContext2D,
   lineHeight: number,
   defaultRowHeight: number,
   padding: number,
   textWrap: boolean,
-  cellInspect: boolean,
+  field: Field,
   cellType: TableCellDisplayMode
 ): boolean {
+  const cellInspect = field.config?.custom?.inspect ?? false;
+
   // Tech debt: Technically image cells are of type string, which is misleading (kinda?)
   // so we need to ensure we don't apply overflow hover states fo type image
   if (textWrap || cellInspect || cellType === TableCellDisplayMode.Image || !isTextCell(key, columnTypes)) {
     return false;
   }
 
-  const cellWidth = headerCellRefs.current[key].offsetWidth;
-  const cellText = String(row[key] ?? '');
-  const newCellHeight = getCellHeight(cellText, cellWidth, osContext, lineHeight, defaultRowHeight, padding);
-
-  return newCellHeight > defaultRowHeight;
+  return true;
 }
 
 export function getTextAlign(field?: Field): Property.JustifyContent {
@@ -477,21 +499,25 @@ export interface MapFrameToGridOptions extends TableNGProps {
   filter: FilterType;
   headerCellRefs: React.MutableRefObject<Record<string, HTMLDivElement>>;
   isCountRowsSet: boolean;
-  osContext: OffscreenCanvasRenderingContext2D | null;
+  ctx: CanvasRenderingContext2D;
+  onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
   rows: TableRow[];
+  sortedRows: TableRow[];
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   setIsInspecting: (isInspecting: boolean) => void;
   setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>;
   sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>;
-  styles: { cell: string };
-  textWrap: boolean;
+  styles: { cell: string; cellWrapped: string; dataGrid: string };
+  textWraps: Record<string, boolean>;
   theme: GrafanaTheme2;
   showTypeIcons?: boolean;
 }
 
 /* ----------------------------- Data grid comparator ---------------------------- */
-const compare = new Intl.Collator('en', { sensitivity: 'base' }).compare;
+// The numeric: true option is used to sort numbers as strings correctly. It recognizes numeric sequences
+// within strings and sorts numerically instead of lexicographically.
+const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
     case FieldType.time:

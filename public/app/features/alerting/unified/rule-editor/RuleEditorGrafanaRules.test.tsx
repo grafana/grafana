@@ -1,18 +1,22 @@
 import * as React from 'react';
 import { renderRuleEditor, ui } from 'test/helpers/alertingRuleEditor';
 import { clickSelectOption, selectOptionInTest } from 'test/helpers/selectOptionInTest';
-import { screen } from 'test/test-utils';
+import { screen, waitFor } from 'test/test-utils';
 import { byRole } from 'testing-library-selector';
 
 import { contextSrv } from 'app/core/services/context_srv';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 import { PROMETHEUS_DATASOURCE_UID } from 'app/features/alerting/unified/mocks/server/constants';
+import { DashboardSearchItemType } from 'app/features/search/types';
 import { AccessControlAction } from 'app/types';
 
-import { grantUserPermissions, mockDataSource } from '../mocks';
-import { grafanaRulerGroup } from '../mocks/grafanaRulerApi';
+import { grantUserPermissions, mockDataSource, mockFolder } from '../mocks';
+import { grafanaRulerGroup, grafanaRulerRule } from '../mocks/grafanaRulerApi';
+import { setFolderResponse } from '../mocks/server/configure';
 import { captureRequests, serializeRequests } from '../mocks/server/events';
 import { setupDataSources } from '../testSetup/datasources';
+import { Annotation } from '../utils/constants';
+import { grafanaRuleDtoToFormValues } from '../utils/rule-form';
 
 jest.mock('app/core/components/AppChrome/AppChromeUpdate', () => ({
   AppChromeUpdate: ({ actions }: { actions: React.ReactNode }) => <div>{actions}</div>,
@@ -69,7 +73,7 @@ describe('RuleEditor grafana managed rules', () => {
     await clickSelectOption(groupInput, grafanaRulerGroup.name);
     await user.type(ui.inputs.annotationValue(1).get(), 'some description');
 
-    await user.click(ui.buttons.saveAndExit.get());
+    await user.click(ui.buttons.save.get());
 
     expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
     const requests = await capture;
@@ -103,5 +107,37 @@ describe('RuleEditor grafana managed rules', () => {
 
     await user.click(ui.buttons.preview.get());
     expect(await screen.findByText(/you cannot use time series data as an alert condition/i)).toBeInTheDocument();
+  });
+  it('can restore grafana managed alert when isManualRestore is passed as query param', async () => {
+    const folder = {
+      title: 'Folder A',
+      uid: grafanaRulerRule.grafana_alert.namespace_uid,
+      id: 1,
+      type: DashboardSearchItemType.DashDB,
+      accessControl: {
+        [AccessControlAction.AlertingRuleUpdate]: true,
+      },
+    };
+    setFolderResponse(mockFolder(folder));
+    const capture = captureRequests((r) => r.method === 'POST' && r.url.includes('/api/ruler/'));
+    const grafanaRuleJson = JSON.stringify(grafanaRuleDtoToFormValues(grafanaRulerRule, folder.title));
+
+    const { user } = renderRuleEditor(undefined, undefined, grafanaRuleJson); // isManualRestore=true
+
+    // check that it's filled in
+    const nameInput = await ui.inputs.name.find();
+    expect(nameInput).toHaveValue(grafanaRulerRule.grafana_alert.title);
+    //check that folder is in the list
+    await waitFor(() => expect(ui.inputs.folder.get()).toHaveTextContent(new RegExp(folder.title)));
+    expect(ui.inputs.annotationValue(0).get()).toHaveValue(grafanaRulerRule.annotations[Annotation.summary]);
+
+    expect(ui.manualRestoreBanner.get()).toBeInTheDocument(); // check that manual restore banner is shown
+
+    await user.click(ui.buttons.save.get());
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Rule added successfully');
+    const requests = await capture;
+    const serializedRequests = await serializeRequests(requests);
+    expect(serializedRequests).toMatchSnapshot();
   });
 });

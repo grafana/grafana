@@ -6,6 +6,8 @@ import { Icon, Select, useStyles2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/services/context_srv';
 import { UserOrg } from 'app/types';
 
+import { t } from '../../../internationalization';
+
 import { OrganizationBaseProps } from './types';
 
 export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBaseProps) {
@@ -32,7 +34,7 @@ export function OrganizationSelect({ orgs, onSelectChange }: OrganizationBasePro
 
   return (
     <Select<UserOrg>
-      aria-label="Change organization"
+      aria-label={t('navigation.org-switcher.aria-label', 'Change organization')}
       width={'auto'}
       value={value}
       prefix={<Icon className="prefix-icon" name="building" />}

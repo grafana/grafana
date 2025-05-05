@@ -1,44 +1,28 @@
-import { css, cx } from '@emotion/css';
+import { css } from '@emotion/css';
 import { useCallback, useMemo } from 'react';
 import * as React from 'react';
 import { FixedSizeList as List, ListChildComponentProps } from 'react-window';
 
 import { GrafanaTheme2, formattedValueToString, getValueFormat, SelectableValue } from '@grafana/data';
 
-import { ButtonSelect, Checkbox, FilterInput, Label, Stack } from '../../..';
+import { Checkbox, Label, Stack } from '../../..';
 import { useStyles2, useTheme2 } from '../../../../themes';
 import { Trans } from '../../../../utils/i18n';
+
+import { operatorSelectableValues } from './FilterPopup';
 
 interface Props {
   values: SelectableValue[];
   options: SelectableValue[];
   onChange: (options: SelectableValue[]) => void;
   caseSensitive?: boolean;
-  showOperators?: boolean;
   searchFilter: string;
-  setSearchFilter: (value: string) => void;
   operator: SelectableValue<string>;
-  setOperator: (item: SelectableValue<string>) => void;
 }
 
 const ITEM_HEIGHT = 28;
 const MIN_HEIGHT = ITEM_HEIGHT * 5;
 
-const operatorSelectableValues: { [key: string]: SelectableValue<string> } = {
-  Contains: { label: 'Contains', value: 'Contains', description: 'Contains' },
-  '=': { label: '=', value: '=', description: 'Equals' },
-  '!=': { label: '!=', value: '!=', description: 'Not equals' },
-  '>': { label: '>', value: '>', description: 'Greater' },
-  '>=': { label: '>=', value: '>=', description: 'Greater or Equal' },
-  '<': { label: '<', value: '<', description: 'Less' },
-  '<=': { label: '<=', value: '<=', description: 'Less or Equal' },
-  Expression: {
-    label: 'Expression',
-    value: 'Expression',
-    description: 'Bool Expression (Char $ represents the column value in the expression, e.g. "$ >= 10 && $ <= 12")',
-  },
-};
-const OPERATORS = Object.values(operatorSelectableValues);
 export const REGEX_OPERATOR = operatorSelectableValues['Contains'];
 const XPR_OPERATOR = operatorSelectableValues['Expression'];
 
@@ -67,22 +51,12 @@ const comparableValue = (value: string): string | number | Date | boolean => {
   return value;
 };
 
-export const FilterList = ({
-  options,
-  values,
-  caseSensitive,
-  showOperators,
-  onChange,
-  searchFilter,
-  setSearchFilter,
-  operator,
-  setOperator,
-}: Props) => {
+export const FilterList = ({ options, values, caseSensitive, onChange, searchFilter, operator }: Props) => {
   const regex = useMemo(() => new RegExp(searchFilter, caseSensitive ? undefined : 'i'), [searchFilter, caseSensitive]);
   const items = useMemo(
     () =>
       options.filter((option) => {
-        if (!showOperators || !searchFilter || operator.value === REGEX_OPERATOR.value) {
+        if (!searchFilter || operator.value === REGEX_OPERATOR.value) {
           if (option.label === undefined) {
             return false;
           }
@@ -123,7 +97,7 @@ export const FilterList = ({
           return false;
         }
       }),
-    [options, regex, showOperators, operator, searchFilter]
+    [options, regex, operator, searchFilter]
   );
   const selectedItems = useMemo(() => items.filter((item) => values.includes(item)), [items, values]);
 
@@ -171,20 +145,7 @@ export const FilterList = ({
   }, [onChange, values, items, selectedItems]);
 
   return (
-    <Stack direction="column" gap={0.25}>
-      {!showOperators && <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />}
-      {showOperators && (
-        <Stack direction="row" gap={0}>
-          <ButtonSelect
-            variant="canvas"
-            options={OPERATORS}
-            onChange={setOperator}
-            value={operator}
-            tooltip={operator.description}
-          />
-          <FilterInput placeholder="Filter values" onChange={setSearchFilter} value={searchFilter} />
-        </Stack>
-      )}
+    <Stack direction="column">
       {items.length > 0 ? (
         <>
           <List
@@ -197,18 +158,15 @@ export const FilterList = ({
           >
             {ItemRenderer}
           </List>
-          <Stack direction="column" gap={0.25}>
-            <div className={cx(styles.selectDivider)} />
-            <div className={cx(styles.filterListRow)}>
-              <Checkbox
-                value={selectCheckValue}
-                indeterminate={selectCheckIndeterminate}
-                label={selectCheckLabel}
-                description={selectCheckDescription}
-                onChange={onSelectChanged}
-              />
-            </div>
-          </Stack>
+          <div className={styles.filterListRow}>
+            <Checkbox
+              value={selectCheckValue}
+              indeterminate={selectCheckIndeterminate}
+              label={selectCheckLabel}
+              description={selectCheckDescription}
+              onChange={onSelectChanged}
+            />
+          </div>
         </>
       ) : (
         <Label className={styles.noValuesLabel}>
@@ -243,6 +201,9 @@ function ItemRenderer({ index, style, data: { onCheckedChanged, items, values, c
 const getStyles = (theme: GrafanaTheme2) => ({
   filterList: css({
     label: 'filterList',
+    backgroundColor: theme.components.input.background,
+    border: `1px solid ${theme.colors.border.medium}`,
+    borderRadius: theme.shape.radius.default,
   }),
   filterListRow: css({
     label: 'filterListRow',

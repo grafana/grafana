@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,7 +18,7 @@ import (
 	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/atomic"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/metrics/metricutil"
@@ -392,8 +393,12 @@ func (mg *Migrator) exec(ctx context.Context, m Migration, sess *xorm.Session) e
 		err = codeMigration.Exec(sess, mg)
 	} else {
 		sql := m.SQL(mg.Dialect)
-		logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
-		_, err = sess.Exec(sql)
+		if strings.TrimSpace(sql) == "" {
+			logger.Debug("Skipping empty sql migration", "id", m.Id())
+		} else {
+			logger.Debug("Executing sql migration", "id", m.Id(), "sql", sql)
+			_, err = sess.Exec(sql)
+		}
 	}
 
 	if err != nil {

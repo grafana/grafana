@@ -141,13 +141,10 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 		})
 	}
 
-	// HACK!!! always allow everything!!!!!!
-	access := authlib.FixedAccessClient(true)
-
 	if settings.RebuildCollection {
 		for _, k := range settings.Collection {
 			// Can we delete the whole collection
-			rsp, err := access.Check(ctx, user, authlib.CheckRequest{
+			rsp, err := s.access.Check(ctx, user, authlib.CheckRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,
@@ -163,7 +160,7 @@ func (s *server) BulkProcess(stream BulkStore_BulkProcessServer) error {
 			}
 
 			// This will be called for each request -- with the folder ID
-			runner.checker[k.NSGR()], err = access.Compile(ctx, user, authlib.ListRequest{
+			runner.checker[k.NSGR()], err = s.access.Compile(ctx, user, authlib.ListRequest{
 				Namespace: k.Namespace,
 				Group:     k.Group,
 				Resource:  k.Resource,

@@ -4,6 +4,7 @@ import * as React from 'react';
 import { selectors } from '@grafana/e2e-selectors';
 import { Button, Field, Modal, Input, Alert } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
+import { t, Trans } from 'app/core/internationalization';
 
 import { RepeatRowSelect } from '../RepeatRowSelect/RepeatRowSelect';
 
@@ -30,10 +31,10 @@ export const RowOptionsForm = ({ repeat, title, warning, onUpdate, onCancel }: P
     >
       {({ register }) => (
         <>
-          <Field label="Title">
+          <Field label={t('dashboard.row-options-form.label-title', 'Title')}>
             <Input {...register('title')} type="text" />
           </Field>
-          <Field label="Repeat for">
+          <Field label={t('dashboard.row-options-form.label-repeat-for', 'Repeat for')}>
             <RepeatRowSelect repeat={newRepeat} onChange={onChangeRepeat} />
           </Field>
           {warning && (
@@ -49,9 +50,11 @@ export const RowOptionsForm = ({ repeat, title, warning, onUpdate, onCancel }: P
           )}
           <Modal.ButtonRow>
             <Button type="button" variant="secondary" onClick={onCancel} fill="outline">
-              Cancel
+              <Trans i18nKey="dashboard.row-options-form.cancel">Cancel</Trans>
             </Button>
-            <Button type="submit">Update</Button>
+            <Button type="submit">
+              <Trans i18nKey="dashboard.row-options-form.update">Update</Trans>
+            </Button>
           </Modal.ButtonRow>
         </>
       )}

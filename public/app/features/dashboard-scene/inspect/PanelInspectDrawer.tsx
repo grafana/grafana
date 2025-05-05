@@ -11,6 +11,7 @@ import {
   SceneObjectRef,
 } from '@grafana/scenes';
 import { Alert, Drawer, Tab, TabsBar } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 import { getDataSourceWithInspector } from 'app/features/dashboard/components/Inspector/hooks';
 import { supportsDataQuery } from 'app/features/dashboard/components/PanelEditor/utils';
 import { InspectTab } from 'app/features/inspector/types';
@@ -135,8 +136,12 @@ function PanelInspectRenderer({ model }: SceneComponentProps<PanelInspectDrawer>
       }
     >
       {pluginNotLoaded && (
-        <Alert title="Panel plugin not loaded">
-          Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+        <Alert
+          title={t('dashboard-scene.panel-inspect-renderer.title-panel-plugin-not-loaded', 'Panel plugin not loaded')}
+        >
+          <Trans i18nKey="dashboard-scene.panel-inspect-renderer.body-panel-plugin-not-loaded">
+            Make sure the panel you want to inspect is visible and has been displayed before opening inspect.
+          </Trans>
         </Alert>
       )}
       {currentTab && currentTab.Component && <currentTab.Component model={currentTab} />}

@@ -49,7 +49,7 @@ const (
 )
 
 var (
-	RelationsFolder      = common.RelationsFolder
+	RelationsFolder      = common.RelationsTyped
 	RelationsResouce     = common.RelationsResource
 	RelationsSubresource = common.RelationsSubresource
 )

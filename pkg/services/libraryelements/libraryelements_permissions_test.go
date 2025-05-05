@@ -28,7 +28,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 	for _, testCase := range generalFolderCases {
 		testScenario(t, fmt.Sprintf("When %s tries to create a library panel in the General folder, it should return correct status", testCase.role),
 			func(t *testing.T, sc scenarioContext) {
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
+				sc.reqContext.OrgRole = testCase.role
 
 				command := getCreatePanelCommand(0, "", "Library Panel Name")
 				sc.reqContext.Req.Body = mockRequestBody(command)
@@ -44,7 +44,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
+				sc.reqContext.OrgRole = testCase.role
 
 				// nolint:staticcheck
 				cmd := model.PatchLibraryElementCommand{FolderID: 0, Version: 1, Kind: int64(model.PanelElement)}
@@ -61,7 +61,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				sc.reqContext.Req.Body = mockRequestBody(command)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
+				sc.reqContext.OrgRole = testCase.role
 
 				// nolint:staticcheck
 				cmd := model.PatchLibraryElementCommand{FolderID: folder.ID, Version: 1, Kind: int64(model.PanelElement)}
@@ -77,7 +77,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				sc.reqContext.Req.Body = mockRequestBody(cmd)
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
+				sc.reqContext.OrgRole = testCase.role
 
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.deleteHandler(sc.reqContext)
@@ -97,7 +97,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.FolderName = "General"
 				result.Result.Meta.FolderUID = "general"
 				result.Result.FolderUID = "general"
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
+				sc.reqContext.OrgRole = testCase.role
 
 				sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 				resp = sc.service.getHandler(sc.reqContext)
@@ -121,7 +121,7 @@ func TestLibraryElementPermissionsGeneralFolder(t *testing.T) {
 				result.Result.Meta.UpdatedBy.Name = userInDbName
 				result.Result.Meta.UpdatedBy.AvatarUrl = userInDbAvatar
 				result.Result.Meta.FolderName = "General"
-				sc.reqContext.SignedInUser.OrgRole = testCase.role
+				sc.reqContext.OrgRole = testCase.role
 
 				resp = sc.service.getAllHandler(sc.reqContext)
 				require.Equal(t, 200, resp.Status())
@@ -179,7 +179,7 @@ func TestLibraryElementCreatePermissions(t *testing.T) {
 		testScenario(t, testCase.desc,
 			func(t *testing.T, sc scenarioContext) {
 				folder := createFolder(t, sc, "Folder", nil)
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -244,7 +244,7 @@ func TestLibraryElementPatchPermissions(t *testing.T) {
 
 				toFolder := createFolder(t, sc, "ToFolder", nil)
 
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -307,7 +307,7 @@ func TestLibraryElementDeletePermissions(t *testing.T) {
 				resp := sc.service.createHandler(sc.reqContext)
 				result := validateAndUnMarshalResponse(t, resp)
 
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -384,8 +384,8 @@ func TestLibraryElementsGetPermissions(t *testing.T) {
 				result.Result.Meta.FolderName = folder.Title
 				result.Result.Meta.FolderUID = folder.UID
 
-				sc.reqContext.SignedInUser.OrgRole = org.RoleViewer
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.OrgRole = org.RoleViewer
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 
@@ -431,8 +431,8 @@ func TestLibraryElementsGetAllPermissions(t *testing.T) {
 					result.Result.Meta.FolderUID = folder.UID
 				}
 
-				sc.reqContext.SignedInUser.OrgRole = org.RoleViewer
-				sc.reqContext.SignedInUser.Permissions = map[int64]map[string][]string{
+				sc.reqContext.OrgRole = org.RoleViewer
+				sc.reqContext.Permissions = map[int64]map[string][]string{
 					1: testCase.permissions,
 				}
 

@@ -2,148 +2,119 @@ package export
 
 import (
 	"context"
-	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/dynamic"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v0alpha1"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/infra/slugify"
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 )
 
-func (r *exportJob) loadResources(ctx context.Context) error {
-	kinds := []schema.GroupVersionResource{{
-		Group:    dashboard.GROUP,
-		Resource: dashboard.DASHBOARD_RESOURCE,
-		Version:  "v1alpha1",
-	}}
+// FIXME: This is used to make sure we save dashboards in the apiVersion they were original saved in
+// When requesting v0 or v2 dashboards over the v1 api -- the backend tries (and fails!) to convert values
+// The response status indicates the original stored version, so we can then request it in an un-converted form
+type conversionShim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error)
 
-	for _, kind := range kinds {
-		r.progress.SetMessage(ctx, fmt.Sprintf("reading %s resource", kind.Resource))
-		if err := r.loadResourcesFromAPIServer(ctx, kind); err != nil {
-			return fmt.Errorf("error loading %s %w", kind.Resource, err)
+func ExportResources(ctx context.Context, options provisioning.ExportJobOptions, clients resources.ResourceClients, repositoryResources resources.RepositoryResources, progress jobs.JobProgressRecorder) error {
+	progress.SetMessage(ctx, "start resource export")
+	for _, kind := range resources.SupportedProvisioningResources {
+		// skip from folders as we do them first... so only dashboards
+		if kind == resources.FolderResource {
+			continue
 		}
-	}
-	return nil
-}
 
-func (r *exportJob) loadResourcesFromAPIServer(ctx context.Context, kind schema.GroupVersionResource) error {
-	client, _, err := r.client.ForResource(kind)
-	if err != nil {
-		return err
-	}
-
-	var continueToken string
-	for {
-		list, err := client.List(ctx, metav1.ListOptions{Limit: 100, Continue: continueToken})
+		progress.SetMessage(ctx, fmt.Sprintf("export %s", kind.Resource))
+		client, _, err := clients.ForResource(kind)
 		if err != nil {
-			return fmt.Errorf("error executing list: %w", err)
+			return fmt.Errorf("get client for %s: %w", kind.Resource, err)
 		}
 
-		for _, item := range list.Items {
-			r.progress.Record(ctx, r.write(ctx, &item))
-			if err := r.progress.TooManyErrors(); err != nil {
-				return err
+		// When requesting v2 (or v0) dashboards over the v1 api, we want to keep the original apiVersion if conversion fails
+		var shim conversionShim
+		if kind.GroupResource() == resources.DashboardResource.GroupResource() {
+			var v2client dynamic.ResourceInterface
+			shim = func(ctx context.Context, item *unstructured.Unstructured) (*unstructured.Unstructured, error) {
+				failed, _, _ := unstructured.NestedBool(item.Object, "status", "conversion", "failed")
+				if failed {
+					storedVersion, _, _ := unstructured.NestedString(item.Object, "status", "conversion", "storedVersion")
+
+					// For v2 we need to request the original version
+					if strings.HasPrefix(storedVersion, "v2") {
+						if v2client == nil {
+							v2client, _, err = clients.ForResource(resources.DashboardResourceV2)
+							if err != nil {
+								return nil, err
+							}
+						}
+						return v2client.Get(ctx, item.GetName(), metav1.GetOptions{})
+					}
+
+					// For v0 we can simply fallback -- the full model is saved, but
+					if strings.HasPrefix(storedVersion, "v0") {
+						item.SetAPIVersion(fmt.Sprintf("%s/%s", kind.Group, storedVersion))
+						return item, nil
+					}
+
+					return nil, fmt.Errorf("unsupported dashboard version: %s", storedVersion)
+				}
+				return item, nil
 			}
 		}
 
-		continueToken = list.GetContinue()
-		if continueToken == "" {
-			break
+		if err := exportResource(ctx, options, client, shim, repositoryResources, progress); err != nil {
+			return fmt.Errorf("export %s: %w", kind.Resource, err)
 		}
 	}
 
 	return nil
 }
 
-func (r *exportJob) write(ctx context.Context, obj *unstructured.Unstructured) jobs.JobResourceResult {
-	gvk := obj.GroupVersionKind()
-	result := jobs.JobResourceResult{
-		Name:     obj.GetName(),
-		Resource: gvk.Kind,
-		Group:    gvk.Group,
-		Action:   repository.FileActionCreated,
-	}
-
-	if err := ctx.Err(); err != nil {
-		result.Error = fmt.Errorf("context error: %w", err)
-		return result
-	}
-
-	meta, err := utils.MetaAccessor(obj)
-	if err != nil {
-		result.Error = fmt.Errorf("extract meta accessor: %w", err)
-		return result
-	}
-
-	// Message from annotations
-	commitMessage := meta.GetMessage()
-	if commitMessage == "" {
-		g := meta.GetGeneration()
-		if g > 0 {
-			commitMessage = fmt.Sprintf("Generation: %d", g)
-		} else {
-			commitMessage = "exported from grafana"
+func exportResource(ctx context.Context,
+	options provisioning.ExportJobOptions,
+	client dynamic.ResourceInterface,
+	shim conversionShim,
+	repositoryResources resources.RepositoryResources,
+	progress jobs.JobProgressRecorder,
+) error {
+	// FIXME: using k8s list will force evrything into one version -- we really want the original saved version
+	// this will work well enough for now, but needs to be revisted as we have a bigger mix of active versions
+	return resources.ForEach(ctx, client, func(item *unstructured.Unstructured) (err error) {
+		gvk := item.GroupVersionKind()
+		result := jobs.JobResourceResult{
+			Name:     item.GetName(),
+			Resource: gvk.Kind,
+			Group:    gvk.Group,
+			Action:   repository.FileActionCreated,
 		}
-	}
 
-	name := meta.GetName()
-	manager, _ := meta.GetManagerProperties()
-	if manager.Identity == r.target.Config().GetName() {
-		result.Action = repository.FileActionIgnored
-		return result
-	}
-
-	title := meta.FindTitle("")
-	if title == "" {
-		title = name
-	}
-	folder := meta.GetFolder()
-
-	// Get the absolute path of the folder
-	fid, ok := r.folderTree.DirPath(folder, "")
-	if !ok {
-		// FIXME: Shouldn't this fail instead?
-		fid = resources.Folder{
-			Path: "__folder_not_found/" + slugify.Slugify(folder),
+		if shim != nil {
+			item, err = shim(ctx, item)
 		}
-		r.logger.Error("folder of item was not in tree of repository")
-	}
+		if err == nil {
+			result.Path, err = repositoryResources.WriteResourceFileFromObject(ctx, item, resources.WriteOptions{
+				Path: options.Path,
+				Ref:  options.Branch,
+			})
+		}
 
-	result.Path = fid.Path
+		if errors.Is(err, resources.ErrAlreadyInRepository) {
+			result.Action = repository.FileActionIgnored
+		} else if err != nil {
+			result.Action = repository.FileActionIgnored
+			result.Error = err
+		}
 
-	// Clear the metadata
-	delete(obj.Object, "metadata")
+		progress.Record(ctx, result)
+		if err := progress.TooManyErrors(); err != nil {
+			return err
+		}
 
-	if r.keepIdentifier {
-		meta.SetName(name) // keep the identifier in the metadata
-	}
-
-	body, err := json.MarshalIndent(obj.Object, "", "  ")
-	if err != nil {
-		result.Error = fmt.Errorf("failed to marshal dashboard: %w", err)
-		return result
-	}
-
-	fileName := slugify.Slugify(title) + ".json"
-	if fid.Path != "" {
-		fileName = safepath.Join(fid.Path, fileName)
-	}
-	if r.path != "" {
-		fileName = safepath.Join(r.path, fileName)
-	}
-
-	err = r.target.Write(ctx, fileName, r.ref, body, commitMessage)
-	if err != nil {
-		result.Error = fmt.Errorf("failed to write file: %w", err)
-	}
-
-	return result
+		return nil
+	})
 }

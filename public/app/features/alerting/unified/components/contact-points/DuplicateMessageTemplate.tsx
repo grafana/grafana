@@ -48,14 +48,27 @@ const DuplicateMessageTemplateComponent = () => {
   }
 
   if (isLoading) {
-    return <LoadingPlaceholder text="Loading notification template" />;
+    return (
+      <LoadingPlaceholder
+        text={t(
+          'alerting.duplicate-message-template.text-loading-notification-template',
+          'Loading notification template'
+        )}
+      />
+    );
   }
 
   if (error) {
     return isNotFoundError(error) ? (
       notFoundComponent
     ) : (
-      <Alert title="Error loading notification template" severity="error">
+      <Alert
+        title={t(
+          'alerting.duplicate-message-template.title-error-loading-notification-template',
+          'Error loading notification template'
+        )}
+        severity="error"
+      >
         {stringifyErrorLike(error)}
       </Alert>
     );

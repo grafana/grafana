@@ -6,7 +6,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	dashboardalpha1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
 )
@@ -92,8 +92,8 @@ var RelationsSubresource = []string{
 	RelationSubresourceSetPermissions,
 }
 
-// RelationsFolder are relations that can be added on type "folder".
-var RelationsFolder = append(
+// RelationsTyped are relations that can be added to typed resources (folders, teams, users, etc).
+var RelationsTyped = append(
 	RelationsSubresource,
 	RelationGet,
 	RelationUpdate,
@@ -160,10 +160,6 @@ func NewFolderIdent(name string) string {
 	return TypeFolderPrefix + name
 }
 
-func NewTeamIdent(name string) string {
-	return TypeTeamPrefix + name
-}
-
 func NewGroupResourceIdent(group, resource, subresource string) string {
 	return TypeGroupResoucePrefix + FormatGroupResource(group, resource, subresource)
 }
@@ -228,7 +224,7 @@ func NewFolderResourceTuple(subject, relation, group, resource, subresource, fol
 	}
 }
 
-func NewTeamResourceTuple(subject, relation, group, resource, subresource, name string) *openfgav1.TupleKey {
+func NewTypedResourceTuple(subject, relation, typ, group, resource, subresource, name string) *openfgav1.TupleKey {
 	relation = SubresourceRelation(relation)
 	var condition *openfgav1.RelationshipCondition
 	if !isSubresourceRelationSet(relation) {
@@ -247,7 +243,7 @@ func NewTeamResourceTuple(subject, relation, group, resource, subresource, name 
 	return &openfgav1.TupleKey{
 		User:      subject,
 		Relation:  relation,
-		Object:    NewTeamIdent(name),
+		Object:    NewTypedIdent(typ, name),
 		Condition: condition,
 	}
 }
@@ -381,8 +377,8 @@ func AddRenderContext(req *openfgav1.CheckRequest) {
 		User:     req.TupleKey.User,
 		Relation: RelationSetView,
 		Object: NewGroupResourceIdent(
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Group,
-			dashboardalpha1.DashboardResourceInfo.GroupResource().Resource,
+			dashboardV1.DashboardResourceInfo.GroupResource().Group,
+			dashboardV1.DashboardResourceInfo.GroupResource().Resource,
 			"",
 		),
 	})

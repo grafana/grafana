@@ -16,13 +16,16 @@ import {
   SceneObject,
   AdHocFiltersVariable,
   SceneVariableState,
+  SceneVariableSet,
 } from '@grafana/scenes';
 import { VariableHide, VariableType } from '@grafana/schema';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
+import { getCustomVariableOptions } from './components/CustomVariableForm';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
-import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
+import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
@@ -34,6 +37,7 @@ interface EditableVariableConfig {
   name: string;
   description: string;
   editor: React.ComponentType<any>;
+  getOptions?: (variable: SceneVariable) => OptionsPaneItemDescriptor[];
 }
 
 //exclude system variable type and snapshot variable type
@@ -46,27 +50,29 @@ export function isEditableVariableType(type: VariableType): type is EditableVari
 export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableConfig> = {
   custom: {
     name: 'Custom',
-    description: 'Define variable values manually',
+    description: 'Values are static and defined manually',
     editor: CustomVariableEditor,
+    getOptions: getCustomVariableOptions,
   },
   query: {
     name: 'Query',
-    description: 'Variable values are fetched from a datasource query',
+    description: 'Values are fetched from a data source query',
     editor: QueryVariableEditor,
   },
   constant: {
     name: 'Constant',
-    description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share',
+    description: 'A hidden constant variable, useful for metric prefixes in dashboards you want to share',
     editor: ConstantVariableEditor,
+    getOptions: getConstantVariableOptions,
   },
   interval: {
     name: 'Interval',
-    description: 'Define a timespan interval (ex 1m, 1h, 1d)',
+    description: 'Values are timespans, ex 1m, 1h, 1d',
     editor: IntervalVariableEditor,
   },
   datasource: {
     name: 'Data source',
-    description: 'Enables you to dynamically switch the data source for multiple panels',
+    description: 'Dynamically switch the data source for multiple panels',
     editor: DataSourceVariableEditor,
   },
   adhoc: {
@@ -81,10 +87,19 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
   },
   textbox: {
     name: 'Textbox',
-    description: 'Define a textbox variable, where users can enter any arbitrary string',
+    description: 'Users can enter any arbitrary strings in a textbox',
     editor: TextBoxVariableEditor,
   },
 };
+
+export function getEditableVariableDefinition(type: string): EditableVariableConfig {
+  const editableVariable = EDITABLE_VARIABLES[type as EditableVariableType];
+  if (!editableVariable) {
+    throw new Error(`Variable type ${type} not found`);
+  }
+
+  return editableVariable;
+}
 
 export const EDITABLE_VARIABLES_SELECT_ORDER: EditableVariableType[] = [
   'query',
@@ -202,7 +217,7 @@ export function getOptionDataSourceTypes() {
   return optionTypes;
 }
 
-function isSceneVariable(sceneObject: SceneObject): sceneObject is SceneVariable {
+export function isSceneVariable(sceneObject: SceneObject): sceneObject is SceneVariable {
   return 'type' in sceneObject.state && 'getValue' in sceneObject;
 }
 
@@ -225,3 +240,32 @@ export function isSceneVariableInstance(sceneObject: SceneObject): sceneObject i
 
 export const RESERVED_GLOBAL_VARIABLE_NAME_REGEX = /^(?!__).*$/;
 export const WORD_CHARACTERS_REGEX = /^\w+$/;
+
+export function validateVariableName(
+  variable: SceneVariable,
+  name: string
+): { isValid: boolean; errorMessage?: string } {
+  const set = variable.parent;
+  if (!(set instanceof SceneVariableSet)) {
+    throw new Error('Variable parent is not a SceneVariableSet');
+  }
+
+  if (!RESERVED_GLOBAL_VARIABLE_NAME_REGEX.test(name)) {
+    return {
+      isValid: false,
+      errorMessage: "Template names cannot begin with '__', that's reserved for Grafana's global variables",
+    };
+  }
+
+  if (!WORD_CHARACTERS_REGEX.test(name)) {
+    return { isValid: false, errorMessage: 'Only word characters are allowed in variable names' };
+  }
+
+  const varLookupByName = set.getByName(name);
+
+  if (varLookupByName && varLookupByName !== variable) {
+    return { isValid: false, errorMessage: 'Variable with the same name already exists' };
+  }
+
+  return { isValid: true };
+}

@@ -54,8 +54,8 @@ func (h *Hooks) Get(method string, url *url.URL) (RequestHandlerFunc, bool) {
 // then the given handler is invoked.
 func (h *Hooks) Wrap(next RequestHandlerFunc) RequestHandlerFunc {
 	return func(req *contextmodel.ReqContext) response.Response {
-		if hook, ok := h.Get(req.Context.Req.Method, req.Context.Req.URL); ok {
-			h.logger.Debug("Hook defined - invoking new handler", "path", req.Context.Req.URL.Path)
+		if hook, ok := h.Get(req.Req.Method, req.Req.URL); ok {
+			h.logger.Debug("Hook defined - invoking new handler", "path", req.Req.URL.Path)
 			return hook(req)
 		}
 		return next(req)

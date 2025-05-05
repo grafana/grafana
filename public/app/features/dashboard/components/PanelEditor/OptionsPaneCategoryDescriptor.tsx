@@ -10,12 +10,16 @@ export interface OptionsPaneCategoryDescriptorProps {
   title: string;
   renderTitle?: (isExpanded: boolean) => React.ReactNode;
   isOpenDefault?: boolean;
-  forceOpen?: number;
+  forceOpen?: boolean;
   className?: string;
   isNested?: boolean;
   itemsCount?: number;
   customRender?: () => React.ReactNode;
   sandboxId?: string;
+  /**
+   * When set will disable category and show tooltip with disabledText on
+   */
+  disabledText?: string;
 }
 
 /**
@@ -61,7 +65,7 @@ export class OptionsPaneCategoryDescriptor {
 
     if (this.props.title === '') {
       return (
-        <Box padding={2} key={this.props.title}>
+        <Box padding={2} paddingBottom={1} key={this.props.title}>
           {this.items.map((item) => item.render(searchQuery))}
         </Box>
       );

@@ -244,6 +244,7 @@ function getCustomOperators(config: BasicConfig) {
 
   // IN operator expects array, override IN formatter for multi-value variables
   const sqlFormatInOp = supportedOperators[Op.IN].sqlFormatOp?.bind(config.ctx) || noop;
+  const formatInOp = supportedOperators[Op.IN].formatOp?.bind(config.ctx) || noop;
   const customSqlInFormatter = (
     field: string,
     op: string,
@@ -259,7 +260,7 @@ function getCustomOperators(config: BasicConfig) {
 
   // NOT IN operator expects array, override NOT IN formatter for multi-value variables
   const sqlFormatNotInOp = supportedOperators[Op.NOT_IN].sqlFormatOp?.bind(config.ctx) || noop;
-
+  const formatNotInOp = supportedOperators[Op.NOT_IN].formatOp?.bind(config.ctx) || noop;
   const customSqlNotInFormatter = (
     field: string,
     op: string,
@@ -277,10 +278,26 @@ function getCustomOperators(config: BasicConfig) {
     ...supportedOperators,
     [Op.IN]: {
       ...supportedOperators[Op.IN],
+      formatOp: (
+        field: string,
+        op: string,
+        value: string | string[] | ImmutableList<string>,
+        valueSrc?: ValueSource
+      ) => {
+        return formatInOp(field, op, splitIfString(value), valueSrc);
+      },
       sqlFormatOp: customSqlInFormatter,
     },
     [Op.NOT_IN]: {
       ...supportedOperators[Op.NOT_IN],
+      formatOp: (
+        field: string,
+        op: string,
+        value: string | string[] | ImmutableList<string>,
+        valueSrc?: ValueSource
+      ) => {
+        return formatNotInOp(field, op, splitIfString(value), valueSrc);
+      },
       sqlFormatOp: customSqlNotInFormatter,
     },
     [Op.MACROS]: {

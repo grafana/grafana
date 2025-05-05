@@ -5,6 +5,7 @@ import { ReactElement } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 export interface RuleEditorSectionProps {
   title: string;
@@ -44,7 +45,7 @@ export const RuleEditorSection = ({
                   onChange={(event) => {
                     switchMode.setAdvancedMode(event.currentTarget.checked);
                   }}
-                  label="Advanced options"
+                  label={t('alerting.rule-editor-section.label-advanced-options', 'Advanced options')}
                   showLabel
                   transparent
                   className={styles.reverse}

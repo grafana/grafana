@@ -7,9 +7,11 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
+	dashboardV1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 )
 
+// FIXME: do this tests make sense in their current form?
 func TestIntegrationProvisioning_Client(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -22,32 +24,27 @@ func TestIntegrationProvisioning_Client(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("dashboard client support", func(t *testing.T) {
-		dash, err := clients.Dashboard()
-		require.NoError(t, err)
-		require.NotNil(t, dash)
-
-		client, _, err := clients.ForResource(schema.GroupVersionResource{
-			Group:    "dashboard.grafana.app",
-			Resource: "dashboards",
-			Version:  "v1alpha1",
-		})
-		require.NoError(t, err)
-		require.Equal(t, dash, client, "expecting the default dashboard to be version1")
-
-		// With empty version, we should get the preferred version (v1alpha1)
-		client, _, err = clients.ForResource(schema.GroupVersionResource{
-			Group:    "dashboard.grafana.app",
+		_, _, err := clients.ForResource(schema.GroupVersionResource{
+			Group:    dashboardV1.GROUP,
+			Version:  dashboardV1.VERSION,
 			Resource: "dashboards",
 		})
 		require.NoError(t, err)
-		require.Equal(t, dash, client, "expecting the default dashboard to be version0")
 
-		client, _, err = clients.ForKind(schema.GroupVersionKind{
-			Group:   "dashboard.grafana.app",
-			Version: "v1alpha1",
+		// With empty version, we should get the preferred version (v1beta1)
+		_, gvk, err := clients.ForResource(schema.GroupVersionResource{
+			Group:    dashboardV1.GROUP,
+			Resource: "dashboards",
+		})
+		require.NoError(t, err)
+		require.Equal(t, dashboardV1.VERSION, gvk.Version)
+		require.Equal(t, "Dashboard", gvk.Kind)
+
+		_, _, err = clients.ForKind(schema.GroupVersionKind{
+			Group:   dashboardV1.GROUP,
+			Version: dashboardV1.VERSION,
 			Kind:    "Dashboard",
 		})
 		require.NoError(t, err)
-		require.Equal(t, dash, client, "same client when requested by kind")
 	})
 }

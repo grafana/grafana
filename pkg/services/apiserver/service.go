@@ -7,7 +7,6 @@ import (
 	"path"
 
 	"github.com/prometheus/client_golang/prometheus"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -58,54 +57,9 @@ var (
 	_ RestConfigProvider         = (*service)(nil)
 	_ registry.BackgroundService = (*service)(nil)
 	_ registry.CanBeDisabled     = (*service)(nil)
-
-	Scheme = runtime.NewScheme()
-	Codecs = serializer.NewCodecFactory(Scheme)
-
-	unversionedVersion = schema.GroupVersion{Group: "", Version: "v1"}
-	unversionedTypes   = []runtime.Object{
-		&metav1.Status{},
-		&metav1.WatchEvent{},
-		&metav1.APIVersions{},
-		&metav1.APIGroupList{},
-		&metav1.APIGroup{},
-		&metav1.APIResourceList{},
-		&metav1.PartialObjectMetadata{},
-		&metav1.PartialObjectMetadataList{},
-	}
-
-	// internal provider of the package level client Config
-	restConfig RestConfigProvider
-	ready      = make(chan struct{})
 )
 
 const MaxRequestBodyBytes = 16 * 1024 * 1024 // 16MB - determined by the size of `mediumtext` on mysql, which is used to save dashboard data
-
-func init() {
-	// we need to add the options to empty v1
-	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Group: "", Version: "v1"})
-	Scheme.AddUnversionedTypes(unversionedVersion, unversionedTypes...)
-}
-
-// ClearRestConfig clears the package level restConfig.
-// This is intended to be used in tests only.
-//
-// TODO: Refactor such that there is no global state.
-func ClearRestConfig() {
-	restConfig = nil
-	ready = make(chan struct{})
-}
-
-// GetRestConfig return a client Config mounted at package level
-// This resolves circular dependency issues between apiserver, authz,
-// and Folder Service.
-// The client Config gets initialized during the first call to
-// ProvideService.
-// Any call to GetRestConfig will block until we have a restConfig available
-func GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
-	<-ready
-	return restConfig.GetRestConfig(ctx)
-}
 
 type Service interface {
 	services.NamedService
@@ -113,25 +67,13 @@ type Service interface {
 	registry.CanBeDisabled
 }
 
-type RestConfigProvider interface {
-	GetRestConfig(context.Context) (*clientrest.Config, error)
-}
-
-type DirectRestConfigProvider interface {
-	// GetDirectRestConfig returns a k8s client configuration that will use the same
-	// logged in user as the current request context.  This is useful when
-	// creating clients that map legacy API handlers to k8s backed services
-	GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config
-
-	// This can be used to rewrite incoming requests to path now supported under /apis
-	DirectlyServeHTTP(w http.ResponseWriter, r *http.Request)
-}
-
 type service struct {
 	services.NamedService
 
 	options    *grafanaapiserveroptions.Options
 	restConfig *clientrest.Config
+	scheme     *runtime.Scheme
+	codecs     serializer.CodecFactory
 
 	cfg      *setting.Cfg
 	features featuremgmt.FeatureToggles
@@ -153,11 +95,12 @@ type service struct {
 	storageStatus     dualwrite.Service
 	kvStore           kvstore.KVStore
 
-	pluginClient    plugins.Client
-	datasources     datasource.ScopedPluginDatasourceProvider
-	contextProvider datasource.PluginContextWrapper
-	pluginStore     pluginstore.Store
-	unified         resource.ResourceClient
+	pluginClient       plugins.Client
+	datasources        datasource.ScopedPluginDatasourceProvider
+	contextProvider    datasource.PluginContextWrapper
+	pluginStore        pluginstore.Store
+	unified            resource.ResourceClient
+	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
 }
@@ -176,9 +119,15 @@ func ProvideService(
 	pluginStore pluginstore.Store,
 	storageStatus dualwrite.Service,
 	unified resource.ResourceClient,
+	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
+	eventualRestConfigProvider *eventualRestConfigProvider,
 ) (*service, error) {
+	scheme := builder.ProvideScheme()
+	codecs := builder.ProvideCodecFactory(scheme)
 	s := &service{
+		scheme:                            scheme,
+		codecs:                            codecs,
 		log:                               log.New(modules.GrafanaAPIServer),
 		cfg:                               cfg,
 		features:                          features,
@@ -197,6 +146,7 @@ func ProvideService(
 		serverLockService:                 serverLockService,
 		storageStatus:                     storageStatus,
 		unified:                           unified,
+		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
 	}
 	// This will be used when running as a dskit service
@@ -208,7 +158,7 @@ func ProvideService(
 	// the routes are registered before the Grafana HTTP server starts.
 	proxyHandler := func(k8sRoute routing.RouteRegister) {
 		handler := func(c *contextmodel.ReqContext) {
-			if err := s.NamedService.AwaitRunning(c.Req.Context()); err != nil {
+			if err := s.AwaitRunning(c.Req.Context()); err != nil {
 				c.Resp.WriteHeader(http.StatusInternalServerError)
 				_, _ = c.Resp.Write([]byte(http.StatusText(http.StatusInternalServerError)))
 				return
@@ -244,17 +194,14 @@ func ProvideService(
 	s.rr.Group("/openapi", proxyHandler)
 	s.rr.Group("/version", proxyHandler)
 
-	// only set the package level restConfig once
-	if restConfig == nil {
-		restConfig = s
-		close(ready)
-	}
+	eventualRestConfigProvider.cfg = s
+	close(eventualRestConfigProvider.ready)
 
 	return s, nil
 }
 
 func (s *service) GetRestConfig(ctx context.Context) (*clientrest.Config, error) {
-	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+	if err := s.AwaitRunning(ctx); err != nil {
 		return nil, fmt.Errorf("unable to get rest config: %w", err)
 	}
 	return s.restConfig, nil
@@ -266,11 +213,11 @@ func (s *service) IsDisabled() bool {
 
 // Run is an adapter for the BackgroundService interface.
 func (s *service) Run(ctx context.Context) error {
-	if err := s.NamedService.StartAsync(ctx); err != nil {
+	if err := s.StartAsync(ctx); err != nil {
 		return err
 	}
 
-	if err := s.NamedService.AwaitRunning(ctx); err != nil {
+	if err := s.AwaitRunning(ctx); err != nil {
 		return err
 	}
 	return s.AwaitTerminated(ctx)
@@ -293,10 +240,10 @@ func (s *service) start(ctx context.Context) error {
 		if len(gvs) == 0 {
 			return fmt.Errorf("no group versions found for builder %T", b)
 		}
-		if err := b.InstallSchema(Scheme); err != nil {
+		if err := b.InstallSchema(s.scheme); err != nil {
 			return err
 		}
-		pvs := Scheme.PrioritizedVersionsForGroup(gvs[0].Group)
+		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
 		for j, gv := range pvs {
 			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
@@ -313,7 +260,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 	}
 
-	o := grafanaapiserveroptions.NewOptions(Codecs.LegacyCodec(groupVersions...))
+	o := grafanaapiserveroptions.NewOptions(s.codecs.LegacyCodec(groupVersions...))
 	err := applyGrafanaConfig(s.cfg, s.features, o)
 	if err != nil {
 		return err
@@ -324,15 +271,7 @@ func (s *service) start(ctx context.Context) error {
 		return errs[0]
 	}
 
-	// This will check that required feature toggles are enabled for more advanced storage modes
-	// Any required preconditions should be hardcoded here
-	if o.StorageOptions != nil {
-		if err := o.StorageOptions.EnforceFeatureToggleAfterMode1(s.features); err != nil {
-			return err
-		}
-	}
-
-	serverConfig := genericapiserver.NewRecommendedConfig(Codecs)
+	serverConfig := genericapiserver.NewRecommendedConfig(s.codecs)
 	if err := o.ApplyTo(serverConfig); err != nil {
 		return err
 	}
@@ -356,16 +295,16 @@ func (s *service) start(ctx context.Context) error {
 			return err
 		}
 	} else {
-		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig)
+		getter := apistore.NewRESTOptionsGetterForClient(s.unified, o.RecommendedOptions.Etcd.StorageConfig, s.restConfigProvider)
 		optsregister = getter.RegisterOptions
 
 		// Use unified storage client
-		serverConfig.Config.RESTOptionsGetter = getter
+		serverConfig.RESTOptionsGetter = getter
 	}
 
 	// Add OpenAPI specs for each group+version
 	err = builder.SetupConfig(
-		Scheme,
+		s.scheme,
 		serverConfig,
 		builders,
 		s.cfg.BuildStamp,
@@ -378,7 +317,7 @@ func (s *service) start(ctx context.Context) error {
 		return err
 	}
 
-	notFoundHandler := notfoundhandler.New(Codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
+	notFoundHandler := notfoundhandler.New(s.codecs, genericapifilters.NoMuxAndDiscoveryIncompleteKey)
 
 	// Create the server
 	server, err := serverConfig.Complete().New("grafana-apiserver", genericapiserver.NewEmptyDelegateWithCustomHandler(notFoundHandler))
@@ -387,7 +326,7 @@ func (s *service) start(ctx context.Context) error {
 	}
 
 	// Install the API group+version
-	err = builder.InstallAPIs(Scheme, Codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
+	err = builder.InstallAPIs(s.scheme, s.codecs, server, serverConfig.RESTOptionsGetter, builders, o.StorageOptions,
 		// Required for the dual writer initialization
 		s.metrics, request.GetNamespaceMapper(s.cfg), kvstore.WithNamespace(s.kvStore, 0, "storage.dualwriting"),
 		s.serverLockService,
@@ -555,7 +494,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 	return &clientrest.Config{
 		Transport: &roundTripperFunc{
 			fn: func(req *http.Request) (*http.Response, error) {
-				if err := s.NamedService.AwaitRunning(req.Context()); err != nil {
+				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
 				ctx := identity.WithRequester(req.Context(), c.SignedInUser)
@@ -567,7 +506,7 @@ func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Co
 }
 
 func (s *service) DirectlyServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if err := s.NamedService.AwaitRunning(r.Context()); err != nil {
+	if err := s.AwaitRunning(r.Context()); err != nil {
 		return
 	}
 	s.handler.ServeHTTP(w, r)
