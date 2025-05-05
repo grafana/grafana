@@ -738,10 +738,8 @@ steps:
       from_secret: docker_password
     DOCKER_USER:
       from_secret: docker_username
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   failure: ignore
@@ -2160,10 +2158,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -2464,10 +2460,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -3463,10 +3457,8 @@ steps:
       from_secret: docker_username
     GCP_KEY:
       from_secret: gcp_grafanauploads
-    GITHUB_APP_ID:
-      from_secret: delivery-bot-app-id
-    GITHUB_APP_INSTALLATION_ID:
-      from_secret: delivery-bot-app-installation-id
+    GITHUB_APP_ID: "329617"
+    GITHUB_APP_INSTALLATION_ID: "37346161"
     GITHUB_APP_PRIVATE_KEY:
       from_secret: delivery-bot-app-private-key
   image: google/cloud-sdk:431.0.0
@@ -5415,13 +5407,13 @@ name: prerelease_bucket
 ---
 get:
   name: username
-  path: infra/data/ci/grafanaci-docker-hub
+  path: ci/data/common/dockerhub
 kind: secret
 name: docker_username
 ---
 get:
   name: password
-  path: infra/data/ci/grafanaci-docker-hub
+  path: ci/data/common/dockerhub
 kind: secret
 name: docker_password
 ---
@@ -5540,20 +5532,8 @@ kind: secret
 name: dagger_token
 ---
 get:
-  name: app-id
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
-kind: secret
-name: delivery-bot-app-id
----
-get:
-  name: app-installation-id
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
-kind: secret
-name: delivery-bot-app-installation-id
----
-get:
-  name: app-private-key
-  path: infra/data/ci/grafana-release-eng/grafana-delivery-bot
+  name: PRIVATE_KEY
+  path: ci/data/repo/grafana/grafana/delivery-bot-app
 kind: secret
 name: delivery-bot-app-private-key
 ---
@@ -5564,6 +5544,6 @@ kind: secret
 name: gcr_credentials
 ---
 kind: signature
-hmac: 3e9721305edd682042fed2e6469bf4c83e0ea6406cf92bd9657b1167afb6d13d
+hmac: c0e27d237198566806eb4b6309a0f017f88a3733c57c40651536cad5bf92c8fc
 
 ...
