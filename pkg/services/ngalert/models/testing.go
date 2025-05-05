@@ -654,6 +654,8 @@ func (g *AlertRuleGenerator) GenerateQuery() AlertQuery {
 		},
 		RefID:     util.GenerateShortUID(),
 		QueryType: util.GenerateShortUID(),
+		DatasourceType: "prometheus",
+		IsMTQuery: true,
 	}
 }
 
