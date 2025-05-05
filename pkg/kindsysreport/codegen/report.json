@@ -33,9 +33,7 @@
     },
     "alertgroupspanelcfg": {
       "category": "composable",
-      "codeowners": [
-        "grafana/alerting-frontend"
-      ],
+      "codeowners": [],
       "currentVersion": [
         0,
         0
@@ -533,7 +531,7 @@
     "elasticsearchdataquery": {
       "category": "composable",
       "codeowners": [
-        "grafana/observability-logs"
+        "grafana/aws-datasources"
       ],
       "currentVersion": [
         0,
@@ -1249,7 +1247,7 @@
     "parcadataquery": {
       "category": "composable",
       "codeowners": [
-        "grafana/observability-traces-and-profiling"
+        "grafana/oss-big-tent"
       ],
       "currentVersion": [
         0,
@@ -1420,7 +1418,7 @@
     "prometheusdataquery": {
       "category": "composable",
       "codeowners": [
-        "grafana/observability-metrics"
+        "grafana/oss-big-tent"
       ],
       "currentVersion": [
         0,
