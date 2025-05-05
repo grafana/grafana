@@ -410,8 +410,12 @@ export const initMoveable = (destroySelecto = false, allowChanges = true, scene:
   scene.infiniteViewer = new InfiniteViewer(scene.viewerDiv!, scene.viewportDiv!, {
     preventWheelClick: false,
     useAutoZoom: true,
-    useMouseDrag: true,
-    useWheelScroll: true,
+    // useMouseDrag: true,
+    // useWheelScroll: true,
+    useMouseDrag: scene.shouldPanZoom,
+    useWheelScroll: scene.shouldPanZoom,
+    displayHorizontalScroll: false,
+    displayVerticalScroll: false,
   });
 
   // Handles context menu activation

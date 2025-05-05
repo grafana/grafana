@@ -79,7 +79,7 @@ export class Scene {
   isEditingEnabled?: boolean;
   shouldShowAdvancedTypes?: boolean;
   shouldPanZoom?: boolean;
-  shouldInfinitePan?: boolean;
+  zoomToContent?: boolean;
   skipNextSelectionBroadcast = false;
   ignoreDataUpdate = false;
   panel: CanvasPanel;
@@ -120,11 +120,11 @@ export class Scene {
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
-    infinitePan: boolean,
+    zoomToContent: boolean,
     public onSave: (cfg: CanvasFrameOptions) => void,
     panel: CanvasPanel
   ) {
-    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, infinitePan);
+    this.root = this.load(cfg, enableEditing, showAdvancedTypes, panZoom, zoomToContent);
 
     this.subscription = this.editModeEnabled.subscribe((open) => {
       if (!this.moveable || !this.isEditingEnabled) {
@@ -162,7 +162,7 @@ export class Scene {
     enableEditing: boolean,
     showAdvancedTypes: boolean,
     panZoom: boolean,
-    infinitePan: boolean
+    zoomToContent: boolean
   ) {
     this.root = new RootElement(
       cfg ?? {
@@ -176,11 +176,11 @@ export class Scene {
     this.isEditingEnabled = enableEditing;
     this.shouldShowAdvancedTypes = showAdvancedTypes;
     this.shouldPanZoom = panZoom;
-    this.shouldInfinitePan = infinitePan;
+    this.zoomToContent = zoomToContent;
 
     setTimeout(() => {
       // if (this.div) {
-      if (this.viewportDiv) {
+      if (this.viewportDiv && this.viewerDiv) {
         // If editing is enabled, clear selecto instance
         const destroySelecto = enableEditing;
         initMoveable(destroySelecto, enableEditing, this);
@@ -190,6 +190,7 @@ export class Scene {
         this.connections.updateState();
         // update initial connections svg size
         this.updateConnectionsSize();
+        this.fitContent(this, zoomToContent);
       }
     });
     return this.root;
@@ -220,6 +221,7 @@ export class Scene {
     }
 
     this.updateConnectionsSize();
+    this.fitContent(this, this.zoomToContent!);
   }
 
   updateConnectionsSize() {
@@ -327,6 +329,83 @@ export class Scene {
     }
   };
 
+  fitContent = (scene: Scene, zoomToContent: boolean) => {
+    const { root, viewerDiv, infiniteViewer } = scene;
+    if (zoomToContent && root.div && infiniteViewer && viewerDiv) {
+      const dimentions = this.calculateZoomToFitScale(Array.from(root.div.children), viewerDiv);
+      const { scale, centerX, centerY } = dimentions;
+      infiniteViewer.setZoom(scale);
+      infiniteViewer.scrollTo(centerX, centerY);
+    }
+  };
+
+  calculateZoomToFitScale(elements: Element[], container: HTMLDivElement, paddingRatio = 0.05) {
+    const bounds = this.calculateGroupBoundingBox(elements);
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = containerRect.width;
+    const containerHeight = containerRect.height;
+
+    const paddedWidth = containerWidth * (1 - 2 * paddingRatio);
+    const paddedHeight = containerHeight * (1 - 2 * paddingRatio);
+
+    const scaleX = paddedWidth / bounds.width;
+    const scaleY = paddedHeight / bounds.height;
+
+    // Use the smaller one to fit both horizontally and vertically
+    const scale = Math.min(scaleX, scaleY);
+
+    // calculate value to move to center
+    const centerX = (bounds.centerX * scale - containerWidth / 2) / scale;
+    const centerY = (bounds.centerY * scale - containerHeight / 2) / scale;
+
+    return {
+      scale,
+      centerX,
+      centerY,
+    };
+  }
+
+  extractTranslateFromTransform(transform: string) {
+    const matrix = new DOMMatrix(transform);
+    return { x: matrix.m41, y: matrix.m42 }; // m41 = translateX, m42 = translateY
+  }
+
+  calculateGroupBoundingBox(elements: Element[]) {
+    let minX = Infinity,
+      minY = Infinity;
+    let maxX = -Infinity,
+      maxY = -Infinity;
+
+    for (const el of elements) {
+      const style = window.getComputedStyle(el);
+      const { x: tx, y: ty } = this.extractTranslateFromTransform(style.transform || '');
+
+      const width = parseFloat(style.width);
+      const height = parseFloat(style.height);
+
+      const left = tx;
+      const top = ty;
+      const right = tx + width;
+      const bottom = ty + height;
+
+      minX = Math.min(minX, left);
+      minY = Math.min(minY, top);
+      maxX = Math.max(maxX, right);
+      maxY = Math.max(maxY, bottom);
+    }
+
+    return {
+      left: minX,
+      top: minY,
+      right: maxX,
+      bottom: maxY,
+      width: maxX - minX,
+      height: maxY - minY,
+      centerX: (minX + maxX) / 2,
+      centerY: (minY + maxY) / 2,
+    };
+  }
+
   render() {
     const hasDataLinks = this.tooltip?.element?.getLinks && this.tooltip.element.getLinks({}).length > 0;
     const hasActions = this.tooltip?.element?.options.actions && this.tooltip.element.options.actions.length > 0;
@@ -356,22 +435,6 @@ export class Scene {
         {/* </div> */}
       </>
     );
-
-    // return (
-    //   <InfiniteViewer
-    //     className="viewer"
-    //     margin={0}
-    //     threshold={0}
-    //     rangeX={[0, 0]}
-    //     rangeY={[0, 0]}
-    //     onScroll={e => {
-    //     }}
-    //   >
-    //     <div className="viewport">
-    //       {sceneDiv}
-    //     </div>
-    //   </InfiniteViewer>
-    // )
 
     return config.featureToggles.canvasPanelPanZoom ? (
       <>
