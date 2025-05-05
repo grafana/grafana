@@ -82,6 +82,7 @@ jobs:
         with:
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
+          fetch-depth: 0
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
