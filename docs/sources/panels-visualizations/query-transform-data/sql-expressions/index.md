@@ -198,7 +198,7 @@ During conversion:
 
     ![Example using a Prometheus query](/media/docs/sql-expressions/sql-expressions-prom-query-example.png)
 
-2. Add the SQL expression **SELECT * from A**. Once you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
+2. Add the SQL expression **SELECT * from A**. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
     ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
 
