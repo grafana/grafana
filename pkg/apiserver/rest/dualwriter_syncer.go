@@ -184,7 +184,7 @@ func legacyToUnifiedStorageDataSyncer(ctx context.Context, cfg *SyncerConfig) (b
 			Limit: int64(cfg.DataSyncerRecordsLimit),
 		})
 		if err != nil {
-			if len(storageList) == 0 {
+			if len(legacyList) == 0 {
 				log.Info("legacy storage is empty, skipping sync")
 				return
 			}
