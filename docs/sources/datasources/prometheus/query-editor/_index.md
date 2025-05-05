@@ -193,7 +193,7 @@ To add the operation to your query, click the **Hint**.
 
 {{< figure src="/static/img/docs/prometheus/hint-example.png" max-width="500px" class="docs-image--no-shadow" caption="Hint" >}}
 
-Once you are satisfied with your query, click **Run query**.
+When you are satisfied with your query, click **Run query**.
 
 ## Code mode
 
@@ -227,7 +227,7 @@ If you don't remember the exact metric name, you can start by selecting a few la
 All lists in the Metrics browser include a search field to quickly filter metrics or labels by keyword.
 In the **Values** section, there's a single search field that filters across all selected labels, making it easier to find matching values. For example, if you have labels like `app`, `job`, and `job_name`, only one of them might contain the value you're looking for.
 
-Once you are satisfied with your query, click **Run query**.
+When you are satisfied with your query, click **Run query**.
 
 ## Incremental dashboard queries (beta)
 
