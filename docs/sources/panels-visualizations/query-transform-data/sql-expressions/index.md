@@ -96,7 +96,7 @@ To create a SQL expression, complete the following steps:
 1. Click **+ Expression**.
 1. Select **SQL** from the drop-down. 
 
-Once you have added a SQL expression, you can select from other data source queries by referencing the RefIDs of the queries in your SQL expression as if they were tables in a SQL database.
+After you have added a SQL expression, you can select from other data source queries by referencing the RefIDs of the queries in your SQL expression as if they were tables in a SQL database.
 
 ![Using the RefID](/media/docs/sql-expressions/using-the-RefID.png)
 
