@@ -33,7 +33,7 @@ You must use relative references when linking to docs within the Grafana repo. P
 
 ## Breaking changes
 
-For Grafana v10.0, we've also provided a list of [breaking changes](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v10-0) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.0](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/breaking-changes/breaking-changes-v10-0).
+For Grafana v10.0, we've also provided a list of [breaking changes](../../breaking-changes/breaking-changes-v10-0/) to help you upgrade with greater confidence. For information about these along with guidance on how to proceed, refer to [Breaking changes in Grafana v10.0](../../breaking-changes/breaking-changes-v10-0/).
 
 ## Correlations
 
