@@ -15,15 +15,11 @@ import (
 )
 
 func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
-	ctx := context.Background()
-	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
-	db := database.ProvideDatabase(testDB)
+	t.Parallel()
 
-	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+	defaultKeeperName := "kp-test"
+	defaultKeeperNS := "default"
 
-	// Initialize the keeper storage and add a test keeper
-	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, features)
-	require.NoError(t, err)
 	testKeeper := &secretv0alpha1.Keeper{
 		Spec: secretv0alpha1.KeeperSpec{
 			Description: "description",
@@ -31,21 +27,31 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		},
 	}
 
-	defaultKeeperName := "kp-test"
-	defaultKeeperNS := "default"
-
 	testKeeper.Name = defaultKeeperName
 	testKeeper.Namespace = defaultKeeperNS
-	_, err = keeperMetadataStorage.Create(ctx, testKeeper, "testuser")
-	require.NoError(t, err)
 
 	t.Run("get the system keeper config", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
+		// get system keeper config
 		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, defaultKeeperNS, nil)
 		require.NoError(t, err)
 		require.Nil(t, keeperConfig)
 	})
 
 	t.Run("get test keeper config", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
+		//
+		_, err := keeperMetadataStorage.Create(ctx, testKeeper, "testuser")
+		require.NoError(t, err)
+
 		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, defaultKeeperNS, &defaultKeeperName)
 		require.NoError(t, err)
 		require.NotNil(t, keeperConfig)
@@ -53,6 +59,15 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	})
 
 	t.Run("get test keeper config when listing", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
+		//
+		_, err := keeperMetadataStorage.Create(ctx, testKeeper, "testuser")
+		require.NoError(t, err)
+
 		keeperList, err := keeperMetadataStorage.List(ctx, xkube.Namespace(defaultKeeperNS))
 		require.NoError(t, err)
 		require.NotEmpty(t, keeperList)
@@ -65,6 +80,11 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	})
 
 	t.Run("create a keeper and then delete it", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
 		keeperTest := "kp-test2"
 		keeperNamespaceTest := "ns"
 
@@ -78,7 +98,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		testKeeper.Namespace = keeperNamespaceTest
 
 		// create the keeper
-		_, err = keeperMetadataStorage.Create(ctx, testKeeper, "testuser")
+		_, err := keeperMetadataStorage.Create(ctx, testKeeper, "testuser")
 		require.NoError(t, err)
 
 		// we are able to get it
@@ -97,6 +117,11 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	})
 
 	t.Run("create, update and validate keeper", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
 		keeperTest := "kp-test3"
 		keeperNamespaceTest := "ns"
 
@@ -111,7 +136,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		initialKeeper.Namespace = keeperNamespaceTest
 
 		// Create the keeper
-		_, err = keeperMetadataStorage.Create(ctx, initialKeeper, "testuser")
+		_, err := keeperMetadataStorage.Create(ctx, initialKeeper, "testuser")
 		require.NoError(t, err)
 
 		// Validate that the description was set
@@ -146,6 +171,11 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	})
 
 	t.Run("update keeper with different AWS configuration", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
 		keeperTest := "kp-test4"
 		keeperNamespaceTest := "ns"
 
@@ -170,7 +200,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		initialKeeper.Namespace = keeperNamespaceTest
 
 		// Create the keeper
-		_, err = keeperMetadataStorage.Create(ctx, initialKeeper, "testuser")
+		_, err := keeperMetadataStorage.Create(ctx, initialKeeper, "testuser")
 		require.NoError(t, err)
 
 		// Verify initial AWS config
@@ -213,18 +243,33 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	})
 
 	t.Run("list keepers in empty namespace", func(t *testing.T) {
-		keeperList, err := keeperMetadataStorage.List(ctx, xkube.Namespace(""))
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
+		keeperList, err := keeperMetadataStorage.List(ctx, "")
 		require.NoError(t, err)
 		require.Empty(t, keeperList)
 	})
 
 	t.Run("read non-existent keeper", func(t *testing.T) {
-		_, err := keeperMetadataStorage.Read(ctx, xkube.Namespace("ns"), "non-existent")
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
+		_, err := keeperMetadataStorage.Read(ctx, "ns", "non-existent")
 		require.Error(t, err)
 		require.Equal(t, contracts.ErrKeeperNotFound, err)
 	})
 
 	t.Run("update keeper with different namespace", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
 		keeperTest := "kp-test5"
 		keeperNamespaceTest := "ns1"
 
@@ -248,7 +293,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		initialKeeper.Namespace = keeperNamespaceTest
 
 		// Create the keeper
-		_, err = keeperMetadataStorage.Create(ctx, initialKeeper, "testuser")
+		_, err := keeperMetadataStorage.Create(ctx, initialKeeper, "testuser")
 		require.NoError(t, err)
 
 		// Try to update with different namespace
@@ -268,6 +313,11 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 	})
 
 	t.Run("update non-existent keeper", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		keeperMetadataStorage := initStorage(t)
+
 		nonExistentKeeper := &secretv0alpha1.Keeper{
 			Spec: secretv0alpha1.KeeperSpec{
 				Description: "some description",
@@ -277,7 +327,18 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		nonExistentKeeper.Name = "non-existent"
 		nonExistentKeeper.Namespace = "ns"
 
-		_, err = keeperMetadataStorage.Update(ctx, nonExistentKeeper, "testuser")
-		require.Error(t, err)
+		_, err := keeperMetadataStorage.Update(ctx, nonExistentKeeper, "testuser")
+		require.Error(t, err, "db failure: keeper not found")
 	})
+}
+
+func initStorage(t *testing.T) contracts.KeeperMetadataStorage {
+	testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
+	db := database.ProvideDatabase(testDB)
+	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+
+	// Initialize the keeper storage
+	keeperMetadataStorage, err := ProvideKeeperMetadataStorage(db, features)
+	require.NoError(t, err)
+	return keeperMetadataStorage
 }
