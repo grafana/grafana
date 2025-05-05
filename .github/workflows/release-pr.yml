@@ -106,7 +106,7 @@ jobs:
       - name: Create branch
         run: git checkout -b "release/${{ github.run_id }}/$VERSION"
       - name: Generate changelog token
-        if: ${{ inputs.changelog == true || inputs.changelog == "true" }}
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         id: generate_changelog_token
         uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
         with:
@@ -114,14 +114,14 @@ jobs:
           private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
       - name: Generate changelog
         id: changelog
-        if: ${{ inputs.changelog == true || inputs.changelog == "true" }}
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         uses: ./.grafana-main/.github/actions/changelog
         with:
           github_token: ${{ steps.generate_changelog_token.outputs.token }}
           target: v${{ env.VERSION }}
           output_file: changelog_items.md
       - name: Patch CHANGELOG.md
-        if: ${{ inputs.changelog == true || inputs.changelog == "true" }}
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: |
           # Prepare CHANGELOG.md content with version delimiters
           (
@@ -153,20 +153,20 @@ jobs:
 
           git diff CHANGELOG.md
       - name: "Prettify CHANGELOG.md"
-        if: ${{ inputs.changelog == true || inputs.changelog == "true" }}
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: npx prettier --write CHANGELOG.md
       - name: Commit CHANGELOG.md changes
-        if: ${{ inputs.changelog == true || inputs.changelog == "true" }}
+        if: ${{ inputs.changelog == true || inputs.changelog == 'true' }}
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
 
       - name: Update package.json versions
-        if: ${{ inputs.bump == true || inputs.bump == "true" }}
+        if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         uses: ./.grafana-main/pkg/build/actions/bump-version
         with:
           version: 'patch'
 
       - name: Add package.json changes
-        if: ${{ inputs.bump == true || inputs.bump == "true" }}
+        if: ${{ inputs.bump == true || inputs.bump == 'true' }}
         run: |
           git add package.json lerna.json yarn.lock packages public
           test -e e2e/test-plugins && git add e2e/test-plugins
