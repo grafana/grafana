@@ -19,6 +19,7 @@ export const TabbedPage: FC<TabbedPageProps> = ({ children, isLoading, vertical,
         <TabsBar className={styles.TabsBar} hideBorder={vertical}>
           {tabs.map((child, index) => (
             <Tab
+              aria-label={`Tab ${child.text}`}
               label={child.text}
               active={child.active}
               key={`${child.url}-${index}`}

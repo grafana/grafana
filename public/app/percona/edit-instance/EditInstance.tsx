@@ -88,6 +88,7 @@ const EditInstancePage: FC = () => {
   const handleOpenModal = (e?: FormEvent<HTMLFormElement | HTMLButtonElement>) => {
     setIsModalOpen(true);
     e?.preventDefault();
+    e?.stopPropagation();
   };
 
   return (
@@ -113,7 +114,7 @@ const EditInstancePage: FC = () => {
                   size="sm"
                   type="submit"
                   variant="primary"
-                  onClick={handleSubmit}
+                  onClick={handleOpenModal}
                   disabled={submitting}
                 >
                   {Messages.saveChanges}
