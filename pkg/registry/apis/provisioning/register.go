@@ -43,7 +43,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/export"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/migrate"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/sync"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
@@ -55,7 +54,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
@@ -76,12 +74,11 @@ var (
 type APIBuilder struct {
 	urlProvider      func(namespace string) string
 	webhookSecretKey string
-	isPublic         bool
 
-	features            featuremgmt.FeatureToggles
+	features featuremgmt.FeatureToggles
+
 	getter              rest.Getter
 	localFileResolver   *repository.LocalFolderResolver
-	render              rendering.Service
 	parsers             resources.ParserFactory
 	repositoryResources resources.RepositoryResourcesFactory
 	clients             resources.ClientFactory
@@ -101,6 +98,9 @@ type APIBuilder struct {
 	secrets          secrets.Service
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
+
+	// Extras provides additional functionality to the API.
+	extras []Extra
 }
 
 // NewAPIBuilder creates an API builder.
@@ -108,10 +108,8 @@ type APIBuilder struct {
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
-	urlProvider func(namespace string) string,
 	webhookSecretKey string,
 	features featuremgmt.FeatureToggles,
-	render rendering.Service,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
 	configProvider apiserver.RestConfigProvider,
@@ -120,25 +118,20 @@ func NewAPIBuilder(
 	storageStatus dualwrite.Service,
 	secrets secrets.Service,
 	access authlib.AccessChecker,
+	extraBuilders []ExtraBuilder,
 ) *APIBuilder {
-	// HACK: Assume is only public if it is HTTPS
-	isPublic := strings.HasPrefix(urlProvider(""), "https://")
-
 	clients := resources.NewClientFactory(configProvider)
 	parsers := resources.NewParserFactory(clients)
 	resourceLister := resources.NewResourceLister(unified, unified, legacyMigrator, storageStatus)
 
-	return &APIBuilder{
-		urlProvider:         urlProvider,
+	b := &APIBuilder{
 		localFileResolver:   local,
 		webhookSecretKey:    webhookSecretKey,
-		isPublic:            isPublic,
 		features:            features,
 		ghFactory:           ghFactory,
 		clients:             clients,
 		parsers:             parsers,
 		repositoryResources: resources.NewRepositoryResourcesFactory(parsers, clients, resourceLister),
-		render:              render,
 		clonedir:            clonedir,
 		resourceLister:      resourceLister,
 		legacyMigrator:      legacyMigrator,
@@ -148,6 +141,12 @@ func NewAPIBuilder(
 		access:              access,
 		jobHistory:          jobs.NewJobHistoryCache(),
 	}
+
+	for _, builder := range extraBuilders {
+		b.extras = append(b.extras, builder(b))
+	}
+
+	return b
 }
 
 // RegisterAPIService returns an API builder, from [NewAPIBuilder]. It is called by Wire.
@@ -158,7 +157,6 @@ func RegisterAPIService(
 	features featuremgmt.FeatureToggles,
 	apiregistration builder.APIRegistrar,
 	reg prometheus.Registerer,
-	render rendering.Service,
 	client resource.ResourceClient, // implements resource.RepositoryClient
 	configProvider apiserver.RestConfigProvider,
 	ghFactory *github.Factory,
@@ -168,6 +166,7 @@ func RegisterAPIService(
 	usageStatsService usagestats.Service,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
+	extraBuilders []ExtraBuilder,
 ) (*APIBuilder, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagProvisioning) {
 		return nil, nil
@@ -177,16 +176,13 @@ func RegisterAPIService(
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
-	urlProvider := func(namespace string) string {
-		return cfg.AppURL
-	}
-
-	builder := NewAPIBuilder(folderResolver, urlProvider, cfg.SecretKey, features,
-		render, client,
+	builder := NewAPIBuilder(folderResolver, cfg.SecretKey, features,
+		client,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
 		legacyMigrator, storageStatus,
 		secrets.NewSingleTenant(secretsSvc), access,
+		extraBuilders,
 	)
 	apiregistration.RegisterAPI(builder)
 	usageStatsService.RegisterMetricsFunc(builder.collectProvisioningStats)
@@ -219,6 +215,14 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 				return authorizer.DecisionDeny, "failed to find requester", err
 			}
 
+			// Check if any extra authorizer has a decision.
+			for _, extra := range b.extras {
+				decision, reason, err := extra.Authorize(ctx, a)
+				if decision != authorizer.DecisionNoOpinion {
+					return decision, reason, err
+				}
+			}
+
 			switch a.GetResource() {
 			case provisioning.RepositoryResourceInfo.GetName():
 				// TODO: Support more fine-grained permissions than the basic roles. Especially on Enterprise.
@@ -230,19 +234,8 @@ func (b *APIBuilder) GetAuthorizer() authorizer.Authorizer {
 					}
 					return authorizer.DecisionDeny, "admin role is required", nil
 
-				case "webhook":
-					// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
-					// The user in this context is usually an anonymous user, but may also be an authenticated synthetic check by the Grafana instance's operator as well.
-					// For context on the anonymous user, check the authn/clients/provisioning.go file.
-					return authorizer.DecisionAllow, "", nil
-
 				case "files":
 					// Access to files is controlled by the AccessClient
-					return authorizer.DecisionAllow, "", nil
-
-				case "render":
-					// This is used to read a blob from unified storage, for GitHub PR comments.
-					// GH uses a proxy for all images, so we need to accept it, always.
 					return authorizer.DecisionAllow, "", nil
 
 				case "resources", "sync", "history":
@@ -345,7 +338,6 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 
 	// TODO: Add some logic so that the connectors can registered themselves and we don't have logic all over the place
 	// TODO: Do not set private fields directly, use factory methods.
-	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = NewWebhookConnector(b, b, b.jobs, b.isPublic)
 	storage[provisioning.RepositoryResourceInfo.StoragePath("test")] = &testConnector{
 		getter: b,
 	}
@@ -362,9 +354,14 @@ func (b *APIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.APIGroupI
 		jobs:       b.jobs,
 		historic:   b.jobHistory,
 	}
-	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = &renderConnector{
-		blob: b.unified,
+
+	// Add any extra storage
+	for _, extra := range b.extras {
+		if err := extra.UpdateStorage(storage); err != nil {
+			return fmt.Errorf("update storage for extra %T: %w", extra, err)
+		}
 	}
+
 	apiGroupInfo.VersionedResourcesStorageMap[provisioning.VERSION] = storage
 	return nil
 }
@@ -578,17 +575,26 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			)
 
 			// Pull request worker
-			renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
-			evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
-			commenter := pullrequest.NewCommenter()
-			pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+			// TODO: This should be wired for render and in between pull request
+			// renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
+			// evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
+			// commenter := pullrequest.NewCommenter()
+			// pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+
+			workers := []jobs.Worker{migrationWorker, syncWorker, exportWorker}
+
+			// Add any extra workers
+			for _, extra := range b.extras {
+				workers = append(workers, extra.GetJobWorkers()...)
+			}
 
 			driver, err := jobs.NewJobDriver(
 				time.Minute*20, // Max time for each job
 				time.Minute*22, // Cleanup any checked out jobs. FIXME: this is slow if things crash/fail!
 				time.Second*30, // Periodically look for new jobs
 				b.jobs, b, b.jobHistory,
-				exportWorker, syncWorker, migrationWorker, pullRequestWorker)
+				workers...,
+			)
 			if err != nil {
 				return err
 			}
@@ -614,6 +620,7 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 			return nil
 		},
 	}
+
 	return postStartHooks, nil
 }
 
@@ -648,11 +655,6 @@ func (b *APIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAPI, err
 				},
 			},
 		}
-	}
-
-	sub = oas.Paths.Paths[repoprefix+"/webhook"]
-	if sub != nil && sub.Get != nil {
-		sub.Post.Description = "Currently only supports github webhooks"
 	}
 
 	ref := &spec3.Parameter{
@@ -883,36 +885,11 @@ spec:
 		oas.Paths.Paths[repoprefix+"/jobs/{uid}"] = sub
 	}
 
-	delete(oas.Paths.Paths, repoprefix+"/render")
-	sub = oas.Paths.Paths[repoprefix+"/render/{path}"]
-	if sub != nil {
-		sub.Get.Description = "get a rendered preview image"
-		sub.Get.Responses = &spec3.Responses{
-			ResponsesProps: spec3.ResponsesProps{
-				StatusCodeResponses: map[int]*spec3.Response{
-					200: {
-						ResponseProps: spec3.ResponseProps{
-							Content: map[string]*spec3.MediaType{
-								"image/png": {},
-							},
-							Description: "OK",
-						},
-					},
-				},
-			},
+	// Run all extra post-processors.
+	for _, extra := range b.extras {
+		if err := extra.PostProcessOpenAPI(oas); err != nil {
+			return nil, fmt.Errorf("post-process OpenAPI for extra %T: %w", extra, err)
 		}
-
-		// Replace {path} with {guid} (it is a GUID, but all k8s sub-resources are called path)
-		for _, v := range sub.Parameters {
-			if v.Name == "path" {
-				v.Name = "guid"
-				v.Description = "Image GUID"
-				break
-			}
-		}
-
-		delete(oas.Paths.Paths, repoprefix+"/render/{path}")
-		oas.Paths.Paths[repoprefix+"/render/{guid}"] = sub
 	}
 
 	// Add any missing definitions
@@ -993,6 +970,7 @@ func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repo
 		repo.Spec.GitHub.Token = ""
 	}
 
+	// TODO: move this to webhook connector
 	if repo.Status.Webhook != nil &&
 		repo.Status.Webhook.Secret != "" {
 		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
@@ -1135,24 +1113,11 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil
 	case provisioning.GitHubRepositoryType:
-		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
-		var webhookURL string
-		if b.isPublic {
-			webhookURL = fmt.Sprintf(
-				"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
-				b.urlProvider(r.GetNamespace()),
-				gvr.Group,
-				gvr.Version,
-				r.GetNamespace(),
-				gvr.Resource,
-				r.GetName(),
-			)
-		}
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
-
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, webhookURL, cloneFn)
+		// TODO: Extra webhook logic outside that repository implementation
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, "", cloneFn)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}

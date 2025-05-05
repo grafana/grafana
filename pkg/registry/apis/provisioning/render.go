@@ -10,16 +10,34 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+func ProvidePreviewScreenshots(
+	render rendering.Service,
+	unified resource.ResourceClient,
+) ExtraBuilder {
+	return func(b *APIBuilder) Extra {
+		return &renderConnector{
+			render:  render,
+			unified: unified,
+		}
+	}
+}
+
 type renderConnector struct {
-	blob resource.BlobStoreClient
+	render  rendering.Service
+	unified resource.ResourceClient
 }
 
 func (*renderConnector) New() runtime.Object {
@@ -42,6 +60,63 @@ func (*renderConnector) ConnectMethods() []string {
 
 func (*renderConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, true, ""
+}
+
+func (c *renderConnector) Authorize(_ context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+	if a.GetResource() == provisioning.RepositoryResourceInfo.GetName() && a.GetSubresource() == "render" {
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	return authorizer.DecisionNoOpinion, "", nil
+}
+
+func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
+	repoprefix := provisioning.RepositoryResourceInfo.GetName() + "/"
+	sub := oas.Paths.Paths[repoprefix+"/render/{path}"]
+	if sub != nil {
+		sub.Get.Description = "get a rendered preview image"
+		sub.Get.Responses = &spec3.Responses{
+			ResponsesProps: spec3.ResponsesProps{
+				StatusCodeResponses: map[int]*spec3.Response{
+					200: {
+						ResponseProps: spec3.ResponseProps{
+							Content: map[string]*spec3.MediaType{
+								"image/png": {},
+							},
+							Description: "OK",
+						},
+					},
+				},
+			},
+		}
+
+		// Replace {path} with {guid} (it is a GUID, but all k8s sub-resources are called path)
+		for _, v := range sub.Parameters {
+			if v.Name == "path" {
+				v.Name = "guid"
+				v.Description = "Image GUID"
+				break
+			}
+		}
+
+		delete(oas.Paths.Paths, repoprefix+"/render/{path}")
+		oas.Paths.Paths[repoprefix+"/render/{guid}"] = sub
+	}
+
+	return nil
+}
+
+func (c *renderConnector) UpdateStorage(storage map[string]rest.Storage) error {
+	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = c
+	return nil
+}
+
+func (c *renderConnector) GetJobWorkers() []jobs.Worker {
+	return []jobs.Worker{}
+}
+
+func (c *renderConnector) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	return nil, nil
 }
 
 func (c *renderConnector) Connect(
@@ -69,7 +144,7 @@ func (c *renderConnector) Connect(
 			return
 		}
 
-		rsp, err := c.blob.GetBlob(ctx, &resource.GetBlobRequest{
+		rsp, err := c.unified.GetBlob(ctx, &resource.GetBlobRequest{
 			Resource: &resource.ResourceKey{
 				Namespace: namespace,
 				Group:     provisioning.GROUP,

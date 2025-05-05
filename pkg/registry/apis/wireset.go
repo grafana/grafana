@@ -32,6 +32,8 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
+	provisioning.ProvidePreviewScreenshots,
+	provisioning.ProvideWebhooks,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,

@@ -5,25 +5,62 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
+	"k8s.io/kube-openapi/pkg/spec3"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
+	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 // Webhook endpoint max size (25MB)
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
+
+func ProvideWebhooks(
+	cfg *setting.Cfg,
+	client ClientGetter,
+	getter RepoGetter,
+	jobs jobs.Queue,
+	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
+	secretsSvc grafanasecrets.Service,
+	ghFactory *github.Factory,
+) ExtraBuilder {
+	urlProvider := func(namespace string) string {
+		return cfg.AppURL
+	}
+	// HACK: Assume is only public if it is HTTPS
+	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+
+	return func(b *APIBuilder) Extra {
+		return NewWebhookConnector(
+			client,
+			getter,
+			jobs,
+			isPublic,
+			urlProvider,
+			b,
+			secrets.NewSingleTenant(secretsSvc),
+			ghFactory,
+		)
+	}
+}
 
 // This only works for github right now
 type webhookConnector struct {
@@ -31,14 +68,31 @@ type webhookConnector struct {
 	getter          RepoGetter
 	jobs            jobs.Queue
 	webhooksEnabled bool
+	urlProvider     func(namespace string) string
+	apiBuilder      *APIBuilder
+	secrets         secrets.Service
+	ghFactory       *github.Factory
 }
 
-func NewWebhookConnector(client ClientGetter, getter RepoGetter, jobs jobs.Queue, webhooksEnabled bool) *webhookConnector {
+func NewWebhookConnector(
+	client ClientGetter,
+	getter RepoGetter,
+	jobs jobs.Queue,
+	webhooksEnabled bool,
+	urlProvider func(namespace string) string,
+	apiBuilder *APIBuilder,
+	secrets secrets.Service,
+	ghFactory *github.Factory,
+) *webhookConnector {
 	return &webhookConnector{
 		client:          client,
 		getter:          getter,
 		jobs:            jobs,
 		webhooksEnabled: webhooksEnabled,
+		urlProvider:     urlProvider,
+		apiBuilder:      apiBuilder,
+		secrets:         secrets,
+		ghFactory:       ghFactory,
 	}
 }
 
@@ -65,6 +119,60 @@ func (*webhookConnector) ConnectMethods() []string {
 
 func (*webhookConnector) NewConnectOptions() (runtime.Object, bool, string) {
 	return nil, false, ""
+}
+
+func (s *webhookConnector) Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error) {
+	if provisioning.RepositoryResourceInfo.GetName() == a.GetResource() && a.GetSubresource() == "webhook" {
+		// When the resource is a webhook, we'll deal with permissions manually by checking signatures or similar in the webhook handler.
+		// The user in this context is usually an anonymous user, but may also be an authenticated synthetic check by the Grafana instance's operator as well.
+		// For context on the anonymous user, check the authn/clients/provisioning.go file.
+		return authorizer.DecisionAllow, "", nil
+	}
+
+	return authorizer.DecisionNoOpinion, "", nil
+}
+
+func (s *webhookConnector) UpdateStorage(storage map[string]rest.Storage) error {
+	storage[provisioning.RepositoryResourceInfo.StoragePath("webhook")] = s
+	return nil
+}
+
+func (s *webhookConnector) GetJobWorkers() []jobs.Worker {
+	// TODO:
+	return []jobs.Worker{}
+}
+
+func (s *webhookConnector) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	if r.Spec.Type == provisioning.GitHubRepositoryType {
+		gvr := provisioning.RepositoryResourceInfo.GroupVersionResource()
+		webhookURL := fmt.Sprintf(
+			"%sapis/%s/%s/namespaces/%s/%s/%s/webhook",
+			s.urlProvider(r.GetNamespace()),
+			gvr.Group,
+			gvr.Version,
+			r.GetNamespace(),
+			gvr.Resource,
+			r.GetName(),
+		)
+		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
+			// TODO: Do not use builder private
+			return gogit.Clone(ctx, s.apiBuilder.clonedir, r, opts, s.secrets)
+		}
+
+		return repository.NewGitHub(ctx, r, s.ghFactory, s.secrets, webhookURL, cloneFn)
+	}
+
+	return nil, nil
+}
+
+func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
+	repoprefix := provisioning.RepositoryResourceInfo.GetName() + "/"
+	sub := oas.Paths.Paths[repoprefix+"/webhook"]
+	if sub != nil && sub.Get != nil {
+		sub.Post.Description = "Currently only supports github webhooks"
+	}
+
+	return nil
 }
 
 func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtime.Object, responder rest.Responder) (http.Handler, error) {
