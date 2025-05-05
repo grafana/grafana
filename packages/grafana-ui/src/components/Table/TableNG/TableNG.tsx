@@ -476,8 +476,6 @@ export function TableNG(props: TableNGProps) {
           ctx,
           onSortByChange,
           rows,
-          // INFO: sortedRows is for correct row indexing for cell background coloring
-          sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -687,7 +685,6 @@ export function mapFrameToDataGrid({
     ctx,
     onSortByChange,
     rows,
-    sortedRows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
@@ -812,7 +809,7 @@ export function mapFrameToDataGrid({
       field,
       cellClass: textWraps[getDisplayName(field)] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-        const { row, rowIdx } = props;
+        const { row } = props;
         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
         const value = row[key];
         // Cell level rendering here
@@ -826,9 +823,7 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={
-              sortedRows[rowIdx] && sortedRows[rowIdx].__index !== undefined ? sortedRows[rowIdx].__index : rowIdx
-            }
+            rowIdx={row.__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
