@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/Masterminds/semver"
 	"github.com/grafana/grafana/pkg/infra/log"
 
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
@@ -14,6 +15,7 @@ import (
 
 type PluginUpdateChecker interface {
 	IsUpdatable(ctx context.Context, plugin pluginstore.Plugin) bool
+	CanUpdateMinor(currentVersion string, targetVersion string) bool
 }
 
 var _ PluginUpdateChecker = (*Service)(nil)
@@ -80,5 +82,32 @@ func (s *Service) IsUpdatable(ctx context.Context, plugin pluginstore.Plugin) bo
 		return false
 	}
 
+	return true
+}
+
+func (s *Service) CanUpdateMinor(currentVersion string, targetVersion string) bool {
+	// If we are already on the latest version, skip the installation
+	if currentVersion == targetVersion {
+		s.log.Debug("Latest plugin already installed", "version", targetVersion)
+		return false
+	}
+
+	// If the latest version is a new major version, skip the installation
+	parsedLatestVersion, err := semver.NewVersion(targetVersion)
+	if err != nil {
+		s.log.Error("Failed to parse latest version, skipping potential update", "version", targetVersion, "error", err)
+		return false
+	}
+	parsedCurrentVersion, err := semver.NewVersion(currentVersion)
+	if err != nil {
+		s.log.Error("Failed to parse current version, skipping potential update", "version", currentVersion, "error", err)
+		return false
+	}
+	if parsedLatestVersion.Major() > parsedCurrentVersion.Major() {
+		s.log.Debug("New major version available, skipping update due to possible breaking changes", "version", targetVersion)
+		return false
+	}
+
+	// We should update the plugin
 	return true
 }

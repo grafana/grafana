@@ -47,7 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/store/sanitizer"
 	"github.com/grafana/grafana/pkg/services/supportbundles/supportbundlesimpl"
 	"github.com/grafana/grafana/pkg/services/team/teamapi"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 )
 
 func ProvideBackgroundServiceRegistry(
@@ -55,8 +55,8 @@ func ProvideBackgroundServiceRegistry(
 	pushGateway *pushhttp.Gateway, notifications *notifications.NotificationService, pluginStore *pluginStore.Service,
 	rendering *rendering.RenderingService, tokenService auth.UserTokenBackgroundService, tracing *tracing.TracingService,
 	provisioning *provisioning.ProvisioningServiceImpl, usageStats *uss.UsageStats,
-	statsCollector *statscollector.Service, grafanaUpdateChecker *updatechecker.GrafanaService,
-	pluginsUpdateChecker *updatechecker.PluginsService, metrics *metrics.InternalMetricsService,
+	statsCollector *statscollector.Service, grafanaUpdateChecker *updatemanager.GrafanaService,
+	pluginsUpdateChecker *updatemanager.PluginsService, metrics *metrics.InternalMetricsService,
 	secretsService *secretsManager.SecretsService, remoteCache *remotecache.RemoteCache, StorageService store.StorageService, searchService searchV2.SearchService, entityEventsService store.EntityEventsService,
 	saService *samanager.ServiceAccountsService, grpcServerProvider grpcserver.Provider,
 	secretMigrationProvider secretsMigrations.SecretMigrationProvider, loginAttemptService *loginattemptimpl.Service,

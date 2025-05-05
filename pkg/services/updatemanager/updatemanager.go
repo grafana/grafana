@@ -1,4 +1,4 @@
-package updatechecker
+package updatemanager
 
 import "net/http"
 

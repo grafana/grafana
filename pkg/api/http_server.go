@@ -107,7 +107,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/tag"
 	"github.com/grafana/grafana/pkg/services/team"
 	tempUser "github.com/grafana/grafana/pkg/services/temp_user"
-	"github.com/grafana/grafana/pkg/services/updatechecker"
+	"github.com/grafana/grafana/pkg/services/updatemanager"
 	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/services/validations"
 	"github.com/grafana/grafana/pkg/setting"
@@ -175,8 +175,8 @@ type HTTPServer struct {
 	DataSourcesService           datasources.DataSourceService
 	cleanUpService               *cleanup.CleanUpService
 	tracer                       tracing.Tracer
-	grafanaUpdateChecker         *updatechecker.GrafanaService
-	pluginsUpdateChecker         *updatechecker.PluginsService
+	grafanaUpdateChecker         *updatemanager.GrafanaService
+	pluginsUpdateChecker         *updatemanager.PluginsService
 	searchUsersService           searchusers.Service
 	queryDataService             query.Service
 	serviceAccountsService       serviceaccounts.Service
@@ -249,8 +249,8 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	contextHandler *contexthandler.ContextHandler, loggerMiddleware loggermw.Logger, features featuremgmt.FeatureToggles,
 	alertNG *ngalert.AlertNG, libraryPanelService librarypanels.Service, libraryElementService libraryelements.Service,
 	quotaService quota.Service, socialService social.Service, tracer tracing.Tracer,
-	encryptionService encryption.Internal, grafanaUpdateChecker *updatechecker.GrafanaService,
-	pluginsUpdateChecker *updatechecker.PluginsService, searchUsersService searchusers.Service,
+	encryptionService encryption.Internal, grafanaUpdateChecker *updatemanager.GrafanaService,
+	pluginsUpdateChecker *updatemanager.PluginsService, searchUsersService searchusers.Service,
 	dataSourcesService datasources.DataSourceService, queryDataService query.Service, pluginFileStore plugins.FileStore,
 	serviceaccountsService serviceaccounts.Service, pluginAssets *pluginassets.Service,
 	authInfoService login.AuthInfoService, storageService store.StorageService,

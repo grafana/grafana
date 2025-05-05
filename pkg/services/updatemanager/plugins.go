@@ -1,4 +1,4 @@
-package updatechecker
+package updatemanager
 
 import (
 	"context"
@@ -44,6 +44,7 @@ type PluginsService struct {
 	updateCheckURL  *url.URL
 	pluginInstaller plugins.Installer
 	updateChecker   *pluginupdatechecker.Service
+	updateStrategy  string
 
 	features featuremgmt.FeatureToggles
 }
@@ -87,6 +88,7 @@ func ProvidePluginsService(cfg *setting.Cfg,
 		pluginInstaller:  pluginInstaller,
 		features:         features,
 		updateChecker:    updateChecker,
+		updateStrategy:   cfg.PluginUpdateStrategy,
 	}, nil
 }
 
@@ -219,6 +221,23 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 		return false
 	}
 
+	if plugin.Info.Version == gcomVersion {
+		return false
+	}
+
+	if s.updateStrategy == setting.PluginUpdateStrategyLatest {
+		return s.canUpdateLatest(plugin, gcomVersion)
+	}
+
+	if s.updateStrategy == setting.PluginUpdateStrategyMinor {
+		return s.canUpdateMinor(plugin, gcomVersion)
+	}
+
+	return s.canUpdateLatest(plugin, gcomVersion)
+
+}
+
+func (s *PluginsService) canUpdateLatest(plugin pluginstore.Plugin, gcomVersion string) bool {
 	ver1, err1 := version.NewVersion(plugin.Info.Version)
 	if err1 != nil {
 		return false
@@ -229,6 +248,14 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 	}
 
 	return ver1.LessThan(ver2)
+}
+
+func (s *PluginsService) canUpdateMinor(plugin pluginstore.Plugin, gcomVersion string) bool {
+	canUpdate := s.updateChecker.CanUpdateMinor(plugin.Info.Version, gcomVersion)
+	if !canUpdate {
+		s.log.Info("Plugin can not be updated to minor version", "pluginID", plugin.ID, "from", plugin.Info.Version, "to", gcomVersion)
+	}
+	return canUpdate
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]pluginstore.Plugin) string {
