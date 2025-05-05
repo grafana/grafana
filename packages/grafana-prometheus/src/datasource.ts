@@ -3,7 +3,7 @@ import { defaults } from 'lodash';
 import { tz } from 'moment-timezone';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import semver from 'semver/preload';
+import { gte } from 'semver';
 
 import {
   AbstractQuery,
@@ -214,7 +214,7 @@ export class PrometheusDatasource
       return false;
     }
 
-    return semver.gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
+    return gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
   }
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
