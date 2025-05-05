@@ -82,8 +82,6 @@ jobs:
         with:
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-tags: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: false
       - name: Checkout Grafana (main)
         uses: actions/checkout@v4
         with:
@@ -91,8 +89,6 @@ jobs:
           fetch-depth: '0'
           fetch-tags: 'false'
           path: .grafana-main
-          token: ${{ secrets.GITHUB_TOKEN }}
-          persist-credentials: false
       - name: Setup nodejs environment
         uses: actions/setup-node@v4
         with:
