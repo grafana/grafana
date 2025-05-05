@@ -66,11 +66,15 @@ describe('DashboardDatasource', () => {
   });
 
   it('Can subscribe to panel data + transforms', async () => {
+    jest.useFakeTimers();
+
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     let rsp: DataQueryResponse | undefined;
 
     observable.subscribe({ next: (data) => (rsp = data) });
+
+    jest.runAllTimers();
 
     expect(rsp?.data[0].fields[1].values).toEqual([3]);
   });
@@ -101,6 +105,26 @@ describe('DashboardDatasource', () => {
     observable.subscribe({ next: () => {} });
 
     expect(first).not.toHaveBeenCalled();
+  });
+
+  it('Should not mutate field state in dataframe', () => {
+    const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
+
+    let rsp: DataQueryResponse | undefined;
+
+    const test = observable.subscribe({ next: (data) => (rsp = data) });
+
+    // modifying series in dashboard DS should not affect the original dataframe
+    rsp!.data[0].fields[0].state = {
+      calcs: { sum: 3 },
+    };
+
+    test.unsubscribe();
+
+    observable.subscribe({ next: (data) => (rsp = data) });
+
+    // on further emissions the result should be the unmodified original dataframe
+    expect(rsp!.data[0].fields[0].state).toEqual({});
   });
 });
 

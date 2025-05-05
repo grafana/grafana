@@ -104,6 +104,11 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 			return nil, err
 		}
 		meta.SetFolder(*cmd.NewParentUID)
+	} else {
+		// only compare versions if not moving the folder
+		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {
+			return nil, dashboards.ErrDashboardVersionMismatch
+		}
 	}
 
 	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{

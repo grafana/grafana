@@ -90,6 +90,14 @@ func Clone(
 		return nil, fmt.Errorf("missing root config")
 	}
 
+	if config.Namespace == "" {
+		return nil, fmt.Errorf("config is missing namespace")
+	}
+
+	if config.Name == "" {
+		return nil, fmt.Errorf("config is missing name")
+	}
+
 	if opts.BeforeFn != nil {
 		if err := opts.BeforeFn(); err != nil {
 			return nil, err
@@ -113,7 +121,7 @@ func Clone(
 		return nil, fmt.Errorf("create root dir: %w", err)
 	}
 
-	dir, err := mkdirTempClone(root, config)
+	dir, err := os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 	if err != nil {
 		return nil, fmt.Errorf("create temp clone dir: %w", err)
 	}
@@ -144,7 +152,10 @@ func Clone(
 
 func clone(ctx context.Context, config *provisioning.Repository, opts repository.CloneOptions, decrypted []byte, dir string, progress io.Writer) (*git.Repository, *git.Worktree, error) {
 	gitcfg := config.Spec.GitHub
-	url := fmt.Sprintf("%s.git", gitcfg.URL)
+	url := gitcfg.URL
+	if !strings.HasPrefix(url, "file://") {
+		url = fmt.Sprintf("%s.git", url)
+	}
 
 	branch := plumbing.NewBranchReferenceName(gitcfg.Branch)
 	cloneOpts := &git.CloneOptions{
@@ -199,16 +210,6 @@ func clone(ctx context.Context, config *provisioning.Repository, opts repository
 	}
 
 	return repo, worktree, nil
-}
-
-func mkdirTempClone(root string, config *provisioning.Repository) (string, error) {
-	if config.Namespace == "" {
-		return "", fmt.Errorf("config is missing namespace")
-	}
-	if config.Name == "" {
-		return "", fmt.Errorf("config is missing name")
-	}
-	return os.MkdirTemp(root, fmt.Sprintf("clone-%s-%s-", config.Namespace, config.Name))
 }
 
 // After making changes to the worktree, push changes
@@ -370,9 +371,13 @@ func (g *GoGitRepo) maybeCommit(ctx context.Context, message string) error {
 		return nil
 	}
 
-	opts := &git.CommitOptions{}
+	opts := &git.CommitOptions{
+		Author: &object.Signature{
+			Name: "grafana",
+		},
+	}
 	sig := repository.GetAuthorSignature(ctx)
-	if sig != nil {
+	if sig != nil && sig.Name != "" {
 		opts.Author = &object.Signature{
 			Name:  sig.Name,
 			Email: sig.Email,
