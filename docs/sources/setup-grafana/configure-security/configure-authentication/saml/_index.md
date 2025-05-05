@@ -89,16 +89,12 @@ The integration provides two key endpoints as part of Grafana:
 ## Configure SAML using the Grafana configuration file
 
 1. In the `[auth.saml]` section in the Grafana configuration file, set [`enabled`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#enabled-3) to `true`.
-1. Optionally, configure the [certificate and private key](#certificate-and-private-key").
-1. On the Okta application page where you have been redirected after application created, navigate to the **Sign On** tab and find **Identity Provider metadata** link in the **Settings** section.
-1. Set the [`idp_metadata_url`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#idp_metadata_url) to the URL obtained from the previous step. The URL should look like `https://<your-org-id>.okta.com/app/<application-id>/sso/saml/metadata`.
-1. Set the following options to the attribute names configured at the **step 10** of the SAML integration setup. You can find this attributes on the **General** tab of the application page (**ATTRIBUTE STATEMENTS** and **GROUP ATTRIBUTE STATEMENTS** in the **SAML Settings** section).
-   - [`assertion_attribute_login`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_login)
-   - [`assertion_attribute_email`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_email)
-   - [`assertion_attribute_name`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_name)
-   - [`assertion_attribute_groups`](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#assertion_attribute_groups)
-1. Optionally, set the `name` parameter in the `[auth.saml]` section in the Grafana configuration file. This parameter replaces SAML in the Grafana user interface in locations such as the sign-in button.
-1. Save the configuration file and then restart the Grafana server.
+2. Configure SAML options:
+   - Review all [available configuration options](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/saml-configuration-options/)
+   - For IdP-specific configuration, refer to:
+     - [Configure SAML with Okta](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-okta/)
+     - [Configure SAML with Entra ID](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/saml/configure-saml-with-azuread/)
+3. Save the configuration file and then restart the Grafana server.
 
 When you are finished, the Grafana configuration might look like this example:
 
@@ -190,6 +186,8 @@ By default, new Grafana users using SAML authentication will have an account cre
 Set `auto_login` option to true to attempt login automatically, skipping the login screen.
 This setting is ignored if multiple auth providers are configured to use auto login.
 
+For more information about automatic login behavior and troubleshooting, see [Automatic login](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-security/configure-authentication/#automatic-oauth-login).
+
 ```
 auto_login = true
 ```
@@ -197,6 +195,8 @@ auto_login = true
 ## Configure allowed organizations
 
 With the [`allowed_organizations`](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/enterprise-configuration/#allowed_organizations) option you can specify a list of organizations where the user must be a member of at least one of them to be able to log in to Grafana.
+
+To get the list of user's organizations from SAML attributes, you must configure the `assertion_attribute_org` option. This option specifies which SAML attribute contains the list of organizations the user belongs to.
 
 To put values containing spaces in the list, use the following JSON syntax:
 
