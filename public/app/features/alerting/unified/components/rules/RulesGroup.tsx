@@ -149,6 +149,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               onClick={() => setIsExporting('folder')}
             />
           );
+          if (isFolderBulkActionsEnabled && folderUID && isListView) {
+            actionIcons.push(<FolderBulkActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
+          }
         }
       }
     }
@@ -221,7 +224,6 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
             </div>
           </>
         )}
-        {isFolderBulkActionsEnabled && folderUID && isListView && <FolderBulkActionsButton folderUID={folderUID} />}
       </div>
       {!isCollapsed && (
         <RulesTable

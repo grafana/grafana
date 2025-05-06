@@ -1,13 +1,16 @@
 import { useState } from 'react';
 
 import { config, locationService } from '@grafana/runtime';
-import { Dropdown, Menu } from '@grafana/ui';
+import { Dropdown, IconButton, Menu } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
-import MoreButton from 'app/features/alerting/unified/components/MoreButton';
+import { useDispatch } from 'app/types';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
+import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 import { FolderBulkAction, useFolderBulkActionAbility } from '../../hooks/useAbilities';
 import { useFolder } from '../../hooks/useFolder';
+import { fetchAllPromAndRulerRulesAction, fetchAllPromRulesAction, fetchRulerRulesAction } from '../../state/actions';
+import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 import { createRelativeUrl } from '../../utils/url';
 
 import { DeleteModal } from './DeleteModal';
@@ -29,6 +32,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   const folderName = useFolder(folderUID).folder?.title || 'unknown folder';
   const listView2Enabled = config.featureToggles.alertingListViewV2 ?? false;
   const view = listView2Enabled ? 'list' : 'grouped';
+  const redirectToListView = useRedirectToListView(view);
 
   if (!canPause && !canDelete) {
     return null;
@@ -36,7 +40,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
 
   const onConfirmDelete = async () => {
     await deleteGrafanaRulesFromFolder({ namespace: folderUID }).unwrap();
-    redirectToListView(view);
+    await redirectToListView();
   };
 
   const menuItems = (
@@ -48,7 +52,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
             action="pause"
             executeAction={async (folderUID) => {
               await pauseFolder({ namespace: folderUID }).unwrap();
-              redirectToListView(view);
+              await redirectToListView();
             }}
             isLoading={updateState.isLoading}
           />
@@ -57,7 +61,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
             action="unpause"
             executeAction={async (folderUID) => {
               await unpauseFolder({ namespace: folderUID }).unwrap();
-              redirectToListView(view);
+              await redirectToListView();
             }}
             isLoading={unpauseState.isLoading}
           />
@@ -77,7 +81,12 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   return (
     <>
       <Dropdown overlay={<Menu>{menuItems}</Menu>}>
-        <MoreButton size="sm" title={t('alerting.folder-bulk-actions.more-button.title', 'Folder Actions')} />
+        <IconButton
+          name="ellipsis-v"
+          size="sm"
+          aria-label={t('alerting.folder-bulk-actions.more-button.title', 'Folder bulk Actions')}
+          tooltip={t('alerting.folder-bulk-actions.more-button.tooltip', 'Folder bulk Actions')}
+        />
       </Dropdown>
       <DeleteModal
         isOpen={isDeleteModalOpen}
@@ -89,6 +98,18 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
   );
 };
 
-function redirectToListView(view: string) {
-  locationService.push(createRelativeUrl('/alerting/list', { view }, { skipSubPath: true }));
+function useRedirectToListView(view: string) {
+  const dispatch = useDispatch();
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+  const redirectToListView = async () => {
+    if (prometheusRulesPrimary) {
+      await dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
+      await dispatch(fetchAllPromRulesAction(false));
+    } else {
+      await dispatch(fetchAllPromAndRulerRulesAction(false));
+    }
+    locationService.push(createRelativeUrl('/alerting/list', { view }, { skipSubPath: true }));
+  };
+
+  return redirectToListView;
 }
