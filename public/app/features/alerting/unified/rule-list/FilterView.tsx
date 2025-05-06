@@ -158,7 +158,7 @@ function FilterViewResults({ filterState }: FilterViewProps) {
               return (
                 <GrafanaRuleLoader
                   key={key}
-                  rule={rule}
+                  ruleIdentifier={{ ruleSourceName: 'grafana', uid: rule.uid }}
                   groupIdentifier={groupIdentifier}
                   namespaceName={ruleWithOrigin.namespaceName}
                 />

@@ -5,6 +5,7 @@ import { t } from 'app/core/internationalization';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
+import { logWarning } from '../Analytics';
 import { alertRuleApi } from '../api/alertRuleApi';
 import { prometheusApi } from '../api/prometheusApi';
 import { RULE_LIST_POLL_INTERVAL_MS } from '../utils/constants';
@@ -153,6 +154,14 @@ export function matchRules(
   );
 
   matchingResult.promOnlyRules.push(...promRulesMap.values());
+
+  if (matchingResult.promOnlyRules.length > 0) {
+    // Grafana Prometheus rules should be strongly consistent now so each Ruler rule should have a matching Prometheus rule
+    // If not, log it as a warning
+    logWarning('Grafana Managed Rules: No matching Prometheus rule found for Ruler rule', {
+      promOnlyRulesCount: matchingResult.promOnlyRules.length.toString(),
+    });
+  }
 
   return matchingResult;
 }
