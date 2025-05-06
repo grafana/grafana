@@ -15,7 +15,7 @@ interface Props {
   executeAction: (folderUID: string) => Promise<void>;
   isLoading: boolean;
 }
-export function FolderActionMenuItem({ folderUID, executeAction, isLoading, action }: Props) {
+export function PauseUnpauseActionMenuItem({ folderUID, executeAction, isLoading, action }: Props) {
   const notifyApp = useAppNotification();
   const label =
     action === 'pause'

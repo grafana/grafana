@@ -11,7 +11,7 @@ import { useFolder } from '../../hooks/useFolder';
 import { createRelativeUrl } from '../../utils/url';
 
 import { DeleteModal } from './DeleteModal';
-import { FolderActionMenuItem } from './MenuItemPauseFolder';
+import { PauseUnpauseActionMenuItem } from './PauseUnpauseActionMenuItem';
 interface Props {
   folderUID: string;
 }
@@ -43,7 +43,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
     <>
       {canPause && (
         <>
-          <FolderActionMenuItem
+          <PauseUnpauseActionMenuItem
             folderUID={folderUID}
             action="pause"
             executeAction={async (folderUID) => {
@@ -52,7 +52,7 @@ export const FolderBulkActionsButton = ({ folderUID }: Props) => {
             }}
             isLoading={updateState.isLoading}
           />
-          <FolderActionMenuItem
+          <PauseUnpauseActionMenuItem
             folderUID={folderUID}
             action="unpause"
             executeAction={async (folderUID) => {
