@@ -356,14 +356,15 @@ func (s *server) Init(ctx context.Context) error {
 			}
 		}
 
-		// initialize the search index
-		if s.initErr == nil && s.search != nil {
-			s.initErr = s.search.init(ctx)
-		}
-
 		// Start watching for changes
 		if s.initErr == nil {
 			s.initErr = s.initWatcher()
+		}
+
+		// Initialize the search index
+		if s.initErr == nil && s.search != nil {
+			s.search.broadcaster = s.broadcaster
+			s.initErr = s.search.init(ctx)
 		}
 
 		if s.initErr != nil {
