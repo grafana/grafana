@@ -454,7 +454,6 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 	default:
 		s.log.Info("ignoring watch event", "type", evt.Type)
 		span.AddEvent("ignoring watch event", trace.WithAttributes(attribute.String("type", evt.Type.String())))
-
 	}
 
 	nsr := NamespacedResource{
