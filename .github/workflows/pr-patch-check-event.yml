@@ -1,22 +1,15 @@
-# Owned by grafana-delivery-squad
-# Intended to be dropped into the base repo Ex: grafana/grafana
 name: Dispatch check for patch conflicts
 run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request_target:
-    types:
-      - opened
-      - reopened
-      - synchronize
-    branches:
-      - "main"
-      - "v*.*.*"
-      - "release-*"
+  push:
+    branches-ignore:
+      - main
+      - release-*.*.*
+    tags-ignore:
+      - *
 
 permissions: {}
 
-# Since this is run on a pull request, we want to apply the patches intended for the
-# target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
     permissions:
@@ -31,6 +24,7 @@ jobs:
       SHA: ${{ github.sha }}
       PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-latest
+    if: github.repository == 'grafana/grafana'
     steps:
       - name: "Get vault secrets"
         id: vault-secrets
