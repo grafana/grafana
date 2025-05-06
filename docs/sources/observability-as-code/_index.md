@@ -49,10 +49,13 @@ hero:
   width: 110
 ---
 
-# Observability as Code
+{{< docs/hero-simple key="hero" >}}
+
+---
+
+## Overview
 
 Observability as Code lets you apply code management best practices to your observability resources.
-Using Observability as Code, you can version, automate, and scale Grafana configurations, including dashboards and observability workflows.
 By representing Grafana resources as code, you can integrate them into existing infrastructure-as-code workflows and apply standard development practices.
 
 Observability as Code provides more control over configuration. Instead of manually configuring dashboards or settings through the Grafana UI, you can:
@@ -62,7 +65,9 @@ Observability as Code provides more control over configuration. Instead of manua
 - Automate with CI/CD: Integrate Grafana directly into your development and deployment pipelines.
 - Standardize workflows: Ensure consistency across your teams by using repeatable, codified processes for managing Grafana resources.
 
-{{< section depth=5 >}}
+## Explore
+
+{{< card-grid key="cards" type="simple" >}}
 
 <!-- Hiding this part of the doc because the rest of the docs aren't released yet
 
