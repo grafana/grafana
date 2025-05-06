@@ -86,6 +86,19 @@ describe('AnnotationQueryEditor', () => {
     expect(screen.getByText('annotation data load error!')).toBeInTheDocument();
   });
 
+  it('displays an error message when onAnnotationChange is missing', () => {
+    render(<AnnotationQueryEditor {...defaultProps} onAnnotationChange={undefined} />);
+    expect(screen.getByText('annotation data load error!')).toBeInTheDocument();
+  });
+
+  it('renders correctly with an empty annotation object', () => {
+    render(<AnnotationQueryEditor {...defaultProps} annotation={{} as AnnotationQuery<PromQuery>} />);
+    // Should render normally with empty values but not show an error
+    expect(screen.getByText('Min step')).toBeInTheDocument();
+    expect(screen.getByText('Title')).toBeInTheDocument();
+    expect(screen.queryByText('annotation data load error!')).not.toBeInTheDocument();
+  });
+
   it('calls onChange when min step is updated', () => {
     render(<AnnotationQueryEditor {...defaultProps} />);
     const minStepInput = screen.getByLabelText('Set lower limit for the step parameter');
