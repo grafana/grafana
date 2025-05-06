@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"hash/fnv"
 
 	"github.com/grafana/dskit/ring"
@@ -170,16 +169,16 @@ func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) 
 	return client.List(userutils.InjectOrgID(ctx, "1"), r)
 }
 
-// func (ds *DistributorServer) Watch(ctx context.Context, r *resource.WatchRequest) (resource.ResourceStore_WatchClient, error) {
 func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
-	// TODO figure out what to do here. what's commented doesn't work
 	return nil
+	// ctx := srv.Context()
+
 	// client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	// if err != nil {
-	// 	return nil, err
+	// 	return err
 	// }
 
-	// return client.Watch(ctx, r)
+	// return client.Watch(r, srv)
 }
 
 // TODO how to do this
