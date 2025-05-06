@@ -2767,12 +2767,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "更改主题...",
+      "change-theme": "",
       "dark-theme": "深色",
-      "light-theme": "浅色"
+      "light-theme": "浅色",
+      "scopes": ""
     },
     "empty-state": {
       "message": ""
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "搜索或跳转至..."
