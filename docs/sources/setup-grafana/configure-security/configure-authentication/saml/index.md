@@ -233,6 +233,28 @@ In order to validate Azure AD users with Grafana, you need to configure the SAML
 1. At the **SAML Certificate** section, copy the **App Federation Metadata Url**.
    - Use this URL in the `idp_metadata_url` field in the `custom.ini` file.
 
+### Integrating with SCIM Provisioning
+
+If you are also using SCIM provisioning for this Grafana application in Azure AD, it's crucial to align the user identifiers between SAML and SCIM for seamless operation. Grafana uses the attribute specified in `assertion_attribute_login` to look up the user based on their Grafana **login handle**.
+
+1.  **Consistent Identifier:** The unique identifier attribute from Azure AD that you mapped to the `externalId` attribute in Grafana in your SCIM provisioning setup (commonly Azure AD's `objectId`) **must also be sent as a claim in the SAML assertion.**
+    *   In Azure AD's Enterprise Application, under **Single sign-on** > **Attributes & Claims**, ensure you add a claim that provides this identifier. For example, you might add a claim named `UserId` (or similar) that sources its value from `user.objectid`.
+
+2.  **Grafana SAML Configuration:** Configure Grafana's `assertion_attribute_login` setting in the `[auth.saml]` section to use the incoming SAML claim that carries this unique identifier.
+
+    *Example:*
+    If you send the `objectId` attribute from Azure AD as a SAML claim named `http://schemas.microsoft.com/identity/claims/objectidentifier` (a common way Azure AD sends it), you would update your Grafana SAML configuration:
+
+    ```ini
+    [auth.saml]
+    # ... other SAML settings ...
+    assertion_attribute_login = http://schemas.microsoft.com/identity/claims/objectidentifier
+    ```
+
+    Ensure that the value specified in `assertion_attribute_login` precisely matches the name of the claim as it's sent in the SAML assertion from Azure AD.
+
+3.  **Grafana SCIM Configuration Alignment:** Because `assertion_attribute_login` maps to the Grafana **login handle**, your SCIM provisioning attribute mapping must also be configured to set the Grafana user's `login` field to the same unique identifier (e.g., the value of Azure AD's `objectId`). This ensures that when a user logs in via SAML, Grafana can find the existing user provisioned by SCIM using this common identifier as the login handle.
+
 ### Configure a Graph API application in Azure AD
 
 While an Azure AD tenant can be configured in Grafana via SAML, some additional information is only accessible via the Graph API. To retrieve this information, create a new application in Azure AD and grant it the necessary permissions.

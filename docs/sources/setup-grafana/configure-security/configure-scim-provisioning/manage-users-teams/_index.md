@@ -64,8 +64,10 @@ SCIM uses a specific process to establish and maintain user identity between the
    - Grafana updates the authentication validations to expect this External ID
 
 3. Authentication validation:
-   - Grafana expects the SAML integration to return the same External ID in SAML assertions
-   - This External ID is used to validate that the logged-in user matches the provisioned user
+   - The SAML integration must be configured to send this same External ID (e.g., Azure AD `objectId`) as a claim in the SAML assertion.
+   - Grafana's SAML configuration (specifically the `assertion_attribute_login` setting) must be set to use this incoming claim.
+   - Grafana then validates the user by matching the identifier received via SAML against the user's **login handle**.
+   - This linkage works correctly because the SCIM provisioning process must also set the user's Grafana login handle to this same External ID value. (See [SAML configuration details](../../configure-authentication/saml/\#integrating-with-scim-provisioning) for setup guidance).
 
 This process ensures secure and consistent user identification across both systems, preventing security issues that could arise from email changes or other user attribute modifications.
 

@@ -42,6 +42,13 @@ Before configuring SCIM with Azure AD, ensure you have:
 - [SAML authentication configured with Azure AD](../../configure-authentication/saml/#set-up-saml-with-azure-ad)
 - SCIM feature enabled in Grafana
 
+{{< admonition type="note" >}}
+**Important SAML Configuration for SCIM:**
+When using SAML for authentication alongside SCIM provisioning with Azure AD, it is crucial to ensure that the user identifier in the SAML assertions matches the `externalId` used by SCIM.
+
+Refer to the [SAML authentication with Azure AD documentation](../../configure-authentication/saml/#integrating-with-scim-provisioning) for detailed instructions on how to configure the necessary SAML claims and Grafana SAML settings to align with your SCIM setup.
+{{< /admonition >}}
+
 ## Configure SCIM in Grafana
 
 To enable SCIM provisioning in Grafana, create a service account and generate a service account token that will be used to authenticate SCIM requests from Azure AD.
