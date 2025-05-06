@@ -36,10 +36,10 @@ export class LogListModel implements LogRowModel {
   uniqueLabels: Labels | undefined;
 
   private _body: string | undefined = undefined;
-  private grammar: Grammar;
+  private _grammar?: Grammar;
   private _highlightedBody: string | undefined = undefined;
-  private _fields: FieldDef[] | undefined;
-  private _getFieldLinks: GetFieldLinksFn | undefined;
+  private _fields: FieldDef[] | undefined = undefined;
+  private _getFieldLinks: GetFieldLinksFn | undefined = undefined;
 
   constructor(log: LogRowModel, { escape, getFieldLinks, grammar, timeZone }: PreProcessLogOptions) {
     // LogRowModel
@@ -65,7 +65,8 @@ export class LogListModel implements LogRowModel {
 
     // LogListModel
     this.displayLevel = logLevelToDisplayLevel(log.logLevel);
-    this.grammar = grammar ?? generateLogGrammar(this);
+    this._getFieldLinks = getFieldLinks;
+    this._grammar = grammar;
     this.timestamp = dateTimeFormat(log.timeEpochMs, {
       timeZone,
       defaultWithMS: true,
@@ -76,7 +77,6 @@ export class LogListModel implements LogRowModel {
       raw = escapeUnescapedString(raw);
     }
     this.raw = raw;
-    this._getFieldLinks = getFieldLinks;
   }
 
   get body(): string {
@@ -97,7 +97,8 @@ export class LogListModel implements LogRowModel {
 
   get highlightedBody() {
     if (this._highlightedBody === undefined) {
-      this._highlightedBody = Prism.highlight(this.body, this.grammar, 'lokiql');
+      this._grammar = this._grammar ?? generateLogGrammar(this);
+      this._highlightedBody = Prism.highlight(this.body, this._grammar, 'lokiql');
     }
     return this._highlightedBody;
   }
