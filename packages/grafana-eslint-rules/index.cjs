@@ -4,6 +4,7 @@ const noUnreducedMotion = require('./rules/no-unreduced-motion.cjs');
 const noUntranslatedStrings = require('./rules/no-untranslated-strings.cjs');
 const noTranslationTopLevel = require('./rules/no-translation-top-level.cjs');
 const themeTokenUsage = require('./rules/theme-token-usage.cjs');
+const noRestrictedImgSrcs = require('./rules/no-restricted-img-srcs.cjs');
 
 module.exports = {
   rules: {
@@ -13,5 +14,6 @@ module.exports = {
     'theme-token-usage': themeTokenUsage,
     'no-untranslated-strings': noUntranslatedStrings,
     'no-translation-top-level': noTranslationTopLevel,
+    'no-restricted-img-srcs': noRestrictedImgSrcs,
   },
 };
