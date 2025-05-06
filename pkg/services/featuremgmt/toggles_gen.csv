@@ -231,3 +231,4 @@ multiTenantFrontend,experimental,@grafana/grafana-frontend-platform,false,false,
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
 alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
 alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
+extensionsReadOnlyProxy,experimental,@grafana/plugins-platform-backend,false,false,true

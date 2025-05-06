@@ -108,11 +108,14 @@ describe('DashboardDatasource', () => {
   });
 
   it('Should not mutate field state in dataframe', () => {
+    jest.useFakeTimers();
     const { observable } = setup({ refId: 'A', panelId: 1, withTransforms: true });
 
     let rsp: DataQueryResponse | undefined;
 
     const test = observable.subscribe({ next: (data) => (rsp = data) });
+
+    jest.runAllTimers();
 
     // modifying series in dashboard DS should not affect the original dataframe
     rsp!.data[0].fields[0].state = {
@@ -122,6 +125,8 @@ describe('DashboardDatasource', () => {
     test.unsubscribe();
 
     observable.subscribe({ next: (data) => (rsp = data) });
+
+    jest.runAllTimers();
 
     // on further emissions the result should be the unmodified original dataframe
     expect(rsp!.data[0].fields[0].state).toEqual({});
