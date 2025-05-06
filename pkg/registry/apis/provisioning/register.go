@@ -577,13 +577,6 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				b.storageStatus,
 			)
 
-			// Pull request worker
-			// TODO: This should be wired for render and in between pull request
-			// renderer := pullrequest.NewScreenshotRenderer(b.render, b.unified)
-			// evaluator := pullrequest.NewEvaluator(renderer, b.parsers, b.urlProvider)
-			// commenter := pullrequest.NewCommenter()
-			// pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
-
 			workers := []jobs.Worker{migrationWorker, syncWorker, exportWorker}
 
 			// Add any extra workers

@@ -21,9 +21,11 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/github"
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
@@ -45,6 +47,8 @@ func ProvideWebhooks(
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 	ghFactory *github.Factory,
+	renderer pullrequest.ScreenshotRenderer,
+	parsers resources.ParserFactory,
 ) WebhookExtraBuilder {
 	urlProvider := func(namespace string) string {
 		return cfg.AppURL
@@ -63,6 +67,8 @@ func ProvideWebhooks(
 				b,
 				secrets.NewSingleTenant(secretsSvc),
 				ghFactory,
+				renderer,
+				parsers,
 			)
 		},
 	}
@@ -78,6 +84,8 @@ type webhookConnector struct {
 	apiBuilder      *APIBuilder
 	secrets         secrets.Service
 	ghFactory       *github.Factory
+	renderer        pullrequest.ScreenshotRenderer
+	parsers         resources.ParserFactory
 }
 
 type JobQueueGetter interface {
@@ -93,6 +101,8 @@ func NewWebhookConnector(
 	apiBuilder *APIBuilder,
 	secrets secrets.Service,
 	ghFactory *github.Factory,
+	renderer pullrequest.ScreenshotRenderer,
+	parsers resources.ParserFactory,
 ) *webhookConnector {
 	return &webhookConnector{
 		client:          client,
@@ -103,6 +113,8 @@ func NewWebhookConnector(
 		apiBuilder:      apiBuilder,
 		secrets:         secrets,
 		ghFactory:       ghFactory,
+		renderer:        renderer,
+		parsers:         parsers,
 	}
 }
 
@@ -148,8 +160,11 @@ func (s *webhookConnector) UpdateStorage(storage map[string]rest.Storage) error 
 }
 
 func (s *webhookConnector) GetJobWorkers() []jobs.Worker {
-	// TODO:
-	return []jobs.Worker{}
+	evaluator := pullrequest.NewEvaluator(s.renderer, s.parsers, s.urlProvider)
+	commenter := pullrequest.NewCommenter()
+	pullRequestWorker := pullrequest.NewPullRequestWorker(evaluator, commenter)
+
+	return []jobs.Worker{pullRequestWorker}
 }
 
 func (s *webhookConnector) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {

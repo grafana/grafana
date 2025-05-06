@@ -19,7 +19,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
-	"github.com/grafana/grafana/pkg/services/rendering"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -29,14 +28,10 @@ type RenderExtraBuilder struct {
 	ExtraBuilder
 }
 
-func ProvidePreviewScreenshots(
-	render rendering.Service,
-	unified resource.ResourceClient,
-) RenderExtraBuilder {
+func ProvidePreviewScreenshots(unified resource.ResourceClient) RenderExtraBuilder {
 	return RenderExtraBuilder{
 		ExtraBuilder: func(b *APIBuilder) Extra {
 			return &renderConnector{
-				render:  render,
 				unified: unified,
 			}
 		},
@@ -44,7 +39,6 @@ func ProvidePreviewScreenshots(
 }
 
 type renderConnector struct {
-	render  rendering.Service
 	unified resource.ResourceClient
 }
 

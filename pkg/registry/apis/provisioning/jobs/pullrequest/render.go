@@ -36,6 +36,10 @@ type screenshotRenderer struct {
 	blobstore BlobStoreClient
 }
 
+func ProvideScreenshotRenderer(render rendering.Service, blobstore BlobStoreClient) ScreenshotRenderer {
+	return NewScreenshotRenderer(render, blobstore)
+}
+
 func NewScreenshotRenderer(render rendering.Service, blobstore BlobStoreClient) ScreenshotRenderer {
 	return &screenshotRenderer{
 		render:    render,
