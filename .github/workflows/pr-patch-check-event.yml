@@ -1,12 +1,12 @@
 name: Dispatch check for patch conflicts
-run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
+run-name: dispatch-check-patch-conflicts-${{ github.head_ref }}
 on:
   push:
     branches-ignore:
-      - main
-      - release-*.*.*
+      - "main"
+      - "release-*.*.*"
     tags-ignore:
-      - *
+      - "*"
 
 permissions: {}
 
@@ -17,12 +17,9 @@ jobs:
       contents: read
       actions: write
     env:
-      HEAD_REF: ${{ github.head_ref }}
-      BASE_REF: ${{ github.base_ref }}
       REPO: ${{ github.repository }}
       SENDER: ${{ github.event.sender.login }}
       SHA: ${{ github.sha }}
-      PR_COMMIT_SHA: ${{ github.event.push.head.sha }}
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
     steps:
@@ -45,7 +42,7 @@ jobs:
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
-            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
+            const {REPO, SENDER, SHA} = process.env;
 
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
@@ -54,11 +51,11 @@ jobs:
                 ref: 'main',
                 inputs: {
                   src_repo: REPO,
-                  src_ref: HEAD_REF,
+                  src_ref: 'main',
                   src_merge_sha: SHA,
-                  src_pr_commit_sha: PR_COMMIT_SHA,
+                  src_pr_commit_sha: SHA,
                   patch_repo: REPO + '-security-patches',
-                  patch_ref: BASE_REF,
+                  patch_ref: 'main',
                   triggering_github_handle: SENDER
                 }
             })
