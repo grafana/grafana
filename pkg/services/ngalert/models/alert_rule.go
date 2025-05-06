@@ -776,8 +776,6 @@ func (alertRule *AlertRule) Copy() *AlertRule {
 			QueryType:         d.QueryType,
 			RelativeTimeRange: d.RelativeTimeRange,
 			DatasourceUID:     d.DatasourceUID,
-			DatasourceType:    d.DatasourceType,
-			IsMTQuery:         d.IsMTQuery,
 		}
 		q.Model = make([]byte, 0, cap(d.Model))
 		q.Model = append(q.Model, d.Model...)

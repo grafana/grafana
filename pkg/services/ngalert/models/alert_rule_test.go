@@ -736,8 +736,6 @@ func TestDiff(t *testing.T) {
 			query2.RefID = "test"
 			query2.DatasourceUID = "test"
 			query2.Model = json.RawMessage(`{ "test": "da2ta"}`)
-			query2.DatasourceType = "loki"
-			query2.IsMTQuery = false
 
 			rule2.Data = []AlertQuery{query2}
 
