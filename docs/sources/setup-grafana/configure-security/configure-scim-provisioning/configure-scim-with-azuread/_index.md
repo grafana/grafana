@@ -78,6 +78,8 @@ Configure the enterprise application in Azure AD to enable automated user and te
 
 ### Configure attribute mappings
 
+After setting the Tenant URL and Secret Token, navigate to the **Mappings** section within the same **Provisioning** settings in your Azure AD enterprise application. This is where you will define how Azure AD attributes correspond to the SCIM attributes for Grafana, including the mandatory `externalId`.
+
 {{< admonition type="note" >}}
 Only work email addresses are supported. Azure AD must be configured to use `emails[type eq "work"].value` for email mapping.
 The `externalId` attribute in Grafana is mandatory. Azure AD uses this to uniquely identify users and groups. You must map an attribute from Azure AD to the `externalId` attribute in Grafana. This Azure AD attribute must be **a stable and a unique identifier for each individual user** (for example, the `objectId` attribute in Azure AD is commonly used for this purpose).
