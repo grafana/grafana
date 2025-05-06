@@ -2586,7 +2586,7 @@
       "allowed-groups-description-oauth": "If you configure \"Allowed groups\", you must also configure \"Groups attribute path\".",
       "api-url-description": "The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with <2>OpenID UserInfo</2>.",
       "team-ids-description": "If set, the user must be a member of one of the given teams to log in.",
-      "team-ids-description-oauth": "If you configure {{teamIds}}, you must also configure {{teamsUrl}} and {{teamIdsAttributePath}}.",
+      "team-ids-description-oauth": "If you configure \"{{teamIds}}\", you must also configure \"{{teamsUrl}}\" and \"{{teamIdsAttributePath}}\".",
       "team-ids-github": "Integer list of Team Ids.",
       "team-ids-other": "String list of Team Ids.",
       "teams-url-description": "The URL used to query for Team Ids. If not set, the default value is /teams.",

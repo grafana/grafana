@@ -505,7 +505,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     orgAttributePath: {
       label: 'Organization attribute path',
-      description: 'JMESPath expression to use for organization lookup.',
+      description:
+        'JMESPath expression to use for organization lookup. If you configure "Organization mapping", you must also configure "Organization attribute path".',
       type: 'text',
       hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
     },
@@ -633,7 +634,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.team-ids-description-oauth',
-              'If you configure {{teamIds}}, you must also configure {{teamsUrl}} and {{teamIdsAttributePath}}.',
+              'If you configure "{{teamIds}}", you must also configure "{{teamsUrl}}" and "{{teamIdsAttributePath}}".',
               { teamIds: 'Team Ids', teamsUrl: 'Teams URL', teamIdsAttributePath: 'Team Ids attribute path' }
             )}
         </>
