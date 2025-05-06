@@ -1,3 +1,5 @@
+import { ValidationRule } from 'react-hook-form';
+
 import { SelectableValue } from '@grafana/data';
 import { IconName } from '@grafana/ui';
 
@@ -121,6 +123,11 @@ export interface ChannelTypeSettings {
   httpMethod: string;
   severity: string;
   uploadImage: boolean;
+}
+
+export interface OptionMeta {
+  required?: string | ValidationRule<boolean>;
+  readOnly?: boolean;
 }
 
 export interface NotificationChannelOption {

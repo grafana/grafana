@@ -3,6 +3,7 @@ import { uniqueId } from 'lodash';
 
 import { DataSourceInstanceSettings, PluginType } from '@grafana/data';
 import { config } from '@grafana/runtime';
+import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 import {
   GrafanaRecordingRuleDefinition,
@@ -178,6 +179,98 @@ const grafanaRecordingRule = Factory.define<RulerGrafanaRuleDTO<GrafanaRecording
   annotations: {}, // @TODO recording rules don't have annotations, we need to fix this type definition
 }));
 
+class GrafanaContactPointFactory extends Factory<GrafanaManagedContactPoint> {
+  withIntegrations(builder: (factory: GrafanaReceiverConfigFactory) => GrafanaManagedReceiverConfig[]) {
+    return this.params({
+      grafana_managed_receiver_configs: builder(grafanaReceiverConfigFactory),
+    });
+  }
+}
+
+const grafanaContactPointFactory = GrafanaContactPointFactory.define(({ sequence }) => ({
+  id: `contact-point-${sequence}`,
+  name: `contact-point-${sequence}`,
+  metadata: {
+    name: `contact-point-${sequence}`,
+    namespace: 'default',
+    uid: `uid-${sequence}`,
+    resourceVersion: 'a5e9fd75262d5488',
+    creationTimestamp: undefined,
+    annotations: {
+      'grafana.com/access/canAdmin': 'true',
+      'grafana.com/access/canDelete': 'true',
+      'grafana.com/access/canReadSecrets': 'true',
+      'grafana.com/access/canWrite': 'true',
+      'grafana.com/inUse/routes': '0',
+      'grafana.com/inUse/rules': '1',
+      'grafana.com/provenance': 'none',
+    },
+  },
+  provisioned: false,
+  grafana_managed_receiver_configs: [],
+}));
+
+interface SlackReceiverOptions {
+  recipient?: string;
+  token?: string;
+  url?: string;
+}
+
+interface SNSReceiverOptions {
+  api_url: string;
+  sigv4?: {
+    region: string;
+    access_key?: string;
+    secret_key?: string;
+  };
+  topic_arn?: string;
+}
+
+class GrafanaReceiverConfigFactory extends Factory<GrafanaManagedReceiverConfig> {
+  email() {
+    return this.params({ type: 'email', name: `email-${this.sequence()}` });
+  }
+
+  oncall() {
+    return this.params({ type: 'oncall', name: `oncall-${this.sequence()}` });
+  }
+
+  slack({ recipient, token, url }: SlackReceiverOptions = {}) {
+    return this.params({
+      type: 'slack',
+      name: `slack-${this.sequence()}`,
+      settings: { recipient },
+      secureFields: { token: Boolean(token), url: Boolean(url) },
+    });
+  }
+
+  webhook() {
+    return this.params({ type: 'webhook', name: `webhook-${this.sequence()}` });
+  }
+
+  sns({ api_url, sigv4, topic_arn }: SNSReceiverOptions) {
+    const { access_key, secret_key, ...sigv4WithoutSecrets } = sigv4 ?? {};
+    return this.params({
+      type: 'sns',
+      name: `sns-${this.sequence()}`,
+      settings: { api_url, sigv4: sigv4WithoutSecrets, topic_arn },
+      secureFields: { 'sigv4.access_key': Boolean(access_key), 'sigv4.secret_key': Boolean(secret_key) },
+    });
+  }
+
+  mqtt() {
+    return this.params({ type: 'mqtt', name: `mqtt-${this.sequence()}` });
+  }
+}
+
+const grafanaReceiverConfigFactory = GrafanaReceiverConfigFactory.define(({ sequence }) => ({
+  name: `receiver-config-${sequence}`,
+  type: 'email',
+  settings: {},
+  secureFields: {},
+  disableResolveMessage: false,
+}));
+
 export const alertingFactory = {
   folder: grafanaFolderFactory,
   prometheus: {
@@ -193,4 +286,10 @@ export const alertingFactory = {
     },
   },
   dataSource: dataSourceFactory,
+  alertmanager: {
+    grafana: {
+      contactPoint: grafanaContactPointFactory,
+      receiver: grafanaReceiverConfigFactory,
+    },
+  },
 };
