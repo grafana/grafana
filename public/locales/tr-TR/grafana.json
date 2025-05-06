@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Temayı değiştir...",
+      "change-theme": "",
       "dark-theme": "Koyu",
-      "light-theme": "Açık"
+      "light-theme": "Açık",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Sonuç bulunamadı"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Ara veya şuraya git:"

@@ -1,5 +1,5 @@
 import { css } from '@emotion/css';
-import { isArray, isObject } from 'lodash';
+import { cloneDeep, isArray, isObject } from 'lodash';
 import * as React from 'react';
 import { useAsync } from 'react-use';
 
@@ -85,7 +85,7 @@ export const wrapWithPluginContext = <T,>(pluginId: string, Component: React.Com
 
     return (
       <PluginContextProvider meta={pluginMeta}>
-        <Component {...props} />
+        <Component {...readOnlyCopy(props, log)} />
       </PluginContextProvider>
     );
   };
@@ -163,7 +163,15 @@ export function generateExtensionId(pluginId: string, extensionPointId: string, 
     .toString();
 }
 
-const _isProxy = Symbol('isReadOnlyProxy');
+const _isReadOnlyProxy = Symbol('isReadOnlyProxy');
+const _isMutationObserverProxy = Symbol('isMutationObserverProxy');
+
+export class ReadOnlyProxyError extends Error {
+  constructor(message?: string) {
+    super(message ?? 'Mutating a read-only proxy object');
+    this.name = 'ReadOnlyProxyError';
+  }
+}
 
 /**
  * Returns a proxy that wraps the given object in a way that makes it read only.
@@ -185,7 +193,7 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
     isExtensible: () => false,
     set: () => false,
     get(target, prop, receiver) {
-      if (prop === _isProxy) {
+      if (prop === _isReadOnlyProxy) {
         return true;
       }
 
@@ -210,12 +218,102 @@ export function getReadOnlyProxy<T extends object>(obj: T): T {
   });
 }
 
+/**
+ * Returns a proxy that logs any attempted mutation to the original object.
+ *
+ * @param obj The object to observe
+ * @returns A new proxy object that logs any attempted mutation to the original object
+ */
+export function getMutationObserverProxy<T extends object>(obj: T, _log: ExtensionsLog = log): T {
+  if (!obj || typeof obj !== 'object' || isMutationObserverProxy(obj)) {
+    return obj;
+  }
+
+  const cache = new WeakMap();
+
+  return new Proxy(obj, {
+    deleteProperty(target, prop) {
+      _log.warning(`Attempted to delete object property "${String(prop)}"`, {
+        stack: new Error().stack ?? '',
+      });
+      Reflect.deleteProperty(target, prop);
+      return true;
+    },
+    defineProperty(target, prop, descriptor) {
+      _log.warning(`Attempted to define object property "${String(prop)}"`, {
+        stack: new Error().stack ?? '',
+      });
+      Reflect.defineProperty(target, prop, descriptor);
+      return true;
+    },
+    set(target, prop, newValue) {
+      _log.warning(`Attempted to mutate object property "${String(prop)}"`, {
+        stack: new Error().stack ?? '',
+      });
+      Reflect.set(target, prop, newValue);
+      return true;
+    },
+    get(target, prop, receiver) {
+      if (prop === _isMutationObserverProxy) {
+        return true;
+      }
+
+      const value = Reflect.get(target, prop, receiver);
+
+      // Return read-only properties as-is to avoid proxy invariant violations
+      const descriptor = Reflect.getOwnPropertyDescriptor(target, prop);
+      if (descriptor && !descriptor.configurable && !descriptor.writable) {
+        return value;
+      }
+
+      // This will create a clone of the date time object
+      // instead of creating a proxy because the underlying
+      // momentjs object needs to be able to mutate itself.
+      if (isDateTime(value)) {
+        return dateTime(value);
+      }
+
+      if (isObject(value) || isArray(value)) {
+        if (!cache.has(value)) {
+          cache.set(value, getMutationObserverProxy(value, _log));
+        }
+        return cache.get(value);
+      }
+
+      return value;
+    },
+  });
+}
+
+export function readOnlyCopy<T>(value: T, _log: ExtensionsLog = log): T {
+  // Primitive types are read-only by default
+  if (!value || typeof value !== 'object') {
+    return value;
+  }
+
+  if (config.featureToggles.extensionsReadOnlyProxy) {
+    return getReadOnlyProxy(value);
+  }
+
+  // In dev mode: we return a read-only proxy (throws errors for any mutation), but with a deep-cloned version of the original object (so no interference with other call-sites)
+  if (isGrafanaDevMode()) {
+    return getReadOnlyProxy(cloneDeep(value));
+  }
+
+  // Default: we return a proxy of a deep-cloned version of the original object, which logs warnings when mutation is attempted
+  return getMutationObserverProxy(cloneDeep(value), _log);
+}
+
 function isRecord(value: unknown): value is Record<string | number | symbol, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
 export function isReadOnlyProxy(value: unknown): boolean {
-  return isRecord(value) && value[_isProxy] === true;
+  return isRecord(value) && value[_isReadOnlyProxy] === true;
+}
+
+export function isMutationObserverProxy(value: unknown): boolean {
+  return isRecord(value) && value[_isMutationObserverProxy] === true;
 }
 
 export function createAddedLinkConfig<T extends object>(

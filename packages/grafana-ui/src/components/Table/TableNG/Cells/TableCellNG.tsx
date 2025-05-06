@@ -18,7 +18,7 @@ import {
   FILTER_OUT_OPERATOR,
   TableCellNGProps,
 } from '../types';
-import { getCellColors, getTextAlign } from '../utils';
+import { getCellColors, getDisplayName, getTextAlign } from '../utils';
 
 import { ActionsCell } from './ActionsCell';
 import AutoCell from './AutoCell';
@@ -49,6 +49,7 @@ export function TableCellNG(props: TableCellNGProps) {
   } = props;
 
   const cellInspect = field.config?.custom?.inspect ?? false;
+  const displayName = getDisplayName(field);
 
   const { config: fieldConfig } = field;
   const defaultCellOptions: TableAutoCellOptions = { type: TableCellDisplayMode.Auto };
@@ -180,15 +181,23 @@ export function TableCellNG(props: TableCellNGProps) {
 
   const onFilterFor = useCallback(() => {
     if (onCellFilterAdded) {
-      onCellFilterAdded({ key: field.name, operator: FILTER_FOR_OPERATOR, value: String(value ?? '') });
+      onCellFilterAdded({
+        key: displayName,
+        operator: FILTER_FOR_OPERATOR,
+        value: String(value ?? ''),
+      });
     }
-  }, [field.name, onCellFilterAdded, value]);
+  }, [displayName, onCellFilterAdded, value]);
 
   const onFilterOut = useCallback(() => {
     if (onCellFilterAdded) {
-      onCellFilterAdded({ key: field.name, operator: FILTER_OUT_OPERATOR, value: String(value ?? '') });
+      onCellFilterAdded({
+        key: displayName,
+        operator: FILTER_OUT_OPERATOR,
+        value: String(value ?? ''),
+      });
     }
-  }, [field.name, onCellFilterAdded, value]);
+  }, [displayName, onCellFilterAdded, value]);
 
   return (
     <div ref={divWidthRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} className={styles.cell}>
