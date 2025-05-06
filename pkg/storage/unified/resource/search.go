@@ -424,33 +424,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 		}
 	}()
 
-	go func() {
-		// Monitor index events
-		var evt *IndexEvent
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case evt = <-s.indexEventsChan:
-			}
-			if evt.Err != nil {
-				s.log.Error("error indexing watch event", "error", evt.Err)
-				continue
-			}
-			// record latency from when event was created to when it was indexed
-			span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", evt.Latency.Seconds())))
-			s.log.Debug("indexed new object", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
-			if evt.Latency.Seconds() > 1 {
-				s.log.Warn("high index latency object details", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
-			}
-			if s.indexMetrics != nil {
-				s.indexMetrics.IndexLatency.WithLabelValues(evt.WrittenEvent.Key.Resource).Observe(evt.Latency.Seconds())
-			}
-			if s.clientIndexEventsChan != nil {
-				s.clientIndexEventsChan <- evt
-			}
-		}
-	}()
+	go s.monitorIndexEvents(ctx)
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
@@ -466,11 +440,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 // It will dispatch the event to the appropriate index queue processor
 func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"dispatchEvent")
+	defer span.End()
 	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
 		s.log.Info("ignoring watch event", "type", evt.Type)
 		return
 	}
-	defer span.End()
 	span.SetAttributes(
 		attribute.String("event_type", evt.Type.String()),
 		attribute.String("namespace", evt.Key.Namespace),
@@ -496,6 +470,35 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 		return
 	}
 	indexQueueProcessor.Add(evt)
+}
+
+func (s *searchSupport) monitorIndexEvents(ctx context.Context) {
+	var evt *IndexEvent
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case evt = <-s.indexEventsChan:
+		}
+		if evt.Err != nil {
+			s.log.Error("error indexing watch event", "error", evt.Err)
+			continue
+		}
+		_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"monitorIndexEvents")
+		defer span.End()
+		// record latency from when event was created to when it was indexed
+		span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", evt.Latency.Seconds())))
+		s.log.Debug("indexed new object", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
+		if evt.Latency.Seconds() > 1 {
+			s.log.Warn("high index latency object details", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
+		}
+		if s.indexMetrics != nil {
+			s.indexMetrics.IndexLatency.WithLabelValues(evt.WrittenEvent.Key.Resource).Observe(evt.Latency.Seconds())
+		}
+		if s.clientIndexEventsChan != nil {
+			s.clientIndexEventsChan <- evt
+		}
+	}
 }
 
 func (s *searchSupport) getOrCreateIndex(ctx context.Context, key NamespacedResource) (ResourceIndex, error) {
