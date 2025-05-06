@@ -1,7 +1,7 @@
 import 'react-data-grid/lib/styles.css';
 import { css } from '@emotion/css';
 import { useMemo, useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
-import DataGrid, { RenderCellProps, RenderRowProps, Row, SortColumn, DataGridHandle } from 'react-data-grid';
+import DataGrid, { RenderCellProps, RenderRowProps, Row, DataGridHandle } from 'react-data-grid';
 import { useMeasure } from 'react-use';
 
 import {
@@ -30,6 +30,7 @@ import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
+import { TableSortingTypes, useTableSorting } from './hooks/useTableSorting';
 import {
   TableNGProps,
   FilterType,
@@ -54,7 +55,6 @@ import {
   getIsNestedTable,
   getRowHeight,
   getTextAlign,
-  handleSort,
   MapFrameToGridOptions,
   processNestedTableRows,
   shouldTextOverflow,
@@ -80,19 +80,6 @@ export function TableNG(props: TableNGProps) {
     replaceVariables,
   } = props;
 
-  const initialSortColumns = useMemo<SortColumn[]>(() => {
-    const initialSort = initialSortBy?.map(({ displayName, desc }) => {
-      const matchingField = data.fields.find(({ state }) => state?.displayName === displayName);
-      const columnKey = matchingField?.name || displayName;
-
-      return {
-        columnKey,
-        direction: desc ? ('DESC' as const) : ('ASC' as const),
-      };
-    });
-    return initialSort ?? [];
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   /* ------------------------------- Local state ------------------------------ */
   const [revId, setRevId] = useState(0);
   const [contextMenuProps, setContextMenuProps] = useState<{
@@ -109,7 +96,6 @@ export function TableNG(props: TableNGProps) {
   // This state will trigger re-render for recalculating row heights
   const [, setResizeTrigger] = useState(0);
   const [, setReadyForRowHeightCalc] = useState(false);
-  const [sortColumns, setSortColumns] = useState<readonly SortColumn[]>(initialSortColumns);
   const [expandedRows, setExpandedRows] = useState<number[]>([]);
   const [isNestedTable, setIsNestedTable] = useState(false);
   const scrollPositionRef = useRef<ScrollPosition>({ x: 0, y: 0 });
@@ -119,8 +105,6 @@ export function TableNG(props: TableNGProps) {
   const crossFilterOrder = useRef<string[]>([]);
   const crossFilterRows = useRef<Record<string, TableRow[]>>({});
   const headerCellRefs = useRef<Record<string, HTMLDivElement>>({});
-  // TODO: This ref persists sortColumns between renders. setSortColumns is still used to trigger re-render
-  const sortColumnsRef = useRef<SortColumn[]>(initialSortColumns);
   const prevProps = useRef(props);
   const calcsRef = useRef<string[]>([]);
   const [paginationWrapperRef, { height: paginationHeight }] = useMeasure<HTMLDivElement>();
@@ -339,36 +323,15 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, filter, isNestedTable, props.data.fields]);
 
-  // Sort rows
-  const sortedRows = useMemo(() => {
-    if (sortColumns.length === 0) {
-      return filteredRows;
-    }
-
-    // Common sort comparator function
-    const compareRows = (a: TableRow, b: TableRow): number => {
-      let result = 0;
-      for (let i = 0; i < sortColumns.length; i++) {
-        const { columnKey, direction } = sortColumns[i];
-        const compare = getComparator(columnTypes[columnKey]);
-        const sortDir = direction === 'ASC' ? 1 : -1;
-
-        result = sortDir * compare(a[columnKey], b[columnKey]);
-        if (result !== 0) {
-          break;
-        }
-      }
-      return result;
-    };
-
-    // Handle nested tables
-    if (isNestedTable) {
-      return processNestedTableRows(filteredRows, (parents) => [...parents].sort(compareRows));
-    }
-
-    // Regular sort for tables without nesting
-    return filteredRows.slice().sort((a, b) => compareRows(a, b));
-  }, [filteredRows, sortColumns, columnTypes, isNestedTable]);
+  const { handleNestedTableSort, nestedTableSortColumns, onSort, sortColumns, sortedRows } = useTableSorting({
+    columnTypes,
+    data: props.data,
+    filteredRows,
+    initialSortBy,
+    isNestedTable,
+    onSortByChange,
+    setRevId,
+  });
 
   // Paginated rows
   // TODO consolidate calculations into pagination wrapper component and only use when needed
@@ -474,27 +437,40 @@ export function TableNG(props: TableNGProps) {
           isCountRowsSet,
           onCellFilterAdded,
           ctx,
-          onSortByChange,
           rows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
-          setSortColumns,
-          sortColumnsRef,
           styles,
           theme,
           showTypeIcons,
           replaceVariables,
+          nestedTableSortColumns,
           ...props,
         },
         handlers: {
           onCellExpand,
           onColumnResize: onColumnResize!,
+          handleNestedTableSort,
+          onSort,
         },
         // Adjust table width to account for the scroll bar width
         availableWidth: width - (hasScroll ? TABLE.SCROLL_BAR_WIDTH + TABLE.SCROLL_BAR_MARGIN : 0),
       }),
-    [props.data, calcsRef, filter, expandedRows, expandedRows.length, footerOptions, width, hasScroll, sortedRows] // eslint-disable-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      props.data,
+      calcsRef,
+      filter,
+      expandedRows,
+      expandedRows.length,
+      footerOptions,
+      width,
+      hasScroll,
+      sortedRows,
+      nestedTableSortColumns,
+      handleNestedTableSort,
+    ]
   );
 
   // This effect needed to set header cells refs before row height calculation
@@ -544,13 +520,6 @@ export function TableNG(props: TableNGProps) {
       y: target.scrollTop,
     };
   };
-
-  // Reset sortColumns when initialSortBy changes
-  useEffect(() => {
-    if (initialSortColumns.length > 0) {
-      setSortColumns(initialSortColumns);
-    }
-  }, [initialSortColumns]);
 
   // Restore scroll position after re-renders
   useEffect(() => {
@@ -663,12 +632,19 @@ export function mapFrameToDataGrid({
   options,
   handlers,
   availableWidth,
+  parentRowIdx,
 }: {
   frame: DataFrame;
   calcsRef: React.MutableRefObject<string[]>;
   options: MapFrameToGridOptions;
-  handlers: { onCellExpand: (rowIdx: number) => void; onColumnResize: TableColumnResizeActionCallback };
+  handlers: {
+    onCellExpand: (rowIdx: number) => void;
+    onColumnResize: TableColumnResizeActionCallback;
+    handleNestedTableSort?: TableSortingTypes['handleNestedTableSort'];
+    onSort: TableSortingTypes['onSort'];
+  };
   availableWidth: number;
+  parentRowIdx?: number;
 }): TableColumn[] {
   const {
     columnTypes,
@@ -683,21 +659,19 @@ export function mapFrameToDataGrid({
     isCountRowsSet,
     onCellFilterAdded,
     ctx,
-    onSortByChange,
     rows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
-    setSortColumns,
-    sortColumnsRef,
     styles,
     theme,
     timeRange,
     getActions,
     showTypeIcons,
     replaceVariables,
+    nestedTableSortColumns,
   } = options;
-  const { onCellExpand, onColumnResize } = handlers;
+  const { onCellExpand, onColumnResize, handleNestedTableSort, onSort } = handlers;
 
   const columns: TableColumn[] = [];
   const hasNestedFrames = getIsNestedTable(frame);
@@ -733,6 +707,7 @@ export function mapFrameToDataGrid({
         // If it's a child, render entire DataGrid at first column position
         let expandedColumns: TableColumn[] = [];
         let expandedRecords: TableRow[] = [];
+        const nestedRowIdx = Number(row.__index);
 
         // Type guard to check if data exists as it's optional
         if (row.data) {
@@ -740,21 +715,57 @@ export function mapFrameToDataGrid({
             frame: row.data,
             calcsRef,
             options: { ...options },
-            handlers: { onCellExpand, onColumnResize },
+            handlers: {
+              onCellExpand,
+              onColumnResize,
+              handleNestedTableSort,
+              onSort,
+            },
             availableWidth,
+            parentRowIdx: nestedRowIdx,
           });
           expandedRecords = frameToRecords(row.data);
         }
 
-        // TODO add renderHeaderCell HeaderCell's here and handle all features
+        // Get sort columns for this nested table
+        const nestedSortColumns = nestedTableSortColumns?.[nestedRowIdx] || [];
+
+        // Sort the nested table rows if we have sort columns
+        let nestedRows = expandedRecords;
+        if (nestedSortColumns.length > 0 && row.data) {
+          // Extract column types from nested frame
+          const nestedColumnTypes = row.data.fields.reduce<ColumnTypes>(
+            (acc, { name, type }) => ({ ...acc, [name]: type }),
+            {}
+          );
+
+          // Sort nested rows
+          nestedRows = [...expandedRecords].sort((a, b) => {
+            let result = 0;
+            for (let i = 0; i < nestedSortColumns.length; i++) {
+              const { columnKey, direction } = nestedSortColumns[i];
+              const compare = getComparator(nestedColumnTypes[columnKey]);
+              const sortDir = direction === 'ASC' ? 1 : -1;
+
+              result = sortDir * compare(a[columnKey], b[columnKey]);
+              if (result !== 0) {
+                break;
+              }
+            }
+            return result;
+          });
+        }
+
         return (
           <DataGrid<TableRow, TableSummaryRow>
-            rows={expandedRecords}
+            rows={nestedRows}
             columns={expandedColumns}
             rowHeight={defaultRowHeight}
             className={styles.dataGrid}
             style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH - 1 }}
             headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
+            defaultColumnOptions={{ sortable: true, resizable: true }}
+            sortColumns={nestedSortColumns}
           />
         );
       },
@@ -866,18 +877,9 @@ export function mapFrameToDataGrid({
           column={column}
           rows={rows}
           field={field}
-          onSort={(columnKey, direction, isMultiSort) => {
-            handleSort(columnKey, direction, isMultiSort, setSortColumns, sortColumnsRef);
-
-            // Update panel context with the new sort order
-            if (onSortByChange) {
-              const sortByFields = sortColumnsRef.current.map(({ columnKey, direction }) => ({
-                displayName: columnKey,
-                desc: direction === 'DESC',
-              }));
-              onSortByChange(sortByFields);
-            }
-          }}
+          onSort={(columnKey, direction, isMultiSort) =>
+            onSort(columnKey, direction, isMultiSort, parentRowIdx, hasNestedFrames)
+          }
           direction={sortDirection}
           justifyContent={justifyColumnContent}
           filter={filter}
