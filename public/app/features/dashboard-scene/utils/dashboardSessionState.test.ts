@@ -128,7 +128,7 @@ describe('dashboardSessionState', () => {
   });
 });
 
-function buildTestScene(overrides?: any) {
+function buildTestScene(overrides?: Partial<DashboardDataDTO>) {
   const testDashboard: DashboardDataDTO = {
     annotations: { list: [] },
     editable: true,
