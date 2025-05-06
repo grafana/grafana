@@ -6,7 +6,7 @@ import { t } from 'app/core/internationalization';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';
-import { FolderAction, useFolderAbility } from '../../hooks/useAbilities';
+import { FolderBulkAction, useFolderBulkActionAbility } from '../../hooks/useAbilities';
 import { useFolder } from '../../hooks/useFolder';
 import { createRelativeUrl } from '../../utils/url';
 
@@ -17,9 +17,9 @@ interface Props {
 }
 
 export const FolderBulkActionsButton = ({ folderUID }: Props) => {
-  const [pauseSupported, pauseAllowed] = useFolderAbility(FolderAction.Pause);
+  const [pauseSupported, pauseAllowed] = useFolderBulkActionAbility(FolderBulkAction.Pause);
   const canPause = pauseSupported && pauseAllowed && false; // lets disable pause for now
-  const [deleteSupported, deleteAllowed] = useFolderAbility(FolderAction.Delete);
+  const [deleteSupported, deleteAllowed] = useFolderBulkActionAbility(FolderBulkAction.Delete);
   const canDelete = deleteSupported && deleteAllowed;
   const [pauseFolder, updateState] = alertingFolderActionsApi.endpoints.pauseFolder.useMutation();
   const [unpauseFolder, unpauseState] = alertingFolderActionsApi.endpoints.unpauseFolder.useMutation();

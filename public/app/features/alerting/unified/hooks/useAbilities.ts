@@ -92,7 +92,7 @@ export enum AlertRuleAction {
 }
 
 // this enum list all of the bulk actions we can perform on a folder
-export enum FolderAction {
+export enum FolderBulkAction {
   Pause = 'pause-folder', // unpause permissions are the same as pause
   Delete = 'delete-folder',
 }
@@ -119,22 +119,22 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderAction;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction;
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
 
 /**
  * This one will check for folder abilities
  */
-export const useFolderAbilities = (): Abilities<FolderAction> => {
+export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
   return {
-    [FolderAction.Pause]: [AlwaysSupported, isAdmin()],
-    [FolderAction.Delete]: [AlwaysSupported, isAdmin()],
+    [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
+    [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
   };
 };
 
-export const useFolderAbility = (action: FolderAction): Ability => {
-  const allAbilities = useFolderAbilities();
+export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability => {
+  const allAbilities = useFolderBulkActionAbilities();
   return allAbilities[action];
 };
 
