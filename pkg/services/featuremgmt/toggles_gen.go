@@ -934,4 +934,8 @@ const (
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
+
+	// FlagExtensionsReadOnlyProxy
+	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
+	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
 )
