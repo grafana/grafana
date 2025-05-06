@@ -14,6 +14,7 @@ var ErrTimeout = errors.New("timeout error - you can set timeout in seconds with
 var ErrConcurrentLimitReached = errors.New("rendering concurrent limit reached")
 var ErrRenderUnavailable = errors.New("rendering plugin not available")
 var ErrServerTimeout = errutil.NewBase(errutil.StatusUnknown, "rendering.serverTimeout", errutil.WithPublicMessage("error trying to connect to image-renderer service"))
+var ErrTooManyRequests = errutil.NewBase(errutil.StatusTooManyRequests, "rendering.tooManyRequests", errutil.WithPublicMessage("trying to send too many requests to image-renderer service"))
 
 type RenderType string
 

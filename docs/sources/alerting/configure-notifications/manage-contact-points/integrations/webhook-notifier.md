@@ -68,17 +68,17 @@ For more details on contact points, including how to test them and enable notifi
 
 #### Optional settings
 
-| Option                            | Description                                                                                                             |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| HTTP Method                       | Specifies the HTTP method to use: `POST` or `PUT`.                                                                      |
-| Basic Authentication Username     | Username for HTTP Basic Authentication.                                                                                 |
-| Basic Authentication Password     | Password for HTTP Basic Authentication.                                                                                 |
-| Authentication Header Scheme      | Scheme for the `Authorization` Request Header. Default is `Bearer`.                                                     |
-| Authentication Header Credentials | Credentials for the `Authorization` Request header.                                                                     |
-| Extra Headers                     | Additional HTTP headers to include in the request.                                                                      |
-| Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit. |
-| TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                |
-| HMAC Signature                    | HMAC signature configuration options.                                                                                   |
+| Option                            | Description                                                                                                                                                                               |
+| --------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP Method                       | Specifies the HTTP method to use: `POST` or `PUT`.                                                                                                                                        |
+| Basic Authentication Username     | Username for HTTP Basic Authentication.                                                                                                                                                   |
+| Basic Authentication Password     | Password for HTTP Basic Authentication.                                                                                                                                                   |
+| Authentication Header Scheme      | Scheme for the `Authorization` Request Header. Default is `Bearer`.                                                                                                                       |
+| Authentication Header Credentials | Credentials for the `Authorization` Request header.                                                                                                                                       |
+| Extra Headers                     | Additional HTTP headers to include in the request. You can also override the default `Content-Type: application/json` header to specify a different content type for the request payload. |
+| Max Alerts                        | Maximum number of alerts to include in a notification. Any alerts exceeding this limit are ignored. `0` means no limit.                                                                   |
+| TLS                               | TLS configuration options, including CA certificate, client certificate, and client key.                                                                                                  |
+| HMAC Signature                    | HMAC signature configuration options.                                                                                                                                                     |
 
 {{< admonition type="note" >}}
 
@@ -254,6 +254,12 @@ The Alert object represents an alert included in the notification group, as prov
 
 ## Custom Payload
 
+{{< admonition type="note" >}}
+
+Custom Payload is not yet [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) in Grafana Cloud.
+
+{{< /admonition >}}
+
 The `Custom Payload` option allows you to completely customize the webhook payload using templates. This gives you full control over the structure and content of the webhook request.
 
 | Option            | Description                                                                                               |
@@ -284,38 +290,4 @@ For detailed information about these and other template functions, refer to [not
 
 Example using JSON helper functions:
 
-```
-{{ define "webhook.custom.payload" -}}
-  {{ coll.Dict
-  "receiver" .Receiver
-  "status" .Status
-  "alerts" (tmpl.Exec "webhook.custom.simple_alerts" .Alerts | data.JSON)
-  "groupLabels" .GroupLabels
-  "commonLabels" .CommonLabels
-  "commonAnnotations" .CommonAnnotations
-  "externalURL" .ExternalURL
-  "version" "1"
-  "orgId"  (index .Alerts 0).OrgID
-  "truncatedAlerts"  .TruncatedAlerts
-  "groupKey" .GroupKey
-  "state"  (tmpl.Inline "{{ if eq .Status \"resolved\" }}ok{{ else }}alerting{{ end }}" . )
-  "allVariables"  .Vars
-  "title" (tmpl.Exec "default.title" . )
-  "message" (tmpl.Exec "default.message" . )
-  | data.ToJSONPretty " "}}
-{{- end }}
-
-{{- /* Embed json templates in other json templates. */ -}}
-{{ define "webhook.custom.simple_alerts" -}}
-  {{- $alerts := coll.Slice -}}
-  {{- range . -}}
-    {{ $alerts = coll.Append (coll.Dict
-    "status" .Status
-    "labels" .Labels
-    "startsAt" .StartsAt
-    "endsAt" .EndsAt
-    ) $alerts}}
-  {{- end -}}
-  {{- $alerts | data.ToJSON -}}
-{{- end }}
-```
+{{< docs/shared lookup="alerts/example-custom-json-payload.md" source="grafana" version="<GRAFANA_VERSION>" >}}

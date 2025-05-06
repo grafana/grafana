@@ -29,10 +29,7 @@
   "liveNow": false,
   "panels": [
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -56,10 +53,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -87,10 +81,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -120,10 +111,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 26,
         "w": 6,
@@ -153,10 +141,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 13,
         "w": 6,
@@ -186,10 +171,7 @@
       "type": "dashlist"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "gridPos": {
         "h": 13,
         "w": 6,

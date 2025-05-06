@@ -5,7 +5,7 @@ import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 import { getEmptyScopeObject } from '../utils';
 
-import { NodeReason, NodesMap, SelectedScope, TreeScope } from './types';
+import { Node, NodeReason, NodesMap, SelectedScope, ToggleNode, TreeScope } from './types';
 
 const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
@@ -67,16 +67,23 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Making a copy as we will be changing this in place and then updating state later.
     // This though does not make a deep copy so you cannot rely on reference of nested nodes changing.
     const nodes = { ...this.state.nodes };
-    let currentLevel: NodesMap = nodes;
+    let parentNode: Node | undefined = nodes[''];
     let loadingNodeName = path[0];
+    let currentNode = nodes[''];
 
     if (path.length > 1) {
-      const pathToParent = path.slice(0, path.length - 1);
-      currentLevel = getNodesAtPath(nodes, pathToParent);
+      const pathToParent = path.slice(1, path.length - 1);
+      parentNode = getNodesAtPath(nodes[''], pathToParent);
       loadingNodeName = last(path)!;
+
+      if (!parentNode) {
+        console.warn('No parent node found for path:', path);
+        return;
+      }
+
+      currentNode = parentNode.nodes[loadingNodeName];
     }
 
-    const currentNode = currentLevel[loadingNodeName];
     const differentQuery = currentNode.query !== query;
 
     currentNode.expanded = expanded;
@@ -125,47 +132,78 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    *
    * The main function of this method is to update the treeScopes state which is a representation of what is selected in
    * the UI and to prefetch the scope data from the server.
-   * @param path
    */
-  public toggleNodeSelect = (path: string[]) => {
-    let treeScopes = [...this.state.treeScopes];
+  public toggleNodeSelect = (node: ToggleNode) => {
+    if ('scopeName' in node) {
+      // This is for a case where we don't have a path yet. For example on init we get the selected from url, but
+      // just the names. If we want to deselect them without knowing where in the tree they are we can just pass the
+      // name.
 
-    let parentNode = this.state.nodes[''];
-
-    for (let idx = 1; idx < path.length - 1; idx++) {
-      parentNode = parentNode.nodes[path[idx]];
+      const newTreeScopes = this.state.treeScopes.filter((s) => s.scopeName !== node.scopeName);
+      if (newTreeScopes.length !== this.state.treeScopes.length) {
+        this.updateState({ treeScopes: newTreeScopes });
+        return;
+      }
     }
 
-    const nodeName = path[path.length - 1];
-    const { linkId } = parentNode.nodes[nodeName];
+    if (!node.path) {
+      console.warn('Node cannot be selected without both path and name', node);
+      return;
+    }
+
+    let treeScopes = [...this.state.treeScopes];
+    const parentNode = getNodesAtPath(this.state.nodes[''], node.path.slice(1, -1));
+
+    if (!parentNode) {
+      // Either the path is wrong or we don't have the nodes loaded yet. So let's check the selected tree nodes if we
+      // can remove something based on scope name.
+      const scopeName = node.path.at(-1);
+      const newTreeScopes = treeScopes.filter((s) => s.scopeName !== scopeName);
+      if (newTreeScopes.length !== treeScopes.length) {
+        this.updateState({ treeScopes: newTreeScopes });
+      } else {
+        console.warn('No node found for path:', node.path);
+      }
+      return;
+    }
+
+    const nodeName = node.path[node.path.length - 1];
+    const { linkId, title } = parentNode.nodes[nodeName];
 
     const selectedIdx = treeScopes.findIndex(({ scopeName }) => scopeName === linkId);
 
     if (selectedIdx === -1) {
+      // We are selecting a new node.
+
       // We prefetch the scope when clicking on it. This will mean that once the selection is applied in closeAndApply()
       // we already have all the scopes in cache and don't need to fetch all of them again is multiple requests.
       this.apiClient.fetchScope(linkId!);
 
+      const treeScope: TreeScope = {
+        scopeName: linkId!,
+        path: node.path,
+        title,
+      };
+
+      // We cannot select multiple scopes with different parents only. In that case we will just deselect all the
+      // others.
       const selectedFromSameNode =
         treeScopes.length === 0 ||
         Object.values(parentNode.nodes).some(({ linkId }) => linkId === treeScopes[0].scopeName);
-
-      const treeScope = {
-        scopeName: linkId!,
-        path,
-      };
 
       this.updateState({
         treeScopes: parentNode?.disableMultiSelect || !selectedFromSameNode ? [treeScope] : [...treeScopes, treeScope],
       });
     } else {
+      // We are deselecting already selected node.
       treeScopes.splice(selectedIdx, 1);
-
       this.updateState({ treeScopes });
     }
   };
 
-  changeScopes = (scopeNames: string[]) => this.setNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [] })));
+  changeScopes = (scopeNames: string[]) => {
+    return this.setNewScopes(scopeNames.map((scopeName) => ({ scopeName, path: [], title: scopeName })));
+  };
 
   /**
    * Apply the selected scopes. Apart from setting the scopes it also fetches the scope metadata and also loads the
@@ -178,8 +216,8 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       return;
     }
 
-    let selectedScopes = treeScopes.map(({ scopeName, path }) => ({
-      scope: getEmptyScopeObject(scopeName),
+    let selectedScopes = treeScopes.map(({ scopeName, path, title }) => ({
+      scope: getEmptyScopeObject(scopeName, title),
       path,
     }));
 
@@ -189,11 +227,26 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     // Fetches both dashboards and scope navigations
     this.dashboardsService.fetchDashboards(selectedScopes.map(({ scope }) => scope.metadata.name));
 
-    selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
-    if (selectedScopes.length > 0) {
-      this.addRecentScopes(selectedScopes);
+    if (treeScopes.length > 0) {
+      selectedScopes = await this.apiClient.fetchMultipleScopes(treeScopes);
+      if (selectedScopes.length > 0) {
+        this.addRecentScopes(selectedScopes);
+      }
     }
-    this.updateState({ selectedScopes, loading: false });
+
+    // Make sure the treeScopes also have the right title as we use it to display the selection in the UI while to set
+    // the scopes you just need the name/id.
+    const updatedTreeScopes = treeScopes.map((treeScope) => {
+      const matchingSelectedScope = selectedScopes.find(
+        (selectedScope) => selectedScope.scope.metadata.name === treeScope.scopeName
+      );
+      return {
+        ...treeScope,
+        title: matchingSelectedScope?.scope.spec.title || treeScope.title,
+      };
+    });
+
+    this.updateState({ selectedScopes, treeScopes: updatedTreeScopes, loading: false });
   };
 
   public removeAllScopes = () => this.setNewScopes([]);
@@ -255,7 +308,15 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
 
   public closeAndApply = () => {
     this.updateState({ opened: false });
-    this.setNewScopes();
+    return this.apply();
+  };
+
+  public apply = () => {
+    return this.setNewScopes();
+  };
+
+  public resetSelection = () => {
+    this.updateState({ treeScopes: getTreeScopesFromSelectedScopes(this.state.selectedScopes) });
   };
 }
 
@@ -279,6 +340,7 @@ function getTreeScopesFromSelectedScopes(scopes: SelectedScope[]): TreeScope[] {
   return scopes.map(({ scope, path }) => ({
     scopeName: scope.metadata.name,
     path,
+    title: scope.spec.title,
   }));
 }
 
@@ -352,12 +414,15 @@ function expandNodes(nodes: NodesMap, path: string[]): NodesMap {
   return nodes;
 }
 
-function getNodesAtPath(nodes: NodesMap, path: string[]): NodesMap {
-  let currentNodes = nodes;
+function getNodesAtPath(node: Node, path: string[]): Node | undefined {
+  let currentNode = node;
 
   for (const section of path) {
-    currentNodes = currentNodes[section].nodes;
+    if (currentNode === undefined) {
+      return undefined;
+    }
+    currentNode = currentNode.nodes[section];
   }
 
-  return currentNodes;
+  return currentNode;
 }

@@ -8,7 +8,6 @@ featureHighlights,GA,@grafana/grafana-as-code,false,false,false
 storage,experimental,@grafana/search-and-storage,false,false,false
 correlations,GA,@grafana/dataviz-squad,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-disableSecretsCompatibility,experimental,@grafana/hosted-grafana-team,false,true,false
 logRequestsInstrumentedAsUnknown,experimental,@grafana/hosted-grafana-team,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
@@ -59,7 +58,6 @@ sseGroupByDatasource,experimental,@grafana/observability-metrics,false,false,fal
 libraryPanelRBAC,experimental,@grafana/dashboards-squad,false,true,false
 lokiRunQueriesInParallel,privatePreview,@grafana/observability-logs,false,false,false
 wargamesTesting,experimental,@grafana/hosted-grafana-team,false,false,false
-alertingInsights,GA,@grafana/alerting-squad,false,false,true
 externalCorePlugins,GA,@grafana/plugins-platform-backend,false,false,false
 externalServiceAccounts,preview,@grafana/identity-access-team,false,false,false
 panelMonitoring,GA,@grafana/dataviz-squad,false,false,true
@@ -73,12 +71,11 @@ dashboardDisableSchemaValidationV1,experimental,@grafana/grafana-app-platform-sq
 dashboardDisableSchemaValidationV2,experimental,@grafana/grafana-app-platform-squad,false,false,false
 dashboardSchemaValidationLogging,experimental,@grafana/grafana-app-platform-squad,false,false,false
 datasourceQueryTypes,experimental,@grafana/grafana-app-platform-squad,false,true,false
-queryService,experimental,@grafana/grafana-app-platform-squad,false,true,false
-queryServiceRewrite,experimental,@grafana/grafana-app-platform-squad,false,true,false
-queryServiceFromUI,experimental,@grafana/grafana-app-platform-squad,false,false,true
+queryService,experimental,@grafana/grafana-datasources-core-services,false,true,false
+queryServiceRewrite,experimental,@grafana/grafana-datasources-core-services,false,true,false
+queryServiceFromUI,experimental,@grafana/grafana-datasources-core-services,false,false,true
 queryServiceFromExplore,experimental,@grafana/grafana-datasources-core-services,false,false,true
 cloudWatchBatchQueries,preview,@grafana/aws-datasources,false,false,false
-recoveryThreshold,GA,@grafana/alerting-squad,false,true,false
 lokiStructuredMetadata,GA,@grafana/observability-logs,false,false,false
 cachingOptimizeSerializationMemoryUsage,experimental,@grafana/grafana-operator-experience-squad,false,false,false
 prometheusCodeModeMetricNamesSearch,experimental,@grafana/oss-big-tent,false,false,true
@@ -170,7 +167,6 @@ managedDualWriter,experimental,@grafana/search-and-storage,false,false,false
 pluginsSriChecks,GA,@grafana/plugins-platform-backend,false,false,false
 unifiedStorageBigObjectsSupport,experimental,@grafana/search-and-storage,false,false,false
 timeRangeProvider,experimental,@grafana/grafana-frontend-platform,false,false,false
-prometheusUsesCombobox,GA,@grafana/oss-big-tent,false,false,false
 azureMonitorDisableLogLimit,GA,@grafana/partner-datasources,false,false,false
 preinstallAutoUpdate,GA,@grafana/plugins-platform-backend,false,false,false
 playlistsReconciler,experimental,@grafana/grafana-app-platform-squad,false,true,false
@@ -217,7 +213,7 @@ grafanaManagedRecordingRulesDatasources,experimental,@grafana/alerting-squad,fal
 infinityRunQueriesInParallel,privatePreview,@grafana/oss-big-tent,false,false,false
 inviteUserExperimental,experimental,@grafana/sharing-squad,false,false,true
 alertingMigrationUI,experimental,@grafana/alerting-squad,false,false,true
-unifiedStorageHistoryPruner,experimental,@grafana/search-and-storage,false,false,false
+unifiedStorageHistoryPruner,GA,@grafana/search-and-storage,false,false,false
 azureMonitorLogsBuilderEditor,preview,@grafana/partner-datasources,false,false,false
 localeFormatPreference,experimental,@grafana/grafana-frontend-platform,false,false,false
 unifiedStorageGrpcConnectionPool,experimental,@grafana/search-and-storage,false,false,false
@@ -231,4 +227,8 @@ unifiedNavbars,GA,@grafana/plugins-platform-backend,false,false,true
 logsPanelControls,preview,@grafana/observability-logs,false,false,true
 metricsFromProfiles,experimental,@grafana/observability-traces-and-profiling,false,false,true
 pluginsAutoUpdate,experimental,@grafana/plugins-platform-backend,false,false,false
+multiTenantFrontend,experimental,@grafana/grafana-frontend-platform,false,false,false
 alertingListViewV2PreviewToggle,privatePreview,@grafana/alerting-squad,false,false,true
+alertRuleUseFiredAtForStartsAt,experimental,@grafana/alerting-squad,false,false,false
+alertingBulkActionsInUI,GA,@grafana/alerting-squad,false,false,true
+extensionsReadOnlyProxy,experimental,@grafana/plugins-platform-backend,false,false,true

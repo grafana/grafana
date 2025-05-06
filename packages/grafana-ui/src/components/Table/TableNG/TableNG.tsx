@@ -48,6 +48,7 @@ import {
   getCellHeightCalculator,
   getComparator,
   getDefaultRowHeight,
+  getDisplayName,
   getFooterItemNG,
   getFooterStyles,
   getIsNestedTable,
@@ -75,6 +76,7 @@ export function TableNG(props: TableNGProps) {
     data,
     enableSharedCrosshair,
     showTypeIcons,
+    replaceVariables,
   } = props;
 
   const initialSortColumns = useMemo<SortColumn[]>(() => {
@@ -195,16 +197,19 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(
-    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+    () => props.data.fields.reduce<ColumnTypes>((acc, field) => ({ ...acc, [getDisplayName(field)]: field.type }), {}),
     [props.data.fields]
   );
 
   // Create a map of column key to text wrap
   const textWraps = useMemo(
     () =>
-      props.data.fields.reduce(
-        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.cellOptions?.wrapText ?? false }),
-        {} as { [key: string]: boolean }
+      props.data.fields.reduce<{ [key: string]: boolean }>(
+        (acc, field) => ({
+          ...acc,
+          [getDisplayName(field)]: field.config?.custom?.cellOptions?.wrapText ?? false,
+        }),
+        {}
       ),
     [props.data.fields]
   );
@@ -217,12 +222,13 @@ export function TableNG(props: TableNGProps) {
     const widths: Record<string, number> = {};
 
     // Set default widths from field config if they exist
-    props.data.fields.forEach(({ name, config }) => {
-      const configWidth = config?.custom?.width;
+    props.data.fields.forEach((field) => {
+      const displayName = getDisplayName(field);
+      const configWidth = field.config?.custom?.width;
       const totalWidth = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
       // subtract out padding and 1px right border
       const contentWidth = totalWidth - 2 * TABLE.CELL_PADDING - 1;
-      widths[name] = contentWidth;
+      widths[displayName] = contentWidth;
     });
 
     // Measure actual widths if available
@@ -242,15 +248,12 @@ export function TableNG(props: TableNGProps) {
   }, [props.data.fields]);
 
   const fieldDisplayType = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, { config, name }) => {
-        if (config?.custom?.cellOptions?.type) {
-          acc[name] = config.custom.cellOptions.type;
-        }
-        return acc;
-      },
-      {} as Record<string, TableCellDisplayMode>
-    );
+    return props.data.fields.reduce<Record<string, TableCellDisplayMode>>((acc, field) => {
+      if (field.config?.custom?.cellOptions?.type) {
+        acc[getDisplayName(field)] = field.config.custom.cellOptions.type;
+      }
+      return acc;
+    }, {});
   }, [props.data.fields]);
 
   // Clean up fieldsData to simplify
@@ -266,7 +269,9 @@ export function TableNG(props: TableNGProps) {
   );
 
   const getDisplayedValue = (row: TableRow, key: string) => {
-    const field = props.data.fields.find((field) => field.name === key)!;
+    const field = props.data.fields.find((field) => {
+      return getDisplayName(field) === key;
+    })!;
     const displayedValue = formattedValueToString(field.display!(row[key]));
     return displayedValue;
   };
@@ -399,12 +404,7 @@ export function TableNG(props: TableNGProps) {
     if (!expandedRows.includes(rowIdx)) {
       setExpandedRows([...expandedRows, rowIdx]);
     } else {
-      const currentExpandedRows = expandedRows;
-      const indexToRemove = currentExpandedRows.indexOf(rowIdx);
-      if (indexToRemove > -1) {
-        currentExpandedRows.splice(indexToRemove, 1);
-        setExpandedRows(currentExpandedRows);
-      }
+      setExpandedRows(expandedRows.filter((id) => id !== rowIdx));
     }
     setResizeTrigger((prev) => prev + 1);
   };
@@ -451,8 +451,6 @@ export function TableNG(props: TableNGProps) {
           ctx,
           onSortByChange,
           rows,
-          // INFO: sortedRows is for correct row indexing for cell background coloring
-          sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -461,6 +459,7 @@ export function TableNG(props: TableNGProps) {
           styles,
           theme,
           showTypeIcons,
+          replaceVariables,
           ...props,
         },
         handlers: {
@@ -503,7 +502,10 @@ export function TableNG(props: TableNGProps) {
         return 0;
       } else if (Number(row.__depth) === 1 && expandedRows.includes(Number(row.__index))) {
         const headerCount = row?.data?.meta?.custom?.noHeader ? 0 : 1;
-        return defaultRowHeight * (row.data?.length ?? 0 + headerCount); // TODO this probably isn't very robust
+
+        // Ensure we have a minimum height for the nested table even if data is empty
+        const rowCount = row.data?.length ?? 0;
+        return Math.max(defaultRowHeight, defaultRowHeight * (rowCount + headerCount));
       }
       return getRowHeight(row, cellHeightCalc, avgCharWidth, defaultRowHeight, fieldsData);
     },
@@ -658,7 +660,6 @@ export function mapFrameToDataGrid({
     ctx,
     onSortByChange,
     rows,
-    sortedRows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
@@ -669,6 +670,7 @@ export function mapFrameToDataGrid({
     timeRange,
     getActions,
     showTypeIcons,
+    replaceVariables,
   } = options;
   const { onCellExpand, onColumnResize } = handlers;
 
@@ -714,7 +716,7 @@ export function mapFrameToDataGrid({
             calcsRef,
             options: { ...options },
             handlers: { onCellExpand, onColumnResize },
-            availableWidth: availableWidth - COLUMN.EXPANDER_WIDTH,
+            availableWidth,
           });
           expandedRecords = frameToRecords(row.data);
         }
@@ -725,7 +727,8 @@ export function mapFrameToDataGrid({
             rows={expandedRecords}
             columns={expandedColumns}
             rowHeight={defaultRowHeight}
-            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH }}
+            className={styles.dataGrid}
+            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH - 1 }}
             headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
           />
         );
@@ -749,7 +752,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
+        const display = field.display!(field.values[rowIndex]);
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
@@ -763,7 +766,7 @@ export function mapFrameToDataGrid({
       return;
     }
     const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
-    const key = field.name;
+    const key = getDisplayName(field);
     const justifyColumnContent = getTextAlign(field);
     const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -779,9 +782,9 @@ export function mapFrameToDataGrid({
       key,
       name: field.name,
       field,
-      cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
+      cellClass: textWraps[getDisplayName(field)] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-        const { row, rowIdx } = props;
+        const { row } = props;
         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
         const value = row[key];
         // Cell level rendering here
@@ -795,7 +798,7 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={sortedRows[rowIdx].__index}
+            rowIdx={row.__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
@@ -806,7 +809,7 @@ export function mapFrameToDataGrid({
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
-                textWraps[field.name],
+                textWraps[getDisplayName(field)],
                 field,
                 cellType
               )
@@ -816,6 +819,7 @@ export function mapFrameToDataGrid({
             getActions={getActions}
             rowBg={rowBg}
             onCellFilterAdded={onCellFilterAdded}
+            replaceVariables={replaceVariables}
           />
         );
       },
@@ -1003,6 +1007,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
     },
     '::-webkit-scrollbar-thumb': {
       backgroundColor: 'rgba(204, 204, 220, 0.16)',
+      // eslint-disable-next-line @grafana/no-border-radius-literal
       borderRadius: '4px',
     },
     '::-webkit-scrollbar-track': {

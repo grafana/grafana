@@ -43,7 +43,7 @@ export const Math = ({ labelWidth, onChange, query, onRunQuery }: Props) => {
                 <div className={styles.documentationContainer}>
                   <div>
                     <Trans
-                      i18nKey=""
+                      i18nKey="expressions.math.run-math-operations"
                       values={{
                         refExample: '${refId}',
                         ref1: '$A',

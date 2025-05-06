@@ -98,6 +98,11 @@ func (hs *HTTPServer) RenderHandler(c *contextmodel.ReqContext) {
 		Theme:             themeModel,
 	}, nil)
 	if err != nil {
+		if errors.Is(err, rendering.ErrTooManyRequests) {
+			c.JsonApiErr(http.StatusTooManyRequests, "Too many rendering requests", err)
+			return
+		}
+
 		if errors.Is(err, rendering.ErrTimeout) {
 			c.Handle(hs.Cfg, http.StatusInternalServerError, err.Error(), err)
 			return
