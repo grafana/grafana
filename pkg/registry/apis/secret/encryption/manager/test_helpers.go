@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/storage/secret/database"
 	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 )
@@ -21,6 +22,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 	tb.Helper()
 
 	testDB := sqlstore.NewTestStore(tb, sqlstore.WithMigrator(migrator.New()))
+	database := database.ProvideDatabase(testDB)
 
 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
 	defaultKey := "SdlklWklckeLS"
@@ -35,7 +37,7 @@ func setupTestService(tb testing.TB) *EncryptionManager {
 			},
 		},
 	}
-	store, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
+	store, err := encryptionstorage.ProvideDataKeyStorage(database, features)
 	require.NoError(tb, err)
 
 	usageStats := &usagestats.UsageStatsMock{T: tb}

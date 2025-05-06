@@ -25,7 +25,6 @@ SET
   {{ .Ident "ref" }} = {{ .Arg .Row.Ref.String }},
   {{ end }}
   {{ .Ident "external_id" }} = {{ .Arg .Row.ExternalID }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Row.Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Row.Name }}
 ;

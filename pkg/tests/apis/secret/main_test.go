@@ -7,6 +7,7 @@ import (
 	"math/rand/v2"
 	"strconv"
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/resourcepermissions"
@@ -16,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -131,7 +133,7 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 		GVR:  gvrSecureValues,
 	})
 
-	testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-generate.yaml")
+	testSecureValue := helper.LoadYAMLOrJSONFile("testdata/secure-value-default-generate.yaml")
 	if len(keeperName) == 1 {
 		testSecureValue.Object["spec"].(map[string]any)["keeper"] = keeperName[0]
 	}
@@ -139,6 +141,21 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 	raw, err := secureValueClient.Resource.Create(ctx, testSecureValue, metav1.CreateOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, raw)
+
+	// Before returning, we need to wait for the outbox to process it, and the status.phase to be Succeeded.
+	require.EventuallyWithT(t, func(collect *assert.CollectT) {
+		result, err := secureValueClient.Resource.Get(ctx, raw.GetName(), metav1.GetOptions{})
+		require.NoError(t, err)
+		require.NotNil(t, result)
+
+		status, ok := result.Object["status"].(map[string]any)
+		require.True(t, ok)
+		require.NotNil(t, status)
+
+		statusPhase, ok := status["phase"].(string)
+		require.True(t, ok)
+		require.Equal(t, "Succeeded", statusPhase)
+	}, 10*time.Second, 250*time.Millisecond, "expected status to be Succeeded")
 
 	t.Cleanup(func() {
 		require.NoError(t, secureValueClient.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))

@@ -17,8 +17,7 @@ SELECT
   {{ .Ident "external_id" }}
 FROM
   {{ .Ident "secret_secure_value" }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Name }}
 {{ if .IsForUpdate }}
 {{ .SelectFor "UPDATE" }}

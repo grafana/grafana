@@ -239,10 +239,11 @@ func TestIntegrationKeeper(t *testing.T) {
 		// 1. Create user with required permissions.
 		permissions := map[string]ResourcePermission{
 			ResourceKeepers: {Actions: ActionsAllKeepers},
-			// needed for this test to create (and delete for cleanup) securevalues.
+			// needed for this test to create (and read+delete for cleanup) securevalues.
 			ResourceSecureValues: {
 				Actions: []string{
 					secret.ActionSecretSecureValuesCreate,
+					secret.ActionSecretSecureValuesRead,
 					secret.ActionSecretSecureValuesDelete,
 				},
 			},
@@ -265,13 +266,16 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper that references a securevalue that is stored in a 3rdparty Keeper returns an error", func(t *testing.T) {
+		t.Skip("skipping because there is no 3rdparty keeper implementation for OSS, move this test to Enterprise")
+
 		// 0. Create user with required permissions.
 		permissions := map[string]ResourcePermission{
 			ResourceKeepers: {Actions: ActionsAllKeepers},
-			// needed for this test to create (and delete for cleanup) securevalues.
+			// needed for this test to create (and read+delete for cleanup) securevalues.
 			ResourceSecureValues: {
 				Actions: []string{
 					secret.ActionSecretSecureValuesCreate,
+					secret.ActionSecretSecureValuesRead,
 					secret.ActionSecretSecureValuesDelete,
 				},
 			},
@@ -535,14 +539,15 @@ func TestIntegrationKeeper(t *testing.T) {
 			GVR:  gvrKeepers,
 		})
 
+		// For create, we don't have actual granular permissions, so we can use any client that has unscoped create permissions.
+		// This is because when we don't know yet what the name of the resource will be, the request comes with an empty value.
+		// And thus the authorizer can't do granular checks.
 		t.Run("CREATE", func(t *testing.T) {
-			// Create the Keeper with the limited client.
-			rawCreateLimited, err := clientScopedLimited.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
+			rawCreateLimited, err := clientScopedAll.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, rawCreateLimited)
 
-			// Create another Keeper with the limited client, because the action is not scoped (no `name` available).
-			rawCreateLimited, err = clientScopedLimited.Resource.Create(ctx, testKeeperAnother, metav1.CreateOptions{})
+			rawCreateLimited, err = clientScopedAll.Resource.Create(ctx, testKeeperAnother, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, rawCreateLimited)
 		})
