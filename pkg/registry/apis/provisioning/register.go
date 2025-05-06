@@ -72,8 +72,6 @@ var (
 )
 
 type APIBuilder struct {
-	webhookSecretKey string
-
 	features featuremgmt.FeatureToggles
 
 	getter              rest.Getter
@@ -107,7 +105,6 @@ type APIBuilder struct {
 // This means there are no hidden dependencies, and no use of e.g. *settings.Cfg.
 func NewAPIBuilder(
 	local *repository.LocalFolderResolver,
-	webhookSecretKey string,
 	features featuremgmt.FeatureToggles,
 	unified resource.ResourceClient,
 	clonedir string, // where repo clones are managed
@@ -125,7 +122,6 @@ func NewAPIBuilder(
 
 	b := &APIBuilder{
 		localFileResolver:   local,
-		webhookSecretKey:    webhookSecretKey,
 		features:            features,
 		ghFactory:           ghFactory,
 		clients:             clients,
@@ -175,7 +171,7 @@ func RegisterAPIService(
 		PermittedPrefixes: cfg.PermittedProvisioningPaths,
 		HomePath:          safepath.Clean(cfg.HomePath),
 	}
-	builder := NewAPIBuilder(folderResolver, cfg.SecretKey, features,
+	builder := NewAPIBuilder(folderResolver, features,
 		client,
 		filepath.Join(cfg.DataPath, "clone"), // where repositories are cloned (temporarialy for now)
 		configProvider, ghFactory,
@@ -415,6 +411,30 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		return fmt.Errorf("failed to encrypt secrets: %w", err)
 	}
 
+	return nil
+}
+
+// TODO: move this to a more appropriate place
+func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
+	var err error
+	if repo.Spec.GitHub != nil &&
+		repo.Spec.GitHub.Token != "" {
+		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
+		if err != nil {
+			return err
+		}
+		repo.Spec.GitHub.Token = ""
+	}
+
+	// TODO: move this to webhook connector
+	if repo.Status.Webhook != nil &&
+		repo.Status.Webhook.Secret != "" {
+		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
+		if err != nil {
+			return err
+		}
+		repo.Status.Webhook.Secret = ""
+	}
 	return nil
 }
 
@@ -952,30 +972,6 @@ spec:
 	oas.Components.Schemas[compBase+"ManagerStats"].Properties["stats"] = schema
 
 	return oas, nil
-}
-
-// TODO: move this to a more appropriate place
-func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
-	var err error
-	if repo.Spec.GitHub != nil &&
-		repo.Spec.GitHub.Token != "" {
-		repo.Spec.GitHub.EncryptedToken, err = b.secrets.Encrypt(ctx, []byte(repo.Spec.GitHub.Token))
-		if err != nil {
-			return err
-		}
-		repo.Spec.GitHub.Token = ""
-	}
-
-	// TODO: move this to webhook connector
-	if repo.Status.Webhook != nil &&
-		repo.Status.Webhook.Secret != "" {
-		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
-		if err != nil {
-			return err
-		}
-		repo.Status.Webhook.Secret = ""
-	}
-	return nil
 }
 
 // FIXME: This logic does not belong in provisioning! (but required for now)
