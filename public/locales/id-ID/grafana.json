@@ -2767,12 +2767,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Ubah tema...",
+      "change-theme": "",
       "dark-theme": "Gelap",
-      "light-theme": "Terang"
+      "light-theme": "Terang",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Hasil tidak ditemukan"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Cari atau lompat ke..."
@@ -3652,7 +3657,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3892,6 +3900,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -5088,8 +5097,11 @@
       "download-button": "Unduh file",
       "download-successful_toast_message": "JSON Anda telah diunduh",
       "export-externally-label": "Ekspor dasbor untuk digunakan di instans lain",
-      "info-text": "Salin atau unduh file JSON yang berisi JSON dasbor Anda",
-      "title": "Ekspor JSON dasbor"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "Ekspor",
@@ -7057,6 +7069,7 @@
         "reportAbuseTooltip": "Laporkan masalah yang terkait dengan plugin jahat atau berbahaya langsung ke Grafana Labs.",
         "repository": "Repositori",
         "signature": "Tanda Tangan",
+        "sponsorDeveloper": "",
         "status": "Status"
       },
       "modal": {
@@ -8187,7 +8200,8 @@
       "loading": "Memuat...",
       "save-button": "Simpan ke file",
       "share-externally-label": "Ekspor untuk berbagi secara eksternal",
-      "view-button": "Lihat JSON"
+      "view-button": "Lihat JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Buat panel pustaka."
