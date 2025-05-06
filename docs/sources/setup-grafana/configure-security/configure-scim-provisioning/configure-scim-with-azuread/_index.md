@@ -35,8 +35,8 @@ For more information, refer to the [feature toggles documentation](/docs/grafana
 
 {{< admonition type="note" >}}
 **Important SAML and SCIM Configuration:**
-When using SAML for authentication alongside SCIM provisioning with Azure AD, it is crucial to correctly align user identifiers. 
-For detailed information on why this is critical for security and how to configure it, refer to the main [SCIM provisioning documentation (../_index.md#critical-aligning-saml-user-id-with-scim-externalid)](../_index.md#critical-aligning-saml-user-id-with-scim-externalid).
+When using SAML for authentication alongside SCIM provisioning with Azure AD, it is crucial to correctly align user identifiers.
+For detailed information on why this is critical for security and how to configure it, refer to the main [SCIM provisioning documentation (../\_index.md#critical-aligning-saml-user-id-with-scim-externalid)](../_index.md#critical-aligning-saml-user-id-with-scim-externalid).
 
 Refer to the [SAML authentication with Azure AD documentation](../../configure-authentication/saml/#integrating-with-scim-provisioning) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Azure AD SCIM setup.
 {{< /admonition >}}
@@ -95,12 +95,12 @@ The `externalId` attribute in Grafana is mandatory. Azure AD uses this to unique
 
 Configure the following required attributes:
 
-| Azure AD Attribute           | Grafana Attribute              |
-| ---------------------------- | ------------------------------ |
-| `userPrincipalName`          | `userName`                     |
-| `mail`                       | `emails[type eq "work"].value` |
-| `displayName`                | `displayName`                  |
-| `objectId`                   | `externalId`                   |
+| Azure AD Attribute  | Grafana Attribute              |
+| ------------------- | ------------------------------ |
+| `userPrincipalName` | `userName`                     |
+| `mail`              | `emails[type eq "work"].value` |
+| `displayName`       | `displayName`                  |
+| `objectId`          | `externalId`                   |
 
 ### Enable provisioning
 
