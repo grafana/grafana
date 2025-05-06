@@ -20,7 +20,7 @@ export const DatabaseConnectionSection = ({ options, onOptionsChange }: Props) =
           isOpen={CONFIG_SECTION_HEADERS[1].isOpen}
         >
           {!options.jsonData.version && (
-            <Alert severity="warning" title="Query language required">
+            <Alert severity="info" title="Query language required">
               <p>To view connection settings, first choose a query language in the URL and Connection section.</p>
             </Alert>
           )}
