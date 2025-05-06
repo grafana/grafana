@@ -1,5 +1,7 @@
 // Core Grafana history https://github.com/grafana/grafana/blob/v11.0.0-preview/public/app/plugins/datasource/prometheus/components/AnnotationQueryEditor.tsx
 
+import { memo } from 'react';
+
 import { AnnotationQuery } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { EditorField, EditorRow, EditorRows, EditorSwitch } from '@grafana/plugin-ui';
@@ -15,12 +17,53 @@ type Props = PromQueryEditorProps & {
   onAnnotationChange?: (annotation: AnnotationQuery<PromQuery>) => void;
 };
 
-export function AnnotationQueryEditor(props: Props) {
+const PLACEHOLDER_TITLE = '{{alertname}}';
+const PLACEHOLDER_TEXT = '{{instance}}';
+const PLACEHOLDER_TAGS = 'label1,label2';
+
+/**
+ * AnnotationQueryEditor component for Prometheus datasource.
+ * Allows users to configure annotation queries with options for title, tags, text format,
+ * and timestamp settings.
+ */
+export const AnnotationQueryEditor = memo(function AnnotationQueryEditor(props: Props) {
   const { annotation, onAnnotationChange, onChange, onRunQuery, query } = props;
 
   if (!annotation || !onAnnotationChange) {
     return <h3>annotation data load error!</h3>;
   }
+
+  const handleMinStepChange = (value: string) => {
+    onChange({ ...query, interval: value });
+  };
+
+  const handleTitleChange = (value: string) => {
+    onAnnotationChange({
+      ...annotation,
+      titleFormat: value,
+    });
+  };
+
+  const handleTagsChange = (value: string) => {
+    onAnnotationChange({
+      ...annotation,
+      tagKeys: value,
+    });
+  };
+
+  const handleTextChange = (value: string) => {
+    onAnnotationChange({
+      ...annotation,
+      textFormat: value,
+    });
+  };
+
+  const handleUseValueForTimeChange = (checked: boolean) => {
+    onAnnotationChange({
+      ...annotation,
+      useValueForTime: checked,
+    });
+  };
 
   return (
     <>
@@ -42,7 +85,7 @@ export function AnnotationQueryEditor(props: Props) {
               placeholder={'auto'}
               minWidth={10}
               value={query.interval ?? ''}
-              onChange={(e) => onChange({ ...query, interval: e.currentTarget.value })}
+              onChange={(e) => handleMinStepChange(e.currentTarget.value)}
               id={selectors.components.DataSource.Prometheus.annotations.minStep}
             />
           </EditorField>
@@ -58,28 +101,18 @@ export function AnnotationQueryEditor(props: Props) {
         >
           <Input
             type="text"
-            placeholder="{{alertname}}"
+            placeholder={PLACEHOLDER_TITLE}
             value={annotation.titleFormat ?? ''}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                titleFormat: event.currentTarget.value,
-              });
-            }}
+            onChange={(event) => handleTitleChange(event.currentTarget.value)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.title}
           />
         </EditorField>
         <EditorField label="Tags">
           <Input
             type="text"
-            placeholder="label1,label2"
+            placeholder={PLACEHOLDER_TAGS}
             value={annotation.tagKeys ?? ''}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                tagKeys: event.currentTarget.value,
-              });
-            }}
+            onChange={(event) => handleTagsChange(event.currentTarget.value)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.tags}
           />
         </EditorField>
@@ -91,14 +124,9 @@ export function AnnotationQueryEditor(props: Props) {
         >
           <Input
             type="text"
-            placeholder="{{instance}}"
+            placeholder={PLACEHOLDER_TEXT}
             value={annotation.textFormat ?? ''}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                textFormat: event.currentTarget.value,
-              });
-            }}
+            onChange={(event) => handleTextChange(event.currentTarget.value)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.text}
           />
         </EditorField>
@@ -110,16 +138,11 @@ export function AnnotationQueryEditor(props: Props) {
         >
           <EditorSwitch
             value={annotation.useValueForTime ?? false}
-            onChange={(event) => {
-              onAnnotationChange({
-                ...annotation,
-                useValueForTime: event.currentTarget.checked,
-              });
-            }}
+            onChange={(event) => handleUseValueForTimeChange(event.currentTarget.checked)}
             data-testid={selectors.components.DataSource.Prometheus.annotations.seriesValueAsTimestamp}
           />
         </EditorField>
       </EditorRow>
     </>
   );
-}
+});
