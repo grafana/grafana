@@ -96,7 +96,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolder(ctx context.Context
 	identifiers[meta.GetCreatedBy()] = struct{}{}
 	identifiers[meta.GetUpdatedBy()] = struct{}{}
 
-	folderUserIdentifiers, err := ss.getIdentifiersFolder(ctx, identifiers)
+	folderUserIdentifiers, err := ss.getFolderIdentifiers(ctx, identifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -121,7 +121,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 		identifiers[meta.GetUpdatedBy()] = struct{}{}
 	}
 
-	folderUserIdentifiers, err := ss.getIdentifiersFolder(ctx, identifiers)
+	folderUserIdentifiers, err := ss.getFolderIdentifiers(ctx, identifiers)
 	if err != nil {
 		return nil, err
 	}
@@ -137,7 +137,7 @@ func (ss *FolderUnifiedStoreImpl) UnstructuredToLegacyFolderList(ctx context.Con
 	return folders, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) getIdentifiersFolder(ctx context.Context, identifiers map[string]struct{}) (map[string]*user.User, error) {
+func (ss *FolderUnifiedStoreImpl) getFolderIdentifiers(ctx context.Context, identifiers map[string]struct{}) (map[string]*user.User, error) {
 	identifierMap, userUIDs, userIds := separateUIDsAndIDs(identifiers)
 	if len(userUIDs) == 0 && len(userIds) == 0 {
 		return nil, nil
