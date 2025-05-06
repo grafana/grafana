@@ -95,7 +95,7 @@ type APIBuilder struct {
 	secrets          secrets.Service
 	client           client.ProvisioningV0alpha1Interface
 	access           authlib.AccessChecker
-
+	statusPatcher    *controller.RepositoryStatusPatcher
 	// Extras provides additional functionality to the API.
 	extras []Extra
 }
@@ -290,6 +290,10 @@ func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 
 func (b *APIBuilder) GetJobQueue() jobs.Queue {
 	return b.jobs
+}
+
+func (b *APIBuilder) GetStatusPatcher() *controller.RepositoryStatusPatcher {
+	return b.statusPatcher
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
@@ -556,13 +560,13 @@ func (b *APIBuilder) GetPostStartHooks() (map[string]genericapiserver.PostStartH
 				repository.WrapWithCloneAndPushIfPossible,
 			)
 
-			statusPatcher := controller.NewRepositoryStatusPatcher(b.GetClient())
+			b.statusPatcher = controller.NewRepositoryStatusPatcher(b.GetClient())
 			syncer := sync.NewSyncer(sync.Compare, sync.FullSync, sync.IncrementalSync)
 			syncWorker := sync.NewSyncWorker(
 				b.clients,
 				b.repositoryResources,
 				b.storageStatus,
-				statusPatcher.Patch,
+				b.statusPatcher.Patch,
 				syncer,
 			)
 			signerFactory := signature.NewSignerFactory(b.clients)

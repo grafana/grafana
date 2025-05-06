@@ -2,15 +2,12 @@ package webhooks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -164,10 +161,10 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 // This is to provide some visibility that the webhook is still active and working
 // It's not a good idea to update the webhook status too often, so we only update it if it's been a while
 func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.Repository, name, namespace string) error {
-	client := s.core.GetClient()
-	if client == nil {
+	patcher := s.core.GetStatusPatcher()
+	if patcher == nil {
 		// This would only happen if we wired things up incorrectly
-		return fmt.Errorf("client is nil")
+		return fmt.Errorf("status patcher is nil")
 	}
 
 	lastEvent := time.UnixMilli(repo.Config().Status.Webhook.LastEvent)
@@ -181,13 +178,7 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 			"value": time.Now().UnixMilli(),
 		}
 
-		patch, err := json.Marshal([]map[string]interface{}{patchOp})
-		if err != nil {
-			return fmt.Errorf("marshal patch: %w", err)
-		}
-
-		if _, err = client.Repositories(namespace).
-			Patch(ctx, name, types.JSONPatchType, patch, metav1.PatchOptions{}, "status"); err != nil {
+		if err := patcher.Patch(ctx, repo.Config(), patchOp); err != nil {
 			return fmt.Errorf("patch status: %w", err)
 		}
 	}
