@@ -120,7 +120,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
-		hooks, ok := repo.(repository.Hooks)
+		hooks, ok := repo.(WebhookRepository)
 		if !ok {
 			responder.Error(errors.NewBadRequest("the repository does not support webhooks"))
 			return
@@ -173,6 +173,7 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 	lastEvent := time.UnixMilli(repo.Config().Status.Webhook.LastEvent)
 	eventAge := time.Since(lastEvent)
 
+	// TODO: Use status patcher
 	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
 		patchOp := map[string]interface{}{
 			"op":    "replace",

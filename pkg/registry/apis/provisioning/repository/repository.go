@@ -162,8 +162,6 @@ type RepositoryWithURLs interface {
 type Hooks interface {
 	Repository
 
-	// For repositories that support webhooks
-	Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error)
 	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
 	OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error)
 	OnDelete(ctx context.Context) error

@@ -176,7 +176,12 @@ func (e *WebhookExtra) AsRepository(ctx context.Context, r *provisioning.Reposit
 			return gogit.Clone(ctx, e.clonedir, r, opts, e.secrets)
 		}
 
-		return repository.NewGitHub(ctx, r, e.ghFactory, e.secrets, webhookURL, cloneFn)
+		basicRepo, err := repository.NewGitHub(ctx, r, e.ghFactory, e.secrets, cloneFn)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewGithubWebhookRepository(basicRepo, webhookURL, e.secrets), nil
 	}
 
 	return nil, nil

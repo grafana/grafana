@@ -1118,8 +1118,7 @@ func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repositor
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
 			return gogit.Clone(ctx, b.clonedir, r, opts, b.secrets)
 		}
-		// TODO: Extra webhook logic outside that repository implementation
-		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, "", cloneFn)
+		return repository.NewGitHub(ctx, r, b.ghFactory, b.secrets, cloneFn)
 	default:
 		return nil, fmt.Errorf("unknown repository type (%s)", r.Spec.Type)
 	}
