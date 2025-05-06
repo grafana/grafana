@@ -21,66 +21,65 @@ For more information about feature release stages, refer to [Release life cycle 
 
 Most [generally available](https://grafana.com/docs/release-life-cycle/#general-availability) features are enabled by default. You can disable these feature by setting the feature flag to "false" in the configuration.
 
-| Feature toggle name                    | Description                                                                                                                         | Enabled by default |
-| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| `disableEnvelopeEncryption`            | Disable envelope encryption (emergency only)                                                                                        |                    |
-| `publicDashboardsScene`                | Enables public dashboard rendering using scenes                                                                                     | Yes                |
-| `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                               |                    |
-| `correlations`                         | Correlations page                                                                                                                   | Yes                |
-| `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                            | Yes                |
-| `nestedFolders`                        | Enable folder nesting                                                                                                               | Yes                |
-| `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                              | Yes                |
-| `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                            | Yes                |
-| `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                           | Yes                |
-| `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different                | Yes                |
-| `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                             | Yes                |
-| `pluginsDetailsRightPanel`             | Enables right panel for the plugins details page                                                                                    | Yes                |
-| `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                          | Yes                |
-| `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                           | Yes                |
-| `transformationsRedesign`              | Enables the transformations redesign                                                                                                | Yes                |
-| `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled  | Yes                |
-| `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                   | Yes                |
-| `dashgpt`                              | Enable AI powered features in dashboards                                                                                            | Yes                |
-| `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                         | Yes                |
-| `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                              | Yes                |
-| `formatString`                         | Enable format string transformer                                                                                                    | Yes                |
-| `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                              | Yes                |
-| `lokiStructuredMetadata`               | Enables the loki data source to request structured metadata from the Loki server                                                    | Yes                |
-| `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                | Yes                |
-| `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
-| `dashboardSceneForViewers`             | Enables dashboard rendering using Scenes for viewer roles                                                                           | Yes                |
-| `dashboardSceneSolo`                   | Enables rendering dashboards using scenes for solo panels                                                                           | Yes                |
-| `dashboardScene`                       | Enables dashboard rendering using scenes for all roles                                                                              | Yes                |
-| `ssoSettingsApi`                       | Enables the SSO settings API and the OAuth configuration UIs in Grafana                                                             | Yes                |
-| `logsInfiniteScrolling`                | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                             | Yes                |
-| `alertingSimplifiedRouting`            | Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule | Yes                |
-| `logRowsPopoverMenu`                   | Enable filtering menu displayed when text of a log line is selected                                                                 | Yes                |
-| `lokiQueryHints`                       | Enables query hints for Loki                                                                                                        | Yes                |
-| `alertingQueryOptimization`            | Optimizes eligible queries in order to reduce load on datasources                                                                   |                    |
-| `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.       | Yes                |
-| `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                    | Yes                |
-| `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                               | Yes                |
-| `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                         | Yes                |
-| `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                        | Yes                |
-| `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                                | Yes                |
-| `newDashboardSharingComponent`         | Enables the new sharing drawer design                                                                                               | Yes                |
-| `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                               |                    |
-| `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                        | Yes                |
-| `pinNavItems`                          | Enables pinning of nav items                                                                                                        | Yes                |
-| `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                                | Yes                |
-| `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                       | Yes                |
-| `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                | Yes                |
-| `alertingQueryAndExpressionsStepMode`  | Enables step mode for alerting queries and expressions                                                                              | Yes                |
-| `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                        | Yes                |
-| `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                                |                    |
-| `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                    |                    |
-| `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                 | Yes                |
-| `reportingUseRawTimeRange`             | Uses the original report or dashboard time range instead of making an absolute transformation                                       | Yes                |
-| `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                            | Yes                |
-| `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                 | Yes                |
-| `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                           | Yes                |
-| `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                       | Yes                |
-| `unifiedNavbars`                       | Enables unified navbars                                                                                                             |                    |
+| Feature toggle name                    | Description                                                                                                                        | Enabled by default |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------------ |
+| `disableEnvelopeEncryption`            | Disable envelope encryption (emergency only)                                                                                       |                    |
+| `publicDashboardsScene`                | Enables public dashboard rendering using scenes                                                                                    | Yes                |
+| `featureHighlights`                    | Highlight Grafana Enterprise features                                                                                              |                    |
+| `correlations`                         | Correlations page                                                                                                                  | Yes                |
+| `cloudWatchCrossAccountQuerying`       | Enables cross-account querying in CloudWatch datasources                                                                           | Yes                |
+| `nestedFolders`                        | Enable folder nesting                                                                                                              | Yes                |
+| `logsContextDatasourceUi`              | Allow datasource to provide custom UI for context view                                                                             | Yes                |
+| `lokiQuerySplitting`                   | Split large interval queries into subqueries with smaller time intervals                                                           | Yes                |
+| `influxdbBackendMigration`             | Query InfluxDB InfluxQL without the proxy                                                                                          | Yes                |
+| `dataplaneFrontendFallback`            | Support dataplane contract field name change for transformations and field name matchers where the name is different               | Yes                |
+| `unifiedRequestLog`                    | Writes error logs to the request logger                                                                                            | Yes                |
+| `pluginsDetailsRightPanel`             | Enables right panel for the plugins details page                                                                                   | Yes                |
+| `recordedQueriesMulti`                 | Enables writing multiple items from a single query within Recorded Queries                                                         | Yes                |
+| `logsExploreTableVisualisation`        | A table visualisation for logs in Explore                                                                                          | Yes                |
+| `transformationsRedesign`              | Enables the transformations redesign                                                                                               | Yes                |
+| `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled | Yes                |
+| `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                  | Yes                |
+| `dashgpt`                              | Enable AI powered features in dashboards                                                                                           | Yes                |
+| `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                        | Yes                |
+| `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                             | Yes                |
+| `formatString`                         | Enable format string transformer                                                                                                   | Yes                |
+| `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                             | Yes                |
+| `lokiStructuredMetadata`               | Enables the loki data source to request structured metadata from the Loki server                                                   | Yes                |
+| `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                               | Yes                |
+| `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                              | Yes                |
+| `dashboardSceneForViewers`             | Enables dashboard rendering using Scenes for viewer roles                                                                          | Yes                |
+| `dashboardSceneSolo`                   | Enables rendering dashboards using scenes for solo panels                                                                          | Yes                |
+| `dashboardScene`                       | Enables dashboard rendering using scenes for all roles                                                                             | Yes                |
+| `ssoSettingsApi`                       | Enables the SSO settings API and the OAuth configuration UIs in Grafana                                                            | Yes                |
+| `logsInfiniteScrolling`                | Enables infinite scrolling for the Logs panel in Explore and Dashboards                                                            | Yes                |
+| `logRowsPopoverMenu`                   | Enable filtering menu displayed when text of a log line is selected                                                                | Yes                |
+| `lokiQueryHints`                       | Enables query hints for Loki                                                                                                       | Yes                |
+| `alertingQueryOptimization`            | Optimizes eligible queries in order to reduce load on datasources                                                                  |                    |
+| `onPremToCloudMigrations`              | Enable the Grafana Migration Assistant, which helps you easily migrate various on-prem resources to your Grafana Cloud stack.      | Yes                |
+| `groupToNestedTableTransformation`     | Enables the group to nested table transformation                                                                                   | Yes                |
+| `newPDFRendering`                      | New implementation for the dashboard-to-PDF rendering                                                                              | Yes                |
+| `tlsMemcached`                         | Use TLS-enabled memcached in the enterprise caching feature                                                                        | Yes                |
+| `ssoSettingsSAML`                      | Use the new SSO Settings API to configure the SAML connector                                                                       | Yes                |
+| `cloudWatchNewLabelParsing`            | Updates CloudWatch label parsing to be more accurate                                                                               | Yes                |
+| `newDashboardSharingComponent`         | Enables the new sharing drawer design                                                                                              | Yes                |
+| `pluginProxyPreserveTrailingSlash`     | Preserve plugin proxy trailing slash.                                                                                              |                    |
+| `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                       | Yes                |
+| `pinNavItems`                          | Enables pinning of nav items                                                                                                       | Yes                |
+| `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                               | Yes                |
+| `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                      | Yes                |
+| `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                               | Yes                |
+| `alertingQueryAndExpressionsStepMode`  | Enables step mode for alerting queries and expressions                                                                             | Yes                |
+| `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                       | Yes                |
+| `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                               |                    |
+| `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                   |                    |
+| `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                | Yes                |
+| `reportingUseRawTimeRange`             | Uses the original report or dashboard time range instead of making an absolute transformation                                      | Yes                |
+| `alertingUIOptimizeReducer`            | Enables removing the reducer from the alerting UI when creating a new alert rule and using instant query                           | Yes                |
+| `azureMonitorEnableUserAuth`           | Enables user auth for Azure Monitor datasource only                                                                                | Yes                |
+| `alertingNotificationsStepMode`        | Enables simplified step mode in the notifications section                                                                          | Yes                |
+| `lokiLabelNamesQueryApi`               | Defaults to using the Loki `/labels` API instead of `/series`                                                                      | Yes                |
+| `unifiedNavbars`                       | Enables unified navbars                                                                                                            |                    |
 
 ## Public preview feature toggles
 

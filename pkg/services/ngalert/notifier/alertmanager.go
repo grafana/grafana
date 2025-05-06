@@ -154,7 +154,7 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		logger:              l,
 
 		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
-		withAutogen: featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting),
+		withAutogen: true,
 	}
 
 	return am, nil

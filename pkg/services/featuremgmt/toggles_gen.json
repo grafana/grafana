@@ -357,7 +357,8 @@
       "metadata": {
         "name": "alertingSimplifiedRouting",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2023-11-10T13:14:39Z"
+        "creationTimestamp": "2023-11-10T13:14:39Z",
+        "deletionTimestamp": "2025-05-06T07:23:50Z"
       },
       "spec": {
         "description": "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",

@@ -11,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	"github.com/grafana/grafana/pkg/apimachinery/errutil"
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier/legacy_storage"
@@ -122,7 +121,7 @@ func (moa *MultiOrgAlertmanager) GetAlertmanagerConfiguration(ctx context.Contex
 		return definitions.GettableUserConfig{}, err
 	}
 
-	if moa.featureManager.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting) && withAutogen {
+	if withAutogen {
 		// We validate the notification settings in a similar way to when we POST.
 		// Otherwise, broken settings (e.g. a receiver that doesn't exist) will cause the config returned here to be
 		// different than the config currently in-use.

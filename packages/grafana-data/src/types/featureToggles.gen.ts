@@ -429,11 +429,6 @@ export interface FeatureToggles {
   */
   logsInfiniteScrolling?: boolean;
   /**
-  * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-  * @default true
-  */
-  alertingSimplifiedRouting?: boolean;
-  /**
   * Enable filtering menu displayed when text of a log line is selected
   * @default true
   */
