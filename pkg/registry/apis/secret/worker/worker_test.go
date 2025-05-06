@@ -74,8 +74,9 @@ func TestProcessMessage(t *testing.T) {
 
 		worker := NewWorker(Config{
 			// TODO: randomize
-			BatchSize:      10,
-			ReceiveTimeout: 1 * time.Second,
+			BatchSize:       10,
+			ReceiveTimeout:  1 * time.Second,
+			PollingInterval: time.Millisecond,
 		},
 			database,
 			outboxQueueWrapper,

@@ -75,8 +75,9 @@ func NewSecretAPIBuilder(
 		database:                   database,
 		accessClient:               accessClient,
 		worker: worker.NewWorker(worker.Config{
-			BatchSize:      1,
-			ReceiveTimeout: 5 * time.Second,
+			BatchSize:       1,
+			ReceiveTimeout:  5 * time.Second,
+			PollingInterval: 500 * time.Millisecond,
 		},
 			database,
 			secretsOutboxQueue,
