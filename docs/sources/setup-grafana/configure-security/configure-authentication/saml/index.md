@@ -235,7 +235,7 @@ In order to validate Azure AD users with Grafana, you need to configure the SAML
 
 ### Integrating with SCIM Provisioning
 
-If you are also using SCIM provisioning for this Grafana application in Azure AD, it's crucial to align the user identifiers between SAML and SCIM for seamless operation. Grafana uses the attribute specified in `assertion_attribute_login` to look up the user based on their Grafana **login handle**.
+If you are also using SCIM provisioning for this Grafana application in Azure AD, it's crucial to align the user identifiers between SAML and SCIM for seamless operation. Grafana uses the attribute specified in `assertion_attribute_login` to look up the user.
 
 1.  **Consistent Identifier:** The unique identifier attribute from Azure AD that you mapped to the `externalId` attribute in Grafana in your SCIM provisioning setup (commonly Azure AD's `objectId`) **must also be sent as a claim in the SAML assertion.**
     *   In Azure AD's Enterprise Application, under **Single sign-on** > **Attributes & Claims**, ensure you add a claim that provides this identifier. For example, you might add a claim named `UserId` (or similar) that sources its value from `user.objectid`.
