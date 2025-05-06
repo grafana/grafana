@@ -23,7 +23,9 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
+// RenderExtraBuilder provides additional functionality for rendering images
 type RenderExtraBuilder struct {
+	// HACK: We need to wrap the builder to please wire so that it can uniquely identify the dependency
 	ExtraBuilder
 }
 

@@ -24,6 +24,12 @@ func MergeProvisioningExtras(webhook provisioning.WebhookExtraBuilder, render pr
 	}
 }
 
+var ProvisioningExtras = wire.NewSet(
+	provisioning.ProvideWebhooks,
+	provisioning.ProvidePreviewScreenshots,
+	MergeProvisioningExtras,
+)
+
 var WireSet = wire.NewSet(
 	ProvideRegistryServiceSink, // dummy background service that forces registration
 
@@ -39,9 +45,7 @@ var WireSet = wire.NewSet(
 	datasource.RegisterAPIService,
 	folders.RegisterAPIService,
 	iam.RegisterAPIService,
-	provisioning.ProvideWebhooks,
-	provisioning.ProvidePreviewScreenshots,
-	MergeProvisioningExtras,
+	ProvisioningExtras,
 	provisioning.RegisterAPIService,
 	service.RegisterAPIService,
 	query.RegisterAPIService,

@@ -33,15 +33,15 @@ import (
 // See https://docs.github.com/en/webhooks/webhook-events-and-payloads
 const webhookMaxBodySize = 25 * 1024 * 1024
 
+// WebhookExtraBuilder is a function that returns an ExtraBuilder.
+// It is used to add additional functionality for webhooks
 type WebhookExtraBuilder struct {
+	// HACK: We need to wrap the builder to please wire so that it can uniquely identify the dependency
 	ExtraBuilder
 }
 
 func ProvideWebhooks(
 	cfg *setting.Cfg,
-	client ClientGetter,
-	getter RepoGetter,
-	jobs jobs.Queue,
 	// FIXME: use multi-tenant service when one exists. In this state, we can't make this a multi-tenant service!
 	secretsSvc grafanasecrets.Service,
 	ghFactory *github.Factory,
@@ -55,9 +55,9 @@ func ProvideWebhooks(
 	return WebhookExtraBuilder{
 		ExtraBuilder: func(b *APIBuilder) Extra {
 			return NewWebhookConnector(
-				client,
-				getter,
-				jobs,
+				b,
+				b,
+				b,
 				isPublic,
 				urlProvider,
 				b,
@@ -72,7 +72,7 @@ func ProvideWebhooks(
 type webhookConnector struct {
 	client          ClientGetter
 	getter          RepoGetter
-	jobs            jobs.Queue
+	jobs            JobQueueGetter
 	webhooksEnabled bool
 	urlProvider     func(namespace string) string
 	apiBuilder      *APIBuilder
@@ -80,10 +80,14 @@ type webhookConnector struct {
 	ghFactory       *github.Factory
 }
 
+type JobQueueGetter interface {
+	GetJobQueue() jobs.Queue
+}
+
 func NewWebhookConnector(
 	client ClientGetter,
 	getter RepoGetter,
-	jobs jobs.Queue,
+	jobs JobQueueGetter,
 	webhooksEnabled bool,
 	urlProvider func(namespace string) string,
 	apiBuilder *APIBuilder,
@@ -229,7 +233,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
-			job, err := s.jobs.Insert(ctx, namespace, *rsp.Job)
+			job, err := s.jobs.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				responder.Error(err)
 				return

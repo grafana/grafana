@@ -72,7 +72,6 @@ var (
 )
 
 type APIBuilder struct {
-	urlProvider      func(namespace string) string
 	webhookSecretKey string
 
 	features featuremgmt.FeatureToggles
@@ -291,6 +290,10 @@ func (b *APIBuilder) GetGroupVersion() schema.GroupVersion {
 
 func (b *APIBuilder) GetClient() client.ProvisioningV0alpha1Interface {
 	return b.client
+}
+
+func (b *APIBuilder) GetJobQueue() jobs.Queue {
+	return b.jobs
 }
 
 func (b *APIBuilder) InstallSchema(scheme *runtime.Scheme) error {
