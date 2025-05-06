@@ -115,7 +115,7 @@ func TestRun(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin3", Name: "Plugin 3", Info: plugins.Info{Version: "1.0.0"}}},
 			},
 			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin3": {Status: "active"},
+				"plugin3": {Status: "deprecated"}, // This should be ignored
 			},
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin3": {Version: "1.1.0"},
@@ -129,7 +129,7 @@ func TestRun(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin4", Name: "Plugin 4", Info: plugins.Info{Version: "1.0.0"}}},
 			},
 			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin4": {Status: "active"},
+				"plugin4": {Status: "deprecated"}, // This should be ignored
 			},
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin4": {Version: "1.1.0"},
@@ -143,7 +143,7 @@ func TestRun(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin5", Name: "Plugin 5", Info: plugins.Info{Version: "1.0.0"}}},
 			},
 			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin5": {Status: "active"},
+				"plugin5": {Status: "deprecated"}, // This should be ignored
 			},
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin5": {Version: "1.1.0"},
