@@ -122,7 +122,7 @@ func (c *renderConnector) Connect(
 			responder.Error(apierrors.NewNotFound(provisioning.RepositoryResourceInfo.GroupResource(), "render"))
 			return
 		}
-		if !validBlobID(blobID) {
+		if !provisioningapis.ValidUUID(blobID) {
 			responder.Error(apierrors.NewBadRequest(fmt.Sprintf("invalid blob id: %s", blobID)))
 			return
 		}
@@ -164,22 +164,6 @@ func (c *renderConnector) Connect(
 			})
 		}
 	}), 20*time.Second), nil
-}
-
-// validBlobID ensures the ID is valid for a blob.
-// The ID is always a UUID. As such, this checks for something that can resemble a UUID.
-// This does not check for the ID to be an actual UUID, as the blob store may change their ID format, which we do not wish to stand in the way of.
-func validBlobID(id string) bool {
-	for _, c := range id {
-		// [a-zA-Z0-9\-] are valid characters.
-		az := c >= 'a' && c <= 'z'
-		AZ := c >= 'A' && c <= 'Z'
-		digit := c >= '0' && c <= '9'
-		if !az && !AZ && !digit && c != '-' {
-			return false
-		}
-	}
-	return true
 }
 
 var (
