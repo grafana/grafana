@@ -74,7 +74,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.Equal(t, secretv0alpha1.SecureValuePhasePending, createdSecureValue.Status.Phase)
 
 		// Read the secure value back
-		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test")
+		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test", contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.NotNil(t, readSecureValue)
 		require.Equal(t, "sv-test", readSecureValue.Name)
@@ -124,7 +124,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.NotNil(t, createdSecureValue)
 
 		// Read the secure value to verify it exists
-		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2")
+		readSecureValue, err := secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2", contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.NotNil(t, readSecureValue)
 		require.Equal(t, "sv-test-2", readSecureValue.Name)
@@ -134,7 +134,7 @@ func Test_SecureValueMetadataStorage_CreateAndRead(t *testing.T) {
 		require.NoError(t, err)
 
 		// Try to read the deleted secure value - should return error
-		_, err = secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2")
+		_, err = secureValueStorage.Read(ctx, xkube.Namespace("default"), "sv-test-2", contracts.ReadOpts{})
 		require.Error(t, err)
 		require.Equal(t, contracts.ErrSecureValueNotFound, err)
 	})
