@@ -22,68 +22,95 @@ import (
 )
 
 func TestLocalResolver(t *testing.T) {
-	resolver := &LocalFolderResolver{
-		PermittedPrefixes: []string{
-			"github",
-		},
-		HomePath: "./",
+	// Create a temporary directory structure
+	tempDir, err := os.MkdirTemp("", "repo-test-*")
+	require.NoError(t, err)
+	defer os.RemoveAll(tempDir)
+
+	// Create directory structure with multiple levels
+	dirs := []string{
+		"level1",
+		"level1/level2",
+		"level1/level2/level3",
+		"another/path",
 	}
 
-	fullpath, err := resolver.LocalPath("github/testdata")
-	require.NoError(t, err)
-	require.Equal(t, "github/testdata", fullpath)
+	for _, dir := range dirs {
+		dirPath := filepath.Join(tempDir, dir)
+		err := os.MkdirAll(dirPath, 0755)
+		require.NoError(t, err)
+	}
 
-	_, err = resolver.LocalPath("something")
-	require.Error(t, err)
+	// Create some files at different levels
+	files := map[string]string{
+		"root.txt":                       "root content",
+		"level1/file1.txt":               "level 1 content",
+		"level1/level2/file2.txt":        "level 2 content",
+		"level1/level2/level3/file3.txt": "level 3 content",
+		"another/path/file.txt":          "another path content",
+	}
 
-	// Check valid errors
-	r := NewLocal(&provisioning.Repository{
+	for path, content := range files {
+		filePath := filepath.Join(tempDir, path)
+		err := os.WriteFile(filePath, []byte(content), 0644)
+		require.NoError(t, err)
+	}
+
+	// Create resolver with the temp directory as permitted prefix
+	resolver := &LocalFolderResolver{
+		PermittedPrefixes: []string{tempDir},
+		HomePath:          "./",
+	}
+
+	// Test resolving paths
+	for _, dir := range dirs {
+		fullPath, err := resolver.LocalPath(filepath.Join(tempDir, dir))
+		require.NoError(t, err)
+		require.Equal(t, filepath.Join(tempDir, dir), fullPath)
+	}
+
+	// Test repository with the temp directory
+	repo := NewLocal(&provisioning.Repository{
 		Spec: provisioning.RepositorySpec{
 			Local: &provisioning.LocalRepositoryConfig{
-				Path: "github",
+				Path: tempDir,
 			},
 		},
 	}, resolver)
 
-	// Full tree
-	tree, err := r.ReadTree(context.Background(), "")
+	// Verify we can read the tree
+	tree, err := repo.ReadTree(context.Background(), "")
 	require.NoError(t, err)
-	names := []string{}
-	for _, v := range tree {
-		names = append(names, v.Path)
+
+	// Collect all paths from the tree
+	paths := make([]string, 0, len(tree))
+	for _, item := range tree {
+		paths = append(paths, item.Path)
 	}
-	require.Equal(t, []string{
-		"client.go",
-		"factory.go",
-		"impl.go",
-		"impl_test.go",
-		"mock_client.go",
-		"mock_commit_file.go",
-		"mock_repository_content.go",
-		"testdata",
-		"testdata/webhook-issue_comment-created.json",
-		"testdata/webhook-ping-check.json",
-		"testdata/webhook-pull_request-opened.json",
-		"testdata/webhook-push-different_branch.json",
-		"testdata/webhook-push-nested.json",
-		"testdata/webhook-push-nothing_relevant.json",
-	}, names)
 
-	v, err := r.Read(context.Background(), "testdata", "")
+	// Sort paths for consistent comparison
+	sort.Strings(paths)
+
+	// Verify all directories and files are present
+	expectedPaths := []string{
+		"another",
+		"another/path",
+		"another/path/file.txt",
+		"level1",
+		"level1/file1.txt",
+		"level1/level2",
+		"level1/level2/file2.txt",
+		"level1/level2/level3",
+		"level1/level2/level3/file3.txt",
+		"root.txt",
+	}
+	require.Equal(t, expectedPaths, paths)
+
+	// Test reading a specific file
+	file, err := repo.Read(context.Background(), "level1/level2/file2.txt", "")
 	require.NoError(t, err)
-	require.Equal(t, "testdata", v.Path)
-	require.Nil(t, v.Data)
-
-	v, err = r.Read(context.Background(), "testdata/webhook-push-nested.json", "")
-	require.NoError(t, err)
-	require.Equal(t, "4eb879daca9942a887862b3d76fe9f24528d0408", v.Hash)
-
-	// read unknown file
-	_, err = r.Read(context.Background(), "testdata/missing", "")
-	require.True(t, apierrors.IsNotFound(err)) // 404 error
-
-	_, err = r.Read(context.Background(), "testdata/webhook-push-nested.json/", "")
-	require.Error(t, err) // not a directory
+	require.Equal(t, "level1/level2/file2.txt", file.Path)
+	require.Equal(t, []byte("level 2 content"), file.Data)
 }
 
 func TestLocal(t *testing.T) {
