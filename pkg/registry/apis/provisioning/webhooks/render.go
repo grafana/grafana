@@ -63,6 +63,7 @@ func (c *renderConnector) Authorize(_ context.Context, a authorizer.Attributes) 
 
 func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	repoprefix := provisioning.RepositoryResourceInfo.GetName() + "/"
+	delete(oas.Paths.Paths, repoprefix+"/render")
 	sub := oas.Paths.Paths[repoprefix+"/render/{path}"]
 	if sub != nil {
 		sub.Get.Description = "get a rendered preview image"
