@@ -144,7 +144,6 @@ type updateStep struct {
 	ManagedPlugins     managedplugins.Manager
 	ProvisionedPlugins provisionedplugins.Manager
 	provisionedPlugins []string
-	log                logging.Logger
 }
 
 func (s *updateStep) Title() string {
