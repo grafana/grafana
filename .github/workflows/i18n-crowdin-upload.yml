@@ -12,11 +12,24 @@ jobs:
   upload-sources-to-crowdin:
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+      id-token: write # needed to get vault secrets
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
+        with:
+          # Vault secret paths:
+          # - ci/repo/grafana/grafana/grafana_frontend_platform_crowdin_bot
+          repo_secrets: |
+            CROWDIN_TOKEN=grafana_frontend_platform_crowdin_bot:access_token
 
       - name: Upload sources
         uses: crowdin/github-action@b8012bd5491b8aa8578b73ab5b5f5e7c94aaa6e2
@@ -31,5 +44,5 @@ jobs:
           source: 'public/locales/en-US/grafana.json'
           translation: 'public/locales/%locale%/%original_file_name%'
         env:
-          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
-          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+          CROWDIN_PROJECT_ID: 5
+          CROWDIN_PERSONAL_TOKEN: ${{ env.CROWDIN_TOKEN }}
