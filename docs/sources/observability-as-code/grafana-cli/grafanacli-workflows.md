@@ -1,6 +1,4 @@
 ---
-cascade:
-  noindex: true
 description: Learn more about the supported workflows and use cases for Grafana CLI
 keywords:
   - workflows
