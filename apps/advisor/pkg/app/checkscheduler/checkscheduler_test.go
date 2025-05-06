@@ -214,7 +214,7 @@ func Test_getEvaluationInterval(t *testing.T) {
 	t.Run("default", func(t *testing.T) {
 		interval, err := getEvaluationInterval(map[string]string{})
 		assert.NoError(t, err)
-		assert.Equal(t, 24*time.Hour, interval)
+		assert.Equal(t, 7*24*time.Hour, interval)
 	})
 
 	t.Run("invalid", func(t *testing.T) {
