@@ -4,10 +4,22 @@ import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
+
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
-import { Button, Modal } from '@grafana/ui';
+import { Box, Button, Field, Modal, TextLink } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
+import { useAsync } from 'react-use';
+import { getDataSourceSrv } from '@grafana/runtime';
+import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
+import { VariableTextAreaField } from '../components/VariableTextAreaField';
+import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
+import { selectors } from '@grafana/e2e-selectors';
+import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
+import { VariableValuesPreview } from '../components/VariableValuesPreview';
+import { hasVariableOptions } from '../utils';
 
 interface QueryVariableEditorProps {
   variable: QueryVariable;
@@ -52,15 +64,7 @@ export function QueryVariableEditor({ variable, onRunQuery }: QueryVariableEdito
     variable.setState({ datasource });
   };
   const onQueryChange = (query: VariableQueryType) => {
-    let definition: string;
-    if (typeof query === 'string') {
-      definition = query;
-    } else if (query.hasOwnProperty('query') && typeof query.query === 'string') {
-      definition = query.query;
-    } else {
-      definition = '';
-    }
-    variable.setState({ query, definition });
+    variable.setState({ query, definition: getQueryDef(query) });
     onRunQuery();
   };
 
@@ -98,28 +102,20 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard-scene.query-variable-form.label-value', 'Value'),
-      render: () => <Editor variable={variable} />,
+      overrides: [
+        {
+          type: 'rule',
+          tooltip: t('dashboard-scene.query-variable-form.tooltip-data-source', 'Data source'),
+          description: 'foo'
+        },
+      ],
+      title: t('dashboard-scene.query-variable-form.label-editor', 'Query Editor'),
+      render: () => <ModalEditor variable={variable} />,
     }),
   ];
 }
 
-function Editor({ variable }: { variable: QueryVariable }) {
-  // const { value: dsConfig } = useAsync(async () => {
-  //   const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
-  //   const VariableQueryEditor = await getVariableQueryEditor(datasource);
-  //   const defaultQuery = datasource?.variables?.getDefaultQuery?.();
-
-  //   if (!query && defaultQuery) {
-  //     const query =
-  //       typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };
-  //     onQueryChange(query);
-  //   }
-
-  //   return { datasource, VariableQueryEditor };
-  // }, [datasourceRef]);
-  // const { datasource, VariableQueryEditor } = dsConfig ?? {};
-
+function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onOpen = () => {
@@ -128,15 +124,149 @@ function Editor({ variable }: { variable: QueryVariable }) {
 
   return (
     <>
-      <Button variant="secondary" fill="outline" onClick={onOpen}>Open Editor</Button>
-      <Modal title="Query Variable" isOpen={isOpen}>
-        <QueryVariableEditor variable={variable} onRunQuery={() => {}} />
-      <Modal.ButtonRow>
-        <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
-          Done
+      <Box display={'flex'} direction={'column'} paddingBottom={1}>
+        <Button
+          tooltip={t(
+            'dashboard.edit-pane.variable.open-editor-tooltip',
+            'For more variable options open variable editor'
+          )}
+          onClick={onOpen}
+          size="sm"
+          fullWidth
+        >
+          <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
         </Button>
-      </Modal.ButtonRow>
-    </Modal>
+      </Box>
+      <Modal title="Query Variable" isOpen={isOpen}>
+        <Editor variable={variable} onRunQuery={() => { }} />
+        <Modal.ButtonRow>
+          <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
+            Done
+          </Button>
+        </Modal.ButtonRow>
+      </Modal>
     </>
   );
+}
+
+function Editor({ variable, onRunQuery }: { variable: QueryVariable, onRunQuery: () => void }) {
+  const { datasource: datasourceRef, sort, refresh, query, regex } = variable.useState();
+  const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
+  const { value: dsConfig } = useAsync(async () => {
+    const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
+    const VariableQueryEditor = await getVariableQueryEditor(datasource);
+    const defaultQuery = datasource?.variables?.getDefaultQuery?.();
+
+    if (!query && defaultQuery) {
+      const query =
+        typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };
+      onQueryChange(query);
+    }
+
+    return { datasource, VariableQueryEditor };
+  }, [datasourceRef]);
+  const { datasource: selectedDatasource, VariableQueryEditor } = dsConfig ?? {};
+
+  const onDataSourceChange = (dsInstanceSettings: DataSourceInstanceSettings) => {
+    const datasource = getDataSourceRef(dsInstanceSettings);
+
+    if ((variable.state.datasource?.type || '') !== datasource.type) {
+      variable.setState({ datasource, query: '', definition: '' });
+      return;
+    }
+
+    variable.setState({ datasource });
+  };
+
+  const onQueryChange = (query: VariableQueryType) => {
+    variable.setState({ query, definition: getQueryDef(query) });
+    onRunQuery();
+  };
+
+  const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
+    variable.setState({ regex: event.currentTarget.value });
+  };
+  
+  const onSortChange = (sort: SelectableValue<VariableSort>) => {
+    variable.setState({ sort: sort.value });
+  };
+  const onRefreshChange = (refresh: VariableRefresh) => {
+    variable.setState({ refresh: refresh });
+  };
+
+  const isHasVariableOptions = hasVariableOptions(variable);
+  
+  return (
+    <>
+      <Field
+        label={t('dashboard-scene.query-variable-editor-form.label-data-source', 'Data source')}
+        htmlFor="data-source-picker"
+      >
+        <DataSourcePicker current={selectedDatasource} onChange={onDataSourceChange} variables={true} width={30} />
+      </Field>
+
+      {selectedDatasource && VariableQueryEditor && (
+        <QueryEditor
+          onQueryChange={onQueryChange}
+          onLegacyQueryChange={onQueryChange}
+          datasource={selectedDatasource}
+          query={query}
+          VariableQueryEditor={VariableQueryEditor}
+          timeRange={timeRange}
+        />
+      )}
+
+      <VariableTextAreaField
+        defaultValue={regex ?? ''}
+        name="Regex"
+        description={
+          <div>
+            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-optional">
+              Optional, if you want to extract part of a series name or metric node segment.
+            </Trans>
+            <br />
+            <Trans i18nKey="dashboard-scene.query-variable-editor-form.description-examples">
+              Named capture groups can be used to separate the display text and value (
+              <TextLink
+                href="https://grafana.com/docs/grafana/latest/variables/filter-variables-with-regex#filter-and-modify-using-named-text-and-value-capture-groups"
+                external
+              >
+                see examples
+              </TextLink>
+              ).
+            </Trans>
+          </div>
+        }
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        placeholder="/.*-(?<text>.*)-(?<value>.*)-.*/"
+        onBlur={onRegExChange}
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRegExInputV2}
+        width={52}
+      />
+
+      <QueryVariableSortSelect
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsSortSelectV2}
+        onChange={onSortChange}
+        sort={sort}
+      />
+
+      <QueryVariableRefreshSelect
+        testId={selectors.pages.Dashboard.Settings.Variables.Edit.QueryVariable.queryOptionsRefreshSelectV2}
+        onChange={onRefreshChange}
+        refresh={refresh}
+      />
+
+      {isHasVariableOptions && <VariableValuesPreview options={variable.getOptionsForSelect(false)} />}
+    </>
+  );
+}
+
+function getQueryDef(query: VariableQueryType) {
+  if (typeof query === 'string') {
+    return query;
+  } else if (query.hasOwnProperty('query') && typeof query.query === 'string') {
+    return query.query;
+  } else {
+    return '';
+  }
 }
