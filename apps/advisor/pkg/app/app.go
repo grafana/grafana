@@ -34,6 +34,10 @@ func New(cfg app.Config) (app.App, error) {
 	if err != nil {
 		return nil, err
 	}
+	typesClient, err := clientGenerator.ClientFor(advisorv0alpha1.CheckTypeKind())
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize checks
 	checkMap := map[string]checks.Check{}
@@ -68,7 +72,7 @@ func New(cfg app.Config) (app.App, error) {
 										return
 									}
 									ctx = identity.WithRequester(context.Background(), requester)
-									err = processCheck(ctx, client, req.Object, check)
+									err = processCheck(ctx, client, typesClient, req.Object, check)
 									if err != nil {
 										log.Error("Error processing check", "error", err)
 									}
@@ -83,7 +87,7 @@ func New(cfg app.Config) (app.App, error) {
 										return
 									}
 									ctx = identity.WithRequester(context.Background(), requester)
-									err = processCheckRetry(ctx, client, req.Object, check)
+									err = processCheckRetry(ctx, client, typesClient, req.Object, check)
 									if err != nil {
 										log.Error("Error processing check retry", "error", err)
 									}

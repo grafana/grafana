@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
 
 	"github.com/grafana/grafana-app-sdk/resource"
@@ -30,7 +31,7 @@ func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Che
 	return c, nil
 }
 
-func processCheck(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheck(ctx context.Context, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status != "" {
 		// Check already processed
@@ -49,8 +50,20 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		}
 		return fmt.Errorf("error initializing check: %w", err)
 	}
+	// Get the check type
+	var checkType resource.Object
+	checkType, err = typesClient.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      check.ID(),
+	})
+	if err != nil {
+		return err
+	}
 	// Run the steps
-	steps := check.Steps()
+	steps, err := filterSteps(checkType, check.Steps())
+	if err != nil {
+		return err
+	}
 	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -64,20 +77,27 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 		Failures: failures,
 		Count:    int64(len(items)),
 	}
-	err = checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationProcessed)
-	if err != nil {
-		return err
-	}
+	// Set the status annotation to processed and annotate the steps ignored
+	annotations := checks.AddAnnotations(ctx, obj, map[string]string{
+		checks.StatusAnnotation:      checks.StatusAnnotationProcessed,
+		checks.IgnoreStepsAnnotation: checkType.GetAnnotations()[checks.IgnoreStepsAnnotation],
+	})
 	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
-		Operations: []resource.PatchOperation{{
-			Operation: resource.PatchOpAdd,
-			Path:      "/status/report",
-			Value:     *report,
-		}},
+		Operations: []resource.PatchOperation{
+			{
+				Operation: resource.PatchOpAdd,
+				Path:      "/status/report",
+				Value:     *report,
+			}, {
+				Operation: resource.PatchOpAdd,
+				Path:      "/metadata/annotations",
+				Value:     annotations,
+			},
+		},
 	}, resource.PatchOptions{}, obj)
 }
 
-func processCheckRetry(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheckRetry(ctx context.Context, client resource.Client, typesClient resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status == "" || status == checks.StatusAnnotationError {
 		// Check not processed yet or errored
@@ -102,8 +122,20 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 		}
 		return fmt.Errorf("error initializing check: %w", err)
 	}
+	// Get the check type
+	var checkType resource.Object
+	checkType, err = typesClient.Get(ctx, resource.Identifier{
+		Namespace: obj.GetNamespace(),
+		Name:      check.ID(),
+	})
+	if err != nil {
+		return err
+	}
 	// Run the steps
-	steps := check.Steps()
+	steps, err := filterSteps(checkType, check.Steps())
+	if err != nil {
+		return err
+	}
 	failures, err := runStepsInParallel(ctx, &c.Spec, steps, []any{item})
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -128,8 +160,7 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 		return false
 	})
 	// Delete the retry annotation to mark the check as processed
-	annotations := obj.GetAnnotations()
-	delete(annotations, checks.RetryAnnotation)
+	annotations := checks.DeleteAnnotations(ctx, obj, []string{checks.RetryAnnotation})
 	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
 		Operations: []resource.PatchOperation{{
 			Operation: resource.PatchOpAdd,
@@ -182,4 +213,19 @@ func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, st
 	}
 	wg.Wait()
 	return reportFailures, internalErr
+}
+
+func filterSteps(checkType resource.Object, steps []checks.Step) ([]checks.Step, error) {
+	ignoreSteps := checkType.GetAnnotations()[checks.IgnoreStepsAnnotation]
+	if ignoreSteps != "" && ignoreSteps != "1" { // 1 is the default value for the annotation
+		filteredSteps := []checks.Step{}
+		ignoreStepsList := strings.Split(ignoreSteps, ",")
+		for _, step := range steps {
+			if !slices.Contains(ignoreStepsList, step.ID()) {
+				filteredSteps = append(filteredSteps, step)
+			}
+		}
+		return filteredSteps, nil
+	}
+	return steps, nil
 }

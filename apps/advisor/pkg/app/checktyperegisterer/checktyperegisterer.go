@@ -65,6 +65,13 @@ func (r *Runner) createOrUpdate(ctx context.Context, obj resource.Object) error 
 		if errors.IsAlreadyExists(err) {
 			// Already exists, update
 			r.log.Debug("Check type already exists, updating", "identifier", id)
+			// Retrieve current annotations to avoid overriding them
+			current, err := r.client.Get(ctx, obj.GetStaticMetadata().Identifier())
+			if err != nil {
+				return err
+			}
+			annotations := current.GetAnnotations()
+			obj.SetAnnotations(annotations)
 			_, err = r.client.Update(ctx, id, obj, resource.UpdateOptions{})
 			if err != nil {
 				// Ignore the error, it's probably due to a race condition
@@ -96,7 +103,8 @@ func (r *Runner) Run(ctx context.Context) error {
 				Namespace: r.namespace,
 				Annotations: map[string]string{
 					// Flag to indicate feature availability
-					checks.RetryAnnotation: "1",
+					checks.RetryAnnotation:       "1",
+					checks.IgnoreStepsAnnotation: "1",
 				},
 			},
 			Spec: advisorv0alpha1.CheckTypeSpec{
