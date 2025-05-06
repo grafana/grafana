@@ -30,6 +30,20 @@ import (
 )
 
 func TestProcessMessage(t *testing.T) {
+	t.Run("create secret message", func(t *testing.T) {
+		panic("TODO")
+	})
+
+	t.Run("update secret message", func(t *testing.T) {
+		panic("TODO")
+	})
+	t.Run("delete secret message", func(t *testing.T) {
+
+		panic("TODO")
+	})
+}
+
+func TestProcessMessageProperty(t *testing.T) {
 	t.Parallel()
 
 	seed := time.Now().UnixMicro()

@@ -127,14 +127,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
 
-	// From this point on, we should not have a need to read value.
-	newSecureValue.Spec.Value = ""
-
-	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
-	// Temporarily mark succeeded here since the value is already stored in the keeper.
-	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
-	newSecureValue.Status.Message = ""
-
 	newRow, err := toUpdateRow(currentRow, newSecureValue, actorUID, currentRow.ExternalID)
 	if err != nil {
 		return nil, fmt.Errorf("to update row: %w", err)
@@ -209,6 +201,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 }
 
 func (s *secureValueMetadataStorage) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
+	// TODO: do we need to delete by GUID? name+namespace is a unique index. It would avoid doing a fetch.
 	req := deleteSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
