@@ -48,7 +48,7 @@ For maximum flexibility, advanced use cases, or building custom tooling, you can
 
 - This approach requires handling HTTP requests and responses but provides complete control over resource management.
 - `grafanactl`, Git Sync, and the Foundation SDK are all built on top of these APIs.
-- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](json-models/).
+- To understand Dashboard Schemas accepted by the APIs, refer to the [JSON models documentation](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/observability-as-code/schema-v2/).
 
 Refer to the [Grafana APIs](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/developers/http_api/apis/) documentation for more information.
 
@@ -67,17 +67,17 @@ Refer to the [Foundation SDK](../foundation-sdk) documentation for more informat
 
 If you're already using established Infrastructure as Code or other configuration management tools, Grafana offers integrations to manage resources within your existing workflows.
 
-- [Terraform](../infrastructure-as-code/terraform/)
+- [Terraform](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/terraform/)
 
   - Use the Grafana Terraform provider to manage dashboards, alerts, and more.
   - Understand how to define and deploy resources using HCL/JSON configurations.
 
-- [Ansible](../infrastructure-as-code/ansible/)
+- [Ansible](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/ansible/)
 
   - Learn to use the Grafana Ansible collection to manage Grafana Cloud resources, including folders and cloud stacks.
   - Write playbooks to automate resource provisioning through the Grafana API.
 
-- [Grafana Operator](../infrastructure-as-code/grafana-operator/)
+- [Grafana Operator](https://grafana.com/docs/grafana-cloud/developer-resources/infrastructure-as-code/grafana-operator/)
 
   - Utilize Kubernetes-native management with the Grafana Operator.
   - Manage dashboards, folders, and data sources via Kubernetes Custom Resources.
