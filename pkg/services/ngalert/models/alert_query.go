@@ -96,7 +96,7 @@ type AlertQuery struct {
 	// JSON is the raw JSON query and includes the above properties as well as custom properties.
 	Model json.RawMessage `json:"model"`
 
-	// DatrasourceType is the type of the data source.
+	// DatasourceType is the type of the data source.
 	DatasourceType string `json:"-"`
 
 	// IsMTQuery ...
