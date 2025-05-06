@@ -76,7 +76,7 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
 }
 
 function getGlobalActions(): CommandPaletteAction[] {
-  return [
+  const actions: CommandPaletteAction[] = [
     {
       id: 'preferences/theme',
       name: t('command-palette.action.change-theme', 'Change theme'),
@@ -101,6 +101,33 @@ function getGlobalActions(): CommandPaletteAction[] {
       priority: PREFERENCES_PRIORITY,
     },
   ];
+
+  if (process.env.NODE_ENV === 'development') {
+    // eslint-disable @grafana/no-untranslated-strings
+    const currentState = currentMockApiState();
+    const mockApiAction = currentState ? 'Disable' : 'Enable';
+    actions.push(
+      {
+        id: 'preferences/dev',
+        name: 'Dev tooling...',
+        keywords: 'dev preferences tooling',
+        section: 'Tooling',
+        priority: PREFERENCES_PRIORITY,
+      },
+      {
+        id: 'preferences/dev/toggle-mock-api',
+        name: `${mockApiAction} Mock API worker and reload`,
+        subtitle: 'Intercepts requests and returns mock data using MSW',
+        keywords: 'mock api',
+        parent: 'preferences/dev',
+        priority: PREFERENCES_PRIORITY,
+        perform: toggleMockApiAndReload,
+      }
+    );
+    // eslint-enable @grafana/no-untranslated-strings
+  }
+
+  return actions;
 }
 
 export function useStaticActions(): CommandPaletteAction[] {
@@ -118,31 +145,6 @@ export function useStaticActions(): CommandPaletteAction[] {
           performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
         },
       });
-    }
-
-    if (process.env.NODE_ENV === 'development') {
-      // eslint-disable @grafana/no-untranslated-strings
-      const currentState = currentMockApiState();
-      const mockApiAction = currentState ? 'Disable' : 'Enable';
-      navBarActions.push(
-        {
-          id: 'preferences/dev',
-          name: 'Dev tooling...',
-          keywords: 'dev preferences tooling',
-          section: 'Tooling',
-          priority: PREFERENCES_PRIORITY,
-        },
-        {
-          id: 'preferences/dev/toggle-mock-api',
-          name: `${mockApiAction} Mock API worker and reload`,
-          subtitle: 'Intercepts requests and returns mock data using MSW',
-          keywords: 'mock api',
-          parent: 'preferences/dev',
-          priority: PREFERENCES_PRIORITY,
-          perform: toggleMockApiAndReload,
-        }
-      );
-      // eslint-enable @grafana/no-untranslated-strings
     }
     return [...getGlobalActions(), ...navBarActions];
   }, [navBarTree]);
