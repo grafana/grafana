@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"hash/fnv"
 
 	"github.com/grafana/dskit/ring"
@@ -107,6 +108,7 @@ var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceS
 })
 
 func (ds *DistributorServer) Search(ctx context.Context, r *resource.ResourceSearchRequest) (*resource.ResourceSearchResponse, error) {
+	fmt.Println("distributing Search")
 	client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -116,6 +118,7 @@ func (ds *DistributorServer) Search(ctx context.Context, r *resource.ResourceSea
 }
 
 func (ds *DistributorServer) GetStats(ctx context.Context, r *resource.ResourceStatsRequest) (*resource.ResourceStatsResponse, error) {
+	fmt.Println("distributing GetStats")
 	client, err := ds.getClientToDistributeRequest(ctx, r.Namespace)
 	if err != nil {
 		return nil, err
@@ -125,6 +128,7 @@ func (ds *DistributorServer) GetStats(ctx context.Context, r *resource.ResourceS
 }
 
 func (ds *DistributorServer) Read(ctx context.Context, r *resource.ReadRequest) (*resource.ReadResponse, error) {
+	fmt.Println("distributing Read")
 	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -134,6 +138,7 @@ func (ds *DistributorServer) Read(ctx context.Context, r *resource.ReadRequest) 
 }
 
 func (ds *DistributorServer) Create(ctx context.Context, r *resource.CreateRequest) (*resource.CreateResponse, error) {
+	fmt.Println("distributing Create")
 	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -143,6 +148,7 @@ func (ds *DistributorServer) Create(ctx context.Context, r *resource.CreateReque
 }
 
 func (ds *DistributorServer) Update(ctx context.Context, r *resource.UpdateRequest) (*resource.UpdateResponse, error) {
+	fmt.Println("distributing Update")
 	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -152,6 +158,7 @@ func (ds *DistributorServer) Update(ctx context.Context, r *resource.UpdateReque
 }
 
 func (ds *DistributorServer) Delete(ctx context.Context, r *resource.DeleteRequest) (*resource.DeleteResponse, error) {
+	fmt.Println("distributing Delete")
 	client, err := ds.getClientToDistributeRequest(ctx, r.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -161,6 +168,7 @@ func (ds *DistributorServer) Delete(ctx context.Context, r *resource.DeleteReque
 }
 
 func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) (*resource.ListResponse, error) {
+	fmt.Println("distributing List")
 	client, err := ds.getClientToDistributeRequest(ctx, r.Options.Key.Namespace)
 	if err != nil {
 		return nil, err
@@ -170,6 +178,7 @@ func (ds *DistributorServer) List(ctx context.Context, r *resource.ListRequest) 
 }
 
 func (ds *DistributorServer) Watch(r *resource.WatchRequest, srv resource.ResourceStore_WatchServer) error {
+	fmt.Println("distributing Watch")
 	return nil
 	// ctx := srv.Context()
 
@@ -238,6 +247,8 @@ func (ds *DistributorServer) getClientToDistributeRequest(ctx context.Context, n
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("distributing request to ", rs.Instances[0].Id)
 
 	return client.(*resource.RingClient).Client, nil
 }
