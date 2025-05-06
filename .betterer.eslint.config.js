@@ -77,6 +77,7 @@ module.exports = [
     rules: {
       '@typescript-eslint/no-explicit-any': 'error',
       '@grafana/no-aria-label-selectors': 'error',
+      '@grafana/no-restricted-img-srcs': 'error',
       'no-restricted-imports': [
         'error',
         {
