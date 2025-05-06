@@ -1099,6 +1099,18 @@ func (b *APIBuilder) asRepository(ctx context.Context, obj runtime.Object) (repo
 }
 
 func (b *APIBuilder) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
+	// Try first with any extra
+	for _, extra := range b.extras {
+		r, err := extra.AsRepository(ctx, r)
+		if err != nil {
+			return nil, fmt.Errorf("convert repository for extra %T: %w", extra, err)
+		}
+
+		if r != nil {
+			return r, nil
+		}
+	}
+
 	switch r.Spec.Type {
 	case provisioning.LocalRepositoryType:
 		return repository.NewLocal(r, b.localFileResolver), nil

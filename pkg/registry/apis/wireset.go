@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 )
 
+// HACK: This is a hack so that wire can uniquely identify dependencies
 func MergeProvisioningExtras(webhook provisioning.WebhookExtraBuilder, render provisioning.RenderExtraBuilder) []provisioning.ExtraBuilder {
 	return []provisioning.ExtraBuilder{
 		webhook.ExtraBuilder,
