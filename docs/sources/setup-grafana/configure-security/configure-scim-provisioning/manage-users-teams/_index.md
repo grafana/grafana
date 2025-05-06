@@ -63,11 +63,12 @@ SCIM uses a specific process to establish and maintain user identity between the
    - The identity provider updates Grafana with the External ID
    - Grafana updates the authentication validations to expect this External ID
 
-3. Authentication validation:
-   - The SAML integration must be configured to send this same External ID (e.g., Azure AD `objectId`) as a claim in the SAML assertion.
-   - Grafana's SAML configuration (specifically the `assertion_attribute_login` setting) must be set to use this incoming claim.
-   - Grafana then validates the user by matching the identifier received via SAML against the user's **login handle**.
-   - This linkage works correctly because the SCIM provisioning process must also set the user's Grafana login handle to this same External ID value. (See [SAML configuration details](../../configure-authentication/saml/\#integrating-with-scim-provisioning) for setup guidance).
+3. Matching the User During Login:
+   When a user logs in via SAML, Grafana needs to securely match them to the correct user account provisioned by SCIM. This requires using a consistent, unique identifier across both processes (for example, the user's `objectId` in Azure AD).
+   - **Configure SAML Claims:** Set up your identity provider (e.g., Azure AD) to include this unique identifier in the information it sends during SAML login.
+   - **Configure Grafana SAML:** In Grafana's SAML settings, use the `assertion_attribute_login` setting to specify which incoming SAML attribute contains this unique identifier. Grafana uses the value of this attribute to find the user by matching it against their Grafana **login** attribute.
+   - **Configure SCIM Mapping:** To complete the link, ensure your SCIM attribute mapping in the identity provider sets the user's Grafana **login** attribute to be the *same* unique identifier provided via SAML.
+   - See [SAML configuration details](../../configure-authentication/saml/\#integrating-with-scim-provisioning) for specific configuration guidance.
 
 This process ensures secure and consistent user identification across both systems, preventing security issues that could arise from email changes or other user attribute modifications.
 
