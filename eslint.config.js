@@ -91,6 +91,7 @@ module.exports = [
       'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
+      '@grafana/no-restricted-img-srcs': 'error',
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
@@ -101,9 +102,16 @@ module.exports = [
       'import/order': [
         'error',
         {
+          pathGroups: [
+            {
+              pattern: 'img/**',
+              group: 'internal',
+            },
+          ],
           groups: [['builtin', 'external'], 'internal', 'parent', 'sibling', 'index'],
           'newlines-between': 'always',
           alphabetize: { order: 'asc' },
+          pathGroupsExcludedImportTypes: ['builtin'],
         },
       ],
       'no-restricted-imports': [
