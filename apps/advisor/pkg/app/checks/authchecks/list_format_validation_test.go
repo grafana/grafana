@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -195,7 +196,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			failure, err := validator.Run(ctx, spec, tt.objToCheck)
+			failure, err := validator.Run(ctx, logging.DefaultLogger, spec, tt.objToCheck)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
