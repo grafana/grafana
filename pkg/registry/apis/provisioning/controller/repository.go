@@ -310,6 +310,7 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 	return obj.Spec.Sync.Enabled && syncAge >= (syncInterval-tolerance) && !pendingForTooLong && !isRunning
 }
 
+// TODO: this should not be about WebhookStatus but about status operations
 func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) (*provisioning.WebhookStatus, error) {
 	logger := logging.FromContext(ctx)
 	hooks, _ := repo.(repository.Hooks)
@@ -498,6 +499,7 @@ func (rc *RepositoryController) process(item *queueItem) error {
 	}
 
 	// Run hooks
+	// TODO: this should not be about WebhookStatus but about status operations
 	webhookStatus, err := rc.runHooks(ctx, repo, obj)
 	switch {
 	case err != nil:
