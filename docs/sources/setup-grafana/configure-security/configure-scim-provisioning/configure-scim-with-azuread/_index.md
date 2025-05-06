@@ -33,6 +33,14 @@ You can enable feature toggles through configuration file or environment variabl
 For more information, refer to the [feature toggles documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+**Important SAML and SCIM Configuration:**
+When using SAML for authentication alongside SCIM provisioning with Azure AD, it is crucial to correctly align user identifiers. 
+For detailed information on why this is critical for security and how to configure it, refer to the main [SCIM provisioning documentation (../_index.md#critical-aligning-saml-user-id-with-scim-externalid)](../_index.md#critical-aligning-saml-user-id-with-scim-externalid).
+
+Refer to the [SAML authentication with Azure AD documentation](../../configure-authentication/saml/#integrating-with-scim-provisioning) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Azure AD SCIM setup.
+{{< /admonition >}}
+
 ## Prerequisites
 
 Before configuring SCIM with Azure AD, ensure you have:
@@ -41,13 +49,6 @@ Before configuring SCIM with Azure AD, ensure you have:
 - Admin access to both Grafana and Azure AD
 - [SAML authentication configured with Azure AD](../../configure-authentication/saml/#set-up-saml-with-azure-ad)
 - SCIM feature enabled in Grafana
-
-{{< admonition type="note" >}}
-**Important SAML Configuration for SCIM:**
-When using SAML for authentication alongside SCIM provisioning with Azure AD, it is crucial to ensure that the user identifier in the SAML assertions matches the `externalId` used by SCIM.
-
-Refer to the [SAML authentication with Azure AD documentation](../../configure-authentication/saml/#integrating-with-scim-provisioning) for detailed instructions on how to configure the necessary SAML claims and Grafana SAML settings to align with your SCIM setup.
-{{< /admonition >}}
 
 ## Configure SCIM in Grafana
 
