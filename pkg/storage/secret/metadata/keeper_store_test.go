@@ -102,7 +102,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		// we are able to get it
-		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, keeperNamespaceTest, &keeperTest)
+		keeperConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, keeperNamespaceTest, &keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.NotNil(t, keeperConfig)
 		require.NotEmpty(t, keeperConfig.Type())
@@ -112,7 +112,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.NoError(t, delErr)
 
 		// and we shouldn't be able to get it again
-		_, getErr := keeperMetadataStorage.GetKeeperConfig(ctx, keeperNamespaceTest, &keeperTest)
+		_, getErr := keeperMetadataStorage.GetKeeperConfig(ctx, keeperNamespaceTest, &keeperTest, contracts.ReadOpts{})
 		require.Errorf(t, getErr, "keeper not found")
 	})
 
@@ -140,7 +140,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		// Validate that the description was set
-		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest)
+		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "initial description", keeper.Spec.Description)
 
@@ -159,13 +159,13 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		// Validate updated values
-		updatedConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, keeperNamespaceTest, &keeperTest)
+		updatedConfig, err := keeperMetadataStorage.GetKeeperConfig(ctx, keeperNamespaceTest, &keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.NotNil(t, updatedConfig)
 		require.NotEmpty(t, updatedConfig.Type())
 
 		// Validate that the description was updated
-		updatedKeeper, err = keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest)
+		updatedKeeper, err = keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "updated description", updatedKeeper.Spec.Description)
 	})
@@ -204,7 +204,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify initial AWS config
-		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest)
+		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "AWS_ACCESS_KEY_ID_1", keeper.Spec.AWS.AccessKeyID.ValueFromEnv)
 		require.Equal(t, "AWS_SECRET_ACCESS_KEY_1", keeper.Spec.AWS.SecretAccessKey.ValueFromEnv)
@@ -235,7 +235,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.NoError(t, err)
 
 		// Verify updated AWS config
-		updatedKeeper, err = keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest)
+		updatedKeeper, err = keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "AWS_ACCESS_KEY_ID_2", updatedKeeper.Spec.AWS.AccessKeyID.ValueFromEnv)
 		require.Equal(t, "AWS_SECRET_ACCESS_KEY_2", updatedKeeper.Spec.AWS.SecretAccessKey.ValueFromEnv)
@@ -259,7 +259,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		ctx := context.Background()
 		keeperMetadataStorage := initStorage(t)
 
-		_, err := keeperMetadataStorage.Read(ctx, "ns", "non-existent")
+		_, err := keeperMetadataStorage.Read(ctx, "ns", "non-existent", contracts.ReadOpts{})
 		require.Error(t, err)
 		require.Equal(t, contracts.ErrKeeperNotFound, err)
 	})
@@ -307,7 +307,7 @@ func Test_KeeperMetadataStorage_GetKeeperConfig(t *testing.T) {
 		require.Error(t, err, "db failure: keeper not found")
 
 		// Verify original keeper is unchanged
-		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest)
+		keeper, err := keeperMetadataStorage.Read(ctx, xkube.Namespace(keeperNamespaceTest), keeperTest, contracts.ReadOpts{})
 		require.NoError(t, err)
 		require.Equal(t, "initial description", keeper.Spec.Description)
 	})
