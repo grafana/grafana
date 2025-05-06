@@ -86,7 +86,6 @@ describe('dashboardSessionState', () => {
             {
               name: 'filters',
               type: 'adhoc',
-              filters: [],
             },
           ],
         },
