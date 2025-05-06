@@ -67,7 +67,7 @@ type SecureValueSpec struct {
 	// +k8s:validation:minLength=1
 	// +k8s:validation:maxLength=1024
 	// +optional
-	Ref string `json:"ref,omitempty"`
+	Ref *string `json:"ref,omitempty"`
 
 	// Name of the keeper, being the actual storage of the secure value.
 	// If not specified, the default keeper for the namespace will be used.

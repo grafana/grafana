@@ -105,8 +105,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	return createdSecureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	secureValue, err := s.read(ctx, namespace, name)
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+	secureValue, err := s.read(ctx, namespace, name, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -120,27 +120,29 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 }
 
 func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
-	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
+	var newRow *secureValueDB
 
-	read, err := s.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name)
-	if err != nil || read == nil {
-		return nil, fmt.Errorf("db failure: %w", err)
-	}
+	err := s.db.Transaction(ctx, func(ctx context.Context) error {
+		read, err := s.read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{ForUpdate: true})
+		if err != nil {
+			return fmt.Errorf("reading secure value: %w", err)
+		}
 
-	// From this point on, we should not have a need to read value.
-	newSecureValue.Spec.Value = ""
+		// From this point on, we should not have a need to read value.
+		newSecureValue.Spec.Value = ""
 
-	// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
-	// Temporarily mark succeeded here since the value is already stored in the keeper.
-	newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
-	newSecureValue.Status.Message = ""
+		// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
+		// Temporarily mark succeeded here since the value is already stored in the keeper.
+		newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
+		newSecureValue.Status.Message = ""
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, actorUID, currentRow.ExternalID)
-	if err != nil {
-		return nil, fmt.Errorf("to update row: %w", err)
-	}
+		// TODO: Confirm the ExternalID should come from the read model.
+		var updateErr error
+		newRow, updateErr = toUpdateRow(&read, newSecureValue, actorUID, read.ExternalID)
+		if updateErr != nil {
+			return fmt.Errorf("model to update row: %w", updateErr)
+		}
 
-	err = s.db.Transaction(ctx, func(ctx context.Context) error {
 		if newRow.Keeper.Valid {
 			// Validate before updating that the new `keeper` exists.
 
@@ -172,7 +174,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 			SQLTemplate: sqltemplate.New(s.dialect),
 			Namespace:   newRow.Namespace,
 			Name:        newRow.Name,
-			Row:         nil,
+			Row:         newRow,
 		}
 
 		query, err := sqltemplate.Execute(sqlSecureValueUpdate, req)
@@ -339,8 +341,8 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 	return nil
 }
 
-func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	row, err := s.read(ctx, namespace, name)
+func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*contracts.DecryptSecureValue, error) {
+	row, err := s.read(ctx, namespace, name, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -353,11 +355,12 @@ func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespa
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.Namespace, name string) (secureValueDB, error) {
+func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
 	req := readSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
+		IsForUpdate: opts.ForUpdate,
 	}
 
 	query, err := sqltemplate.Execute(sqlSecureValueRead, req)
