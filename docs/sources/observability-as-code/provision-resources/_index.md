@@ -12,7 +12,7 @@ labels:
     - enterprise
     - oss
 title: Provision resources and sync dashboards
-weight: 100
+weight: 300
 ---
 
 # Provision resources and sync dashboards
