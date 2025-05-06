@@ -2026,8 +2026,8 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "Cannot find rule details for {{uid}}",
-      "cannot-load-rule-details-for": "Cannot load rule details for {{name}}",
+      "cannot-find-rule-details-for": "Cannot find rule details for UID {{uid}}",
+      "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
       "ds-error-boundary": {
@@ -2583,14 +2583,14 @@
     },
     "fields": {
       "allowed-groups-description": "List of comma- or space-separated groups. The user should be a member of at least one group to log in.",
-      "allowed-groups-description-oauth": "If you configure allowed_groups, you must also configure groups_attribute_path.",
+      "allowed-groups-description-oauth": "If you configure \"Allowed groups\", you must also configure \"Groups attribute path\".",
       "api-url-description": "The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with <2>OpenID UserInfo</2>.",
       "team-ids-description": "If set, the user must be a member of one of the given teams to log in.",
-      "team-ids-description-oauth": "If you configure {{teamIds}}, you must also configure {{teamsUrl}} and {{teamIdsAttributePath}}.",
+      "team-ids-description-oauth": "If you configure \"{{teamIds}}\", you must also configure \"{{teamsUrl}}\" and \"{{teamIdsAttributePath}}\".",
       "team-ids-github": "Integer list of Team Ids.",
       "team-ids-other": "String list of Team Ids.",
       "teams-url-description": "The URL used to query for Team Ids. If not set, the default value is /teams.",
-      "teams-url-description-oauth": "If you configure teams_url, you must also configure team_ids_attribute_path.",
+      "teams-url-description-oauth": "If you configure \"Teams URL\", you must also configure \"Team Ids attribute path\".",
       "use-pkce-description": "If enabled, Grafana will use <2>Proof Key for Code Exchange (PKCE)</2> with the OAuth2 Authorization Code Grant."
     },
     "provider-card": {
