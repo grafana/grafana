@@ -221,11 +221,6 @@ export function createDashboardSceneFromDashboardModel(oldModel: DashboardModel,
     });
   }
 
-  if (oldModel.uid === 'f3f3d514129c344097cd313fe9a6b0dd') {
-    oldModel.meta.reloadOnParamsChange = true;
-    console.log('HAPPENING');
-  }
-
   const scopeMeta =
     config.featureToggles.scopeFilters && oldModel.scopeMeta
       ? {

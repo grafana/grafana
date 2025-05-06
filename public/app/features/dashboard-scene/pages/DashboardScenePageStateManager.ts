@@ -37,7 +37,7 @@ import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSav
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
-import { getEmptyDashboard, updateNavModel } from './utils';
+import { updateNavModel } from './utils';
 
 export interface LoadError {
   status?: number;
@@ -317,13 +317,7 @@ abstract class DashboardScenePageStateManagerBase<T>
       return await this.loadHomeDashboard();
     }
 
-    let rsp: any = '';
-
-    if (options.uid === 'f3f3d514129c344097cd313fe9a6b0dd') {
-      rsp = getEmptyDashboard();
-    } else {
-      rsp = await this.fetchDashboard(options);
-    }
+    const rsp = await this.fetchDashboard(options);
 
     if (!rsp) {
       return null;
