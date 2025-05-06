@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -25,6 +26,7 @@ func MergeProvisioningExtras(webhook provisioning.WebhookExtraBuilder, render pr
 }
 
 var ProvisioningExtras = wire.NewSet(
+	pullrequest.ProvideScreenshotRenderer,
 	provisioning.ProvideWebhooks,
 	provisioning.ProvidePreviewScreenshots,
 	MergeProvisioningExtras,

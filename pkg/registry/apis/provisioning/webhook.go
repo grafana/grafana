@@ -27,6 +27,7 @@ import (
 	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/resources"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	grafanasecrets "github.com/grafana/grafana/pkg/services/secrets"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -48,13 +49,15 @@ func ProvideWebhooks(
 	secretsSvc grafanasecrets.Service,
 	ghFactory *github.Factory,
 	renderer pullrequest.ScreenshotRenderer,
-	parsers resources.ParserFactory,
+	configProvider apiserver.RestConfigProvider,
 ) WebhookExtraBuilder {
 	urlProvider := func(namespace string) string {
 		return cfg.AppURL
 	}
 	// HACK: Assume is only public if it is HTTPS
 	isPublic := strings.HasPrefix(urlProvider(""), "https://")
+	clients := resources.NewClientFactory(configProvider)
+	parsers := resources.NewParserFactory(clients)
 
 	return WebhookExtraBuilder{
 		ExtraBuilder: func(b *APIBuilder) Extra {
