@@ -102,13 +102,6 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
-      overrides: [
-        {
-          type: 'rule',
-          tooltip: t('dashboard-scene.query-variable-form.tooltip-data-source', 'Data source'),
-          description: 'foo'
-        },
-      ],
       title: t('dashboard-scene.query-variable-form.label-editor', 'Query Editor'),
       render: () => <ModalEditor variable={variable} />,
     }),
