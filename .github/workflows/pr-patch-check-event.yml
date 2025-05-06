@@ -47,7 +47,7 @@ jobs:
                 owner: 'grafana',
                 repo: 'security-patch-actions',
                 workflow_id: 'test-patches-event.yml',
-                ref: 'km/patch-check-vault',
+                ref: 'main',
                 inputs: {
                   src_repo: REPO,
                   src_ref: 'main',
