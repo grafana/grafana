@@ -441,10 +441,6 @@ func (s *searchSupport) init(ctx context.Context) error {
 func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"dispatchEvent")
 	defer span.End()
-	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
-		s.log.Info("ignoring watch event", "type", evt.Type)
-		return
-	}
 	span.SetAttributes(
 		attribute.String("event_type", evt.Type.String()),
 		attribute.String("namespace", evt.Key.Namespace),
@@ -452,6 +448,14 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 		attribute.String("resource", evt.Key.Resource),
 		attribute.String("name", evt.Key.Name),
 	)
+
+	switch evt.Type {
+	case WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED: // OK
+	default:
+		s.log.Info("ignoring watch event", "type", evt.Type)
+		span.AddEvent("ignoring watch event", trace.WithAttributes(attribute.String("type", evt.Type.String())))
+
+	}
 
 	nsr := NamespacedResource{
 		Namespace: evt.Key.Namespace,
@@ -461,12 +465,14 @@ func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
 	index, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
 		s.log.Warn("error getting index for watch event", "error", err)
+		span.RecordError(err)
 		return
 	}
 	// Get or create index queue processor for this index
 	indexQueueProcessor, err := s.getOrCreateIndexQueueProcessor(index, nsr)
 	if err != nil {
 		s.log.Error("error getting index queue processor for watch event", "error", err)
+		span.RecordError(err)
 		return
 	}
 	indexQueueProcessor.Add(evt)
