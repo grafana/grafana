@@ -1,3 +1,5 @@
+import grafanaIconSvg from 'img/grafana_icon.svg';
+
 import { Trans } from '../../../../../../core/internationalization';
 import { RuleFormType } from '../../../types/rule-form';
 
@@ -16,7 +18,7 @@ const GrafanaManagedRuleType = ({ selected = false, disabled, onClick }: SharedP
           </Trans>
         </span>
       }
-      image="public/img/grafana_icon.svg"
+      image={grafanaIconSvg}
       selected={selected}
       disabled={disabled}
       value={RuleFormType.grafana}
