@@ -8,9 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util/xorm/core"
 	"xorm.io/builder"
@@ -306,13 +309,7 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 
 	// If engine has a sequence number generator, use it to produce values for auto-increment columns.
 	if len(table.AutoIncrement) > 0 && session.engine.sequenceGenerator != nil {
-		var found bool
-		for _, col := range colNames {
-			if col == table.AutoIncrement {
-				found = true
-				break
-			}
-		}
+		found := slices.Contains(colNames, table.AutoIncrement)
 		if !found {
 			seq, err := session.engine.sequenceGenerator.Next(session.ctx, table.Name, table.AutoIncrement)
 			if err != nil {
@@ -321,6 +318,26 @@ func (session *Session) innerInsert(bean any) (int64, error) {
 
 			colNames = append(colNames, table.AutoIncrement)
 			args = append(args, seq)
+		}
+	} else if len(table.RandomID) > 0 {
+		found := slices.Contains(colNames, table.RandomID)
+		if !found {
+			id := session.engine.randomIDGen()
+			colNames = append(colNames, table.RandomID)
+			args = append(args, id)
+			// Set random ID back to the bean.
+			col := table.GetColumn(table.RandomID)
+			if col == nil {
+				return 0, fmt.Errorf("column %s not found in table %s", table.RandomID, table.Name)
+			}
+			idValue, err := col.ValueOf(bean)
+			if err != nil {
+				session.engine.logger.Error(err)
+			}
+			if idValue == nil || !idValue.IsValid() || !idValue.CanSet() {
+				return 0, fmt.Errorf("failed to set snowflake ID to bean: %v", err)
+			}
+			idValue.Set(int64ToIntValue(id, idValue.Type()))
 		}
 	}
 
@@ -587,7 +604,7 @@ func (session *Session) genInsertColumns(bean any) ([]string, []any, error) {
 		}
 		fieldValue := *fieldValuePtr
 
-		if col.IsAutoIncrement {
+		if col.IsAutoIncrement || col.IsRandomID {
 			switch fieldValue.Type().Kind() {
 			case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int, reflect.Int64:
 				if fieldValue.Int() == 0 {
@@ -779,4 +796,41 @@ func (session *Session) insertMap(columns []string, args []any) (int64, error) {
 		return 0, err
 	}
 	return affected, nil
+}
+
+type snowflake struct {
+	mu       sync.Mutex
+	nodeID   int64
+	sequence int64
+	lastTime int64
+	epoch    time.Time
+}
+
+// newSnowflake creates a new instance with a random node ID (0-1023)
+// It forcefully converts epoch time (in milliseconds) to monotonic time
+func newSnowflake(nodeID int64) *snowflake {
+	const snowflakeEpoch = 1288834974657 // 2010-11-04 01:42:54.657 UTC
+	epoch := time.Unix(snowflakeEpoch/1000, (snowflakeEpoch%1000)*1000000)
+	now := time.Now()
+	return &snowflake{nodeID: nodeID & 0x3ff, epoch: now.Add(epoch.Sub(now))}
+}
+
+func (s *snowflake) Generate() int64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	currentTime := time.Since(s.epoch).Milliseconds()
+	if currentTime == s.lastTime {
+		s.sequence = (s.sequence + 1) & 0xfff
+		if s.sequence == 0 {
+			// wait for next millisecond, we are not using time.Sleep() here due to its low resolution (often >4ms)
+			for currentTime <= s.lastTime {
+				currentTime = time.Since(s.epoch).Milliseconds()
+			}
+		}
+	} else {
+		s.sequence = 0
+	}
+	s.lastTime = currentTime
+	id := (currentTime << 22) | (s.nodeID << 12) | s.sequence
+	return id
 }

@@ -38,6 +38,7 @@ var (
 		"NULL":     NULLTagHandler,
 		"NOT":      IgnoreTagHandler,
 		"AUTOINCR": AutoIncrTagHandler,
+		"RANDOMID": RandomIDTagHandler,
 		"DEFAULT":  DefaultTagHandler,
 		"CREATED":  CreatedTagHandler,
 		"UPDATED":  UpdatedTagHandler,
@@ -85,6 +86,12 @@ func NotNullTagHandler(ctx *tagContext) error {
 // AutoIncrTagHandler describes autoincr tag handler
 func AutoIncrTagHandler(ctx *tagContext) error {
 	ctx.col.IsAutoIncrement = true
+	return nil
+}
+
+// RandomIDTagHandler describes snowflake id tag handler
+func RandomIDTagHandler(ctx *tagContext) error {
+	ctx.col.IsRandomID = true
 	return nil
 }
 
