@@ -21,8 +21,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
-var subscribedEvents = []string{"push", "pull_request"}
-
 // Make sure all public functions of this struct call the (*githubRepository).logger function, to ensure the GH repo details are included.
 type githubRepository struct {
 	config  *provisioning.Repository
