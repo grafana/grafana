@@ -114,7 +114,7 @@ Use the following workflow to create a SQL expression:
    SELECT * FROM A LIMIT 10.
    ```
 
-   This lets you see the available columns and sample rows from `query A`. Repeat this for each input query you want to use (e.g., SELECT * FROM B LIMIT 10).
+   This lets you see the available columns and sample rows from `query A`. Repeat this for each input query you want to use (e.g., `SELECT * FROM B LIMIT 10`).
 
 1. **Inspect your data**. Repeat this for each input query to understand the column structure and data types you're working with.
 
@@ -139,7 +139,7 @@ For data to be used in SQL expressions, it must be in a **tabular format**, spec
 
 ## SQL conversion rules
 
-When a RefID is referenced within a SQL statement (e.g., SELECT * FROM A), the system invokes a distinct SQL conversion process.
+When a RefID is referenced within a SQL statement (e.g., `SELECT * FROM A`), the system invokes a distinct SQL conversion process.
 
 The SQL conversion path:
 
@@ -201,6 +201,6 @@ During conversion:
 
    ![Example using a Prometheus query](/media/docs/sql-expressions/sql-expressions-prom-query-example.png)
 
-2. Add the SQL expression **SELECT * from A**. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
+2. Add the SQL expression `SELECT * from A`. After you add a SQL expression that selects from RefID A, Grafana converts it to a table response:
 
    ![Add the SQL expression](/media/docs/sql-expressions/add-the-sql-expression.png)
