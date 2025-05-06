@@ -33,6 +33,8 @@ func ProvideSecretService(
 }
 
 func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
+	sv.Status = secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending, Message: "Creating secure value"}
+
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
@@ -141,10 +143,6 @@ func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, n
 		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
 		if err != nil {
 			return fmt.Errorf("fetching secure value: %+w", err)
-		}
-
-		if sv.Status.Phase == secretv0alpha1.SecureValuePhasePending {
-			return contracts.ErrSecureValueOperationInProgress
 		}
 
 		if err := s.secureValueMetadataStorage.SetStatus(ctx, namespace, name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending}); err != nil {

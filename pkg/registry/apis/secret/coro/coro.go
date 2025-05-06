@@ -8,7 +8,7 @@ var CurrentCoroutine Coroutine
 
 func Yield() any {
 	if CurrentCoroutine == nil {
-		panic("CurrentCoroutine is nil, did you forget to set it?")
+		panic("CurrentCoroutine is nil, did you forget to set it? Make sure Yield is called inside of a runtime")
 	}
 
 	CurrentCoroutine.ReadyToResume(nil)

@@ -1,10 +1,12 @@
 package simulator
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"math/rand"
 	"os"
+	"slices"
 	"strconv"
 	"testing"
 	"time"
@@ -18,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 
@@ -133,6 +136,7 @@ func (sim *Simulator) enabledActions() []Action {
 				enabled = append(enabled, action)
 			}
 
+			// TODO: add acgtion to udpate secret
 		case ActionDeleteSecret:
 			// Always enabled to try deleting secrets that doesn't exist
 			enabled = append(enabled, action)
@@ -202,12 +206,25 @@ func (sim *Simulator) genCreateSecureValueInput() *secretv0alpha1.SecureValue {
 }
 
 func (sim *Simulator) genDeleteSecureValueInput() (string, string) {
+	rows := make([]*secureValueMetadataRow, 0)
 	for _, secureValues := range sim.simDatabaseServer.secretMetadata {
 		for _, secureValue := range secureValues {
-			return secureValue.Namespace, secureValue.Name
+			rows = append(rows, secureValue)
 		}
 	}
-	return "doesnt_exist_ns", "doesnt_exist_v"
+
+	if len(rows) == 0 {
+		return "doesnt_exist_ns", "doesnt_exist_v"
+	}
+
+	// Sort the slice of secure values for determinism
+	slices.SortStableFunc(rows, func(a, b *secureValueMetadataRow) int {
+		return cmp.Compare(fmt.Sprintf("%s.%s", a.Namespace, a.Name), fmt.Sprintf("%s.%s", b.Namespace, b.Name))
+	})
+
+	// Pick a random secure value
+	i := sim.rng.Intn(len(rows))
+	return rows[i].Namespace, rows[i].Name
 }
 
 func (sim *Simulator) execute(action Action) {
@@ -240,6 +257,7 @@ func (sim *Simulator) execute(action Action) {
 		coroutine := sim.runtime.Spawn(func() {
 			ctx := context.Background()
 			namespace, name := sim.genDeleteSecureValueInput()
+
 			deleteValidationfunc := func(context.Context, runtime.Object) error {
 				return nil
 			}
@@ -345,6 +363,7 @@ func TestSimulate(t *testing.T) {
 	t.Parallel()
 
 	simulatorConfig := getSimulatorConfigOrDefault()
+	simulatorConfig.Seed = 4886524972453555688
 	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
 	activityLog := NewActivityLog()
 
@@ -410,15 +429,17 @@ func TestSimulate(t *testing.T) {
 	for range simulatorConfig.Steps {
 		simulator.step()
 
-		state := fetchState(t, simDatabaseServer)
+		state := fetchState(simDatabaseServer)
 
 		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, &state)
 		invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabaseServer)
 	}
+
+	fmt.Printf("\n\naaaaaaa simulator.metrics %+v\n\n", simulator.metrics)
 }
 
 // Returns the state need to invariant assertions
-func fetchState(t *testing.T, simDatabaseServer *SimDatabaseServer) state {
+func fetchState(simDatabaseServer *SimDatabaseServer) state {
 	return state{outbox: simDatabaseServer.outboxQueue}
 }
 
@@ -500,3 +521,77 @@ func createAuthContext(ctx context.Context, namespace string, permissions []stri
 
 	return types.WithAuthInfo(ctx, requester)
 }
+
+func TXestSecretServiceDelete(t *testing.T) {
+	rng := rand.New(rand.NewSource(1))
+	activityLog := NewActivityLog()
+	simDatabaseServer := NewSimDatabaseServer(activityLog)
+	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog)
+	simSecureValueMetadataStorage := NewSimSecureMetadataValueStorage(simNetwork, simDatabaseServer)
+	simDatabaseClient := NewSimDatabaseClient(simNetwork, simDatabaseServer)
+	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabaseServer)
+	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+	runtime := coro.NewRuntime()
+
+	secretService := service.ProvideSecretService(accessClient, simDatabaseClient, simSecureValueMetadataStorage, simOutboxQueue)
+
+	sv := &secretv0alpha1.SecureValue{}
+	sv.Namespace = "namespace"
+	sv.Name = "name"
+
+	_ = runtime.Spawn(func() {
+		fmt.Printf("\n\naaaaaaa  here\n\n")
+		createdSv, err := secretService.Create(context.Background(), sv, "actor-uid")
+		require.NoError(t, err)
+		fmt.Printf("\n\naaaaaaa createdSv %+v\n\n", createdSv)
+
+		readSv, err := secretService.Read(context.Background(), xkube.Namespace(sv.Namespace), sv.Name)
+		require.NoError(t, err)
+		fmt.Printf("\n\naaaaaaa readSv %+v\n\n", readSv)
+	})
+
+	for runtime.HasCoroutinesReady() {
+		runtime.ReadySet[0].Coroutine.Resume(runtime.ReadySet[0].Payload)
+	}
+}
+
+// func TXestSecureValueRest(t *testing.T) {
+// 	t.Parallel()
+
+// 	rng := rand.New(rand.NewSource(1))
+// 	activityLog := NewActivityLog()
+// 	simDatabaseServer := NewSimDatabaseServer(activityLog)
+// 	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog)
+// 	simSecureValueMetadataStorage := NewSimSecureMetadataValueStorage(simNetwork, simDatabaseServer)
+// 	simDatabaseClient := NewSimDatabaseClient(simNetwork, simDatabaseServer)
+// 	simOutboxQueue := NewSimOutboxQueue(simNetwork, simDatabaseServer)
+// 	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
+// 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
+// 	runtime := coro.NewRuntime()
+
+// 	secretService := service.ProvideSecretService(accessClient, simDatabaseClient, simSecureValueMetadataStorage, simOutboxQueue)
+
+// 	sv := &secretv0alpha1.SecureValue{}
+// 	sv.Namespace = "namespace"
+// 	sv.Name = "name"
+
+// 	actions := []Action{ActionCreateSecret /*ActionUpdateSecret*/, ActionDeleteSecret}
+
+// 	t.Run("creating/updating/deleting secure value changes the secure value metadata status to pending", func(t *testing.T) {
+// 		for range 100 {
+// 			action := actions[rng.Intn(len(actions))]
+
+// 			switch action {
+// 			case ActionCreateSecret:
+// 			case ActionDeleteSecret:
+// 			default:
+// 				panic(fmt.Sprintf("unhandled action: %+v", action))
+// 			}
+// 		}
+
+// 		for runtime.HasCoroutinesReady() {
+// 			runtime.ReadySet[0].Coroutine.Resume(runtime.ReadySet[0].Payload)
+// 		}
+// 	})
+// }

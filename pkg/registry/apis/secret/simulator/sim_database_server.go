@@ -246,6 +246,8 @@ func (db *SimDatabaseServer) QueryReadSecureValueMetadata(namespace xkube.Namesp
 		return nil, contracts.ErrSecureValueNotFound
 	}
 
+	// TODO: implement opts.ForUpdate
+
 	return &row.SecureValue, nil
 }
 
