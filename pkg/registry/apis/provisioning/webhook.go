@@ -193,6 +193,20 @@ func (s *webhookConnector) AsRepository(ctx context.Context, r *provisioning.Rep
 	return nil, nil
 }
 
+func (s *webhookConnector) Mutate(ctx context.Context, r *provisioning.Repository) error {
+	// Encrypt webhook secret if present
+	if r.Status.Webhook != nil && r.Status.Webhook.Secret != "" {
+		encryptedSecret, err := s.secrets.Encrypt(ctx, []byte(r.Status.Webhook.Secret))
+		if err != nil {
+			return fmt.Errorf("failed to encrypt webhook secret: %w", err)
+		}
+		r.Status.Webhook.EncryptedSecret = encryptedSecret
+		r.Status.Webhook.Secret = ""
+	}
+
+	return nil
+}
+
 func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	repoprefix := provisioning.RepositoryResourceInfo.GetName() + "/"
 	sub := oas.Paths.Paths[repoprefix+"/webhook"]

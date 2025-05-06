@@ -72,6 +72,10 @@ func (c *renderConnector) Authorize(_ context.Context, a authorizer.Attributes) 
 	return authorizer.DecisionNoOpinion, "", nil
 }
 
+func (c *renderConnector) Mutate(ctx context.Context, r *provisioning.Repository) error {
+	return nil
+}
+
 func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 	repoprefix := provisioning.RepositoryResourceInfo.GetName() + "/"
 	sub := oas.Paths.Paths[repoprefix+"/render/{path}"]

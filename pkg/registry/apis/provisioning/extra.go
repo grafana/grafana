@@ -13,6 +13,7 @@ import (
 
 type Extra interface {
 	Authorize(ctx context.Context, a authorizer.Attributes) (decision authorizer.Decision, reason string, err error)
+	Mutate(ctx context.Context, r *provisioning.Repository) error
 	UpdateStorage(storage map[string]rest.Storage) error
 	PostProcessOpenAPI(oas *spec3.OpenAPI) error
 	GetJobWorkers() []jobs.Worker

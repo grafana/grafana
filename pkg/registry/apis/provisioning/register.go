@@ -407,15 +407,22 @@ func (b *APIBuilder) Mutate(ctx context.Context, a admission.Attributes, o admis
 		r.Spec.Workflows = []provisioning.Workflow{}
 	}
 
-	if err := b.encryptSecrets(ctx, r); err != nil {
+	if err := b.encryptGithubToken(ctx, r); err != nil {
 		return fmt.Errorf("failed to encrypt secrets: %w", err)
+	}
+
+	// Mutate the repository with any extra mutators
+	for _, extra := range b.extras {
+		if err := extra.Mutate(ctx, r); err != nil {
+			return fmt.Errorf("failed to mutate repository: %w", err)
+		}
 	}
 
 	return nil
 }
 
 // TODO: move this to a more appropriate place
-func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repository) error {
+func (b *APIBuilder) encryptGithubToken(ctx context.Context, repo *provisioning.Repository) error {
 	var err error
 	if repo.Spec.GitHub != nil &&
 		repo.Spec.GitHub.Token != "" {
@@ -426,15 +433,6 @@ func (b *APIBuilder) encryptSecrets(ctx context.Context, repo *provisioning.Repo
 		repo.Spec.GitHub.Token = ""
 	}
 
-	// TODO: move this to webhook connector
-	if repo.Status.Webhook != nil &&
-		repo.Status.Webhook.Secret != "" {
-		repo.Status.Webhook.EncryptedSecret, err = b.secrets.Encrypt(ctx, []byte(repo.Status.Webhook.Secret))
-		if err != nil {
-			return err
-		}
-		repo.Status.Webhook.Secret = ""
-	}
 	return nil
 }
 
