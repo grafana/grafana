@@ -4208,6 +4208,9 @@
       "placeholder-default-value-if-any": "(optional)",
       "text-options": "Text options"
     },
+    "textbox-variable-form": {
+      "label-value": "Value"
+    },
     "title-field-label": {
       "title": "Title"
     },
