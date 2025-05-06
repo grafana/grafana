@@ -18,29 +18,17 @@ import (
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
-// RenderExtraBuilder provides additional functionality for rendering images
-type RenderExtraBuilder struct {
-	// HACK: We need to wrap the builder to please wire so that it can uniquely identify the dependency
-	provisioningapis.ExtraBuilder
-}
-
-func ProvidePreviewScreenshots(unified resource.ResourceClient) RenderExtraBuilder {
-	return RenderExtraBuilder{
-		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
-			return &renderConnector{
-				unified: unified,
-			}
-		},
-	}
-}
-
 type renderConnector struct {
 	unified resource.ResourceClient
+}
+
+func NewRenderConnector(unified resource.ResourceClient) *renderConnector {
+	return &renderConnector{
+		unified: unified,
+	}
 }
 
 func (*renderConnector) New() runtime.Object {
@@ -71,10 +59,6 @@ func (c *renderConnector) Authorize(_ context.Context, a authorizer.Attributes) 
 	}
 
 	return authorizer.DecisionNoOpinion, "", nil
-}
-
-func (c *renderConnector) Mutate(ctx context.Context, r *provisioning.Repository) error {
-	return nil
 }
 
 func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
@@ -116,14 +100,6 @@ func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
 func (c *renderConnector) UpdateStorage(storage map[string]rest.Storage) error {
 	storage[provisioning.RepositoryResourceInfo.StoragePath("render")] = c
 	return nil
-}
-
-func (c *renderConnector) GetJobWorkers() []jobs.Worker {
-	return []jobs.Worker{}
-}
-
-func (c *renderConnector) AsRepository(ctx context.Context, r *provisioning.Repository) (repository.Repository, error) {
-	return nil, nil
 }
 
 func (c *renderConnector) Connect(
