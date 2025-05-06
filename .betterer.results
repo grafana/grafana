@@ -809,6 +809,9 @@ exports[`better eslint`] = {
     "public/app/core/components/AppChrome/News/NewsDrawer.tsx:5381": [
       [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
+    "public/app/core/components/AppChrome/News/NewsWrapper.tsx:5381": [
+      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
+    ],
     "public/app/core/components/BouncingLoader/BouncingLoader.tsx:5381": [
       [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
@@ -1060,6 +1063,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/alerting/unified/components/rule-editor/rule-types/MimirOrLokiRecordingRule.tsx:5381": [
+      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
+    ],
+    "public/app/features/alerting/unified/components/settings/InternalAlertmanager.tsx:5381": [
       [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx:5381": [
