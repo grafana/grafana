@@ -11,15 +11,25 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
   if (preservedUrlState) {
     const preservedQueryParams = new URLSearchParams(preservedUrlState);
     const currentQueryParams = locationService.getSearch();
+    const cleanedQueryParams = new URLSearchParams();
 
     // iterate over preserved query params and append them to current query params if they don't already exist
     preservedQueryParams.forEach((value, key) => {
+      // if somehow there are keys set with no values, we append new key-value pairs,
+      // but need to clean empty ones after this loop so we don't lose any values
       if (!currentQueryParams.has(key) || currentQueryParams.get(key) === '') {
         currentQueryParams.append(key, value);
       }
     });
 
-    for (const key of Array.from(currentQueryParams.keys())) {
+    // remove empty values
+    currentQueryParams.forEach((value, key) => {
+      if (value !== '') {
+        cleanedQueryParams.append(key, value);
+      }
+    });
+
+    for (const key of Array.from(cleanedQueryParams.keys())) {
       // preserve non-variable query params, i.e. time range
       if (!key.startsWith('var-')) {
         continue;
@@ -27,11 +37,11 @@ export function restoreDashboardStateFromLocalStorage(dashboard: DashboardScene)
 
       // remove params for variables that are not present on the target dashboard
       if (!dashboard.state.$variables?.getByName(key.replace('var-', ''))) {
-        currentQueryParams.delete(key);
+        cleanedQueryParams.delete(key);
       }
     }
 
-    const finalParams = currentQueryParams.toString();
+    const finalParams = cleanedQueryParams.toString();
     if (finalParams) {
       locationService.replace({ search: finalParams });
     }

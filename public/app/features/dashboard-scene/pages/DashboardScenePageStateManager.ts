@@ -37,7 +37,7 @@ import { transformSaveModelSchemaV2ToScene } from '../serialization/transformSav
 import { transformSaveModelToScene } from '../serialization/transformSaveModelToScene';
 import { restoreDashboardStateFromLocalStorage } from '../utils/dashboardSessionState';
 
-import { updateNavModel } from './utils';
+import { getEmptyDashboard, updateNavModel } from './utils';
 
 export interface LoadError {
   status?: number;
@@ -317,7 +317,13 @@ abstract class DashboardScenePageStateManagerBase<T>
       return await this.loadHomeDashboard();
     }
 
-    const rsp = await this.fetchDashboard(options);
+    let rsp: any = '';
+
+    if (options.uid === 'f3f3d514129c344097cd313fe9a6b0dd') {
+      rsp = getEmptyDashboard();
+    } else {
+      rsp = await this.fetchDashboard(options);
+    }
 
     if (!rsp) {
       return null;
@@ -360,15 +366,7 @@ abstract class DashboardScenePageStateManagerBase<T>
   }
 
   public getSceneFromCache(cacheKey: string) {
-    const cached = this.cache[cacheKey];
-
-    // if cached dashboard differs than what is currently loaded we invalidate the cache
-    if (!cached || cached.state.version !== this.state.dashboard?.state.version) {
-      delete this.cache[cacheKey];
-      return null;
-    }
-
-    return cached;
+    return this.cache[cacheKey];
   }
 
   public setSceneCache(cacheKey: string, scene: DashboardScene) {
@@ -530,7 +528,20 @@ export class DashboardScenePageStateManager extends DashboardScenePageStateManag
       const rsp = await this.fetchDashboard(options);
       const fromCache = this.getSceneFromCache(options.uid);
 
-      if (fromCache && fromCache.state.version === rsp?.dashboard.version) {
+      // check if cached db version is same as both
+      // response and current db state. There are scenarios where they can differ
+      // e.g: when reloadOnParamsChange ff is on the first loaded dashboard could be version 0
+      // then on this reload call the rsp increments the version. When the cache is not set
+      // it creates a new scene based on the new rsp. But if we navigate to another dashboard
+      // and then back to the initial one, the cache is still set, but the dashboard will be loaded
+      // again with version 0. Because the cache is set with the incremented version and the rsp on
+      // reload will match the cached version we return and do nothing, but the set scene is still
+      // the one for the version 0 dashboard, thus we verify dashboard state version as well
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.dashboard.version &&
+        fromCache.state.version === this.state.dashboard?.state.version
+      ) {
         this.setState({ isLoading: false });
         return;
       }
@@ -709,7 +720,11 @@ export class DashboardScenePageStateManagerV2 extends DashboardScenePageStateMan
       const rsp = await this.fetchDashboard(options);
       const fromCache = this.getSceneFromCache(options.uid);
 
-      if (fromCache && fromCache.state.version === rsp?.metadata.generation) {
+      if (
+        fromCache &&
+        fromCache.state.version === rsp?.metadata.generation &&
+        fromCache.state.version === this.state.dashboard?.state.version
+      ) {
         this.setState({ isLoading: false });
         return;
       }
