@@ -2,6 +2,7 @@ import { configureStore as reduxConfigureStore, createListenerMiddleware } from 
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { Middleware } from 'redux';
 
+import { reportingAPI } from 'app/api/clients/reporting/baseAPI';
 import { browseDashboardsAPI } from 'app/features/browse-dashboards/api/browseDashboardsAPI';
 import { publicDashboardApi } from 'app/features/dashboard/api/publicDashboardApi';
 import { cloudMigrationAPI } from 'app/features/migrate-to-cloud/api';
@@ -13,6 +14,8 @@ import { folderAPI } from '../api/clients/folder';
 import { iamAPI } from '../api/clients/iam';
 import { playlistAPI } from '../api/clients/playlist';
 import { provisioningAPI } from '../api/clients/provisioning';
+// Used by the API client generator
+// PLOP_INJECT_IMPORT
 import { buildInitialState } from '../core/reducers/navModel';
 import { addReducer, createRootReducer } from '../core/reducers/root';
 import { alertingApi } from '../features/alerting/unified/api/alertingApi';
@@ -49,6 +52,9 @@ export function configureStore(initialState?: Partial<StoreState>) {
         provisioningAPI.middleware,
         folderAPI.middleware,
         advisorAPI.middleware,
+        reportingAPI.middleware,
+        // PLOP_INJECT_MIDDLEWARE
+        // Used by the API client generator
         ...extraMiddleware
       ),
     devTools: process.env.NODE_ENV !== 'production',

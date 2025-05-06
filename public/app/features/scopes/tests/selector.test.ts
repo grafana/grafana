@@ -96,13 +96,14 @@ describe('Selector', () => {
       await selectResultApplicationsMimir();
       await applyScopes();
 
-      // Grafana,Mimir currently selected. Grafana is the first recent scope.
+      // recent scopes only show on top level, so we need to make sure the scopes tree is not exapnded.
+      await clearSelector();
+
       await openSelector();
       expectRecentScopesSection();
       await expandRecentScopes();
       expectRecentScope('Grafana');
-      expectRecentScopeNotPresent('Mimir');
-      expectRecentScopeNotPresent('Grafana, Mimir');
+      expectRecentScope('Grafana, Mimir');
       await selectRecentScope('Grafana');
 
       expectScopesSelectorValue('Grafana');
