@@ -1,7 +1,7 @@
 import { ResourceKey } from 'i18next';
 import { uniq } from 'lodash';
 
-import { PSEUDO_LOCALE, LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
+import { DEFAULT_LANGUAGE, PSEUDO_LOCALE, LANGUAGES as SUPPORTED_LANGUAGES } from '@grafana/i18n';
 
 export type LocaleFileLoader = () => Promise<ResourceKey>;
 export interface LanguageDefinition<Namespace extends string = string> {
@@ -15,22 +15,14 @@ export interface LanguageDefinition<Namespace extends string = string> {
   loader: Record<Namespace, LocaleFileLoader>;
 }
 
-export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => ({
-  ...def,
-  loader: { grafana: () => import(`../../../locales/${def.code}/grafana.json`) },
-}));
-
-if (process.env.NODE_ENV === 'development') {
-  LANGUAGES.push({
-    code: PSEUDO_LOCALE,
-    name: 'Pseudo-locale',
-    loader: {
-      // Load the English locale as the pseudo-locale,
-      // as it will be post-processed by i18next-pseudo library
-      grafana: () => import('../../../locales/en-US/grafana.json'),
-    },
-  });
-}
+export const LANGUAGES: LanguageDefinition[] = SUPPORTED_LANGUAGES.map((def) => {
+  // Load the Default language (en-US) as the pseudo-locale, as it will be post-processed by i18next-pseudo library
+  const locale = def.code === PSEUDO_LOCALE ? DEFAULT_LANGUAGE : def.code;
+  return {
+    ...def,
+    loader: { grafana: () => import(`../../../locales/${locale}/grafana.json`) },
+  };
+});
 
 // Optionally load enterprise locale extensions, if they are present.
 // It is important that this happens before NAMESPACES is defined so it has the correct value
