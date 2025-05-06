@@ -47,6 +47,7 @@ interface Props {
   getRowContextQuery?: GetRowContextQueryFn;
   grammar?: Grammar;
   initialScrollPosition?: 'top' | 'bottom';
+  loading?: boolean;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logOptionsStorageKey?: string;
   logs: LogRowModel[];
@@ -88,6 +89,7 @@ export const LogList = ({
   getRowContextQuery,
   grammar,
   initialScrollPosition = 'top',
+  loading,
   loadMore,
   logOptionsStorageKey,
   logs,
@@ -140,6 +142,7 @@ export const LogList = ({
         getFieldLinks={getFieldLinks}
         grammar={grammar}
         initialScrollPosition={initialScrollPosition}
+        loading={loading}
         loadMore={loadMore}
         logs={logs}
         showControls={showControls}
@@ -156,6 +159,7 @@ const LogListComponent = ({
   getFieldLinks,
   grammar,
   initialScrollPosition = 'top',
+  loading,
   loadMore,
   logs,
   showControls,
@@ -189,15 +193,19 @@ const LogListComponent = ({
   }, [eventBus, logs.length]);
 
   useEffect(() => {
+    if (loading) {
+      return;
+    }
     setProcessedLogs(
       preProcessLogs(logs, { getFieldLinks, escape: forceEscape ?? false, order: sortOrder, timeZone }, grammar)
     );
-  }, [forceEscape, getFieldLinks, grammar, logs, sortOrder, timeZone]);
-
-  useEffect(() => {
     resetLogLineSizes();
     listRef.current?.resetAfterIndex(0);
-  }, [wrapLogMessage, processedLogs]);
+  }, [forceEscape, getFieldLinks, grammar, loading, logs, sortOrder, timeZone]);
+
+  useEffect(() => {
+    listRef.current?.resetAfterIndex(0);
+  }, [wrapLogMessage]);
 
   useEffect(() => {
     const handleResize = debounce(() => {
@@ -214,17 +222,16 @@ const LogListComponent = ({
     if (widthRef.current === containerElement.clientWidth) {
       return;
     }
-    resetLogLineSizes();
-    listRef.current?.resetAfterIndex(0);
     widthRef.current = containerElement.clientWidth;
+    listRef.current?.resetAfterIndex(0);
   });
 
   const handleOverflow = useCallback(
-    (index: number, id: string, height: number) => {
-      if (containerElement) {
+    (index: number, id: string, height?: number) => {
+      if (containerElement && height !== undefined) {
         storeLogLineSize(id, containerElement, height);
-        listRef.current?.resetAfterIndex(index);
       }
+      listRef.current?.resetAfterIndex(index);
     },
     [containerElement]
   );
