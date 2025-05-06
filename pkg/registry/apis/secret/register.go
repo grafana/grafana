@@ -7,6 +7,7 @@ import (
 	"time"
 
 	claims "github.com/grafana/authlib/types"
+	"github.com/grafana/grafana-app-sdk/logging"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,19 +23,16 @@ import (
 	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/db"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/worker"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	authsvc "github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/secret/database"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -47,7 +45,7 @@ var (
 
 type SecretAPIBuilder struct {
 	tracer                     tracing.Tracer
-	log                        *log.ConcreteLogger
+	secretService              *service.SecretService
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage
 	keeperMetadataStorage      contracts.KeeperMetadataStorage
 	secretsOutboxQueue         contracts.OutboxQueue
@@ -60,22 +58,17 @@ type SecretAPIBuilder struct {
 func NewSecretAPIBuilder(
 	tracer tracing.Tracer,
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
+	secretService *service.SecretService,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	secretsOutboxQueue contracts.OutboxQueue,
-	db db.DB,
-	keeperService secretkeeper.Service,
+	database contracts.Database,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	decryptersAllowList map[string]struct{},
 ) (*SecretAPIBuilder, error) {
-	database := database.New(db)
-	keepers, err := keeperService.GetKeepers()
-	if err != nil {
-		return nil, fmt.Errorf("getting map of keepers: %+w", err)
-	}
-
 	return &SecretAPIBuilder{
 		tracer:                     tracer,
-		log:                        log.New("secret.SecretAPIBuilder"),
+		secretService:              secretService,
 		secureValueMetadataStorage: secureValueMetadataStorage,
 		keeperMetadataStorage:      keeperMetadataStorage,
 		secretsOutboxQueue:         secretsOutboxQueue,
@@ -85,12 +78,11 @@ func NewSecretAPIBuilder(
 			BatchSize:      1,
 			ReceiveTimeout: 5 * time.Second,
 		},
-			log.New("secret.worker"),
 			database,
 			secretsOutboxQueue,
 			secureValueMetadataStorage,
 			keeperMetadataStorage,
-			keepers,
+			keeperService,
 		),
 		decryptersAllowList: decryptersAllowList,
 	}, nil
@@ -104,15 +96,21 @@ func RegisterAPIService(
 	secureValueMetadataStorage contracts.SecureValueMetadataStorage,
 	keeperMetadataStorage contracts.KeeperMetadataStorage,
 	outboxQueue contracts.OutboxQueue,
-	db db.DB,
-	keeperService secretkeeper.Service,
+	secretService *service.SecretService,
+	database contracts.Database,
+	keeperService contracts.KeeperService,
 	accessClient claims.AccessClient,
 	accessControlService accesscontrol.Service,
+	secretDBMigrator contracts.SecretDBMigrator,
 ) (*SecretAPIBuilder, error) {
 	// Skip registration unless opting into experimental apis and the secrets management app platform flag.
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return nil, nil
+	}
+
+	if err := secretDBMigrator.RunMigrations(); err != nil {
+		return nil, fmt.Errorf("running secret database migrations: %w", err)
 	}
 
 	if err := RegisterAccessControlRoles(accessControlService); err != nil {
@@ -122,9 +120,10 @@ func RegisterAPIService(
 	builder, err := NewSecretAPIBuilder(
 		tracer,
 		secureValueMetadataStorage,
+		secretService,
 		keeperMetadataStorage,
 		outboxQueue,
-		db,
+		database,
 		keeperService,
 		accessClient,
 		nil, // OSS does not need an allow list.
@@ -183,12 +182,10 @@ func (b *SecretAPIBuilder) UpdateAPIGroupInfo(apiGroupInfo *genericapiserver.API
 	secureRestStorage := map[string]rest.Storage{
 		// Default path for `securevalue`.
 		// The `reststorage.SecureValueRest` struct will implement interfaces for CRUDL operations on `securevalue`.
-		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(
-			b.secureValueMetadataStorage, b.database, b.secretsOutboxQueue, b.accessClient, secureValueResource,
-		),
+		secureValueResource.StoragePath(): reststorage.NewSecureValueRest(b.secretService, secureValueResource),
 
 		// The `reststorage.KeeperRest` struct will implement interfaces for CRUDL operations on `keeper`.
-		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, keeperResource),
+		keeperResource.StoragePath(): reststorage.NewKeeperRest(b.keeperMetadataStorage, b.accessClient, keeperResource),
 	}
 
 	apiGroupInfo.VersionedResourcesStorageMap[secretv0alpha1.VERSION] = secureRestStorage
@@ -222,28 +219,12 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 						MediaTypeProps: spec3.MediaTypeProps{
 							Schema: &optionsSchema,
 							Examples: map[string]*spec3.Example{
-								"a sql keeper": {
-									ExampleProps: spec3.ExampleProps{
-										Value: &unstructured.Unstructured{
-											Object: map[string]interface{}{
-												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "SQL XYZ Keeper",
-													SQL: &secretv0alpha1.SQLKeeperConfig{
-														Encryption: &secretv0alpha1.Encryption{
-															Envelope: &secretv0alpha1.Envelope{},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
 								"an aws keeper": {
 									ExampleProps: spec3.ExampleProps{
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "AWS XYZ Keeper",
+													Description: "AWS XYZ Keeper",
 													AWS: &secretv0alpha1.AWSKeeperConfig{
 														AWSCredentials: secretv0alpha1.AWSCredentials{
 															AccessKeyID: secretv0alpha1.CredentialValue{
@@ -265,7 +246,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "Azure XYZ Keeper",
+													Description: "Azure XYZ Keeper",
 													Azure: &secretv0alpha1.AzureKeeperConfig{
 														AzureCredentials: secretv0alpha1.AzureCredentials{
 															KeyVaultName: "key-vault-name",
@@ -286,7 +267,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "GCP XYZ Keeper",
+													Description: "GCP XYZ Keeper",
 													GCP: &secretv0alpha1.GCPKeeperConfig{
 														GCPCredentials: secretv0alpha1.GCPCredentials{
 															ProjectID:       "project-id",
@@ -303,7 +284,7 @@ func (b *SecretAPIBuilder) PostProcessOpenAPI(oas *spec3.OpenAPI) (*spec3.OpenAP
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.KeeperSpec{
-													Title: "Hashicorp XYZ Keeper",
+													Description: "Hashicorp XYZ Keeper",
 													HashiCorp: &secretv0alpha1.HashiCorpKeeperConfig{
 														HashiCorpCredentials: secretv0alpha1.HashiCorpCredentials{
 															Address: "vault-address",
@@ -337,7 +318,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: SQL XYZ Keeper
+  description: SQL XYZ Keeper
   sql:
     encryption:
       envelope:`,
@@ -353,7 +334,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: AWS XYZ Keeper
+  description: AWS XYZ Keeper
   aws:
     accessKeyId: 
       valueFromEnv: ACCESS_KEY_ID_XYZ
@@ -372,7 +353,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: Azure XYZ Keeper
+  description: Azure XYZ Keeper
   azurekeyvault:
     clientSecret:
       valueFromConfig: "/path/to/file.json"
@@ -391,7 +372,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: GCP XYZ Keeper
+  description: GCP XYZ Keeper
   gcp:
     projectId: project-id 
     credentialsFile: /path/to/file.json`,
@@ -407,7 +388,7 @@ metadata:
   labels:
     aa: AAA
 spec:
-  title: Hashicorp XYZ Keeper
+  description: Hashicorp XYZ Keeper
   hashivault:
     address: vault-address
     token:
@@ -440,9 +421,9 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret in default",
-													Value:      "this is super duper secure",
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "A secret in default",
+													Value:       "this is super duper secure",
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -453,10 +434,10 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret in aws",
-													Value:      "this is super duper secure",
-													Keeper:     &exampleKeeperAWS,
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "A secret in aws",
+													Value:       "this is super duper secure",
+													Keeper:      &exampleKeeperAWS,
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -467,10 +448,10 @@ spec:
 										Value: &unstructured.Unstructured{
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "A secret from aws",
-													Ref:        "my-secret-in-aws",
-													Keeper:     &exampleKeeperAWS,
-													Decrypters: []string{"actor_k6"},
+													Description: "A secret from aws",
+													Ref:         "my-secret-in-aws",
+													Keeper:      &exampleKeeperAWS,
+													Decrypters:  []string{"actor_k6"},
 												},
 											},
 										},
@@ -484,9 +465,9 @@ spec:
 													Name: "xyz",
 												},
 												"spec": &secretv0alpha1.SecureValueSpec{
-													Title:      "XYZ secret",
-													Value:      "this is super duper secure",
-													Decrypters: []string{"actor_k6, actor_synthetic-monitoring"},
+													Description: "XYZ secret",
+													Value:       "this is super duper secure",
+													Decrypters:  []string{"actor_k6, actor_synthetic-monitoring"},
 												},
 											},
 										},
@@ -512,7 +493,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret value
+  description: A secret value
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -531,7 +512,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret value in aws
+  description: A secret value in aws
   keeper: aws-keeper-that-must-already-exist
   value: this is super duper secure
   decrypters:
@@ -551,7 +532,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: A secret from aws
+  description: A secret from aws
   keeper: aws-keeper-that-must-already-exist
   ref: my-secret-in-aws
   decrypters:
@@ -571,7 +552,7 @@ metadata:
     aa: AAA
     bb: BBB
 spec:
-  title: XYZ secret
+  description: XYZ secret
   value: this is super duper secure
   decrypters:
     - actor_k6 
@@ -707,7 +688,7 @@ func (b *SecretAPIBuilder) GetPostStartHooks() (map[string]genericapiserver.Post
 		"start-outbox-queue-worker": func(hookCtx genericapiserver.PostStartHookContext) error {
 			if err := b.worker.ControlLoop(hookCtx.Context); err != nil {
 				if !errors.Is(err, context.Canceled) {
-					b.log.Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
+					logging.FromContext(hookCtx).Error("secrets outbox worker exited control loop with error, secrets won't be created/updated/deleted/etc while the worker is not running: %+v", err)
 					return err
 				}
 			}

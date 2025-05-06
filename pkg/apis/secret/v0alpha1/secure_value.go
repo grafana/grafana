@@ -14,11 +14,11 @@ type SecureValue struct {
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// This is the actual secure value schema.
-	Spec SecureValueSpec `json:"spec,omitempty"`
+	Spec SecureValueSpec `json:"spec"`
 
 	// Read-only observed status of the `SecureValue`.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#spec-and-status
-	Status SecureValueStatus `json:"status"`
+	Status SecureValueStatus `json:"status,omitempty"`
 }
 
 // +enum
@@ -46,34 +46,40 @@ type SecureValueStatus struct {
 	// Only applicable if the `phase=Failed`.
 	// +optional
 	Message string `json:"message,omitempty"`
+
+	// +optional
+	ExternalID string `json:"externalId,omitempty"`
 }
 
 type SecureValueSpec struct {
-	// Human friendly name for the secure value.
-	Title string `json:"title"`
+	// Short description that explains the purpose of this SecureValue.
+	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=253
+	Description string `json:"description"`
 
 	// The raw value is only valid for write. Read/List will always be empty.
 	// There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.
+	// +k8s:validation:minLength=1
 	Value ExposedSecureValue `json:"value,omitempty"`
 
-	// When using a remote Key manager, the ref is used to reference a value inside the remote storage.
+	// When using a third-party keeper, the `ref` is used to reference a value inside the remote storage.
 	// This should not contain sensitive information.
+	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=1024
+	// +optional
 	Ref string `json:"ref,omitempty"`
 
 	// Name of the keeper, being the actual storage of the secure value.
 	// If not specified, the default keeper for the namespace will be used.
+	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=253
 	// +optional
 	Keeper *string `json:"keeper,omitempty"`
 
 	// The Decrypters that are allowed to decrypt this secret.
 	// An empty list means no service can decrypt it.
-	// Support and behavior is still TBD, but could likely look like:
-	// * testdata.grafana.app/{name1}
-	// * testdata.grafana.app/{name2}
-	// * runner.k6.grafana.app/*  -- allow any k6 test runner
-	// Rather than a string pattern, we may want a more explicit object:
-	// [{ group:"testdata.grafana.app", name="name1"},
-	//  { group:"runner.k6.grafana.app"}]
+	// +k8s:validation:maxItems=64
+	// +k8s:validation:uniqueItems=true
 	// +listType=atomic
 	// +optional
 	Decrypters []string `json:"decrypters"`

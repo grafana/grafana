@@ -3,10 +3,11 @@ package migrator
 import (
 	"fmt"
 
-	"xorm.io/xorm"
-
+	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/registry"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 const (
@@ -17,19 +18,30 @@ const (
 	TableNameEncryptedValue    = "secret_encrypted_value"
 )
 
-func MigrateSecretSQL(engine *xorm.Engine, cfg *setting.Cfg) error {
-	mg := migrator.NewScopedMigrator(engine, cfg, "secret")
-	mg.AddCreateMigration()
+type SecretDB struct {
+	engine *xorm.Engine
+}
 
-	initSecretStore(mg)
+func New() registry.DatabaseMigrator {
+	return &SecretDB{}
+}
 
-	// since it's a new feature enable migration locking by default
+func NewWithEngine(db db.DB) contracts.SecretDBMigrator {
+	return &SecretDB{engine: db.GetEngine()}
+}
+
+func (db *SecretDB) RunMigrations() error {
+	mg := migrator.NewScopedMigrator(db.engine, nil, "secret")
+
+	db.AddMigration(mg)
+
 	return mg.Start(true, 0)
 }
 
-func initSecretStore(mg *migrator.Migrator) string {
-	marker := "Initialize secrets tables"
-	mg.AddMigration(marker, &migrator.RawSQLMigration{})
+func (*SecretDB) AddMigration(mg *migrator.Migrator) {
+	mg.AddCreateMigration()
+
+	mg.AddMigration("Initialize secrets tables", &migrator.RawSQLMigration{})
 
 	tables := []migrator.Table{}
 
@@ -52,10 +64,10 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "status_message", Type: migrator.DB_Text, Nullable: true},
 
 			// Spec
-			{Name: "title", Type: migrator.DB_Text, Nullable: false},
-			{Name: "keeper", Type: migrator.DB_NVarchar, Length: 253, Nullable: true}, // Keeper name, if not set, use default keeper.
+			{Name: "description", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough.
+			{Name: "keeper", Type: migrator.DB_NVarchar, Length: 253, Nullable: true},       // Keeper name, if not set, use default keeper.
 			{Name: "decrypters", Type: migrator.DB_Text, Nullable: true},
-			{Name: "ref", Type: migrator.DB_Text, Nullable: true}, // Reference to third-party storage secret path.
+			{Name: "ref", Type: migrator.DB_NVarchar, Length: 1024, Nullable: true}, // Reference to third-party storage secret path.Chosen arbitrarily, but should be enough.
 			{Name: "external_id", Type: migrator.DB_Text, Nullable: false},
 		},
 		Indices: []*migrator.Index{
@@ -78,7 +90,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "updated_by", Type: migrator.DB_Text, Nullable: false},
 
 			// Spec
-			{Name: "title", Type: migrator.DB_Text, Nullable: false},
+			{Name: "description", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Chosen arbitrarily, but should be enough.
 			{Name: "type", Type: migrator.DB_Text, Nullable: false},
 			// Each keeper has a different payload so we store the whole thing as a blob.
 			{Name: "payload", Type: migrator.DB_Text, Nullable: true},
@@ -124,7 +136,7 @@ func initSecretStore(mg *migrator.Migrator) string {
 			{Name: "message_type", Type: migrator.DB_NVarchar, Length: 16, Nullable: false},
 			{Name: "name", Type: migrator.DB_NVarchar, Length: 253, Nullable: false},      // Limit enforced by K8s.
 			{Name: "namespace", Type: migrator.DB_NVarchar, Length: 253, Nullable: false}, // Limit enforced by K8s.
-			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: false},
+			{Name: "encrypted_secret", Type: migrator.DB_Blob, Nullable: true},
 			{Name: "keeper_name", Type: migrator.DB_NVarchar, Length: 253, Nullable: true}, // Keeper name, if not set, use default keeper.
 			{Name: "external_id", Type: migrator.DB_NVarchar, Length: 36, Nullable: true},  // Fixed size of a UUID.
 			{Name: "created", Type: migrator.DB_BigInt, Nullable: false},
@@ -146,6 +158,4 @@ func initSecretStore(mg *migrator.Migrator) string {
 			mg.AddMigration(fmt.Sprintf("create table %s, index: %d", tables[t].Name, i), migrator.NewAddIndexMigration(tables[t], tables[t].Indices[i]))
 		}
 	}
-
-	return marker
 }

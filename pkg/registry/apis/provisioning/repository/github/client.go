@@ -100,8 +100,6 @@ type Client interface {
 
 	ListPullRequestFiles(ctx context.Context, owner, repository string, number int) ([]CommitFile, error)
 	CreatePullRequestComment(ctx context.Context, owner, repository string, number int, body string) error
-	CreatePullRequestFileComment(ctx context.Context, owner, repository string, number int, comment FileComment) error
-	ClearAllPullRequestFileComments(ctx context.Context, owner, repository string, number int) error
 }
 
 //go:generate mockery --name RepositoryContent --structname MockRepositoryContent --inpackage --filename mock_repository_content.go --with-expecter

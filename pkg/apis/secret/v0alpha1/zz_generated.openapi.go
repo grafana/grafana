@@ -10,6 +10,7 @@ package v0alpha1
 import (
 	common "k8s.io/kube-openapi/pkg/common"
 	spec "k8s.io/kube-openapi/pkg/validation/spec"
+	ptr "k8s.io/utils/ptr"
 )
 
 func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenAPIDefinition {
@@ -19,7 +20,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials":      schema_pkg_apis_secret_v0alpha1_AzureCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig":     schema_pkg_apis_secret_v0alpha1_AzureKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.CredentialValue":       schema_pkg_apis_secret_v0alpha1_CredentialValue(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption":            schema_pkg_apis_secret_v0alpha1_Encryption(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope":              schema_pkg_apis_secret_v0alpha1_Envelope(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials":        schema_pkg_apis_secret_v0alpha1_GCPCredentials(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig":       schema_pkg_apis_secret_v0alpha1_GCPKeeperConfig(ref),
@@ -28,7 +28,6 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Keeper":                schema_pkg_apis_secret_v0alpha1_Keeper(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperList":            schema_pkg_apis_secret_v0alpha1_KeeperList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.KeeperSpec":            schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref),
-		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig":       schema_pkg_apis_secret_v0alpha1_SQLKeeperConfig(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValue":           schema_pkg_apis_secret_v0alpha1_SecureValue(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueList":       schema_pkg_apis_secret_v0alpha1_SecureValueList(ref),
 		"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SecureValueSpec":       schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref),
@@ -218,47 +217,20 @@ func schema_pkg_apis_secret_v0alpha1_CredentialValue(ref common.ReferenceCallbac
 					},
 				},
 			},
-		},
-	}
-}
-
-func schema_pkg_apis_secret_v0alpha1_Encryption(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "Encryption of default SQL keeper.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"envelope": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope"),
-						},
-					},
-					"aws": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSCredentials"),
-						},
-					},
-					"azure": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials"),
-						},
-					},
-					"gcp": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials"),
-						},
-					},
-					"hashicorp": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials"),
+			VendorExtensible: spec.VendorExtensible{
+				Extensions: spec.Extensions{
+					"x-kubernetes-unions": []interface{}{
+						map[string]interface{}{
+							"fields-to-discriminateBy": map[string]interface{}{
+								"secureValueName": "SecureValueName",
+								"valueFromConfig": "ValueFromConfig",
+								"valueFromEnv":    "ValueFromEnv",
+							},
 						},
 					},
 				},
 			},
 		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSCredentials", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureCredentials", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Envelope", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPCredentials", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpCredentials"},
 	}
 }
 
@@ -424,6 +396,7 @@ func schema_pkg_apis_secret_v0alpha1_Keeper(ref common.ReferenceCallback) common
 						},
 					},
 				},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -486,66 +459,66 @@ func schema_pkg_apis_secret_v0alpha1_KeeperSpec(ref common.ReferenceCallback) co
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
+					"description": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Human friendly name for the keeper.",
+							Description: "Short description for the Keeper.",
 							Default:     "",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
-					"sql": {
-						SchemaProps: spec.SchemaProps{
-							Description: "You can only chose one of the following.",
-							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig"),
-						},
-					},
 					"aws": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig"),
+							Description: "AWS Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig"),
 						},
 					},
 					"azurekeyvault": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig"),
+							Description: "Azure Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig"),
 						},
 					},
 					"gcp": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig"),
+							Description: "GCP Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig"),
 						},
 					},
 					"hashivault": {
+						VendorExtensible: spec.VendorExtensible{
+							Extensions: spec.Extensions{
+								"x-kubernetes-map-type": "atomic",
+							},
+						},
 						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig"),
+							Description: "HashiCorp Vault Keeper Configuration.",
+							Ref:         ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig"),
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"description"},
 			},
 		},
 		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.SQLKeeperConfig"},
-	}
-}
-
-func schema_pkg_apis_secret_v0alpha1_SQLKeeperConfig(ref common.ReferenceCallback) common.OpenAPIDefinition {
-	return common.OpenAPIDefinition{
-		Schema: spec.Schema{
-			SchemaProps: spec.SchemaProps{
-				Description: "The default SQL keeper.",
-				Type:        []string{"object"},
-				Properties: map[string]spec.Schema{
-					"encryption": {
-						SchemaProps: spec.SchemaProps{
-							Ref: ref("github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption"),
-						},
-					},
-				},
-			},
-		},
-		Dependencies: []string{
-			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.Encryption"},
+			"github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AWSKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.AzureKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.GCPKeeperConfig", "github.com/grafana/grafana/pkg/apis/secret/v0alpha1.HashiCorpKeeperConfig"},
 	}
 }
 
@@ -591,7 +564,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValue(ref common.ReferenceCallback) c
 						},
 					},
 				},
-				Required: []string{"status"},
+				Required: []string{"spec"},
 			},
 		},
 		Dependencies: []string{
@@ -654,10 +627,12 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 			SchemaProps: spec.SchemaProps{
 				Type: []string{"object"},
 				Properties: map[string]spec.Schema{
-					"title": {
+					"description": {
 						SchemaProps: spec.SchemaProps{
-							Description: "Human friendly name for the secure value.",
+							Description: "Short description that explains the purpose of this SecureValue.",
 							Default:     "",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -665,13 +640,16 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					"value": {
 						SchemaProps: spec.SchemaProps{
 							Description: "The raw value is only valid for write. Read/List will always be empty. There is no support for mixing `value` and `ref`, you can't create a secret in a third-party keeper with a specified `ref`.",
+							MinLength:   ptr.To[int64](1),
 							Type:        []string{"string"},
 							Format:      "",
 						},
 					},
 					"ref": {
 						SchemaProps: spec.SchemaProps{
-							Description: "When using a remote Key manager, the ref is used to reference a value inside the remote storage. This should not contain sensitive information.",
+							Description: "When using a third-party keeper, the `ref` is used to reference a value inside the remote storage. This should not contain sensitive information.",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](1024),
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -679,6 +657,8 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 					"keeper": {
 						SchemaProps: spec.SchemaProps{
 							Description: "Name of the keeper, being the actual storage of the secure value. If not specified, the default keeper for the namespace will be used.",
+							MinLength:   ptr.To[int64](1),
+							MaxLength:   ptr.To[int64](253),
 							Type:        []string{"string"},
 							Format:      "",
 						},
@@ -690,7 +670,9 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 							},
 						},
 						SchemaProps: spec.SchemaProps{
-							Description: "The Decrypters that are allowed to decrypt this secret. An empty list means no service can decrypt it. Support and behavior is still TBD, but could likely look like: * testdata.grafana.app/{name1} * testdata.grafana.app/{name2} * runner.k6.grafana.app/*  -- allow any k6 test runner Rather than a string pattern, we may want a more explicit object: [{ group:\"testdata.grafana.app\", name=\"name1\"},\n { group:\"runner.k6.grafana.app\"}]",
+							Description: "The Decrypters that are allowed to decrypt this secret. An empty list means no service can decrypt it.",
+							MaxItems:    ptr.To[int64](64),
+							UniqueItems: true,
 							Type:        []string{"array"},
 							Items: &spec.SchemaOrArray{
 								Schema: &spec.Schema{
@@ -704,7 +686,7 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueSpec(ref common.ReferenceCallbac
 						},
 					},
 				},
-				Required: []string{"title"},
+				Required: []string{"description"},
 			},
 		},
 	}
@@ -730,6 +712,12 @@ func schema_pkg_apis_secret_v0alpha1_SecureValueStatus(ref common.ReferenceCallb
 							Description: "A human readable message indicating details about why the `SecureValue` is in this phase. Only applicable if the `phase=Failed`.",
 							Type:        []string{"string"},
 							Format:      "",
+						},
+					},
+					"externalId": {
+						SchemaProps: spec.SchemaProps{
+							Type:   []string{"string"},
+							Format: "",
 						},
 					},
 				},

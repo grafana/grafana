@@ -8,7 +8,7 @@ INSERT INTO {{ .Ident "secret_keeper" }} (
   {{ .Ident "created_by" }},
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
-  {{ .Ident "title" }},
+  {{ .Ident "description" }},
   {{ .Ident "type" }},
   {{ .Ident "payload" }}
 ) VALUES (
@@ -21,7 +21,7 @@ INSERT INTO {{ .Ident "secret_keeper" }} (
   {{ .Arg .Row.CreatedBy }},
   {{ .Arg .Row.Updated }},
   {{ .Arg .Row.UpdatedBy }},
-  {{ .Arg .Row.Title }},
+  {{ .Arg .Row.Description }},
   {{ .Arg .Row.Type }},
   {{ .Arg .Row.Payload }}
 );

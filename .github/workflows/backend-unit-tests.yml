@@ -17,9 +17,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
-permissions:
-  contents: read
-  id-token: write
+permissions: {}
 
 jobs:
   grafana:
@@ -29,9 +27,14 @@ jobs:
     name: Grafana
     runs-on: ubuntu-latest-8-cores
     continue-on-error: true
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
@@ -46,9 +49,14 @@ jobs:
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
     name: Grafana Enterprise
     runs-on: ubuntu-latest-8-cores
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - name: Setup Go
         uses: actions/setup-go@v5
         with:

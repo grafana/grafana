@@ -8,15 +8,13 @@ SELECT
   {{ .Ident "created_by" }},
   {{ .Ident "updated" }},
   {{ .Ident "updated_by" }},
-  {{ .Ident "title" }},
+  {{ .Ident "description" }},
   {{ .Ident "type" }},
   {{ .Ident "payload" }}
 FROM
   {{ .Ident "secret_keeper" }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} = {{ .Arg .Name }}
-ORDER BY {{ .Ident "updated" }} DESC
 {{ if .IsForUpdate }}
 {{ .SelectFor "UPDATE" }}
 {{ end }}

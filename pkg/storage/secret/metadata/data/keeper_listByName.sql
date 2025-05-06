@@ -4,9 +4,7 @@ SELECT
   {{ .Ident "name" }}
 FROM
   {{ .Ident "secret_keeper" }}
-WHERE 1 = 1 AND
-  {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
-  {{ .Ident "type" }} != {{ .Arg .ExcludeSQLKeeper }} AND
+WHERE {{ .Ident "namespace" }} = {{ .Arg .Namespace }} AND
   {{ .Ident "name" }} IN ({{ .ArgList .KeeperNames }})
 {{ .SelectFor "UPDATE" }}
 ;

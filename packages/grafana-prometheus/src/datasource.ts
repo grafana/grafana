@@ -3,7 +3,7 @@ import { defaults } from 'lodash';
 import { tz } from 'moment-timezone';
 import { lastValueFrom, Observable, throwError } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
-import semver from 'semver/preload';
+import { gte } from 'semver';
 
 import {
   AbstractQuery,
@@ -60,7 +60,7 @@ import { getQueryHints } from './query_hints';
 import { promQueryModeller } from './querybuilder/PromQueryModeller';
 import { QueryBuilderLabelFilter, QueryEditorMode } from './querybuilder/shared/types';
 import { CacheRequestInfo, defaultPrometheusQueryOverlapWindow, QueryCache } from './querycache/QueryCache';
-import { getOriginalMetricName, transformV2 } from './result_transformer';
+import { transformV2 } from './result_transformer';
 import { trackQuery } from './tracking';
 import {
   ExemplarTraceIdDestination,
@@ -214,7 +214,7 @@ export class PrometheusDatasource
       return false;
     }
 
-    return semver.gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
+    return gte(this.datasourceConfigurationPrometheusVersion, targetVersion);
   }
 
   _addTracingHeaders(httpOptions: PromQueryRequest, options: DataQueryRequest<PromQuery>) {
@@ -904,10 +904,6 @@ export class PrometheusDatasource
     };
   }
 
-  getOriginalMetricName(labelData: { [key: string]: string }) {
-    return getOriginalMetricName(labelData);
-  }
-
   /**
    * This converts the adhocVariableFilter array and converts it to scopeFilter array
    * @param filters
@@ -1069,28 +1065,6 @@ export class PrometheusDatasource
 
     return defaults;
   }
-}
-
-/**
- * Align query range to step.
- * Rounds start and end down to a multiple of step.
- * @param start Timestamp marking the beginning of the range.
- * @param end Timestamp marking the end of the range.
- * @param step Interval to align start and end with.
- * @param utcOffsetSec Number of seconds current timezone is offset from UTC
- */
-export function alignRange(
-  start: number,
-  end: number,
-  step: number,
-  utcOffsetSec: number
-): { end: number; start: number } {
-  const alignedEnd = Math.floor((end + utcOffsetSec) / step) * step - utcOffsetSec;
-  const alignedStart = Math.floor((start + utcOffsetSec) / step) * step - utcOffsetSec;
-  return {
-    end: alignedEnd,
-    start: alignedStart,
-  };
 }
 
 export function extractRuleMappingFromGroups(groups: RawRecordingRules[]): RuleQueryMapping {

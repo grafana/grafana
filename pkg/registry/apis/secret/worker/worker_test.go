@@ -12,28 +12,19 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
-	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/tracing"
-	"github.com/grafana/grafana/pkg/infra/usagestats"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher"
-	encryptionmanager "github.com/grafana/grafana/pkg/registry/apis/secret/encryption/manager"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/reststorage"
-	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/secretkeeper/fakes"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
-	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/secret/database"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/secret/metadata"
 	"github.com/grafana/grafana/pkg/storage/secret/migrator"
 	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
@@ -54,73 +45,43 @@ func TestProcessMessage(t *testing.T) {
 	}()
 
 	for range 10 {
-		testDB := sqlstore.NewTestStore(t)
-		require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
+		testDB := sqlstore.NewTestStore(t, sqlstore.WithMigrator(migrator.New()))
 
-		database := database.New(testDB)
+		database := database.ProvideDatabase(testDB)
 
-		outboxQueueWrapper := newOutboxQueueWrapper(rng, metadata.ProvideOutboxQueue(testDB))
+		outboxQueueWrapper := newOutboxQueueWrapper(rng, metadata.ProvideOutboxQueue(database))
 
 		features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-
-		dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
-		require.NoError(t, err)
-
-		encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(database, features)
-		require.NoError(t, err)
-
-		encMgr, err := encryptionmanager.ProvideEncryptionManager(
-			tracing.InitializeTracerForTest(),
-			dataKeyStore,
-			&setting.Cfg{
-				SecretsManagement: setting.SecretsManagerSettings{
-					SecretKey:          "sdDkslslld",
-					EncryptionProvider: "secretKey.v1",
-					Encryption: setting.EncryptionSettings{
-						DataKeysCacheTTL:        5 * time.Minute,
-						DataKeysCleanupInterval: 1 * time.Nanosecond,
-						Algorithm:               cipher.AesGcm,
-					},
-				},
-			},
-			&usagestats.UsageStatsMock{},
-			encryption.ProviderMap{},
-		)
-		require.NoError(t, err)
 
 		// Initialize access client + access control
 		accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
 		accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
-		keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
-		require.NoError(t, err)
-
-		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features, accessClient)
+		keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(database, features)
 		require.NoError(t, err)
 		keeperMetadataStorageWrapper := newKeeperMetadataStorageWrapper(rng, keeperMetadataStorage)
 
-		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, keeperMetadataStorageWrapper, keeperService)
+		secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(database, features)
 		require.NoError(t, err)
 		secureValueMetadataStorageWrapper := newSecureValueMetadataStorageWrapper(rng, secureValueMetadataStorage)
 
 		sqlKeeperWrapper := newKeeperWrapper(rng, fakes.NewFakeKeeper())
-		keepers := map[contracts.KeeperType]contracts.Keeper{
-			contracts.SQLKeeperType: sqlKeeperWrapper,
-		}
+		keeperServiceWrapper := newKeeperServiceWrapper(rng, sqlKeeperWrapper)
 
-		secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, database, outboxQueueWrapper, accessClient, utils.ResourceInfo{})
+		secretService := service.ProvideSecretService(accessClient, database, secureValueMetadataStorage, outboxQueueWrapper)
+
+		secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
 
 		worker := NewWorker(Config{
 			// TODO: randomize
 			BatchSize:      10,
 			ReceiveTimeout: 1 * time.Second,
 		},
-			log.New("secret.worker"),
 			database,
 			outboxQueueWrapper,
 			secureValueMetadataStorageWrapper,
 			keeperMetadataStorageWrapper,
-			keepers,
+			keeperServiceWrapper,
 		)
 
 		for i := range 1000 {
@@ -136,8 +97,8 @@ func TestProcessMessage(t *testing.T) {
 						Namespace: fmt.Sprintf("stack-%d", i),
 					},
 					Spec: secretv0alpha1.SecureValueSpec{
-						Title: fmt.Sprintf("title-%d", i),
-						Value: secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", i)),
+						Description: fmt.Sprintf("description-%d", i),
+						Value:       secretv0alpha1.NewExposedSecureValue(fmt.Sprintf("value-%d", i)),
 					},
 					Status: secretv0alpha1.SecureValueStatus{
 						Phase: secretv0alpha1.SecureValuePhasePending,
@@ -260,13 +221,13 @@ func nextAction(rng *rand.Rand, state *state) action {
 
 func buildState(database contracts.Database) *state {
 	const secureValuesNotInOutboxQueueQuery = `
-	SELECT 
+	SELECT
 		secret_secure_value.namespace,
 		secret_secure_value.name,
 		secret_secure_value.external_id
 	FROM secret_secure_value
 	WHERE NOT EXISTS (
-		SELECT 1 FROM secret_secure_value_outbox 
+		SELECT 1 FROM secret_secure_value_outbox
 		WHERE secret_secure_value_outbox.namespace = secret_secure_value.namespace
 					AND secret_secure_value_outbox.name = secret_secure_value.name
 		)
@@ -421,6 +382,24 @@ func (wrapper *secureValueMetadataStorageWrapper) ReadForDecrypt(ctx context.Con
 	return wrapper.impl.ReadForDecrypt(ctx, namespace, name)
 }
 
+type keeperServiceWrapper struct {
+	rng    *rand.Rand
+	keeper contracts.Keeper
+}
+
+func newKeeperServiceWrapper(rng *rand.Rand, keeper contracts.Keeper) *keeperServiceWrapper {
+	return &keeperServiceWrapper{rng: rng, keeper: keeper}
+}
+
+func (wrapper *keeperServiceWrapper) KeeperForConfig(cfg secretv0alpha1.KeeperConfig) (contracts.Keeper, error) {
+	// Maybe return an error before calling the real implementation
+	if wrapper.rng.Float32() <= 0.2 {
+		return nil, context.DeadlineExceeded
+	}
+
+	return wrapper.keeper, nil
+}
+
 type keeperWrapper struct {
 	rng    *rand.Rand
 	keeper contracts.Keeper
@@ -502,33 +481,33 @@ func newKeeperMetadataStorageWrapper(rng *rand.Rand, impl contracts.KeeperMetada
 	return &keeperMetadataStorageWrapper{rng: rng, impl: impl}
 }
 
-func (wrapper *keeperMetadataStorageWrapper) Create(_ context.Context, _ *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (wrapper *keeperMetadataStorageWrapper) Create(_ context.Context, _ *secretv0alpha1.Keeper, _ string) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
 func (wrapper *keeperMetadataStorageWrapper) Read(_ context.Context, _ xkube.Namespace, _ string) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) Update(_ context.Context, _ *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
+func (wrapper *keeperMetadataStorageWrapper) Update(_ context.Context, _ *secretv0alpha1.Keeper, _ string) (*secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
 func (wrapper *keeperMetadataStorageWrapper) Delete(_ context.Context, _ xkube.Namespace, _ string) error {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace, _ *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
+func (wrapper *keeperMetadataStorageWrapper) List(_ context.Context, _ xkube.Namespace) ([]secretv0alpha1.Keeper, error) {
 	panic("unimplemented")
 }
-func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
+func (wrapper *keeperMetadataStorageWrapper) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
 	// Maybe return an error before calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
-		return "", nil, context.DeadlineExceeded
+		return nil, context.DeadlineExceeded
 	}
-	keeperType, cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name)
+	cfg, err := wrapper.impl.GetKeeperConfig(ctx, namespace, name)
 	if err != nil {
-		return keeperType, cfg, err
+		return cfg, err
 	}
 	// Maybe return an error after calling the real implementation
 	if wrapper.rng.Float32() <= 0.2 {
-		return keeperType, cfg, context.DeadlineExceeded
+		return cfg, context.DeadlineExceeded
 	}
-	return keeperType, cfg, nil
+	return cfg, nil
 }

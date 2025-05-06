@@ -30,7 +30,7 @@ var SecureValuesResourceInfo = utils.NewResourceInfo(
 		// This defines the fields we view in `kubectl get`. Not related with the storage layer.
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The display name of the secure value"},
+			{Name: "Description", Type: "string", Format: "string", Description: "Short description that explains the purpose of this SecureValue"},
 			{Name: "Keeper", Type: "string", Format: "string", Description: "Storage of the secure value"},
 			{Name: "Ref", Type: "string", Format: "string", Description: "If present, the reference to a secret"},
 			{Name: "Status", Type: "string", Format: "string", Description: "The status of the secure value"},
@@ -41,7 +41,7 @@ var SecureValuesResourceInfo = utils.NewResourceInfo(
 			if ok {
 				return []interface{}{
 					r.Name,
-					r.Spec.Title,
+					r.Spec.Description,
 					r.Spec.Keeper,
 					r.Spec.Ref,
 					r.Status.Phase,
@@ -65,7 +65,7 @@ var KeeperResourceInfo = utils.NewResourceInfo(
 		// This defines the fields we view in `kubectl get`. Not related with the storage layer.
 		Definition: []metav1.TableColumnDefinition{
 			{Name: "Name", Type: "string", Format: "name"},
-			{Name: "Title", Type: "string", Format: "string", Description: "The display name of the keeper"},
+			{Name: "Description", Type: "string", Format: "string", Description: "Short description for the Keeper"},
 		},
 		// Decodes the object into a concrete type. Return order in the slice must be the same as in `Definition`.
 		Reader: func(obj any) ([]interface{}, error) {
@@ -73,7 +73,7 @@ var KeeperResourceInfo = utils.NewResourceInfo(
 			if ok {
 				return []interface{}{
 					r.Name,
-					r.Spec.Title,
+					r.Spec.Description,
 				}, nil
 			}
 

@@ -147,15 +147,11 @@ describe('PrometheusMetricFindQuery', () => {
     });
 
     // <LegacyPrometheus>
-    it('label_values(metric, resource) should generate series query with correct time', async () => {
+    it('label_values(metric, resource) should generate label/__name__/values query with correct time', async () => {
       const query = setupMetricFindQuery({
         query: 'label_values(metric, resource)',
         response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: 'value3' },
-          ],
+          data: ['value1', 'value2', 'value3'],
         },
       });
       const results = await query.process(raw);
@@ -164,24 +160,19 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
-        showErrorAlert: false,
         headers: {},
       });
     });
 
-    it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate series query with correct time', async () => {
+    it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate label/__name__/values? query with correct time', async () => {
       const query = setupMetricFindQuery({
         query: 'label_values(metric{label1="foo", label2="bar", label3="baz"}, resource)',
         response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: 'value3' },
-          ],
+          data: ['value1', 'value2', 'value3'],
         },
       });
       const results = await query.process(raw);
@@ -190,9 +181,8 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: '/api/datasources/uid/ABCDEF/resources/api/v1/series?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
+        url: '/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?match%5B%5D=metric%7Blabel1%3D%22foo%22%2C%20label2%3D%22bar%22%2C%20label3%3D%22baz%22%7D&start=1524650400&end=1524654000',
         hideFromInspector: true,
-        showErrorAlert: false,
         headers: {},
       });
     });
@@ -201,11 +191,7 @@ describe('PrometheusMetricFindQuery', () => {
       const query = setupMetricFindQuery({
         query: 'label_values(metric, resource)',
         response: {
-          data: [
-            { __name__: 'metric', resource: 'value1' },
-            { __name__: 'metric', resource: 'value2' },
-            { __name__: 'metric', resource: '' },
-          ],
+          data: ['value1', 'value2'],
         },
       });
       const results = await query.process(raw);
@@ -216,11 +202,10 @@ describe('PrometheusMetricFindQuery', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(fetchMock).toHaveBeenCalledWith({
         method: 'GET',
-        url: `/api/datasources/uid/ABCDEF/resources/api/v1/series?match${encodeURIComponent(
+        url: `/api/datasources/uid/ABCDEF/resources/api/v1/label/resource/values?match${encodeURIComponent(
           '[]'
         )}=metric&start=${raw.from.unix()}&end=${raw.to.unix()}`,
         hideFromInspector: true,
-        showErrorAlert: false,
         headers: {},
       });
     });

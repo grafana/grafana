@@ -4,46 +4,35 @@ import (
 	"context"
 	"fmt"
 
-	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
-	"k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	"k8s.io/apimachinery/pkg/labels"
 )
 
 // keeperMetadataStorage is the actual implementation of the keeper metadata storage.
 type keeperMetadataStorage struct {
-	db           contracts.Database
-	dialect      sqltemplate.Dialect
-	accessClient claims.AccessClient
+	db      contracts.Database
+	dialect sqltemplate.Dialect
 }
 
 var _ contracts.KeeperMetadataStorage = (*keeperMetadataStorage)(nil)
 
-func ProvideKeeperMetadataStorage(db contracts.Database, features featuremgmt.FeatureToggles, accessClient claims.AccessClient) (contracts.KeeperMetadataStorage, error) {
+func ProvideKeeperMetadataStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.KeeperMetadataStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &keeperMetadataStorage{}, nil
 	}
 
 	return &keeperMetadataStorage{
-		db:           db,
-		dialect:      sqltemplate.DialectForDriver(db.DriverName()),
-		accessClient: accessClient,
+		db:      db,
+		dialect: sqltemplate.DialectForDriver(db.DriverName()),
 	}, nil
 }
 
-func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	row, err := toKeeperCreateRow(keeper, authInfo.GetUID())
+func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
+	row, err := toKeeperCreateRow(keeper, actorUID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create row: %w", err)
 	}
@@ -121,7 +110,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 
 	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("getting row: %w", err)
+		return nil, fmt.Errorf("getting row for %s in namespace %s: %w", name, namespace, err)
 	}
 	defer func() { _ = res.Close() }()
 
@@ -132,7 +121,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	var keeper keeperDB
 	err = res.Scan(
 		&keeper.GUID, &keeper.Name, &keeper.Namespace, &keeper.Annotations, &keeper.Labels, &keeper.Created,
-		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Title, &keeper.Type, &keeper.Payload,
+		&keeper.CreatedBy, &keeper.Updated, &keeper.UpdatedBy, &keeper.Description, &keeper.Type, &keeper.Payload,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to scan keeper row: %w", err)
@@ -144,12 +133,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 	return &keeper, nil
 }
 
-func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper) (*secretv0alpha1.Keeper, error) {
-	authInfo, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
+func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0alpha1.Keeper, actorUID string) (*secretv0alpha1.Keeper, error) {
 	var newRow *keeperDB
 
 	err := s.db.Transaction(ctx, func(ctx context.Context) error {
@@ -161,12 +145,12 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		// Read old value first.
 		oldKeeperRow, err := s.read(ctx, newKeeper.Namespace, newKeeper.Name, yesForUpdate)
 		if err != nil {
-			return fmt.Errorf("failed to get row: %w", err)
+			return err
 		}
 
 		// Generate an update row model.
 		var updateErr error
-		newRow, updateErr = toKeeperUpdateRow(oldKeeperRow, newKeeper, authInfo.GetUID())
+		newRow, updateErr = toKeeperUpdateRow(oldKeeperRow, newKeeper, actorUID)
 		if updateErr != nil {
 			return fmt.Errorf("failed to map into update row: %w", updateErr)
 		}
@@ -240,27 +224,7 @@ func (s *keeperMetadataStorage) Delete(ctx context.Context, namespace xkube.Name
 	return nil
 }
 
-func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace, options *internalversion.ListOptions) (*secretv0alpha1.KeeperList, error) {
-	user, ok := claims.AuthInfoFrom(ctx)
-	if !ok {
-		return nil, fmt.Errorf("missing auth info in context")
-	}
-
-	hasPermissionFor, err := s.accessClient.Compile(ctx, user, claims.ListRequest{
-		Group:     secretv0alpha1.GROUP,
-		Resource:  secretv0alpha1.KeeperResourceInfo.GetName(),
-		Namespace: namespace.String(),
-		Verb:      utils.VerbGet,
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile checker: %w", err)
-	}
-
-	labelSelector := options.LabelSelector
-	if labelSelector == nil {
-		labelSelector = labels.Everything()
-	}
-
+func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.Keeper, error) {
 	req := listKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
@@ -275,6 +239,7 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 	if err != nil {
 		return nil, fmt.Errorf("listing keepers %q: %w", sqlKeeperList.Name(), err)
 	}
+	defer func() { _ = rows.Close() }()
 
 	keepers := make([]secretv0alpha1.Keeper, 0)
 
@@ -282,15 +247,10 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 		var row keeperDB
 		err = rows.Scan(
 			&row.GUID, &row.Name, &row.Namespace, &row.Annotations, &row.Labels, &row.Created,
-			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Title, &row.Type, &row.Payload,
+			&row.CreatedBy, &row.Updated, &row.UpdatedBy, &row.Description, &row.Type, &row.Payload,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("error reading keeper row: %w", err)
-		}
-
-		// Check whether the user has permission to access this specific Keeper in the namespace.
-		if !hasPermissionFor(row.Name, "") {
-			continue
 		}
 
 		keeper, err := row.toKubernetes()
@@ -298,14 +258,14 @@ func (s *keeperMetadataStorage) List(ctx context.Context, namespace xkube.Namesp
 			return nil, fmt.Errorf("failed to convert to kubernetes object: %w", err)
 		}
 
-		if labelSelector.Matches(labels.Set(keeper.Labels)) {
-			keepers = append(keepers, *keeper)
-		}
+		keepers = append(keepers, *keeper)
 	}
 
-	return &secretv0alpha1.KeeperList{
-		Items: keepers,
-	}, nil
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
+	}
+
+	return keepers, nil
 }
 
 // validateSecureValueReferences checks that all secure values referenced by the keeper exist and are not referenced by other third-party keepers.
@@ -344,7 +304,7 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	// DTO for `sqlSecureValueListByName` query result, only what we need.
 	type listByNameResult struct {
 		Name   string
-		Keeper string
+		Keeper *string
 	}
 
 	secureValueRows := make([]listByNameResult, 0)
@@ -378,20 +338,29 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	}
 
 	// If all secure values exist, we need to guarantee that the third-party keeper is not referencing another third-party,
-	// it must reference only 'sql' type keepers to keep the dependency tree flat (n=1).
+	// it must reference only the system keeper (when keeper=null) to keep the dependency tree flat (n=1).
 	keeperNames := make([]string, 0, len(secureValueRows))
 	keeperSecureValues := make(map[string][]string, 0)
 
 	for _, svRow := range secureValueRows {
-		keeperNames = append(keeperNames, svRow.Keeper)
-		keeperSecureValues[svRow.Keeper] = append(keeperSecureValues[svRow.Keeper], svRow.Name)
+		// Using the system keeper (null).
+		if svRow.Keeper == nil {
+			continue
+		}
+
+		keeperNames = append(keeperNames, *svRow.Keeper)
+		keeperSecureValues[*svRow.Keeper] = append(keeperSecureValues[*svRow.Keeper], svRow.Name)
+	}
+
+	// We didn't find any secure values that reference third-party keepers.
+	if len(keeperNames) == 0 {
+		return nil
 	}
 
 	reqKeeper := listByNameKeeper{
-		SQLTemplate:      sqltemplate.New(s.dialect),
-		Namespace:        keeper.Namespace,
-		KeeperNames:      keeperNames,
-		ExcludeSQLKeeper: string(contracts.SQLKeeperType),
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   keeper.Namespace,
+		KeeperNames: keeperNames,
 	}
 
 	qKeeper, err := sqltemplate.Execute(sqlKeeperListByName, reqKeeper)
@@ -435,20 +404,20 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (contracts.KeeperType, secretv0alpha1.KeeperConfig, error) {
-	// Check if keeper is default sql.
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
+	// Check if keeper is the systemwide one.
 	if name == nil {
-		return contracts.SQLKeeperType, nil, nil
+		return nil, nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
 	kp, err := s.read(ctx, namespace, *name, notForUpdate)
 	if err != nil {
-		return "", nil, err
+		return nil, err
 	}
 
-	keeperConfig := toProvider(kp.Type, kp.Payload)
+	keeperConfig := toProvider(secretv0alpha1.KeeperType(kp.Type), kp.Payload)
 
 	// TODO: this would be a good place to check if credentials are secure values and load them.
-	return kp.Type, keeperConfig, nil
+	return keeperConfig, nil
 }

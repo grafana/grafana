@@ -31,6 +31,18 @@ var (
 
 	sqlKeeperListByName      = mustTemplate("keeper_listByName.sql")
 	sqlSecureValueListByName = mustTemplate("secure_value_listByName.sql")
+
+	sqlSecureValueRead             = mustTemplate("secure_value_read.sql")
+	sqlSecureValueList             = mustTemplate("secure_value_list.sql")
+	sqlSecureValueCreate           = mustTemplate("secure_value_create.sql")
+	sqlSecureValueDelete           = mustTemplate("secure_value_delete.sql")
+	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
+	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
+	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
+
+	sqlSecureValueOutboxAppend   = mustTemplate("secure_value_outbox_append.sql")
+	sqlSecureValueOutboxReceiveN = mustTemplate("secure_value_outbox_receiveN.sql")
+	sqlSecureValueOutboxDelete   = mustTemplate("secure_value_outbox_delete.sql")
 )
 
 func mustTemplate(filename string) *template.Template {
@@ -39,6 +51,10 @@ func mustTemplate(filename string) *template.Template {
 	}
 	panic(fmt.Sprintf("template file not found: %s", filename))
 }
+
+/************************/
+/**-- Keeper Queries --**/
+/************************/
 
 // Create
 type createKeeper struct {
@@ -113,12 +129,121 @@ func (r listByNameSecureValue) Validate() error {
 // This is used at keeper store to validate create & update operations
 type listByNameKeeper struct {
 	sqltemplate.SQLTemplate
-	Namespace        string
-	KeeperNames      []string
-	ExcludeSQLKeeper string
+	Namespace   string
+	KeeperNames []string
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
 func (r listByNameKeeper) Validate() error {
 	return nil // TODO
 }
+
+/******************************/
+/**-- Secure Value Queries --**/
+/******************************/
+
+type readSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r readSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type listSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r listSecureValue) Validate() error {
+	return nil // TODO
+}
+
+type createSecureValue struct {
+	sqltemplate.SQLTemplate
+	Row *secureValueDB
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r createSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// Delete
+type deleteSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r deleteSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// Update externalId
+type updateExternalIdSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace  string
+	Name       string
+	ExternalID string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r updateExternalIdSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// Update secure value
+type updateSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Row       *secureValueDB
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r updateSecureValue) Validate() error {
+	return nil // TODO
+}
+
+// update status message
+type updateStatusSecureValue struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+	Phase     string
+}
+
+// Validate is only used if we use `dbutil` from `unifiedstorage`
+func (r updateStatusSecureValue) Validate() error {
+	return nil // TODO
+}
+
+/*************************************/
+/**-- Secure Value Outbox Queries --**/
+/*************************************/
+type appendSecureValueOutbox struct {
+	sqltemplate.SQLTemplate
+	Row *outboxMessageDB
+}
+
+func (appendSecureValueOutbox) Validate() error { return nil }
+
+type receiveNSecureValueOutbox struct {
+	sqltemplate.SQLTemplate
+	ReceiveLimit uint
+}
+
+func (receiveNSecureValueOutbox) Validate() error { return nil }
+
+type deleteSecureValueOutbox struct {
+	sqltemplate.SQLTemplate
+	MessageID string
+}
+
+func (deleteSecureValueOutbox) Validate() error { return nil }

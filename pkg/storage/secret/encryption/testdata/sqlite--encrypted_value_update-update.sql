@@ -3,7 +3,6 @@ UPDATE
 SET
   "encrypted_data" = '[115 101 99 114 101 116]',
   "updated" = 5679
-WHERE 1 = 1 AND
-  "namespace" = 'ns' AND
+WHERE "namespace" = 'ns' AND
   "uid" = 'abc123'
 ;

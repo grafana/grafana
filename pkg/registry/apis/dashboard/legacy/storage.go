@@ -9,7 +9,7 @@ import (
 
 	claims "github.com/grafana/authlib/types"
 
-	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -212,6 +212,12 @@ func (a *dashboardSqlAccess) ReadResource(ctx context.Context, req *resource.Rea
 			Code: http.StatusNotFound,
 		}
 	} else {
+		meta, err := utils.MetaAccessor(dash)
+		if err != nil {
+			rsp.Error = resource.AsErrorResult(err)
+		}
+		rsp.Folder = meta.GetFolder()
+
 		rsp.Value, err = json.Marshal(dash)
 		if err != nil {
 			rsp.Error = resource.AsErrorResult(err)

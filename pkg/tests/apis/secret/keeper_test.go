@@ -82,7 +82,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, keeper)
 
-		require.NotEmpty(t, keeper.Spec.Title)
+		require.NotEmpty(t, keeper.Spec.Description)
 		require.NotEmpty(t, keeper.Spec.AWS)
 		require.Empty(t, keeper.Spec.Azure)
 
@@ -119,7 +119,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		t.Run("and updating the keeper replaces the spec fields and returns them", func(t *testing.T) {
 			newRaw := helper.LoadYAMLOrJSONFile("testdata/keeper-gcp-generate.yaml")
 			newRaw.SetName(raw.GetName())
-			newRaw.Object["spec"].(map[string]any)["title"] = "New title"
+			newRaw.Object["spec"].(map[string]any)["description"] = "New description"
 			newRaw.Object["metadata"].(map[string]any)["annotations"] = map[string]any{"newAnnotation": "newValue"}
 
 			updatedRaw, err := client.Resource.Update(ctx, newRaw, metav1.UpdateOptions{})
@@ -156,7 +156,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 	t.Run("creating an invalid keeper fails validation and returns an error", func(t *testing.T) {
 		testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
-		testData.Object["spec"].(map[string]any)["title"] = ""
+		testData.Object["spec"].(map[string]any)["description"] = ""
 
 		raw, err := client.Resource.Create(ctx, testData, metav1.CreateOptions{})
 		require.Error(t, err)
@@ -167,10 +167,10 @@ func TestIntegrationKeeper(t *testing.T) {
 	})
 
 	t.Run("creating a keeper with a provider then changing the provider does not return an error", func(t *testing.T) {
-		rawAWS := mustGenerateKeeper(t, helper, genericUserEditor, nil, "")
+		rawAWS := mustGenerateKeeper(t, helper, genericUserEditor, nil, "testdata/keeper-aws-generate.yaml")
 
 		testDataKeeperGCP := rawAWS.DeepCopy()
-		testDataKeeperGCP.Object["spec"].(map[string]any)["sql"] = nil
+		testDataKeeperGCP.Object["spec"].(map[string]any)["aws"] = nil
 		testDataKeeperGCP.Object["spec"].(map[string]any)["gcp"] = map[string]any{
 			"projectId":       "project-id",
 			"credentialsFile": "/path/to/file.json",
@@ -235,14 +235,15 @@ func TestIntegrationKeeper(t *testing.T) {
 		})
 	})
 
-	t.Run("creating a keeper that references a securevalue that is stored in a SQL type Keeper returns no error", func(t *testing.T) {
-		// 0. Create user with required permissions.
+	t.Run("creating a keeper that references a securevalue that is stored in the System Keeper returns no error", func(t *testing.T) {
+		// 1. Create user with required permissions.
 		permissions := map[string]ResourcePermission{
 			ResourceKeepers: {Actions: ActionsAllKeepers},
-			// needed for this test to create (and delete for cleanup) securevalues.
+			// needed for this test to create (and read+delete for cleanup) securevalues.
 			ResourceSecureValues: {
 				Actions: []string{
 					secret.ActionSecretSecureValuesCreate,
+					secret.ActionSecretSecureValuesRead,
 					secret.ActionSecretSecureValuesDelete,
 				},
 			},
@@ -250,36 +251,31 @@ func TestIntegrationKeeper(t *testing.T) {
 
 		editor := mustCreateUsers(t, helper, permissions).Editor
 
-		// 1. Create a SQL keeper.
-		keeperSQL := mustGenerateKeeper(t, helper, editor, map[string]any{
-			"title": "SQL Keeper",
-			"sql": map[string]any{
-				"encryption": map[string]any{"envelope": map[string]any{}},
-			},
-		}, "")
+		// 2. Create a secureValue that is stored in the system keeper.
+		secureValue := mustGenerateSecureValue(t, helper, editor)
 
-		// 2. Create a secureValue that is stored in the previously created keeper (SQL).
-		secureValue := mustGenerateSecureValue(t, helper, editor, keeperSQL.GetName())
-
-		// 3. Create a non-SQL keeper that uses the secureValue.
+		// 3. Create a keeper that uses the secureValue.
 		keeperAWS := mustGenerateKeeper(t, helper, editor, map[string]any{
-			"title": "AWS Keeper",
+			"description": "AWS Keeper",
 			"aws": map[string]any{
 				"accessKeyId":     map[string]any{"secureValueName": secureValue.GetName()},
 				"secretAccessKey": map[string]any{"valueFromEnv": "SECRET_ACCESS_KEY_XYZ"},
 			},
-		}, "")
+		}, "testdata/keeper-aws-generate.yaml")
 		require.NotNil(t, keeperAWS)
 	})
 
 	t.Run("creating a keeper that references a securevalue that is stored in a 3rdparty Keeper returns an error", func(t *testing.T) {
+		t.Skip("skipping because there is no 3rdparty keeper implementation for OSS, move this test to Enterprise")
+
 		// 0. Create user with required permissions.
 		permissions := map[string]ResourcePermission{
 			ResourceKeepers: {Actions: ActionsAllKeepers},
-			// needed for this test to create (and delete for cleanup) securevalues.
+			// needed for this test to create (and read+delete for cleanup) securevalues.
 			ResourceSecureValues: {
 				Actions: []string{
 					secret.ActionSecretSecureValuesCreate,
+					secret.ActionSecretSecureValuesRead,
 					secret.ActionSecretSecureValuesDelete,
 				},
 			},
@@ -323,8 +319,8 @@ func TestIntegrationKeeper(t *testing.T) {
 		editorOrgA := mustCreateUsers(t, helper, permissions).Editor
 		editorOrgB := mustCreateUsers(t, helper, permissions).Editor
 
-		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil, "")
-		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil, "")
+		keeperOrgA := mustGenerateKeeper(t, helper, editorOrgA, nil, "testdata/keeper-aws-generate.yaml")
+		keeperOrgB := mustGenerateKeeper(t, helper, editorOrgB, nil, "testdata/keeper-aws-generate.yaml")
 
 		clientOrgA := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgA, GVR: gvrKeepers})
 		clientOrgB := helper.GetResourceClient(apis.ResourceClientArgs{User: editorOrgB, GVR: gvrKeepers})
@@ -377,7 +373,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			// OrgA trying to update securevalue from OrgB.
 			testData := helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 			testData.SetName(keeperOrgB.GetName())
-			testData.Object["spec"].(map[string]any)["title"] = "New title"
+			testData.Object["spec"].(map[string]any)["description"] = "New description"
 
 			raw, err := clientOrgA.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
@@ -388,7 +384,7 @@ func TestIntegrationKeeper(t *testing.T) {
 			// OrgB trying to update keeper from OrgA.
 			testData = helper.LoadYAMLOrJSONFile("testdata/keeper-aws-generate.yaml")
 			testData.SetName(keeperOrgA.GetName())
-			testData.Object["spec"].(map[string]any)["title"] = "New title"
+			testData.Object["spec"].(map[string]any)["description"] = "New description"
 
 			raw, err = clientOrgB.Resource.Update(ctx, testData, metav1.UpdateOptions{})
 			require.Error(t, err)
@@ -543,14 +539,15 @@ func TestIntegrationKeeper(t *testing.T) {
 			GVR:  gvrKeepers,
 		})
 
+		// For create, we don't have actual granular permissions, so we can use any client that has unscoped create permissions.
+		// This is because when we don't know yet what the name of the resource will be, the request comes with an empty value.
+		// And thus the authorizer can't do granular checks.
 		t.Run("CREATE", func(t *testing.T) {
-			// Create the Keeper with the limited client.
-			rawCreateLimited, err := clientScopedLimited.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
+			rawCreateLimited, err := clientScopedAll.Resource.Create(ctx, testKeeper, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, rawCreateLimited)
 
-			// Create another Keeper with the limited client, because the action is not scoped (no `name` available).
-			rawCreateLimited, err = clientScopedLimited.Resource.Create(ctx, testKeeperAnother, metav1.CreateOptions{})
+			rawCreateLimited, err = clientScopedAll.Resource.Create(ctx, testKeeperAnother, metav1.CreateOptions{})
 			require.NoError(t, err)
 			require.NotNil(t, rawCreateLimited)
 		})
@@ -601,7 +598,7 @@ func TestIntegrationKeeper(t *testing.T) {
 		t.Run("UPDATE", func(t *testing.T) {
 			// Update `keeperName` from the limited client.
 			testKeeperUpdate := testKeeper.DeepCopy()
-			testKeeperUpdate.Object["spec"].(map[string]any)["title"] = "keeper-title-1234"
+			testKeeperUpdate.Object["spec"].(map[string]any)["description"] = "keeper-description-1234"
 
 			rawUpdate, err := clientScopedLimited.Resource.Update(ctx, testKeeperUpdate, metav1.UpdateOptions{})
 			require.NoError(t, err)
@@ -609,7 +606,7 @@ func TestIntegrationKeeper(t *testing.T) {
 
 			// Try to update `keeperNameAnother` from the limited client.
 			testKeeperAnotherUpdate := testKeeperAnother.DeepCopy()
-			testKeeperAnotherUpdate.Object["spec"].(map[string]any)["title"] = "keeper-title-5678"
+			testKeeperAnotherUpdate.Object["spec"].(map[string]any)["description"] = "keeper-description-5678"
 
 			rawUpdate, err = clientScopedLimited.Resource.Update(ctx, testKeeperAnotherUpdate, metav1.UpdateOptions{})
 			require.Error(t, err)

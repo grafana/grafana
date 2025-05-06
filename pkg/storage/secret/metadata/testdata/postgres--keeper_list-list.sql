@@ -8,12 +8,11 @@ SELECT
   "created_by",
   "updated",
   "updated_by",
-  "title",
+  "description",
   "type",
   "payload"
 FROM
   "secret_keeper"
-WHERE 1 = 1 AND
-  "namespace" = 'ns'
+WHERE "namespace" = 'ns'
 ORDER BY "updated" DESC
 ;

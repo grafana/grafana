@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -17,26 +18,26 @@ import (
 
 type secureValueDB struct {
 	// Kubernetes Metadata
-	GUID        string `xorm:"pk 'guid'"`
-	Name        string `xorm:"name"`
-	Namespace   string `xorm:"namespace"`
-	Annotations string `xorm:"annotations"` // map[string]string
-	Labels      string `xorm:"labels"`      // map[string]string
-	Created     int64  `xorm:"created"`
-	CreatedBy   string `xorm:"created_by"`
-	Updated     int64  `xorm:"updated"`
-	UpdatedBy   string `xorm:"updated_by"`
+	GUID        string
+	Name        string
+	Namespace   string
+	Annotations string // map[string]string
+	Labels      string // map[string]string
+	Created     int64
+	CreatedBy   string
+	Updated     int64
+	UpdatedBy   string
 
 	// Kubernetes Status
-	Phase   string  `xorm:"status_phase"`
-	Message *string `xorm:"status_message"`
+	Phase   string
+	Message sql.NullString
 
 	// Spec
-	Title      string  `xorm:"title"`
-	Keeper     *string `xorm:"keeper"`
-	Decrypters *string `xorm:"decrypters"`
-	Ref        *string `xorm:"ref"`
-	ExternalID string  `xorm:"external_id"`
+	Description string
+	Keeper      sql.NullString
+	Decrypters  sql.NullString
+	Ref         sql.NullString
+	ExternalID  string
 }
 
 func (*secureValueDB) TableName() string {
@@ -60,28 +61,34 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	}
 
 	decrypters := make([]string, 0)
-	if sv.Decrypters != nil && *sv.Decrypters != "" {
-		if err := json.Unmarshal([]byte(*sv.Decrypters), &decrypters); err != nil {
+
+	if sv.Decrypters.Valid && sv.Decrypters.String != "" {
+		if err := json.Unmarshal([]byte(sv.Decrypters.String), &decrypters); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
 		}
 	}
 
 	resource := &secretv0alpha1.SecureValue{
 		Spec: secretv0alpha1.SecureValueSpec{
-			Title:      sv.Title,
-			Keeper:     sv.Keeper,
-			Decrypters: decrypters,
+			Description: sv.Description,
+			Decrypters:  decrypters,
 		},
 		Status: secretv0alpha1.SecureValueStatus{
-			Phase: secretv0alpha1.SecureValuePhase(sv.Phase),
+			Phase:      secretv0alpha1.SecureValuePhase(sv.Phase),
+			ExternalID: sv.ExternalID,
 		},
 	}
-	if sv.Ref != nil {
-		resource.Spec.Ref = *sv.Ref
+
+	if sv.Keeper.Valid {
+		resource.Spec.Keeper = &sv.Keeper.String
 	}
-	if sv.Message != nil && *sv.Message != "" {
-		resource.Status.Message = *sv.Message
+	if sv.Ref.Valid {
+		resource.Spec.Ref = sv.Ref.String
 	}
+	if sv.Message.Valid {
+		resource.Status.Message = sv.Message.String
+	}
+	resource.Status.ExternalID = sv.ExternalID
 
 	// Set all meta fields here for consistency.
 	meta, err := utils.MetaAccessor(resource)
@@ -215,33 +222,52 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		UpdatedBy:   meta.GetUpdatedBy(),
 
 		Phase:   string(sv.Status.Phase),
-		Message: statusMessage,
+		Message: toNullString(statusMessage),
 
-		Title:      sv.Spec.Title,
-		Keeper:     sv.Spec.Keeper,
-		Decrypters: decrypters,
-		Ref:        ref,
-		ExternalID: externalID,
+		Description: sv.Spec.Description,
+		Keeper:      toNullString(sv.Spec.Keeper),
+		Decrypters:  toNullString(decrypters),
+		Ref:         toNullString(ref),
+		ExternalID:  externalID,
 	}, nil
 }
 
 // to Decrypt maps a DB row into a DecryptSecureValue object needed for decryption.
 func (sv *secureValueDB) toDecrypt() (*contracts.DecryptSecureValue, error) {
 	decrypters := make([]string, 0)
-	if sv.Decrypters != nil && *sv.Decrypters != "" {
-		if err := json.Unmarshal([]byte(*sv.Decrypters), &decrypters); err != nil {
+	if sv.Decrypters.Valid && sv.Decrypters.String != "" {
+		if err := json.Unmarshal([]byte(sv.Decrypters.String), &decrypters); err != nil {
 			return nil, fmt.Errorf("failed to unmarshal decrypters: %w", err)
 		}
 	}
 
 	decryptSecureValue := &contracts.DecryptSecureValue{
-		Keeper:     sv.Keeper,
 		Decrypters: decrypters,
 		ExternalID: sv.ExternalID,
 	}
-	if sv.Ref != nil {
-		decryptSecureValue.Ref = *sv.Ref
+
+	if sv.Keeper.Valid && sv.Keeper.String != "" {
+		decryptSecureValue.Keeper = &sv.Keeper.String
+	}
+	if sv.Ref.Valid && sv.Ref.String != "" {
+		decryptSecureValue.Ref = sv.Ref.String
 	}
 
 	return decryptSecureValue, nil
+}
+
+// toNullString returns a sql.NullString struct given a *string
+// assumes that "" (empty string) is a valid string
+func toNullString(s *string) sql.NullString {
+	if s == nil {
+		return sql.NullString{
+			String: "",
+			Valid:  false,
+		}
+	}
+
+	return sql.NullString{
+		String: *s,
+		Valid:  true,
+	}
 }
