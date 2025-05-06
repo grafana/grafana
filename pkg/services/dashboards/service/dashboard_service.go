@@ -353,7 +353,7 @@ func (dr *DashboardServiceImpl) processDashboardBatch(ctx context.Context, orgID
 			"deletionTimestamp", deletionTimestamp,
 			"resourceVersion", resourceVersion)
 
-		if err = dr.CleanUpDashboard(ctx, dash.UID, orgID); err != nil {
+		if err = dr.CleanUpDashboard(ctx, dash.UID, dash.ID, orgID); err != nil {
 			errs = append(errs, fmt.Errorf("failed to clean up dashboard %s: %w", dash.UID, err))
 		}
 		itemsProcessed++
@@ -1790,7 +1790,7 @@ func (dr *DashboardServiceImpl) DeleteInFolders(ctx context.Context, orgID int64
 
 func (dr *DashboardServiceImpl) Kind() string { return entity.StandardKindDashboard }
 
-func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error {
+func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardUID string, dashboardID int64, orgId int64) error {
 	ctx, span := tracer.Start(ctx, "dashboards.service.CleanUpDashboard")
 	defer span.End()
 
@@ -1800,7 +1800,7 @@ func (dr *DashboardServiceImpl) CleanUpDashboard(ctx context.Context, dashboardU
 		return err
 	}
 
-	return dr.dashboardStore.CleanupAfterDelete(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgId, UID: dashboardUID})
+	return dr.dashboardStore.CleanupAfterDelete(ctx, &dashboards.DeleteDashboardCommand{OrgID: orgId, UID: dashboardUID, ID: dashboardID})
 }
 
 // -----------------------------------------------------------------------------------------

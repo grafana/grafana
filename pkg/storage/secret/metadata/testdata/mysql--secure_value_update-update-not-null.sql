@@ -17,7 +17,6 @@ SET
   `decrypters` = 'decrypters_test',
   `ref` = 'ref_test',
   `external_id` = 'extId'
-WHERE 1 = 1 AND
-  `namespace` = 'ns' AND
+WHERE `namespace` = 'ns' AND
   `name` = 'name'
 ;

@@ -273,11 +273,6 @@ export interface FeatureToggles {
   */
   wargamesTesting?: boolean;
   /**
-  * Show the new alerting insights landing page
-  * @default true
-  */
-  alertingInsights?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
@@ -1031,4 +1026,8 @@ export interface FeatureToggles {
   * @default true
   */
   alertingBulkActionsInUI?: boolean;
+  /**
+  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
+  */
+  extensionsReadOnlyProxy?: boolean;
 }

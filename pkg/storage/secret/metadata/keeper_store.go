@@ -110,7 +110,7 @@ func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string
 
 	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
 	if err != nil {
-		return nil, fmt.Errorf("getting row: %w", err)
+		return nil, fmt.Errorf("getting row for %s in namespace %s: %w", name, namespace, err)
 	}
 	defer func() { _ = res.Close() }()
 
@@ -145,7 +145,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		// Read old value first.
 		oldKeeperRow, err := s.read(ctx, newKeeper.Namespace, newKeeper.Name, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
-			return fmt.Errorf("failed to get row: %w", err)
+			return err
 		}
 
 		// Generate an update row model.
