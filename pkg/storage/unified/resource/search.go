@@ -435,6 +435,7 @@ func (s *searchSupport) init(ctx context.Context) error {
 			}
 			if evt.Err != nil {
 				s.log.Error("error indexing watch event", "error", evt.Err)
+				continue
 			}
 			// record latency from when event was created to when it was indexed
 			span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", evt.Latency.Seconds())))
