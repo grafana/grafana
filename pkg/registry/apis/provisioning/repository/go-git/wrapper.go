@@ -463,13 +463,3 @@ func (g *GoGitRepo) History(ctx context.Context, path string, ref string) ([]pro
 func (g *GoGitRepo) Validate() field.ErrorList {
 	return nil
 }
-
-// Webhook implements repository.Repository.
-func (g *GoGitRepo) Webhook(ctx context.Context, req *http.Request) (*provisioning.WebhookResponse, error) {
-	return nil, &apierrors.StatusError{
-		ErrStatus: metav1.Status{
-			Message: "history is not yet implemented",
-			Code:    http.StatusNotImplemented,
-		},
-	}
-}
