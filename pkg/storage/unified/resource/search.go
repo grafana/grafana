@@ -746,7 +746,7 @@ func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr 
 		s.log.Error("error getting document builder", "error", err)
 		return nil, err
 	}
-	indexQueueProcessor := NewIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
+	indexQueueProcessor := newIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
 	s.indexQueueProcessors[key] = indexQueueProcessor
 	return indexQueueProcessor, nil
 }

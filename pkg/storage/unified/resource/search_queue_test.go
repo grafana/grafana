@@ -15,7 +15,7 @@ func TestNewIndexQueueProcessor(t *testing.T) {
 
 	resChan := make(chan *IndexEvent)
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
+	processor := newIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	assert.NotNil(t, processor)
 	assert.Equal(t, 10, processor.batchSize)
@@ -29,7 +29,7 @@ func TestIndexQueueProcessor_SingleEvent(t *testing.T) {
 
 	resChan := make(chan *IndexEvent)
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
+	processor := newIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	// Test data
 	key := ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"}
@@ -65,7 +65,7 @@ func TestIndexQueueProcessor_BatchProcessing(t *testing.T) {
 
 	resChan := make(chan *IndexEvent)
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 2, mockBuilder, resChan)
+	processor := newIndexQueueProcessor(mockIndex, nsr, 2, mockBuilder, resChan)
 
 	// Test data for two events
 	events := []*WrittenEvent{
@@ -114,7 +114,7 @@ func TestIndexQueueProcessor_BuildDocumentError(t *testing.T) {
 
 	resChan := make(chan *IndexEvent)
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
+	processor := newIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	evt := &WrittenEvent{
 		Key:             &ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},
@@ -148,7 +148,7 @@ func TestIndexQueueProcessor_BulkIndexError(t *testing.T) {
 
 	resChan := make(chan *IndexEvent)
 
-	processor := NewIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
+	processor := newIndexQueueProcessor(mockIndex, nsr, 10, mockBuilder, resChan)
 
 	evt := &WrittenEvent{
 		Key:             &ResourceKey{Resource: "test", Name: "obj1", Namespace: "default"},

@@ -31,8 +31,8 @@ type IndexEvent struct {
 	Err               error
 }
 
-// NewIndexQueueProcessor creates a new IndexQueueProcessor for the given index
-func NewIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource, batchSize int, builder DocumentBuilder, resChan chan *IndexEvent) *indexQueueProcessor {
+// newIndexQueueProcessor creates a new IndexQueueProcessor for the given index
+func newIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource, batchSize int, builder DocumentBuilder, resChan chan *IndexEvent) *indexQueueProcessor {
 	return &indexQueueProcessor{
 		index:     index,
 		nsr:       nsr,
