@@ -20,7 +20,6 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	claims "github.com/grafana/authlib/types"
-	"github.com/grafana/dskit/ring"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 )
 
