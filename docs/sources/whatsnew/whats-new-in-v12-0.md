@@ -71,7 +71,7 @@ Welcome to Grafana 12.0! We have a _lot_ to share. This release marks general av
 
 Read on to learn about these and more improvements to Grafana!
 
-{{< youtube id=4uJkHC-IvGU >}}
+{{< youtube id=mHSzaVYBh38 >}}
 
 For even more detail about all the changes in this release, refer to the [changelog](https://github.com/grafana/grafana/blob/main/CHANGELOG.md). For the specific steps we recommend when you upgrade to v12.0, check out our [Upgrade Guide](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/upgrade-guide/upgrade-v12.0/).
 
