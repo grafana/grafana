@@ -1140,39 +1140,94 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                 />
               </>
             )}
-          {config.featureToggles.newLogsPanel && visualisationType === 'logs' && hasData && (
-            <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
-              {logsContainerRef.current && (
-                <LogList
-                  app={CoreApp.Explore}
-                  containerElement={logsContainerRef.current}
-                  dedupStrategy={dedupStrategy}
-                  displayedFields={displayedFields}
-                  filterLevels={filterLevels}
-                  getFieldLinks={getFieldLinks}
-                  getRowContextQuery={getRowContextQuery}
-                  loadMore={loadMoreLogs}
-                  logOptionsStorageKey={SETTING_KEY_ROOT}
-                  logs={dedupedRows}
-                  logsMeta={logsMeta}
-                  logSupportsContext={showContextToggle}
-                  onLogOptionsChange={onLogOptionsChange}
-                  onLogLineHover={onLogRowHover}
-                  onOpenContext={onOpenContext}
-                  onPermalinkClick={onPermalinkClick}
-                  onPinLine={onPinToContentOutlineClick}
-                  onUnpinLine={onPinToContentOutlineClick}
-                  pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
-                  pinnedLogs={pinnedLogs}
-                  showControls
-                  showTime={showTime}
-                  sortOrder={logsSortOrder}
-                  timeRange={props.range}
-                  timeZone={timeZone}
-                  wrapLogMessage={wrapLogMessage}
-                />
+          {config.featureToggles.newLogsPanel && hasData && (
+            <>
+              {visualisationType === 'logs' && (
+                <div data-testid="logRows" ref={logsContainerRef} className={styles.logRowsWrapper}>
+                  {logsContainerRef.current && (
+                    <LogList
+                      app={CoreApp.Explore}
+                      containerElement={logsContainerRef.current}
+                      dedupStrategy={dedupStrategy}
+                      displayedFields={displayedFields}
+                      filterLevels={filterLevels}
+                      getFieldLinks={getFieldLinks}
+                      getRowContextQuery={getRowContextQuery}
+                      loadMore={loadMoreLogs}
+                      logOptionsStorageKey={SETTING_KEY_ROOT}
+                      logs={dedupedRows}
+                      logsMeta={logsMeta}
+                      logSupportsContext={showContextToggle}
+                      onLogOptionsChange={onLogOptionsChange}
+                      onLogLineHover={onLogRowHover}
+                      onOpenContext={onOpenContext}
+                      onPermalinkClick={onPermalinkClick}
+                      onPinLine={onPinToContentOutlineClick}
+                      onUnpinLine={onPinToContentOutlineClick}
+                      pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                      pinnedLogs={pinnedLogs}
+                      showControls
+                      showTime={showTime}
+                      sortOrder={logsSortOrder}
+                      timeRange={props.range}
+                      timeZone={timeZone}
+                      wrapLogMessage={wrapLogMessage}
+                    />
+                  )}
+                </div>
               )}
-            </div>
+              {visualisationType === 'table' && (
+                <div className={styles.logRowsWrapper} data-testid="logRows">
+                  <ControlledLogRows
+                    logsTableFrames={props.logsFrames}
+                    width={width}
+                    updatePanelState={updatePanelState}
+                    panelState={panelState?.logs}
+                    datasourceType={props.datasourceType}
+                    splitOpen={splitOpen}
+                    visualisationType={visualisationType}
+                    loading={loading}
+                    loadMoreLogs={infiniteScrollAvailable ? loadMoreLogs : undefined}
+                    range={props.range}
+                    pinnedLogs={pinnedLogs}
+                    logRows={logRows}
+                    deduplicatedRows={dedupedRows}
+                    dedupStrategy={dedupStrategy}
+                    onClickFilterLabel={onClickFilterLabel}
+                    onClickFilterOutLabel={onClickFilterOutLabel}
+                    showContextToggle={showContextToggle}
+                    getRowContextQuery={getRowContextQuery}
+                    showLabels={showLabels}
+                    showTime={showTime}
+                    enableLogDetails={true}
+                    wrapLogMessage={wrapLogMessage}
+                    prettifyLogMessage={prettifyLogMessage}
+                    timeZone={timeZone}
+                    getFieldLinks={getFieldLinks}
+                    logsSortOrder={logsSortOrder}
+                    displayedFields={displayedFields}
+                    onClickShowField={showField}
+                    onClickHideField={hideField}
+                    app={CoreApp.Explore}
+                    onLogRowHover={onLogRowHover}
+                    onOpenContext={onOpenContext}
+                    onPermalinkClick={onPermalinkClick}
+                    permalinkedRowId={panelState?.logs?.id}
+                    scrollIntoView={scrollIntoView}
+                    isFilterLabelActive={props.isFilterLabelActive}
+                    onClickFilterString={props.onClickFilterString}
+                    onClickFilterOutString={props.onClickFilterOutString}
+                    onUnpinLine={onPinToContentOutlineClick}
+                    onPinLine={onPinToContentOutlineClick}
+                    pinLineButtonTooltipTitle={pinLineButtonTooltipTitle}
+                    logsMeta={logsMeta}
+                    logOptionsStorageKey={SETTING_KEY_ROOT}
+                    onLogOptionsChange={onLogOptionsChange}
+                    hasUnescapedContent={hasUnescapedContent}
+                  />
+                </div>
+              )}
+            </>
           )}
           {!loading && !hasData && !scanning && (
             <div className={styles.noDataWrapper}>
