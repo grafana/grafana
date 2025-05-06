@@ -328,8 +328,8 @@ func newSecureValueMetadataStorageWrapper(rng *rand.Rand, impl contracts.SecureV
 func (wrapper *secureValueMetadataStorageWrapper) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	return wrapper.impl.Create(ctx, sv, actorUID)
 }
-func (wrapper *secureValueMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	return wrapper.impl.Read(ctx, namespace, name)
+func (wrapper *secureValueMetadataStorageWrapper) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+	return wrapper.impl.Read(ctx, namespace, name, opts)
 }
 func (wrapper *secureValueMetadataStorageWrapper) Update(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	// Maybe return an error before calling the real implementation

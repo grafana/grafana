@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/jmoiron/sqlx"
+
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
+	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
 )
 
 var transactionContextKey = &struct{}{}
@@ -82,4 +85,106 @@ func transactionIDFromContext(ctx context.Context) uint64 {
 	}
 
 	return id
+}
+
+// Implementation of contracts.Database// contextSessionTxKey is the key used to store the transaction in the context.
+type contextSessionTxKey struct{}
+
+// Implements contracts.Database
+type SimDatabaseClient2 struct {
+	simNetwork *SimNetwork
+	dbType     string
+	sqlx       *sqlx.DB
+}
+
+func NewSimDatabaseClient2(simNetwork *SimNetwork, db *sqlx.DB) *SimDatabaseClient2 {
+	return &SimDatabaseClient2{
+		simNetwork: simNetwork,
+		sqlx:       db,
+	}
+}
+
+func (db *SimDatabaseClient2) DriverName() string {
+	return "mysql"
+}
+
+func (db *SimDatabaseClient2) Transaction(ctx context.Context, callback func(context.Context) error) error {
+	reply := db.simNetwork.Send(SendInput{
+		Debug: "Transaction",
+		Execute: func() any {
+			txCtx := ctx
+
+			// If another transaction is already open, we just use that one instead of nesting.
+			sqlxTx, ok := txCtx.Value(contextSessionTxKey{}).(*sqlx.Tx)
+			if sqlxTx != nil && ok {
+				// We are already in a transaction, so we don't commit or rollback, let the outermost transaction do it.
+				return callback(txCtx)
+			}
+
+			tx, err := db.sqlx.Beginx()
+			if err != nil {
+				return err
+			}
+
+			sqlxTx = tx
+
+			// Save it in the context so the transaction can be reused in case it is nested.
+			txCtx = context.WithValue(ctx, contextSessionTxKey{}, sqlxTx)
+
+			if err := callback(txCtx); err != nil {
+				_ = coro.Yield()
+				if rbErr := sqlxTx.Rollback(); rbErr != nil {
+					return errors.Join(err, rbErr)
+				}
+
+				return err
+			}
+
+			_ = coro.Yield()
+			return sqlxTx.Commit()
+		},
+	})
+
+	return toError(reply)
+}
+
+func (db *SimDatabaseClient2) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
+	reply := db.simNetwork.Send(SendInput{
+		Debug: "ExecContext",
+		Execute: func() any {
+			// If another transaction is already open, we just use that one instead of nesting.
+			if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
+				result, err := tx.ExecContext(ctx, db.sqlx.Rebind(query), args...)
+				return []any{result, err}
+			}
+
+			result, err := db.sqlx.ExecContext(ctx, db.sqlx.Rebind(query), args...)
+			return []any{result, err}
+		},
+	}).([]any)
+	if reply[0] == nil {
+		return nil, toError(reply[1])
+	}
+	return reply[0].(sql.Result), toError(reply[1])
+}
+
+func (db *SimDatabaseClient2) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
+	reply := db.simNetwork.Send(SendInput{
+		Debug: "QueryContext",
+		Execute: func() any {
+			// If another transaction is already open, we just use that one instead of nesting.
+			if tx, ok := ctx.Value(contextSessionTxKey{}).(*sqlx.Tx); tx != nil && ok {
+				rows, err := tx.QueryContext(ctx, db.sqlx.Rebind(query), args...)
+				return []any{rows, err}
+			}
+
+			rows, err := db.sqlx.QueryContext(ctx, db.sqlx.Rebind(query), args...)
+			return []any{rows, err}
+		},
+	}).([]any)
+	if reply[0] == nil {
+		return nil, toError(reply[1])
+	}
+	return reply[0].(contracts.Rows), toError(reply[1])
+
 }

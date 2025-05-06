@@ -169,25 +169,24 @@ func (sim *Simulator) step() {
 
 func (sim *Simulator) genCreateSecureValueInput() *secretv0alpha1.SecureValue {
 	// If a secret exists, maybe try to recreate it
-	// if len(sim.simDatabaseServer.secretMetadata) > 0 && sim.rng.Float32() >= sim.config.CreateDuplicateSecretProbability {
-	// 	for _, secureValues := range sim.simDatabaseServer.secretMetadata {
-	// 		for _, secureValue := range secureValues {
-	// 			return &secretv0alpha1.SecureValue{
-	// 				ObjectMeta: metav1.ObjectMeta{
-	// 					Name:      secureValue.Name,
-	// 					Namespace: secureValue.Namespace,
-	// 				},
-	// 				Spec: secretv0alpha1.SecureValueSpec{
-	// 					Title: secureValue.Spec.Title,
-	// 					Value: secretv0alpha1.NewExposedSecureValue("value1"),
-	// 				},
-	// 				Status: secretv0alpha1.SecureValueStatus{
-	// 					Phase: secretv0alpha1.SecureValuePhasePending,
-	// 				},
-	// 			}
-	// 		}
-	// 	}
-	// }
+	if len(sim.simDatabaseServer.secretMetadata) > 0 && sim.rng.Float32() >= sim.config.CreateDuplicateSecretProbability {
+		for _, secureValues := range sim.simDatabaseServer.secretMetadata {
+			for _, secureValue := range secureValues {
+				return &secretv0alpha1.SecureValue{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:      secureValue.Name,
+						Namespace: secureValue.Namespace,
+					},
+					Spec: secretv0alpha1.SecureValueSpec{
+						Value: secretv0alpha1.NewExposedSecureValue("value1"),
+					},
+					Status: secretv0alpha1.SecureValueStatus{
+						Phase: secretv0alpha1.SecureValuePhasePending,
+					},
+				}
+			}
+		}
+	}
 	return &secretv0alpha1.SecureValue{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("sv-%d", sim.metrics.NumSteps),
@@ -212,6 +211,7 @@ func (sim *Simulator) genDeleteSecureValueInput() (string, string) {
 }
 
 func (sim *Simulator) execute(action Action) {
+
 	switch action {
 	case ActionCreateSecret:
 		sim.metrics.NumCreateSecrets++
@@ -345,7 +345,6 @@ func TestSimulate(t *testing.T) {
 	t.Parallel()
 
 	simulatorConfig := getSimulatorConfigOrDefault()
-	simulatorConfig.Seed = 8890920885552465367
 	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
 	activityLog := NewActivityLog()
 
@@ -353,7 +352,7 @@ func TestSimulate(t *testing.T) {
 
 	defer func() {
 		if err := recover(); err != nil || t.Failed() {
-			// fmt.Println(activityLog.String())
+			fmt.Println(activityLog.String())
 			fmt.Printf("SEED=%+v", simulatorConfig.Seed)
 			if err != nil {
 				panic(err)
@@ -381,6 +380,10 @@ func TestSimulate(t *testing.T) {
 	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
 
+	// features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
+	// secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(simDatabaseClient, features)
+	// require.NoError(t, err)
+
 	secretService := service.ProvideSecretService(accessClient, simDatabaseClient, simSecureValueMetadataStorage, simOutboxQueue)
 
 	secureValueRest := reststorage.NewSecureValueRest(secretService, utils.ResourceInfo{})
@@ -407,121 +410,31 @@ func TestSimulate(t *testing.T) {
 	for range simulatorConfig.Steps {
 		simulator.step()
 
-		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabaseServer)
+		state := fetchState(t, simDatabaseServer)
+
+		invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, &state)
 		invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabaseServer)
 	}
 }
 
-// func AAASimulateWithRealImplementation(t *testing.T) {
-// 	t.Parallel()
+// Returns the state need to invariant assertions
+func fetchState(t *testing.T, simDatabaseServer *SimDatabaseServer) state {
+	return state{outbox: simDatabaseServer.outboxQueue}
+}
 
-// 	simulatorConfig := getSimulatorConfigOrDefault()
-// 	rng := rand.New(rand.NewSource(simulatorConfig.Seed))
-// 	activityLog := NewActivityLog()
-
-// 	defer func() {
-// 		if err := recover(); err != nil || t.Failed() {
-// 			fmt.Println(activityLog.String())
-// 			fmt.Printf("SEED=%+v", simulatorConfig.Seed)
-// 			if err != nil {
-// 				panic(err)
-// 			}
-// 		}
-// 	}()
-
-// 	testDB := sqlstore.NewTestStore(t)
-// 	require.NoError(t, migrator.MigrateSecretSQL(testDB.GetEngine(), nil))
-
-// 	outbox := metadata.ProvideOutboxQueue(testDB)
-// 	features := featuremgmt.WithFeatures(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs, featuremgmt.FlagSecretsManagementAppPlatform)
-
-// 	dataKeyStore, err := encryptionstorage.ProvideDataKeyStorage(testDB, features)
-// 	require.NoError(t, err)
-
-// 	encValueStore, err := encryptionstorage.ProvideEncryptedValueStorage(testDB, features)
-// 	require.NoError(t, err)
-
-// 	// Initialize the encryption manager
-// 	encMgr, err := encryptionmanager.ProvideEncryptionManager(
-// 		tracing.InitializeTracerForTest(),
-// 		dataKeyStore,
-// 		&setting.Cfg{
-// 			SecretsManagement: setting.SecretsManagerSettings{
-// 				SecretKey:          "sdDkslslld",
-// 				EncryptionProvider: "secretKey.v1",
-// 				Encryption: setting.EncryptionSettings{
-// 					DataKeysCacheTTL:        5 * time.Minute,
-// 					DataKeysCleanupInterval: 1 * time.Nanosecond,
-// 					Algorithm:               "aes-cfb",
-// 				},
-// 			},
-// 		},
-// 		&usagestats.UsageStatsMock{},
-// 		encryption.ProviderMap{},
-// 	)
-// 	require.NoError(t, err)
-
-// 	// Initialize the keeper service
-// 	keeperService, err := secretkeeper.ProvideService(tracing.InitializeTracerForTest(), encValueStore, encMgr)
-// 	require.NoError(t, err)
-
-// 	// Initialize access client + access control
-// 	accessControl := &actest.FakeAccessControl{ExpectedEvaluate: true}
-// 	accessClient := accesscontrol.NewLegacyAccessClient(accessControl)
-
-// 	// Initialize the keeper storage and add a test keeper
-// 	keeperMetadataStorage, err := metadata.ProvideKeeperMetadataStorage(testDB, features, accessClient)
-// 	require.NoError(t, err)
-
-// 	// Initialize the secure value storage
-// 	secureValueMetadataStorage, err := metadata.ProvideSecureValueMetadataStorage(testDB, features, accessClient, keeperMetadataStorage, keeperService)
-// 	require.NoError(t, err)
-
-// 	simNetwork := NewSimNetwork(SimNetworkConfig{rng: rng}, activityLog)
-
-// 	// simDatabaseClient := NewSimDatabaseClient(simNetwork, simDatabaseServer)
-// 	simDatabaseClient := NewSimDatabase2(simNetwork, testDB)
-
-// 	simKeeperMetadataStorage := NewSimKeeperMetadataStorage()
-
-// 	secureValueRest := reststorage.NewSecureValueRest(secureValueMetadataStorage, simDatabaseClient, outbox, utils.ResourceInfo{})
-
-// 	runtime := coro.NewRuntime()
-
-// 	simulator := NewSimulator(
-// 		t,
-// 		NewModel(),
-// 		rng,
-// 		simulatorConfig,
-// 		runtime,
-// 		activityLog,
-// 		simNetwork,
-// 		outbox,
-// 		keepers,
-// 		simDatabaseClient,
-// 		nil,
-// 		secureValueMetadataStorage,
-// 		simKeeperMetadataStorage,
-// 		secureValueRest,
-// 	)
-
-// 	for range simulatorConfig.Steps {
-// 		simulator.step()
-
-// 		// invOnlyOneOperationPerSecureValueInTheQueueAtATime(t, simDatabaseServer)
-// 		// invSecretMetadataHasPendingStatusWhenTheresAnOperationInTheQueue(t, simDatabaseServer)
-// 	}
-// }
+type state struct {
+	outbox []contracts.OutboxMessage
+}
 
 // TLA+ inv: OnlyOneOperationPerSecureValueInTheQueueAtATime
-func invOnlyOneOperationPerSecureValueInTheQueueAtATime(t *testing.T, simDatabase *SimDatabaseServer) {
+func invOnlyOneOperationPerSecureValueInTheQueueAtATime(t *testing.T, state *state) {
 	// A set of secure value names
 	seen := make(map[string]struct{}, 0)
 
-	for _, sv := range simDatabase.outboxQueue {
+	for _, sv := range state.outbox {
 		secureValueName := sv.Name
 
-		require.NotContains(t, seen, secureValueName, fmt.Sprintf("Current SecureValues: %v outbox=%+v", seen, simDatabase.outboxQueue))
+		require.NotContains(t, seen, secureValueName, fmt.Sprintf("Current SecureValues: %v outbox=%+v", seen, state.outbox))
 
 		// Add the secure value name to the set
 		seen[secureValueName] = struct{}{}

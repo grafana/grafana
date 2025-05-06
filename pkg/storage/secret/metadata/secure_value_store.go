@@ -105,8 +105,8 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 	return createdSecureValue, nil
 }
 
-func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	secureValue, err := s.read(ctx, namespace, name)
+func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
+	secureValue, err := s.read(ctx, namespace, name, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +122,7 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
 
-	read, err := s.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name)
+	read, err := s.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{})
 	if err != nil || read == nil {
 		return nil, fmt.Errorf("db failure: %w", err)
 	}
@@ -332,7 +332,7 @@ func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xk
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	row, err := s.read(ctx, namespace, name)
+	row, err := s.read(ctx, namespace, name, contracts.ReadOpts{})
 	if err != nil {
 		return nil, err
 	}
@@ -345,11 +345,12 @@ func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespa
 	return secureValue, nil
 }
 
-func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.Namespace, name string) (secureValueDB, error) {
+func (s *secureValueMetadataStorage) read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (secureValueDB, error) {
 	req := readSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
+		IsForUpdate: opts.ForUpdate,
 	}
 
 	query, err := sqltemplate.Execute(sqlSecureValueRead, req)

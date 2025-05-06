@@ -235,7 +235,7 @@ func (db *SimDatabaseServer) QueryOutboxAppend(transactionID TransactionID, mess
 	return messageID, nil
 }
 
-func (db *SimDatabaseServer) QueryReadSecureValueMetadata(namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (db *SimDatabaseServer) QueryReadSecureValueMetadata(namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
 	ns, ok := db.secretMetadata[namespace.String()]
 	if !ok {
 		return nil, contracts.ErrSecureValueNotFound

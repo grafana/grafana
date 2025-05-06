@@ -62,7 +62,7 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 }
 
 func (s *SecretService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	return s.secureValueMetadataStorage.Read(ctx, namespace, name)
+	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 }
 
 func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error) {
@@ -138,9 +138,13 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 
 func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name)
+		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
 		if err != nil {
 			return fmt.Errorf("fetching secure value: %+w", err)
+		}
+
+		if sv.Status.Phase == secretv0alpha1.SecureValuePhasePending {
+			return contracts.ErrSecureValueOperationInProgress
 		}
 
 		if err := s.secureValueMetadataStorage.SetStatus(ctx, namespace, name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending}); err != nil {

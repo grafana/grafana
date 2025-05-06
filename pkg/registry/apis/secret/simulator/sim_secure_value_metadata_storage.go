@@ -29,11 +29,11 @@ func (storage *SimSecureValueMetadataStorage) Create(ctx context.Context, sv *se
 		}}).([]any)
 	return reply[0].(*secretv0alpha1.SecureValue), toError(reply[1])
 }
-func (storage *SimSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+func (storage *SimSecureValueMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.SecureValue, error) {
 	reply := storage.simNetwork.Send(SendInput{
 		Debug: fmt.Sprintf("DatabaseReadSecureValueMetadataQuery(%+v, %+v)", namespace, name),
 		Execute: func() any {
-			sv, err := storage.simDatabase.QueryReadSecureValueMetadata(namespace, name)
+			sv, err := storage.simDatabase.QueryReadSecureValueMetadata(namespace, name, opts)
 			return []any{sv, err}
 		}}).([]any)
 	return reply[0].(*secretv0alpha1.SecureValue), toError(reply[1])
