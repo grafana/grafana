@@ -25,13 +25,7 @@ export function AnnotationQueryEditor(props: Props) {
   return (
     <>
       <EditorRows>
-        <PromQueryCodeEditor
-          {...props}
-          query={query}
-          showExplain={false}
-          onRunQuery={onRunQuery}
-          onChange={(q) => onChange(q)}
-        />
+        <PromQueryCodeEditor {...props} query={query} showExplain={false} onRunQuery={onRunQuery} onChange={onChange} />
         <EditorRow>
           <EditorField
             label="Min step"
@@ -47,7 +41,7 @@ export function AnnotationQueryEditor(props: Props) {
               aria-label="Set lower limit for the step parameter"
               placeholder={'auto'}
               minWidth={10}
-              value={query.interval}
+              value={query.interval ?? ''}
               onChange={(e) => onChange({ ...query, interval: e.currentTarget.value })}
               id={selectors.components.DataSource.Prometheus.annotations.minStep}
             />

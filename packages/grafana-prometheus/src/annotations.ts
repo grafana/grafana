@@ -31,8 +31,8 @@ export const PrometheusAnnotationSupport = (ds: PrometheusDatasource): Annotatio
       json.target = {
         ...json.target,
         refId: json.target.refId || json.refId || 'Anno',
-        expr: json.target.expr || json.expr || json.target.expr,
-        interval: json.target.interval || json.step || json.target.interval,
+        expr: json.target.expr || json.expr || '',
+        interval: json.target.interval || json.step || '',
       };
 
       // Remove properties that have been transferred to target

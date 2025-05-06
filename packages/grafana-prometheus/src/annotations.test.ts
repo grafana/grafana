@@ -162,7 +162,7 @@ describe('PrometheusAnnotationSupport', () => {
 
       expect(result.target?.refId).toBe('Anno');
       expect(result.target?.expr).toBe('');
-      expect(result.target?.interval).toBeUndefined();
+      expect(result.target?.interval).toBe('');
     });
 
     it('should handle empty strings vs undefined values correctly', () => {
