@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Cambiar tema...",
+      "change-theme": "",
       "dark-theme": "Oscuro",
-      "light-theme": "Claro"
+      "light-theme": "Claro",
+      "scopes": ""
     },
     "empty-state": {
       "message": ""
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."

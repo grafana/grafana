@@ -2767,12 +2767,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "テーマを変更...",
+      "change-theme": "",
       "dark-theme": "ダーク",
-      "light-theme": "ライト"
+      "light-theme": "ライト",
+      "scopes": ""
     },
     "empty-state": {
       "message": "結果はありません"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "検索またはジャンプ先を指定..."
