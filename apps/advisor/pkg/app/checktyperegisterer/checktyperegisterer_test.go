@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/infra/log"
 	k8sErrs "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -119,7 +119,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					updateFunc: tt.updateFunc,
 				},
 				namespace:     "custom-namespace",
-				log:           log.New("test"),
+				log:           logging.DefaultLogger,
 				retryAttempts: 1,
 				retryDelay:    0,
 			}
@@ -180,7 +180,7 @@ func (m *mockStep) Resolution() string {
 	return ""
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportFailure, error) {
+func (m *mockStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportFailure, error) {
 	return nil, nil
 }
 

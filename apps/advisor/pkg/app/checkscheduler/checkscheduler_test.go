@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -31,7 +31,7 @@ func TestRunner_Run(t *testing.T) {
 		runner := &Runner{
 			checkRegistry:      mockCheckService,
 			client:             mockClient,
-			log:                log.NewNopLogger(),
+			log:                logging.DefaultLogger,
 			evaluationInterval: 1 * time.Hour,
 		}
 
@@ -51,7 +51,7 @@ func TestRunner_checkLastCreated_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    log.NewNopLogger(),
+		log:    logging.DefaultLogger,
 	}
 
 	lastCreated, err := runner.checkLastCreated(context.Background())
@@ -76,7 +76,7 @@ func TestRunner_createChecks_ErrorOnCreate(t *testing.T) {
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
-		log:           log.NewNopLogger(),
+		log:           logging.DefaultLogger,
 	}
 
 	err := runner.createChecks(context.Background())
@@ -100,7 +100,7 @@ func TestRunner_createChecks_Success(t *testing.T) {
 	runner := &Runner{
 		checkRegistry: mockCheckService,
 		client:        mockClient,
-		log:           log.NewNopLogger(),
+		log:           logging.DefaultLogger,
 	}
 
 	err := runner.createChecks(context.Background())
@@ -116,10 +116,10 @@ func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    log.NewNopLogger(),
+		log:    logging.DefaultLogger,
 	}
 
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.Error(t, err)
 }
 
@@ -137,10 +137,10 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 
 	runner := &Runner{
 		client: mockClient,
-		log:    log.NewNopLogger(),
+		log:    logging.DefaultLogger,
 	}
 
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.NoError(t, err)
 }
 
@@ -167,9 +167,9 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        log.NewNopLogger(),
+		log:        logging.DefaultLogger,
 	}
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.ErrorContains(t, err, "delete error")
 }
 
@@ -203,9 +203,9 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 	runner := &Runner{
 		client:     mockClient,
 		maxHistory: defaultMaxHistory,
-		log:        log.NewNopLogger(),
+		log:        logging.DefaultLogger,
 	}
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"check-0"}, itemsDeleted)
 }
@@ -274,9 +274,9 @@ func Test_markUnprocessedChecksAsErrored(t *testing.T) {
 	}
 	runner := &Runner{
 		client: mockClient,
-		log:    log.NewNopLogger(),
+		log:    logging.DefaultLogger,
 	}
-	runner.markUnprocessedChecksAsErrored(context.Background())
+	runner.markUnprocessedChecksAsErrored(context.Background(), logging.DefaultLogger)
 	assert.Equal(t, "check-1", identifier.Name)
 	assert.Equal(t, "/metadata/annotations", patchOperation.Path)
 	expectedAnnotations := map[string]string{

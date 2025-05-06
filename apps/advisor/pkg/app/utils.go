@@ -7,6 +7,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -30,7 +31,7 @@ func getCheck(obj resource.Object, checkMap map[string]checks.Check) (checks.Che
 	return c, nil
 }
 
-func processCheck(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheck(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status != "" {
 		// Check already processed
@@ -51,7 +52,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}
 	// Run the steps
 	steps := check.Steps()
-	failures, err := runStepsInParallel(ctx, &c.Spec, steps, items)
+	failures, err := runStepsInParallel(ctx, log, &c.Spec, steps, items)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
@@ -77,7 +78,7 @@ func processCheck(ctx context.Context, client resource.Client, obj resource.Obje
 	}, resource.PatchOptions{}, obj)
 }
 
-func processCheckRetry(ctx context.Context, client resource.Client, obj resource.Object, check checks.Check) error {
+func processCheckRetry(ctx context.Context, log logging.Logger, client resource.Client, obj resource.Object, check checks.Check) error {
 	status := checks.GetStatusAnnotation(obj)
 	if status == "" || status == checks.StatusAnnotationError {
 		// Check not processed yet or errored
@@ -104,7 +105,7 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 	}
 	// Run the steps
 	steps := check.Steps()
-	failures, err := runStepsInParallel(ctx, &c.Spec, steps, []any{item})
+	failures, err := runStepsInParallel(ctx, log, &c.Spec, steps, []any{item})
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
 		if setErr != nil {
@@ -143,7 +144,7 @@ func processCheckRetry(ctx context.Context, client resource.Client, obj resource
 	}, resource.PatchOptions{}, obj)
 }
 
-func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
+func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0alpha1.CheckSpec, steps []checks.Step, items []any) ([]advisorv0alpha1.CheckReportFailure, error) {
 	reportFailures := []advisorv0alpha1.CheckReportFailure{}
 	var internalErr error
 	var wg sync.WaitGroup
@@ -166,7 +167,8 @@ func runStepsInParallel(ctx context.Context, spec *advisorv0alpha1.CheckSpec, st
 							err = fmt.Errorf("panic recovered in step %s: %v", step.ID(), r)
 						}
 					}()
-					stepErr, err = step.Run(ctx, spec, item)
+					logger := log.With("step", step.ID())
+					stepErr, err = step.Run(ctx, logger, spec, item)
 				}()
 				mu.Lock()
 				defer mu.Unlock()

@@ -9,14 +9,13 @@ import (
 
 	"github.com/grafana/grafana-app-sdk/app"
 	"github.com/grafana/grafana-app-sdk/k8s"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/gtime"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checkregistry"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/infra/log"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/klog/v2"
 )
 
 const defaultEvaluationInterval = 24 * time.Hour
@@ -31,11 +30,11 @@ type Runner struct {
 	evaluationInterval time.Duration
 	maxHistory         int
 	namespace          string
-	log                log.Logger
+	log                logging.Logger
 }
 
 // NewRunner creates a new Runner.
-func New(cfg app.Config) (app.Runnable, error) {
+func New(cfg app.Config, log logging.Logger) (app.Runnable, error) {
 	// Read config
 	specificConfig, ok := cfg.SpecificConfig.(checkregistry.AdvisorAppConfig)
 	if !ok {
@@ -68,14 +67,15 @@ func New(cfg app.Config) (app.Runnable, error) {
 		evaluationInterval: evalInterval,
 		maxHistory:         maxHistory,
 		namespace:          namespace,
-		log:                log.New("advisor.checkscheduler"),
+		log:                log.With("runner", "advisor.checkscheduler"),
 	}, nil
 }
 
 func (r *Runner) Run(ctx context.Context) error {
 	lastCreated, err := r.checkLastCreated(ctx)
+	logger := r.log.WithContext(ctx)
 	if err != nil {
-		r.log.Error("Error getting last check creation time", "error", err)
+		logger.Error("Error getting last check creation time", "error", err)
 		// Wait for interval to create the next scheduled check
 		lastCreated = time.Now()
 	} else {
@@ -83,7 +83,7 @@ func (r *Runner) Run(ctx context.Context) error {
 		if lastCreated.IsZero() {
 			err = r.createChecks(ctx)
 			if err != nil {
-				klog.Error("Error creating new check reports", "error", err)
+				logger.Error("Error creating new check reports", "error", err)
 			} else {
 				lastCreated = time.Now()
 			}
@@ -103,12 +103,12 @@ func (r *Runner) Run(ctx context.Context) error {
 		case <-ticker.C:
 			err = r.createChecks(ctx)
 			if err != nil {
-				klog.Error("Error creating new check reports", "error", err)
+				logger.Error("Error creating new check reports", "error", err)
 			}
 
-			err = r.cleanupChecks(ctx)
+			err = r.cleanupChecks(ctx, logger)
 			if err != nil {
-				klog.Error("Error cleaning up old check reports", "error", err)
+				logger.Error("Error cleaning up old check reports", "error", err)
 			}
 
 			if nextSendInterval != r.evaluationInterval {
@@ -116,7 +116,7 @@ func (r *Runner) Run(ctx context.Context) error {
 			}
 			ticker.Reset(nextSendInterval)
 		case <-ctx.Done():
-			r.markUnprocessedChecksAsErrored(ctx)
+			r.markUnprocessedChecksAsErrored(ctx, logger)
 			return ctx.Err()
 		}
 	}
@@ -163,7 +163,7 @@ func (r *Runner) createChecks(ctx context.Context) error {
 }
 
 // cleanupChecks deletes the olders checks if the number of checks exceeds the limit.
-func (r *Runner) cleanupChecks(ctx context.Context) error {
+func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error {
 	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{Limit: -1})
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func (r *Runner) cleanupChecks(ctx context.Context) error {
 		labels := check.GetLabels()
 		checkType, ok := labels[checks.TypeLabel]
 		if !ok {
-			klog.Error("Check type not found in labels", "check", check)
+			logger.Error("Check type not found in labels", "check", check)
 			continue
 		}
 		checksByType[checkType] = append(checksByType[checkType], check)
@@ -230,19 +230,19 @@ func getMaxHistory(pluginConfig map[string]string) (int, error) {
 	return maxHistory, nil
 }
 
-func (r *Runner) markUnprocessedChecksAsErrored(ctx context.Context) {
+func (r *Runner) markUnprocessedChecksAsErrored(ctx context.Context, log logging.Logger) {
 	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{})
 	if err != nil {
-		r.log.Error("Error getting checks", "error", err)
+		log.Error("Error getting checks", "error", err)
 		return
 	}
 
 	for _, check := range list.GetItems() {
 		if checks.GetStatusAnnotation(check) == "" {
-			r.log.Error("Check is unprocessed", "check", check.GetStaticMetadata().Identifier())
+			log.Error("Check is unprocessed", "check", check.GetStaticMetadata().Identifier())
 			err := checks.SetStatusAnnotation(ctx, r.client, check, checks.StatusAnnotationError)
 			if err != nil {
-				r.log.Error("Error setting check status to error", "error", err)
+				log.Error("Error setting check status to error", "error", err)
 			}
 		}
 	}

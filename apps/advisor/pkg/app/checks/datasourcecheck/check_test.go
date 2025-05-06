@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -28,7 +28,7 @@ func runChecks(check *check) ([]advisor.CheckReportFailure, error) {
 	failures := []advisor.CheckReportFailure{}
 	for _, step := range check.Steps() {
 		for _, item := range items {
-			stepFailures, err := step.Run(ctx, &advisor.CheckSpec{}, item)
+			stepFailures, err := step.Run(ctx, logging.DefaultLogger, &advisor.CheckSpec{}, item)
 			if err != nil {
 				return nil, err
 			}
@@ -60,7 +60,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -85,7 +84,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -111,7 +109,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -136,7 +133,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -160,7 +156,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -185,7 +180,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
@@ -211,7 +205,6 @@ func TestCheck_Run(t *testing.T) {
 			PluginClient:          mockPluginClient,
 			PluginRepo:            mockPluginRepo,
 			PluginStore:           mockPluginStore,
-			log:                   log.New("advisor.datasourcecheck"),
 		}
 
 		failures, err := runChecks(check)
