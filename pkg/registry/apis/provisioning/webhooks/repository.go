@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/google/go-github/v64/github"
+	"github.com/google/go-github/v70/github"
 	"github.com/google/uuid"
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
