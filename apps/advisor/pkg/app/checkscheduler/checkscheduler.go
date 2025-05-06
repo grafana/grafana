@@ -216,7 +216,7 @@ func getEvaluationInterval(pluginConfig map[string]string) (time.Duration, error
 
 func getNextSendInterval(lastCreated time.Time, evaluationInterval time.Duration) time.Duration {
 	nextSendInterval := time.Until(lastCreated.Add(evaluationInterval))
-	// Add random variation of <24 hours
+	// Add random variation of one hour
 	randomVariation := time.Duration(rand.Int63n(time.Hour.Nanoseconds()))
 	nextSendInterval += randomVariation
 	if nextSendInterval < time.Minute {
