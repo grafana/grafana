@@ -110,7 +110,7 @@ exports[`useContactPoints should return contact points with status 1`] = `
             "name": "Grafana OnCall",
           },
           Symbol(receiver_plugin_metadata): {
-            "icon": "public/img/alerting/oncall_logo.svg",
+            "icon": "__DEFAULT_MOCK_IMAGE_CONTENT__",
             "title": "Grafana OnCall",
           },
         },
@@ -363,7 +363,7 @@ exports[`useContactPoints when having oncall plugin installed and no alert manag
           Symbol(receiver_plugin_metadata): {
             "description": "grafana-integration",
             "externalUrl": "/a/grafana-oncall-app/integrations/ABC123",
-            "icon": "public/img/alerting/oncall_logo.svg",
+            "icon": "__DEFAULT_MOCK_IMAGE_CONTENT__",
             "title": "Grafana OnCall",
             "warning": undefined,
           },
