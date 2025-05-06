@@ -38,10 +38,10 @@ export function QueryEditor({
   if (VariableQueryEditor && isLegacyQueryEditor(VariableQueryEditor, datasource)) {
     return (
       <Box marginBottom={2}>
-        <Text variant='body'>
+        <Text variant='bodySmall' weight='medium'>
           <Trans i18nKey="dashboard-scene.query-editor.query">Query</Trans>
         </Text>
-        <Box>
+        <Box marginTop={0.25}>
           <VariableQueryEditor
             key={datasource.uid}
             datasource={datasource}
@@ -57,10 +57,10 @@ export function QueryEditor({
   if (VariableQueryEditor && isQueryEditor(VariableQueryEditor, datasource)) {
     return (
       <Box marginBottom={2}>
-        <Text variant='body'>
+        <Text variant='bodySmall' weight='medium'>
           <Trans i18nKey="dashboard-scene.query-editor.query">Query</Trans>
         </Text>
-        <Box>
+        <Box marginTop={0.25}>
           <VariableQueryEditor
             key={datasource.uid}
             datasource={datasource}
