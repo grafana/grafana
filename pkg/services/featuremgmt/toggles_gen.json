@@ -474,7 +474,8 @@
       "metadata": {
         "name": "authZGRPCServer",
         "resourceVersion": "1745491786560",
-        "creationTimestamp": "2024-06-13T09:41:35Z"
+        "creationTimestamp": "2024-06-13T09:41:35Z",
+        "deletionTimestamp": "2025-04-07T14:39:38Z"
       },
       "spec": {
         "description": "Enables the gRPC server for authorization",
