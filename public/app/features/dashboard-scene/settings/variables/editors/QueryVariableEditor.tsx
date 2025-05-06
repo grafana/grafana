@@ -111,10 +111,6 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const onOpen = () => {
-    setIsOpen(true);
-  };
-
   return (
     <>
       <Box display={'flex'} direction={'column'} paddingBottom={1}>
@@ -123,7 +119,7 @@ function ModalEditor({ variable }: { variable: QueryVariable }) {
             'dashboard.edit-pane.variable.open-editor-tooltip',
             'For more variable options open variable editor'
           )}
-          onClick={onOpen}
+          onClick={() => setIsOpen(true)}
           size="sm"
           fullWidth
         >
