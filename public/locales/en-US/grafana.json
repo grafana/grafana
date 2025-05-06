@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Change theme...",
+      "change-theme": "Change theme",
       "dark-theme": "Dark",
-      "light-theme": "Light"
+      "light-theme": "Light",
+      "scopes": "Scopes"
     },
     "empty-state": {
       "message": "No results found"
+    },
+    "scopes": {
+      "apply-selected-scopes": "Apply",
+      "selected-scopes-label": "Scopes: "
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -7830,8 +7835,8 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "Interval = {intervalDesc}",
-      "collapsed-max-data-points": "MD = {mdDesc}",
+      "collapsed-interval": "Interval = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Hide time info",
       "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",
