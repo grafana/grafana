@@ -934,4 +934,8 @@ const (
 	// FlagAlertingBulkActionsInUI
 	// Enables the alerting bulk actions in the UI
 	FlagAlertingBulkActionsInUI = "alertingBulkActionsInUI"
+
+	// FlagDashboardImageSharing
+	// Enables image sharing functionality for dashboards and their panels
+	FlagDashboardImageSharing = "dashboardImageSharing"
 )

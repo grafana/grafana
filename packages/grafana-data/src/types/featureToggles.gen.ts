@@ -1026,4 +1026,8 @@ export interface FeatureToggles {
   * @default true
   */
   alertingBulkActionsInUI?: boolean;
+  /**
+  * Enables image sharing functionality for dashboards and their panels
+  */
+  dashboardImageSharing?: boolean;
 }

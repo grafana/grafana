@@ -222,6 +222,9 @@ export const versionedPages = {
           exportAsJson: {
             '11.2.0': 'data-testid new export button export as json',
           },
+          exportAsImage: {
+            '12.1.0': 'data-testid new export button export as image',
+          },
         },
       },
       playlistControls: {

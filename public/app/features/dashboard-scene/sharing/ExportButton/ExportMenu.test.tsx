@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { SceneTimeRange, VizPanel } from '@grafana/scenes';
 
 import { DashboardScene } from '../../scene/DashboardScene';
@@ -15,6 +16,20 @@ describe('ExportMenu', () => {
     setup();
     expect(await screen.findByTestId(selector.exportAsJson)).toBeInTheDocument();
   });
+
+  describe('dashboardImageSharing feature toggle', () => {
+    it('should render image export option when enabled', async () => {
+      config.featureToggles.dashboardImageSharing = true;
+      setup();
+      expect(await screen.findByTestId(selector.exportAsImage)).toBeInTheDocument();
+    });
+
+    it('should not render image export option when disabled', async () => {
+      config.featureToggles.dashboardImageSharing = false;
+      setup();
+      expect(screen.queryByTestId(selector.exportAsImage)).not.toBeInTheDocument();
+    });
+  });
 });
 
 function setup() {
@@ -23,11 +38,13 @@ function setup() {
     pluginId: 'table',
     key: 'panel-12',
   });
+
   const dashboard = new DashboardScene({
     title: 'hello',
     uid: 'dash-1',
     $timeRange: new SceneTimeRange({}),
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
+
   render(<ExportMenu dashboard={dashboard} />);
 }
