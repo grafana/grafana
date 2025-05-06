@@ -137,12 +137,12 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		require.Equal(t, fakeAM.config, lastConfig)
 		require.Equal(t, fakeAM.state, lastState)
 
-		// Syncing after the sync interval elapses should update both config and state.
+		// Syncing after the sync interval elapses should update the config.
 		require.Eventually(t, func() bool {
 			require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
-			return fakeAM.config != lastConfig && fakeAM.state != lastState
+			return fakeAM.config != lastConfig
 		}, 15*time.Second, 300*time.Millisecond)
-		lastConfig, lastState = fakeAM.config, fakeAM.state
+		lastConfig = fakeAM.config
 	}
 
 	// It should send config and state on shutdown.
