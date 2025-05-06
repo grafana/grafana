@@ -257,7 +257,6 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		cancel:         cancel,
 		storageMetrics: opts.storageMetrics,
 		indexMetrics:   opts.IndexMetrics,
-		reg:            opts.Reg,
 	}
 
 	if opts.Search.Resources != nil {
@@ -302,9 +301,6 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
-
-	shardingEnabled bool
-	reg             prometheus.Registerer
 }
 
 type RingClient struct {
@@ -352,10 +348,6 @@ func (s *server) Init(ctx context.Context) error {
 	})
 	return s.initErr
 }
-
-var ringOp = ring.NewOp([]ring.InstanceState{ring.ACTIVE}, func(s ring.InstanceState) bool {
-	return s != ring.ACTIVE
-})
 
 func (s *server) Stop(ctx context.Context) error {
 	s.initErr = fmt.Errorf("service is stopping")

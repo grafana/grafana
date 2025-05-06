@@ -22,7 +22,6 @@ import (
 
 const ringKey = "unified-storage-ring"
 const ringName = "unified_storage_ring"
-const numTokens = 128
 const heartbeatTimeout = time.Minute
 
 var metricsPrefix = ringName + "_"
