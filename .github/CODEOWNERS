@@ -804,6 +804,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/verify-kinds.yml @grafana/platform-monitoring
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
+/.github/workflows/e2e-dashboard-new-layouts.yml  @grafana/dashboards-squad
 /.github/workflows/run-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/trigger-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-backend-services-squad
