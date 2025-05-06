@@ -283,7 +283,7 @@ func (r *githubWebhookRepository) deleteWebhook(ctx context.Context) error {
 	return nil
 }
 
-func (r *githubWebhookRepository) OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+func (r *githubWebhookRepository) OnCreate(ctx context.Context) ([]map[string]interface{}, error) {
 	if len(r.webhookURL) == 0 {
 		return nil, nil
 	}
@@ -293,15 +293,21 @@ func (r *githubWebhookRepository) OnCreate(ctx context.Context) (*provisioning.W
 	if err != nil {
 		return nil, err
 	}
-	return &provisioning.WebhookStatus{
-		ID:               hook.ID,
-		URL:              hook.URL,
-		Secret:           hook.Secret,
-		SubscribedEvents: hook.Events,
+	return []map[string]interface{}{
+		{
+			"op":   "replace",
+			"path": "/status/webhook",
+			"value": &provisioning.WebhookStatus{
+				ID:               hook.ID,
+				URL:              hook.URL,
+				Secret:           hook.Secret,
+				SubscribedEvents: hook.Events,
+			},
+		},
 	}, nil
 }
 
-func (r *githubWebhookRepository) OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error) {
+func (r *githubWebhookRepository) OnUpdate(ctx context.Context) ([]map[string]interface{}, error) {
 	if len(r.webhookURL) == 0 {
 		return nil, nil
 	}
@@ -311,11 +317,17 @@ func (r *githubWebhookRepository) OnUpdate(ctx context.Context) (*provisioning.W
 		return nil, err
 	}
 
-	return &provisioning.WebhookStatus{
-		ID:               hook.ID,
-		URL:              hook.URL,
-		Secret:           hook.Secret,
-		SubscribedEvents: hook.Events,
+	return []map[string]interface{}{
+		{
+			"op":   "replace",
+			"path": "/status/webhook",
+			"value": &provisioning.WebhookStatus{
+				ID:               hook.ID,
+				URL:              hook.URL,
+				Secret:           hook.Secret,
+				SubscribedEvents: hook.Events,
+			},
+		},
 	}, nil
 }
 

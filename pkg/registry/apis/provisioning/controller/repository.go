@@ -311,7 +311,7 @@ func (rc *RepositoryController) shouldResync(obj *provisioning.Repository) bool 
 }
 
 // TODO: this should not be about WebhookStatus but about status operations
-func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) (*provisioning.WebhookStatus, error) {
+func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Repository, obj *provisioning.Repository) ([]map[string]interface{}, error) {
 	logger := logging.FromContext(ctx)
 	hooks, _ := repo.(repository.Hooks)
 	if hooks == nil || obj.Generation == obj.Status.ObservedGeneration {
@@ -320,20 +320,20 @@ func (rc *RepositoryController) runHooks(ctx context.Context, repo repository.Re
 
 	if obj.Status.ObservedGeneration < 1 {
 		logger.Info("handle repository create")
-		webhookStatus, err := hooks.OnCreate(ctx)
+		patchOperations, err := hooks.OnCreate(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("error running OnCreate: %w", err)
 		}
-		return webhookStatus, nil
+		return patchOperations, nil
 	}
 
 	logger.Info("handle repository spec update", "Generation", obj.Generation, "ObservedGeneration", obj.Status.ObservedGeneration)
-	webhookStatus, err := hooks.OnUpdate(ctx)
+	patchOperations, err := hooks.OnUpdate(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error running OnUpdate: %w", err)
 	}
 
-	return webhookStatus, nil
+	return patchOperations, nil
 }
 
 func (rc *RepositoryController) determineSyncStrategy(ctx context.Context, obj *provisioning.Repository, shouldResync bool, healthStatus provisioning.HealthStatus) *provisioning.SyncJobOptions {
@@ -500,16 +500,12 @@ func (rc *RepositoryController) process(item *queueItem) error {
 
 	// Run hooks
 	// TODO: this should not be about WebhookStatus but about status operations
-	webhookStatus, err := rc.runHooks(ctx, repo, obj)
+	hookOps, err := rc.runHooks(ctx, repo, obj)
 	switch {
 	case err != nil:
 		return err
-	case webhookStatus != nil:
-		patchOperations = append(patchOperations, map[string]interface{}{
-			"op":    "replace",
-			"path":  "/status/webhook",
-			"value": webhookStatus,
-		})
+	case len(hookOps) > 0:
+		patchOperations = append(patchOperations, hookOps...)
 	}
 
 	// determine the sync strategy and sync status to apply

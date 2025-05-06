@@ -1135,22 +1135,25 @@ func TestGitHubRepository_OnCreate(t *testing.T) {
 			}
 
 			// Call the OnCreate method
-			hook, err := repo.OnCreate(context.Background())
+			hookOps, err := repo.OnCreate(context.Background())
 
 			// Check results
 			if tt.expectedError != nil {
 				require.Error(t, err)
 				require.Equal(t, tt.expectedError.Error(), err.Error())
-				require.Nil(t, hook)
+				require.Nil(t, hookOps)
 			} else {
 				require.NoError(t, err)
 				if tt.expectedHook != nil {
-					require.NotNil(t, hook)
-					require.Equal(t, tt.expectedHook.ID, hook.ID)
-					require.Equal(t, tt.expectedHook.URL, hook.URL)
-					require.NotEmpty(t, hook.Secret) // Secret is randomly generated, so just check it's not empty
+					require.NotNil(t, hookOps)
+					require.Len(t, hookOps, 1)
+					require.Equal(t, "replace", hookOps[0]["op"])
+					require.Equal(t, "/status/webhook", hookOps[0]["path"])
+					require.Equal(t, tt.expectedHook.ID, hookOps[0]["value"].(*provisioning.WebhookStatus).ID)
+					require.Equal(t, tt.expectedHook.URL, hookOps[0]["value"].(*provisioning.WebhookStatus).URL)
+					require.NotEmpty(t, hookOps[0]["value"].(*provisioning.WebhookStatus).Secret) // Secret is randomly generated, so just check it's not empty
 				} else {
-					require.Nil(t, hook)
+					require.Nil(t, hookOps)
 				}
 			}
 
@@ -1524,27 +1527,30 @@ func TestGitHubRepository_OnUpdate(t *testing.T) {
 			}
 
 			// Call the OnUpdate method
-			hook, err := repo.OnUpdate(context.Background())
+			hookOps, err := repo.OnUpdate(context.Background())
 
 			// Check results
 			if tt.expectedError != nil {
 				require.Error(t, err)
 				require.Equal(t, tt.expectedError.Error(), err.Error())
-				require.Nil(t, hook)
+				require.Nil(t, hookOps)
 			} else {
 				require.NoError(t, err)
 				if tt.expectedHook != nil {
-					require.NotNil(t, hook)
-					require.Equal(t, tt.expectedHook.ID, hook.ID)
-					require.Equal(t, tt.expectedHook.URL, hook.URL)
+					require.NotNil(t, hookOps)
+					require.Len(t, hookOps, 1)
+					require.Equal(t, "replace", hookOps[0]["op"])
+					require.Equal(t, "/status/webhook", hookOps[0]["path"])
+					require.Equal(t, tt.expectedHook.ID, hookOps[0]["value"].(*provisioning.WebhookStatus).ID)
+					require.Equal(t, tt.expectedHook.URL, hookOps[0]["value"].(*provisioning.WebhookStatus).URL)
 					if tt.expectedHook.Secret != "" {
-						require.Equal(t, tt.expectedHook.Secret, hook.Secret)
+						require.Equal(t, tt.expectedHook.Secret, hookOps[0]["value"].(*provisioning.WebhookStatus).Secret)
 					} else {
-						require.NotEmpty(t, hook.Secret) // Secret is randomly generated, so just check it's not empty
+						require.NotEmpty(t, hookOps[0]["value"].(*provisioning.WebhookStatus).Secret) // Secret is randomly generated, so just check it's not empty
 					}
-					require.ElementsMatch(t, tt.expectedHook.SubscribedEvents, hook.SubscribedEvents)
+					require.ElementsMatch(t, tt.expectedHook.SubscribedEvents, hookOps[0]["value"].(*provisioning.WebhookStatus).SubscribedEvents)
 				} else {
-					require.Nil(t, hook)
+					require.Nil(t, hookOps)
 				}
 			}
 

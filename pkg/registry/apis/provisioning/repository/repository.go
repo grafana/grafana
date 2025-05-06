@@ -162,8 +162,8 @@ type RepositoryWithURLs interface {
 type Hooks interface {
 	Repository
 
-	OnCreate(ctx context.Context) (*provisioning.WebhookStatus, error)
-	OnUpdate(ctx context.Context) (*provisioning.WebhookStatus, error)
+	OnCreate(ctx context.Context) ([]map[string]interface{}, error)
+	OnUpdate(ctx context.Context) ([]map[string]interface{}, error)
 	OnDelete(ctx context.Context) error
 }
 
