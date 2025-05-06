@@ -24,10 +24,22 @@ cards:
       height: 24
       href: ./grafana-cli/
       description: Grafana CLI (`grafanactl`) is a command-line tool designed to simplify interaction with Grafana instances. You can authenticate, manage multiple environments, and perform administrative tasks through Grafana’s REST API, all from the terminal.
-    - title: Git Sync
+    - title: JSON schema v2
+      height: 24
+      href: ./schema-v2/
+      description: Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings. Observability as Code works with all versions of the JSON model, and it's fully compatible with version 2.
+    - title: Foundation SDK
+      height: 24
+      href: ./foundation-sdk/
+      description: The Grafana Foundation SDK is a set of tools, types, and libraries that let you define Grafana dashboards and resources using strongly typed code.
+    - title: Git Sync (experimental)
       height: 24
       href: ./provision-resources/intro-git-sync/
       description: Git Sync is an experimental feature that lets you store your dashboard files in a GitHub repository and synchronize those changes with your Grafana instance.
+    - title: File provisioning (experimental)
+      height: 24
+      href: ./provision-resources/
+      description: File provisioning in Grafana lets you include resources, including folders and dashboard JSON files, that are stored in a local file system.
   title_class: pt-0 lh-1
 hero:
   title: Observability as Code
@@ -48,10 +60,10 @@ By representing Grafana resources as code, you can integrate them into existing 
 
 Observability as Code provides more control over configuration. Instead of manually configuring dashboards or settings through the Grafana UI, you can:
 
-- **Write configurations in code:** Define dashboards in JSON or other supported formats.
-- **Sync your Grafana setup to GitHub:** Track changes, collaborate, and roll back updates using Git and GitHub, or other remote sources.
-- **Automate with CI/CD:** Integrate Grafana directly into your development and deployment pipelines.
-- **Standardize workflows:** Ensure consistency across your teams by using repeatable, codified processes for managing Grafana resources.
+- Write configurations in code: Define dashboards in JSON or other supported formats.
+- Sync your Grafana setup to GitHub: Track changes, collaborate, and roll back updates using Git and GitHub, or other remote sources.
+- Automate with CI/CD: Integrate Grafana directly into your development and deployment pipelines.
+- Standardize workflows: Ensure consistency across your teams by using repeatable, codified processes for managing Grafana resources.
 
 ## Explore
 

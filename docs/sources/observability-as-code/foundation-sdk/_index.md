@@ -14,7 +14,7 @@ weight: 250
 
 # Get started with the Grafana Foundation SDK
 
-The [Grafana Foundation SDK](https://github.com/grafana/grafana-foundation-sdk) is a set of tools, types, and libraries that enable you to define Grafana dashboards and resources using strongly typed code. By writing your dashboards as code, you can:
+The [Grafana Foundation SDK](https://github.com/grafana/grafana-foundation-sdk) is a set of tools, types, and libraries that let you define Grafana dashboards and resources using strongly typed code. By writing your dashboards as code, you can:
 
 - **Leverage strong typing:** Catch errors at compile time, ensuring more reliable configurations.
 - **Enhance version control:** Track changes seamlessly using standard version control systems like Git.
