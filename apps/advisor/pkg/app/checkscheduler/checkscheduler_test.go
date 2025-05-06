@@ -119,7 +119,7 @@ func TestRunner_cleanupChecks_ErrorOnList(t *testing.T) {
 		log:    logging.DefaultLogger,
 	}
 
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.Error(t, err)
 }
 
@@ -140,7 +140,7 @@ func TestRunner_cleanupChecks_WithinMax(t *testing.T) {
 		log:    logging.DefaultLogger,
 	}
 
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.NoError(t, err)
 }
 
@@ -169,7 +169,7 @@ func TestRunner_cleanupChecks_ErrorOnDelete(t *testing.T) {
 		maxHistory: defaultMaxHistory,
 		log:        logging.DefaultLogger,
 	}
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.ErrorContains(t, err, "delete error")
 }
 
@@ -205,7 +205,7 @@ func TestRunner_cleanupChecks_Success(t *testing.T) {
 		maxHistory: defaultMaxHistory,
 		log:        logging.DefaultLogger,
 	}
-	err := runner.cleanupChecks(context.Background())
+	err := runner.cleanupChecks(context.Background(), logging.DefaultLogger)
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"check-0"}, itemsDeleted)
 }

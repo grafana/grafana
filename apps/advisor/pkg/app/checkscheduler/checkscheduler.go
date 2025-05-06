@@ -106,7 +106,7 @@ func (r *Runner) Run(ctx context.Context) error {
 				logger.Error("Error creating new check reports", "error", err)
 			}
 
-			err = r.cleanupChecks(ctx)
+			err = r.cleanupChecks(ctx, logger)
 			if err != nil {
 				logger.Error("Error cleaning up old check reports", "error", err)
 			}
@@ -163,7 +163,7 @@ func (r *Runner) createChecks(ctx context.Context) error {
 }
 
 // cleanupChecks deletes the olders checks if the number of checks exceeds the limit.
-func (r *Runner) cleanupChecks(ctx context.Context) error {
+func (r *Runner) cleanupChecks(ctx context.Context, logger logging.Logger) error {
 	list, err := r.client.List(ctx, r.namespace, resource.ListOptions{Limit: -1})
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func (r *Runner) cleanupChecks(ctx context.Context) error {
 		labels := check.GetLabels()
 		checkType, ok := labels[checks.TypeLabel]
 		if !ok {
-			r.log.Error("Check type not found in labels", "check", check)
+			logger.Error("Check type not found in labels", "check", check)
 			continue
 		}
 		checksByType[checkType] = append(checksByType[checkType], check)
