@@ -53,42 +53,40 @@ func (b *indexQueueProcessor) Add(evt *WrittenEvent) {
 	defer b.mu.Unlock()
 	if !b.running {
 		b.running = true
-		b.startProcessor()
+		go b.runProcessor()
 	}
 }
 
-// startProcessor starts the background goroutine if it's not already running
-func (b *indexQueueProcessor) startProcessor() {
-	go func() {
-		defer func() {
-			b.mu.Lock()
-			b.running = false
-			b.mu.Unlock()
-		}()
+// runProcessor is the task processing the queue of written events
+func (b *indexQueueProcessor) runProcessor() {
+	defer func() {
+		b.mu.Lock()
+		b.running = false
+		b.mu.Unlock()
+	}()
 
-		for {
-			batch := make([]*WrittenEvent, 0, b.batchSize)
+	for {
+		batch := make([]*WrittenEvent, 0, b.batchSize)
+		select {
+		case evt := <-b.queue:
+			batch = append(batch, evt)
+		case <-time.After(5 * time.Second):
+			// No events in the past few seconds, stop the processor
+			return
+		}
+
+	prepare:
+		for len(batch) < b.batchSize {
 			select {
 			case evt := <-b.queue:
 				batch = append(batch, evt)
-			case <-time.After(5 * time.Second):
-				// No events in the past few seconds, stop the processor
-				return
+			default:
+				break prepare
 			}
-
-		prepare:
-			for len(batch) < b.batchSize {
-				select {
-				case evt := <-b.queue:
-					batch = append(batch, evt)
-				default:
-					break prepare
-				}
-			}
-
-			b.process(batch)
 		}
-	}()
+
+		b.process(batch)
+	}
 }
 
 // process handles a batch of events
