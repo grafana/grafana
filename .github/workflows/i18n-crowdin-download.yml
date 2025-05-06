@@ -15,19 +15,6 @@ jobs:
       id-token: write # needed to get vault secrets
 
     steps:
-      - name: Generate token
-        id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
-        with:
-          app_id: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_PR_AUTOMATION_APP_PEM }}
-
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          token: ${{ steps.generate_token.outputs.token }}
-          persist-credentials: false
-
       - name: "Get vault secrets"
         id: vault-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
@@ -36,6 +23,21 @@ jobs:
           # - ci/repo/grafana/grafana/grafana_frontend_platform_crowdin_bot
           repo_secrets: |
             CROWDIN_TOKEN=grafana_frontend_platform_crowdin_bot:access_token
+            GRAFANA_PR_AUTOMATION_APP_ID=grafana_pr_automation_app:app_id
+            GRAFANA_PR_AUTOMATION_APP_PEM=grafana_pr_automation_app:app_pem
+
+      - name: Generate token
+        id: generate_token
+        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        with:
+          app_id: ${{ env.GRAFANA_PR_AUTOMATION_APP_ID }}
+          private_key: ${{ env.GRAFANA_PR_AUTOMATION_APP_PEM }}
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ steps.generate_token.outputs.token }}
+          persist-credentials: false
 
       - name: Download sources
         id: crowdin-download
@@ -126,7 +128,7 @@ jobs:
           token: ${{ steps.generate_token.outputs.token }}
 
       - name: Get vault secrets
-        id: vault-secrets
+        id: vault-secrets-approver
         uses: grafana/shared-workflows/actions/get-vault-secrets@main # zizmor: ignore[unpinned-uses]
         with:
           # Secrets placed in ci/repo/grafana/grafana/grafana-pr-approver

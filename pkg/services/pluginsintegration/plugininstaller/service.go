@@ -129,6 +129,10 @@ func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion str
 		s.log.Debug("New major version available, skipping update due to possible breaking changes", "pluginId", pluginID, "version", info.Version)
 		return false
 	}
+	if parsedCurrentVersion.Compare(parsedLatestVersion) >= 0 {
+		s.log.Debug("No update available", "pluginId", pluginID, "version", info.Version)
+		return false
+	}
 
 	// We should update the plugin
 	return true

@@ -1,9 +1,10 @@
 import { Alert } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
+import { GrafanaRuleGroupIdentifier, GrafanaRuleIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, PromRuleType, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { alertRuleApi } from '../api/alertRuleApi';
+import { prometheusApi } from '../api/prometheusApi';
 import { GrafanaRulesSource } from '../utils/datasource';
 import { rulerRuleType } from '../utils/rules';
 import { createRelativeUrl } from '../utils/url';
@@ -19,44 +20,55 @@ import { RuleActionsButtons } from './components/RuleActionsButtons.V2';
 import { RuleOperation } from './components/RuleListIcon';
 
 const { useGetGrafanaRulerGroupQuery } = alertRuleApi;
+const { useGetGrafanaGroupsQuery } = prometheusApi;
 
 interface GrafanaRuleLoaderProps {
-  rule: GrafanaPromRuleDTO;
-
+  ruleIdentifier: GrafanaRuleIdentifier;
   groupIdentifier: GrafanaRuleGroupIdentifier;
   namespaceName: string;
 }
 
-export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
+export function GrafanaRuleLoader({ ruleIdentifier, groupIdentifier, namespaceName }: GrafanaRuleLoaderProps) {
   const {
     data: rulerRuleGroup,
-    isError,
-    isLoading,
+    error: rulerRuleGroupError,
+    isLoading: isRulerRuleGroupLoading,
   } = useGetGrafanaRulerGroupQuery({
     folderUid: groupIdentifier.namespace.uid,
     groupName: groupIdentifier.groupName,
   });
+  const {
+    data: promRuleGroup,
+    error: promRuleGroupError,
+    isLoading: isPromRuleGroupLoading,
+  } = useGetGrafanaGroupsQuery({
+    folderUid: groupIdentifier.namespace.uid,
+    groupName: groupIdentifier.groupName,
+  });
 
-  const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === rule.uid);
+  const rulerRule = rulerRuleGroup?.rules.find((rulerRule) => rulerRule.grafana_alert.uid === ruleIdentifier.uid);
+  const promRule = promRuleGroup?.data.groups
+    .flatMap((group) => group.rules)
+    .find((promRule) => promRule.uid === ruleIdentifier.uid);
 
-  if (isError) {
-    return <RulerRuleLoadingError rule={rule} />;
+  if (rulerRuleGroupError || promRuleGroupError) {
+    return <RulerRuleLoadingError ruleIdentifier={ruleIdentifier} error={rulerRuleGroupError || promRuleGroupError} />;
   }
 
-  if (isLoading) {
+  if (isRulerRuleGroupLoading || isPromRuleGroupLoading) {
     return <AlertRuleListItemSkeleton />;
   }
 
   if (!rulerRule) {
     return (
       <Alert
-        title={t('alerting.rule-list.cannot-load-rule-details-for', 'Cannot load rule details for {{name}}', {
-          name: rule.name,
+        title={t('alerting.rule-list.cannot-load-rule-details-for', 'Cannot load rule details for UID {{uid}}', {
+          uid: ruleIdentifier.uid,
         })}
         severity="error"
       >
         <Trans i18nKey="alerting.rule-list.cannot-find-rule-details-for">
-          Cannot find rule details for {{ uid: rule.uid ?? '<empty uid>' }}
+          Cannot find rule details for UID {{ uid: ruleIdentifier.uid ?? '<empty uid>' }}
         </Trans>
       </Alert>
     );
@@ -64,7 +76,7 @@ export function GrafanaRuleLoader({ rule, groupIdentifier, namespaceName }: Graf
 
   return (
     <GrafanaRuleListItem
-      rule={rule}
+      rule={promRule}
       rulerRule={rulerRule}
       groupIdentifier={groupIdentifier}
       namespaceName={namespaceName}
@@ -103,7 +115,7 @@ export function GrafanaRuleListItem({
     error: rule?.lastError,
     labels: labels,
     isProvisioned: Boolean(provenance),
-    isPaused: is_paused,
+    isPaused: rule?.isPaused ?? is_paused,
     application: 'grafana' as const,
     actions: <RuleActionsButtons rule={rulerRule} promRule={rule} groupIdentifier={groupIdentifier} compact />,
   };

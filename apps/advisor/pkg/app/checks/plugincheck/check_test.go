@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -169,7 +170,7 @@ func TestRun(t *testing.T) {
 			failures := []advisor.CheckReportFailure{}
 			for _, step := range check.Steps() {
 				for _, item := range items {
-					stepFailures, err := step.Run(context.Background(), &advisor.CheckSpec{}, item)
+					stepFailures, err := step.Run(context.Background(), logging.DefaultLogger, &advisor.CheckSpec{}, item)
 					assert.NoError(t, err)
 					if stepFailures != nil {
 						failures = append(failures, *stepFailures)
