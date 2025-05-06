@@ -14,8 +14,6 @@ labels:
     - oss
 title: Observability as Code
 weight: 100
-<<<<<<< HEAD
-=======
 cards:
   items:
     - title: Get started
@@ -49,7 +47,6 @@ hero:
   height: 110
   level: 1
   width: 110
->>>>>>> 02042c1ac0b (Add landing page for Obs as Code doc (#105015))
 ---
 
 # Observability as Code
