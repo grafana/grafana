@@ -160,6 +160,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -175,6 +176,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -189,6 +191,7 @@ const injectedRtkApi = api
           params: {
             ref: queryArg.ref,
             message: queryArg.message,
+            skipDryRun: queryArg.skipDryRun,
           },
         }),
         invalidatesTags: ['Repository'],
@@ -518,6 +521,8 @@ export type ReplaceRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
   body: {
     [key: string]: any;
   };
@@ -532,6 +537,8 @@ export type CreateRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
   body: {
     [key: string]: any;
   };
@@ -546,6 +553,8 @@ export type DeleteRepositoryFilesWithPathApiArg = {
   ref?: string;
   /** optional message sent with any changes */
   message?: string;
+  /** do not pro-actively verify the payload */
+  skipDryRun?: boolean;
 };
 export type GetRepositoryHistoryApiResponse = /** status 200 OK */ string;
 export type GetRepositoryHistoryApiArg = {

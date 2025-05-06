@@ -59,10 +59,6 @@ export interface FeatureToggles {
   */
   canvasPanelNesting?: boolean;
   /**
-  * Disable duplicated secret storage in legacy tables
-  */
-  disableSecretsCompatibility?: boolean;
-  /**
   * Logs the path for requests that are instrumented as unknown
   */
   logRequestsInstrumentedAsUnknown?: boolean;
@@ -178,10 +174,6 @@ export interface FeatureToggles {
   */
   pluginsFrontendSandbox?: boolean;
   /**
-  * Enables monitor only in the plugin frontend sandbox (if enabled)
-  */
-  frontendSandboxMonitorOnly?: boolean;
-  /**
   * Enables right panel for the plugins details page
   * @default true
   */
@@ -281,11 +273,6 @@ export interface FeatureToggles {
   */
   wargamesTesting?: boolean;
   /**
-  * Show the new alerting insights landing page
-  * @default true
-  */
-  alertingInsights?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
@@ -312,11 +299,6 @@ export interface FeatureToggles {
   * @default true
   */
   formatString?: boolean;
-  /**
-  * Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s
-  * @default true
-  */
-  kubernetesPlaylists?: boolean;
   /**
   * Routes snapshot requests from /api to the /apis endpoint
   */
@@ -366,11 +348,6 @@ export interface FeatureToggles {
   * Runs CloudWatch metrics queries as separate batches
   */
   cloudWatchBatchQueries?: boolean;
-  /**
-  * Enables feature recovery threshold (aka hysteresis) for threshold server-side expression
-  * @default true
-  */
-  recoveryThreshold?: boolean;
   /**
   * Enables the loki data source to request structured metadata from the Loki server
   * @default true
@@ -663,11 +640,6 @@ export interface FeatureToggles {
   */
   enableScopesInMetricsExplore?: boolean;
   /**
-  * Register Alerting APIs with the K8s API server
-  * @default true
-  */
-  alertingApiServer?: boolean;
-  /**
   * Round up end time for metric queries to the next minute to avoid missing data
   * @default true
   */
@@ -775,11 +747,6 @@ export interface FeatureToggles {
   * Enables time pickers sync
   */
   timeRangeProvider?: boolean;
-  /**
-  * Use new **Combobox** component for Prometheus query editor
-  * @default true
-  */
-  prometheusUsesCombobox?: boolean;
   /**
   * Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.
   * @default false
@@ -981,6 +948,7 @@ export interface FeatureToggles {
   alertingMigrationUI?: boolean;
   /**
   * Enables the unified storage history pruner
+  * @default true
   */
   unifiedStorageHistoryPruner?: boolean;
   /**
@@ -1036,4 +1004,30 @@ export interface FeatureToggles {
   * Enables creating metrics from profiles and storing them as recording rules
   */
   metricsFromProfiles?: boolean;
+  /**
+  * Enables auto-updating of users installed plugins
+  */
+  pluginsAutoUpdate?: boolean;
+  /**
+  * Register MT frontend
+  */
+  multiTenantFrontend?: boolean;
+  /**
+  * Enables the alerting list view v2 preview toggle
+  */
+  alertingListViewV2PreviewToggle?: boolean;
+  /**
+  * Use FiredAt for StartsAt when sending alerts to Alertmaanger
+  * @default false
+  */
+  alertRuleUseFiredAtForStartsAt?: boolean;
+  /**
+  * Enables the alerting bulk actions in the UI
+  * @default true
+  */
+  alertingBulkActionsInUI?: boolean;
+  /**
+  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
+  */
+  extensionsReadOnlyProxy?: boolean;
 }

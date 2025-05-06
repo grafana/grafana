@@ -5,6 +5,8 @@ import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
 
+import { t, Trans } from '../../core/internationalization';
+
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';
 import { isSelectableValue } from './utils/guards';
@@ -323,7 +325,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     authStyle: {
       label: 'Auth style',
       type: 'select',
-      description: 'It determines how client_id and client_secret are sent to Oauth2 provider. Default is AutoDetect.',
+      description:
+        'It determines how "Client Id" and "Client secret" are sent to Oauth2 provider. Default is AutoDetect.',
       multi: false,
       options: [
         { value: 'AutoDetect', label: 'AutoDetect' },
@@ -357,9 +360,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'select',
       description: (
         <>
-          List of comma- or space-separated groups. The user should be a member of at least one group to log in.{' '}
+          <Trans i18nKey="auth-config.fields.allowed-groups-description">
+            List of comma- or space-separated groups. The user should be a member of at least one group to log in.
+          </Trans>{' '}
           {provider === 'generic_oauth' &&
-            'If you configure allowed_groups, you must also configure groups_attribute_path.'}
+            t(
+              'auth-config.fields.allowed-groups-description-oauth',
+              'If you configure "Allowed groups", you must also configure "Groups attribute path".'
+            )}
         </>
       ),
       multi: true,
@@ -385,14 +393,14 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: 'API URL',
       type: 'text',
       description: (
-        <>
+        <Trans i18nKey="auth-config.fields.api-url-description">
           The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be
           compatible with{' '}
           <TextLink href={'https://connect2id.com/products/server/docs/api/userinfo'} external variant={'bodySmall'}>
             OpenID UserInfo
           </TextLink>
           .
-        </>
+        </Trans>
       ),
       validation: {
         required: false,
@@ -497,7 +505,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     orgAttributePath: {
       label: 'Organization attribute path',
-      description: 'JMESPath expression to use for organization lookup.',
+      description:
+        'JMESPath expression to use for organization lookup. If you configure "Organization mapping", you must also configure "Organization attribute path".',
       type: 'text',
       hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
     },
@@ -517,13 +526,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     usePkce: {
       label: 'Use PKCE',
       description: (
-        <>
+        <Trans i18nKey="auth-config.fields.use-pkce-description">
           If enabled, Grafana will use{' '}
           <TextLink external variant={'bodySmall'} href={'https://datatracker.ietf.org/doc/html/rfc7636'}>
             Proof Key for Code Exchange (PKCE)
           </TextLink>{' '}
           with the OAuth2 Authorization Code Grant.
-        </>
+        </Trans>
       ),
       type: 'checkbox',
     },
@@ -562,17 +571,22 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     groupsAttributePath: {
       label: 'Groups attribute path',
       description:
-        'JMESPath expression to use for user group lookup. If you configure allowed_groups, \n' +
-        'you must also configure groups_attribute_path.',
+        'JMESPath expression to use for user group lookup. If you configure "Allowed groups", \n' +
+        'you must also configure "Groups attribute path".',
       type: 'text',
     },
     teamsUrl: {
       label: 'Teams URL',
       description: (
         <>
-          The URL used to query for Team Ids. If not set, the default value is /teams.{' '}
+          <Trans i18nKey="auth-config.fields.teams-url-description">
+            The URL used to query for Team Ids. If not set, the default value is /teams.
+          </Trans>{' '}
           {provider === 'generic_oauth' &&
-            'If you configure teams_url, you must also configure team_ids_attribute_path.'}
+            t(
+              'auth-config.fields.teams-url-description-oauth',
+              'If you configure "Teams URL", you must also configure "Team Ids attribute path".'
+            )}
         </>
       ),
       type: 'text',
@@ -594,7 +608,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     teamIdsAttributePath: {
       label: 'Team Ids attribute path',
       description:
-        'The JMESPath expression to use for Grafana Team Id lookup within the results returned by the teams_url endpoint.',
+        'The JMESPath expression to use for Grafana Team Id lookup within the results returned by the "Teams URL" endpoint.',
       type: 'text',
       validation: {
         validate: (value, formValues) => {
@@ -611,10 +625,18 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'select',
       description: (
         <>
-          {provider === 'github' ? 'Integer' : 'String'} list of Team Ids. If set, the user must be a member of one of
-          the given teams to log in.{' '}
+          {provider === 'github'
+            ? t('auth-config.fields.team-ids-github', 'Integer list of Team Ids.')
+            : t('auth-config.fields.team-ids-other', 'String list of Team Ids.')}{' '}
+          <Trans i18nKey="auth-config.fields.team-ids-description">
+            If set, the user must be a member of one of the given teams to log in.
+          </Trans>{' '}
           {provider === 'generic_oauth' &&
-            'If you configure team_ids, you must also configure teams_url and team_ids_attribute_path.'}
+            t(
+              'auth-config.fields.team-ids-description-oauth',
+              'If you configure "{{teamIds}}", you must also configure "{{teamsUrl}}" and "{{teamIdsAttributePath}}".',
+              { teamIds: 'Team Ids', teamsUrl: 'Teams URL', teamIdsAttributePath: 'Team Ids attribute path' }
+            )}
         </>
       ),
       multi: true,

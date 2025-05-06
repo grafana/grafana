@@ -224,6 +224,7 @@ func SetupConfig(
 	}
 
 	// Set the swagger build versions
+	serverConfig.OpenAPIConfig.Info.Title = "Grafana API Server"
 	serverConfig.OpenAPIConfig.Info.Version = buildVersion
 	serverConfig.OpenAPIV3Config.Info.Version = buildVersion
 
@@ -314,6 +315,7 @@ func InstallAPIs(
 
 			var (
 				dualWriterPeriodicDataSyncJobEnabled bool
+				dualWriterMigrationDataSyncDisabled  bool
 				dataSyncerInterval                   = time.Hour
 				dataSyncerRecordsLimit               = 1000
 			)
@@ -322,6 +324,7 @@ func InstallAPIs(
 			if resourceExists {
 				mode = resourceConfig.DualWriterMode
 				dualWriterPeriodicDataSyncJobEnabled = resourceConfig.DualWriterPeriodicDataSyncJobEnabled
+				dualWriterMigrationDataSyncDisabled = resourceConfig.DualWriterMigrationDataSyncDisabled
 				dataSyncerInterval = resourceConfig.DataSyncerInterval
 				dataSyncerRecordsLimit = resourceConfig.DataSyncerRecordsLimit
 			}
@@ -342,6 +345,7 @@ func InstallAPIs(
 				Kind:                   key,
 				RequestInfo:            requestInfo,
 				Mode:                   mode,
+				SkipDataSync:           dualWriterMigrationDataSyncDisabled,
 				LegacyStorage:          legacy,
 				Storage:                storage,
 				ServerLockService:      serverLock,

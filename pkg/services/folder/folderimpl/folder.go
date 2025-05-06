@@ -18,9 +18,9 @@ import (
 
 	"github.com/grafana/dskit/concurrency"
 
-	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1alpha1"
+	dashboardv1 "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -353,14 +353,9 @@ func (s *Service) GetLegacy(ctx context.Context, q *folder.GetFolderQuery) (*fol
 	return f, err
 }
 
-func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identity.Requester, forceLegacy bool) (*folder.Folder, error) {
+func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, forceLegacy bool) (*folder.Folder, error) {
 	ctx, span := s.tracer.Start(ctx, "folder.setFullpath")
 	defer span.End()
-	// #TODO is some kind of intermediate conversion required as is the case with user id where
-	// it gets parsed using UserIdentifier(). Also is there some kind of validation taking place as
-	// part of the parsing?
-	f.CreatedByUID = user.GetUID()
-	f.UpdatedByUID = user.GetUID()
 
 	if f.ParentUID == "" {
 		return f, nil
@@ -386,15 +381,7 @@ func (s *Service) setFullpath(ctx context.Context, f *folder.Folder, user identi
 	}
 	// #TODO revisit setting permissions so that we can centralise the logic for escaping slashes in titles
 	// Escape forward slashes in the title
-	escapedSlash := "\\/"
-	title := strings.ReplaceAll(f.Title, "/", escapedSlash)
-	f.Fullpath = title
-	f.FullpathUIDs = f.UID
-	for _, p := range parents {
-		pt := strings.ReplaceAll(p.Title, "/", escapedSlash)
-		f.Fullpath = f.Fullpath + "/" + pt
-		f.FullpathUIDs = f.FullpathUIDs + "/" + p.UID
-	}
+	f.Fullpath, f.FullpathUIDs = computeFullPath(append(parents, f))
 	return f, nil
 }
 
@@ -573,7 +560,7 @@ func (s *Service) GetSharedWithMe(ctx context.Context, q *folder.GetChildrenQuer
 		return nil, folder.ErrInternal.Errorf("failed to fetch root folders to which the user has access: %w", err)
 	}
 
-	dedupAvailableNonRootFolders := s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders, q.OrgID)
+	dedupAvailableNonRootFolders := s.deduplicateAvailableFolders(ctx, availableNonRootFolders, rootFolders)
 	s.metrics.sharedWithMeFetchFoldersRequestsDuration.WithLabelValues("success").Observe(time.Since(start).Seconds())
 	return dedupAvailableNonRootFolders, nil
 }
@@ -641,7 +628,7 @@ func (s *Service) getAvailableNonRootFolders(ctx context.Context, q *folder.GetC
 	return nonRootFolders, nil
 }
 
-func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.FolderReference, orgID int64) []*folder.FolderReference {
+func (s *Service) deduplicateAvailableFolders(ctx context.Context, folders []*folder.Folder, rootFolders []*folder.FolderReference) []*folder.FolderReference {
 	foldersRef := make([]*folder.FolderReference, len(folders))
 	for i, f := range folders {
 		foldersRef[i] = f.ToFolderReference()
@@ -768,7 +755,7 @@ func (s *Service) CreateLegacy(ctx context.Context, cmd *folder.CreateFolderComm
 	var userID int64
 	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
@@ -918,7 +905,7 @@ func (s *Service) legacyUpdate(ctx context.Context, cmd *folder.UpdateFolderComm
 	var userID int64
 	if id, err := identity.UserIdentifier(cmd.SignedInUser.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", cmd.SignedInUser.GetID())
 	}
 
@@ -1441,7 +1428,7 @@ func (s *Service) buildSaveDashboardCommand(ctx context.Context, dto *dashboards
 	var userID int64
 	if id, err := identity.UserIdentifier(dto.User.GetID()); err == nil {
 		userID = id
-	} else {
+	} else if !identity.IsServiceIdentity(ctx) {
 		s.log.Warn("User does not belong to a user or service account namespace, using 0 as user ID", "id", dto.User.GetID())
 	}
 

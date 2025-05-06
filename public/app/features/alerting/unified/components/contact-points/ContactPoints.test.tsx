@@ -184,11 +184,11 @@ describe('contact points', () => {
       const unusedBadge = screen.getAllByLabelText('unused');
       expect(unusedBadge).toHaveLength(4);
 
-      const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
+      const viewProvisioned = screen.getByTestId('view-action');
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).toBeEnabled();
 
-      const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
+      const editButtons = screen.getAllByTestId('edit-action');
       expect(editButtons).toHaveLength(4);
       editButtons.forEach((button) => {
         expect(button).toBeEnabled();
@@ -213,11 +213,11 @@ describe('contact points', () => {
       expect(screen.getByRole('link', { name: 'add contact point' })).toHaveAttribute('aria-disabled', 'true');
 
       // edit permission is based on API response - we should have 3 buttons
-      const editButtons = await screen.findAllByRole('link', { name: 'edit-action' });
+      const editButtons = await screen.findAllByTestId('edit-action');
       expect(editButtons).toHaveLength(3);
 
       // there should be view buttons though - one for provisioned, and one for the un-editable contact point
-      const viewButtons = screen.getAllByRole('link', { name: 'view-action' });
+      const viewButtons = screen.getAllByTestId('view-action');
       expect(viewButtons).toHaveLength(2);
 
       // check buttons in Notification Templates
@@ -373,7 +373,7 @@ describe('contact points', () => {
       const unusedBadge = screen.getAllByLabelText('unused');
       expect(unusedBadge).toHaveLength(1);
 
-      const editButtons = screen.getAllByRole('link', { name: 'edit-action' });
+      const editButtons = screen.getAllByTestId('edit-action');
       expect(editButtons).toHaveLength(2);
       editButtons.forEach((button) => {
         expect(button).toBeEnabled();
@@ -417,7 +417,7 @@ describe('contact points', () => {
 
       expect(screen.queryByRole('link', { name: 'add contact point' })).not.toBeInTheDocument();
 
-      const viewProvisioned = screen.getByRole('link', { name: 'view-action' });
+      const viewProvisioned = screen.getByTestId('view-action');
       expect(viewProvisioned).toBeInTheDocument();
       expect(viewProvisioned).toBeEnabled();
 

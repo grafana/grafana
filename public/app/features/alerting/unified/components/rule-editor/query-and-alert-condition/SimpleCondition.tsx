@@ -103,7 +103,13 @@ export const SimpleConditionEditor = ({
               />
             </InlineField>
           )}
-          <InlineField label={simpleCondition.whenField ? 'OF QUERY' : 'WHEN QUERY'}>
+          <InlineField
+            label={
+              simpleCondition.whenField
+                ? t('alerting.simple-condition-editor.label-of-query', 'OF QUERY')
+                : t('alerting.simple-condition-editor.label-when-query', 'WHEN QUERY')
+            }
+          >
             <Stack direction="row" gap={1} alignItems="center">
               <ThresholdSelect onChange={onEvalFunctionChange} value={thresholdFunction} />
               {isRange ? (

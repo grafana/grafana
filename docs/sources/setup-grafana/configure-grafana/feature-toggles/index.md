@@ -41,13 +41,10 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled  | Yes                |
 | `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                   | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                            | Yes                |
-| `alertingInsights`                     | Show the new alerting insights landing page                                                                                         | Yes                |
 | `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                         | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                              | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                    | Yes                |
-| `kubernetesPlaylists`                  | Use the kubernetes API in the frontend for playlists, and route /api/playlist requests to k8s                                       | Yes                |
 | `kubernetesClientDashboardsFolders`    | Route the folder and dashboard service requests to k8s                                                                              | Yes                |
-| `recoveryThreshold`                    | Enables feature recovery threshold (aka hysteresis) for threshold server-side expression                                            | Yes                |
 | `lokiStructuredMetadata`               | Enables the loki data source to request structured metadata from the Loki server                                                    | Yes                |
 | `addFieldFromCalculationStatFunctions` | Add cumulative and window functions to the add field from calculation transformation                                                | Yes                |
 | `annotationPermissionUpdate`           | Change the way annotation permissions work by scoping them to folders and dashboards.                                               | Yes                |
@@ -71,13 +68,11 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `azureMonitorPrometheusExemplars`      | Allows configuration of Azure Monitor as a data source that can provide Prometheus exemplars                                        | Yes                |
 | `pinNavItems`                          | Enables pinning of nav items                                                                                                        | Yes                |
 | `failWrongDSUID`                       | Throws an error if a data source has an invalid UIDs                                                                                | Yes                |
-| `alertingApiServer`                    | Register Alerting APIs with the K8s API server                                                                                      | Yes                |
 | `cloudWatchRoundUpEndTime`             | Round up end time for metric queries to the next minute to avoid missing data                                                       | Yes                |
 | `newFiltersUI`                         | Enables new combobox style UI for the Ad hoc filters variable in scenes architecture                                                | Yes                |
 | `alertingQueryAndExpressionsStepMode`  | Enables step mode for alerting queries and expressions                                                                              | Yes                |
 | `useSessionStorageForRedirection`      | Use session storage for handling the redirection after login                                                                        | Yes                |
 | `pluginsSriChecks`                     | Enables SRI checks for plugin assets                                                                                                |                    |
-| `prometheusUsesCombobox`               | Use new **Combobox** component for Prometheus query editor                                                                          | Yes                |
 | `azureMonitorDisableLogLimit`          | Disables the log limit restriction for Azure Monitor when true. The limit is enabled by default.                                    |                    |
 | `preinstallAutoUpdate`                 | Enables automatic updates for pre-installed plugins                                                                                 | Yes                |
 | `reportingUseRawTimeRange`             | Uses the original report or dashboard time range instead of making an absolute transformation                                       | Yes                |

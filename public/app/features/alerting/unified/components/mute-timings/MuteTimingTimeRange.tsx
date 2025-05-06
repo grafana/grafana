@@ -37,7 +37,10 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
       <Field
         className={styles.field}
         label={t('alerting.mute-timing-time-range.label-time-range', 'Time range')}
-        description="The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time)"
+        description={t(
+          'alerting.mute-timing-time-range.description-time-range',
+          'The time inclusive of the start and exclusive of the end time (in UTC if no location has been selected, otherwise local time)'
+        )}
         invalid={timeRangeInvalid}
       >
         <>
@@ -142,7 +145,13 @@ export const MuteTimingTimeRange = ({ intervalIndex }: Props) => {
       <ConditionalWrap
         shouldWrap={isDisabled}
         wrap={(children) => (
-          <Tooltip content="This time interval is disabled" placement="right-start">
+          <Tooltip
+            content={t(
+              'alerting.mute-timing-time-range.content-this-time-interval-is-disabled',
+              'This time interval is disabled'
+            )}
+            placement="right-start"
+          >
             {children}
           </Tooltip>
         )}

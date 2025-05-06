@@ -306,7 +306,7 @@ function getNamedHeightInPixels(rowHeight: AutoGridRowHeight) {
 
   switch (rowHeight) {
     case 'short':
-      return 128;
+      return 168;
     case 'tall':
       return 512;
     case 'custom':

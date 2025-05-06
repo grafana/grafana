@@ -1,5 +1,5 @@
 import { Alert, LinkButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';
@@ -23,11 +23,15 @@ export const GlobalConfigAlert = ({ alertManagerName }: GlobalConfigAlertProps) 
         )}
       >
         <p>
-          For each external Alertmanager you can define global settings, like server addresses, usernames and password,
-          for all the supported contact points.
+          <Trans i18nKey="alerting.global-config-alert.body">
+            For each external Alertmanager you can define global settings, like server addresses, usernames and
+            password, for all the supported contact points.
+          </Trans>
         </p>
         <LinkButton href={makeAMLink('alerting/notifications/global-config', alertManagerName)} variant="secondary">
-          {isVanillaAM ? 'View global config' : 'Edit global config'}
+          {isVanillaAM
+            ? t('alerting.global-config-alert.view-global-config', 'View global config')
+            : t('alerting.global-config-alert.edit-global-config', 'Edit global config')}
         </LinkButton>
       </Alert>
     </Authorize>

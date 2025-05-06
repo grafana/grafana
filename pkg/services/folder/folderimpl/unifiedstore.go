@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	folderv1 "github.com/grafana/grafana/pkg/apis/folder/v1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -104,6 +104,11 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 			return nil, err
 		}
 		meta.SetFolder(*cmd.NewParentUID)
+	} else {
+		// only compare versions if not moving the folder
+		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {
+			return nil, dashboards.ErrDashboardVersionMismatch
+		}
 	}
 
 	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
@@ -316,7 +321,9 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
-	opts := v1.ListOptions{}
+	opts := v1.ListOptions{
+		Limit: folderSearchLimit,
+	}
 	if q.WithFullpath || q.WithFullpathUIDs {
 		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
 		// to retrieve the parent for all folders in grafana

@@ -1,4 +1,5 @@
 import { css, cx } from '@emotion/css';
+import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
@@ -6,12 +7,24 @@ import { t } from 'app/core/internationalization';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 
-import { getComponentIdFromComponentMeta, useExtensionSidebarContext } from './ExtensionSidebarProvider';
+import {
+  getComponentIdFromComponentMeta,
+  getComponentMetaFromComponentId,
+  useExtensionSidebarContext,
+} from './ExtensionSidebarProvider';
 
 export function ExtensionToolbarItem() {
   const styles = getStyles(useTheme2());
   const { availableComponents, dockedComponentId, setDockedComponentId, isOpen, isEnabled } =
     useExtensionSidebarContext();
+
+  let dockedComponentTitle = '';
+  if (dockedComponentId) {
+    const dockedComponent = getComponentMetaFromComponentId(dockedComponentId);
+    if (dockedComponent) {
+      dockedComponentTitle = dockedComponent.componentTitle;
+    }
+  }
 
   if (!isEnabled || availableComponents.size === 0) {
     return null;
@@ -26,22 +39,52 @@ export function ExtensionToolbarItem() {
     return null;
   }
 
+  // conditionally renders a button to open or close the sidebar
+  // not using a component to avoid passing refs with the `Dropdown` component
+  const renderButton = useCallback(
+    (isOpen: boolean, title?: string, onClick?: () => void) => {
+      if (isOpen) {
+        // render button to close the sidebar
+        return (
+          <ToolbarButton
+            className={cx(styles.button, styles.buttonActive)}
+            icon="ai-sparkle"
+            data-testid="extension-toolbar-button-close"
+            variant="default"
+            onClick={() => setDockedComponentId(undefined)}
+            tooltip={t('navigation.extension-sidebar.button-tooltip.close', 'Close {{title}}', { title })}
+          />
+        );
+      }
+      // if a title is provided, use it in the tooltip
+      let tooltip = t('navigation.extension-sidebar.button-tooltip.open-all', 'Open AI assistants and sidebar apps');
+      if (title) {
+        tooltip = t('navigation.extension-sidebar.button-tooltip.open', 'Open {{title}}', { title });
+      }
+      return (
+        <ToolbarButton
+          className={cx(styles.button)}
+          icon="ai-sparkle"
+          data-testid="extension-toolbar-button-open"
+          variant="default"
+          onClick={onClick}
+          tooltip={tooltip}
+        />
+      );
+    },
+    [setDockedComponentId, styles.button, styles.buttonActive]
+  );
+
   if (components.length === 1) {
     return (
       <>
-        <ToolbarButton
-          icon="ai-sparkle"
-          data-testid="extension-toolbar-button"
-          className={cx(styles.button, isOpen && styles.buttonActive)}
-          tooltip={components[0].description}
-          onClick={() => {
-            if (isOpen) {
-              setDockedComponentId(undefined);
-            } else {
-              setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
-            }
-          }}
-        />
+        {renderButton(isOpen, components[0].title, () => {
+          if (isOpen) {
+            setDockedComponentId(undefined);
+          } else {
+            setDockedComponentId(getComponentIdFromComponentMeta(components[0].pluginId, components[0]));
+          }
+        })}
         <NavToolbarSeparator />
       </>
     );
@@ -70,15 +113,17 @@ export function ExtensionToolbarItem() {
   );
   return (
     <>
-      <Dropdown overlay={MenuItems} placement="bottom-end">
-        <ToolbarButton
-          className={cx(styles.button, isOpen && styles.buttonActive)}
-          icon="ai-sparkle"
-          data-testid="extension-toolbar-button"
-          variant="default"
-          tooltip={t('navigation.extension-sidebar.button-tooltip', 'Open AI assistants and sidebar apps')}
-        />
-      </Dropdown>
+      {isOpen &&
+        renderButton(isOpen, dockedComponentTitle, () => {
+          if (isOpen) {
+            setDockedComponentId(undefined);
+          }
+        })}
+      {!isOpen && (
+        <Dropdown overlay={MenuItems} placement="bottom-end">
+          {renderButton(isOpen)}
+        </Dropdown>
+      )}
       <NavToolbarSeparator />
     </>
   );

@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
-	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 )
 
 //go:generate mockery --name RepositoryResourcesFactory --structname MockRepositoryResourcesFactory --inpackage --filename repository_resources_factory_mock.go --with-expecter
@@ -23,7 +24,7 @@ type RepositoryResources interface {
 	EnsureFolderExists(ctx context.Context, folder Folder, parentID string) error
 	EnsureFolderTreeExists(ctx context.Context, ref, path string, tree FolderTree, fn func(folder Folder, created bool, err error) error) error
 	// File from Resource
-	CreateResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
+	WriteResourceFileFromObject(ctx context.Context, obj *unstructured.Unstructured, options WriteOptions) (string, error)
 	// Resource from file
 	WriteResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
 	RemoveResourceFromFile(ctx context.Context, path, ref string) (string, schema.GroupVersionKind, error)
@@ -33,7 +34,7 @@ type RepositoryResources interface {
 	List(ctx context.Context) (*provisioning.ResourceList, error)
 }
 
-type repositoryResourcesFactor struct {
+type repositoryResourcesFactory struct {
 	parsers ParserFactory
 	clients ClientFactory
 	lister  ResourceLister
@@ -55,10 +56,10 @@ func (r *repositoryResources) List(ctx context.Context) (*provisioning.ResourceL
 }
 
 func NewRepositoryResourcesFactory(parsers ParserFactory, clients ClientFactory, lister ResourceLister) RepositoryResourcesFactory {
-	return &repositoryResourcesFactor{parsers, clients, lister}
+	return &repositoryResourcesFactory{parsers, clients, lister}
 }
 
-func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
+func (r *repositoryResourcesFactory) Client(ctx context.Context, repo repository.ReaderWriter) (RepositoryResources, error) {
 	clients, err := r.clients.Clients(ctx, repo.Config().Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("create clients: %w", err)
@@ -74,7 +75,7 @@ func (r *repositoryResourcesFactor) Client(ctx context.Context, repo repository.
 	}
 
 	folders := NewFolderManager(repo, folderClient, NewEmptyFolderTree())
-	resources := NewResourcesManager(repo, folders, parser, clients, map[string]repository.CommitSignature{})
+	resources := NewResourcesManager(repo, folders, parser, clients)
 
 	return &repositoryResources{
 		FolderManager:    folders,

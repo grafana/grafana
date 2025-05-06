@@ -102,7 +102,7 @@ const getTooltips = () => {
   return {
     field: (
       <div>
-        A valid path of an json object.
+        <Trans i18nKey="transformers.get-tooltips.description">A valid path of an json object.</Trans>
         <div>
           <strong>
             <Trans i18nKey="transformers.get-tooltips.json-value">JSON Value:</Trans>
@@ -113,7 +113,9 @@ const getTooltips = () => {
             {['{', '  "object": {', '    "value1": "hello world"', '    "value2": [1, 2, 3, 4]', '  }', '}'].join('\n')}
           </code>
         </pre>
-        <strong>Valid Paths:</strong>
+        <strong>
+          <Trans i18nKey="transformers.get-tooltips.valid-paths">Valid Paths:</Trans>
+        </strong>
         {mapValidPaths.map((value, key) => {
           return (
             <p key={key}>

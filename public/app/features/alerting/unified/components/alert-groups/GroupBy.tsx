@@ -2,7 +2,7 @@ import { uniq } from 'lodash';
 
 import { SelectableValue } from '@grafana/data';
 import { Icon, Label, MultiSelect, Tooltip } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerGroup } from 'app/plugins/datasource/alertmanager/types';
 
 import { isPrivateLabelKey } from '../../utils/labels';
@@ -24,12 +24,16 @@ export const GroupBy = ({ groups, groupBy, onGroupingChange }: Props) => {
   return (
     <div data-testid={'group-by-container'}>
       <Label>
-        <span>Custom group by&nbsp;</span>
+        <span>
+          <Trans i18nKey="alerting.group-by.custom-group-by">Custom group by</Trans>&nbsp;
+        </span>
         <Tooltip
           content={
             <div>
-              Group notifications using a different combination of labels. This option can help validate the grouping
-              settings of your notification policies.
+              <Trans i18nKey="alerting.group-by.tooltip-group-by">
+                Group notifications using a different combination of labels. This option can help validate the grouping
+                settings of your notification policies.
+              </Trans>
             </div>
           }
         >

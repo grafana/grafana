@@ -15,9 +15,9 @@ import (
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
-	"xorm.io/core"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm/core"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/fs"

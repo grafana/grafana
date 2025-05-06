@@ -179,7 +179,7 @@ describe('RuleEditor cloud: checking editable data sources', () => {
 
     await ui.inputs.name.find();
 
-    const switchToCloudButton = screen.getByText('Data source-managed');
+    const switchToCloudButton = await screen.findByText('Data source-managed');
     expect(switchToCloudButton).toBeInTheDocument();
 
     await user.click(switchToCloudButton);

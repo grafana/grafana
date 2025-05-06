@@ -3,7 +3,15 @@ import { Resizable } from 're-resizable';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { selectors } from '@grafana/e2e-selectors';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneObject,
+  sceneGraph,
+  useSceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import {
   ElementSelectionContextItem,
   ElementSelectionContextState,
@@ -17,8 +25,8 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { containsCloneKey, getOriginalKey, isInCloneChain } from '../utils/clone';
-import { getDashboardSceneFor } from '../utils/utils';
+import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
+import { findEditPanel, getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
@@ -101,10 +109,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    const elementId = containsCloneKey(element.id) ? getOriginalKey(element.id) : element.id;
-
-    const obj = sceneGraph.findByKey(this, elementId);
+    let obj = sceneGraph.findByKey(this, element.id);
     if (obj) {
+      if (obj instanceof VizPanel && containsCloneKey(getLastKeyFromClone(element.id))) {
+        const sourceVizPanel = findEditPanel(this, element.id);
+        if (sourceVizPanel) {
+          obj = sourceVizPanel;
+        }
+      }
       this.selectObject(obj, element.id, options);
     }
   }
@@ -132,13 +144,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
 
     const { selection, contextItems: selected } = elementSelection.getStateWithValue(id, obj, !!multi);
 
-    this.setState({
-      selection: new ElementSelection(selection),
-      selectionContext: {
-        ...this.state.selectionContext,
-        selected,
-      },
-    });
+    this.updateSelection(new ElementSelection(selection), selected);
   }
 
   private removeMultiSelectedObject(id: string) {
@@ -153,13 +159,17 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    this.setState({
-      selection: new ElementSelection([...entries]),
-      selectionContext: {
-        ...this.state.selectionContext,
-        selected,
-      },
-    });
+    this.updateSelection(new ElementSelection([...entries]), selected);
+  }
+
+  private updateSelection(selection: ElementSelection | undefined, selected: ElementSelectionContextItem[]) {
+    // onBlur events are not fired on unmount and some edit pane inputs have important onBlur events
+    // This make sure they fire before unmounting
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+
+    this.setState({ selection, selectionContext: { ...this.state.selectionContext, selected } });
   }
 
   public clearSelection() {
@@ -167,13 +177,7 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    this.setState({
-      selection: undefined,
-      selectionContext: {
-        ...this.state.selectionContext,
-        selected: [],
-      },
-    });
+    this.updateSelection(undefined, []);
   }
 
   private newObjectAddedToCanvas(obj: SceneObject) {
@@ -280,11 +284,12 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
             role="button"
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
             className={styles.outlineCollapseButton}
+            data-testid={selectors.components.PanelEditor.Outline.section}
           >
             <Text weight="medium">
               <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
             </Text>
-            <Icon name="angle-up" />
+            <Icon name={outlineCollapsed ? 'angle-up' : 'angle-down'} />
           </div>
           {!outlineCollapsed && (
             <div className={styles.outlineContainer}>

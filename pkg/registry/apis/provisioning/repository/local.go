@@ -112,41 +112,40 @@ func (r *localRepository) Config() *provisioning.Repository {
 }
 
 // Validate implements provisioning.Repository.
-func (r *localRepository) Validate() (fields field.ErrorList) {
+func (r *localRepository) Validate() field.ErrorList {
 	cfg := r.config.Spec.Local
 	if cfg == nil {
-		fields = append(fields, &field.Error{
+		return field.ErrorList{&field.Error{
 			Type:  field.ErrorTypeRequired,
 			Field: "spec.local",
-		})
-		return fields
+		}}
 	}
 
 	// The path value must be set for local provisioning
 	if cfg.Path == "" {
-		fields = append(fields, field.Required(field.NewPath("spec", "local", "path"),
-			"must enter a path to local file"))
+		return field.ErrorList{field.Required(field.NewPath("spec", "local", "path"),
+			"must enter a path to local file")}
+	}
+
+	if err := safepath.IsSafe(cfg.Path); err != nil {
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"),
+			cfg.Path, err.Error())}
 	}
 
 	// Check if it is valid
 	_, err := r.resolver.LocalPath(cfg.Path)
 	if err != nil {
-		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, err.Error()))
+		return field.ErrorList{field.Invalid(field.NewPath("spec", "local", "path"),
+			cfg.Path, err.Error())}
 	}
 
-	if err := safepath.IsSafe(cfg.Path); err != nil {
-		fields = append(fields, field.Invalid(field.NewPath("spec", "local", "path"),
-			cfg.Path, err.Error()))
-	}
-
-	return fields
+	return nil
 }
 
 // Test implements provisioning.Repository.
 // NOTE: Validate has been called (and passed) before this function should be called
 func (r *localRepository) Test(ctx context.Context) (*provisioning.TestResults, error) {
-	path := field.NewPath("spec", "localhost", "path")
+	path := field.NewPath("spec", "local", "path")
 	if r.config.Spec.Local.Path == "" {
 		return fromFieldError(field.Required(path, "no path is configured")), nil
 	}
@@ -172,18 +171,7 @@ func (r *localRepository) validateRequest(ref string) error {
 	if ref != "" {
 		return apierrors.NewBadRequest("local repository does not support ref")
 	}
-	if r.path == "" {
-		_, err := r.resolver.LocalPath(r.config.Spec.Local.Path)
-		if err != nil {
-			return err
-		}
-		return &apierrors.StatusError{
-			ErrStatus: metav1.Status{
-				Message: "the service is missing a root path",
-				Code:    http.StatusFailedDependency,
-			},
-		}
-	}
+
 	return nil
 }
 
@@ -261,7 +249,7 @@ func (r *localRepository) ReadTree(ctx context.Context, ref string) ([]FileTreeE
 			entry.Blob = true
 			entry.Hash, _, err = r.calculateFileHash(path)
 			if err != nil {
-				return fmt.Errorf("failed to read and calculate hash of path %s: %w", path, err)
+				return fmt.Errorf("read and calculate hash of path %s: %w", path, err)
 			}
 		}
 		// TODO: do folders have a trailing slash?
@@ -282,7 +270,7 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	//nolint:gosec
 	file, err := os.OpenFile(path, os.O_RDONLY, 0)
 	if err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf("open file: %w", err)
 	}
 
 	// TODO: Define what hashing algorithm we want to use for the entire repository. Maybe a config option?
@@ -290,7 +278,7 @@ func (r *localRepository) calculateFileHash(path string) (string, int64, error) 
 	// TODO: context-aware io.Copy? Is that even possible with a reasonable impl?
 	size, err := io.Copy(hasher, file)
 	if err != nil {
-		return "", 0, err
+		return "", 0, fmt.Errorf("copy file: %w", err)
 	}
 	// NOTE: EncodeToString (& hex.Encode for that matter) return lower-case hex.
 	return hex.EncodeToString(hasher.Sum(nil)), size, nil
@@ -339,9 +327,14 @@ func (r *localRepository) Update(ctx context.Context, path string, ref string, d
 		return apierrors.NewBadRequest("cannot update a directory")
 	}
 
-	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
+	f, err := os.Stat(path)
+	if err != nil && errors.Is(err, os.ErrNotExist) {
 		return ErrFileNotFound
 	}
+	if f.IsDir() {
+		return apierrors.NewBadRequest("path exists but it is a directory")
+	}
+
 	return os.WriteFile(path, data, 0600)
 }
 

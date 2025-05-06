@@ -62,8 +62,19 @@ export const ExpressionEditor = ({
   const dsi = getDataSourceSrv().getInstanceSettings(dataSourceName);
 
   if (error || !dataSource || !dataSource?.components?.QueryEditor || !dsi) {
-    const errorMessage = error?.message || 'Data source plugin does not export any Query Editor component';
-    return <div>Could not load query editor due to: {errorMessage}</div>;
+    const errorMessage =
+      error?.message ||
+      t(
+        'alerting.expression-editor.error-no-component',
+        'Data source plugin does not export any Query Editor component'
+      );
+    return (
+      <div>
+        <Trans i18nKey="alerting.expression-editor.could-not-load-editor">
+          Could not load query editor due to: {{ errorMessage }}
+        </Trans>
+      </div>
+    );
   }
 
   const previewLoaded = alertPreview?.data.state === LoadingState.Done;

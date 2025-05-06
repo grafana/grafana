@@ -1,4 +1,4 @@
-apiVersion: folder.grafana.app/v1
+apiVersion: folder.grafana.app/v1beta1
 kind: Folder
 metadata:
   name: test
