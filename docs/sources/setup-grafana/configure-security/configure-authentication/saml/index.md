@@ -407,7 +407,7 @@ The integration provides two key endpoints as part of Grafana:
 
 ### IdP-initiated Single Sign-On (SSO)
 
-By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via Grafana's login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
+By default, Grafana allows only service provider (SP) initiated logins (when the user logs in with SAML via the Grafana login page). If you want users to log in into Grafana directly from your identity provider (IdP), set the `allow_idp_initiated` configuration option to `true` and configure `relay_state` with the same value specified in the IdP configuration.
 
 IdP-initiated SSO has some security risks, so make sure you understand the risks before enabling this feature. When using IdP-initiated SSO, Grafana receives unsolicited SAML requests and can't verify that login flow was started by the user. This makes it hard to detect whether SAML message has been stolen or replaced. Because of this, IdP-initiated SSO is vulnerable to login cross-site request forgery (CSRF) and man in the middle (MITM) attacks. We do not recommend using IdP-initiated SSO and keeping it disabled whenever possible.
 
