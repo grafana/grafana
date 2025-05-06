@@ -1,16 +1,19 @@
+import store from 'app/core/store';
+
 import { sendAppNotification } from './core/copy/appNotification';
 import { AppNotificationSeverity } from './types';
 
 export const STORAGE_MOCK_API_KEY = 'grafana.dev.mockApi';
 
 export const currentMockApiState = () => {
-  return window.localStorage.getItem(STORAGE_MOCK_API_KEY) === 'true';
+  return store.getBool(STORAGE_MOCK_API_KEY, false);
 };
 
 export const toggleMockApiAndReload = () => {
   const currentState = currentMockApiState();
-  window.localStorage.setItem(STORAGE_MOCK_API_KEY, String(!currentState));
-  sendAppNotification(`Toggling Mock API`, 'Reloading...', AppNotificationSeverity.Info);
+  store.set(STORAGE_MOCK_API_KEY, String(!currentState));
+  const action = currentState ? 'Disabling' : 'Enabling';
+  sendAppNotification(`${action} Mock API`, 'Reloading...', AppNotificationSeverity.Info);
   setTimeout(() => {
     window.location.reload();
   }, 200);
@@ -23,7 +26,6 @@ export const potentiallySetupMockApi = async () => {
 
     worker.start({ onUnhandledRequest: 'bypass' });
   }
-  return Promise.resolve();
 };
 
 export const notifyIfMockApiEnabled = () => {
