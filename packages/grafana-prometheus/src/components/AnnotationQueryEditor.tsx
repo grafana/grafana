@@ -59,7 +59,7 @@ export function AnnotationQueryEditor(props: Props) {
           <Input
             type="text"
             placeholder="{{alertname}}"
-            value={annotation.titleFormat}
+            value={annotation.titleFormat ?? ''}
             onChange={(event) => {
               onAnnotationChange({
                 ...annotation,
@@ -73,7 +73,7 @@ export function AnnotationQueryEditor(props: Props) {
           <Input
             type="text"
             placeholder="label1,label2"
-            value={annotation.tagKeys}
+            value={annotation.tagKeys ?? ''}
             onChange={(event) => {
               onAnnotationChange({
                 ...annotation,
@@ -92,7 +92,7 @@ export function AnnotationQueryEditor(props: Props) {
           <Input
             type="text"
             placeholder="{{instance}}"
-            value={annotation.textFormat}
+            value={annotation.textFormat ?? ''}
             onChange={(event) => {
               onAnnotationChange({
                 ...annotation,
@@ -109,11 +109,11 @@ export function AnnotationQueryEditor(props: Props) {
           }
         >
           <EditorSwitch
-            value={annotation.useValueForTime}
+            value={annotation.useValueForTime ?? false}
             onChange={(event) => {
               onAnnotationChange({
                 ...annotation,
-                useValueForTime: event.currentTarget.value,
+                useValueForTime: event.currentTarget.checked,
               });
             }}
             data-testid={selectors.components.DataSource.Prometheus.annotations.seriesValueAsTimestamp}
