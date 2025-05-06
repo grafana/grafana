@@ -48,7 +48,7 @@ jobs:
         uses: actions/github-script@v7
         if: failure()
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prNumber = context.payload.pull_request.number;
             const runId = context.runId;
