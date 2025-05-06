@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { type Unsubscribable } from 'rxjs';
 
 import { dateTime, usePluginContext, PluginLoadingStrategy } from '@grafana/data';
@@ -7,6 +7,7 @@ import appEvents from 'app/core/app_events';
 import { ShowModalReactEvent } from 'app/types/events';
 
 import { log } from './logs/log';
+import { resetLogMock } from './logs/testUtils';
 import {
   deepFreeze,
   handleErrorsInFn,
@@ -19,12 +20,26 @@ import {
   getAppPluginIdFromExposedComponentId,
   getAppPluginDependencies,
   getExtensionPointPluginMeta,
+  getMutationObserverProxy,
+  readOnlyCopy,
+  isReadOnlyProxy,
+  isMutationObserverProxy,
 } from './utils';
 
 jest.mock('app/features/plugins/pluginSettings', () => ({
   ...jest.requireActual('app/features/plugins/pluginSettings'),
   getPluginSettings: () => Promise.resolve({ info: { version: '1.0.0' } }),
 }));
+
+jest.mock('./logs/log', () => {
+  const { createLogMock } = jest.requireActual('./logs/testUtils');
+  const original = jest.requireActual('./logs/log');
+
+  return {
+    ...original,
+    log: createLogMock(),
+  };
+});
 
 describe('Plugin Extensions / Utils', () => {
   describe('deepFreeze()', () => {
@@ -228,7 +243,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a = 'b';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should not be possible to modify values in proxied array', () => {
@@ -236,7 +251,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy[0] = 2;
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should not be possible to modify nested objects in proxied object', () => {
@@ -249,7 +264,58 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a.c = 'testing';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
+    });
+
+    // This is to record what we are not able to do currently.
+    // (Due to Proxy.get() invariants limitations: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy/Proxy/get#invariants)
+    it('should not work with any objects that are already frozen', () => {
+      const obj = {
+        a: {
+          b: {
+            c: {
+              d: 'd',
+            },
+          },
+        },
+      };
+
+      Object.freeze(obj);
+      Object.freeze(obj.a);
+      Object.freeze(obj.a.b);
+
+      const proxy = getReadOnlyProxy(obj);
+
+      expect(() => {
+        proxy.a.b.c.d = 'testing';
+      }).toThrow(
+        "'get' on proxy: property 'a' is a read-only and non-configurable data property on the proxy target but the proxy did not return its actual value (expected '#<Object>' but got '#<Object>')"
+      );
+
+      expect(obj.a.b.c.d).toBe('d');
+    });
+
+    it('should throw a TypeError if a proxied object is trying to be frozen', () => {
+      const obj = {
+        a: {
+          b: {
+            c: {
+              d: 'd',
+            },
+          },
+        },
+      };
+
+      const proxy = getReadOnlyProxy(obj);
+
+      expect(() => Object.freeze(proxy)).toThrow(TypeError);
+      expect(() => Object.freeze(proxy.a)).toThrow(TypeError);
+      expect(() => Object.freeze(proxy.a.b)).toThrow(TypeError);
+
+      // Check if the original object is not frozen
+      expect(Object.isFrozen(obj)).toBe(false);
+      expect(Object.isFrozen(obj.a)).toBe(false);
+      expect(Object.isFrozen(obj.a.b)).toBe(false);
     });
 
     it('should not be possible to modify nested arrays in proxied object', () => {
@@ -262,7 +328,7 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(() => {
         proxy.a.c[0] = 'testing';
-      }).toThrowError(TypeError);
+      }).toThrow(TypeError);
     });
 
     it('should be possible to modify source object', () => {
@@ -317,6 +383,178 @@ describe('Plugin Extensions / Utils', () => {
 
       expect(source.isSame(proxy.a)).toBe(true);
       expect(source).not.toBe(proxy.a);
+    });
+  });
+
+  describe('getMutationObserverProxy()', () => {
+    it('should not be possible to modify values in proxied object, but logs a warning', () => {
+      const proxy = getMutationObserverProxy({ a: 'a' });
+
+      expect(() => {
+        proxy.a = 'b';
+      }).not.toThrow();
+
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
+        stack: expect.any(String),
+      });
+
+      expect(proxy.a).toBe('b');
+    });
+
+    it('should be possible to set new values, but logs a warning', () => {
+      const obj: { a: string; b?: string } = { a: 'a' };
+      const proxy = getMutationObserverProxy(obj);
+
+      expect(() => {
+        Object.defineProperty(proxy, 'b', {
+          value: 'b',
+          writable: false,
+        });
+      }).not.toThrow();
+
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "b"`, {
+        stack: expect.any(String),
+      });
+
+      expect(proxy.b).toBe('b');
+    });
+
+    it('should be possible to delete properties, but logs a warning', () => {
+      const proxy = getMutationObserverProxy({
+        a: {
+          c: 'c',
+        },
+        b: 'b',
+      });
+
+      expect(() => {
+        // @ts-ignore - This is to test the logic
+        delete proxy.a.c;
+      }).not.toThrow();
+
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to delete object property "c"`, {
+        stack: expect.any(String),
+      });
+
+      expect(proxy.a.c).toBeUndefined();
+    });
+  });
+
+  describe('readOnlyCopy()', () => {
+    const originalEnv = config.buildInfo.env;
+
+    beforeEach(() => {
+      jest.spyOn(console, 'warn').mockImplementation();
+      config.featureToggles.extensionsReadOnlyProxy = false;
+    });
+
+    afterEach(() => {
+      config.buildInfo.env = originalEnv;
+      jest.mocked(console.warn).mockClear();
+    });
+
+    it('should return the same value for primitive types', () => {
+      expect(readOnlyCopy(1)).toBe(1);
+      expect(readOnlyCopy('a')).toBe('a');
+      expect(readOnlyCopy(true)).toBe(true);
+      expect(readOnlyCopy(false)).toBe(false);
+      expect(readOnlyCopy(null)).toBe(null);
+      expect(readOnlyCopy(undefined)).toBe(undefined);
+    });
+
+    it('should return a read-only proxy of the original object if the feature flag is enabled', () => {
+      config.featureToggles.extensionsReadOnlyProxy = true;
+
+      const obj = { a: 'a' };
+      const copy = readOnlyCopy(obj);
+
+      expect(copy).not.toBe(obj);
+      expect(copy.a).toBe('a');
+      expect(isReadOnlyProxy(copy)).toBe(true);
+      expect(() => {
+        copy.a = 'b';
+      }).toThrow(TypeError);
+    });
+
+    it('should return a read-only proxy of a deep-copy of the original object in dev mode', () => {
+      config.featureToggles.extensionsReadOnlyProxy = false;
+      config.buildInfo.env = 'development';
+
+      const obj = { a: 'a' };
+      const copy = readOnlyCopy(obj);
+
+      expect(copy).not.toBe(obj);
+      expect(copy.a).toBe('a');
+      expect(isReadOnlyProxy(copy)).toBe(true);
+      expect(() => {
+        copy.a = 'b';
+      }).toThrow(TypeError);
+
+      // Also test that we can handle frozen objects
+      // (This is not possible with getReadOnlyProxy, as it throws an error when the object is already frozen)
+      const obj2 = {
+        a: {
+          b: {
+            c: {
+              d: 'd',
+            },
+          },
+        },
+      };
+
+      Object.freeze(obj2);
+      Object.freeze(obj2.a);
+      Object.freeze(obj2.a.b);
+
+      const copy2 = readOnlyCopy(obj2);
+
+      expect(() => {
+        copy2.a.b.c.d = 'testing';
+      }).toThrow("'set' on proxy: trap returned falsish for property 'd'");
+
+      expect(copy2.a.b.c.d).toBe('d');
+    });
+
+    it('should return a writable deep-copy of the original object in production mode', () => {
+      config.featureToggles.extensionsReadOnlyProxy = false;
+      config.buildInfo.env = 'production';
+
+      const obj = { a: 'a' };
+      const copy = readOnlyCopy(obj);
+
+      expect(copy).not.toBe(obj);
+      expect(copy.a).toBe('a');
+      expect(isMutationObserverProxy(copy)).toBe(true);
+      expect(() => {
+        copy.a = 'b';
+      }).not.toThrow();
+
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "a"`, {
+        stack: expect.any(String),
+      });
+
+      expect(copy.a).toBe('b');
+    });
+
+    it('should allow freezing the object in production mode', () => {
+      config.featureToggles.extensionsReadOnlyProxy = false;
+      config.buildInfo.env = 'production';
+
+      const obj = { a: 'a', b: { c: 'c' } };
+      const copy = readOnlyCopy(obj);
+
+      expect(() => {
+        Object.freeze(copy);
+        Object.freeze(copy.b);
+      }).not.toThrow();
+
+      expect(Object.isFrozen(copy)).toBe(true);
+      expect(Object.isFrozen(copy.b)).toBe(true);
+      expect(copy.b).toEqual({ c: 'c' });
+
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to define object property "a"`, {
+        stack: expect.any(String),
+      });
     });
   });
 
@@ -417,15 +655,24 @@ describe('Plugin Extensions / Utils', () => {
     });
   });
 
-  describe('wrapExtensionComponentWithContext()', () => {
+  describe('wrapWithPluginContext()', () => {
     type ExampleComponentProps = {
-      audience?: string;
+      a: {
+        b: {
+          c: string;
+        };
+      };
+      override?: boolean;
     };
 
     const ExampleComponent = (props: ExampleComponentProps) => {
       const pluginContext = usePluginContext();
 
-      const audience = props.audience || 'Grafana';
+      const audience = props.a.b.c || 'Grafana';
+
+      if (props.override) {
+        props.a.b.c = 'OVERRIDE';
+      }
 
       return (
         <div>
@@ -434,11 +681,15 @@ describe('Plugin Extensions / Utils', () => {
       );
     };
 
+    beforeEach(() => {
+      resetLogMock(log);
+    });
+
     it('should make the plugin context available for the wrapped component', async () => {
       const pluginId = 'grafana-worldmap-panel';
       const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
-      render(<Component />);
+      render(<Component a={{ b: { c: 'Grafana' } }} />);
 
       expect(await screen.findByText('Hello Grafana!')).toBeVisible();
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
@@ -448,10 +699,51 @@ describe('Plugin Extensions / Utils', () => {
       const pluginId = 'grafana-worldmap-panel';
       const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
 
-      render(<Component audience="folks" />);
+      render(<Component a={{ b: { c: 'Grafana' } }} />);
 
-      expect(await screen.findByText('Hello folks!')).toBeVisible();
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
       expect(screen.getByText('Version: 1.0.0')).toBeVisible();
+    });
+
+    it('should not be possible to mutate the props in development mode, and it also throws an error', async () => {
+      config.buildInfo.env = 'development';
+      const pluginId = 'grafana-worldmap-panel';
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const props = { a: { b: { c: 'Grafana' } } };
+
+      jest.spyOn(console, 'error').mockImplementation();
+
+      await expect(async () => {
+        await act(async () => {
+          render(<Component {...props} override />);
+        });
+      }).rejects.toThrow(`'set' on proxy: trap returned falsish for property 'c'`);
+
+      // Logs an error
+      expect(console.error).toHaveBeenCalledWith(expect.any(String));
+
+      // Not able to mutate the props in development mode
+      expect(props.a.b.c).toBe('Grafana');
+    });
+
+    it('should not be possible to mutate the props in production mode either, but it logs a warning', async () => {
+      config.buildInfo.env = 'production';
+      const pluginId = 'grafana-worldmap-panel';
+      const Component = wrapWithPluginContext(pluginId, ExampleComponent, log);
+      const props = { a: { b: { c: 'Grafana' } } };
+
+      render(<Component {...props} override />);
+
+      expect(await screen.findByText('Hello Grafana!')).toBeVisible();
+
+      // Logs a warning
+      expect(log.warning).toHaveBeenCalledTimes(1);
+      expect(log.warning).toHaveBeenCalledWith(`Attempted to mutate object property "c"`, {
+        stack: expect.any(String),
+      });
+
+      // Not able to mutate the props in production mode either
+      expect(props.a.b.c).toBe('Grafana');
     });
   });
 
