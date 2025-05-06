@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/iam"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/webhooks"
 	"github.com/grafana/grafana/pkg/registry/apis/query"
 	"github.com/grafana/grafana/pkg/registry/apis/secret"
 	"github.com/grafana/grafana/pkg/registry/apis/service"
@@ -19,7 +20,7 @@ import (
 )
 
 // HACK: This is a hack so that wire can uniquely identify dependencies
-func MergeProvisioningExtras(webhook provisioning.WebhookExtraBuilder, render provisioning.RenderExtraBuilder) []provisioning.ExtraBuilder {
+func MergeProvisioningExtras(webhook webhooks.WebhookExtraBuilder, render webhooks.RenderExtraBuilder) []provisioning.ExtraBuilder {
 	return []provisioning.ExtraBuilder{
 		webhook.ExtraBuilder,
 		render.ExtraBuilder,
@@ -28,8 +29,8 @@ func MergeProvisioningExtras(webhook provisioning.WebhookExtraBuilder, render pr
 
 var ProvisioningExtras = wire.NewSet(
 	pullrequest.ProvideScreenshotRenderer,
-	provisioning.ProvideWebhooks,
-	provisioning.ProvidePreviewScreenshots,
+	webhooks.ProvideWebhooks,
+	webhooks.ProvidePreviewScreenshots,
 	MergeProvisioningExtras,
 )
 

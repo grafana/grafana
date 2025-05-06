@@ -1,10 +1,11 @@
-package provisioning
+package webhooks
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
+	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs/pullrequest"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
@@ -40,7 +42,7 @@ const webhookMaxBodySize = 25 * 1024 * 1024
 // It is used to add additional functionality for webhooks
 type WebhookExtraBuilder struct {
 	// HACK: We need to wrap the builder to please wire so that it can uniquely identify the dependency
-	ExtraBuilder
+	provisioningapis.ExtraBuilder
 }
 
 func ProvideWebhooks(
@@ -51,7 +53,7 @@ func ProvideWebhooks(
 	renderer pullrequest.ScreenshotRenderer,
 	configProvider apiserver.RestConfigProvider,
 ) WebhookExtraBuilder {
-	urlProvider := func(namespace string) string {
+	urlProvider := func(_ string) string {
 		return cfg.AppURL
 	}
 	// HACK: Assume is only public if it is HTTPS
@@ -60,11 +62,8 @@ func ProvideWebhooks(
 	parsers := resources.NewParserFactory(clients)
 
 	return WebhookExtraBuilder{
-		ExtraBuilder: func(b *APIBuilder) Extra {
+		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			return NewWebhookConnector(
-				b,
-				b,
-				b,
 				isPublic,
 				urlProvider,
 				b,
@@ -72,6 +71,7 @@ func ProvideWebhooks(
 				ghFactory,
 				renderer,
 				parsers,
+				filepath.Join(cfg.DataPath, "clone"),
 			)
 		},
 	}
@@ -79,45 +79,36 @@ func ProvideWebhooks(
 
 // This only works for github right now
 type webhookConnector struct {
-	client          ClientGetter
-	getter          RepoGetter
-	jobs            JobQueueGetter
 	webhooksEnabled bool
 	urlProvider     func(namespace string) string
-	apiBuilder      *APIBuilder
+	core            *provisioningapis.APIBuilder
 	secrets         secrets.Service
 	ghFactory       *github.Factory
 	renderer        pullrequest.ScreenshotRenderer
 	parsers         resources.ParserFactory
-}
-
-type JobQueueGetter interface {
-	GetJobQueue() jobs.Queue
+	clonedir        string
 }
 
 func NewWebhookConnector(
-	client ClientGetter,
-	getter RepoGetter,
-	jobs JobQueueGetter,
 	webhooksEnabled bool,
 	urlProvider func(namespace string) string,
-	apiBuilder *APIBuilder,
+	// TODO: use interface for this
+	core *provisioningapis.APIBuilder,
 	secrets secrets.Service,
 	ghFactory *github.Factory,
 	renderer pullrequest.ScreenshotRenderer,
 	parsers resources.ParserFactory,
+	clonedir string,
 ) *webhookConnector {
 	return &webhookConnector{
-		client:          client,
-		getter:          getter,
-		jobs:            jobs,
 		webhooksEnabled: webhooksEnabled,
 		urlProvider:     urlProvider,
-		apiBuilder:      apiBuilder,
+		core:            core,
 		secrets:         secrets,
 		ghFactory:       ghFactory,
 		renderer:        renderer,
 		parsers:         parsers,
+		clonedir:        clonedir,
 	}
 }
 
@@ -183,8 +174,7 @@ func (s *webhookConnector) AsRepository(ctx context.Context, r *provisioning.Rep
 			r.GetName(),
 		)
 		cloneFn := func(ctx context.Context, opts repository.CloneOptions) (repository.ClonedRepository, error) {
-			// TODO: Do not use builder private
-			return gogit.Clone(ctx, s.apiBuilder.clonedir, r, opts, s.secrets)
+			return gogit.Clone(ctx, s.clonedir, r, opts, s.secrets)
 		}
 
 		return repository.NewGitHub(ctx, r, s.ghFactory, s.secrets, webhookURL, cloneFn)
@@ -225,12 +215,12 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 	}
 
 	// Get the repository with the worker identity (since the request user is likely anonymous)
-	repo, err := s.getter.GetHealthyRepository(ctx, name)
+	repo, err := s.core.GetRepository(ctx, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := logging.FromContext(r.Context()).With("logger", "webhook-connector", "repo", name)
 		ctx := logging.Context(r.Context(), logger)
 		if !s.webhooksEnabled {
@@ -265,7 +255,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 
 		if rsp.Job != nil {
 			rsp.Job.Repository = name
-			job, err := s.jobs.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
+			job, err := s.core.GetJobQueue().Insert(ctx, namespace, *rsp.Job)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -282,7 +272,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 // This is to provide some visibility that the webhook is still active and working
 // It's not a good idea to update the webhook status too often, so we only update it if it's been a while
 func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.Repository, name, namespace string) error {
-	client := s.client.GetClient()
+	client := s.core.GetClient()
 	if client == nil {
 		// This would only happen if we wired things up incorrectly
 		return fmt.Errorf("client is nil")

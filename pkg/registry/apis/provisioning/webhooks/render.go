@@ -1,4 +1,4 @@
-package provisioning
+package webhooks
 
 import (
 	"context"
@@ -17,6 +17,7 @@ import (
 
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	provisioningapis "github.com/grafana/grafana/pkg/registry/apis/provisioning"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
@@ -25,12 +26,12 @@ import (
 // RenderExtraBuilder provides additional functionality for rendering images
 type RenderExtraBuilder struct {
 	// HACK: We need to wrap the builder to please wire so that it can uniquely identify the dependency
-	ExtraBuilder
+	provisioningapis.ExtraBuilder
 }
 
 func ProvidePreviewScreenshots(unified resource.ResourceClient) RenderExtraBuilder {
 	return RenderExtraBuilder{
-		ExtraBuilder: func(b *APIBuilder) Extra {
+		ExtraBuilder: func(b *provisioningapis.APIBuilder) provisioningapis.Extra {
 			return &renderConnector{
 				unified: unified,
 			}
@@ -132,7 +133,7 @@ func (c *renderConnector) Connect(
 	responder rest.Responder,
 ) (http.Handler, error) {
 	namespace := request.NamespaceValue(ctx)
-	return WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return provisioningapis.WithTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		prefix := fmt.Sprintf("/%s/render", name)
 		idx := strings.Index(r.URL.Path, prefix)
 		if idx == -1 {
