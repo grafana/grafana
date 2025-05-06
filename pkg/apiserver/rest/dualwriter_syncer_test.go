@@ -179,7 +179,7 @@ func TestLegacyToUnifiedStorage_DataSyncer(t *testing.T) {
 				expectedOutcome: true,
 			},
 			{
-				name: "no items in legacy to sync",
+				name: "no items to sync",
 				setupLegacyFn: func(m *mock.Mock) {
 					m.On("List", mock.Anything, mock.Anything).Return(empty, nil)
 				},
