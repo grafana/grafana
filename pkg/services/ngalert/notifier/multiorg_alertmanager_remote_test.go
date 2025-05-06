@@ -137,10 +137,10 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 		require.Equal(t, fakeAM.config, lastConfig)
 		require.Equal(t, fakeAM.state, lastState)
 
-		// Syncing after the sync interval elapses should update the config.
+		// Syncing after the sync interval elapses should update the config, not the state.
 		require.Eventually(t, func() bool {
 			require.NoError(t, moa.LoadAndSyncAlertmanagersForOrgs(ctx))
-			return fakeAM.config != lastConfig
+			return fakeAM.config != lastConfig && fakeAM.state == lastState
 		}, 15*time.Second, 300*time.Millisecond)
 		lastConfig = fakeAM.config
 	}
@@ -154,13 +154,12 @@ func TestMultiorgAlertmanager_RemoteSecondaryMode(t *testing.T) {
 			OrgID:                     1,
 			LastApplied:               time.Now().Unix(),
 		}))
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.SilencesFilename, "lwEKhgEKAWESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8ClwEKhgEKAWISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCPuEkbAGEK3AhM8CIgwIi6GRsAYQrcCEzwIqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCIuhkbAGEK3AhM8C"))
-		require.NoError(t, kvStore.Set(ctx, 1, "alertmanager", notifier.NotificationLogFilename, "OAopCgZncm91cEESEgoJcmVjZWl2ZXJBEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAVOAopCgZncm91cEISEgoJcmVjZWl2ZXJCEgV0ZXN0MyoLCNmEkbAGEOzO0BUSCwjpoJGwBhDsztAV"))
 
 		// Both state and config should be updated when shutting the Alertmanager down.
 		moa.StopAndWait()
-		require.NotEqual(t, fakeAM.config, lastConfig)
-		require.NotEqual(t, fakeAM.state, lastState)
+		require.Eventually(t, func() bool {
+			return fakeAM.config != lastConfig && fakeAM.state != lastState
+		}, 15*time.Second, 300*time.Millisecond)
 	}
 }
 
