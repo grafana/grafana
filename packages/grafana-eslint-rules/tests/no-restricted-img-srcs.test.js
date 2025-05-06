@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/no-restricted-img-srcs */
 import { RuleTester } from 'eslint';
 
 import noRestrictedImgSrcs from '../rules/no-restricted-img-srcs.cjs';
@@ -51,6 +52,17 @@ const foo = checkbox128IconPng;`,
 const foo = 'public/build/img/checkbox-128-icon.png';`,
             },
           ],
+        },
+      ],
+    },
+    {
+      name: 'template literal',
+      code: `
+const isDark = true ? 'dark' : 'light';
+const foo = \`public/img/checkbox-128-icon-\${isDark}.png\`;`,
+      errors: [
+        {
+          messageId: 'publicImg',
         },
       ],
     },

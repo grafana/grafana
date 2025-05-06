@@ -1,4 +1,6 @@
 // @ts-check
+/** @typedef {import('@typescript-eslint/utils').TSESTree.Literal} Literal */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.TemplateLiteral} TemplateLiteral */
 const { getImageImportFixers, replaceWithPublicBuild } = require('./import-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -7,19 +9,29 @@ const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
 );
 
+const PUBLIC_IMG_DIR = 'public/img/';
+
 const imgSrcRule = createRule({
   create(context) {
     return {
-      Literal: function (node) {
+      /**
+       * @param {Literal|TemplateLiteral} node
+       */
+      'Literal, TemplateLiteral'(node) {
+        if (node.type === AST_NODE_TYPES.TemplateLiteral) {
+          if (node.quasis.some((quasi) => quasi.value.raw.includes(PUBLIC_IMG_DIR))) {
+            return context.report({
+              node,
+              messageId: 'publicImg',
+            });
+          }
+          return;
+        }
+
         const { value } = node;
 
-        if (
-          node.parent.type !== AST_NODE_TYPES.ImportDeclaration &&
-          value &&
-          typeof value === 'string' &&
-          value.includes('public/img/')
-        ) {
-          context.report({
+        if (value && typeof value === 'string' && value.includes(PUBLIC_IMG_DIR)) {
+          return context.report({
             node,
             messageId: 'publicImg',
             suggest: [
