@@ -40,9 +40,6 @@ jobs:
           runTests: false
       - name: Run dashboardNewLayouts e2e
         run: yarn e2e:dashboard-new-layouts
-
-      - name: Fail on purpose (for demo)
-        run: exit 1
       
       - name: Post PR comment on fail
         uses: actions/github-script@v7
