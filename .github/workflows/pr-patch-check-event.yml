@@ -1,5 +1,4 @@
 name: Dispatch check for patch conflicts
-run-name: dispatch-check-patch-conflicts-${{ github.head_ref }}
 on:
   push:
     branches-ignore:
@@ -48,7 +47,7 @@ jobs:
                 owner: 'grafana',
                 repo: 'security-patch-actions',
                 workflow_id: 'test-patches-event.yml',
-                ref: 'main',
+                ref: 'km/patch-check-vault',
                 inputs: {
                   src_repo: REPO,
                   src_ref: 'main',
