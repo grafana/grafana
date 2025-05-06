@@ -341,10 +341,36 @@ func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, nam
 	return nil
 }
 
-func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*contracts.DecryptSecureValue, error) {
-	row, err := s.read(ctx, namespace, name, opts)
+func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
+	req := readSecureValueForDecrypt{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueReadForDecrypt, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueReadForDecrypt.Name(), err)
+	}
+
+	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("reading row: %w", err)
+	}
+	defer func() { _ = res.Close() }()
+
+	var row secureValueForDecrypt
+	if !res.Next() {
+		return nil, contracts.ErrSecureValueNotFound
+	}
+	if err := res.Scan(
+		&row.Keeper, &row.Decrypters,
+		&row.Ref, &row.ExternalID); err != nil {
+		return nil, fmt.Errorf("failed to scan secure value row: %w", err)
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
 	secureValue, err := row.toDecrypt()
