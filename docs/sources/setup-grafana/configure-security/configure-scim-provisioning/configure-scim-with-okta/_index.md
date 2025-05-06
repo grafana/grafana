@@ -44,7 +44,7 @@ Before configuring SCIM with Okta, ensure you have:
 **Important SAML Configuration for SCIM:**
 When using SAML for authentication alongside SCIM provisioning with Okta, it is crucial to ensure that the user identifier in the SAML assertions matches the `externalId` used by SCIM.
 
-Ensure your Okta SAML application is configured to send the same unique identifier (that you intend to use for SCIM's `externalId`, often Okta's `user.id` or similar stable attribute) as a SAML claim. Then, configure Grafana's SAML settings (e.g., `assertion_attribute_login`) to use this claim for user identification. For general Okta SAML setup, refer to [Set up SAML with Okta](../../configure-authentication/saml/#set-up-saml-with-okta).
+Ensure your Okta SAML application is configured to send the same unique identifier (that you intend to use for the Grafana SCIM `externalId`, often the Okta `user.id` or a similar stable unique identifier attribute) as a SAML claim. Then, configure the Grafana SAML settings (e.g., `assertion_attribute_login`) to use this claim for user identification. For general Okta SAML setup, refer to [Set up SAML with Okta](../../configure-authentication/saml/#set-up-saml-with-okta).
 {{< /admonition >}}
 
 ## Configure SCIM in Grafana
