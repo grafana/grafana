@@ -151,6 +151,11 @@ func addUserMigrations(mg *Migrator) {
 		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid IS NULL;").
 		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid IS NULL;"))
 
+	mg.AddMigration("Make sure default admin has a uid", NewRawSQLMigration("").
+		SQLite("UPDATE user SET uid=printf('u%09d',id) WHERE uid = '' AND id = 1 ;").
+		Postgres("UPDATE `user` SET uid='u' || lpad('' || id::text,9,'0') WHERE uid = '' AND id = 1;").
+		Mysql("UPDATE user SET uid=concat('u',lpad(id,9,'0')) WHERE uid = '' AND id = 1;"))
+
 	mg.AddMigration("Add unique index user_uid", NewAddIndexMigration(userV2, &Index{
 		Cols: []string{"uid"}, Type: UniqueIndex,
 	}))
