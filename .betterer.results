@@ -554,13 +554,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
-    "packages/grafana-ui/src/components/Icon/utils.test.ts:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"]
-    ],
-    "packages/grafana-ui/src/components/Icon/utils.ts:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
     "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
@@ -806,19 +799,6 @@ exports[`better eslint`] = {
     "public/app/core/components/AccessControl/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"]
     ],
-    "public/app/core/components/AppChrome/News/NewsDrawer.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
-    "public/app/core/components/AppChrome/News/NewsWrapper.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
-    "public/app/core/components/BouncingLoader/BouncingLoader.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
-    "public/app/core/components/Branding/Branding.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"]
-    ],
     "public/app/core/components/DynamicImports/SafeDynamicImport.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -840,9 +820,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
-    ],
-    "public/app/core/components/Upgrade/UpgradeBox.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/core/config.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`Settings\`)", "0"],
@@ -953,18 +930,6 @@ exports[`better eslint`] = {
     "public/app/features/actions/ParamsEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/admin/LicenseChrome.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "2"]
-    ],
-    "public/app/features/admin/UpgradePage.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "2"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "3"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "4"]
-    ],
     "public/app/features/alerting/routes.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -1037,10 +1002,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/features/alerting/unified/components/receivers/grafanaAppReceivers/types.ts:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"]
-    ],
     "public/app/features/alerting/unified/components/rule-editor/AnnotationKeyInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -1055,18 +1016,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/alerting/unified/components/rule-editor/rule-types/GrafanaManagedAlert.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
-    "public/app/features/alerting/unified/components/rule-editor/rule-types/MimirOrLokiAlert.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
-    "public/app/features/alerting/unified/components/rule-editor/rule-types/MimirOrLokiRecordingRule.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
-    "public/app/features/alerting/unified/components/settings/InternalAlertmanager.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1086,9 +1035,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/types/receiver-form.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
-    ],
-    "public/app/features/alerting/unified/utils/datasource.ts:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/alerting/unified/utils/misc.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1373,9 +1319,6 @@ exports[`better eslint`] = {
     "public/app/features/dashboard/components/DashboardRow/DashboardRow.test.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
-    "public/app/features/dashboard/components/DashboardRow/DashboardRow.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
     "public/app/features/dashboard/components/DashboardRow/index.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`./DashboardRow\`)", "0"]
     ],
@@ -1419,10 +1362,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
-    ],
-    "public/app/features/dashboard/components/PublicDashboard/usePublicDashboardConfig.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"]
     ],
     "public/app/features/dashboard/components/SaveDashboard/SaveDashboardButton.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"],
@@ -1637,38 +1576,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
-    "public/app/features/datasources/state/buildCategories.ts:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "2"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "3"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "4"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "5"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "6"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "7"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "8"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "9"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "10"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "11"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "12"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "13"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "14"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "15"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "16"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "17"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "18"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "19"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "20"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "21"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "22"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "23"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "24"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "25"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "26"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "27"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "28"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "29"]
-    ],
     "public/app/features/datasources/state/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "1"],
@@ -1679,8 +1586,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/datasources/state/navModel.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
     "public/app/features/datasources/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1695,9 +1601,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dimensions/editors/ResourceDimensionEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/dimensions/editors/ResourcePicker.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/dimensions/editors/TextDimensionEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1738,9 +1641,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/dimensions/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/explore/RichHistory/RichHistoryCard.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/explore/TraceView/TraceView.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -1830,11 +1730,7 @@ exports[`better eslint`] = {
     ],
     "public/app/features/expressions/ExpressionDatasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
-      [0, 0, 0, "Do not use any type assertions.", "1"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "2"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "3"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "4"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "5"]
+      [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
     "public/app/features/expressions/guards.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1920,9 +1816,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/org/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/panel/components/PanelPluginError.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/panel/components/VizTypePicker/PanelTypeCard.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
@@ -2010,9 +1903,6 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"]
     ],
-    "public/app/features/provisioning/GettingStarted/GettingStarted.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
-    ],
     "public/app/features/provisioning/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -2084,9 +1974,6 @@ exports[`better eslint`] = {
     ],
     "public/app/features/serviceaccounts/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
-    ],
-    "public/app/features/teams/state/navModel.ts:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"]
     ],
     "public/app/features/teams/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2280,9 +2167,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not re-export imported variable (\`./OptionsPicker/OptionsPicker\`)", "0"]
     ],
     "public/app/features/variables/pickers/shared/VariableOptions.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "1"],
-      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "2"]
+      [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
     "public/app/features/variables/query/QueryVariableEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -3293,8 +3178,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/swagger/SwaggerPage.tsx:5381": [
-      [0, 0, 0, "Don\'t reference image sources from the public folder. Either use the build folder or import the image", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/swagger/index.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
