@@ -80,7 +80,7 @@ Configure the enterprise application in Azure AD to enable automated user and te
 
 {{< admonition type="note" >}}
 Only work email addresses are supported. Azure AD must be configured to use `emails[type eq "work"].value` for email mapping.
-The `externalId` attribute in Grafana is mandatory and is used by Azure AD to uniquely identify users and groups. You must map a **stable and unique identifier attribute from Azure AD** (for example, `objectId`) to Grafana's `externalId`.
+The `externalId` attribute in Grafana is mandatory. Azure AD uses this to uniquely identify users and groups. You must map an attribute from Azure AD to Grafana's `externalId`. This Azure AD attribute must be **a stable and a unique identifier for each individual user** (for example, Azure AD's `objectId` is commonly used for this purpose).
 {{< /admonition >}}
 
 Configure the following required attributes:
