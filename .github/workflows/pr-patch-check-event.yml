@@ -22,7 +22,7 @@ jobs:
       REPO: ${{ github.repository }}
       SENDER: ${{ github.event.sender.login }}
       SHA: ${{ github.sha }}
-      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
+      PR_COMMIT_SHA: ${{ github.event.push.head.sha }}
     runs-on: ubuntu-latest
     if: github.repository == 'grafana/grafana'
     steps:
