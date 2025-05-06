@@ -251,6 +251,7 @@ export function PanelChrome({
             truncate
             title={typeof title === 'string' ? title : undefined}
             id={panelTitleId}
+            data-testid={selectors.components.Panels.Panel.title}
           >
             {title}
           </Text>
@@ -372,7 +373,7 @@ export function PanelChrome({
         <div
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
-          data-testid="header-container"
+          data-testid={selectors.components.Panels.Panel.headerContainer}
           onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}
