@@ -2767,12 +2767,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "테마 변경... ",
+      "change-theme": "",
       "dark-theme": "다크",
-      "light-theme": "라이트"
+      "light-theme": "라이트",
+      "scopes": ""
     },
     "empty-state": {
       "message": "찾은 결과 없음"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "검색 또는 다음으로 건너뛰기..."
