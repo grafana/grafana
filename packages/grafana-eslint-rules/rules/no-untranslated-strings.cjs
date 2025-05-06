@@ -21,7 +21,7 @@ const createRule = ESLintUtils.RuleCreator(
 );
 
 /** @type {string[]} */
-const propsToCheck = ['label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
+const propsToCheck = ['content', 'label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
 
 /** @type {RuleDefinition} */
 const noUntranslatedStrings = createRule({

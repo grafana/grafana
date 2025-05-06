@@ -182,7 +182,7 @@ const styles = {
   scrollableLogRows: css({
     overflowY: 'auto',
     width: '100%',
-    maxHeight: '75vh',
+    maxHeight: '80vh',
   }),
   forwardedScrollableLogRows: css({
     overflowY: 'auto',

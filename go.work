@@ -30,12 +30,7 @@ use (
 	./pkg/semconv
 	./pkg/storage/unified/apistore
 	./pkg/storage/unified/resource
-	./pkg/util/xorm // skip:golangci-lint
 )
-
-// when we release xorm we would like to release it like github.com/grafana/grafana/pkg/util/xorm
-// but we don't want to change all the imports. so we use replace to handle this situation
-replace xorm.io/xorm => ./pkg/util/xorm
 
 replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.126.0
 
