@@ -286,7 +286,6 @@ module.exports = [
     },
     files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
     ignores: [
-      'public/app/extensions/**',
       'public/app/plugins/**',
       '**/*.story.tsx',
       '**/*.{test,spec}.{ts,tsx}',
