@@ -1,27 +1,16 @@
+import { mockLocalStorage } from './mocks';
 import { getPreviewToggle, setPreviewToggle } from './previewToggles';
 
-// Mock localStorage
-const storage = new Map<string, string>();
-
-const mockLocalStorage = {
-  getItem: (key: string) => storage.get(key) ?? null,
-  setItem: (key: string, value: string) => storage.set(key, value),
-  clear: () => storage.clear(),
-  removeItem: (key: string) => storage.delete(key),
-  key: () => null,
-  length: 0,
-};
-
-// Replace the global localStorage with our mock
+const localStorageMock = mockLocalStorage();
 Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
+  value: localStorageMock,
   writable: true,
 });
 
 describe('previewToggles', () => {
   beforeEach(() => {
     // Clear the localStorage mock before each test
-    storage.clear();
+    localStorageMock.clear();
   });
 
   describe('getPreviewToggle', () => {

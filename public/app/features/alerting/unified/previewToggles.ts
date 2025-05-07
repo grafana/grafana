@@ -2,10 +2,6 @@ import { FeatureToggles, Store } from '@grafana/data';
 
 type AlertingPreviewToggles = Pick<FeatureToggles, 'alertingListViewV2'>;
 
-const defaultPreviewToggles: AlertingPreviewToggles = {
-  alertingListViewV2: undefined,
-};
-
 const previewToggleStoreKey = 'grafana.alerting.previewToggles';
 
 /**
@@ -14,14 +10,14 @@ const previewToggleStoreKey = 'grafana.alerting.previewToggles';
  */
 export function getPreviewToggle(previewToggleName: keyof AlertingPreviewToggles): boolean | undefined {
   const previewStore = new Store();
-  const previewToggles = previewStore.getObject<AlertingPreviewToggles>(previewToggleStoreKey, defaultPreviewToggles);
+  const previewToggles = previewStore.getObject<AlertingPreviewToggles>(previewToggleStoreKey, {});
 
   return previewToggles[previewToggleName];
 }
 
 export function setPreviewToggle(previewToggleName: keyof AlertingPreviewToggles, value: boolean | undefined) {
   const previewStore = new Store();
-  const previewToggles = previewStore.getObject<AlertingPreviewToggles>(previewToggleStoreKey, defaultPreviewToggles);
+  const previewToggles = previewStore.getObject<AlertingPreviewToggles>(previewToggleStoreKey, {});
 
   previewToggles[previewToggleName] = value;
   previewStore.setObject(previewToggleStoreKey, previewToggles);

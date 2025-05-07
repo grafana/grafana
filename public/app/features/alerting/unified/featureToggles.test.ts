@@ -1,25 +1,20 @@
 import { config } from '@grafana/runtime';
 
 import { shouldUseAlertingListViewV2 } from './featureToggles';
+import { mockLocalStorage } from './mocks';
 import { setPreviewToggle } from './previewToggles';
 
-const storage = new Map<string, string>();
-
-const mockLocalStorage = {
-  getItem: (key: string) => storage.get(key) ?? null,
-  setItem: (key: string, value: string) => storage.set(key, value),
-  clear: () => storage.clear(),
-};
+const localStorageMock = mockLocalStorage();
 
 Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
+  value: localStorageMock,
   writable: true,
 });
 
 describe('featureToggles', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    storage.clear();
+    localStorageMock.clear();
     config.featureToggles = {};
   });
 
