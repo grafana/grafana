@@ -177,10 +177,10 @@ jobs:
         run: |
           LATEST_FLAG=""
           if [ "$LATEST" = "true" ]; then
-            LATEST_FLAG='-l "release/latest"'
+            LATEST_FLAG=(-l "release/latest")
           fi
           gh pr create \
-            $LATEST_FLAG \
+            "${LATEST_FLAG[@]}" \
             -l "no-changelog" \
             --dry-run="$DRY_RUN" \
             -B "$BRANCH" \
@@ -195,10 +195,10 @@ jobs:
         run: |
           LATEST_FLAG=""
           if [ "$LATEST" = "true" ]; then
-            LATEST_FLAG='-l "release/latest"'
+            LATEST_FLAG=(-l "release/latest")
           fi
           gh pr create \
-            $LATEST_FLAG \
+            "${LATEST_FLAG[@]}" \
             -l "product-approved" \
             -l "no-changelog" \
             --dry-run="$DRY_RUN" \
