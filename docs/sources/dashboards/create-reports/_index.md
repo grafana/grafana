@@ -82,6 +82,8 @@ refs:
 You can configure several elements of these reports and generate PDFs, CSV files, and embedded images.
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
 
+{{< figure src="screenshot-report-drawer.png" max-width="600px" alt="The open Schedule report drawer" >}}
+
 ## Requirements
 
 For Grafana Enterprise, the Reporting feature has the following requirements:
@@ -106,7 +108,7 @@ You can customize who can create reports with [role-based access control (RBAC)]
 When [RBAC](ref:rbac) is enabled, you need to have the relevant [permissions](ref:permission) to create and manage reports.
 Refer to specific guides to understand what permissions are required.
 
-## Create a report directly
+## Create a report
 
 The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page.
 
@@ -127,7 +129,7 @@ To create a report, follow these steps:
 1. Click the **Share** drop-down list in the top-right corner of the dashboard.
 1. Click **Schedule report**.
 
-    The **Schedule report** drawer opens.
+    The **Schedule report** drawer opens. Any other reports using this dashboard are listed in the drawer.
 
 1. Update the name of the report, if needed.
 
@@ -140,7 +142,10 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
-   - **Send preview** -
+   - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
+
+     {{< figure src="screenshot-send-preview.png" max-width="350px" alt="The Send preview modal" >}}
+
    - **Schedule report** - The report is sent according the schedule you've set.
    - **Save draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
 
@@ -153,6 +158,9 @@ To create a report, follow these steps:
 
 1. In the main menu, click **Dashboards > Reporting**.
 1. Click **+ Create a new report**.
+
+    The **Schedule report** drawer opens.
+
 1. Enter a name for the report.
 1. Expand and complete each section of the report, as needed:
    - [Dashboard](#1-dashboard)
@@ -161,9 +169,12 @@ To create a report, follow these steps:
    - [Recipients](#4-recipients)
    - [Attachments](#5-attachments)
 1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
-   - **Send preview**
+   - **Send preview** - Send a preview of the report to your desired recipient. You can choose to use the report recipients:
+
+     {{< figure src="screenshot-send-preview.png" max-width="350px" alt="The Send preview modal" >}}
+
    - **Schedule report** - The report is sent according the schedule you've set.
-   - **Save draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
+   - **Save draft** - Save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
 
    To delete the report draft, click the x at the top of the drawer without scheduling or saving the report as a draft. This action can't be reversed.
 
@@ -273,16 +284,16 @@ Enter the email addresses of the people or teams that you want to receive the re
 
 ### 5. Attachments
 
-At this step, select one or more report formatting options.
+At this step, select one or more report attachment options.
 You can select multiple options, but you must select _at least one_:
 
-- Attach the report as a PDF
-- [Attach a separate PDF of table data](#table-data-in-pdf) - Attach a separate PDF file to the report email for each table panel on the selected dashboard. Public preview only.
-- Attach a CSV file of table panel data - Attach a CSV file to the report email for each table panel on the selected dashboard.
+- **Attach the report as a PDF** -
+- **[Attach a separate PDF of table data](#table-data-in-pdf)** - Attach a separate PDF file to the report email for each table panel on the selected dashboard. Public preview only.
+- **Attach a CSV file of table panel data** - Attach a CSV file to the report email for each table panel on the selected dashboard.
 
 #### PDF format
 
-If you selected the PDF format option under the **Style the PDF** section, you can configure the following options:
+If you selected a PDF attachment, you can configure the following options:
 
 <!-- prettier-ignore-start -->
 
