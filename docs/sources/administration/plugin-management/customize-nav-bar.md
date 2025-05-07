@@ -25,7 +25,7 @@ You can change the location of your app plugin pages in two ways:
 
 ### 1. Move an Entire App Plugin to a Different Section
 
-To relocate an entire app plugin to a different navigation section, use the `navigation.app_sections` configuration in your grafana configuration file:
+To relocate an entire app plugin to a different navigation section, use the `navigation.app_sections` configuration in your Grafana configuration file:
 
 ```ini
 [navigation.app_sections]
