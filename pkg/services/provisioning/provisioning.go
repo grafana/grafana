@@ -166,8 +166,8 @@ type ProvisioningServiceImpl struct {
 	folderService                folder.Service
 	resourcePermissions          accesscontrol.ReceiverPermissionsService
 	tracer                       tracing.Tracer
-	onceInitProvisioners         sync.Once
 	dual                         dualwrite.Service
+	onceInitProvisioners         sync.Once
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
