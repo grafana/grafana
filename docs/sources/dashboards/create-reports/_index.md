@@ -106,15 +106,21 @@ You can customize who can create reports with [role-based access control (RBAC)]
 When [RBAC](ref:rbac) is enabled, you need to have the relevant [permissions](ref:permission) to create and manage reports.
 Refer to specific guides to understand what permissions are required.
 
-## Create a report
+## Create a report directly
 
 The report creation process is multi-step, but you don't need to complete these steps in order and you can skip steps by clicking a step name at the top of the page.
 
 You can also save the report as a draft at any step in the process:
 
-![Reporting wizard](/media/docs/grafana/dashboards/screenshot-reporting-wizard-v11.5.png)
+![Reporting wizard](/media/docs/grafana/dashboards/screenshot-reporting-wizard-v11.5.png) <!-- update screenshot -->
+
+You can create directly from a dashboard or from the Reporting page.
+Select one of the following tabs for directions on each option.
 
 To create a report, follow these steps:
+
+{{< tabs >}}
+{{< tab-content name="Create a report directly from a dashboard" >}}
 
 1. In the main menu, click **Dashboards > Reporting**.
 1. Click **+ Create a new report**.
@@ -128,6 +134,24 @@ To create a report, follow these steps:
    - **Send now** or **Schedule send** - The report is sent according the schedule you've set.
    - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
    - **Discard** - Delete the report draft. This action can't be reversed.
+
+{{< /tab-content >}}
+{{< tab-content name="Create a report from Reporting" >}}
+1. In the main menu, click **Dashboards > Reporting**.
+1. Click **+ Create a new report**.
+1. Complete the report steps, as needed:
+   - [Select dashboard](#1-select-dashboard)
+   - [Format report](#2-format-report)
+   - [Schedule](#3-schedule)
+   - [Share](#4-share)
+   - [Confirm](#5-confirm)
+1. Click one of the following buttons in the top-right corner of the screen:
+   - **Send now** or **Schedule send** - The report is sent according the schedule you've set.
+   - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
+   - **Discard** - Delete the report draft. This action can't be reversed.
+
+{{< /tab-content >}}
+{{< /tabs >}}
 
 ### 1. Select dashboard
 
