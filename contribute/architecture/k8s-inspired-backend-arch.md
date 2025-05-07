@@ -233,7 +233,7 @@ graph TB
 Both API styles will coexist for a while. How they interact depends on the specific resource and the stage of migration. The migration generally follows these steps per resource type:
 
 1. **Define schema:** Define the resource using CUE (Apps Approach). Introduce an Alpha version (`v1alpha1`).
-2. **Implement handlers:** Create Resource API handlers (CRUD) interacting with legacy storage. The initial goal is to mimic the behavior of the legacy API.
+2. **Implement handlers:** Create Resource API handlers (CRUD) interacting with legacy storage. The goal for the initial alpha version is to expose the current functionality of the legacy API through the new Resource API structure, using CUE for schema definition, rather than to undertake a full resource/data model redesign. 
 3. **Add feature flag:** Create a flag (e.g., `kubernetesClient<Resource>`), initially off.
 4. **Implement routing/translation:** Modify Legacy API handlers to check the flag and delegate calls to the Resource API or storage layer when active.
 5. **Testing & promotion (Beta):** Enable the flag by default after testing. Promote API to Beta (`v1beta1`). Beta APIs aim for stability but may have breaking changes following a deprecation policy.
