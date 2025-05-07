@@ -1,15 +1,13 @@
 // @ts-check
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Literal} Literal */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.TemplateLiteral} TemplateLiteral */
-const { getImageImportFixers, replaceWithPublicBuild } = require('./import-utils.cjs');
+const { getImageImportFixers, replaceWithPublicBuild, isInvalidImageLocation } = require('./import-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
 );
-
-const PUBLIC_IMG_DIR = 'public/img/';
 
 const imgSrcRule = createRule({
   create(context) {
@@ -19,7 +17,7 @@ const imgSrcRule = createRule({
        */
       'Literal, TemplateLiteral'(node) {
         if (node.type === AST_NODE_TYPES.TemplateLiteral) {
-          if (node.quasis.some((quasi) => quasi.value.raw.includes(PUBLIC_IMG_DIR))) {
+          if (node.quasis.some((quasi) => isInvalidImageLocation(quasi.value.raw))) {
             return context.report({
               node,
               messageId: 'publicImg',
@@ -30,20 +28,29 @@ const imgSrcRule = createRule({
 
         const { value } = node;
 
-        if (value && typeof value === 'string' && value.includes(PUBLIC_IMG_DIR)) {
+        if (value && typeof value === 'string' && isInvalidImageLocation(value)) {
+          const canUseBuildFolder = value.startsWith('public/img/');
+          /**
+           * @type {import('@typescript-eslint/utils/ts-eslint').SuggestionReportDescriptor<"publicImg" | "importImage" | "useBuildFolder">[]}
+           */
+          const suggestions = [
+            {
+              messageId: 'importImage',
+              fix: (fixer) => getImageImportFixers(fixer, node, context),
+            },
+          ];
+
+          if (canUseBuildFolder) {
+            suggestions.push({
+              messageId: 'useBuildFolder',
+              fix: (fixer) => replaceWithPublicBuild(fixer, node),
+            });
+          }
+
           return context.report({
             node,
             messageId: 'publicImg',
-            suggest: [
-              {
-                messageId: 'importImage',
-                fix: (fixer) => getImageImportFixers(fixer, node, context),
-              },
-              {
-                messageId: 'useBuildFolder',
-                fix: (fixer) => replaceWithPublicBuild(fixer, node),
-              },
-            ],
+            suggest: suggestions,
           });
         }
       },

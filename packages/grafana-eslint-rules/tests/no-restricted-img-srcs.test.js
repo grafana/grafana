@@ -30,6 +30,14 @@ import foo from 'img/checkbox.png';
 const bar = foo;
 `,
     },
+    {
+      name: 'plugin folder',
+      code: `const foo = 'public/plugins/foo/checkbox.png';`,
+    },
+    {
+      name: 'template literal',
+      code: `const foo = \`something else\``,
+    },
   ],
   invalid: [
     {
@@ -109,6 +117,22 @@ const bar = checkboxPng;`,
 import checkboxPng from 'img/checkbox.png';
 const foo = checkboxPng;
 const bar = 'public/build/img/checkbox.png';`,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'image elsewhere in public folder',
+      code: `const foo = 'public/app/plugins/datasource/alertmanager/img/logo.svg';`,
+      errors: [
+        {
+          messageId: 'publicImg',
+          suggestions: [
+            {
+              messageId: 'importImage',
+              output: `import logoSvg from 'app/plugins/datasource/alertmanager/img/logo.svg';
+const foo = logoSvg;`,
             },
           ],
         },

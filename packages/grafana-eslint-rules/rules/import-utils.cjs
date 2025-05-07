@@ -77,7 +77,20 @@ const replaceWithPublicBuild = (fixer, node) => {
   );
 };
 
+/**
+ * @param {string} value
+ */
+const isInvalidImageLocation = (value) => {
+  return (
+    value.startsWith('public/img/') ||
+    (!value.startsWith('public/build/') &&
+      !value.startsWith('public/plugins/') &&
+      /public.*(\.svg|\.png|\.jpg|\.jpeg|\.gif)$/.test(value))
+  );
+};
+
 module.exports = {
   getImageImportFixers,
   replaceWithPublicBuild,
+  isInvalidImageLocation,
 };
