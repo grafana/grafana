@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
@@ -51,6 +52,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 			},
 			updateCheckURL: updateCheckURL,
 			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			features:       &featuremgmt.FeatureManager{},
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -213,6 +215,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			tracer:         tracing.InitializeTracerForTest(),
 			updateCheckURL: updateCheckURL,
 			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			features:       &featuremgmt.FeatureManager{},
 		}
 
 		svc.instrumentedCheckForUpdates(context.Background())
