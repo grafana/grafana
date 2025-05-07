@@ -3,14 +3,10 @@
  */
 import { MergeDeep, MergeExclusive, OverrideProperties } from 'type-fest';
 
-import {
-  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisReceiverV0Alpha1Receiver as ContactPointV0Alpha1,
-  ComGithubGrafanaGrafanaAppsAlertingNotificationsPkgApisReceiverV0Alpha1Integration as IntegrationV0Alpha1,
-  ListReceiverApiResponse as ListReceiverApiResponsev0Alpha1,
-} from '../api/api.v0alpha1.gen';
+import { Receiver, ReceiverIntegration, ListReceiverApiResponse } from './api.gen';
 
 type GenericIntegration = OverrideProperties<
-  IntegrationV0Alpha1,
+  ReceiverIntegration,
   {
     settings: Record<string, unknown>;
   }
@@ -60,7 +56,7 @@ export type Integration = EmailIntegration | SlackIntegration | GenericIntegrati
 // Enhanced version of ContactPoint with typed integrations
 // ⚠️ MergeDeep does not check if the property you are overriding exists in the base type and there is no "DeepOverrideProperties" helper
 export type ContactPoint = MergeDeep<
-  ContactPointV0Alpha1,
+  Receiver,
   {
     spec: {
       integrations: Integration[];
@@ -68,8 +64,8 @@ export type ContactPoint = MergeDeep<
   }
 >;
 
-export type EnhancedListReceiverv0alpha1ApiResponse = OverrideProperties<
-  ListReceiverApiResponsev0Alpha1,
+export type EnhancedListReceiverApiResponse = OverrideProperties<
+  ListReceiverApiResponse,
   {
     items: ContactPoint[];
   }

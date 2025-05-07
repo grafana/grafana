@@ -37,7 +37,7 @@
   },
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "codegen": "concurrently --raw \"rtk-query-codegen-openapi ./scripts/codegen.*.ts\""
+    "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
@@ -45,7 +45,6 @@
     "@types/lodash": "^4",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
-    "concurrently": "^9.1.2",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "type-fest": "^4.40.0",
@@ -58,7 +57,7 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.7.0",
+    "@reduxjs/toolkit": "^2.8.0",
     "lodash": "^4.17.21"
   }
 }
