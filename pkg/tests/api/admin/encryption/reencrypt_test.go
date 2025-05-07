@@ -96,10 +96,11 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 // Setup function is supposed to create various secrets that are then
 // obtained via "secretsFunctions".
 // This test is quite generic so that it can be called from enterprise repository as well.
-func RunAdminApiReencryptTest(t *testing.T,
+func RunAdminApiReencryptTest(
+	t *testing.T,
 	setup func(t *testing.T, env *server.TestEnv, grafanaListenAddr string),
-	secretsFns map[string]func(t *testing.T, env *server.TestEnv) map[int]secret) {
-
+	secretsFns map[string]func(t *testing.T, env *server.TestEnv) map[int]secret,
+) {
 	dir, path := testinfra.CreateGrafDir(t, testinfra.GrafanaOpts{
 		APIServerStorageType: options.StorageTypeUnified,
 	})
