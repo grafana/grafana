@@ -2307,6 +2307,22 @@
     },
     {
       "metadata": {
+        "name": "newDataSourceConfigPageDesign",
+        "resourceVersion": "1750093814755",
+        "creationTimestamp": "2025-05-07T17:52:11Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-06-16 17:10:14.75552 +0000 UTC"
+        }
+      },
+      "spec": {
+        "description": "Enables new design for data source configuration pages",
+        "stage": "privatePreview",
+        "codeowner": "@grafana/partner-datasources",
+        "expression": "false"
+      }
+    },
+    {
+      "metadata": {
         "name": "newFiltersUI",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-08-30T12:48:13Z"

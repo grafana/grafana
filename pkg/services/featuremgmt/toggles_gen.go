@@ -938,4 +938,8 @@ const (
 	// FlagTabularNumbers
 	// Use fixed-width numbers globally in the UI
 	FlagTabularNumbers = "tabularNumbers"
+
+	// FlagNewDataSourceConfigPageDesign
+	// Enables new design for data source configuration pages
+	FlagNewDataSourceConfigPageDesign = "newDataSourceConfigPageDesign"
 )

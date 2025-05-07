@@ -1037,4 +1037,9 @@ export interface FeatureToggles {
   * @default true
   */
   tabularNumbers?: boolean;
+  /**
+  * Enables new design for data source configuration pages
+  * @default false
+  */
+  newDataSourceConfigPageDesign?: boolean;
 }

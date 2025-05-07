@@ -232,3 +232,4 @@ alertEnrichment,experimental,@grafana/alerting-squad,false,false,false
 alertingImportAlertmanagerAPI,experimental,@grafana/alerting-squad,false,false,false
 preferLibraryPanelTitle,privatePreview,@grafana/dashboards-squad,false,false,false
 tabularNumbers,GA,@grafana/grafana-frontend-platform,false,false,false
+newDataSourceConfigPageDesign,privatePreview,@grafana/partner-datasources,false,false,false
