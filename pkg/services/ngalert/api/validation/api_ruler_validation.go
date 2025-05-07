@@ -299,10 +299,10 @@ func validateKeepFiringForInterval(ruleNode *apimodels.PostableExtendedRuleNode)
 //   - == 0, returns nil (reset to default)
 //   - == nil && UID == "", returns nil (new rule)
 //   - == nil && UID != "", returns -1 (existing rule)
-func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int, error) {
+func validateMissingSeriesEvalsToResolve(ruleNode *apimodels.PostableExtendedRuleNode) (*int64, error) {
 	if ruleNode.GrafanaManagedAlert.MissingSeriesEvalsToResolve == nil {
 		if ruleNode.GrafanaManagedAlert.UID != "" {
-			return util.Pointer(-1), nil // will be patched later with the real value of the current version of the rule
+			return util.Pointer[int64](-1), nil // will be patched later with the real value of the current version of the rule
 		}
 		return nil, nil // if it's a new rule, use nil as the default
 	}
@@ -329,7 +329,9 @@ func ValidateRuleGroup(
 		return nil, errors.New("rule group name cannot be empty")
 	}
 
-	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength {
+	isNoGroupRuleGroup := ngmodels.IsNoGroupRuleGroup(ruleGroupConfig.Name)
+
+	if len(ruleGroupConfig.Name) > store.AlertRuleMaxRuleGroupNameLength && !isNoGroupRuleGroup {
 		return nil, fmt.Errorf("rule group name is too long. Max length is %d", store.AlertRuleMaxRuleGroupNameLength)
 	}
 
@@ -345,10 +347,16 @@ func ValidateRuleGroup(
 
 	// TODO should we validate that interval is >= cfg.MinInterval? Currently, we allow to save but fix the specified interval if it is < cfg.MinInterval
 
+	// If the rule group is reserved for no-group rules, we cannot have multiple rules in it.
+	if isNoGroupRuleGroup && len(ruleGroupConfig.Rules) > 1 {
+		return nil, fmt.Errorf("rule group %s is reserved for no-group rules and cannot be used for rule groups with multiple rules", ruleGroupConfig.Name)
+	}
+
 	result := make([]*ngmodels.AlertRuleWithOptionals, 0, len(ruleGroupConfig.Rules))
 	uids := make(map[string]int, cap(result))
 	for idx := range ruleGroupConfig.Rules {
-		rule, err := ValidateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, interval, orgId, namespaceUID, limits)
+		ruleInterval := time.Duration(ruleGroupConfig.Interval)
+		rule, err := ValidateRuleNode(&ruleGroupConfig.Rules[idx], ruleGroupConfig.Name, ruleInterval, orgId, namespaceUID, limits)
 		// TODO do not stop on the first failure but return all failures
 		if err != nil {
 			return nil, fmt.Errorf("invalid rule specification at index [%d]: %w", idx, err)

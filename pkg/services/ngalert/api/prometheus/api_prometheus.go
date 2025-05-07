@@ -30,7 +30,7 @@ import (
 
 type RuleStoreReader interface {
 	GetUserVisibleNamespaces(context.Context, int64, identity.Requester) (map[string]*folder.Folder, error)
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, string, error)
 }
 
 type RuleGroupAccessControlService interface {
@@ -241,7 +241,7 @@ type RuleGroupStatusesOptions struct {
 }
 
 type ListAlertRulesStore interface {
-	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, error)
+	ListAlertRules(ctx context.Context, query *ngmodels.ListAlertRulesQuery) (ngmodels.RulesGroup, string, error)
 }
 
 func (srv PrometheusSrv) RouteGetRuleStatuses(c *contextmodel.ReqContext) response.Response {
@@ -484,7 +484,7 @@ func PrepareRuleGroupStatuses(log log.Logger, store ListAlertRulesStore, opts Ru
 		RuleGroups:    ruleGroups,
 		ReceiverName:  receiverName,
 	}
-	ruleList, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
+	ruleList, _, err := store.ListAlertRules(opts.Ctx, &alertRuleQuery)
 	if err != nil {
 		ruleResponse.Status = "error"
 		ruleResponse.Error = fmt.Sprintf("failure getting rules: %s", err.Error())

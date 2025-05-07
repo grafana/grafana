@@ -139,7 +139,7 @@ func (st *Manager) Warm(ctx context.Context, orgReader OrgReader, rulesReader Ru
 		ruleCmd := ngModels.ListAlertRulesQuery{
 			OrgID: orgId,
 		}
-		alertRules, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
+		alertRules, _, err := rulesReader.ListAlertRules(ctx, &ruleCmd)
 		if err != nil {
 			logger.Error("Unable to fetch previous state", "error", err)
 		}
@@ -587,7 +587,7 @@ func (st *Manager) processMissingSeriesStates(logger log.Logger, evaluatedAt tim
 
 // stateIsStale determines whether the evaluation state is considered stale.
 // A state is considered stale if the data has been missing for at least missingSeriesEvalsToResolve evaluation intervals.
-func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64, missingSeriesEvalsToResolve int) bool {
+func stateIsStale(evaluatedAt time.Time, lastEval time.Time, intervalSeconds int64, missingSeriesEvalsToResolve int64) bool {
 	// If the last evaluation time equals the current evaluation time, the state is not stale.
 	if evaluatedAt.Equal(lastEval) {
 		return false
