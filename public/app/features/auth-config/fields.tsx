@@ -134,7 +134,7 @@ export const getSectionFields = (): Section => {
         fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
       },
       {
-        name: 'User mapping',
+        name: userMappingLabel,
         id: 'user',
         fields: [
           'roleAttributePath',
@@ -168,7 +168,7 @@ export const getSectionFields = (): Section => {
         fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
       },
       {
-        name: 'User mapping',
+        name: userMappingLabel,
         id: 'user',
         fields: [
           'roleAttributePath',

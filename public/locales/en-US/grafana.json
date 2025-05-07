@@ -2740,12 +2740,15 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Reset to default values"
       },
+      "disable": "Disable",
+      "disabling": "Disabling...",
       "discard": "Discard",
       "enabled-label-enabled": "Enabled",
       "label-enabled": "Enabled",
       "reset-configuration": "Are you sure you want to reset this configuration?",
       "reset-configuration-description": "After resetting these settings Grafana will use the provider configuration from the system (config file/environment variables) if any.",
       "save": "Save",
+      "save-and-enable": "Save and enable",
       "saving": "Saving...",
       "title-more-actions": "More actions",
       "title-reset": "Reset",

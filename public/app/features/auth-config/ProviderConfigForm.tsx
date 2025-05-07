@@ -22,7 +22,7 @@ import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';
 
 import { FieldRenderer } from './FieldRenderer';
-import { sectionFields } from './fields';
+import { getSectionFields } from './fields';
 import { SSOProvider, SSOProviderDTO } from './types';
 import { dataToDTO, dtoToData } from './utils/data';
 
@@ -49,7 +49,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const [isSaving, setIsSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
-  const sections = sectionFields[provider];
+  const sections = getSectionFields()[provider];
   const [resetConfig, setResetConfig] = useState(false);
 
   const additionalActionsMenu = (
@@ -211,7 +211,13 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
               onClick={() => onSaveAttempt(true)}
               variant={isEnabled ? 'secondary' : undefined}
             >
-              {isSaving ? (isEnabled ? 'Disabling...' : 'Saving...') : isEnabled ? 'Disable' : 'Save and enable'}
+              {isSaving
+                ? isEnabled
+                  ? t('auth-config.provider-config-form.disabling', 'Disabling...')
+                  : t('auth-config.provider-config-form.saving', 'Saving...')
+                : isEnabled
+                  ? t('auth-config.provider-config-form.disable', 'Disable')
+                  : t('auth-config.provider-config-form.save-and-enable', 'Save and enable')}
             </Button>
 
             <Button type={'submit'} disabled={isSaving} variant={'secondary'} onClick={() => onSaveAttempt(false)}>
