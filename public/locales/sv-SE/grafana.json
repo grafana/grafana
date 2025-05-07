@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Ändra tema ...",
+      "change-theme": "",
       "dark-theme": "Mörk",
-      "light-theme": "Ljus"
+      "light-theme": "Ljus",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Inga resultat hittades"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Sök eller hoppa till …"
@@ -4202,6 +4207,9 @@
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "",
       "text-options": ""
+    },
+    "textbox-variable-form": {
+      "label-value": ""
     },
     "title-field-label": {
       "title": ""
@@ -6020,6 +6028,10 @@
     },
     "log-labels-list": {
       "log-line": ""
+    },
+    "log-line": {
+      "show-less": "",
+      "show-more": ""
     },
     "log-line-menu": {
       "copy-link": "Kopiera länk till loggrad",
