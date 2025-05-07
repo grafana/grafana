@@ -251,7 +251,6 @@ export function PanelChrome({
             truncate
             title={typeof title === 'string' ? title : undefined}
             id={panelTitleId}
-            data-testid={selectors.components.Panels.Panel.title}
           >
             {title}
           </Text>
