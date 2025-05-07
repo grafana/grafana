@@ -18,6 +18,7 @@ use (
 	./apps/folder
 	./apps/investigations
 	./apps/playlist
+	./apps/authz
 	./pkg/aggregator
 	./pkg/apimachinery
 	./pkg/apis/secret // @grafana/grafana-operator-experience-squad
