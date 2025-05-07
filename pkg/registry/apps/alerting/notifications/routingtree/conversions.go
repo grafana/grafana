@@ -12,7 +12,7 @@ import (
 
 	promModel "github.com/prometheus/common/model"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	"github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -20,8 +20,8 @@ import (
 )
 
 func ConvertToK8sResource(orgID int64, r definitions.Route, version string, namespacer request.NamespaceMapper) (*model.RoutingTree, error) {
-	spec := model.Spec{
-		Defaults: model.RouteDefaults{
+	spec := model.RoutingTreeSpec{
+		Defaults: model.RoutingTreeRouteDefaults{
 			GroupBy:        r.GroupByStr,
 			GroupWait:      optionalPrometheusDurationToString(r.GroupWait),
 			GroupInterval:  optionalPrometheusDurationToString(r.GroupInterval),
@@ -49,15 +49,15 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 	return result, nil
 }
 
-func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
-	result := model.Route{
+func convertRouteToK8sSubRoute(r *definitions.Route) model.RoutingTreeRoute {
+	result := model.RoutingTreeRoute{
 		GroupBy:           r.GroupByStr,
 		MuteTimeIntervals: r.MuteTimeIntervals,
 		Continue:          r.Continue,
 		GroupWait:         optionalPrometheusDurationToString(r.GroupWait),
 		GroupInterval:     optionalPrometheusDurationToString(r.GroupInterval),
 		RepeatInterval:    optionalPrometheusDurationToString(r.RepeatInterval),
-		Routes:            make([]model.Route, 0, len(r.Routes)),
+		Routes:            make([]model.RoutingTreeRoute, 0, len(r.Routes)),
 	}
 	if r.Receiver != "" {
 		result.Receiver = util.Pointer(r.Receiver)
@@ -67,9 +67,9 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
 		keys := slices.Collect(maps.Keys(r.Match))
 		slices.Sort(keys)
 		for _, key := range keys {
-			result.Matchers = append(result.Matchers, model.Matcher{
+			result.Matchers = append(result.Matchers, model.RoutingTreeMatcher{
 				Label: key,
-				Type:  model.MatcherTypeEqual,
+				Type:  model.RoutingTreeMatcherTypeEqual,
 				Value: r.Match[key],
 			})
 		}
@@ -79,9 +79,9 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
 		keys := slices.Collect(maps.Keys(r.MatchRE))
 		slices.Sort(keys)
 		for _, key := range keys {
-			m := model.Matcher{
+			m := model.RoutingTreeMatcher{
 				Label: key,
-				Type:  model.MatcherTypeEqualRegex,
+				Type:  model.RoutingTreeMatcherTypeEqualRegex,
 			}
 			value, _ := r.MatchRE[key].MarshalYAML()
 			if s, ok := value.(string); ok {
@@ -92,16 +92,16 @@ func convertRouteToK8sSubRoute(r *definitions.Route) model.Route {
 	}
 
 	for _, m := range r.Matchers {
-		result.Matchers = append(result.Matchers, model.Matcher{
+		result.Matchers = append(result.Matchers, model.RoutingTreeMatcher{
 			Label: m.Name,
-			Type:  model.MatcherType(m.Type.String()),
+			Type:  model.RoutingTreeMatcherType(m.Type.String()),
 			Value: m.Value,
 		})
 	}
 	for _, m := range r.ObjectMatchers {
-		result.Matchers = append(result.Matchers, model.Matcher{
+		result.Matchers = append(result.Matchers, model.RoutingTreeMatcher{
 			Label: m.Name,
-			Type:  model.MatcherType(m.Type.String()),
+			Type:  model.RoutingTreeMatcherType(m.Type.String()),
 			Value: m.Value,
 		})
 	}
@@ -150,7 +150,7 @@ func convertToDomainModel(obj *model.RoutingTree) (definitions.Route, string, er
 	return result, obj.ResourceVersion, nil
 }
 
-func convertK8sSubRouteToRoute(r model.Route, path string) (definitions.Route, []error) {
+func convertK8sSubRouteToRoute(r model.RoutingTreeRoute, path string) (definitions.Route, []error) {
 	result := definitions.Route{
 		GroupByStr:        r.GroupBy,
 		MuteTimeIntervals: r.MuteTimeIntervals,
@@ -175,13 +175,13 @@ func convertK8sSubRouteToRoute(r model.Route, path string) (definitions.Route, [
 	for _, matcher := range r.Matchers {
 		var mt labels.MatchType
 		switch matcher.Type {
-		case model.MatcherTypeEqual:
+		case model.RoutingTreeMatcherTypeEqual:
 			mt = labels.MatchEqual
-		case model.MatcherTypeNotEqual:
+		case model.RoutingTreeMatcherTypeNotEqual:
 			mt = labels.MatchNotEqual
-		case model.MatcherTypeEqualRegex:
+		case model.RoutingTreeMatcherTypeEqualRegex:
 			mt = labels.MatchRegexp
-		case model.MatcherTypeNotEqualRegex:
+		case model.RoutingTreeMatcherTypeNotEqualRegex:
 			mt = labels.MatchNotRegexp
 		default:
 			errs = append(errs, fmt.Errorf("route '%s' has unsupported matcher type: %s", path, matcher.Type))
