@@ -15,14 +15,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 type mockPluginPreinstall struct {
-	plugininstaller.Preinstall
+	pluginupdatechecker.Preinstall
 }
 
 func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {

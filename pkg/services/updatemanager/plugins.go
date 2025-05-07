@@ -252,7 +252,7 @@ func (s *PluginsService) canUpdateLatest(plugin pluginstore.Plugin, gcomVersion 
 }
 
 func (s *PluginsService) canUpdateMinor(plugin pluginstore.Plugin, gcomVersion string) bool {
-	canUpdate := s.updateChecker.CanUpdateMinor(plugin.Info.Version, gcomVersion)
+	canUpdate := s.updateChecker.CanUpdate(plugin.Info.Version, gcomVersion, true)
 	if !canUpdate {
 		s.log.Info("Plugin can not be updated to minor version", "pluginID", plugin.ID, "from", plugin.Info.Version, "to", gcomVersion)
 	}

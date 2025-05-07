@@ -45,7 +45,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
@@ -115,7 +114,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				},
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
-			hs.pluginPreinstall = plugininstaller.ProvidePreinstall(hs.Cfg)
+			hs.pluginPreinstall = pluginupdatechecker.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -593,7 +592,7 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 }
 
 type mockPluginPreinstall struct {
-	plugininstaller.Preinstall
+	pluginupdatechecker.Preinstall
 }
 
 func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {

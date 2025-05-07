@@ -1,4 +1,4 @@
-package plugininstaller
+package pluginupdatechecker
 
 import "github.com/grafana/grafana/pkg/setting"
 

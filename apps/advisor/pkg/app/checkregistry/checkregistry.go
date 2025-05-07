@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
@@ -28,7 +27,7 @@ type Service struct {
 	pluginClient          plugins.Client
 	pluginRepo            repo.Service
 	updateChecker         pluginupdatechecker.PluginUpdateChecker
-	pluginPreinstall      plugininstaller.Preinstall
+	pluginPreinstall      pluginupdatechecker.Preinstall
 	managedPlugins        managedplugins.Manager
 	provisionedPlugins    provisionedplugins.Manager
 	ssoSettingsSvc        ssosettings.Service
@@ -37,7 +36,7 @@ type Service struct {
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	updateChecker pluginupdatechecker.PluginUpdateChecker,
-	pluginRepo repo.Service, pluginPreinstall plugininstaller.Preinstall, managedPlugins managedplugins.Manager,
+	pluginRepo repo.Service, pluginPreinstall pluginupdatechecker.Preinstall, managedPlugins managedplugins.Manager,
 	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service,
 ) *Service {
 	return &Service{
