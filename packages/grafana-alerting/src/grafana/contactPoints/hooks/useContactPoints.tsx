@@ -1,6 +1,6 @@
 import { fetchBaseQuery, TypedUseQueryHookResult } from '@reduxjs/toolkit/query/react';
 
-import { alertingAPIv0alpha1, type ListReceiverApiArg } from '../../api/v0alpha1/api.gen';
+import { alertingAPI, type ListReceiverApiArg } from '../../api/v0alpha1/api.gen';
 import type { EnhancedListReceiverApiResponse } from '../../api/v0alpha1/types';
 
 // this is a workaround for the fact that the generated types are not narrow enough
@@ -19,7 +19,7 @@ type EnhancedHookResult = TypedUseQueryHookResult<
  * It automatically uses the configured namespace for the query.
  */
 function useListContactPointsv0alpha1() {
-  return alertingAPIv0alpha1.useListReceiverQuery<EnhancedHookResult>({});
+  return alertingAPI.useListReceiverQuery<EnhancedHookResult>({});
 }
 
 export { useListContactPointsv0alpha1 };
