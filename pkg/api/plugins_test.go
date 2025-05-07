@@ -591,14 +591,6 @@ func (c *fakePluginClient) QueryData(ctx context.Context, req *backend.QueryData
 	return backend.NewQueryDataResponse(), nil
 }
 
-type mockPluginPreinstall struct {
-	pluginupdatechecker.Preinstall
-}
-
-func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
-	return false
-}
-
 func Test_PluginsList_AccessControl(t *testing.T) {
 	p1 := createPlugin(plugins.JSONData{
 		ID: "test-app", Type: "app", Name: "test-app",
@@ -660,7 +652,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 					nil, // plugins.Installer
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginupdatechecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -859,7 +851,7 @@ func Test_PluginsSettings(t *testing.T) {
 					&fakes.FakePluginInstaller{},
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginupdatechecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})

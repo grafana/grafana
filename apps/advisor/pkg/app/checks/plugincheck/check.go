@@ -3,7 +3,6 @@ package plugincheck
 import (
 	"context"
 	"fmt"
-	"log"
 	sysruntime "runtime"
 
 	"github.com/Masterminds/semver/v3"
@@ -68,7 +67,6 @@ func (c *check) Steps() []checks.Step {
 		},
 		&updateStep{
 			PluginRepo:    c.PluginRepo,
-			log:           log.New("advisor.check.plugin.update"),
 			updateChecker: c.updateChecker,
 		},
 	}
@@ -131,7 +129,6 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 
 type updateStep struct {
 	PluginRepo    repo.Service
-	log           log.Logger
 	updateChecker pluginupdatechecker.PluginUpdateChecker
 }
 

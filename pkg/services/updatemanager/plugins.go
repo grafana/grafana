@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/hashicorp/go-version"
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
@@ -226,37 +225,10 @@ func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugi
 	}
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
-		if s.updateStrategy == setting.PluginUpdateStrategyLatest {
-			return s.canUpdateLatest(plugin, gcomVersion)
-		}
-
-		if s.updateStrategy == setting.PluginUpdateStrategyMinor {
-			return s.canUpdateMinor(plugin, gcomVersion)
-		}
+		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
 	}
 
-	return s.canUpdateLatest(plugin, gcomVersion)
-}
-
-func (s *PluginsService) canUpdateLatest(plugin pluginstore.Plugin, gcomVersion string) bool {
-	ver1, err1 := version.NewVersion(plugin.Info.Version)
-	if err1 != nil {
-		return false
-	}
-	ver2, err2 := version.NewVersion(gcomVersion)
-	if err2 != nil {
-		return false
-	}
-
-	return ver1.LessThan(ver2)
-}
-
-func (s *PluginsService) canUpdateMinor(plugin pluginstore.Plugin, gcomVersion string) bool {
-	canUpdate := s.updateChecker.CanUpdate(plugin.Info.Version, gcomVersion, true)
-	if !canUpdate {
-		s.log.Info("Plugin can not be updated to minor version", "pluginID", plugin.ID, "from", plugin.Info.Version, "to", gcomVersion)
-	}
-	return canUpdate
+	return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, false)
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]pluginstore.Plugin) string {

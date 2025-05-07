@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -43,6 +43,7 @@ type Service struct {
 	pluginRepo      repo.Service
 	features        featuremgmt.FeatureToggles
 	failOnErr       bool
+	updateChecker   pluginupdatechecker.PluginUpdateChecker
 }
 
 func ProvideService(
@@ -52,6 +53,7 @@ func ProvideService(
 	promReg prometheus.Registerer,
 	pluginRepo repo.Service,
 	features featuremgmt.FeatureToggles,
+	updateChecker pluginupdatechecker.PluginUpdateChecker,
 ) (*Service, error) {
 	once.Do(func() {
 		promReg.MustRegister(installRequestCounter)
@@ -66,6 +68,7 @@ func ProvideService(
 		failOnErr:       !cfg.PreinstallPluginsAsync, // Fail on error if preinstall is synchronous
 		pluginRepo:      pluginRepo,
 		features:        features,
+		updateChecker:   updateChecker,
 	}
 	if !cfg.PreinstallPluginsAsync {
 		// Block initialization process until plugins are installed
@@ -108,34 +111,7 @@ func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion str
 		return false
 	}
 
-	// If we are already on the latest version, skip the installation
-	if info.Version == currentVersion {
-		s.log.Debug("Latest plugin already installed", "pluginId", pluginID, "version", info.Version)
-		return false
-	}
-
-	// If the latest version is a new major version, skip the installation
-	parsedLatestVersion, err := semver.NewVersion(info.Version)
-	if err != nil {
-		s.log.Error("Failed to parse latest version, skipping potential update", "pluginId", pluginID, "version", info.Version, "error", err)
-		return false
-	}
-	parsedCurrentVersion, err := semver.NewVersion(currentVersion)
-	if err != nil {
-		s.log.Error("Failed to parse current version, skipping potential update", "pluginId", pluginID, "version", currentVersion, "error", err)
-		return false
-	}
-	if parsedLatestVersion.Major() > parsedCurrentVersion.Major() {
-		s.log.Debug("New major version available, skipping update due to possible breaking changes", "pluginId", pluginID, "version", info.Version)
-		return false
-	}
-	if parsedCurrentVersion.Compare(parsedLatestVersion) >= 0 {
-		s.log.Debug("No update available", "pluginId", pluginID, "version", info.Version)
-		return false
-	}
-
-	// We should update the plugin
-	return true
+	return s.updateChecker.CanUpdate(pluginID, currentVersion, info.Version, true)
 }
 
 func (s *Service) installPlugins(ctx context.Context) error {
