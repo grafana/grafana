@@ -954,6 +954,64 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			identity:    &authn.Identity{AuthenticatedBy: login.SAMLAuthModule, AuthID: "1", ExternalUID: "incoming-uid"},
 			expectedErr: errUserExternalUIDMismatch,
 		},
+		{
+			desc: "it should skip ExternalUID validation for a SAML-provisioned user accessed by a non-SAML method with an empty incoming ExternalUID",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: true,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "saml-originated-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.GenericOAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "it should fail validation when a SAML-provisioned user is accessed by SAML with an empty incoming ExternalUID",
+			userSyncServiceSetup: func() *UserSync {
+				userSyncService := initUserSyncService()
+				userSyncService.allowNonProvisionedUsers = false
+				userSyncService.isUserProvisioningEnabled = true
+				userSyncService.userService = &usertest.FakeUserService{
+					ExpectedUser: &user.User{
+						ID:            1,
+						IsProvisioned: true,
+					},
+				}
+				userSyncService.authInfoService = &authinfotest.FakeService{
+					ExpectedUserAuth: &login.UserAuth{
+						UserId:      1,
+						AuthModule:  login.SAMLAuthModule,
+						AuthId:      "1",
+						ExternalUID: "saml-originated-uid",
+					},
+				}
+				return userSyncService
+			},
+			identity: &authn.Identity{
+				AuthenticatedBy: login.SAMLAuthModule,
+				AuthID:          "1",
+				ExternalUID:     "",
+			},
+			expectedErr: errUserExternalUIDMismatch.Errorf("the provisioned user.ExternalUID does not match the authinfo.ExternalUID"),
+		},
 	}
 
 	for _, tt := range tests {
