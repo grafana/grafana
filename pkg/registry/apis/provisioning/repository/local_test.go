@@ -23,9 +23,7 @@ import (
 
 func TestLocalResolver(t *testing.T) {
 	// Create a temporary directory structure
-	tempDir, err := os.MkdirTemp("", "repo-test-*")
-	require.NoError(t, err)
-	defer os.RemoveAll(tempDir)
+	tempDir := t.TempDir()
 
 	// Create directory structure with multiple levels
 	dirs := []string{
@@ -37,7 +35,7 @@ func TestLocalResolver(t *testing.T) {
 
 	for _, dir := range dirs {
 		dirPath := filepath.Join(tempDir, dir)
-		err := os.MkdirAll(dirPath, 0755)
+		err := os.MkdirAll(dirPath, 0750)
 		require.NoError(t, err)
 	}
 
