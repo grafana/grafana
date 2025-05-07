@@ -1,6 +1,5 @@
 import { PanelMenuItem, urlUtil, PluginExtensionLink } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
-import config from 'app/core/config';
 import { createErrorNotification } from 'app/core/copy/appNotification';
 import { t } from 'app/core/internationalization';
 import { notifyApp } from 'app/core/reducers/appNotification';
@@ -88,8 +87,7 @@ export function getPanelMenu(
 
   const onNavigateToExplore = (event: React.MouseEvent) => {
     event.preventDefault();
-    const openInNewWindow =
-      event.ctrlKey || event.metaKey ? (url: string) => window.open(`${config.appSubUrl}${url}`) : undefined;
+    const openInNewWindow = event.ctrlKey || event.metaKey ? (url: string) => window.open(url) : undefined;
     store.dispatch(
       navigateToExplore(panel, {
         timeRange: getTimeSrv().timeRange(),
