@@ -31,10 +31,10 @@ export const MuteTimingTimeInterval = () => {
       <>
         <p>
           <Trans i18nKey="alerting.mute-timing-time-interval.description">
-            A time interval is a definition for a moment in time. All fields are lists, and at least one list element
-            must be satisfied to match the field. If a field is left blank, any moment of time will match the field. For
-            an instant of time to match a complete time interval, all fields must match. A mute timing can contain
-            multiple time intervals.
+            A time interval item is a definition for a moment in time. All fields are lists, and at least one list
+            element must be satisfied to match the field. If a field is left blank, any moment of time will match the
+            field. For an instant of time to match a complete time interval, all fields must match. A time interval can
+            contain multiple time interval items.
           </Trans>
         </p>
         <Stack direction="column" gap={2}>
@@ -182,8 +182,8 @@ export const MuteTimingTimeInterval = () => {
           }}
           icon="plus"
         >
-          <Trans i18nKey="alerting.mute-timing-time-interval.add-another-time-interval">
-            Add another time interval
+          <Trans i18nKey="alerting.mute-timing-time-interval.add-another-time-interval-item">
+            Add another time interval item
           </Trans>
         </Button>
       </>

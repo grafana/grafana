@@ -6,7 +6,7 @@ import { Trans, t } from 'app/core/internationalization';
 export enum ProvisionedResource {
   ContactPoint = 'contact point',
   Template = 'template',
-  MuteTiming = 'mute timing',
+  MuteTiming = 'time interval',
   AlertRule = 'alert rule',
   RootNotificationPolicy = 'root notification policy',
 }

@@ -92,6 +92,21 @@ func TestUpdatePolicyTree(t *testing.T) {
 		require.ErrorIs(t, err, ErrRouteInvalidFormat)
 	})
 
+	t.Run("ErrValidation if referenced active time interval does not exist", func(t *testing.T) {
+		sut, store, _ := createNotificationPolicyServiceSut()
+		store.GetFn = func(ctx context.Context, orgID int64) (*legacy_storage.ConfigRevision, error) {
+			return &rev, nil
+		}
+		newRoute := definitions.Route{
+			Receiver: rev.Config.AlertmanagerConfig.Receivers[0].Name,
+			ActiveTimeIntervals: []string{
+				"not-existing",
+			},
+		}
+		_, _, err := sut.UpdatePolicyTree(context.Background(), orgID, newRoute, models.ProvenanceNone, defaultVersion)
+		require.ErrorIs(t, err, ErrRouteInvalidFormat)
+	})
+
 	t.Run("ErrValidation if root route has no receiver", func(t *testing.T) {
 		rev := getDefaultConfigRevision()
 		sut, store, _ := createNotificationPolicyServiceSut()

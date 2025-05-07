@@ -32,6 +32,7 @@ export function SimplifiedRouting() {
           selectedContactPoint: selectedContactPoint?.selectedContactPoint ?? '',
           routeSettings: {
             muteTimeIntervals: selectedContactPoint?.muteTimeIntervals ?? [],
+            activeTimeIntervals: selectedContactPoint?.activeTimeIntervals ?? [],
             overrideGrouping: selectedContactPoint?.overrideGrouping ?? false,
             groupBy: selectedContactPoint?.groupBy ?? [],
             overrideTimings: selectedContactPoint?.overrideTimings ?? false,

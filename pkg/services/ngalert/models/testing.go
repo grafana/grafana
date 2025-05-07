@@ -925,6 +925,10 @@ func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[Notif
 		c.MuteTimeIntervals = make([]string, len(ns.MuteTimeIntervals))
 		copy(c.MuteTimeIntervals, ns.MuteTimeIntervals)
 	}
+	if ns.ActiveTimeIntervals != nil {
+		c.ActiveTimeIntervals = make([]string, len(ns.ActiveTimeIntervals))
+		copy(c.ActiveTimeIntervals, ns.ActiveTimeIntervals)
+	}
 	for _, mutator := range mutators {
 		mutator(&c)
 	}
@@ -935,12 +939,13 @@ func CopyNotificationSettings(ns NotificationSettings, mutators ...Mutator[Notif
 func NotificationSettingsGen(mutators ...Mutator[NotificationSettings]) func() NotificationSettings {
 	return func() NotificationSettings {
 		c := NotificationSettings{
-			Receiver:          util.GenerateShortUID(),
-			GroupBy:           []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
-			GroupWait:         util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			GroupInterval:     util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			RepeatInterval:    util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
-			MuteTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
+			Receiver:            util.GenerateShortUID(),
+			GroupBy:             []string{model.AlertNameLabel, FolderTitleLabel, util.GenerateShortUID()},
+			GroupWait:           util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			GroupInterval:       util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			RepeatInterval:      util.Pointer(model.Duration(time.Duration(rand.Intn(100)+1) * time.Second)),
+			MuteTimeIntervals:   []string{util.GenerateShortUID(), util.GenerateShortUID()},
+			ActiveTimeIntervals: []string{util.GenerateShortUID(), util.GenerateShortUID()},
 		}
 		for _, mutator := range mutators {
 			mutator(&c)
@@ -999,6 +1004,12 @@ func (n NotificationSettingsMutators) WithGroupBy(groupBy ...string) Mutator[Not
 func (n NotificationSettingsMutators) WithMuteTimeIntervals(muteTimeIntervals ...string) Mutator[NotificationSettings] {
 	return func(ns *NotificationSettings) {
 		ns.MuteTimeIntervals = muteTimeIntervals
+	}
+}
+
+func (n NotificationSettingsMutators) WithActiveTimeIntervals(activeTimeIntervals ...string) Mutator[NotificationSettings] {
+	return func(ns *NotificationSettings) {
+		ns.ActiveTimeIntervals = activeTimeIntervals
 	}
 }
 

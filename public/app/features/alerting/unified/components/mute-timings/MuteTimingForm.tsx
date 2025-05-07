@@ -70,7 +70,7 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
   const formApi = useForm({ defaultValues, values: defaultValues });
   const updating = formApi.formState.isSubmitting;
 
-  const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'mute_timings' });
+  const returnLink = makeAMLink('/alerting/routes/', selectedAlertmanager!, { tab: 'time_intervals' });
 
   const onSubmit = async (values: MuteTimingFields) => {
     const interval = createMuteTiming(values);
@@ -88,13 +88,18 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
   };
 
   if (loading) {
-    return <LoadingPlaceholder text={t('alerting.mute-timing-form.text-loading-mute-timing', 'Loading mute timing')} />;
+    return (
+      <LoadingPlaceholder text={t('alerting.time-interval-form.text-loading-time-interval', 'Loading time interval')} />
+    );
   }
 
   if (showError) {
     return (
       <Alert
-        title={t('alerting.mute-timing-form.title-no-matching-mute-timing-found', 'No matching mute timing found')}
+        title={t(
+          'alerting.time-interval-form.title-no-matching-time-interval-found',
+          'No matching time interval found'
+        )}
       />
     );
   }
@@ -109,8 +114,8 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
               required
               label={t('alerting.mute-timing-form.label-name', 'Name')}
               description={t(
-                'alerting.mute-timing-form.description-unique-timing',
-                'A unique name for the mute timing'
+                'alerting.time-interval-form.description-unique-time-interval',
+                'A unique name for the time interval'
               )}
               invalid={!!formApi.formState.errors?.name}
               error={formApi.formState.errors.name?.message}
@@ -135,9 +140,9 @@ const MuteTimingForm = ({ muteTiming, showError, loading, provisioned, editMode 
               icon={updating ? 'spinner' : undefined}
             >
               {updating ? (
-                <Trans i18nKey="alerting.mute-timings.saving">Saving mute timing</Trans>
+                <Trans i18nKey="alerting.time-interval.saving">Saving time interval</Trans>
               ) : (
-                <Trans i18nKey="alerting.mute-timings.save">Save mute timing</Trans>
+                <Trans i18nKey="alerting.time-interval.save">Save time interval</Trans>
               )}
             </Button>
             <LinkButton type="button" variant="secondary" fill="outline" href={returnLink} disabled={updating}>

@@ -42,7 +42,7 @@ function EditMuteTimingPage() {
   return (
     <AlertmanagerPageWrapper
       navId="am-routes"
-      pageNav={{ id: 'alert-policy-edit', text: 'Edit mute timing' }}
+      pageNav={{ id: 'alert-policy-edit', text: 'Edit time interval' }}
       accessType="notification"
     >
       <EditTimingRoute />

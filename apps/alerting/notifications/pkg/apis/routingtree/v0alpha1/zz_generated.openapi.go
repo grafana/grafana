@@ -119,6 +119,20 @@ func schema_pkg_apis_routingtree_v0alpha1_Route(ref common.ReferenceCallback) co
 							},
 						},
 					},
+					"active_time_intervals": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"routes": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},

@@ -28,11 +28,12 @@ type ListNotificationSettingsQuery struct {
 type NotificationSettings struct {
 	Receiver string `json:"receiver"`
 
-	GroupBy           []string        `json:"group_by,omitempty"`
-	GroupWait         *model.Duration `json:"group_wait,omitempty"`
-	GroupInterval     *model.Duration `json:"group_interval,omitempty"`
-	RepeatInterval    *model.Duration `json:"repeat_interval,omitempty"`
-	MuteTimeIntervals []string        `json:"mute_time_intervals,omitempty"`
+	GroupBy             []string        `json:"group_by,omitempty"`
+	GroupWait           *model.Duration `json:"group_wait,omitempty"`
+	GroupInterval       *model.Duration `json:"group_interval,omitempty"`
+	RepeatInterval      *model.Duration `json:"repeat_interval,omitempty"`
+	MuteTimeIntervals   []string        `json:"mute_time_intervals,omitempty"`
+	ActiveTimeIntervals []string        `json:"active_time_intervals,omitempty"`
 }
 
 func (s *NotificationSettings) GetUID() string {
@@ -136,6 +137,9 @@ func (s *NotificationSettings) Equals(other *NotificationSettings) bool {
 	if !slices.Equal(s.MuteTimeIntervals, other.MuteTimeIntervals) {
 		return false
 	}
+	if !slices.Equal(s.ActiveTimeIntervals, other.ActiveTimeIntervals) {
+		return false
+	}
 	sGr := s.GroupBy
 	oGr := other.GroupBy
 	return slices.Equal(sGr, oGr)
@@ -143,7 +147,7 @@ func (s *NotificationSettings) Equals(other *NotificationSettings) bool {
 
 // IsAllDefault checks if the NotificationSettings object has all default values for optional fields (all except Receiver) .
 func (s *NotificationSettings) IsAllDefault() bool {
-	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0
+	return len(s.GroupBy) == 0 && s.GroupWait == nil && s.GroupInterval == nil && s.RepeatInterval == nil && len(s.MuteTimeIntervals) == 0 && len(s.ActiveTimeIntervals) == 0
 }
 
 // NewDefaultNotificationSettings creates a new default NotificationSettings with the specified receiver.
@@ -184,6 +188,9 @@ func (s *NotificationSettings) Fingerprint() data.Fingerprint {
 	writeDuration(s.GroupInterval)
 	writeDuration(s.RepeatInterval)
 	for _, interval := range s.MuteTimeIntervals {
+		writeString(interval)
+	}
+	for _, interval := range s.ActiveTimeIntervals {
 		writeString(interval)
 	}
 	return data.Fingerprint(h.Sum64())

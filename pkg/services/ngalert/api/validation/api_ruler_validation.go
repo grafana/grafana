@@ -7,6 +7,8 @@ import (
 	"strings"
 	"time"
 
+	prommodels "github.com/prometheus/common/model"
+
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	. "github.com/grafana/grafana/pkg/services/ngalert/api/compat"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
@@ -14,7 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/store"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	prommodels "github.com/prometheus/common/model"
 )
 
 type RuleLimits struct {
@@ -392,12 +393,13 @@ func ValidateRuleGroup(
 
 func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
 	s := ngmodels.NotificationSettings{
-		Receiver:          n.Receiver,
-		GroupBy:           n.GroupBy,
-		GroupWait:         n.GroupWait,
-		GroupInterval:     n.GroupInterval,
-		RepeatInterval:    n.RepeatInterval,
-		MuteTimeIntervals: n.MuteTimeIntervals,
+		Receiver:            n.Receiver,
+		GroupBy:             n.GroupBy,
+		GroupWait:           n.GroupWait,
+		GroupInterval:       n.GroupInterval,
+		RepeatInterval:      n.RepeatInterval,
+		MuteTimeIntervals:   n.MuteTimeIntervals,
+		ActiveTimeIntervals: n.ActiveTimeIntervals,
 	}
 
 	if err := s.Validate(); err != nil {

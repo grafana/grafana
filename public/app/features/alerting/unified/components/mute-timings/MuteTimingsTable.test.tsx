@@ -14,13 +14,13 @@ import { TIME_INTERVAL_UID_HAPPY_PATH } from '../../mocks/server/handlers/k8s/ti
 import { AlertmanagerProvider } from '../../state/AlertmanagerContext';
 import { GRAFANA_RULES_SOURCE_NAME } from '../../utils/datasource';
 
-import { MuteTimingsTable } from './MuteTimingsTable';
+import { TimeIntervalsTable } from './MuteTimingsTable';
 import { defaultConfig } from './mocks';
 
 const renderWithProvider = (alertManagerSource = GRAFANA_RULES_SOURCE_NAME) => {
   return render(
     <AlertmanagerProvider accessType={'notification'} alertmanagerSourceName={alertManagerSource}>
-      <MuteTimingsTable />
+      <TimeIntervalsTable />
     </AlertmanagerProvider>
   );
 };
@@ -92,14 +92,14 @@ describe('MuteTimingsTable', () => {
       expect(await screen.findByTestId('dynamic-table')).toBeInTheDocument();
 
       expect(await screen.findByText('Provisioned')).toBeInTheDocument();
-      expect(screen.queryByText(/no mute timings configured/i)).not.toBeInTheDocument();
-      expect(screen.queryByText(/you haven't created any mute timings yet/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/no time intervals configured/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/you haven't created any time in intervals yet/i)).not.toBeInTheDocument();
     });
 
     it('shows error when mute timings cannot load', async () => {
       setMuteTimingsListError();
       renderWithProvider();
-      expect(await screen.findByText(/error loading mute timings/i)).toBeInTheDocument();
+      expect(await screen.findByText(/error loading time intervals/i)).toBeInTheDocument();
     });
 
     it('deletes interval', async () => {
@@ -123,7 +123,7 @@ describe('MuteTimingsTable', () => {
     it('shows empty state when no mute timings are configured', async () => {
       setTimeIntervalsListEmpty();
       renderWithProvider();
-      expect(await screen.findByText(/you haven't created any mute timings yet/i)).toBeInTheDocument();
+      expect(await screen.findByText(/you haven't created any time intervals yet/i)).toBeInTheDocument();
     });
   });
 
