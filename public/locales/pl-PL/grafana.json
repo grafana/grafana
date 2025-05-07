@@ -2821,12 +2821,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Zmień motyw…",
+      "change-theme": "",
       "dark-theme": "Ciemny",
-      "light-theme": "Jasny"
+      "light-theme": "Jasny",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Brak wyników"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Wyszukaj lub przejdź do…"
