@@ -62,7 +62,8 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 }
 
 func (s *SecretService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
-	return s.secureValueMetadataStorage.Read(ctx, namespace, name)
+	// TODO: readopts
+	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 }
 
 func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace) (*secretv0alpha1.SecureValueList, error) {
@@ -137,7 +138,8 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 }
 
 func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
-	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name)
+	// TODO: readopts
+	sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 	if err != nil {
 		return fmt.Errorf("fetching secure value: %+w", err)
 	}

@@ -26,6 +26,8 @@ type Config struct {
 	BatchSize uint
 	// How long to wait for a request to fetch messages from the outbox queue
 	ReceiveTimeout time.Duration
+	// How often to poll the outbox queue for new messages
+	PollingInterval time.Duration
 }
 
 func NewWorker(
@@ -48,6 +50,9 @@ func NewWorker(
 
 // The main method to drive the worker
 func (w *Worker) ControlLoop(ctx context.Context) error {
+	t := time.NewTicker(w.config.PollingInterval)
+	defer t.Stop()
+
 	for {
 		select {
 		// If the context was canceled
@@ -56,7 +61,11 @@ func (w *Worker) ControlLoop(ctx context.Context) error {
 			return ctx.Err()
 
 		// Otherwise try to receive messages
-		default:
+		case <-t.C:
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+
 			w.receiveAndProcessMessages(ctx)
 		}
 	}
@@ -84,7 +93,7 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 }
 
 func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMessage) error {
-	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName)
+	keeperCfg, err := w.keeperMetadataStorage.GetKeeperConfig(ctx, message.Namespace, message.KeeperName, contracts.ReadOpts{ForUpdate: true})
 	if err != nil {
 		return fmt.Errorf("fetching keeper config: namespace=%+v keeperName=%+v %w", message.Namespace, message.KeeperName, err)
 	}

@@ -66,7 +66,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 	// The auth token will not necessarily have the permission to read the secure value metadata,
 	// but we still need to do it to inspect the `decrypters` field, hence the actual `authorize`
 	// function call happens after this.
-	sv, err := s.secureValueMetadataStorage.ReadForDecrypt(ctx, namespace, name)
+	sv, err := s.secureValueMetadataStorage.ReadForDecrypt(ctx, namespace, name, contracts.ReadOpts{})
 	if err != nil {
 		return "", contracts.ErrDecryptNotFound
 	}
@@ -76,7 +76,7 @@ func (s *decryptStorage) Decrypt(ctx context.Context, namespace xkube.Namespace,
 		return "", contracts.ErrDecryptNotAuthorized
 	}
 
-	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper)
+	keeperConfig, err := s.keeperMetadataStorage.GetKeeperConfig(ctx, namespace.String(), sv.Keeper, contracts.ReadOpts{})
 	if err != nil {
 		return "", contracts.ErrDecryptFailed
 	}

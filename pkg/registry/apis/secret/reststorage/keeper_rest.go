@@ -132,7 +132,8 @@ func (s *KeeperRest) Get(ctx context.Context, name string, options *metav1.GetOp
 		return nil, fmt.Errorf("missing namespace")
 	}
 
-	kp, err := s.storage.Read(ctx, xkube.Namespace(namespace), name)
+	// TODO: readopts
+	kp, err := s.storage.Read(ctx, xkube.Namespace(namespace), name, contracts.ReadOpts{})
 	if err != nil {
 		if errors.Is(err, contracts.ErrKeeperNotFound) {
 			return nil, s.resource.NewNotFound(name)
