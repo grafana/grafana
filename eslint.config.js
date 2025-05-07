@@ -101,9 +101,16 @@ module.exports = [
       'import/order': [
         'error',
         {
+          pathGroups: [
+            {
+              pattern: 'img/**',
+              group: 'internal',
+            },
+          ],
           groups: [['builtin', 'external'], 'internal', 'parent', 'sibling', 'index'],
           'newlines-between': 'always',
           alphabetize: { order: 'asc' },
+          pathGroupsExcludedImportTypes: ['builtin'],
         },
       ],
       'no-restricted-imports': [

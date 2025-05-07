@@ -33,6 +33,14 @@ You can enable feature toggles through configuration file or environment variabl
 For more information, refer to the [feature toggles documentation](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles).
 {{< /admonition >}}
 
+{{< admonition type="note" >}}
+**Important SAML and SCIM Configuration:**
+When using SAML for authentication alongside SCIM provisioning with Azure AD, it is crucial to correctly align user identifiers.
+For detailed information on why this is critical for security and how to configure it, refer to the main [SCIM provisioning documentation (../\_index.md#critical-aligning-saml-user-id-with-scim-externalid)](../_index.md#critical-aligning-saml-user-id-with-scim-externalid).
+
+Refer to the [SAML authentication with Azure AD documentation](../../configure-authentication/saml/#integrating-with-scim-provisioning) for specific instructions on how to configure SAML claims and Grafana SAML settings for your Azure AD SCIM setup.
+{{< /admonition >}}
+
 ## Prerequisites
 
 Before configuring SCIM with Azure AD, ensure you have:
@@ -70,24 +78,29 @@ Configure the enterprise application in Azure AD to enable automated user and te
 1. In the application overview, select **Provisioning**
 2. Click **+ New Configuration**
 3. Configure the following settings:
-   - **Tenant URL:** `https://{grafana_url}/scim`
+   - **Tenant URL:** `https://{your-grafana-domain}/apis/scim.grafana.app/v0alpha1/namespaces/stacks-{stack-id}`
+     Replace `{your-grafana-domain}` with your Grafana instance's domain (e.g., `your-stack.grafana.net` for Grafana Cloud or `grafana.yourcompany.com` for self-hosted instances). Replace `{stack-id}` with your Grafana Cloud stack ID.
    - **Secret Token:** Enter the service account token from Grafana
 4. Click **Test connection** to verify the configuration
 5. Click **Create** to save the settings
 
 ### Configure attribute mappings
 
+After setting the Tenant URL and Secret Token, navigate to the **Mappings** section within the same **Provisioning** settings in your Azure AD enterprise application. This is where you will define how Azure AD attributes correspond to the SCIM attributes for Grafana, including the mandatory `externalId`.
+
 {{< admonition type="note" >}}
 Only work email addresses are supported. Azure AD must be configured to use `emails[type eq "work"].value` for email mapping.
+The `externalId` attribute in Grafana is mandatory. Azure AD uses this to uniquely identify users and groups. You must map an attribute from Azure AD to the `externalId` attribute in Grafana. This Azure AD attribute must be **a stable and a unique identifier for each individual user** (for example, the `objectId` attribute in Azure AD is commonly used for this purpose).
 {{< /admonition >}}
 
 Configure the following required attributes:
 
-| Azure AD Attribute. | Grafana Attribute              |
+| Azure AD Attribute  | Grafana Attribute              |
 | ------------------- | ------------------------------ |
 | `userPrincipalName` | `userName`                     |
 | `mail`              | `emails[type eq "work"].value` |
 | `displayName`       | `displayName`                  |
+| `objectId`          | `externalId`                   |
 
 ### Enable provisioning
 
