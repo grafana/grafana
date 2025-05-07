@@ -65,7 +65,7 @@ func (s *listFormatValidation) Run(ctx context.Context, log logging.Logger, _ *a
 
 		currentSettingStr, ok := currentSettingValue.(string)
 		if !ok {
-			reportIssues = append(reportIssues, *checks.NewCheckReportFailure(
+			reportIssues = append(reportIssues, checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				s.ID(),
 				fmt.Sprintf("%s - Invalid type for '%s': expected string, got %T", login.GetAuthProviderLabel(setting.Provider), settingKey, currentSettingValue),
@@ -80,7 +80,7 @@ func (s *listFormatValidation) Run(ctx context.Context, log logging.Logger, _ *a
 
 		_, err := util.SplitStringWithError(currentSettingStr)
 		if err != nil {
-			reportIssues = append(reportIssues, *checks.NewCheckReportFailure(
+			reportIssues = append(reportIssues, checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				s.ID(),
 				fmt.Sprintf("%s - Invalid format for '%s': %s", login.GetAuthProviderLabel(setting.Provider), settingKey, currentSettingStr),

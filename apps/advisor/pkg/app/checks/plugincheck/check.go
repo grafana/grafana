@@ -122,7 +122,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 		return nil, nil
 	}
 	if i.Status == "deprecated" {
-		return []advisor.CheckReportFailure{*checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			p.Name,
@@ -194,7 +194,7 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 		return nil, nil
 	}
 	if hasUpdate(p, info) {
-		return []advisor.CheckReportFailure{*checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			p.Name,

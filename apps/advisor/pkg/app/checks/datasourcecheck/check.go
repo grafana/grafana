@@ -116,7 +116,7 @@ func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *ad
 	// Data source UID validation
 	err := util.ValidateUID(ds.UID)
 	if err != nil {
-		return []advisor.CheckReportFailure{*checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			fmt.Sprintf("%s (%s)", ds.Name, ds.UID),
@@ -184,7 +184,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 		} else {
 			log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
 		}
-		return []advisor.CheckReportFailure{*checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
@@ -244,7 +244,7 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 			})
 		}
 		// The plugin is not installed
-		return []advisor.CheckReportFailure{*checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
