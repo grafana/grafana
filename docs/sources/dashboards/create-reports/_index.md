@@ -172,9 +172,6 @@ To create a report, follow these steps:
 {{< /tab-content >}}
 {{< /tabs >}}
 
-<!-- after sending a preview, scheduling a report, and saving a draft, when i try to close the drawer, i get a changes will be discarded message -->
-<!-- three button menu on report isn't working -->
-
 ### 1. Dashboard
 
 At this step, select the dashboard or dashboards on which the report is based, as well as the variables and time ranges for those dashboards.
