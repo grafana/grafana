@@ -4,7 +4,7 @@ RoleBindingSpec: {
 	#Subject: {
 		// kind of the identity getting the permission
 		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
-		// uid of the resource (e.g: "fold1")
+		// uid of the identity
 		name: string
 	}
 	#RoleRef: {
