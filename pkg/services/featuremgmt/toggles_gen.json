@@ -1812,16 +1812,16 @@
     {
       "metadata": {
         "name": "logRequestsInstrumentedAsUnknown",
-        "resourceVersion": "1746651535573",
+        "resourceVersion": "1746651640866",
         "creationTimestamp": "2022-06-10T08:56:55Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-05-07 21:00:40.866696 +0000 UTC"
         }
       },
       "spec": {
         "description": "Logs the path for requests that are instrumented as unknown",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-backend-services-squad"
+        "codeowner": "@grafana/grafana-backend-group"
       }
     },
     {
@@ -3164,16 +3164,16 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1746651535573",
+        "resourceVersion": "1746651640866",
         "creationTimestamp": "2023-03-31T13:38:09Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-05-07 21:00:40.866696 +0000 UTC"
         }
       },
       "spec": {
         "description": "Writes error logs to the request logger",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-backend-services-squad",
+        "codeowner": "@grafana/grafana-backend-group",
         "hideFromAdminPage": true,
         "expression": "true"
       }

@@ -90,7 +90,7 @@ var (
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendServicesSquad,
+			Owner:       grafanaBackendGroup,
 		},
 		{
 			Name:              "grpcServer",
@@ -224,7 +224,7 @@ var (
 			Name:              "unifiedRequestLog",
 			Description:       "Writes error logs to the request logger",
 			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaBackendServicesSquad,
+			Owner:             grafanaBackendGroup,
 			Expression:        "true",
 			HideFromAdminPage: true,
 		},

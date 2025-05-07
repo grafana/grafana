@@ -8,7 +8,7 @@ featureHighlights,GA,@grafana/grafana-operator-experience-squad,false,false,fals
 storage,experimental,@grafana/search-and-storage,false,false,false
 correlations,GA,@grafana/dataviz-squad,false,false,false
 canvasPanelNesting,experimental,@grafana/dataviz-squad,false,false,true
-logRequestsInstrumentedAsUnknown,experimental,@grafana/grafana-backend-services-squad,false,false,false
+logRequestsInstrumentedAsUnknown,experimental,@grafana/grafana-backend-group,false,false,false
 grpcServer,preview,@grafana/search-and-storage,false,false,false
 cloudWatchCrossAccountQuerying,GA,@grafana/aws-datasources,false,false,false
 showDashboardValidationWarnings,experimental,@grafana/dashboards-squad,false,false,false
@@ -27,7 +27,7 @@ influxdbRunQueriesInParallel,privatePreview,@grafana/partner-datasources,false,f
 lokiLogsDataplane,experimental,@grafana/observability-logs,false,false,false
 dataplaneFrontendFallback,GA,@grafana/observability-metrics,false,false,true
 disableSSEDataplane,experimental,@grafana/observability-metrics,false,false,false
-unifiedRequestLog,GA,@grafana/grafana-backend-services-squad,false,false,false
+unifiedRequestLog,GA,@grafana/grafana-backend-group,false,false,false
 renderAuthJWT,preview,@grafana/sharing-squad,false,false,false
 refactorVariablesTimeRange,preview,@grafana/dashboards-squad,false,false,false
 faroDatasourceSelector,preview,@grafana/app-o11y,false,false,true
