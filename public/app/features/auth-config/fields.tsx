@@ -22,311 +22,387 @@ type Section = Record<
   }>
 >;
 
-export const sectionFields: Section = {
-  azuread: [
-    {
-      name: 'General settings',
-      id: 'general',
-      fields: [
-        'name',
-        'clientAuthentication',
-        'clientId',
-        'clientSecret',
-        'managedIdentityClientId',
-        'federatedCredentialAudience',
-        'scopes',
-        'authUrl',
-        'tokenUrl',
-        'allowSignUp',
-        'autoLogin',
-        'signoutRedirectUrl',
-      ],
-    },
-    {
-      name: 'User mapping',
-      id: 'user',
-      fields: ['roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
-    },
-    {
-      name: 'Extra security measures',
-      id: 'extra',
-      fields: [
-        'allowedOrganizations',
-        'allowedDomains',
-        'allowedGroups',
-        'forceUseGraphApi',
-        'usePkce',
-        'useRefreshToken',
-        'tlsSkipVerifyInsecure',
-        'tlsClientCert',
-        'tlsClientKey',
-        'tlsClientCa',
-      ],
-    },
-  ],
-  generic_oauth: [
-    {
-      name: 'General settings',
-      id: 'general',
-      fields: [
-        'name',
-        'clientId',
-        'clientSecret',
-        'authStyle',
-        'scopes',
-        'serverDiscoveryUrl',
-        'authUrl',
-        'tokenUrl',
-        'apiUrl',
-        'allowSignUp',
-        'autoLogin',
-        'signoutRedirectUrl',
-      ],
-    },
-    {
-      name: 'User mapping',
-      id: 'user',
-      fields: [
-        'nameAttributePath',
-        'loginAttributePath',
-        'emailAttributeName',
-        'emailAttributePath',
-        'idTokenAttributeName',
-        'roleAttributePath',
-        'roleAttributeStrict',
-        'orgMapping',
-        'orgAttributePath',
-        'allowAssignGrafanaAdmin',
-        'skipOrgRoleSync',
-      ],
-    },
-    {
-      name: 'Extra security measures',
-      id: 'extra',
-      fields: [
-        'allowedOrganizations',
-        'allowedDomains',
-        'defineAllowedGroups',
-        { name: 'allowedGroups', dependsOn: 'defineAllowedGroups' },
-        { name: 'groupsAttributePath', dependsOn: 'defineAllowedGroups' },
-        'defineAllowedTeamsIds',
-        { name: 'teamIds', dependsOn: 'defineAllowedTeamsIds' },
-        { name: 'teamsUrl', dependsOn: 'defineAllowedTeamsIds' },
-        { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
-        'usePkce',
-        'useRefreshToken',
-        'tlsSkipVerifyInsecure',
-        'tlsClientCert',
-        'tlsClientKey',
-        'tlsClientCa',
-      ],
-    },
-  ],
-  google: [
-    {
-      name: 'General settings',
-      id: 'general',
-      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
-    },
-    {
-      name: 'User mapping',
-      id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
-    },
-    {
-      name: 'Extra security measures',
-      id: 'extra',
-      fields: [
-        'validateHd',
-        'hostedDomain',
-        'allowedDomains',
-        'allowedGroups',
-        'usePkce',
-        'useRefreshToken',
-        'tlsSkipVerifyInsecure',
-        'tlsClientCert',
-        'tlsClientKey',
-        'tlsClientCa',
-      ],
-    },
-  ],
-  github: [
-    {
-      name: 'General settings',
-      id: 'general',
-      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
-    },
-    {
-      name: 'User mapping',
-      id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
-    },
-    {
-      name: 'Extra security measures',
-      id: 'extra',
-      fields: [
-        'allowedOrganizations',
-        'allowedDomains',
-        'teamIds',
-        'usePkce',
-        'useRefreshToken',
-        'tlsSkipVerifyInsecure',
-        'tlsClientCert',
-        'tlsClientKey',
-        'tlsClientCa',
-      ],
-    },
-  ],
-  gitlab: [
-    {
-      name: 'General settings',
-      id: 'general',
-      fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
-    },
-    {
-      name: 'User mapping',
-      id: 'user',
-      fields: ['roleAttributePath', 'roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
-    },
-    {
-      name: 'Extra security measures',
-      id: 'extra',
-      fields: [
-        'allowedDomains',
-        'allowedGroups',
-        'usePkce',
-        'useRefreshToken',
-        'tlsSkipVerifyInsecure',
-        'tlsClientCert',
-        'tlsClientKey',
-        'tlsClientCa',
-      ],
-    },
-  ],
-  okta: [
-    {
-      name: 'General settings',
-      id: 'general',
-      fields: [
-        'name',
-        'clientId',
-        'clientSecret',
-        'scopes',
-        'authUrl',
-        'tokenUrl',
-        'apiUrl',
-        'allowSignUp',
-        'autoLogin',
-        'signoutRedirectUrl',
-      ],
-    },
-    {
-      name: 'User mapping',
-      id: 'user',
-      fields: [
-        'roleAttributePath',
-        'roleAttributeStrict',
-        'orgMapping',
-        'orgAttributePath',
-        'allowAssignGrafanaAdmin',
-        'skipOrgRoleSync',
-      ],
-    },
-    {
-      name: 'Extra security measures',
-      id: 'extra',
-      fields: [
-        'allowedDomains',
-        'allowedGroups',
-        'usePkce',
-        'useRefreshToken',
-        'tlsSkipVerifyInsecure',
-        'tlsClientCert',
-        'tlsClientKey',
-        'tlsClientCa',
-      ],
-    },
-  ],
+export const getSectionFields = (): Section => {
+  const generalSettingsLabel = t('auth-config.fields.section-general-settings', 'General settings');
+  const userMappingLabel = t('auth-config.fields.section-user-mapping', 'User mapping');
+  const extraSecurityLabel = t('auth-config.fields.section-extra-security', 'Extra security measures');
+
+  return {
+    azuread: [
+      {
+        name: generalSettingsLabel,
+        id: 'general',
+        fields: [
+          'name',
+          'clientAuthentication',
+          'clientId',
+          'clientSecret',
+          'managedIdentityClientId',
+          'federatedCredentialAudience',
+          'scopes',
+          'authUrl',
+          'tokenUrl',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+        ],
+      },
+      {
+        name: userMappingLabel,
+        id: 'user',
+        fields: ['roleAttributeStrict', 'orgMapping', 'allowAssignGrafanaAdmin', 'skipOrgRoleSync'],
+      },
+      {
+        name: 'Extra security measures',
+        id: 'extra',
+        fields: [
+          'allowedOrganizations',
+          'allowedDomains',
+          'allowedGroups',
+          'forceUseGraphApi',
+          'usePkce',
+          'useRefreshToken',
+          'tlsSkipVerifyInsecure',
+          'tlsClientCert',
+          'tlsClientKey',
+          'tlsClientCa',
+        ],
+      },
+    ],
+    generic_oauth: [
+      {
+        name: generalSettingsLabel,
+        id: 'general',
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'authStyle',
+          'scopes',
+          'serverDiscoveryUrl',
+          'authUrl',
+          'tokenUrl',
+          'apiUrl',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+        ],
+      },
+      {
+        name: userMappingLabel,
+        id: 'user',
+        fields: [
+          'nameAttributePath',
+          'loginAttributePath',
+          'emailAttributeName',
+          'emailAttributePath',
+          'idTokenAttributeName',
+          'roleAttributePath',
+          'roleAttributeStrict',
+          'orgMapping',
+          'orgAttributePath',
+          'allowAssignGrafanaAdmin',
+          'skipOrgRoleSync',
+        ],
+      },
+      {
+        name: extraSecurityLabel,
+        id: 'extra',
+        fields: [
+          'allowedOrganizations',
+          'allowedDomains',
+          'defineAllowedGroups',
+          { name: 'allowedGroups', dependsOn: 'defineAllowedGroups' },
+          { name: 'groupsAttributePath', dependsOn: 'defineAllowedGroups' },
+          'defineAllowedTeamsIds',
+          { name: 'teamIds', dependsOn: 'defineAllowedTeamsIds' },
+          { name: 'teamsUrl', dependsOn: 'defineAllowedTeamsIds' },
+          { name: 'teamIdsAttributePath', dependsOn: 'defineAllowedTeamsIds' },
+          'usePkce',
+          'useRefreshToken',
+          'tlsSkipVerifyInsecure',
+          'tlsClientCert',
+          'tlsClientKey',
+          'tlsClientCa',
+        ],
+      },
+    ],
+    google: [
+      {
+        name: generalSettingsLabel,
+        id: 'general',
+        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+      },
+      {
+        name: 'User mapping',
+        id: 'user',
+        fields: [
+          'roleAttributePath',
+          'roleAttributeStrict',
+          'orgMapping',
+          'allowAssignGrafanaAdmin',
+          'skipOrgRoleSync',
+        ],
+      },
+      {
+        name: extraSecurityLabel,
+        id: 'extra',
+        fields: [
+          'validateHd',
+          'hostedDomain',
+          'allowedDomains',
+          'allowedGroups',
+          'usePkce',
+          'useRefreshToken',
+          'tlsSkipVerifyInsecure',
+          'tlsClientCert',
+          'tlsClientKey',
+          'tlsClientCa',
+        ],
+      },
+    ],
+    github: [
+      {
+        name: generalSettingsLabel,
+        id: 'general',
+        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+      },
+      {
+        name: 'User mapping',
+        id: 'user',
+        fields: [
+          'roleAttributePath',
+          'roleAttributeStrict',
+          'orgMapping',
+          'allowAssignGrafanaAdmin',
+          'skipOrgRoleSync',
+        ],
+      },
+      {
+        name: extraSecurityLabel,
+        id: 'extra',
+        fields: [
+          'allowedOrganizations',
+          'allowedDomains',
+          'teamIds',
+          'usePkce',
+          'useRefreshToken',
+          'tlsSkipVerifyInsecure',
+          'tlsClientCert',
+          'tlsClientKey',
+          'tlsClientCa',
+        ],
+      },
+    ],
+    gitlab: [
+      {
+        name: generalSettingsLabel,
+        id: 'general',
+        fields: ['name', 'clientId', 'clientSecret', 'scopes', 'allowSignUp', 'autoLogin', 'signoutRedirectUrl'],
+      },
+      {
+        name: userMappingLabel,
+        id: 'user',
+        fields: [
+          'roleAttributePath',
+          'roleAttributeStrict',
+          'orgMapping',
+          'allowAssignGrafanaAdmin',
+          'skipOrgRoleSync',
+        ],
+      },
+      {
+        name: extraSecurityLabel,
+        id: 'extra',
+        fields: [
+          'allowedDomains',
+          'allowedGroups',
+          'usePkce',
+          'useRefreshToken',
+          'tlsSkipVerifyInsecure',
+          'tlsClientCert',
+          'tlsClientKey',
+          'tlsClientCa',
+        ],
+      },
+    ],
+    okta: [
+      {
+        name: generalSettingsLabel,
+        id: 'general',
+        fields: [
+          'name',
+          'clientId',
+          'clientSecret',
+          'scopes',
+          'authUrl',
+          'tokenUrl',
+          'apiUrl',
+          'allowSignUp',
+          'autoLogin',
+          'signoutRedirectUrl',
+        ],
+      },
+      {
+        name: userMappingLabel,
+        id: 'user',
+        fields: [
+          'roleAttributePath',
+          'roleAttributeStrict',
+          'orgMapping',
+          'orgAttributePath',
+          'allowAssignGrafanaAdmin',
+          'skipOrgRoleSync',
+        ],
+      },
+      {
+        name: extraSecurityLabel,
+        id: 'extra',
+        fields: [
+          'allowedDomains',
+          'allowedGroups',
+          'usePkce',
+          'useRefreshToken',
+          'tlsSkipVerifyInsecure',
+          'tlsClientCert',
+          'tlsClientKey',
+          'tlsClientCa',
+        ],
+      },
+    ],
+  };
 };
+
+// These field names should not be translated because they refer to specific technical terminology.
+// We put them in variables so they can be referred to in otherwise translated descriptions and not
+// risk being translated.
+const clientIDField = 'Client ID';
+const clientSecretField = 'Client secret';
+const scopesField = 'Scopes';
+const openIDConnectDiscoveryField = 'OpenID Connect Discovery URL';
+const authURLField = 'Auth URL';
+const tokenURLField = 'Token URL';
+const apiURLField = 'API URL';
 
 /**
  * List all the fields that can be used in the form
  */
 export function fieldMap(provider: string): Record<string, FieldData> {
+  const orgMappingFieldName = t('auth-config.fields.organization-mapping-label', 'Organization mapping');
+  const orgAttributePathFieldName = t(
+    'auth-config.fields.organization-attribute-path-label',
+    'Organization attribute path'
+  );
+
+  const teamsURLFieldName = t('auth-config.fields.teams-url-label', 'Teams URL');
+  const teamIDsAttributePathFieldName = t(
+    'auth-config.fields.team-ids-attribute-path-label',
+    'Team IDs attribute path'
+  );
+
+  const allowedGroupsField = t('auth-config.fields.allowed-groups-label', 'Allowed groups');
+  const groupsAttributePathField = t('auth-config.fields.groups-attribute-path-label', 'Groups attribute path');
+  const teamIDsField = t('auth-config.fields.team-ids-label', 'Team IDs');
+
   return {
     clientAuthentication: {
-      label: 'Client authentication',
+      label: t('auth-config.fields.client-authentication-label', 'Client authentication'),
       type: 'select',
-      description: 'The client authentication method used to authenticate to the token endpoint.',
+      description: t(
+        'auth-config.fields.client-authentication-description',
+        'The client authentication method used to authenticate to the token endpoint.'
+      ),
       multi: false,
       options: clientAuthenticationOptions(provider),
       defaultValue: { value: 'none', label: 'None' },
       validation: {
         required: true,
-        message: 'This field is required',
+        message: t('auth-config.fields.required', 'This field is required'),
       },
     },
     clientId: {
-      label: 'Client Id',
+      label: clientIDField,
       type: 'text',
-      description: 'The client Id of your OAuth2 app.',
+      description: t('auth-config.fields.client-id-description', 'The {{ clientIDField }} of your OAuth2 app.', {
+        clientIDField,
+      }),
       validation: {
         required: true,
-        message: 'This field is required',
+        message: t('auth-config.fields.required', 'This field is required'),
       },
     },
     clientSecret: {
-      label: 'Client secret',
+      label: clientSecretField,
       type: 'secret',
-      description: 'The client secret of your OAuth2 app.',
+      description: t(
+        'auth-config.fields.client-secret-description',
+        'The {{ clientSecretField }} of your OAuth2 app.',
+        {
+          clientSecretField,
+        }
+      ),
     },
     managedIdentityClientId: {
-      label: 'FIC managed identity client Id',
+      label: t('auth-config.fields.managed-identity-client-id-label', 'FIC managed identity client Id'),
       type: 'text',
-      description: 'The managed identity client Id of the federated identity credential of your OAuth2 app.',
+      description: t(
+        'auth-config.fields.managed-identity-client-id-description',
+        'The managed identity client Id of the federated identity credential of your OAuth2 app.'
+      ),
     },
     federatedCredentialAudience: {
-      label: 'FIC audience',
+      label: t('auth-config.fields.federated-credential-audience-label', 'FIC audience'),
       type: 'text',
-      description: 'The audience of the federated identity credential of your OAuth2 app.',
+      description: t(
+        'auth-config.fields.federated-credential-audience-description',
+        'The audience of the federated identity credential of your OAuth2 app.'
+      ),
     },
     allowedOrganizations: {
-      label: 'Allowed organizations',
+      label: t('auth-config.fields.allowed-organizations-label', 'Allowed organizations'),
       type: 'select',
-      description:
-        'List of comma- or space-separated organizations. The user should be a member \n' +
-        'of at least one organization to log in.',
+      description: t(
+        'auth-config.fields.allowed-organizations-description',
+        'List of comma- or space-separated organizations. The user should be a member \nof at least one organization to log in.'
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
-      placeholder: 'Enter organizations (my-team, myteam...) and press Enter to add',
+      placeholder: t(
+        'auth-config.fields.allowed-organizations-placeholder',
+        'Enter organizations (my-team, myteam...) and press Enter to add'
+      ),
     },
     allowedDomains: {
-      label: 'Allowed domains',
+      label: t('auth-config.fields.allowed-domains-label', 'Allowed domains'),
       type: 'select',
-      description:
-        'List of comma- or space-separated domains. The user should belong to at least \n' + 'one domain to log in.',
+      description: t(
+        'auth-config.fields.allowed-domains-description',
+        'List of comma- or space-separated domains. The user should belong to at least \none domain to log in.'
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
     },
     authUrl: {
-      label: 'Auth URL',
+      label: authURLField,
       type: 'text',
-      description: 'The authorization endpoint of your OAuth2 provider.',
+      description: t('auth-config.fields.auth-url-description', 'The authorization endpoint of your OAuth2 provider.'),
       validation: {
         required: true,
         validate: (value) => {
           return isUrlValid(value);
         },
-        message: 'This field is required and must be a valid URL.',
+        message: t('auth-config.fields.auth-url-required', 'This field is required and must be a valid URL.'),
       },
     },
     authStyle: {
       label: 'Auth style',
       type: 'select',
-      description:
-        'It determines how "Client Id" and "Client secret" are sent to Oauth2 provider. Default is AutoDetect.',
+      description: t(
+        'auth-config.fields.auth-style-description',
+        'It determines how "Client Id" and "Client secret" are sent to Oauth2 provider. Default is AutoDetect.'
+      ),
       multi: false,
       options: [
         { value: 'AutoDetect', label: 'AutoDetect' },
@@ -336,27 +412,29 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
     },
     tokenUrl: {
-      label: 'Token URL',
+      label: tokenURLField,
       type: 'text',
-      description: 'The token endpoint of your OAuth2 provider.',
+      description: t('auth-config.fields.token-url-description', 'The token endpoint of your OAuth2 provider.'),
       validation: {
         required: true,
         validate: (value) => {
           return isUrlValid(value);
         },
-        message: 'This field is required and must be a valid URL.',
+        message: t('auth-config.fields.token-url-required', 'This field is required and must be a valid URL.'),
       },
     },
     scopes: {
-      label: 'Scopes',
+      label: scopesField,
       type: 'select',
-      description: 'List of comma- or space-separated OAuth2 scopes.',
+      description: t('auth-config.fields.scopes-description', 'List of comma- or space-separated {{ scopesField }}.', {
+        scopesField,
+      }),
       multi: true,
       allowCustomValue: true,
       options: [],
     },
     allowedGroups: {
-      label: 'Allowed groups',
+      label: allowedGroupsField,
       type: 'select',
       description: (
         <>
@@ -366,7 +444,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.allowed-groups-description-oauth',
-              'If you configure "Allowed groups", you must also configure "Groups attribute path".'
+              'If you configure "{{ allowedGroupsField }}", you must also configure "{{ groupsAttributePathField }}".',
+              { allowedGroupsField, groupsAttributePathField }
             )}
         </>
       ),
@@ -385,12 +464,18 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 }
                 return true;
               },
-              message: 'Allowed groups must be Object Ids.',
+              message: t(
+                'auth-config.fields.allowed-groups-object-ids',
+                '{{ allowedGroupsField }} must be {{ objectIDsField }}.',
+                {
+                  objectIDsField: 'Object IDs',
+                }
+              ),
             }
           : undefined,
     },
     apiUrl: {
-      label: 'API URL',
+      label: apiURLField,
       type: 'text',
       description: (
         <Trans i18nKey="auth-config.fields.api-url-description">
@@ -415,116 +500,158 @@ export function fieldMap(provider: string): Record<string, FieldData> {
 
           return true;
         },
-        message: 'This field must be a valid URL if set.',
+        message: t('auth-config.fields.api-url-required', 'This field must be a valid URL if set.'),
       },
     },
     roleAttributePath: {
-      label: 'Role attribute path',
-      description: 'JMESPath expression to use for Grafana role lookup.',
+      label: t('auth-config.fields.role-attribute-path-label', 'Role attribute path'),
+      description: t(
+        'auth-config.fields.role-attribute-path-description',
+        'JMESPath expression to use for Grafana role lookup.'
+      ),
       type: 'text',
       validation: {
         required: false,
       },
     },
     name: {
-      label: 'Display name',
-      description:
-        'Will be displayed on the login page as "Sign in with ...". Helpful if you use more than one identity providers or SSO protocols.',
+      label: t('auth-config.fields.display-name-label', 'Display name'),
+      description: t(
+        'auth-config.fields.display-name-description',
+        'Will be displayed on the login page as "Sign in with ...". Helpful if you use more than one identity providers or SSO protocols.'
+      ),
       type: 'text',
     },
     allowSignUp: {
-      label: 'Allow sign up',
-      description: 'If not enabled, only existing Grafana users can log in using OAuth.',
+      label: t('auth-config.fields.allow-sign-up-label', 'Allow sign up'),
+      description: t(
+        'auth-config.fields.allow-sign-up-description',
+        'If not enabled, only existing Grafana users can log in using OAuth.'
+      ),
       type: 'switch',
     },
     autoLogin: {
-      label: 'Auto login',
-      description: 'Log in automatically, skipping the login screen.',
+      label: t('auth-config.fields.auto-login-label', 'Auto login'),
+      description: t('auth-config.fields.auto-login-description', 'Log in automatically, skipping the login screen.'),
       type: 'switch',
     },
     signoutRedirectUrl: {
-      label: 'Sign out redirect URL',
-      description: 'The URL to redirect the user to after signing out from Grafana.',
+      label: t('auth-config.fields.signout-redirect-url-label', 'Sign out redirect URL'),
+      description: t(
+        'auth-config.fields.signout-redirect-url-description',
+        'The URL to redirect the user to after signing out from Grafana.'
+      ),
       type: 'text',
       validation: {
         required: false,
       },
     },
     emailAttributeName: {
-      label: 'Email attribute name',
-      description: 'Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.',
+      label: t('auth-config.fields.email-attribute-name-label', 'Email attribute name'),
+      description: t(
+        'auth-config.fields.email-attribute-name-description',
+        'Name of the key to use for user email lookup within the attributes map of OAuth2 ID token.'
+      ),
       type: 'text',
     },
     emailAttributePath: {
-      label: 'Email attribute path',
-      description: 'JMESPath expression to use for user email lookup from the user information.',
+      label: t('auth-config.fields.email-attribute-path-label', 'Email attribute path'),
+      description: t(
+        'auth-config.fields.email-attribute-path-description',
+        'JMESPath expression to use for user email lookup from the user information.'
+      ),
       type: 'text',
     },
     nameAttributePath: {
-      label: 'Name attribute path',
-      description:
-        'JMESPath expression to use for user name lookup from the user ID token. \n' +
-        'This name will be used as the user’s display name.',
+      label: t('auth-config.fields.name-attribute-path-label', 'Name attribute path'),
+      description: t(
+        'auth-config.fields.name-attribute-path-description',
+        "JMESPath expression to use for user name lookup from the user ID token. \nThis name will be used as the user's display name."
+      ),
       type: 'text',
     },
     loginAttributePath: {
-      label: 'Login attribute path',
-      description: 'JMESPath expression to use for user login lookup from the user ID token.',
+      label: t('auth-config.fields.login-attribute-path-label', 'Login attribute path'),
+      description: t(
+        'auth-config.fields.login-attribute-path-description',
+        'JMESPath expression to use for user login lookup from the user ID token.'
+      ),
       type: 'text',
     },
     idTokenAttributeName: {
-      label: 'ID token attribute name',
-      description: 'The name of the key used to extract the ID token from the returned OAuth2 token.',
+      label: t('auth-config.fields.id-token-attribute-name-label', 'ID token attribute name'),
+      description: t(
+        'auth-config.fields.id-token-attribute-name-description',
+        'The name of the key used to extract the ID token from the returned OAuth2 token.'
+      ),
       type: 'text',
     },
     roleAttributeStrict: {
-      label: 'Role attribute strict mode',
-      description: 'If enabled, denies user login if the Grafana role cannot be extracted using Role attribute path.',
+      label: t('auth-config.fields.role-attribute-strict-label', 'Role attribute strict mode'),
+      description: t(
+        'auth-config.fields.role-attribute-strict-description',
+        'If enabled, denies user login if the Grafana role cannot be extracted using Role attribute path.'
+      ),
       type: 'switch',
     },
     allowAssignGrafanaAdmin: {
-      label: 'Allow assign Grafana admin',
-      description: 'If enabled, it will automatically sync the Grafana server administrator role.',
+      label: t('auth-config.fields.allow-assign-grafana-admin-label', 'Allow assign Grafana admin'),
+      description: t(
+        'auth-config.fields.allow-assign-grafana-admin-description',
+        'If enabled, it will automatically sync the Grafana server administrator role.'
+      ),
       type: 'switch',
       hidden: !contextSrv.isGrafanaAdmin,
     },
     skipOrgRoleSync: {
-      label: 'Skip organization role sync',
-      description: 'Prevent synchronizing users’ organization roles from your IdP.',
+      label: t('auth-config.fields.skip-org-role-sync-label', 'Skip organization role sync'),
+      description: t(
+        'auth-config.fields.skip-org-role-sync-description',
+        "Prevent synchronizing users' organization roles from your IdP."
+      ),
       type: 'switch',
     },
     orgMapping: {
-      label: 'Organization mapping',
+      label: orgMappingFieldName,
       description: orgMappingDescription(provider),
       type: 'select',
       hidden: !contextSrv.isGrafanaAdmin,
       multi: true,
       allowCustomValue: true,
       options: [],
-      placeholder: 'Enter mappings (my-team:1:Viewer...) and press Enter to add',
+      placeholder: t(
+        'auth-config.fields.organization-mapping-placeholder',
+        'Enter mappings (my-team:1:Viewer...) and press Enter to add'
+      ),
     },
     orgAttributePath: {
-      label: 'Organization attribute path',
-      description:
-        'JMESPath expression to use for organization lookup. If you configure "Organization mapping", you must also configure "Organization attribute path".',
+      label: orgAttributePathFieldName,
+      description: t(
+        'auth-config.fields.organization-attribute-path-description',
+        'JMESPath expression to use for organization lookup. If you configure "{{ orgMappingFieldName }}", you must also configure "{{ orgAttributePathFieldName }}".',
+        { orgMappingFieldName, orgAttributePathFieldName }
+      ),
       type: 'text',
       hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
     },
     defineAllowedGroups: {
-      label: 'Define allowed groups',
+      label: t('auth-config.fields.define-allowed-groups-label', 'Define allowed groups'),
       type: 'switch',
     },
     defineAllowedTeamsIds: {
-      label: 'Define allowed teams ids',
+      label: t('auth-config.fields.define-allowed-teams-ids-label', 'Define allowed teams ids'),
       type: 'switch',
     },
     forceUseGraphApi: {
-      label: 'Force use Graph API',
-      description: "If enabled, Grafana will fetch the users' groups using the Microsoft Graph API.",
+      label: t('auth-config.fields.force-use-graph-api-label', 'Force use Graph API'),
+      description: t(
+        'auth-config.fields.force-use-graph-api-description',
+        "If enabled, Grafana will fetch the users' groups using the Microsoft Graph API."
+      ),
       type: 'checkbox',
     },
     usePkce: {
-      label: 'Use PKCE',
+      label: t('auth-config.fields.use-pkce-label', 'Use PKCE'),
       description: (
         <Trans i18nKey="auth-config.fields.use-pkce-description">
           If enabled, Grafana will use{' '}
@@ -537,55 +664,69 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'checkbox',
     },
     useRefreshToken: {
-      label: 'Use refresh token',
-      description:
-        'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.',
+      label: t('auth-config.fields.use-refresh-token-label', 'Use refresh token'),
+      description: t(
+        'auth-config.fields.use-refresh-token-description',
+        'If enabled, Grafana will fetch a new access token using the refresh token provided by the OAuth2 provider.'
+      ),
       type: 'checkbox',
     },
     tlsClientCa: {
-      label: 'TLS client ca',
-      description: 'The file path to the trusted certificate authority list. Is not applicable on Grafana Cloud.',
+      label: t('auth-config.fields.tls-client-ca-label', 'TLS client ca'),
+      description: t(
+        'auth-config.fields.tls-client-ca-description',
+        'The file path to the trusted certificate authority list. Is not applicable on Grafana Cloud.'
+      ),
       type: 'text',
       hidden: !config.localFileSystemAvailable,
     },
     tlsClientCert: {
-      label: 'TLS client cert',
-      description: 'The file path to the certificate. Is not applicable on Grafana Cloud.',
+      label: t('auth-config.fields.tls-client-cert-label', 'TLS client cert'),
+      description: t(
+        'auth-config.fields.tls-client-cert-description',
+        'The file path to the certificate. Is not applicable on Grafana Cloud.'
+      ),
       type: 'text',
       hidden: !config.localFileSystemAvailable,
     },
     tlsClientKey: {
-      label: 'TLS client key',
-      description: 'The file path to the key. Is not applicable on Grafana Cloud.',
+      label: t('auth-config.fields.tls-client-key-label', 'TLS client key'),
+      description: t(
+        'auth-config.fields.tls-client-key-description',
+        'The file path to the key. Is not applicable on Grafana Cloud.'
+      ),
       type: 'text',
       hidden: !config.localFileSystemAvailable,
     },
     tlsSkipVerifyInsecure: {
-      label: 'TLS skip verify',
-      description:
-        'If enabled, the client accepts any certificate presented by the server and any host \n' +
-        'name in that certificate. You should only use this for testing, because this mode leaves \n' +
-        'SSL/TLS susceptible to man-in-the-middle attacks.',
+      label: t('auth-config.fields.tls-skip-verify-label', 'TLS skip verify'),
+      description: t(
+        'auth-config.fields.tls-skip-verify-description',
+        'If enabled, the client accepts any certificate presented by the server and any host \nname in that certificate. You should only use this for testing, because this mode leaves \nSSL/TLS susceptible to man-in-the-middle attacks.'
+      ),
       type: 'switch',
     },
     groupsAttributePath: {
-      label: 'Groups attribute path',
-      description:
-        'JMESPath expression to use for user group lookup. If you configure "Allowed groups", \n' +
-        'you must also configure "Groups attribute path".',
+      label: groupsAttributePathField,
+      description: t(
+        'auth-config.fields.groups-attribute-path-description',
+        'JMESPath expression to use for user group lookup. If you configure "{{ allowedGroupsField }}", \nyou must also configure "{{ groupsAttributePathField }}".',
+        { allowedGroupsField, groupsAttributePathField }
+      ),
       type: 'text',
     },
     teamsUrl: {
-      label: 'Teams URL',
+      label: teamsURLFieldName,
       description: (
         <>
           <Trans i18nKey="auth-config.fields.teams-url-description">
-            The URL used to query for Team Ids. If not set, the default value is /teams.
+            The URL used to query for Team IDs. If not set, the default value is /teams.
           </Trans>{' '}
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.teams-url-description-oauth',
-              'If you configure "Teams URL", you must also configure "Team Ids attribute path".'
+              'If you configure "{{ teamsURLFieldName }}", you must also configure "{{ teamIDsAttributePathFieldName }}".',
+              { teamsURLFieldName, teamIDsAttributePathFieldName }
             )}
         </>
       ),
@@ -602,13 +743,20 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           }
           return result;
         },
-        message: 'This field must be set if Team Ids are configured and must be a valid URL.',
+        message: t(
+          'auth-config.fields.teams-url-required',
+          'This field must be set if {{ teamIDsField }} are configured and must be a valid URL.',
+          { teamIDsField }
+        ),
       },
     },
     teamIdsAttributePath: {
-      label: 'Team Ids attribute path',
-      description:
-        'The JMESPath expression to use for Grafana Team Id lookup within the results returned by the "Teams URL" endpoint.',
+      label: teamIDsAttributePathFieldName,
+      description: t(
+        'auth-config.fields.team-ids-attribute-path-description',
+        'The JMESPath expression to use for Grafana Team ID lookup within the results returned by the "{{ teamsURLFieldName }}" endpoint.',
+        { teamsURLFieldName }
+      ),
       type: 'text',
       validation: {
         validate: (value, formValues) => {
@@ -617,32 +765,36 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           }
           return true;
         },
-        message: 'This field must be set if Team Ids are configured.',
+        message: t(
+          'auth-config.fields.team-ids-attribute-path-required',
+          'This field must be set if {{ teamIDsField }} are configured.',
+          { teamIDsField }
+        ),
       },
     },
     teamIds: {
-      label: 'Team Ids',
+      label: teamIDsField,
       type: 'select',
       description: (
         <>
           {provider === 'github'
-            ? t('auth-config.fields.team-ids-github', 'Integer list of Team Ids.')
-            : t('auth-config.fields.team-ids-other', 'String list of Team Ids.')}{' '}
+            ? t('auth-config.fields.team-ids-github', 'Integer list of Team IDs.')
+            : t('auth-config.fields.team-ids-other', 'String list of Team IDs.')}{' '}
           <Trans i18nKey="auth-config.fields.team-ids-description">
             If set, the user must be a member of one of the given teams to log in.
           </Trans>{' '}
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.team-ids-description-oauth',
-              'If you configure "{{teamIds}}", you must also configure "{{teamsUrl}}" and "{{teamIdsAttributePath}}".',
-              { teamIds: 'Team Ids', teamsUrl: 'Teams URL', teamIdsAttributePath: 'Team Ids attribute path' }
+              'If you configure "{{teamIDsField}}", you must also configure "{{teamsURLFieldName}}" and "{{teamIDsAttributePathFieldName}}".',
+              { teamIDsField, teamsURLFieldName, teamIDsAttributePathFieldName }
             )}
         </>
       ),
       multi: true,
       allowCustomValue: true,
       options: [],
-      placeholder: 'Enter Team Ids and press Enter to add',
+      placeholder: t('auth-config.fields.team-ids-placeholder', 'Enter Team IDs and press Enter to add'),
       validation:
         provider === 'github'
           ? {
@@ -655,25 +807,33 @@ export function fieldMap(provider: string): Record<string, FieldData> {
                 }
                 return true;
               },
-              message: 'Team Ids must be numbers.',
+              message: t('auth-config.fields.team-ids-numbers', 'Team IDs must be numbers.'),
             }
           : undefined,
     },
     hostedDomain: {
-      label: 'Hosted domain',
-      description: 'The domain under which Grafana is hosted and accessible.',
+      label: t('auth-config.fields.hosted-domain-label', 'Hosted domain'),
+      description: t(
+        'auth-config.fields.hosted-domain-description',
+        'The domain under which Grafana is hosted and accessible.'
+      ),
       type: 'text',
     },
     validateHd: {
-      label: 'Validate hosted domain',
-      description:
-        'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.',
+      label: t('auth-config.fields.validate-hosted-domain-label', 'Validate hosted domain'),
+      description: t(
+        'auth-config.fields.validate-hosted-domain-description',
+        'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.'
+      ),
       type: 'checkbox',
     },
     serverDiscoveryUrl: {
-      label: 'OpenID Connect Discovery URL',
-      description:
-        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the Auth URL, Token URL and API URL fields.',
+      label: openIDConnectDiscoveryField,
+      description: t(
+        'auth-config.fields.server-discovery-url-description',
+        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the {{ authURLField }}, {{ tokenURLField }} and {{ apiURLField }} fields.',
+        { authURLField, tokenURLField, apiURLField }
+      ),
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
     },
@@ -688,24 +848,40 @@ function isNumeric(value: string) {
 function orgMappingDescription(provider: string): string {
   switch (provider) {
     case 'azuread':
-      return 'List of "<GroupID>:<OrgIdOrName>:<Role>" mappings.';
+      return t(
+        'auth-config.fields.org-mapping-description-azuread',
+        'List of "<GroupID>:<OrgIdOrName>:<Role>" mappings.'
+      );
     case 'github':
-      return 'List of "<GitHubTeamName>:<OrgIdOrName>:<Role>" mappings.';
+      return t(
+        'auth-config.fields.org-mapping-description-github',
+        'List of "<GitHubTeamName>:<OrgIdOrName>:<Role>" mappings.'
+      );
     case 'gitlab':
-      return 'List of "<GitlabGroupName>:<OrgIdOrName>:<Role>';
+      return t(
+        'auth-config.fields.org-mapping-description-gitlab',
+        'List of "<GitlabGroupName>:<OrgIdOrName>:<Role>" mappings.'
+      );
     case 'google':
-      return 'List of "<GoogleGroupName>:<OrgIdOrName>:<Role>';
+      return t(
+        'auth-config.fields.org-mapping-description-google',
+        'List of "<GoogleGroupName>:<OrgIdOrName>:<Role>" mappings.'
+      );
     default:
       // Generic OAuth, Okta
-      return 'List of "<ExternalName>:<OrgIdOrName>:<Role>" mappings.';
+      return t(
+        'auth-config.fields.org-mapping-description-generic',
+        'List of "<ExternalName>:<OrgIdOrName>:<Role>" mappings.'
+      );
   }
 }
 
 function clientAuthenticationOptions(provider: string): Array<SelectableValue<string>> {
+  // Other options are purposefully not translated
   switch (provider) {
     case 'azuread':
       return [
-        { value: 'none', label: 'None' },
+        { value: 'none', label: t('auth-config.fields.client-authentication-none', 'None') },
         { value: 'client_secret_post', label: 'Client secret' },
         { value: 'managed_identity', label: 'Managed identity' },
       ];
