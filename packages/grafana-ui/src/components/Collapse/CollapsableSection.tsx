@@ -142,6 +142,6 @@ const collapsableSectionStyles = (theme: GrafanaTheme2) => ({
   label: css({
     display: 'flex',
     fontWeight: theme.typography.fontWeightMedium,
-    color: theme.colors.text.maxContrast,
+    color: theme.colors.text.primary,
   }),
 });
