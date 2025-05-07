@@ -107,7 +107,7 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
   ];
 }
 
-function ModalEditor({ variable }: { variable: QueryVariable }) {
+export function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
 
   const onRunQuery = () => {
@@ -148,18 +148,18 @@ function ModalEditor({ variable }: { variable: QueryVariable }) {
   );
 }
 
-function Editor({ variable }: { variable: QueryVariable }) {
+export function Editor({ variable }: { variable: QueryVariable }) {
   const { datasource: datasourceRef, sort, refresh, query, regex } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
   const { value: dsConfig } = useAsync(async () => {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
-
+    
     if (!query && defaultQuery) {
-      const query =
+      const newQuery =
         typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };
-      onQueryChange(query);
+      onQueryChange(newQuery);
     }
 
     return { datasource, VariableQueryEditor };

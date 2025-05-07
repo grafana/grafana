@@ -13,13 +13,13 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
-import { QueryVariable, SceneVariable, TextBoxVariable } from '@grafana/scenes';
+import { QueryVariable, TextBoxVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { QueryVariableEditor, getQueryVariableOptions } from './QueryVariableEditor';
+import { QueryVariableEditor, getQueryVariableOptions, Editor } from './QueryVariableEditor';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -435,4 +435,35 @@ describe('QueryVariableEditor', () => {
 
     refreshOptionsSpy.mockRestore();
   });
+});
+
+describe('Editor', () => {
+  const variable = new QueryVariable({
+    datasource: {
+      uid: defaultDatasource.uid,
+      type: defaultDatasource.type,
+    },
+    query: '',
+    regex: '.*',
+  });
+
+  it('should update variable state when datasource is changed', async () => {
+    await act(async () => {
+      render(<Editor variable={variable} />);
+    });
+
+    const dataSourcePicker = screen.getByLabelText('Data source');
+    expect(dataSourcePicker).toBeInTheDocument();
+    
+    const user = userEvent.setup();
+    await user.click(dataSourcePicker);
+    await user.click(screen.getByText(/prom/i));
+    
+    await waitFor(async () => {
+      await lastValueFrom(variable.validateAndUpdate());
+    });
+    
+    expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
+  });
+  
 });
