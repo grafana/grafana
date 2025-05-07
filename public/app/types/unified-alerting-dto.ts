@@ -13,6 +13,7 @@ export enum PromAlertingRuleState {
   Inactive = 'inactive',
   Pending = 'pending',
   Recovering = 'recovering',
+  Unknown = 'unknown',
 }
 
 export enum GrafanaAlertState {
