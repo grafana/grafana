@@ -3599,6 +3599,13 @@
           "continue"
         ],
         "properties": {
+          "active_time_intervals": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
           "continue": {
             "type": "boolean",
             "default": false
