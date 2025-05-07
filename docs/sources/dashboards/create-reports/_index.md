@@ -236,7 +236,7 @@ Options vary depending on the frequency you select.
 
 <!-- prettier-ignore-end -->
 
-#### Time zone <!-- old heading: Report time zones -->
+#### Time zone
 
 Reports use the time zone of the dashboard from which they're generated.
 You can control the time zone for your reports by setting the dashboard to a specific time zone.
@@ -283,7 +283,7 @@ You can select multiple options, but you must select _at least one_:
 - [Attach a separate PDF of table data](#table-data-in-pdf) - Attach a separate PDF file to the report email for each table panel on the selected dashboard. Public preview only.
 - Attach a CSV file of table panel data - Attach a CSV file to the report email for each table panel on the selected dashboard.
 
-#### PDF format <!-- previous heading: Attach the report as a PDF -->
+#### PDF format
 
 If you selected the PDF format option under the **Style the PDF** section, you can configure the following options:
 
@@ -311,10 +311,6 @@ If you selected the PDF format option under the **Style the PDF** section, you c
 | Grid   | Landscape   | Generates an A4 page in landscape mode with panels arranged in the same way as in the original dashboard. | {{< figure src="/static/img/docs/enterprise/reports_grid_landscape_preview.png" max-width="500px" alt="Grid layout in landscape" >}}                  |
 
 <!-- prettier-ignore-end -->
-
-<!-- Removed headings 
-Embed a dashboard as an image in the email
-Attach a CSV file of the table panel data -->
 
 #### Table data in PDF
 
