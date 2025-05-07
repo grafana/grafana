@@ -104,26 +104,18 @@ function getGlobalActions(): CommandPaletteAction[] {
 
   if (process.env.NODE_ENV === 'development') {
     // eslint-disable @grafana/no-untranslated-strings
+    const section = 'Dev tooling';
     const currentState = currentMockApiState();
     const mockApiAction = currentState ? 'Disable' : 'Enable';
-    actions.push(
-      {
-        id: 'preferences/dev',
-        name: 'Dev tooling...',
-        keywords: 'dev preferences tooling',
-        section: 'Tooling',
-        priority: PREFERENCES_PRIORITY,
-      },
-      {
-        id: 'preferences/dev/toggle-mock-api',
-        name: `${mockApiAction} Mock API worker and reload`,
-        subtitle: 'Intercepts requests and returns mock data using MSW',
-        keywords: 'mock api',
-        parent: 'preferences/dev',
-        priority: PREFERENCES_PRIORITY,
-        perform: toggleMockApiAndReload,
-      }
-    );
+    actions.push({
+      id: 'preferences/dev/toggle-mock-api',
+      section,
+      name: `${mockApiAction} Mock API worker and reload`,
+      subtitle: 'Intercepts requests and returns mock data using MSW',
+      keywords: 'mock api',
+      priority: PREFERENCES_PRIORITY,
+      perform: toggleMockApiAndReload,
+    });
     // eslint-enable @grafana/no-untranslated-strings
   }
 
