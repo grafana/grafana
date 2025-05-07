@@ -46,6 +46,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pipeline"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginconfig"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
@@ -54,7 +55,6 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	pluginSettings "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings/service"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/renderer"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/serviceregistration"
@@ -129,12 +129,12 @@ var WireSet = wire.NewSet(
 	wire.Bind(new(plugincontext.BasePluginContextProvider), new(*plugincontext.BaseProvider)),
 	plugininstaller.ProvideService,
 	pluginassets.ProvideService,
-	pluginupdatechecker.ProvidePreinstall,
-	wire.Bind(new(pluginupdatechecker.Preinstall), new(*pluginupdatechecker.PreinstallImpl)),
+	pluginchecker.ProvidePreinstall,
+	wire.Bind(new(pluginchecker.Preinstall), new(*pluginchecker.PreinstallImpl)),
 	advisor.ProvideService,
 	wire.Bind(new(advisor.AdvisorStats), new(*advisor.Service)),
-	pluginupdatechecker.ProvideService,
-	wire.Bind(new(pluginupdatechecker.PluginUpdateChecker), new(*pluginupdatechecker.Service)),
+	pluginchecker.ProvideService,
+	wire.Bind(new(pluginchecker.PluginUpdateChecker), new(*pluginchecker.Service)),
 )
 
 // WireExtensionSet provides a wire.ProviderSet of plugin providers that can be

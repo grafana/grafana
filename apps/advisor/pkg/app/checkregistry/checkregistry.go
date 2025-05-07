@@ -9,9 +9,9 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugincontext"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
@@ -26,8 +26,8 @@ type Service struct {
 	pluginContextProvider *plugincontext.Provider
 	pluginClient          plugins.Client
 	pluginRepo            repo.Service
-	updateChecker         pluginupdatechecker.PluginUpdateChecker
-	pluginPreinstall      pluginupdatechecker.Preinstall
+	updateChecker         pluginchecker.PluginUpdateChecker
+	pluginPreinstall      pluginchecker.Preinstall
 	managedPlugins        managedplugins.Manager
 	provisionedPlugins    provisionedplugins.Manager
 	ssoSettingsSvc        ssosettings.Service
@@ -35,8 +35,8 @@ type Service struct {
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
-	updateChecker pluginupdatechecker.PluginUpdateChecker,
-	pluginRepo repo.Service, pluginPreinstall pluginupdatechecker.Preinstall, managedPlugins managedplugins.Manager,
+	updateChecker pluginchecker.PluginUpdateChecker,
+	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
 	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service,
 ) *Service {
 	return &Service{

@@ -44,10 +44,10 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginerrs"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginsettings"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/secrets/kvstore"
 	"github.com/grafana/grafana/pkg/services/updatemanager"
@@ -114,7 +114,7 @@ func Test_PluginsInstallAndUninstall(t *testing.T) {
 				},
 			})
 			hs.managedPluginsService = managedplugins.NewNoop()
-			hs.pluginPreinstall = pluginupdatechecker.ProvidePreinstall(hs.Cfg)
+			hs.pluginPreinstall = pluginchecker.ProvidePreinstall(hs.Cfg)
 
 			expectedIdentity := &authn.Identity{
 				OrgID:       tc.permissionOrg,
@@ -652,7 +652,7 @@ func Test_PluginsList_AccessControl(t *testing.T) {
 					nil, // plugins.Installer
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginupdatechecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})
@@ -851,7 +851,7 @@ func Test_PluginsSettings(t *testing.T) {
 					&fakes.FakePluginInstaller{},
 					tracing.InitializeTracerForTest(),
 					kvstore.NewFakeFeatureToggles(t, true),
-					pluginupdatechecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginupdatechecker.FakePluginPreinstall{}),
+					pluginchecker.ProvideService(hs.managedPluginsService, provisionedplugins.NewNoop(), &pluginchecker.FakePluginPreinstall{}),
 				)
 				require.NoError(t, err)
 			})

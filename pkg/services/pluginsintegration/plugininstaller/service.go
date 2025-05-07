@@ -12,8 +12,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
 )
@@ -43,7 +43,7 @@ type Service struct {
 	pluginRepo      repo.Service
 	features        featuremgmt.FeatureToggles
 	failOnErr       bool
-	updateChecker   pluginupdatechecker.PluginUpdateChecker
+	updateChecker   pluginchecker.PluginUpdateChecker
 }
 
 func ProvideService(
@@ -53,7 +53,7 @@ func ProvideService(
 	promReg prometheus.Registerer,
 	pluginRepo repo.Service,
 	features featuremgmt.FeatureToggles,
-	updateChecker pluginupdatechecker.PluginUpdateChecker,
+	updateChecker pluginchecker.PluginUpdateChecker,
 ) (*Service, error) {
 	once.Do(func() {
 		promReg.MustRegister(installRequestCounter)

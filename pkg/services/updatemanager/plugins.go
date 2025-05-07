@@ -20,8 +20,8 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -42,7 +42,7 @@ type PluginsService struct {
 	tracer          tracing.Tracer
 	updateCheckURL  *url.URL
 	pluginInstaller plugins.Installer
-	updateChecker   *pluginupdatechecker.Service
+	updateChecker   *pluginchecker.Service
 	updateStrategy  string
 
 	features featuremgmt.FeatureToggles
@@ -53,7 +53,7 @@ func ProvidePluginsService(cfg *setting.Cfg,
 	pluginInstaller plugins.Installer,
 	tracer tracing.Tracer,
 	features featuremgmt.FeatureToggles,
-	updateChecker *pluginupdatechecker.Service,
+	updateChecker *pluginchecker.Service,
 ) (*PluginsService, error) {
 	logger := log.New("plugins.update.checker")
 	cl, err := httpclient.New(httpclient.Options{

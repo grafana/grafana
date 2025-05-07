@@ -16,13 +16,13 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/fakes"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 type mockPluginPreinstall struct {
-	pluginupdatechecker.Preinstall
+	pluginchecker.Preinstall
 }
 
 func (m *mockPluginPreinstall) IsPinned(pluginID string) bool {
@@ -51,7 +51,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				},
 			},
 			updateCheckURL: updateCheckURL,
-			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 			features:       &featuremgmt.FeatureManager{},
 		}
 
@@ -97,7 +97,7 @@ func TestPluginUpdateChecker_HasUpdate(t *testing.T) {
 				},
 			},
 			updateCheckURL: updateCheckURL,
-			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 		}
 
 		update, exists := svc.HasUpdate(context.Background(), "test-ds")
@@ -214,7 +214,7 @@ func TestPluginUpdateChecker_checkForUpdates(t *testing.T) {
 			log:            log.NewNopLogger(),
 			tracer:         tracing.InitializeTracerForTest(),
 			updateCheckURL: updateCheckURL,
-			updateChecker:  pluginupdatechecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
+			updateChecker:  pluginchecker.ProvideService(managedplugins.NewNoop(), provisionedplugins.NewNoop(), &mockPluginPreinstall{}),
 			features:       &featuremgmt.FeatureManager{},
 		}
 

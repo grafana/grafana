@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/plugins/repo"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
-	updateChecker pluginupdatechecker.PluginUpdateChecker,
+	updateChecker pluginchecker.PluginUpdateChecker,
 ) checks.Check {
 	return &check{
 		PluginStore:   pluginStore,
@@ -36,7 +36,7 @@ func New(
 type check struct {
 	PluginStore   pluginstore.Store
 	PluginRepo    repo.Service
-	updateChecker pluginupdatechecker.PluginUpdateChecker
+	updateChecker pluginchecker.PluginUpdateChecker
 }
 
 func (c *check) ID() string {
@@ -129,7 +129,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 
 type updateStep struct {
 	PluginRepo    repo.Service
-	updateChecker pluginupdatechecker.PluginUpdateChecker
+	updateChecker pluginchecker.PluginUpdateChecker
 }
 
 func (s *updateStep) Title() string {

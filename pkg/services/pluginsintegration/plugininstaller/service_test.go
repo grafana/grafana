@@ -11,8 +11,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/prometheus/client_golang/prometheus"
@@ -32,7 +32,7 @@ func TestService_IsDisabled(t *testing.T) {
 		prometheus.NewRegistry(),
 		&fakes.FakePluginRepo{},
 		featuremgmt.WithFeatures(),
-		&pluginupdatechecker.FakePluginUpdateChecker{},
+		&pluginchecker.FakePluginUpdateChecker{},
 	)
 	require.NoError(t, err)
 
@@ -184,10 +184,10 @@ func TestService_Run(t *testing.T) {
 					},
 				},
 				featuremgmt.WithFeatures(featuremgmt.FlagPreinstallAutoUpdate),
-				pluginupdatechecker.ProvideService(
+				pluginchecker.ProvideService(
 					managedplugins.NewNoop(),
 					provisionedplugins.NewNoop(),
-					&pluginupdatechecker.FakePluginPreinstall{},
+					&pluginchecker.FakePluginPreinstall{},
 				),
 			)
 			if tt.blocking && !tt.shouldInstall {

@@ -1,4 +1,4 @@
-package pluginupdatechecker
+package pluginchecker
 
 import (
 	"context"
