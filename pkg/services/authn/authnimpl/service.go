@@ -537,14 +537,29 @@ func parseNamespace(path string) string {
 	return parts[0]
 }
 
-// name of query string used to target specific org for request
+// name of the query string used to target specific org for request
 const orgIDTargetQuery = "targetOrgId"
+
+// name of the query string used to target specific org for request
+const orgIDQuery = "orgId"
 
 func orgIDFromQuery(req *http.Request) int64 {
 	params := req.URL.Query()
-	if !params.Has(orgIDTargetQuery) {
+
+	if !params.Has(orgIDTargetQuery) && !params.Has(orgIDQuery) {
+		// no org id in query string
 		return 0
 	}
+
+	if params.Has(orgIDQuery) {
+		id, err := strconv.ParseInt(params.Get(orgIDQuery), 10, 64)
+		if err != nil {
+			return 0
+		}
+		return id
+	}
+
+	// legacy support for targetOrgId
 	id, err := strconv.ParseInt(params.Get(orgIDTargetQuery), 10, 64)
 	if err != nil {
 		return 0
