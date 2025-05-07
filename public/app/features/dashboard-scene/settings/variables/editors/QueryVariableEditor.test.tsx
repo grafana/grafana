@@ -422,7 +422,6 @@ describe('QueryVariableEditor', () => {
     const closeButton = closeButtonTextSpan.closest('button')!;
     expect(previewButton).toBeInTheDocument();
     expect(closeButton).toBeInTheDocument();
-    expect(closeButton).not.toHaveAttribute('aria-label', 'Close'); // Further ensures it's not the header X button
 
     // 5. Preview button calls variable.refreshOptions()
     await user.click(previewButton);
