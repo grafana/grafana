@@ -26,13 +26,13 @@ jobs:
           args: go run ./pkg/build/e2e --package=grafana.tar.gz --suite=${{ inputs.suite }}
       - name: Set suite name
         id: set-suite-name
-        if: always()
+        if: success() || failure()
         env:
           SUITE: ${{ inputs.suite }}
         run: |
           echo "suite=$(echo "$SUITE" | sed 's/\//-/g')" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: success() || failure()
         with:
           name: e2e-${{ steps.set-suite-name.outputs.suite }}-${{github.run_number}}
           path: videos
