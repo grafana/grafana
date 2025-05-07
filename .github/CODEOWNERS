@@ -49,6 +49,7 @@
 /docs/sources/developers/plugins/                                                 @grafana/plugins-platform-frontend @grafana/plugins-platform-backend
 
 /docs/sources/panels-visualizations/query-transform-data/transform-data/index.md  @imatwawana @baldm0mma
+/docs/sources/panels-visualizations/query-transform-data/sql-expressions/index.md  @lwandz13 @irenerl24
 # END Technical documentation
 
 # Backend code
@@ -188,7 +189,7 @@
 
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
-/devenv/docker/blocks/elastic* @grafana/aws-datasources
+/devenv/docker/blocks/elastic* @grafana/partner-datasources
 /devenv/docker/blocks/self-instrumentation* @grafana/oss-big-tent
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
@@ -225,7 +226,7 @@
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 
-/devenv/dev-dashboards/datasource-elasticsearch/ @grafana/aws-datasources
+/devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-mssql/ @grafana/partner-datasources
@@ -329,7 +330,7 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/oss-big-tent
-/pkg/tsdb/elasticsearch/ @grafana/aws-datasources
+/pkg/tsdb/elasticsearch/ @grafana/partner-datasources
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
@@ -651,7 +652,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
-/public/app/plugins/datasource/elasticsearch/ @grafana/aws-datasources
+/public/app/plugins/datasource/elasticsearch/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
@@ -826,7 +827,6 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-e2e-tests.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/run-e2e-suite.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/skye-add-to-project.yml @grafana/grafana-frontend-platform
-/.github/workflows/zizmor.yml @grafana/grafana-developer-enablement-squad
 /.github/zizmor.yml @grafana/grafana-developer-enablement-squad
 
 # Generated files not requiring owner approval
