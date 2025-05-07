@@ -319,7 +319,9 @@ function useRedirectToDetailsPage(existingUid?: string) {
       const newOrUpdatedRuleUid = (saveResult.created?.at(0) || saveResult.updated?.at(0)) ?? existingUid;
       if (newOrUpdatedRuleUid) {
         locationService.replace(
-          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' })
+          rulesNav.detailsPageLink('grafana', { uid: newOrUpdatedRuleUid, ruleSourceName: 'grafana' }, undefined, {
+            skipSubPath: true,
+          })
         );
       } else {
         notifyApp.error(
@@ -335,7 +337,11 @@ function useRedirectToDetailsPage(existingUid?: string) {
   const redirectCloudRulerRule = useCallback((rule: RulerRuleDTO, groupId: RuleGroupIdentifier) => {
     const { dataSourceName, namespaceName, groupName } = groupId;
     const updatedRuleIdentifier = fromRulerRule(dataSourceName, namespaceName, groupName, rule);
-    locationService.replace(rulesNav.detailsPageLink(updatedRuleIdentifier.ruleSourceName, updatedRuleIdentifier));
+    locationService.replace(
+      rulesNav.detailsPageLink(updatedRuleIdentifier.ruleSourceName, updatedRuleIdentifier, undefined, {
+        skipSubPath: true,
+      })
+    );
   }, []);
 
   const redirectToDetailsPage = useCallback(
