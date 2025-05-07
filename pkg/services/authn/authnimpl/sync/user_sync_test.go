@@ -984,7 +984,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			desc: "it should fail validation when a SAML-provisioned user is accessed by SAML with an empty incoming ExternalUID",
+			desc: "it should fail validation when a provisioned user is accessed by SAML with an empty incoming ExternalUID",
 			userSyncServiceSetup: func() *UserSync {
 				userSyncService := initUserSyncService()
 				userSyncService.allowNonProvisionedUsers = false
