@@ -3,7 +3,7 @@ import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 
 import { Button, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
-import { NotificationChannelOption, NotificationChannelSecureFields } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 
@@ -13,10 +13,16 @@ import { getReceiverFormFieldStyles } from './styles';
 interface Props {
   defaultValue: any;
   option: NotificationChannelOption;
+  getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
   pathPrefix: string;
   errors?: DeepMap<any, FieldError>;
   readOnly?: boolean;
-  secureFields?: NotificationChannelSecureFields;
+  secureFields: NotificationChannelSecureFields;
+  /**
+   * Callback function to delete a subform field. Removal requires side effects
+   * like settings and secure fields cleanup.
+   */
+  onDelete?: (propertyName: string) => void;
   onResetSecureField?: (propertyName: string) => void;
 }
 
@@ -25,8 +31,10 @@ export const SubformField = ({
   pathPrefix,
   errors,
   defaultValue,
+  getOptionMeta,
   readOnly = false,
-  secureFields = {},
+  secureFields,
+  onDelete,
   onResetSecureField,
 }: Props) => {
   const styles = useStyles2(getReceiverFormFieldStyles);
@@ -37,18 +45,23 @@ export const SubformField = ({
 
   const [show, setShow] = useState(!!value);
 
+  const onDeleteClick = () => {
+    onDelete?.(option.propertyName);
+    setShow(false);
+  };
+
   return (
     <div className={styles.wrapper} data-testid={`${name}.container`}>
       <h6>{option.label}</h6>
       {option.description && <p className={styles.description}>{option.description}</p>}
       {show && (
         <>
-          {!readOnly && (
+          {!readOnly && onDelete && (
             <ActionIcon
               data-testid={`${name}.delete-button`}
               icon="trash-alt"
               tooltip={t('alerting.subform-field.tooltip-delete', 'delete')}
-              onClick={() => setShow(false)}
+              onClick={onDeleteClick}
               className={styles.deleteIcon}
             />
           )}
@@ -56,8 +69,9 @@ export const SubformField = ({
             return (
               <OptionField
                 readOnly={readOnly}
-                secureFields={secureFields}
+                getOptionMeta={getOptionMeta}
                 onResetSecureField={onResetSecureField}
+                secureFields={secureFields}
                 defaultValue={defaultValue?.[subOption.propertyName]}
                 parentOption={option}
                 key={subOption.propertyName}
