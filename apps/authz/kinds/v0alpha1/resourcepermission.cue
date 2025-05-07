@@ -1,6 +1,6 @@
 package v0alpha1
 
-ManagedPermission: {
+ResourcePermission: {
 	#Resource: {
 		// api group of the resource (e.g: "folder.grafana.app")
 		apiGroup: string

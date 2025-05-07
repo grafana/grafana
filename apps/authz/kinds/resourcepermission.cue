@@ -4,9 +4,9 @@ import (
 	"github.com/grafana/grafana/apps/authz/kinds/v0alpha1"
 )
 
-managedpermission: {
-	kind:       "ManagedPermission"
-	pluralName: "ManagedPermissions"
+resourcepermission: {
+	kind:       "ResourcePermission"
+	pluralName: "ResourcePermissions"
 	current:    "v0alpha1"
 
 	codegen: {
@@ -17,7 +17,7 @@ managedpermission: {
 	versions: {
 		"v0alpha1": {
 			schema: {
-				spec:   v0alpha1.ManagedPermission
+				spec:   v0alpha1.ResourcePermission
 			}
 		}
 	}

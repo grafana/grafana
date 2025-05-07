@@ -38,6 +38,13 @@ func GetOpenAPIDefinitions(ref common.ReferenceCallback) map[string]common.OpenA
 		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ManagedPermissionspecPermission":       schema_pkg_apis_authz_v0alpha1_ManagedPermissionspecPermission(ref),
 		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ManagedPermissionspecResource":         schema_pkg_apis_authz_v0alpha1_ManagedPermissionspecResource(ref),
 		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ManagedPermissionstatusOperatorState":  schema_pkg_apis_authz_v0alpha1_ManagedPermissionstatusOperatorState(ref),
+		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermission":                    schema_pkg_apis_authz_v0alpha1_ResourcePermission(ref),
+		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionList":                schema_pkg_apis_authz_v0alpha1_ResourcePermissionList(ref),
+		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionSpec":                schema_pkg_apis_authz_v0alpha1_ResourcePermissionSpec(ref),
+		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionStatus":              schema_pkg_apis_authz_v0alpha1_ResourcePermissionStatus(ref),
+		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionspecPermission":      schema_pkg_apis_authz_v0alpha1_ResourcePermissionspecPermission(ref),
+		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionspecResource":        schema_pkg_apis_authz_v0alpha1_ResourcePermissionspecResource(ref),
+		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionstatusOperatorState": schema_pkg_apis_authz_v0alpha1_ResourcePermissionstatusOperatorState(ref),
 		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.Role":                                  schema_pkg_apis_authz_v0alpha1_Role(ref),
 		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.RoleBinding":                           schema_pkg_apis_authz_v0alpha1_RoleBinding(ref),
 		"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.RoleBindingList":                       schema_pkg_apis_authz_v0alpha1_RoleBindingList(ref),
@@ -1161,6 +1168,312 @@ func schema_pkg_apis_authz_v0alpha1_ManagedPermissionspecResource(ref common.Ref
 }
 
 func schema_pkg_apis_authz_v0alpha1_ManagedPermissionstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"lastEvaluation": {
+						SchemaProps: spec.SchemaProps{
+							Description: "lastEvaluation is the ResourceVersion last evaluated",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"state": {
+						SchemaProps: spec.SchemaProps{
+							Description: "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"descriptiveState": {
+						SchemaProps: spec.SchemaProps{
+							Description: "descriptiveState is an optional more descriptive state field which has no requirements on format",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"details": {
+						SchemaProps: spec.SchemaProps{
+							Description: "details contains any extra information that is operator-specific",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"lastEvaluation", "state"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_authz_v0alpha1_ResourcePermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+						},
+					},
+					"spec": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Spec is the spec of the ResourcePermission",
+							Default:     map[string]interface{}{},
+							Ref:         ref("github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionSpec"),
+						},
+					},
+					"status": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionStatus"),
+						},
+					},
+				},
+				Required: []string{"metadata", "spec", "status"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionSpec", "github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+	}
+}
+
+func schema_pkg_apis_authz_v0alpha1_ResourcePermissionList(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"apiVersion": {
+						SchemaProps: spec.SchemaProps{
+							Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"metadata": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+						},
+					},
+					"items": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermission"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"metadata", "items"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermission", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+	}
+}
+
+func schema_pkg_apis_authz_v0alpha1_ResourcePermissionSpec(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Default: map[string]interface{}{},
+							Ref:     ref("github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionspecResource"),
+						},
+					},
+					"permissions": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionspecPermission"),
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"resource", "permissions"},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionspecPermission", "github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionspecResource"},
+	}
+}
+
+func schema_pkg_apis_authz_v0alpha1_ResourcePermissionStatus(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"operatorStates": {
+						SchemaProps: spec.SchemaProps{
+							Description: "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: map[string]interface{}{},
+										Ref:     ref("github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionstatusOperatorState"),
+									},
+								},
+							},
+						},
+					},
+					"additionalFields": {
+						SchemaProps: spec.SchemaProps{
+							Description: "additionalFields is reserved for future use",
+							Type:        []string{"object"},
+							AdditionalProperties: &spec.SchemaOrBool{
+								Allows: true,
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Type:   []string{"object"},
+										Format: "",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		Dependencies: []string{
+			"github.com/grafana/grafana/apps/authz/pkg/apis/authz/v0alpha1.ResourcePermissionstatusOperatorState"},
+	}
+}
+
+func schema_pkg_apis_authz_v0alpha1_ResourcePermissionspecPermission(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"kind": {
+						SchemaProps: spec.SchemaProps{
+							Description: "kind of the identity getting the permission",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "uid of the identity getting the permission",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"verbs": {
+						SchemaProps: spec.SchemaProps{
+							Description: "list of actions granted to the user (e.g. \"admin\" or \"get\", \"update\")",
+							Type:        []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
+				},
+				Required: []string{"kind", "name", "verbs"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_authz_v0alpha1_ResourcePermissionspecResource(ref common.ReferenceCallback) common.OpenAPIDefinition {
+	return common.OpenAPIDefinition{
+		Schema: spec.Schema{
+			SchemaProps: spec.SchemaProps{
+				Type: []string{"object"},
+				Properties: map[string]spec.Schema{
+					"apiGroup": {
+						SchemaProps: spec.SchemaProps{
+							Description: "api group of the resource (e.g: \"folder.grafana.app\")",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"resource": {
+						SchemaProps: spec.SchemaProps{
+							Description: "kind of the resource (e.g: \"folders\")",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+					"name": {
+						SchemaProps: spec.SchemaProps{
+							Description: "uid of the resource (e.g: \"fold1\")",
+							Default:     "",
+							Type:        []string{"string"},
+							Format:      "",
+						},
+					},
+				},
+				Required: []string{"apiGroup", "resource", "name"},
+			},
+		},
+	}
+}
+
+func schema_pkg_apis_authz_v0alpha1_ResourcePermissionstatusOperatorState(ref common.ReferenceCallback) common.OpenAPIDefinition {
 	return common.OpenAPIDefinition{
 		Schema: spec.Schema{
 			SchemaProps: spec.SchemaProps{
