@@ -156,8 +156,8 @@ func (s *UserSync) ValidateUserProvisioningHook(ctx context.Context, id *authn.I
 
 	// Validate the provisioned user.ExternalUID with the authinfo.ExternalUID
 	if usr.IsProvisioned {
-		// The user is provisioned via SAML and the identity is empty, meaning this request is not from the SAML auth flow
-		if authInfo.AuthModule == login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
+		// Allow non-SAML requests for SAML-provisioned users to proceed if incoming ExternalUID is empty (e.g. session access).
+		if authInfo.AuthModule == login.SAMLAuthModule && id.AuthenticatedBy != login.SAMLAuthModule && authInfo.ExternalUID != "" && id.ExternalUID == "" {
 			log.Debug("Skipping ExternalUID validation for non-SAML request to SAML-provisioned user")
 			return nil
 		}
