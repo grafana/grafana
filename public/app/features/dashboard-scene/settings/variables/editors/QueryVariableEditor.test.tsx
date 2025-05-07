@@ -1,4 +1,4 @@
-import { getByRole, render, screen, act, waitFor } from '@testing-library/react';
+import { getByRole, render, screen, act, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { lastValueFrom, of } from 'rxjs';
@@ -13,12 +13,13 @@ import {
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
-import { QueryVariable } from '@grafana/scenes';
+import { QueryVariable, SceneVariable, TextBoxVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { QueryVariableEditor } from './QueryVariableEditor';
+import { QueryVariableEditor, getQueryVariableOptions } from './QueryVariableEditor';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -359,5 +360,80 @@ describe('QueryVariableEditor', () => {
     });
 
     expect(variable.state.allValue).toBe('custom all value and another value');
+  });
+
+  it('should return an empty array if variable is not a QueryVariable', () => {
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const variable = new TextBoxVariable({ name: 'test', value: 'test value' });
+    const result = getQueryVariableOptions(variable);
+    expect(result).toEqual([]);
+    expect(consoleWarnSpy).toHaveBeenCalledWith('getQueryVariableOptions: variable is not a QueryVariable');
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should return an OptionsPaneItemDescriptor that renders ModalEditor with expected interactions if variable is a QueryVariable', async () => {
+    const variable = new QueryVariable({
+      name: 'test',
+      datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
+      query: 'initial query',
+    });
+    const refreshOptionsSpy = jest.spyOn(variable, 'refreshOptions');
+
+    const result = getQueryVariableOptions(variable);
+
+    expect(result.length).toBe(1);
+    const descriptor = result[0];
+    expect(descriptor.props.title).toBe('Query Editor');
+
+    // Mock the parent property that OptionsPaneItem expects
+    descriptor.parent = new OptionsPaneCategoryDescriptor({
+      id: 'mock-parent-id',
+      title: 'Mock Parent',
+    });
+
+    const { queryByRole } = render(descriptor.render());
+    const user = userEvent.setup();
+
+    // 1. Initial state: "Open variable editor" button is visible, Modal is not.
+    const openEditorButton = screen.getByRole('button', { name: 'Open variable editor' });
+    expect(openEditorButton).toBeInTheDocument();
+    expect(queryByRole('dialog')).not.toBeInTheDocument(); // Modal has role 'dialog'
+
+    // 2. Opening Modal
+    await user.click(openEditorButton);
+    const modal = await screen.findByRole('dialog'); // wait for modal to appear
+    expect(modal).toBeInTheDocument();
+    expect(within(modal).getByText('Query Variable')).toBeInTheDocument(); // Modal title
+
+    // 3. Assert Editor's key elements are rendered
+    // DataSourcePicker's Field
+    expect(within(modal).getByLabelText('Data source')).toBeInTheDocument();
+    // Regex input placeholder
+    expect(within(modal).getByPlaceholderText(/text>.*value/i)).toBeInTheDocument();
+    // Sort select (check for its current value display)
+    expect(within(modal).getByText('Disabled')).toBeInTheDocument(); // Default sort is 0 (Disabled)
+    // Refresh select (check for its current value display)
+    expect(within(modal).getByRole('radio', { name: /on dashboard load/i })).toBeChecked(); // Default refresh
+
+    // 4. Assert Preview and Close buttons are visible
+    const previewButton = within(modal).getByRole('button', { name: 'Preview' });
+    // To distinguish from the header 'X' (aria-label="Close"), find the span with text "Close" and get its parent button.
+    const closeButtonTextSpan = within(modal).getByText(/^Close$/);
+    const closeButton = closeButtonTextSpan.closest('button')!;
+    expect(previewButton).toBeInTheDocument();
+    expect(closeButton).toBeInTheDocument();
+    expect(closeButton).not.toHaveAttribute('aria-label', 'Close'); // Further ensures it's not the header X button
+
+    // 5. Preview button calls variable.refreshOptions()
+    await user.click(previewButton);
+    expect(refreshOptionsSpy).toHaveBeenCalledTimes(1);
+
+    // 6. Closing Modal
+    await user.click(closeButton);
+    await waitFor(() => {
+      expect(queryByRole('dialog')).not.toBeInTheDocument();
+    });
+
+    refreshOptionsSpy.mockRestore();
   });
 });
