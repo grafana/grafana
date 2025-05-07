@@ -189,8 +189,11 @@ func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) erro
 func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 	var err error
 
-	// run Init Provisioners only once
 	ps.onceInitProvisioners.Do(func() {
+		// Run Alerting Provisioning only once.
+		// It can't be initialized at RunInitProvisioners because it
+		// depends on the Server to be already running and listening
+		// to /apis endpoints.
 		err = ps.ProvisionAlerting(ctx)
 	})
 
