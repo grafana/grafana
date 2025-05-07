@@ -122,38 +122,60 @@ To create a report, follow these steps:
 {{< tabs >}}
 {{< tab-content name="Create a report directly from a dashboard" >}}
 
-1. In the main menu, click **Dashboards > Reporting**.
-1. Click **+ Create a new report**.
-1. Complete the report steps, as needed:
-   - [Select dashboard](#1-select-dashboard)
-   - [Format report](#2-format-report)
-   - [Schedule](#3-schedule)
-   - [Share](#4-share)
-   - [Confirm](#5-confirm)
-1. Click one of the following buttons in the top-right corner of the screen:
-   - **Send now** or **Schedule send** - The report is sent according the schedule you've set.
-   - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
-   - **Discard** - Delete the report draft. This action can't be reversed.
+1. In the main menu, click **Dashboards**.
+1. Navigate to the dashboard from which you want to create a report.
+1. Click the **Share** drop-down list in the top-right corner of the dashboard.
+1. Click **Schedule report**.
+
+    The **Schedule report** drawer opens.
+
+1. Update the name of the report, if needed.
+
+    By default, the report name is the name of the dashboard.
+
+1. Expand and complete each section of the report, as needed:
+   - [Dashboard](#1-dashboard)
+   - [Schedule](#2-schedule)
+   - [Email settings](#3-email-settings)
+   - [Recipients](#4-recipients)
+   - [Attachments](#5-attachments)
+1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
+   - **Send preview** -
+   - **Schedule report** - The report is sent according the schedule you've set.
+   - **Save draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
+
+   To delete the report draft, click the x at the top of the drawer without scheduling or saving the report as a draft. This action can't be reversed.
+
+1. When you finish configuring the report, click the x at the top of the drawer to close it.
 
 {{< /tab-content >}}
 {{< tab-content name="Create a report from Reporting" >}}
+
 1. In the main menu, click **Dashboards > Reporting**.
 1. Click **+ Create a new report**.
-1. Complete the report steps, as needed:
-   - [Select dashboard](#1-select-dashboard)
-   - [Format report](#2-format-report)
-   - [Schedule](#3-schedule)
-   - [Share](#4-share)
-   - [Confirm](#5-confirm)
-1. Click one of the following buttons in the top-right corner of the screen:
-   - **Send now** or **Schedule send** - The report is sent according the schedule you've set.
-   - **Save as draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
-   - **Discard** - Delete the report draft. This action can't be reversed.
+1. Enter a name for the report.
+1. Expand and complete each section of the report, as needed:
+   - [Dashboard](#1-dashboard)
+   - [Schedule](#2-schedule)
+   - [Email settings](#3-email-settings)
+   - [Recipients](#4-recipients)
+   - [Attachments](#5-attachments)
+1. Click one of the following buttons at the bottom of the **Schedule report** drawer:
+   - **Send preview**
+   - **Schedule report** - The report is sent according the schedule you've set.
+   - **Save draft** - You can save a draft at any point during the report creation or update process, even if it's missing required fields. The report won't be sent according to its schedule while it's a draft.
+
+   To delete the report draft, click the x at the top of the drawer without scheduling or saving the report as a draft. This action can't be reversed.
+
+1. When you finish configuring the report, click the x at the top of the drawer to close it.
 
 {{< /tab-content >}}
 {{< /tabs >}}
 
-### 1. Select dashboard
+<!-- after sending a preview, scheduling a report, and saving a draft, when i try to close the drawer, i get a changes will be discarded message -->
+<!-- three button menu on report isn't working -->
+
+### 1. Dashboard
 
 At this step, select the dashboard or dashboards on which the report is based, as well as the variables and time ranges for those dashboards.
 The options are:
@@ -202,7 +224,49 @@ If you want to use a specific time zone, save the dashboard with a fixed time zo
 
 Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
 
-### 2. Format report
+### 2. Schedule
+
+At this step, set scheduling information.
+Options vary depending on the frequency you select.
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Frequency | You can schedule reports to be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**. For example, you might want to [send the report using the API](#send-a-report-using-the-api). |
+| Time | Choose one of the following:<ul><li>**Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date.</li><li>**Send later** schedules a report for a later date. When you select this option, the required **Start date**, **Start time**, and **Time zone** options are displayed.</li></ul> |
+| End date | If you leave this field empty, the report is sent out indefinitely. |
+| Send only from Monday to Friday | For reports that have an hourly or daily frequency, you can choose to send them only from Monday to Friday. |
+| Send on the last day of the month | When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option. This way, the report is sent on the last day of every month regardless of how many days there are in the month. |
+
+<!-- prettier-ignore-end -->
+
+### 3. Email settings
+
+### 4. Recipients
+
+At this step, enter information related to sharing the report:
+
+<!-- vale Grafana.GoogleLyHyphens = NO -->
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Report name (required) | The name of the report as you want it to appear in the **Reports** list. The report name also populates the email subject line. |
+| Recipients (required) | Enter the email addresses of the people or teams that you want to receive the report, separated by commas or semicolons. |
+| Reply-to email address | The address that appears in the **Reply to** field of the email. |
+| Message | The body of the message in the email with the report. |
+| Include a dashboard link | Include a links to the dashboards in the report email. |
+
+<!-- prettier-ignore-end -->
+
+<!-- vale Grafana.GoogleLyHyphens = YES -->
+
+Click **Send test email** in the top-right corner of the screen to verify that the configuration works as expected and to verify that emails are working.
+You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
+
+### 5. Attachments
 
 At this step, select one or more report formatting options.
 You can select multiple options, but you must select _at least one_:
@@ -266,47 +330,7 @@ When there's more data in your table visualizations than can be shown in the das
 - **Include table data as PDF appendix** - Adds an appendix to the dashboard PDF.
 - **Attach a separate PDF of table data** - Generates a separate PDF file.
 
-### 3. Schedule
-
-At this step, set scheduling information.
-Options vary depending on the frequency you select.
-
-<!-- prettier-ignore-start -->
-
-| Option | Description |
-| ------ | ----------- |
-| Frequency | You can schedule reports to be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**. For example, you might want to [send the report using the API](#send-a-report-using-the-api). |
-| Time | Choose one of the following:<ul><li>**Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date.</li><li>**Send later** schedules a report for a later date. When you select this option, the required **Start date**, **Start time**, and **Time zone** options are displayed.</li></ul> |
-| End date | If you leave this field empty, the report is sent out indefinitely. |
-| Send only from Monday to Friday | For reports that have an hourly or daily frequency, you can choose to send them only from Monday to Friday. |
-| Send on the last day of the month | When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option. This way, the report is sent on the last day of every month regardless of how many days there are in the month. |
-
-<!-- prettier-ignore-end -->
-
-### 4. Share
-
-At this step, enter information related to sharing the report:
-
-<!-- vale Grafana.GoogleLyHyphens = NO -->
-
-<!-- prettier-ignore-start -->
-
-| Option | Description |
-| ------ | ----------- |
-| Report name (required) | The name of the report as you want it to appear in the **Reports** list. The report name also populates the email subject line. |
-| Recipients (required) | Enter the email addresses of the people or teams that you want to receive the report, separated by commas or semicolons. |
-| Reply-to email address | The address that appears in the **Reply to** field of the email. |
-| Message | The body of the message in the email with the report. |
-| Include a dashboard link | Include a links to the dashboards in the report email. |
-
-<!-- prettier-ignore-end -->
-
-<!-- vale Grafana.GoogleLyHyphens = YES -->
-
-Click **Send test email** in the top-right corner of the screen to verify that the configuration works as expected and to verify that emails are working.
-You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
-
-### 5. Confirm
+### 6. Confirm
 
 At this step, the confirmation page displays all the report settings.
 Review them and confirm that they're correct or click the provided **Edit** links for each section to make updates.
