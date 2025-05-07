@@ -7,7 +7,7 @@ type ClusterRolespecPermission struct {
 	// RBAC action (e.g: "dashbaords:read")
 	Action string `json:"action"`
 	// RBAC scope (e.g: "dashboards:uid:dash1")
-	Scope string `json:"Scope"`
+	Scope string `json:"scope"`
 }
 
 // NewClusterRolespecPermission creates a new ClusterRolespecPermission object.

@@ -6,7 +6,7 @@ package v0alpha1
 type ClusterRoleBindingspecSubject struct {
 	// kind of the identity getting the permission
 	Kind ClusterRoleBindingSpecSubjectKind `json:"kind"`
-	// uid of the resource (e.g: "fold1")
+	// uid of the identity
 	Name string `json:"name"`
 }
 

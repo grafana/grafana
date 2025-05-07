@@ -328,7 +328,7 @@ func schema_pkg_apis_authz_v0alpha1_ClusterRoleBindingspecSubject(ref common.Ref
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "uid of the resource (e.g: \"fold1\")",
+							Description: "uid of the identity",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -562,7 +562,7 @@ func schema_pkg_apis_authz_v0alpha1_ClusterRolespecPermission(ref common.Referen
 							Format:      "",
 						},
 					},
-					"Scope": {
+					"scope": {
 						SchemaProps: spec.SchemaProps{
 							Description: "RBAC scope (e.g: \"dashboards:uid:dash1\")",
 							Default:     "",
@@ -571,7 +571,7 @@ func schema_pkg_apis_authz_v0alpha1_ClusterRolespecPermission(ref common.Referen
 						},
 					},
 				},
-				Required: []string{"action", "Scope"},
+				Required: []string{"action", "scope"},
 			},
 		},
 	}
@@ -846,7 +846,7 @@ func schema_pkg_apis_authz_v0alpha1_CoreRolespecPermission(ref common.ReferenceC
 							Format:      "",
 						},
 					},
-					"Scope": {
+					"scope": {
 						SchemaProps: spec.SchemaProps{
 							Description: "RBAC scope (e.g: \"dashboards:uid:dash1\")",
 							Default:     "",
@@ -855,7 +855,7 @@ func schema_pkg_apis_authz_v0alpha1_CoreRolespecPermission(ref common.ReferenceC
 						},
 					},
 				},
-				Required: []string{"action", "Scope"},
+				Required: []string{"action", "scope"},
 			},
 		},
 	}
@@ -1791,7 +1791,7 @@ func schema_pkg_apis_authz_v0alpha1_RoleBindingspecSubject(ref common.ReferenceC
 					},
 					"name": {
 						SchemaProps: spec.SchemaProps{
-							Description: "uid of the resource (e.g: \"fold1\")",
+							Description: "uid of the identity",
 							Default:     "",
 							Type:        []string{"string"},
 							Format:      "",
@@ -2025,7 +2025,7 @@ func schema_pkg_apis_authz_v0alpha1_RolespecPermission(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
-					"Scope": {
+					"scope": {
 						SchemaProps: spec.SchemaProps{
 							Description: "RBAC scope (e.g: \"dashboards:uid:dash1\")",
 							Default:     "",
@@ -2034,7 +2034,7 @@ func schema_pkg_apis_authz_v0alpha1_RolespecPermission(ref common.ReferenceCallb
 						},
 					},
 				},
-				Required: []string{"action", "Scope"},
+				Required: []string{"action", "scope"},
 			},
 		},
 	}
