@@ -5,7 +5,7 @@ RoleSpec: {
 		// RBAC action (e.g: "dashbaords:read")
 		action: string
 		// RBAC scope (e.g: "dashboards:uid:dash1")
-		Scope: string
+		scope: string
 	}
 	
 	name: string
