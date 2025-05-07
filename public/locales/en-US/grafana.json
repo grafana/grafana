@@ -407,7 +407,7 @@
     },
     "alert-labels": {
       "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} common label",
+      "common-labels-count_one": "+{{count}} common labels",
       "common-labels-count_other": "+{{count}} common labels"
     },
     "alert-manager-manual-routing": {
@@ -622,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Link dashboard and panel",
       "placeholder-value-input-default": "Enter custom annotation content..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": "Rules successfully deleted from folder"
+      },
+      "pause": {
+        "success": "Rules evaluation successfully paused for folder"
+      },
+      "unpause": {
+        "success": "Rules successfully unpaused for this folder"
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1036,6 +1047,33 @@
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
     },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": "Delete rules"
+        }
+      },
+      "delete-modal-confirmation-text": "Delete",
+      "delete-modal-delete-button": "Delete",
+      "delete-modal-deleting": "Deleting...",
+      "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
+      "delete-modal-title": "Delete",
+      "error": "Failed to execute action for folder: {{error}}",
+      "more-button": {
+        "title": "Folder bulk Actions",
+        "tooltip": "Folder bulk Actions"
+      },
+      "pause": {
+        "button": {
+          "label": "Pause all rule evaluation"
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": "Resume all rule evaluation"
+        }
+      }
+    },
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in."
     },
@@ -1389,7 +1427,7 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules_one": "Loading rules from {{count}} source",
+        "loading-rules_one": "Loading rules from {{count}} sources",
         "loading-rules_other": "Loading rules from {{count}} sources"
       }
     },
@@ -2008,8 +2046,8 @@
       "title-inspect-alert-rule": "Inspect Alert rule"
     },
     "rule-list": {
-      "cannot-find-rule-details-for": "Cannot find rule details for {{uid}}",
-      "cannot-load-rule-details-for": "Cannot load rule details for {{name}}",
+      "cannot-find-rule-details-for": "Cannot find rule details for UID {{uid}}",
+      "cannot-load-rule-details-for": "Cannot load rule details for UID {{uid}}",
       "configure-datasource": "Configure",
       "draft-new-rule": "Draft a new rule",
       "ds-error-boundary": {
@@ -2047,14 +2085,14 @@
       "unknown-rule-type": "Unknown rule type"
     },
     "rule-list-errors": {
-      "button-errors_one": "{{count}} error",
+      "button-errors_one": "{{count}} errors",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
       "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
-      "more-errors_one": "{{count}} more error",
+      "more-errors_one": "{{count}} more errors",
       "more-errors_other": "{{count}} more errors",
       "unknown-error": "Unknown error."
     },
@@ -2081,7 +2119,7 @@
       }
     },
     "rule-stats": {
-      "error_one": "{{count}} error",
+      "error_one": "{{count}} errors",
       "error_other": "{{count}} errors",
       "firing": "{{alertingStats}} firing",
       "inactive": "{{normalStats}} normal",
@@ -2591,14 +2629,14 @@
     },
     "fields": {
       "allowed-groups-description": "List of comma- or space-separated groups. The user should be a member of at least one group to log in.",
-      "allowed-groups-description-oauth": "If you configure allowed_groups, you must also configure groups_attribute_path.",
+      "allowed-groups-description-oauth": "If you configure \"Allowed groups\", you must also configure \"Groups attribute path\".",
       "api-url-description": "The user information endpoint of your OAuth2 provider. Information returned by this endpoint must be compatible with <2>OpenID UserInfo</2>.",
       "team-ids-description": "If set, the user must be a member of one of the given teams to log in.",
-      "team-ids-description-oauth": "If you configure {{teamIds}}, you must also configure {{teamsUrl}} and {{teamIdsAttributePath}}.",
+      "team-ids-description-oauth": "If you configure \"{{teamIds}}\", you must also configure \"{{teamsUrl}}\" and \"{{teamIdsAttributePath}}\".",
       "team-ids-github": "Integer list of Team Ids.",
       "team-ids-other": "String list of Team Ids.",
       "teams-url-description": "The URL used to query for Team Ids. If not set, the default value is /teams.",
-      "teams-url-description-oauth": "If you configure teams_url, you must also configure team_ids_attribute_path.",
+      "teams-url-description-oauth": "If you configure \"Teams URL\", you must also configure \"Team Ids attribute path\".",
       "use-pkce-description": "If enabled, Grafana will use <2>Proof Key for Code Exchange (PKCE)</2> with the OAuth2 Authorization Code Grant."
     },
     "provider-card": {
@@ -2793,12 +2831,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Change theme...",
+      "change-theme": "Change theme",
       "dark-theme": "Dark",
-      "light-theme": "Light"
+      "light-theme": "Light",
+      "scopes": "Scopes"
     },
     "empty-state": {
       "message": "No results found"
+    },
+    "scopes": {
+      "apply-selected-scopes": "Apply",
+      "selected-scopes-label": "Scopes: "
     },
     "search-box": {
       "placeholder": "Search or jump to..."
@@ -3922,6 +3965,7 @@
     },
     "constant-variable-form": {
       "constant-options": "Constant options",
+      "label-value": "Value",
       "placeholder-your-metric-prefix": "Your metric prefix"
     },
     "custom-variable-form": {
@@ -4035,7 +4079,7 @@
     },
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} by<person />",
-      "usage-count_one": "Used on {{count}} dashboard",
+      "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "name-already-exists-error": {
@@ -4154,7 +4198,7 @@
       "save-variables-label-update-default-variable-values": "Update default variable values"
     },
     "save-library-viz-panel-modal": {
-      "affected-dashboards_one": "This update will affect <1>{{count}} dashboard.</1> The following dashboard using the panel will be affected:",
+      "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "affected-dashboards_other": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
@@ -4209,6 +4253,9 @@
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "(optional)",
       "text-options": "Text options"
+    },
+    "textbox-variable-form": {
+      "label-value": "Value"
     },
     "title-field-label": {
       "title": "Title"
@@ -5665,9 +5712,9 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
-      "count-frames_one": "{{count}} frame, ",
+      "count-frames_one": "{{count}} frames, ",
       "count-frames_other": "{{count}} frames, ",
-      "count-rows_one": "{{count}} row",
+      "count-rows_one": "{{count}} rows",
       "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
       "text-loading-query-inspector": "Loading query inspector..."
@@ -5884,7 +5931,7 @@
     },
     "library-panel-info": {
       "last-edited": "Last edited on {{timeAgo}} by<person />",
-      "usage-count_one": "Used on {{count}} dashboard",
+      "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "library-panels-search": {
@@ -5918,7 +5965,7 @@
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <1>{{count}} dashboard.</1>",
+      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
@@ -6027,6 +6074,10 @@
     },
     "log-labels-list": {
       "log-line": "log line"
+    },
+    "log-line": {
+      "show-less": "show less",
+      "show-more": "show more"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
@@ -7837,8 +7888,8 @@
       "title-data-source-help": "Data source help"
     },
     "query-group-options-editor": {
-      "collapsed-interval": "Interval = {intervalDesc}",
-      "collapsed-max-data-points": "MD = {mdDesc}",
+      "collapsed-interval": "Interval = {{intervalDesc}}",
+      "collapsed-max-data-points": "MD = {{mdDesc}}",
       "hide-time-info": "Hide time info",
       "Query options-title-query-options": "Query options",
       "relative-time": "Relative time",

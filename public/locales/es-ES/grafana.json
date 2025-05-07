@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Cambiar tema...",
+      "change-theme": "",
       "dark-theme": "Oscuro",
-      "light-theme": "Claro"
+      "light-theme": "Claro",
+      "scopes": ""
     },
     "empty-state": {
       "message": ""
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -3671,7 +3676,10 @@
         "export": {
           "arrow": "",
           "title": "",
-          "tooltip": ""
+          "tooltip": {
+            "as-code": "",
+            "json": ""
+          }
         },
         "mark-favorite": "",
         "more-save-options": "",
@@ -3911,6 +3919,7 @@
     },
     "constant-variable-form": {
       "constant-options": "",
+      "label-value": "",
       "placeholder-your-metric-prefix": ""
     },
     "custom-variable-form": {
@@ -4198,6 +4207,9 @@
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "",
       "text-options": ""
+    },
+    "textbox-variable-form": {
+      "label-value": ""
     },
     "title-field-label": {
       "title": ""
@@ -5109,8 +5121,11 @@
       "download-button": "Descargar archivo",
       "download-successful_toast_message": "Tu JSON se ha descargado",
       "export-externally-label": "Exportar el panel de control para utilizarlo en otra instancia",
-      "info-text": "Copia o descarga un archivo JSON que contenga el JSON de tu panel de control",
-      "title": "Exportar JSON del panel de control"
+      "export-format": "",
+      "export-mode": "",
+      "export-remove-ds-refs": "",
+      "info-text": "",
+      "title": ""
     },
     "menu": {
       "export-as-json-label": "",
@@ -6013,6 +6028,10 @@
     },
     "log-labels-list": {
       "log-line": ""
+    },
+    "log-line": {
+      "show-less": "",
+      "show-more": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar enlace a la línea de registro",
@@ -7083,6 +7102,7 @@
         "reportAbuseTooltip": "Informa de problemas relacionados con complementos maliciosos o dañinos directamente a Grafana Labs.",
         "repository": "Repositorio",
         "signature": "Firma",
+        "sponsorDeveloper": "",
         "status": ""
       },
       "modal": {
@@ -8218,7 +8238,8 @@
       "loading": "",
       "save-button": "Guardar en archivo",
       "share-externally-label": "Exportar para compartir externamente",
-      "view-button": "Ver JSON"
+      "view-button": "Ver JSON",
+      "view-button-yaml": ""
     },
     "library": {
       "info": "Cree un panel de librería."

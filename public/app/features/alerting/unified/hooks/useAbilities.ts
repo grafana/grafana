@@ -91,6 +91,12 @@ export enum AlertRuleAction {
   DeletePermanently = 'delete-alert-rule-permanently',
 }
 
+// this enum list all of the bulk actions we can perform on a folder
+export enum FolderBulkAction {
+  Pause = 'pause-folder', // unpause permissions are the same as pause
+  Delete = 'delete-folder',
+}
+
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
 // alert source, rule or alertmanager
 export enum AlertingAction {
@@ -113,9 +119,24 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction;
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
+
+/**
+ * This one will check for folder abilities
+ */
+export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
+  return {
+    [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
+    [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
+  };
+};
+
+export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability => {
+  const allAbilities = useFolderBulkActionAbilities();
+  return allAbilities[action];
+};
 
 /**
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule

@@ -1151,6 +1151,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
+                  loading={loading}
                   loadMore={loadMoreLogs}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}
@@ -1253,7 +1254,7 @@ const getStyles = (theme: GrafanaTheme2, wrapLogMessage: boolean, tableHeight: n
     scrollableLogRows: css({
       overflowY: 'scroll',
       width: '100%',
-      maxHeight: '75vh',
+      maxHeight: '80vh',
     }),
     logRows: css({
       overflowX: `${wrapLogMessage ? 'unset' : 'scroll'}`,

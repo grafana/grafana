@@ -48,6 +48,7 @@ import {
   getCellHeightCalculator,
   getComparator,
   getDefaultRowHeight,
+  getDisplayName,
   getFooterItemNG,
   getFooterStyles,
   getIsNestedTable,
@@ -55,6 +56,7 @@ import {
   getTextAlign,
   handleSort,
   MapFrameToGridOptions,
+  processNestedTableRows,
   shouldTextOverflow,
 } from './utils';
 
@@ -196,16 +198,19 @@ export function TableNG(props: TableNGProps) {
 
   // Create a map of column key to column type
   const columnTypes = useMemo(
-    () => props.data.fields.reduce((acc, { name, type }) => ({ ...acc, [name]: type }), {} as ColumnTypes),
+    () => props.data.fields.reduce<ColumnTypes>((acc, field) => ({ ...acc, [getDisplayName(field)]: field.type }), {}),
     [props.data.fields]
   );
 
   // Create a map of column key to text wrap
   const textWraps = useMemo(
     () =>
-      props.data.fields.reduce(
-        (acc, { name, config }) => ({ ...acc, [name]: config?.custom?.cellOptions?.wrapText ?? false }),
-        {} as { [key: string]: boolean }
+      props.data.fields.reduce<{ [key: string]: boolean }>(
+        (acc, field) => ({
+          ...acc,
+          [getDisplayName(field)]: field.config?.custom?.cellOptions?.wrapText ?? false,
+        }),
+        {}
       ),
     [props.data.fields]
   );
@@ -218,12 +223,13 @@ export function TableNG(props: TableNGProps) {
     const widths: Record<string, number> = {};
 
     // Set default widths from field config if they exist
-    props.data.fields.forEach(({ name, config }) => {
-      const configWidth = config?.custom?.width;
+    props.data.fields.forEach((field) => {
+      const displayName = getDisplayName(field);
+      const configWidth = field.config?.custom?.width;
       const totalWidth = typeof configWidth === 'number' ? configWidth : COLUMN.DEFAULT_WIDTH;
       // subtract out padding and 1px right border
       const contentWidth = totalWidth - 2 * TABLE.CELL_PADDING - 1;
-      widths[name] = contentWidth;
+      widths[displayName] = contentWidth;
     });
 
     // Measure actual widths if available
@@ -243,15 +249,12 @@ export function TableNG(props: TableNGProps) {
   }, [props.data.fields]);
 
   const fieldDisplayType = useMemo(() => {
-    return props.data.fields.reduce(
-      (acc, { config, name }) => {
-        if (config?.custom?.cellOptions?.type) {
-          acc[name] = config.custom.cellOptions.type;
-        }
-        return acc;
-      },
-      {} as Record<string, TableCellDisplayMode>
-    );
+    return props.data.fields.reduce<Record<string, TableCellDisplayMode>>((acc, field) => {
+      if (field.config?.custom?.cellOptions?.type) {
+        acc[getDisplayName(field)] = field.config.custom.cellOptions.type;
+      }
+      return acc;
+    }, {});
   }, [props.data.fields]);
 
   // Clean up fieldsData to simplify
@@ -266,12 +269,6 @@ export function TableNG(props: TableNGProps) {
     [textWraps, columnTypes, getColumnWidths, headersLength, fieldDisplayType]
   );
 
-  const getDisplayedValue = (row: TableRow, key: string) => {
-    const field = props.data.fields.find((field) => field.name === key)!;
-    const displayedValue = formattedValueToString(field.display!(row[key]));
-    return displayedValue;
-  };
-
   // Filter rows
   const filteredRows = useMemo(() => {
     const filterValues = Object.entries(filter);
@@ -280,6 +277,13 @@ export function TableNG(props: TableNGProps) {
       crossFilterOrder.current = [];
       return rows;
     }
+
+    // Helper function to get displayed value
+    const getDisplayedValue = (row: TableRow, key: string) => {
+      const field = props.data.fields.find((field) => field.name === key)!;
+      const displayedValue = formattedValueToString(field.display!(row[key]));
+      return displayedValue;
+    };
 
     // Update crossFilterOrder
     const filterKeys = new Set(filterValues.map(([key]) => key));
@@ -296,6 +300,28 @@ export function TableNG(props: TableNGProps) {
     // reset crossFilterRows
     crossFilterRows.current = {};
 
+    // For nested tables, only filter parent rows and keep their children
+    if (isNestedTable) {
+      return processNestedTableRows(rows, (parents) =>
+        parents.filter((row) => {
+          for (const [key, value] of filterValues) {
+            const displayedValue = getDisplayedValue(row, key);
+            if (!value.filteredSet.has(displayedValue)) {
+              return false;
+            }
+            // collect rows for crossFilter
+            if (!crossFilterRows.current[key]) {
+              crossFilterRows.current[key] = [row];
+            } else {
+              crossFilterRows.current[key].push(row);
+            }
+          }
+          return true;
+        })
+      );
+    }
+
+    // Regular filtering for non-nested tables
     return rows.filter((row) => {
       for (const [key, value] of filterValues) {
         const displayedValue = getDisplayedValue(row, key);
@@ -311,35 +337,38 @@ export function TableNG(props: TableNGProps) {
       }
       return true;
     });
-  }, [rows, filter, props.data.fields]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [rows, filter, isNestedTable, props.data.fields]);
 
   // Sort rows
   const sortedRows = useMemo(() => {
-    const comparators = sortColumns.map(({ columnKey }) => getComparator(columnTypes[columnKey]));
-    const sortDirs = sortColumns.map(({ direction }) => (direction === 'ASC' ? 1 : -1));
-
     if (sortColumns.length === 0) {
       return filteredRows;
     }
 
-    return filteredRows.slice().sort((a, b) => {
+    // Common sort comparator function
+    const compareRows = (a: TableRow, b: TableRow): number => {
       let result = 0;
-      let sortIndex = 0;
+      for (let i = 0; i < sortColumns.length; i++) {
+        const { columnKey, direction } = sortColumns[i];
+        const compare = getComparator(columnTypes[columnKey]);
+        const sortDir = direction === 'ASC' ? 1 : -1;
 
-      for (const { columnKey } of sortColumns) {
-        const compare = comparators[sortIndex];
-        result = sortDirs[sortIndex] * compare(a[columnKey], b[columnKey]);
-
+        result = sortDir * compare(a[columnKey], b[columnKey]);
         if (result !== 0) {
           break;
         }
-
-        sortIndex += 1;
       }
-
       return result;
-    });
-  }, [filteredRows, sortColumns, columnTypes]);
+    };
+
+    // Handle nested tables
+    if (isNestedTable) {
+      return processNestedTableRows(filteredRows, (parents) => [...parents].sort(compareRows));
+    }
+
+    // Regular sort for tables without nesting
+    return filteredRows.slice().sort((a, b) => compareRows(a, b));
+  }, [filteredRows, sortColumns, columnTypes, isNestedTable]);
 
   // Paginated rows
   // TODO consolidate calculations into pagination wrapper component and only use when needed
@@ -447,8 +476,6 @@ export function TableNG(props: TableNGProps) {
           ctx,
           onSortByChange,
           rows,
-          // INFO: sortedRows is for correct row indexing for cell background coloring
-          sortedRows,
           setContextMenuProps,
           setFilter,
           setIsInspecting,
@@ -658,7 +685,6 @@ export function mapFrameToDataGrid({
     ctx,
     onSortByChange,
     rows,
-    sortedRows,
     setContextMenuProps,
     setFilter,
     setIsInspecting,
@@ -751,7 +777,7 @@ export function mapFrameToDataGrid({
       fieldOptions.cellOptions.applyToRow
     ) {
       rowBg = (rowIndex: number): CellColors => {
-        const display = field.display!(field.values.get(sortedRows[rowIndex].__index));
+        const display = field.display!(field.values[rowIndex]);
         const colors = getCellColors(theme, fieldOptions.cellOptions, display);
         return colors;
       };
@@ -765,7 +791,7 @@ export function mapFrameToDataGrid({
       return;
     }
     const fieldTableOptions: TableFieldOptionsType = field.config.custom || {};
-    const key = field.name;
+    const key = getDisplayName(field);
     const justifyColumnContent = getTextAlign(field);
     const footerStyles = getFooterStyles(justifyColumnContent);
 
@@ -781,9 +807,9 @@ export function mapFrameToDataGrid({
       key,
       name: field.name,
       field,
-      cellClass: textWraps[field.name] ? styles.cellWrapped : styles.cell,
+      cellClass: textWraps[getDisplayName(field)] ? styles.cellWrapped : styles.cell,
       renderCell: (props: RenderCellProps<TableRow, TableSummaryRow>): JSX.Element => {
-        const { row, rowIdx } = props;
+        const { row } = props;
         const cellType = field.config?.custom?.cellOptions?.type ?? TableCellDisplayMode.Auto;
         const value = row[key];
         // Cell level rendering here
@@ -797,7 +823,7 @@ export function mapFrameToDataGrid({
             timeRange={timeRange ?? getDefaultTimeRange()}
             height={defaultRowHeight}
             justifyContent={justifyColumnContent}
-            rowIdx={sortedRows[rowIdx].__index}
+            rowIdx={row.__index}
             shouldTextOverflow={() =>
               shouldTextOverflow(
                 key,
@@ -808,7 +834,7 @@ export function mapFrameToDataGrid({
                 defaultLineHeight,
                 defaultRowHeight,
                 TABLE.CELL_PADDING,
-                textWraps[field.name],
+                textWraps[getDisplayName(field)],
                 field,
                 cellType
               )
