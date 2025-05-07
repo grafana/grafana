@@ -88,15 +88,16 @@ const Ellipsis = ({ toggle, diff }: EllipsisProps) => {
   return (
     <>
       <Trans i18nKey="logs.log-row-message.ellipsis">… </Trans>
-      <span className={styles.showMore} onClick={handleClick}>
+      <button className={styles.showMore} onClick={handleClick}>
         {diff} <Trans i18nKey="logs.log-row-message.more">more</Trans>
-      </span>
+      </button>
     </>
   );
 };
 
 const getEllipsisStyles = (theme: GrafanaTheme2) => ({
   showMore: css({
+    backgroundColor: 'transparent',
     display: 'inline-flex',
     fontWeight: theme.typography.fontWeightMedium,
     fontSize: theme.typography.size.sm,

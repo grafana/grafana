@@ -99,6 +99,7 @@ const HeaderCell: React.FC<HeaderCellProps> = ({
   }, [column]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={headerRef}
       className={styles.headerCell}
