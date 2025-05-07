@@ -147,7 +147,7 @@ jobs:
       - name: "Create changelog PR"
         run: >
           gh pr create \
-            --dry-run=${DRY_RUN} \
+            --dry-run="${DRY_RUN}" \
             --label "no-backport" \
             --label "no-changelog" \
             -B "${TARGET}" \
