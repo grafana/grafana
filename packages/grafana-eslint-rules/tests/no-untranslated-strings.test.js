@@ -87,6 +87,32 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
     {
       name: 'Ternary with falsy strings',
       code: `<div icon={isAThing ? foo : ''} />`,
+      name: 'Object property',
+      code: `const thing = {
+        label: t('test', 'Test'),
+      }`,
+    },
+    {
+      name: 'Object property using variable',
+      code: `const foo = 'test';
+      const thing = {
+        label: foo,
+      }`,
+    },
+    {
+      name: 'Object property using dynamic keys',
+      code: `const foo = 'label';
+      const thing = {
+        [foo]: 'test',
+        ['abc']: 'test',
+      }`,
+    },
+    {
+      name: 'Label reference inside `css` call',
+      code: `const foo = css({
+        label: 'red',
+      });`,
+      options: [{ calleesToIgnore: ['somethingelse', '^css$'] }],
     },
   ],
   invalid: [
@@ -421,6 +447,63 @@ const Foo = () => {
       ],
     },
 
+    {
+      name: 'Untranslated object property',
+      code: `
+const Foo = () => {
+  const thing = {
+    label: 'test',
+  }
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+import { t } from 'app/core/internationalization';
+const Foo = () => {
+  const thing = {
+    label: t(\"some-feature.foo.thing.label.test\", \"test\"),
+  }
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Untranslated object property with calleesToIgnore',
+      code: `
+const Foo = () => {
+  const thing = doAThing({
+    label: 'test',
+  })
+}`,
+      options: [{ calleesToIgnore: ['doSomethingElse'] }],
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+import { t } from 'app/core/internationalization';
+const Foo = () => {
+  const thing = doAThing({
+    label: t(\"some-feature.foo.thing.label.test\", \"test\"),
+  })
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
     /**
      * UNFIXABLE CASES
      */
@@ -515,6 +598,20 @@ const Foo = () => {
       code: `const Foo = () => <div title={isAThing ? 'Foo' : 'Bar'} />`,
       filename,
       errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
+    },
+
+    {
+      name: 'Object property at top level scope',
+      code: `
+const thing = {
+  label: 'test',
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+        },
+      ],
     },
   ],
 });
