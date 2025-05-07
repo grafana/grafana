@@ -9,7 +9,6 @@ Object.defineProperty(window, 'localStorage', {
 
 describe('previewToggles', () => {
   beforeEach(() => {
-    // Clear the localStorage mock before each test
     localStorageMock.clear();
   });
 
