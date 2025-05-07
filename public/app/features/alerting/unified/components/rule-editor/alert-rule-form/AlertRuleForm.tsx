@@ -5,7 +5,7 @@ import { useParams } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
-import { Alert, Button, Spinner, Stack, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { contextSrv } from 'app/core/core';
 import { Trans, t } from 'app/core/internationalization';
