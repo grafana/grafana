@@ -404,7 +404,7 @@
     },
     "alert-labels": {
       "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} common label",
+      "common-labels-count_one": "+{{count}} common labels",
       "common-labels-count_other": "+{{count}} common labels"
     },
     "alert-manager-manual-routing": {
@@ -1384,7 +1384,7 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules_one": "Loading rules from {{count}} source",
+        "loading-rules_one": "Loading rules from {{count}} sources",
         "loading-rules_other": "Loading rules from {{count}} sources"
       }
     },
@@ -2065,14 +2065,14 @@
       "unknown-rule-type": "Unknown rule type"
     },
     "rule-list-errors": {
-      "button-errors_one": "{{count}} error",
+      "button-errors_one": "{{count}} errors",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
       "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
-      "more-errors_one": "{{count}} more error",
+      "more-errors_one": "{{count}} more errors",
       "more-errors_other": "{{count}} more errors",
       "unknown-error": "Unknown error."
     },
@@ -2099,7 +2099,7 @@
       }
     },
     "rule-stats": {
-      "error_one": "{{count}} error",
+      "error_one": "{{count}} errors",
       "error_other": "{{count}} errors",
       "firing": "{{alertingStats}} firing",
       "inactive": "{{normalStats}} normal",
@@ -4033,7 +4033,7 @@
     },
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} by<person />",
-      "usage-count_one": "Used on {{count}} dashboard",
+      "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "name-already-exists-error": {
@@ -4152,7 +4152,7 @@
       "save-variables-label-update-default-variable-values": "Update default variable values"
     },
     "save-library-viz-panel-modal": {
-      "affected-dashboards_one": "This update will affect <1>{{count}} dashboard.</1> The following dashboard using the panel will be affected:",
+      "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "affected-dashboards_other": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
@@ -4207,6 +4207,9 @@
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "(optional)",
       "text-options": "Text options"
+    },
+    "textbox-variable-form": {
+      "label-value": "Value"
     },
     "title-field-label": {
       "title": "Title"
@@ -5663,9 +5666,9 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
-      "count-frames_one": "{{count}} frame, ",
+      "count-frames_one": "{{count}} frames, ",
       "count-frames_other": "{{count}} frames, ",
-      "count-rows_one": "{{count}} row",
+      "count-rows_one": "{{count}} rows",
       "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
       "text-loading-query-inspector": "Loading query inspector..."
@@ -5882,7 +5885,7 @@
     },
     "library-panel-info": {
       "last-edited": "Last edited on {{timeAgo}} by<person />",
-      "usage-count_one": "Used on {{count}} dashboard",
+      "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "library-panels-search": {
@@ -5916,7 +5919,7 @@
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <1>{{count}} dashboard.</1>",
+      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
@@ -6025,6 +6028,10 @@
     },
     "log-labels-list": {
       "log-line": "log line"
+    },
+    "log-line": {
+      "show-less": "show less",
+      "show-more": "show more"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",
