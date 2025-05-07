@@ -2,6 +2,7 @@ package jaeger
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -83,7 +84,13 @@ func TestDataSourceInstanceSettings_TraceIdTimeEnabled(t *testing.T) {
 			require.NotNil(t, dsInfo)
 
 			// Verify the client's traceIdTimeEnabled parameter
-			assert.Equal(t, tt.expectedEnabled, dsInfo.JaegerClient.traceIdTimeEnabled)
+
+			var jsonData SettingsJSONData
+			if err := json.Unmarshal(dsInfo.JaegerClient.settings.JSONData, &jsonData); err != nil {
+				t.Fatalf("failed to parse settings JSON data: %v", err)
+			}
+
+			assert.Equal(t, tt.expectedEnabled, jsonData.TraceIdTimeParams.Enabled)
 		})
 	}
 }
