@@ -2,7 +2,8 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.Node} Node */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXElement} JSXElement */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
-/** @typedef {import('@typescript-eslint/utils').TSESLint.RuleModule<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT', [{ forceFix: string[] }]>} RuleDefinition */
+/** @typedef {import('@typescript-eslint/utils').TSESLint.RuleModule<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties', [{ forceFix: string[] , calleesToIgnore: string[] }]>} RuleDefinition */
+/** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT' | 'noUntranslatedStringsProperties',  [{forceFix: string[], calleesToIgnore: string[]}]>} RuleContextWithOptions */
 
 const {
   getNodeValue,
@@ -12,6 +13,7 @@ const {
   elementIsTrans,
   shouldBeFixed,
   isStringNonAlphanumeric,
+  getPropertyFixer,
 } = require('./translation-utils.cjs');
 
 const { ESLintUtils, AST_NODE_TYPES } = require('@typescript-eslint/utils');
@@ -23,10 +25,88 @@ const createRule = ESLintUtils.RuleCreator(
 /** @type {string[]} */
 const propsToCheck = ['content', 'label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
 
+const propertiesToCheck = [
+  'label',
+  'description',
+  'placeholder',
+  'aria-label',
+  'title',
+  'subTitle',
+  'text',
+  'tooltip',
+  'message',
+  'name',
+];
+
 /** @type {RuleDefinition} */
 const noUntranslatedStrings = createRule({
+  /**
+   * @param {RuleContextWithOptions} context
+   */
   create(context) {
+    const calleesToIgnore = context.options[0]?.calleesToIgnore || [];
+    const propertiesRegexes = calleesToIgnore.map((pattern) => {
+      return new RegExp(pattern);
+    });
+
     return {
+      // TODO:
+      // support for ignoring based on regex (e.g. {{ template }}, __foo__)
+      // ignore special values (e.g. `uid`)
+      // handle template literals
+      Property(node) {
+        const { key, value, parent } = node;
+        const keyName =
+          key.type === AST_NODE_TYPES.Identifier && typeof key.name === 'string' ? String(key.name) : null;
+
+        if (!propertiesToCheck.includes(String(keyName))) {
+          return;
+        }
+
+        // Check if we're being called by something that we want to ignore
+        // e.g. css({ label: 'test' }) should be ignored (based on the rule configuration)
+        if (
+          parent.parent.type === AST_NODE_TYPES.CallExpression &&
+          parent.parent.callee.type === AST_NODE_TYPES.Identifier
+        ) {
+          // Nest `if`s to make type narrowing work
+          const callExpression = parent.parent.callee;
+
+          if (propertiesRegexes.some((regex) => regex.test(callExpression.name))) {
+            return;
+          }
+        }
+
+        const nodeValue = getNodeValue(node);
+
+        const isOnlySymbols = !/[a-zA-Z0-9]/.test(nodeValue);
+        const isNumeric = !/[a-zA-Z]/.test(nodeValue);
+
+        const isUntranslated =
+          ((value.type === AST_NODE_TYPES.Literal && nodeValue !== '') ||
+            value.type === AST_NODE_TYPES.TemplateLiteral) &&
+          !isOnlySymbols &&
+          !isNumeric;
+
+        const errorCanBeFixed = canBeFixed(node, context);
+        const errorShouldBeFixed = shouldBeFixed(context);
+        if (isUntranslated) {
+          context.report({
+            node,
+            messageId: 'noUntranslatedStringsProperties',
+            fix: errorShouldBeFixed && errorCanBeFixed ? getPropertyFixer(node, context) : undefined,
+            suggest: errorCanBeFixed
+              ? [
+                  {
+                    messageId: 'wrapWithT',
+                    fix: getPropertyFixer(node, context),
+                  },
+                ]
+              : undefined,
+          });
+        }
+      },
+
       JSXAttribute(node) {
         if (!propsToCheck.includes(String(node.name.name)) || !node.value) {
           return;
@@ -163,6 +243,7 @@ const noUntranslatedStrings = createRule({
     messages: {
       noUntranslatedStrings: 'No untranslated strings. Wrap text with <Trans />',
       noUntranslatedStringsProp: `No untranslated strings in text props. Wrap text with <Trans /> or use t()`,
+      noUntranslatedStringsProperties: `No untranslated strings in object properties. Wrap text with t()`,
       wrapWithTrans: 'Wrap text with <Trans /> for manual key assignment',
       wrapWithT: 'Wrap text with t() for manual key assignment',
     },
@@ -177,12 +258,19 @@ const noUntranslatedStrings = createRule({
             },
             uniqueItems: true,
           },
+          calleesToIgnore: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+            default: [],
+          },
         },
         additionalProperties: false,
       },
     ],
   },
-  defaultOptions: [{ forceFix: [] }],
+  defaultOptions: [{ forceFix: [], calleesToIgnore: [] }],
 });
 
 module.exports = noUntranslatedStrings;

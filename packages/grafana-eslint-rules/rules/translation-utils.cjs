@@ -5,9 +5,9 @@
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXFragment} JSXFragment */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXText} JSXText */
 /** @typedef {import('@typescript-eslint/utils').TSESTree.JSXChild} JSXChild */
+/** @typedef {import('@typescript-eslint/utils').TSESTree.Property} Property */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleFixer} RuleFixer */
 /** @typedef {import('@typescript-eslint/utils/ts-eslint').RuleContext<'noUntranslatedStrings' | 'noUntranslatedStringsProp' | 'wrapWithTrans' | 'wrapWithT',  [{forceFix: string[]}]>} RuleContextWithOptions */
-
 const { AST_NODE_TYPES } = require('@typescript-eslint/utils');
 
 /**
@@ -61,7 +61,7 @@ function shouldBeFixed(context) {
 
 /**
  * Checks if a node can be fixed automatically
- * @param {JSXAttribute|JSXElement|JSXFragment} node The node to check
+ * @param {JSXAttribute|JSXElement|JSXFragment|Property} node The node to check
  * @param {RuleContextWithOptions} context
  * @returns {boolean} Whether the node can be fixed
  */
@@ -70,25 +70,32 @@ function canBeFixed(node, context) {
     return false;
   }
 
-  // We can only fix JSX attribute strings that are within a function,
-  // otherwise the `t` function call will be made too early
+  const ancestors = context.sourceCode.getAncestors(node);
+  const isInFunction = ancestors.some((anc) => {
+    return [
+      AST_NODE_TYPES.ArrowFunctionExpression,
+      AST_NODE_TYPES.FunctionDeclaration,
+      AST_NODE_TYPES.FunctionExpression,
+      AST_NODE_TYPES.ClassDeclaration,
+    ].includes(anc.type);
+  });
 
-  if (node.type === AST_NODE_TYPES.JSXAttribute) {
-    const ancestors = context.sourceCode.getAncestors(node);
-    const isInFunction = ancestors.some((anc) => {
-      return [
-        AST_NODE_TYPES.ArrowFunctionExpression,
-        AST_NODE_TYPES.FunctionDeclaration,
-        AST_NODE_TYPES.FunctionExpression,
-        AST_NODE_TYPES.ClassDeclaration,
-      ].includes(anc.type);
-    });
+  if (node.type === AST_NODE_TYPES.Property) {
     if (!isInFunction) {
       return false;
     }
-    if (node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
-      return isStringLiteral(node.value.expression);
-    }
+  }
+  if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
+    return isStringLiteral(node.value.expression);
+  }
+
+  // We can only fix JSX attribute strings that are within a function,
+  // otherwise the `t` function call will be made too early
+  if (
+    node.type === AST_NODE_TYPES.JSXAttribute &&
+    (!isInFunction || node.value?.type === AST_NODE_TYPES.JSXExpressionContainer)
+  ) {
+    return false;
   }
 
   const values =
@@ -132,7 +139,7 @@ function getTranslationPrefix(context) {
 
 /**
  * Gets the i18n key for a node
- * @param {JSXAttribute|JSXText} node The node
+ * @param {JSXAttribute|JSXText|Property} node The node
  * @param {RuleContextWithOptions} context
  * @returns {string} The i18n key
  */
@@ -141,6 +148,10 @@ const getI18nKey = (node, context) => {
   const stringValue = getNodeValue(node);
 
   const componentNames = getComponentNames(node, context);
+
+  const propertyName =
+    node.type === AST_NODE_TYPES.Property && node.key.type === AST_NODE_TYPES.Identifier ? String(node.key.name) : null;
+
   const words = stringValue
     .trim()
     .replace(/[^\a-zA-Z\s]/g, '')
@@ -178,14 +189,14 @@ const getI18nKey = (node, context) => {
     kebabString = [potentialId, propName, kebabString].filter(Boolean).join('-');
   }
 
-  const fullPrefix = [prefixFromFilePath, ...componentNames, kebabString].filter(Boolean).join('.');
+  const fullPrefix = [prefixFromFilePath, ...componentNames, propertyName, kebabString].filter(Boolean).join('.');
 
   return fullPrefix;
 };
 
 /**
  * Gets component names from ancestors
- * @param {JSXAttribute|JSXText} node The node
+ * @param {JSXAttribute|JSXText|Property} node The node
  * @param {RuleContextWithOptions} context
  * @returns {string[]} The component names
  */
@@ -212,7 +223,7 @@ function getComponentNames(node, context) {
 
 /**
  * Gets the import fixer for a node
- * @param {JSXElement|JSXFragment|JSXAttribute} node
+ * @param {JSXElement|JSXFragment|JSXAttribute|Property} node
  * @param {RuleFixer} fixer The fixer
  * @param {'Trans'|'t'|'useTranslate'} importName The import name
  * @param {RuleContextWithOptions} context
@@ -431,12 +442,37 @@ const getTFixers = (node, context) => (fixer) => {
 };
 
 /**
+ * @param {Property} node
+ * @param {RuleContextWithOptions} context
+ * @returns {(fixer: RuleFixer) => import('@typescript-eslint/utils/ts-eslint').RuleFix[]}
+ */
+const getPropertyFixer = (node, context) => (fixer) => {
+  const fixes = [];
+  const i18nKey = getI18nKey(node, context);
+
+  const value = getNodeValue(node);
+  const wrappingQuotes = value.includes('"') ? "'" : '"';
+
+  fixes.push(fixer.replaceText(node.value, `t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})`));
+
+  const importsFixer = getImportsFixer(node, fixer, 't', context);
+  if (importsFixer) {
+    fixes.push(importsFixer);
+  }
+
+  return fixes;
+};
+
+/**
  * Gets the value of a node
- * @param {JSXAttribute|JSXText|JSXElement|JSXFragment|JSXChild} node The node
+ * @param {JSXAttribute|JSXText|JSXElement|JSXFragment|JSXChild|Property} node The node
  * @returns {string} The node value
  */
 function getNodeValue(node) {
-  if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.Literal) {
+  if (
+    (node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property) &&
+    node.value?.type === AST_NODE_TYPES.Literal
+  ) {
     return String(node.value.value) || '';
   }
   if (node.type === AST_NODE_TYPES.JSXText) {
@@ -457,6 +493,7 @@ module.exports = {
   getNodeValue,
   getTFixers,
   getTransFixers,
+  getPropertyFixer,
   getTranslationPrefix,
   canBeFixed,
   shouldBeFixed,
