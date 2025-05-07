@@ -299,6 +299,30 @@ export function trackUseCentralHistoryMaxEventsReached(payload: { from: number; 
   reportInteraction('grafana_alerting_central_alert_state_history_max_events_reached', payload);
 }
 
+export function trackFolderBulkActionsDeleteSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_success');
+}
+
+export function trackFolderBulkActionsDeleteFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_delete_fail');
+}
+
+export function trackFolderBulkActionsPauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_success');
+}
+
+export function trackFolderBulkActionsUnpauseSuccess() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_success');
+}
+
+export function trackFolderBulkActionsPauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_pause_fail');
+}
+
+export function trackFolderBulkActionsUnpauseFail() {
+  reportInteraction('grafana_alerting_folder_bulk_actions_unpause_fail');
+}
+
 export type AlertRuleTrackingProps = {
   user_id: number;
   grafana_version?: string;

@@ -233,6 +233,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
           />
           {visualisationType === 'logs' && (
             <>
+              <div className={styles.divider} />
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <IconButton
                   name={'filter'}
@@ -253,6 +254,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               </Dropdown>
+              <div className={styles.divider} />
               <IconButton
                 name="clock-nine"
                 aria-pressed={showTime}
