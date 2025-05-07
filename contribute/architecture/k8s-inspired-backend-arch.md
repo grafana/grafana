@@ -37,7 +37,7 @@ The end goal is for the Resource APIs to become the only interface for managing 
 - **Resource APIs:** New Grafana API endpoints that mimic the Kubernetes API structure (e.g., `/apis/dashboard.grafana.app/v1alpha1/dashboards`). These are served by Grafana itself and are distinct from any Kubernetes API running on the same system.
 
 - **API implementation approaches:**
-  - **Registry Approach (`pkg/registry/apis/...`):** Original method using Go code (`.../register.go` files). While newer resources are primarily defined using CUE in `apps/`, this path is still used for things such as legacy fallbacks for App-defined resources.
+  - **Registry Approach (`pkg/registry/apis/...`):** Original method using Go code (`.../register.go` files). While newer resources are primarily defined using CUE in `apps/`, this path is still used for things such as legacy fallbacks for App-defined resources when data for that resource exists outside of unified storage.
   - **Apps Approach (`apps/...`):** The newer, more modular implementation where APIs are defined using CUE in self-contained modules. Each app defines resources in `kinds/*.cue` files and resources are registered via the App SDK. This is the direction Grafana is moving toward for all resources.
 - **Unified Storage (`pkg/storage/unified/...`):** Internal abstraction handling resource persistence. It handles the conversion between the Resource API and the underlying storage backend.
 - **`K8sHandler` (`pkg/services/apiserver/client/client.go`):** Internal client facade used by Grafana services. Provides a Kubernetes-like client interface (`Get`, `Create`, etc.) for the Resource API. Acts as an adapter during migration, enabling legacy services to use the Resource API. Does not interact with external systems - it interact only with Grafana's own APIs.
@@ -80,13 +80,15 @@ The Apps Approach creates the same Resource API endpoints (`/apis/...`) as the R
 
 ### 2.3 Kubernetes API Compatibility
 
-Grafana's Resource APIs adopts many Kubernetes API conventions but is **not strictly conformant** to the official Kubernetes API specification. Grafana diverges from the Kubernetes specification when needed for Grafana's requirements, to avoid operational complexity, or to maintain existing Grafana patterns. Key differences include:
+Grafana's Resource APIs adopts many Kubernetes API conventions but is **not strictly conformant** to the official Kubernetes API specification. We diverge from the Kubernetes architecture and Kubernetes API specification when needed for Grafana's own unique requirements or to avoid operational complexity. Each architectural difference can surface as behavioral or wire-level incompatibility with the vanilla Kubernetes API. 
 
+In other words, even when the URLs / resources look Kubernetes-like, some API Server guarantees might not hold. We are adopting Kubernetes API patterns, general structure, and declarative style. A strict, byte-for-byte conformance to the API spec is currently not a goal.
+
+The list of major architectural changes include:
 - **Persistence:** Uses Grafana's configured SQL database (PostgreSQL, MySQL, SQLite) via Unified Storage, not `etcd`.
 - **Auth:** Uses Grafana's standard auth (API keys, sessions, RBAC/Permissions), not Kubernetes ServiceAccounts or RBAC.
 - **Resource Definition:** Uses golang (Registry Approach) or CUE schemas (Apps Approach), not Kubernetes CRDs applied to an external `kube-apiserver`.
 - **Controllers/Reconcilers:** Run **internally within the Grafana server process**, not as external operators talking to `kube-apiserver`.
-- **Conformance goal:** Adopt Kubernetes API patterns, structure, and declarative style, not strict byte-for-byte conformance.
 - **Dealing with large resources:** Some of Grafana resources can be much larger than what Kubernetes/etcd allows which impacts design of some operations (e.g. `LIST`)
 - **Dataplane routes:** Not all Grafana Legacy APIs can be expressed as simple CRUD operations (e.g. datasource queries or proxy routes). We are going to define custom, resource- or group-level routes to handle these scenarios.
 
