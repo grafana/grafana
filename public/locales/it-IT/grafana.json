@@ -4208,6 +4208,9 @@
       "placeholder-default-value-if-any": "",
       "text-options": ""
     },
+    "textbox-variable-form": {
+      "label-value": ""
+    },
     "title-field-label": {
       "title": ""
     },
@@ -6025,6 +6028,10 @@
     },
     "log-labels-list": {
       "log-line": ""
+    },
+    "log-line": {
+      "show-less": "",
+      "show-more": ""
     },
     "log-line-menu": {
       "copy-link": "Copia il link alla riga del registro",

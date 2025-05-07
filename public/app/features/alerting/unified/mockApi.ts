@@ -8,7 +8,7 @@ import {
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
-import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
+import { DashboardDTO, FolderDTO } from 'app/types';
 import {
   PromRulesResponse,
   RulerGrafanaRuleDTO,
@@ -224,22 +224,6 @@ export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
       server.use(http.get(`/api/folders/${folderUid}`, () => HttpResponse.json(response)));
-    },
-  };
-}
-
-export function mockSearchApi(server: SetupServer) {
-  return {
-    search: (results: DashboardSearchItem[]) => {
-      server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
-    },
-  };
-}
-
-export function mockUserApi(server: SetupServer) {
-  return {
-    user: (user: OrgUser) => {
-      server.use(http.get(`/api/user`, () => HttpResponse.json(user)));
     },
   };
 }
