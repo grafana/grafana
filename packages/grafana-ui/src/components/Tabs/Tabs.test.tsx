@@ -27,7 +27,7 @@ describe('Tabs', () => {
     expect(onChangeTab).toHaveBeenCalledTimes(1);
   });
 
-  it('should render active tab with correctly', () => {
+  it('should render active tab correctly', () => {
     render(
       <TabsBar>
         <Tab label="Active Tab" active={true} onChangeTab={onChangeTab} />
