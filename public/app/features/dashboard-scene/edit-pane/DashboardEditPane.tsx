@@ -283,6 +283,7 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
         />
         <div {...splitter.secondaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
           <button
+            type="button"
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
             className={cx(clearButton, styles.outlineCollapseButton)}
             data-testid={selectors.components.PanelEditor.Outline.section}

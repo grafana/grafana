@@ -102,6 +102,7 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
       <div className={cx(styles.imageGrid)}>
         {validImages.map((image, index) => (
           <button
+            type="button"
             key={image.path}
             onClick={() => openPreview(index)}
             className={cx(resetButtonStyles, styles.imageButton)}
