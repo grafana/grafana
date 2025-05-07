@@ -911,13 +911,16 @@
     {
       "metadata": {
         "name": "disableEnvelopeEncryption",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-05-24T08:34:47Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2022-05-24T08:34:47Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Disable envelope encryption (emergency only)",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-as-code",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "hideFromAdminPage": true,
         "expression": "false"
       }
@@ -1267,13 +1270,16 @@
     {
       "metadata": {
         "name": "featureHighlights",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-02-03T11:53:23Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2022-02-03T11:53:23Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Highlight Grafana Enterprise features",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-as-code",
+        "codeowner": "@grafana/grafana-operator-experience-squad",
         "allowSelfServe": true,
         "expression": "false"
       }
@@ -1527,13 +1533,16 @@
     {
       "metadata": {
         "name": "individualCookiePreferences",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-02-21T10:19:07Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2023-02-21T10:19:07Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Support overriding cookie preferences per user",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-backend-group"
+        "codeowner": "@grafana/grafana-frontend-platform"
       }
     },
     {
@@ -1803,13 +1812,16 @@
     {
       "metadata": {
         "name": "logRequestsInstrumentedAsUnknown",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2022-06-10T08:56:55Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2022-06-10T08:56:55Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Logs the path for requests that are instrumented as unknown",
         "stage": "experimental",
-        "codeowner": "@grafana/hosted-grafana-team"
+        "codeowner": "@grafana/grafana-backend-services-squad"
       }
     },
     {
@@ -2366,13 +2378,16 @@
     {
       "metadata": {
         "name": "permissionsFilterRemoveSubquery",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-08-02T07:39:25Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2023-08-02T07:39:25Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-backend-group"
+        "codeowner": "@grafana/search-and-storage"
       }
     },
     {
@@ -2789,13 +2804,16 @@
     {
       "metadata": {
         "name": "renderAuthJWT",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-04-03T16:53:38Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2023-04-03T16:53:38Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Uses JWT-based auth for rendering instead of relying on remote cache",
         "stage": "preview",
-        "codeowner": "@grafana/grafana-as-code",
+        "codeowner": "@grafana/sharing-squad",
         "hideFromAdminPage": true
       }
     },
@@ -3146,13 +3164,16 @@
     {
       "metadata": {
         "name": "unifiedRequestLog",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-03-31T13:38:09Z"
+        "resourceVersion": "1746651535573",
+        "creationTimestamp": "2023-03-31T13:38:09Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Writes error logs to the request logger",
         "stage": "GA",
-        "codeowner": "@grafana/grafana-backend-group",
+        "codeowner": "@grafana/grafana-backend-services-squad",
         "hideFromAdminPage": true,
         "expression": "true"
       }
@@ -3287,7 +3308,8 @@
       "metadata": {
         "name": "wargamesTesting",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-09-13T18:32:01Z"
+        "creationTimestamp": "2023-09-13T18:32:01Z",
+        "deletionTimestamp": "2025-05-07T20:58:55Z"
       },
       "spec": {
         "description": "Placeholder feature flag for internal testing",
