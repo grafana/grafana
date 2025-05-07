@@ -87,6 +87,7 @@ export const GlobalConfigForm = ({ config, alertManagerSourceName }: Props) => {
             option={option}
             error={errors[option.propertyName]}
             pathPrefix={''}
+            secureFields={{}}
           />
         ))}
         <div>

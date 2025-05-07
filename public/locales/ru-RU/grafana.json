@@ -2821,12 +2821,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Изменить тему...",
+      "change-theme": "",
       "dark-theme": "Темная",
-      "light-theme": "Светлая"
+      "light-theme": "Светлая",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Результаты не найдены"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Поиск или переход к..."
@@ -4244,6 +4249,9 @@
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "",
       "text-options": ""
+    },
+    "textbox-variable-form": {
+      "label-value": ""
     },
     "title-field-label": {
       "title": ""
@@ -6072,6 +6080,10 @@
     },
     "log-labels-list": {
       "log-line": ""
+    },
+    "log-line": {
+      "show-less": "",
+      "show-more": ""
     },
     "log-line-menu": {
       "copy-link": "Копировать ссылку в строку журнала",
