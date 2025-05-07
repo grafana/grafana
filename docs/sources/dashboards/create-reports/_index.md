@@ -184,12 +184,14 @@ The options are:
 
 | Option | Description |
 | ------ | ----------- |
-| Source dashboard (required) | Select the dashboard from which you want to generate the report. |
+| Source dashboard (required) | Select or update the dashboard from which you want to generate the report. If you've created your report directly from a dashboard, this field is already filled in with the name of the current dashboard. |
 | [Template variables](#template-variables) | Select the variable values for the selected dashboard. This option is only displayed if the dashboard has variables. |
-| [Time range](#time-range) | If you leave the field empty, reports use the saved time range of the dashboard. Optionally, you can change the time range of the report. |
-| Add another dashboard | Add more dashboards to the report. |
+| [Time range](#time-range) | Update the report time range. By default, the report uses the time range of the dashboard. |
+| Add dashboard | Add more dashboards to the report. |
 
 <!-- prettier-ignore-end -->
+
+<!--need to see time range behaviour when the report is created from Reporting -->
 
 #### Template variables
 
@@ -210,9 +212,31 @@ If you leave the **Time range** field empty, reports use the saved time range of
 Optionally, you can change the time range of the report by setting it in the **Time range** field.
 If specified, the custom time range overrides the time range from the report's dashboard.
 
+<!--need to see time range behaviour when the report is created from Reporting -->
+
 The page header of the report displays the time range for the dashboard's data queries.
 
-##### Report time zones
+### 2. Schedule
+
+At this step, set scheduling information.
+Options vary depending on the frequency you select.
+
+<!-- prettier-ignore-start -->
+
+| Option | Description |
+| ------ | ----------- |
+| Schedule | Choose one of the following:<ul><li>**Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date.</li><li>**Send later** schedules a report for a later date. When you select this option, the required **Start date**, **Start time**, and **Time zone** options are displayed.</li></ul> |
+| Frequency | You can schedule reports to be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**. For example, you might want to [send the report using the API](#send-a-report-using-the-api). |
+| Start date | Set the date when the report should start being sent. |
+| Start time | Set the time when the report should start being sent. |
+| [Time zone](#time-zone) | Set the time zone of the report. |
+| End date | If you leave this field empty, the report is sent out indefinitely. |
+| Send only from Monday to Friday | For reports that have an hourly or daily frequency, you can choose to send them only from Monday to Friday. |
+| Send on the last day of the month | When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option. This way, the report is sent on the last day of every month regardless of how many days there are in the month. |
+
+<!-- prettier-ignore-end -->
+
+#### Time zone <!-- old heading: Report time zones -->
 
 Reports use the time zone of the dashboard from which they're generated.
 You can control the time zone for your reports by setting the dashboard to a specific time zone.
@@ -224,28 +248,11 @@ If you want to use a specific time zone, save the dashboard with a fixed time zo
 
 Each dashboard's time zone setting is visible in the [time range controls](ref:time-range-controls).
 
-### 2. Schedule
-
-At this step, set scheduling information.
-Options vary depending on the frequency you select.
-
-<!-- prettier-ignore-start -->
-
-| Option | Description |
-| ------ | ----------- |
-| Frequency | You can schedule reports to be sent once, or repeated on an hourly, daily, weekly, or monthly basis, or sent at custom intervals. You can also disable scheduling by selecting **Never**. For example, you might want to [send the report using the API](#send-a-report-using-the-api). |
-| Time | Choose one of the following:<ul><li>**Send now** sends the report immediately after you save it. To stop sending the report at some point in the future, add an end date.</li><li>**Send later** schedules a report for a later date. When you select this option, the required **Start date**, **Start time**, and **Time zone** options are displayed.</li></ul> |
-| End date | If you leave this field empty, the report is sent out indefinitely. |
-| Send only from Monday to Friday | For reports that have an hourly or daily frequency, you can choose to send them only from Monday to Friday. |
-| Send on the last day of the month | When you schedule a report with a monthly frequency, and set the start date between the 29th and the 31st of the month, the report is only sent during the months that have those dates. If you want the report to be sent every month, select the **Send on the last day of the month** option. This way, the report is sent on the last day of every month regardless of how many days there are in the month. |
-
-<!-- prettier-ignore-end -->
+<!-- Review how much of above is true now -->
 
 ### 3. Email settings
 
-### 4. Recipients
-
-At this step, enter information related to sharing the report:
+At this step, enter information related to setup of the report email:
 
 <!-- vale Grafana.GoogleLyHyphens = NO -->
 
@@ -253,47 +260,44 @@ At this step, enter information related to sharing the report:
 
 | Option | Description |
 | ------ | ----------- |
-| Report name (required) | The name of the report as you want it to appear in the **Reports** list. The report name also populates the email subject line. |
-| Recipients (required) | Enter the email addresses of the people or teams that you want to receive the report, separated by commas or semicolons. |
-| Reply-to email address | The address that appears in the **Reply to** field of the email. |
+| Email subject | If you leave this field empty, the report name is used as the email subject line. |
 | Message | The body of the message in the email with the report. |
+| Reply-to email address | The address that appears in the **Reply to** field of the email. |
 | Include a dashboard link | Include a links to the dashboards in the report email. |
+| Embed dashboard image | The report email is sent with an image of the dashboard embedded in it so recipients see the dashboard at a glance. |
 
 <!-- prettier-ignore-end -->
 
 <!-- vale Grafana.GoogleLyHyphens = YES -->
 
-Click **Send test email** in the top-right corner of the screen to verify that the configuration works as expected and to verify that emails are working.
-You can choose to send this email to the recipients configured for the report, or to a different set of email addresses only used for testing.
+### 4. Recipients
+
+Enter the email addresses of the people or teams that you want to receive the report, separated by commas or semicolons.
 
 ### 5. Attachments
 
 At this step, select one or more report formatting options.
 You can select multiple options, but you must select _at least one_:
 
-- [Attach the report as a PDF](#attach-the-report-as-a-pdf)
-- [Include table data as PDF appendix](#table-data-in-pdf) (Public preview only)
-- [Embed a dashboard image in the email](#embed-a-dashboard-as-an-image-in-the-email)
-- [Attach a CSV file of the table panel data](#attach-a-csv-file-of-the-table-panel-data)
-- [Attach a separate PDF of table data](#table-data-in-pdf) (Public preview only)
+- Attach the report as a PDF
+- [Attach a separate PDF of table data](#table-data-in-pdf) - Attach a separate PDF file to the report email for each table panel on the selected dashboard. Public preview only.
+- Attach a CSV file of table panel data - Attach a CSV file to the report email for each table panel on the selected dashboard.
 
-#### Attach the report as a PDF
+#### PDF format <!-- previous heading: Attach the report as a PDF -->
 
 If you selected the PDF format option under the **Style the PDF** section, you can configure the following options:
 
-- **Configure multiple PDFs** - Click the **Combine all dashboard PDFs in one file** checkbox if you want to generate one PDF file for all the dashboards included in the report. This option is only displayed if your report includes multiple dashboards.
-- **Configure report header** - Click the **Show template variables** checkbox to show dashboard variables.
-- **Orientation** - Set the report orientation in **Portrait** or **Landscape**. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
-- **Layout** - Select one of the following:
+<!-- prettier-ignore-start -->
 
-  - **Simple** - Renders each panel as full-width across the PDF.
-  - **Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard.
-
-    Refer to the [Layout and orientation table](#layout-and-orientation) to see examples.
-
-- **Zoom** - Zoom in to enlarge text in your PDF, or zoom out to see more data (like table columns) per panel.
-
-Click **Preview PDF** in the top-right corner of the screen to view a rendered PDF with the options you selected.
+| Option                          | Description                                                                                     |
+|---------------------------------|-------------------------------------------------------------------------------------------------|
+| Orientation                     | Set the report orientation in **Portrait** or **Landscape**. Refer to the [Layout and orientation table](#layout-and-orientation) to see examples. |
+| Layout                          | Select one of the following:<ul><li>**Simple** - Renders each panel as full-width across the PDF.</li><li>**Grid** - Renders the PDF with the same panel arrangement and width as the source dashboard.</li></ul>Refer to the [Layout and orientation table](#layout-and-orientation) to see examples. |
+| Zoom                            | Zoom in to enlarge text in your PDF or zoom out to see more data (like table columns) per panel. |
+| Combine all dashboard PDFs in one file     | Click the checkbox if you want to generate one PDF file for all the dashboards included in the report. |
+| Show template variables         | Click the checkbox to show dashboard variables.                    |
+| [Include table data as PDF appendix](#table-data-in-pdf) | Add an appendix of the dashboard table data to the report PDF. This is useful when there's more data in your table visualization than can be shown in the dashboard PDF. Public preview only. |
+<!-- prettier-ignore-end --> 
 
 ##### Layout and orientation
 
@@ -308,16 +312,9 @@ Click **Preview PDF** in the top-right corner of the screen to view a rendered P
 
 <!-- prettier-ignore-end -->
 
-#### Embed a dashboard as an image in the email
-
-You can send a report email with an image of the dashboard embedded in the email.
-This lets the email recipients see the dashboard at a glance.
-
-#### Attach a CSV file of the table panel data
-
-You can attach a CSV file to the report email for each table panel on the selected dashboard.
-
-Click **Download CSV** in the top-right corner of the screen to download a zipped file of the CSV files for your selected dashboard.
+<!-- Removed headings 
+Embed a dashboard as an image in the email
+Attach a CSV file of the table panel data -->
 
 #### Table data in PDF
 
@@ -329,15 +326,6 @@ When there's more data in your table visualizations than can be shown in the das
 
 - **Include table data as PDF appendix** - Adds an appendix to the dashboard PDF.
 - **Attach a separate PDF of table data** - Generates a separate PDF file.
-
-### 6. Confirm
-
-At this step, the confirmation page displays all the report settings.
-Review them and confirm that they're correct or click the provided **Edit** links for each section to make updates.
-
-Then, click **Send now** or **Schedule send**.
-
-You can also save the report as a draft or discard it. Discarding the report is irreversible.
 
 ## Send a report using the API
 
