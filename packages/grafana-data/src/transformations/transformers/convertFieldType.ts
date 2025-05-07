@@ -203,6 +203,10 @@ export function fieldToStringField(
   parseOptions?: DateTimeOptionsWhenParsing,
   joinWith?: string
 ): Field {
+  // Helper to determine if an array contains only simple values that can be safely joined
+  const isJoinableArray = (v: unknown): v is Array<string | number | boolean | null | undefined> =>
+    Array.isArray(v) && v.every((item) => item === null || item === undefined || typeof item !== 'object');
+
   let values = field.values;
 
   switch (field.type) {
@@ -210,12 +214,15 @@ export function fieldToStringField(
       values = values.map((v) => dateTimeParse(v, parseOptions).format(dateFormat));
       break;
 
+    // Handle both string and other types to ensure compatibility across Grafana versions (10 & 11)
+    // Arrays are classified as 'other' in Grafana 10 but as 'string' in Grafana 11
+    case FieldType.string:
     case FieldType.other:
       values = values.map((v) => {
-        if (joinWith?.length && Array.isArray(v)) {
+        if (joinWith?.length && isJoinableArray(v)) {
           return v.join(joinWith);
         }
-        return JSON.stringify(v); // will quote strings and avoid "object"
+        return field.type === FieldType.other ? JSON.stringify(v) : `${v}`;
       });
       break;
 
