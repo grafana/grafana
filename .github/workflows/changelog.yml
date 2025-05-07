@@ -142,7 +142,7 @@ jobs:
       - name: "Commit changelog changes"
         run: git add CHANGELOG.md && git commit --allow-empty -m "Update changelog" CHANGELOG.md
       - name: "git push"
-        if: ${{ inputs.dry_run }} != true
+        if: inputs.dry_run != true
         run: git push
       - name: "Create changelog PR"
         run: >

@@ -166,7 +166,7 @@ jobs:
           git commit -m "Update version to $VERSION"
 
       - name: Git push
-        if: ${{ inputs.dry_run }} != true
+        if: inputs.dry_run != true
         run: git push --set-upstream origin "release/${{ github.run_id }}/$VERSION"
 
       - name: Create PR without backports
