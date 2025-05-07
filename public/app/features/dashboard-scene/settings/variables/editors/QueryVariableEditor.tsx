@@ -155,7 +155,7 @@ export function Editor({ variable }: { variable: QueryVariable }) {
     const datasource = await getDataSourceSrv().get(datasourceRef ?? '');
     const VariableQueryEditor = await getVariableQueryEditor(datasource);
     const defaultQuery = datasource?.variables?.getDefaultQuery?.();
-    
+
     if (!query && defaultQuery) {
       const newQuery =
         typeof defaultQuery === 'string' ? defaultQuery : { ...defaultQuery, refId: defaultQuery.refId ?? 'A' };

@@ -454,16 +454,15 @@ describe('Editor', () => {
 
     const dataSourcePicker = screen.getByLabelText('Data source');
     expect(dataSourcePicker).toBeInTheDocument();
-    
+
     const user = userEvent.setup();
     await user.click(dataSourcePicker);
     await user.click(screen.getByText(/prom/i));
-    
+
     await waitFor(async () => {
       await lastValueFrom(variable.validateAndUpdate());
     });
-    
+
     expect(variable.state.datasource).toEqual({ uid: 'mock-ds-3', type: 'prometheus' });
   });
-  
 });
