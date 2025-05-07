@@ -3273,6 +3273,11 @@
         "name": "Name",
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
+        "query-options": {
+          "close": "Close",
+          "modal-title": "Query Variable",
+          "preview": "Preview"
+        },
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",
@@ -4095,6 +4100,9 @@
       "label-data-source": "Data source",
       "query-options": "Query options",
       "selection-options": "Selection options"
+    },
+    "query-variable-form": {
+      "label-editor": "Query Editor"
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",

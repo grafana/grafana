@@ -1,23 +1,22 @@
 import { useState, FormEvent } from 'react';
+import { useAsync } from 'react-use';
 
 import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
+import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
-
-import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { Box, Button, Field, Modal, TextLink } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
+import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
+import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
+import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
+import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
 
 import { QueryVariableEditorForm } from '../components/QueryVariableForm';
-import { Box, Button, Field, Modal, TextLink } from '@grafana/ui';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { t, Trans } from 'app/core/internationalization';
-import { useAsync } from 'react-use';
-import { getDataSourceSrv } from '@grafana/runtime';
-import { getVariableQueryEditor } from 'app/features/variables/editor/getVariableQueryEditor';
 import { VariableTextAreaField } from '../components/VariableTextAreaField';
-import { QueryVariableSortSelect } from 'app/features/variables/query/QueryVariableSortSelect';
-import { selectors } from '@grafana/e2e-selectors';
-import { QueryVariableRefreshSelect } from 'app/features/variables/query/QueryVariableRefreshSelect';
 import { VariableValuesPreview } from '../components/VariableValuesPreview';
 import { hasVariableOptions } from '../utils';
 
@@ -111,6 +110,10 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 function ModalEditor({ variable }: { variable: QueryVariable }) {
   const [isOpen, setIsOpen] = useState(false);
 
+  const onRunQuery = () => {
+    variable.refreshOptions();
+  };
+
   return (
     <>
       <Box display={'flex'} direction={'column'} paddingBottom={1}>
@@ -126,11 +129,18 @@ function ModalEditor({ variable }: { variable: QueryVariable }) {
           <Trans i18nKey="dashboard.edit-pane.variable.open-editor">Open variable editor</Trans>
         </Button>
       </Box>
-      <Modal title="Query Variable" isOpen={isOpen}>
-        <Editor variable={variable} onRunQuery={() => { }} />
+      <Modal
+        title={t('dashboard.edit-pane.variable.query-options.modal-title', 'Query Variable')}
+        isOpen={isOpen}
+        onDismiss={() => setIsOpen(false)}
+      >
+        <Editor variable={variable} />
         <Modal.ButtonRow>
+          <Button variant="primary" fill="outline" onClick={onRunQuery}>
+            <Trans i18nKey="dashboard.edit-pane.variable.query-options.preview">Preview</Trans>
+          </Button>
           <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
-            Done
+            <Trans i18nKey="dashboard.edit-pane.variable.query-options.close">Close</Trans>
           </Button>
         </Modal.ButtonRow>
       </Modal>
@@ -138,7 +148,7 @@ function ModalEditor({ variable }: { variable: QueryVariable }) {
   );
 }
 
-function Editor({ variable, onRunQuery }: { variable: QueryVariable, onRunQuery: () => void }) {
+function Editor({ variable }: { variable: QueryVariable }) {
   const { datasource: datasourceRef, sort, refresh, query, regex } = variable.useState();
   const { value: timeRange } = sceneGraph.getTimeRange(variable).useState();
   const { value: dsConfig } = useAsync(async () => {
@@ -169,13 +179,12 @@ function Editor({ variable, onRunQuery }: { variable: QueryVariable, onRunQuery:
 
   const onQueryChange = (query: VariableQueryType) => {
     variable.setState({ query, definition: getQueryDef(query) });
-    onRunQuery();
   };
 
   const onRegExChange = (event: React.FormEvent<HTMLTextAreaElement>) => {
     variable.setState({ regex: event.currentTarget.value });
   };
-  
+
   const onSortChange = (sort: SelectableValue<VariableSort>) => {
     variable.setState({ sort: sort.value });
   };
@@ -184,7 +193,7 @@ function Editor({ variable, onRunQuery }: { variable: QueryVariable, onRunQuery:
   };
 
   const isHasVariableOptions = hasVariableOptions(variable);
-  
+
   return (
     <>
       <Field
