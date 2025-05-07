@@ -155,3 +155,7 @@ All alert rules and instances, irrespective of their labels, match the default n
    Add custom labels by selecting existing key-value pairs from the drop down, or add new labels by entering the new key or value.
 
 {{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+
+## Bulk delete all alert rules for a rule group
+
+Admin users can delete all of the alert rules for a rule group. To delete all the alert rules for a rule group folder, click the vertical ellipsis icon and select **Delete**. Then type "Delete" into the field and click **Delete** to confirm the bulk deletion. 
