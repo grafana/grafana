@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Cambiar tema...",
+      "change-theme": "",
       "dark-theme": "Oscuro",
-      "light-theme": "Claro"
+      "light-theme": "Claro",
+      "scopes": ""
     },
     "empty-state": {
       "message": ""
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Buscar o saltar a..."
@@ -4202,6 +4207,9 @@
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "",
       "text-options": ""
+    },
+    "textbox-variable-form": {
+      "label-value": ""
     },
     "title-field-label": {
       "title": ""
@@ -6020,6 +6028,10 @@
     },
     "log-labels-list": {
       "log-line": ""
+    },
+    "log-line": {
+      "show-less": "",
+      "show-more": ""
     },
     "log-line-menu": {
       "copy-link": "Copiar enlace a la línea de registro",

@@ -33,6 +33,11 @@ export const versionedComponents = {
       '12.1.0': 'data-testid DashboardEditPaneSplitter primary body',
     },
   },
+  EditPaneHeader: {
+    deleteButton: {
+      '12.1.0': 'data-testid EditPaneHeader delete panel',
+    },
+  },
   TimePicker: {
     openButton: {
       [MIN_GRAFANA_VERSION]: 'data-testid TimePicker Open Button',
@@ -353,6 +358,9 @@ export const versionedComponents = {
       },
       content: {
         '11.1.0': 'data-testid panel content',
+      },
+      headerContainer: {
+        '9.5.0': 'data-testid header-container',
       },
       headerItems: {
         '10.2.0': (item: string) => `data-testid Panel header item ${item}`,
