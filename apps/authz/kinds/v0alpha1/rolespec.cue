@@ -1,6 +1,6 @@
 package v0alpha1
 
-Role: {
+RoleSpec: {
 	#Permission: {
 		// RBAC action (e.g: "dashbaords:read")
 		action: string
@@ -17,7 +17,6 @@ Role: {
 
 	// TODO:
 	// delegatable?: bool
-	// hidden?: bool
 	// created?
 	// updated?
 }

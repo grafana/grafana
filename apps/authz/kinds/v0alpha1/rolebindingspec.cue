@@ -1,6 +1,6 @@
 package v0alpha1
 
-RoleBinding: {
+RoleBindingSpec: {
 	#Subject: {
 		// kind of the identity getting the permission
 		kind: "User" | "ServiceAccount" | "Team" | "BasicRole"
@@ -9,16 +9,11 @@ RoleBinding: {
 	}
 	#RoleRef: {
 		// kind of role
-		kind: Role
+		kind: "Role" | "CoreRole" | "ClusterRole"
 		// uid of the role
 		name: string
 	}
 
-	// TODO: 
-	// includeHidden
-	// global
-
 	subjects: [...#Subject]
 	roleRef: #RoleRef
 }
-

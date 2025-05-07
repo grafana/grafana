@@ -17,7 +17,26 @@ rolebinding: {
 	versions: {
 		"v0alpha1": {
 			schema: {
-				spec:   v0alpha1.RoleBinding
+				spec:   v0alpha1.RoleBindingSpec
+			}
+		}
+	}
+}
+
+clusterrolebinding: {
+	kind:       "ClusterRoleBinding"
+	pluralName: "ClusterRoleBindings"
+	current:    "v0alpha1"
+
+	codegen: {
+		ts: { enabled: false }
+		go: { enabled: true }
+	}
+
+	versions: {
+		"v0alpha1": {
+			schema: {
+				spec:   v0alpha1.RoleBindingSpec
 			}
 		}
 	}
