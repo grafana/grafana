@@ -4,7 +4,14 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneObject,
+  sceneGraph,
+  useSceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import {
   clearButtonStyles,
   ElementSelectionContextItem,
@@ -19,8 +26,8 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { containsCloneKey, getOriginalKey, isInCloneChain } from '../utils/clone';
-import { getDashboardSceneFor } from '../utils/utils';
+import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
+import { findEditPanel, getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
@@ -103,10 +110,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    const elementId = containsCloneKey(element.id) ? getOriginalKey(element.id) : element.id;
-
-    const obj = sceneGraph.findByKey(this, elementId);
+    let obj = sceneGraph.findByKey(this, element.id);
     if (obj) {
+      if (obj instanceof VizPanel && containsCloneKey(getLastKeyFromClone(element.id))) {
+        const sourceVizPanel = findEditPanel(this, element.id);
+        if (sourceVizPanel) {
+          obj = sourceVizPanel;
+        }
+      }
       this.selectObject(obj, element.id, options);
     }
   }
