@@ -298,4 +298,4 @@ By default, `kubectl` cannot connect directly to Grafana. Grafana APIs use stand
 
 **Experimental `kubectl` support (Flag enabled):**
 
-If you enable the `grafanaAPIServerEnsureKubectlAccess` feature flag, Grafana will enter "dev mode" and generate a `grafana.kubeconfig` file in its config directory. This kubeconfig contains a bearer token and server details allowing `kubectl` to connect to Grafana's Resource API. Relying on the flag for production workflows is discouraged in favor of using Grafana's standard provisioning method.
+If you enable the `grafanaAPIServerEnsureKubectlAccess` feature flag, Grafana will enter "dev mode" and generate a `grafana.kubeconfig` file in its config directory. The kubeconfig contains a bearer token and server details allowing `kubectl` to connect to Grafana's Resource API. Relying on the flag for production workflows is discouraged in favor of using Grafana's standard provisioning method.
