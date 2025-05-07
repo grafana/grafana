@@ -279,7 +279,6 @@ export const AlertRuleForm = ({ existing, prefill, isManualRestore }: Props) => 
                 disabled={isSubmitting}
                 icon={isSubmitting ? 'spinner' : undefined}
               >
-                {isSubmitting && <Spinner className={styles.buttonSpinner} inline={true} />}
                 <Trans i18nKey="alerting.alert-rule-form.action-buttons.save">Save</Trans>
               </Button>
 
@@ -394,9 +393,6 @@ function storeInLocalStorageValues(values: RuleFormValues) {
 }
 
 const getStyles = (theme: GrafanaTheme2) => ({
-  buttonSpinner: css({
-    marginRight: theme.spacing(1),
-  }),
   form: css({
     width: '100%',
     height: '100%',
@@ -408,10 +404,5 @@ const getStyles = (theme: GrafanaTheme2) => ({
     overflow: 'hidden',
     maxWidth: theme.breakpoints.values.xl,
     flex: 1,
-  }),
-  flexRow: css({
-    display: 'flex',
-    flexDirection: 'row',
-    justifyContent: 'flex-start',
   }),
 });
