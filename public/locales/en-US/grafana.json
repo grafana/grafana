@@ -618,6 +618,17 @@
       "link-dashboard-and-panel": "Link dashboard and panel",
       "placeholder-value-input-default": "Enter custom annotation content..."
     },
+    "bulk-actions": {
+      "delete": {
+        "success": "Rules successfully deleted from folder"
+      },
+      "pause": {
+        "success": "Rules evaluation successfully paused for folder"
+      },
+      "unpause": {
+        "success": "Rules successfully unpaused for this folder"
+      }
+    },
     "central-alert-history": {
       "details": {
         "error": "Error loading rule for this event.",
@@ -1030,6 +1041,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": "Delete rules"
+        }
+      },
+      "delete-modal-confirmation-text": "Delete",
+      "delete-modal-delete-button": "Delete",
+      "delete-modal-deleting": "Deleting...",
+      "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
+      "delete-modal-title": "Delete",
+      "error": "Failed to execute action for folder: {{error}}",
+      "more-button": {
+        "title": "Folder bulk Actions",
+        "tooltip": "Folder bulk Actions"
+      },
+      "pause": {
+        "button": {
+          "label": "Pause all rule evaluation"
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": "Resume all rule evaluation"
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in."
