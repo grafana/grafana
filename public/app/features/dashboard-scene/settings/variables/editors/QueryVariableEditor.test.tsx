@@ -371,7 +371,7 @@ describe('QueryVariableEditor', () => {
     consoleWarnSpy.mockRestore();
   });
 
-  it('should return an OptionsPaneItemDescriptor that renders ModalEditor with expected interactions if variable is a QueryVariable', async () => {
+  it('should return an OptionsPaneItemDescriptor that renders ModalEditor with expected interactions', async () => {
     const variable = new QueryVariable({
       name: 'test',
       datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
