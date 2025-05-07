@@ -1,8 +1,8 @@
 import { SelectableValue } from '@grafana/data';
-import { config } from '@grafana/runtime';
 import { RadioButtonGroup } from '@grafana/ui';
 
 import { trackRulesListViewChange } from '../../../Analytics';
+import { shouldUseAlertingListViewV2 } from '../../../featureToggles';
 import { useRulesFilter } from '../../../hooks/useFilteredRules';
 import { useURLSearchParams } from '../../../hooks/useURLSearchParams';
 
@@ -66,6 +66,4 @@ function viewParamToLegacyView(viewParam: string | null): LegacySupportedView {
   return 'grouped';
 }
 
-export const RulesViewModeSelector = config.featureToggles.alertingListViewV2
-  ? RulesViewModeSelectorV2
-  : RulesViewModeSelectorV1;
+export const RulesViewModeSelector = shouldUseAlertingListViewV2() ? RulesViewModeSelectorV2 : RulesViewModeSelectorV1;

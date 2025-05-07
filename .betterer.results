@@ -1078,12 +1078,6 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
-    "public/app/features/alerting/unified/featureToggles.ts:5381": [
-      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
-      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
-      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
-      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"]
-    ],
     "public/app/features/alerting/unified/hooks/useAlertmanagerConfig.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],

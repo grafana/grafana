@@ -1,6 +1,8 @@
-import { setLocalStorageFeatureToggle } from './featureToggles';
+import { config } from '@grafana/runtime';
 
-const featureTogglesKey = 'grafana.featureToggles';
+import { shouldUseAlertingListViewV2 } from './featureToggles';
+import { setPreviewToggle } from './previewToggles';
+
 const storage = new Map<string, string>();
 
 const mockLocalStorage = {
@@ -14,77 +16,71 @@ Object.defineProperty(window, 'localStorage', {
   writable: true,
 });
 
-describe('setLocalStorageFeatureToggle', () => {
+describe('featureToggles', () => {
   beforeEach(() => {
+    jest.clearAllMocks();
     storage.clear();
+    config.featureToggles = {};
   });
 
-  it('should set feature toggle to true', () => {
-    setLocalStorageFeatureToggle('alertingListViewV2', true);
-    expect(storage.get(featureTogglesKey)).toBe('alertingListViewV2=true');
-  });
+  describe('shouldUseAlertingListViewV2', () => {
+    describe('when alertingListViewV2 toggle is disabled', () => {
+      beforeEach(() => {
+        config.featureToggles.alertingListViewV2 = false;
+      });
 
-  it('should set feature toggle to false', () => {
-    setLocalStorageFeatureToggle('alertingListViewV2', false);
-    expect(storage.get(featureTogglesKey)).toBe('alertingListViewV2=false');
-  });
+      it('should return false when preview toggle is disabled', () => {
+        config.featureToggles.alertingListViewV2PreviewToggle = false;
 
-  it('should remove feature toggle when set to undefined', () => {
-    storage.set(
-      featureTogglesKey,
-      'alertingListViewV2=true,alertingPrometheusRulesPrimary=true,alertingCentralAlertHistory=true'
-    );
+        expect(shouldUseAlertingListViewV2()).toBe(false);
+      });
 
-    setLocalStorageFeatureToggle('alertingPrometheusRulesPrimary', undefined);
-    expect(storage.get(featureTogglesKey)).toBe('alertingListViewV2=true,alertingCentralAlertHistory=true');
-  });
+      it('should return true when preview toggle is enabled and preview value is true', () => {
+        config.featureToggles.alertingListViewV2PreviewToggle = true;
+        setPreviewToggle('alertingListViewV2', true);
 
-  it('should not set undefined when no feature toggles are set', () => {
-    storage.set(featureTogglesKey, '');
+        expect(shouldUseAlertingListViewV2()).toBe(true);
+      });
 
-    setLocalStorageFeatureToggle('alertingPrometheusRulesPrimary', undefined);
-    expect(storage.get(featureTogglesKey)).toBe('');
-  });
+      it('should return false when preview toggle is enabled but preview value is false', () => {
+        config.featureToggles.alertingListViewV2PreviewToggle = true;
+        setPreviewToggle('alertingListViewV2', false);
 
-  it('should update only one feature toggle when multiple feature toggles are set', () => {
-    storage.set(
-      featureTogglesKey,
-      'alertingListViewV2=true,alertingPrometheusRulesPrimary=true,alertingCentralAlertHistory=true'
-    );
+        expect(shouldUseAlertingListViewV2()).toBe(false);
+      });
+    });
 
-    setLocalStorageFeatureToggle('alertingPrometheusRulesPrimary', false);
-    expect(storage.get(featureTogglesKey)).toBe(
-      'alertingListViewV2=true,alertingPrometheusRulesPrimary=false,alertingCentralAlertHistory=true'
-    );
-  });
+    describe('when alertingListViewV2 toggle is enabled', () => {
+      beforeEach(() => {
+        config.featureToggles.alertingListViewV2 = true;
+      });
 
-  it('should not rewrite other feature toggles when updating one', () => {
-    storage.set(
-      featureTogglesKey,
-      'alertingListViewV2=true,alertingPrometheusRulesPrimary=1,alertingCentralAlertHistory=false'
-    );
+      it('should return true when preview toggle is disabled', () => {
+        config.featureToggles.alertingListViewV2PreviewToggle = false;
 
-    setLocalStorageFeatureToggle('alertingListViewV2', false);
-    expect(storage.get(featureTogglesKey)).toBe(
-      'alertingListViewV2=false,alertingPrometheusRulesPrimary=1,alertingCentralAlertHistory=false'
-    );
-  });
+        expect(shouldUseAlertingListViewV2()).toBe(true);
+      });
 
-  it('should add a new toggle when others exist', () => {
-    storage.set(featureTogglesKey, 'alertingListViewV2=true');
-    setLocalStorageFeatureToggle('alertingCentralAlertHistory', true);
-    expect(storage.get(featureTogglesKey)).toBe('alertingListViewV2=true,alertingCentralAlertHistory=true');
-  });
+      it('should return true when preview toggle is disabled even if preview value is true', () => {
+        config.featureToggles.alertingListViewV2PreviewToggle = false;
+        setPreviewToggle('alertingListViewV2', true);
 
-  it('should remove the only existing toggle', () => {
-    storage.set(featureTogglesKey, 'alertingListViewV2=true');
-    setLocalStorageFeatureToggle('alertingListViewV2', undefined);
-    expect(storage.get(featureTogglesKey)).toBe('');
-  });
+        expect(shouldUseAlertingListViewV2()).toBe(true);
+      });
 
-  it('should not change localStorage when attempting to remove a non-existent toggle', () => {
-    storage.set(featureTogglesKey, 'alertingListViewV2=true');
-    setLocalStorageFeatureToggle('alertingCentralAlertHistory', undefined);
-    expect(storage.get(featureTogglesKey)).toBe('alertingListViewV2=true');
+      it('should return false when preview toggle is enabled and preview value is false', () => {
+        config.featureToggles.alertingListViewV2PreviewToggle = true;
+        setPreviewToggle('alertingListViewV2', false);
+
+        expect(shouldUseAlertingListViewV2()).toBe(false);
+      });
+
+      it('should return true when preview toggle is enabled and preview value is true', () => {
+        config.featureToggles.alertingListViewV2PreviewToggle = true;
+        setPreviewToggle('alertingListViewV2', true);
+
+        expect(shouldUseAlertingListViewV2()).toBe(true);
+      });
+    });
   });
 });
