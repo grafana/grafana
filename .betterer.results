@@ -11,8 +11,16 @@ exports[`better eslint`] = {
     "apps/dashboard/tshack/v1alpha1_spec_gen.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "e2e/old-arch/utils/support/localStorage.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
+    ],
     "e2e/old-arch/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "e2e/utils/support/localStorage.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
     ],
     "e2e/utils/support/types.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -360,6 +368,14 @@ exports[`better eslint`] = {
     "packages/grafana-data/src/utils/location.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-data/src/utils/store.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"]
+    ],
     "packages/grafana-data/src/utils/url.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -403,6 +419,14 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-prometheus/src/components/PromQueryField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "packages/grafana-prometheus/src/components/metrics-browser/useMetricsLabelsValues.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"]
     ],
     "packages/grafana-prometheus/src/datasource.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -452,11 +476,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "packages/grafana-runtime/src/config.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
       [0, 0, 0, "Do not use any type assertions.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"]
+      [0, 0, 0, "Do not use any type assertions.", "3"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
+      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
     ],
     "packages/grafana-runtime/src/services/EchoSrv.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -500,6 +525,20 @@ exports[`better eslint`] = {
     ],
     "packages/grafana-runtime/src/utils/queryResponse.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-runtime/src/utils/userStorage.tsx:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "6"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "7"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "8"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "9"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "10"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "11"]
     ],
     "packages/grafana-schema/src/veneer/common.types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -783,6 +822,9 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/utils/dom.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "packages/grafana-ui/src/utils/logger.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"]
+    ],
     "packages/grafana-ui/src/utils/useAsyncDependency.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -837,6 +879,11 @@ exports[`better eslint`] = {
     ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/core/reducers/appNotification.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"]
     ],
     "public/app/core/services/ResponseQueue.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -990,9 +1037,7 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "3"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "4"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "5"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "3"]
     ],
     "public/app/features/alerting/unified/components/receivers/form/fields/SubformArrayField.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1017,11 +1062,27 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/AlertRuleForm.tsx:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "6"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "7"]
+    ],
     "public/app/features/alerting/unified/components/silences/SilencesEditor.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/alerting/unified/components/silences/SilencesFilter.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/alerting/unified/featureToggles.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"]
     ],
     "public/app/features/alerting/unified/hooks/useAlertmanagerConfig.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1032,9 +1093,16 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/insights/InsightsMenuButton.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/rule-editor/formDefaults.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"]
+    ],
     "public/app/features/alerting/unified/types/receiver-form.ts:5381": [
-      [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
-      [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+      [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/alerting/unified/utils/misc.test.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -1076,6 +1144,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/browse-dashboards/api/useRecentlyDeletedStateManager.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
     ],
     "public/app/features/browse-dashboards/state/index.ts:5381": [
       [0, 0, 0, "Do not use export all (\`export * from ...\`)", "0"],
@@ -1778,7 +1850,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/logs/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
     "public/app/features/manage-dashboards/components/ImportDashboardLibraryPanelsList.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -1949,6 +2027,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "public/app/features/scopes/selector/ScopesSelectorService.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"]
+    ],
     "public/app/features/search/page/components/columns.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -1964,13 +2048,32 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/state/SearchStateManager.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "6"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "7"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "8"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "9"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "10"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "11"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "12"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "13"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "14"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "15"],
+      [0, 0, 0, "Do not use any type assertions.", "16"]
     ],
     "public/app/features/search/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/search/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/features/serviceaccounts/state/reducers.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -2742,6 +2845,23 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/plugins/datasource/loki/LogContextProvider.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiContextUi.tsx:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "6"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiQueryEditor.tsx:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
+    ],
     "public/app/plugins/datasource/loki/configuration/ConfigEditor.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
@@ -2751,6 +2871,14 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/loki/querybuilder/components/LokiQueryBuilder.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/plugins/datasource/loki/querybuilder/state.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
+    ],
+    "public/app/plugins/datasource/loki/shardQuerySplitting.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
     ],
     "public/app/plugins/datasource/loki/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`LokiQueryDirection\`)", "0"],

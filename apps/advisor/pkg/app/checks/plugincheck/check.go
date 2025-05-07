@@ -3,13 +3,14 @@ package plugincheck
 import (
 	"context"
 	"fmt"
+	"log"
 	sysruntime "runtime"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginupdatechecker"
@@ -94,7 +95,7 @@ func (s *deprecationStep) ID() string {
 	return DeprecationStepID
 }
 
-func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
+func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
 	p, ok := it.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", it)
@@ -150,7 +151,7 @@ func (s *updateStep) ID() string {
 	return UpdateStepID
 }
 
-func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	p, ok := i.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
