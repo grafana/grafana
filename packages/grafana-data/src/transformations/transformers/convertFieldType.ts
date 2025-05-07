@@ -203,10 +203,6 @@ export function fieldToStringField(
   parseOptions?: DateTimeOptionsWhenParsing,
   joinWith?: string
 ): Field {
-  // Helper to determine if an array contains only simple values that can be safely joined
-  const isJoinableArray = (v: unknown): v is Array<string | number | boolean | null | undefined> =>
-    Array.isArray(v) && v.every((item) => item === null || item === undefined || typeof item !== 'object');
-
   let values = field.values;
 
   switch (field.type) {
@@ -219,7 +215,7 @@ export function fieldToStringField(
     case FieldType.string:
     case FieldType.other:
       values = values.map((v) => {
-        if (joinWith?.length && isJoinableArray(v)) {
+        if (joinWith?.length && Array.isArray(v)) {
           return v.join(joinWith);
         }
         return field.type === FieldType.other ? JSON.stringify(v) : `${v}`;
