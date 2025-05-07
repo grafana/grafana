@@ -3,9 +3,8 @@ package encryption
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -19,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/apiserver/options"
 	"github.com/grafana/grafana/pkg/services/authn"
 	"github.com/grafana/grafana/pkg/services/datasources"
+	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/notifier"
 	"github.com/grafana/grafana/pkg/services/org"
 	"github.com/grafana/grafana/pkg/services/org/orgimpl"
@@ -86,7 +86,7 @@ func TestIntegration_AdminApiReencrypt(t *testing.T) {
 		require.NoError(t, err)
 
 		// Add alerting config with secure settings.
-		addAlertingConfig(t, grafanaListenAddr)
+		addAlertingConfig(t, env)
 	}
 
 	RunAdminApiReencryptTest(t, setup, getSecretsFunctions)
@@ -177,7 +177,9 @@ next:
 	return result
 }
 
-func addAlertingConfig(t *testing.T, grafanaListenAddr string) {
+func addAlertingConfig(t *testing.T, env *server.TestEnv) {
+	// Create alertmanager config
+	cfg := apimodels.PostableUserConfig{}
 	body := `
 		{
 			"alertmanager_config": {
@@ -202,12 +204,10 @@ func addAlertingConfig(t *testing.T, grafanaListenAddr string) {
 			}
 		}
 		`
-
-	url := fmt.Sprintf("http://admin:admin@%s/api/alertmanager/grafana/config/api/v1/alerts", grafanaListenAddr)
-	resp, err := http.Post(url, "application/json", strings.NewReader(body))
+	err := json.Unmarshal([]byte(body), &cfg)
 	require.NoError(t, err)
-	require.NoError(t, resp.Body.Close())
-	require.Equal(t, http.StatusAccepted, resp.StatusCode)
+	err = env.Server.HTTPServer.AlertNG.MultiOrgAlertmanager.SaveAndApplyAlertmanagerConfiguration(context.Background(), 1, cfg)
+	require.NoError(t, err)
 }
 
 type secret struct {
