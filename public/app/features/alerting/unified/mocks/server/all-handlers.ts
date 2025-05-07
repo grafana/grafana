@@ -14,7 +14,6 @@ import routingTreeK8sHandlers from 'app/features/alerting/unified/mocks/server/h
 import templatesK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/templates.k8s';
 import timeIntervalK8sHandlers from 'app/features/alerting/unified/mocks/server/handlers/k8s/timeIntervals.k8s';
 import mimirRulerHandlers from 'app/features/alerting/unified/mocks/server/handlers/mimirRuler';
-import notificationsHandlers from 'app/features/alerting/unified/mocks/server/handlers/notifications';
 import pluginsHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins';
 import allPluginHandlers from 'app/features/alerting/unified/mocks/server/handlers/plugins/all-plugin-handlers';
 import provisioningHandlers from 'app/features/alerting/unified/mocks/server/handlers/provisioning';
@@ -37,7 +36,6 @@ const allHandlers = [
   ...provisioningHandlers,
   ...silenceHandlers,
   ...searchHandlers,
-  ...notificationsHandlers,
 
   ...allPluginHandlers,
 

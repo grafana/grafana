@@ -20,13 +20,17 @@ var (
 
 var _ ProtoClient = (*protoClient)(nil)
 
-type ProtoClient interface {
+type PluginV2 interface {
 	pluginv2.DataClient
 	pluginv2.ResourceClient
 	pluginv2.DiagnosticsClient
 	pluginv2.StreamClient
 	pluginv2.AdmissionControlClient
 	pluginv2.ResourceConversionClient
+}
+
+type ProtoClient interface {
+	PluginV2
 
 	PID(context.Context) (string, error)
 	PluginID() string

@@ -502,7 +502,6 @@ export interface MapFrameToGridOptions extends TableNGProps {
   ctx: CanvasRenderingContext2D;
   onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
   rows: TableRow[];
-  sortedRows: TableRow[];
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   setIsInspecting: (isInspecting: boolean) => void;
@@ -600,6 +599,41 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 /** Returns true if the DataFrame contains nested frames */
 export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
   dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
+/** Processes nested table rows */
+export const processNestedTableRows = (
+  rows: TableRow[],
+  processParents: (parents: TableRow[]) => TableRow[]
+): TableRow[] => {
+  // Separate parent and child rows
+  // Array for parentRows: enables sorting and maintains order for iteration
+  // Map for childRows: provides O(1) lookup by parent index when reconstructing the result
+  const parentRows: TableRow[] = [];
+  const childRows: Map<number, TableRow> = new Map();
+
+  rows.forEach((row) => {
+    if (Number(row.__depth) === 0) {
+      parentRows.push(row);
+    } else {
+      childRows.set(Number(row.__index), row);
+    }
+  });
+
+  // Process parent rows (filter or sort)
+  const processedParents = processParents(parentRows);
+
+  // Reconstruct the result
+  const result: TableRow[] = [];
+  processedParents.forEach((row) => {
+    result.push(row);
+    const childRow = childRows.get(Number(row.__index));
+    if (childRow) {
+      result.push(childRow);
+    }
+  });
+
+  return result;
+};
 
 export const getDisplayName = (field: Field): string => {
   return field.state?.displayName ?? field.name;
