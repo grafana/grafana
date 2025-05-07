@@ -276,33 +276,30 @@ export const getSectionFields = (): Section => {
 // These field names should not be translated because they refer to specific technical terminology.
 // We put them in variables so they can be referred to in otherwise translated descriptions and not
 // risk being translated.
-const clientIDField = 'Client ID';
-const clientSecretField = 'Client secret';
-const scopesField = 'Scopes';
-const openIDConnectDiscoveryField = 'OpenID Connect Discovery URL';
-const authURLField = 'Auth URL';
-const tokenURLField = 'Token URL';
-const apiURLField = 'API URL';
+const clientIDLabel = 'Client ID';
+const clientSecretLabel = 'Client secret';
+const scopesLabel = 'Scopes';
+const openIDConnectDiscoveryLabel = 'OpenID Connect Discovery URL';
+const authURLLabel = 'Auth URL';
+const tokenURLLabel = 'Token URL';
+const apiURLLabel = 'API URL';
 
 /**
  * List all the fields that can be used in the form
  */
 export function fieldMap(provider: string): Record<string, FieldData> {
-  const orgMappingFieldName = t('auth-config.fields.organization-mapping-label', 'Organization mapping');
-  const orgAttributePathFieldName = t(
+  const orgMappingLabel = t('auth-config.fields.organization-mapping-label', 'Organization mapping');
+  const orgAttributePathLabel = t(
     'auth-config.fields.organization-attribute-path-label',
     'Organization attribute path'
   );
 
-  const teamsURLFieldName = t('auth-config.fields.teams-url-label', 'Teams URL');
-  const teamIDsAttributePathFieldName = t(
-    'auth-config.fields.team-ids-attribute-path-label',
-    'Team IDs attribute path'
-  );
+  const teamsURLLabel = t('auth-config.fields.teams-url-label', 'Teams URL');
+  const teamIDsAttributePathLabel = t('auth-config.fields.team-ids-attribute-path-label', 'Team IDs attribute path');
 
-  const allowedGroupsField = t('auth-config.fields.allowed-groups-label', 'Allowed groups');
-  const groupsAttributePathField = t('auth-config.fields.groups-attribute-path-label', 'Groups attribute path');
-  const teamIDsField = t('auth-config.fields.team-ids-label', 'Team IDs');
+  const allowedGroupsLabel = t('auth-config.fields.allowed-groups-label', 'Allowed groups');
+  const groupsAttributePathLabel = t('auth-config.fields.groups-attribute-path-label', 'Groups attribute path');
+  const teamIDsLabel = t('auth-config.fields.team-ids-label', 'Team IDs');
 
   return {
     clientAuthentication: {
@@ -321,10 +318,10 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       },
     },
     clientId: {
-      label: clientIDField,
+      label: clientIDLabel,
       type: 'text',
-      description: t('auth-config.fields.client-id-description', 'The {{ clientIDField }} of your OAuth2 app.', {
-        clientIDField,
+      description: t('auth-config.fields.client-id-description', 'The {{ clientIDLabel }} of your OAuth2 app.', {
+        clientIDLabel,
       }),
       validation: {
         required: true,
@@ -332,22 +329,22 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       },
     },
     clientSecret: {
-      label: clientSecretField,
+      label: clientSecretLabel,
       type: 'secret',
       description: t(
         'auth-config.fields.client-secret-description',
-        'The {{ clientSecretField }} of your OAuth2 app.',
+        'The {{ clientSecretLabel }} of your OAuth2 app.',
         {
-          clientSecretField,
+          clientSecretLabel,
         }
       ),
     },
     managedIdentityClientId: {
-      label: t('auth-config.fields.managed-identity-client-id-label', 'FIC managed identity client Id'),
+      label: t('auth-config.fields.managed-identity-client-id-label', 'FIC managed identity client ID'),
       type: 'text',
       description: t(
         'auth-config.fields.managed-identity-client-id-description',
-        'The managed identity client Id of the federated identity credential of your OAuth2 app.'
+        'The managed identity client ID of the federated identity credential of your OAuth2 app.'
       ),
     },
     federatedCredentialAudience: {
@@ -385,7 +382,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       options: [],
     },
     authUrl: {
-      label: authURLField,
+      label: authURLLabel,
       type: 'text',
       description: t('auth-config.fields.auth-url-description', 'The authorization endpoint of your OAuth2 provider.'),
       validation: {
@@ -397,11 +394,12 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       },
     },
     authStyle: {
-      label: 'Auth style',
+      label: t('auth-config.fields.auth-style-label', 'Auth style'),
       type: 'select',
       description: t(
         'auth-config.fields.auth-style-description',
-        'It determines how "Client Id" and "Client secret" are sent to Oauth2 provider. Default is AutoDetect.'
+        'It determines how "{{ clientIDLabel }}" and "{{ clientSecretLabel }}" are sent to Oauth2 provider. Default is AutoDetect.',
+        { clientIDLabel, clientSecretLabel }
       ),
       multi: false,
       options: [
@@ -412,7 +410,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       defaultValue: { value: 'AutoDetect', label: 'AutoDetect' },
     },
     tokenUrl: {
-      label: tokenURLField,
+      label: tokenURLLabel,
       type: 'text',
       description: t('auth-config.fields.token-url-description', 'The token endpoint of your OAuth2 provider.'),
       validation: {
@@ -424,17 +422,17 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       },
     },
     scopes: {
-      label: scopesField,
+      label: scopesLabel,
       type: 'select',
-      description: t('auth-config.fields.scopes-description', 'List of comma- or space-separated {{ scopesField }}.', {
-        scopesField,
+      description: t('auth-config.fields.scopes-description', 'List of comma- or space-separated {{ scopesLabel }}.', {
+        scopesLabel,
       }),
       multi: true,
       allowCustomValue: true,
       options: [],
     },
     allowedGroups: {
-      label: allowedGroupsField,
+      label: allowedGroupsLabel,
       type: 'select',
       description: (
         <>
@@ -444,8 +442,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.allowed-groups-description-oauth',
-              'If you configure "{{ allowedGroupsField }}", you must also configure "{{ groupsAttributePathField }}".',
-              { allowedGroupsField, groupsAttributePathField }
+              'If you configure "{{ allowedGroupsLabel }}", you must also configure "{{ groupsAttributePathLabel }}".',
+              { allowedGroupsLabel, groupsAttributePathLabel }
             )}
         </>
       ),
@@ -466,7 +464,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
               },
               message: t(
                 'auth-config.fields.allowed-groups-object-ids',
-                '{{ allowedGroupsField }} must be {{ objectIDsField }}.',
+                '{{ allowedGroupsLabel }} must be {{ objectIDsField }}.',
                 {
                   objectIDsField: 'Object IDs',
                 }
@@ -475,7 +473,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           : undefined,
     },
     apiUrl: {
-      label: apiURLField,
+      label: apiURLLabel,
       type: 'text',
       description: (
         <Trans i18nKey="auth-config.fields.api-url-description">
@@ -612,7 +610,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'switch',
     },
     orgMapping: {
-      label: orgMappingFieldName,
+      label: orgMappingLabel,
       description: orgMappingDescription(provider),
       type: 'select',
       hidden: !contextSrv.isGrafanaAdmin,
@@ -625,11 +623,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
     },
     orgAttributePath: {
-      label: orgAttributePathFieldName,
+      label: orgAttributePathLabel,
       description: t(
         'auth-config.fields.organization-attribute-path-description',
-        'JMESPath expression to use for organization lookup. If you configure "{{ orgMappingFieldName }}", you must also configure "{{ orgAttributePathFieldName }}".',
-        { orgMappingFieldName, orgAttributePathFieldName }
+        'JMESPath expression to use for organization lookup. If you configure "{{ orgMappingLabel }}", you must also configure "{{ orgAttributePathLabel }}".',
+        { orgMappingLabel, orgAttributePathLabel }
       ),
       type: 'text',
       hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
@@ -707,16 +705,16 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'switch',
     },
     groupsAttributePath: {
-      label: groupsAttributePathField,
+      label: groupsAttributePathLabel,
       description: t(
         'auth-config.fields.groups-attribute-path-description',
-        'JMESPath expression to use for user group lookup. If you configure "{{ allowedGroupsField }}", \nyou must also configure "{{ groupsAttributePathField }}".',
-        { allowedGroupsField, groupsAttributePathField }
+        'JMESPath expression to use for user group lookup. If you configure "{{ allowedGroupsLabel }}", \nyou must also configure "{{ groupsAttributePathLabel }}".',
+        { allowedGroupsLabel, groupsAttributePathLabel }
       ),
       type: 'text',
     },
     teamsUrl: {
-      label: teamsURLFieldName,
+      label: teamsURLLabel,
       description: (
         <>
           <Trans i18nKey="auth-config.fields.teams-url-description">
@@ -725,8 +723,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.teams-url-description-oauth',
-              'If you configure "{{ teamsURLFieldName }}", you must also configure "{{ teamIDsAttributePathFieldName }}".',
-              { teamsURLFieldName, teamIDsAttributePathFieldName }
+              'If you configure "{{ teamsURLLabel }}", you must also configure "{{ teamIDsAttributePathLabel }}".',
+              { teamsURLLabel, teamIDsAttributePathLabel }
             )}
         </>
       ),
@@ -745,17 +743,17 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t(
           'auth-config.fields.teams-url-required',
-          'This field must be set if {{ teamIDsField }} are configured and must be a valid URL.',
-          { teamIDsField }
+          'This field must be set if {{ teamIDsLabel }} are configured and must be a valid URL.',
+          { teamIDsLabel }
         ),
       },
     },
     teamIdsAttributePath: {
-      label: teamIDsAttributePathFieldName,
+      label: teamIDsAttributePathLabel,
       description: t(
         'auth-config.fields.team-ids-attribute-path-description',
-        'The JMESPath expression to use for Grafana Team ID lookup within the results returned by the "{{ teamsURLFieldName }}" endpoint.',
-        { teamsURLFieldName }
+        'The JMESPath expression to use for Grafana Team ID lookup within the results returned by the "{{ teamsURLLabel }}" endpoint.',
+        { teamsURLLabel }
       ),
       type: 'text',
       validation: {
@@ -767,13 +765,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t(
           'auth-config.fields.team-ids-attribute-path-required',
-          'This field must be set if {{ teamIDsField }} are configured.',
-          { teamIDsField }
+          'This field must be set if {{ teamIDsLabel }} are configured.',
+          { teamIDsLabel }
         ),
       },
     },
     teamIds: {
-      label: teamIDsField,
+      label: teamIDsLabel,
       type: 'select',
       description: (
         <>
@@ -786,8 +784,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.team-ids-description-oauth',
-              'If you configure "{{teamIDsField}}", you must also configure "{{teamsURLFieldName}}" and "{{teamIDsAttributePathFieldName}}".',
-              { teamIDsField, teamsURLFieldName, teamIDsAttributePathFieldName }
+              'If you configure "{{teamIDsLabel}}", you must also configure "{{teamsURLLabel}}" and "{{teamIDsAttributePathLabel}}".',
+              { teamIDsLabel, teamsURLLabel, teamIDsAttributePathLabel }
             )}
         </>
       ),
@@ -828,11 +826,11 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'checkbox',
     },
     serverDiscoveryUrl: {
-      label: openIDConnectDiscoveryField,
+      label: openIDConnectDiscoveryLabel,
       description: t(
         'auth-config.fields.server-discovery-url-description',
-        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the {{ authURLField }}, {{ tokenURLField }} and {{ apiURLField }} fields.',
-        { authURLField, tokenURLField, apiURLField }
+        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the {{ authURLLabel }}, {{ tokenURLLabel }} and {{ apiURLLabel }} fields.',
+        { authURLLabel, tokenURLLabel, apiURLLabel }
       ),
       type: 'custom',
       content: (setValue) => <ServerDiscoveryField setValue={setValue} />,
