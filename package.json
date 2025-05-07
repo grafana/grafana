@@ -272,6 +272,7 @@
     "@grafana/faro-web-tracing": "^1.13.2",
     "@grafana/flamegraph": "workspace:*",
     "@grafana/google-sdk": "0.1.2",
+    "@grafana/i18n": "workspace:*",
     "@grafana/lezer-logql": "0.2.7",
     "@grafana/llm": "0.13.2",
     "@grafana/monaco-logql": "^0.0.8",
