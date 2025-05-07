@@ -55,7 +55,7 @@ The Unified Storage (`pkg/storage/unified/...`) is Grafana's internal persistenc
 
 **Key Characteristics:**
 
-- **Implementing Kubernetes `storage.Interface`:** Provides an implementation of `k8s.io/apiserver/pkg/storage.Interface` via `apistore.Storage` (`pkg/storage/unified/apistore/store.go`). This adapter translates Kubernetes storage operations (`Create`, `Get`, `List`, `Watch`) to calls against Grafana's `resource.ResourceClient`.
+- **Implementing Kubernetes [`storage.Interface`](https://github.com/kubernetes/apiserver/blob/master/pkg/storage/interfaces.go#L168):** Provides an implementation of `k8s.io/apiserver/pkg/storage.Interface` via `apistore.Storage` (`pkg/storage/unified/apistore/store.go`). This adapter translates Kubernetes storage operations (`Create`, `Get`, `List`, `Watch`) to calls against Grafana's `resource.ResourceClient`.
 - **Resource versioning:** Each resource stored in the Unified Storage has a `resourceVersion` that changes whenever the resource is modified. It's stored as a monotonically increasing counter and is used for optimistic concurrency control in updates; if the stored version differs from the provided version, the update is rejected with a 409 Conflict error. 
 - **Native `Watch` support:** `resourceVersion` enables efficient `Watch` capabilities, even on standard SQL databases. Every resource modification writes an entry to a `resource_history` table, tagged with the new `resourceVersion`. In HA mode, an internal poller reads this table based on `resourceVersion` to detect changes. In non-HA mode, writes trigger direct notifications via Go channels. The API server then streams these detected events (from polling or direct notification) to connected Watch clients.
 
