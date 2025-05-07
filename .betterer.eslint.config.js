@@ -96,33 +96,45 @@ module.exports = [
     },
   },
   {
-    files: ['**/*.{ts,tsx}'],
-    ignores: ['**/*.{test,spec}.{ts,tsx}', '**/__mocks__/**', '**/public/test/**'],
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      '**/*.{test,spec}.{ts,tsx}',
+      '**/__mocks__/**',
+      '**/public/test/**',
+      '**/mocks.{ts,tsx}',
+      '**/spec/**/*.{ts,tsx}',
+    ],
     rules: {
       '@typescript-eslint/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+    },
+  },
+  {
+    files: ['**/*.{js,jsx,ts,tsx}'],
+    ignores: [
+      '**/*.{test,spec}.{ts,tsx}',
+      '**/__mocks__/**',
+      '**/public/test/**',
+      '**/mocks.{ts,tsx}',
+      '**/spec/**/*.{ts,tsx}',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Identifier[name=localStorage]',
+          message: 'Direct usage of localStorage is not allowed. Use `Store` from @grafana/data instead.',
+        },
+        {
+          selector: 'MemberExpression[object.name=localStorage]',
+          message: 'Direct usage of localStorage is not allowed. Use `Store` from @grafana/data instead.',
+        },
+      ],
     },
   },
   {
     files: ['public/app/**/*.{ts,tsx}'],
     rules: {
       'no-barrel-files/no-barrel-files': 'error',
-    },
-  },
-  {
-    files: ['public/**/*.tsx', 'packages/grafana-ui/**/*.tsx'],
-    ignores: ['public/app/plugins/**', '**/*.story.tsx', '**/*.{test,spec}.{ts,tsx}', '**/__mocks__/', 'public/test'],
-    rules: {
-      '@grafana/no-untranslated-strings': [
-        'error',
-        {
-          forceFix: [
-            // Add paths here that are happy to be auto fixed by this rule,
-            // for example
-            // 'public/app/features/alerting'
-          ],
-        },
-      ],
-      '@grafana/no-translation-top-level': 'error',
     },
   },
 ];

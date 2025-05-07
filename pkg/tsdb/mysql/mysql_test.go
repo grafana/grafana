@@ -35,7 +35,7 @@ func TestIntegrationMySQL(t *testing.T) {
 	runMySQLTests := false
 	// runMySQLTests := true
 
-	if !(isTestDbMySQL() || runMySQLTests) {
+	if !isTestDbMySQL() && !runMySQLTests {
 		t.Skip()
 	}
 

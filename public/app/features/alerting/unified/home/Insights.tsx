@@ -15,6 +15,7 @@ import {
   VariableValueSelectors,
 } from '@grafana/scenes';
 import { Icon, Text, Tooltip } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 
 import { getAPINamespace } from '../../../../api/utils';
 import { SectionFooter } from '../insights/SectionFooter';
@@ -178,15 +179,19 @@ export function getInsightsScenes() {
         props: {
           children: (
             <Text>
-              Monitor the status of your system{' '}
+              <Trans i18nKey="alerting.insights.monitor-status-of-system">Monitor the status of your system</Trans>{' '}
               <Tooltip
                 content={
                   <div>
-                    Alerting insights provides pre-built dashboards to monitor your alerting data.
+                    <Trans i18nKey="alerting.insights.monitor-status-system-tooltip">
+                      Alerting insights provides pre-built dashboards to monitor your alerting data.
+                    </Trans>
                     <br />
                     <br />
-                    You can identify patterns in why things go wrong and discover trends in alerting performance within
-                    your organization.
+                    <Trans i18nKey="alerting.insights.monitor-status-system-tooltip-identify">
+                      You can identify patterns in why things go wrong and discover trends in alerting performance
+                      within your organization.
+                    </Trans>
                   </div>
                 }
               >

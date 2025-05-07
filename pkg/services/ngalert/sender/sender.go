@@ -259,11 +259,11 @@ func buildNotifierConfig(alertmanagers []ExternalAMcfg) (*config.Config, map[str
 func (s *ExternalAlertmanager) alertToNotifierAlert(alert models.PostableAlert) *Alert {
 	// Prometheus alertmanager has stricter rules for annotations/labels than grafana's internal alertmanager, so we sanitize invalid keys.
 	return &Alert{
-		Labels:       s.sanitizeLabelSetFn(alert.Alert.Labels),
+		Labels:       s.sanitizeLabelSetFn(alert.Labels),
 		Annotations:  s.sanitizeLabelSetFn(alert.Annotations),
 		StartsAt:     time.Time(alert.StartsAt),
 		EndsAt:       time.Time(alert.EndsAt),
-		GeneratorURL: alert.Alert.GeneratorURL.String(),
+		GeneratorURL: alert.GeneratorURL.String(),
 	}
 }
 

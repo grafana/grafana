@@ -9,12 +9,6 @@ import { StoreState } from 'app/types';
 
 import { loadSupportBundleCollectors, createSupportBundle } from './state/actions';
 
-const subTitle = (
-  <span>
-    Choose the components for the support bundle. The support bundle will be available for 3 days after creation.
-  </span>
-);
-
 const mapStateToProps = (state: StoreState) => {
   return {
     collectors: state.supportBundles.supportBundleCollectors,
@@ -54,6 +48,14 @@ export const SupportBundlesCreateUnconnected = ({
   const values: Record<string, boolean> = collectors.reduce((acc, curr) => {
     return { ...acc, [curr.uid]: curr.default };
   }, {});
+
+  const subTitle = (
+    <span>
+      <Trans i18nKey="support-bundles.support-bundles-create-unconnected.sub-title">
+        Choose the components for the support bundle. The support bundle will be available for 3 days after creation.
+      </Trans>
+    </span>
+  );
 
   return (
     <Page navId="support-bundles" pageNav={{ text: 'Create support bundle' }} subTitle={subTitle}>

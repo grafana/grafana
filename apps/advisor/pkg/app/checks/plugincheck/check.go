@@ -7,15 +7,21 @@ import (
 	"slices"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
+)
+
+const (
+	CheckID           = "plugin"
+	DeprecationStepID = "deprecation"
+	UpdateStepID      = "update"
 )
 
 func New(
@@ -43,7 +49,7 @@ type check struct {
 }
 
 func (c *check) ID() string {
-	return "plugin"
+	return CheckID
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
@@ -53,6 +59,14 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 		res[i] = p
 	}
 	return res, nil
+}
+
+func (c *check) Item(ctx context.Context, id string) (any, error) {
+	p, exists := c.PluginStore.Plugin(ctx, id)
+	if !exists {
+		return nil, fmt.Errorf("plugin %s not found", id)
+	}
+	return p, nil
 }
 
 func (c *check) Steps() []checks.Step {
@@ -65,7 +79,6 @@ func (c *check) Steps() []checks.Step {
 			PluginPreinstall:   c.PluginPreinstall,
 			ManagedPlugins:     c.ManagedPlugins,
 			ProvisionedPlugins: c.ProvisionedPlugins,
-			log:                log.New("advisor.check.plugin.update"),
 		},
 	}
 }
@@ -88,10 +101,10 @@ func (s *deprecationStep) Resolution() string {
 }
 
 func (s *deprecationStep) ID() string {
-	return "deprecation"
+	return DeprecationStepID
 }
 
-func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
+func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
 	p, ok := it.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", it)
@@ -112,6 +125,7 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
@@ -130,7 +144,6 @@ type updateStep struct {
 	ManagedPlugins     managedplugins.Manager
 	ProvisionedPlugins provisionedplugins.Manager
 	provisionedPlugins []string
-	log                log.Logger
 }
 
 func (s *updateStep) Title() string {
@@ -146,10 +159,10 @@ func (s *updateStep) Resolution() string {
 }
 
 func (s *updateStep) ID() string {
-	return "update"
+	return UpdateStepID
 }
 
-func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	p, ok := i.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -157,19 +170,19 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 
 	// Skip if it's a core plugin
 	if p.IsCorePlugin() {
-		s.log.Debug("Skipping core plugin", "plugin", p.ID)
+		log.Debug("Skipping core plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
 	// Skip if it's managed or pinned
 	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
-		s.log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
+		log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
 	// Skip if it's provisioned
 	if s.isProvisioned(ctx, p.ID) {
-		s.log.Debug("Skipping provisioned plugin", "plugin", p.ID)
+		log.Debug("Skipping provisioned plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
@@ -184,6 +197,7 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{

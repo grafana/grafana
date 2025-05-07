@@ -1,6 +1,7 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { selectors } from '@grafana/e2e-selectors';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -27,7 +28,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
 
   return (
     <div className={styles.wrapper}>
-      <Stack direction="row" gap={1}>
+      <Stack direction="row" gap={0.5}>
         {canGoBack && (
           <IconButton
             name="arrow-left"
@@ -78,6 +79,7 @@ export function EditPaneHeader({ element, editPane }: EditPaneHeaderProps) {
             fill="outline"
             icon="trash-alt"
             tooltip={t('dashboard.layout.common.delete', 'Delete')}
+            data-testid={selectors.components.EditPaneHeader.deleteButton}
           />
         )}
       </Stack>

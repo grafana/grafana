@@ -14,7 +14,7 @@ import { isLoading, useAsync } from '../../hooks/useAsync';
  * @returns Pagination state and controls for navigating through rule groups
  */
 export function usePaginatedPrometheusGroups<TGroup extends PromRuleGroupDTO>(
-  groupsGenerator: AsyncGenerator<TGroup, void, unknown>,
+  groupsGenerator: AsyncIterator<TGroup>,
   pageSize: number
 ) {
   const [currentPage, setCurrentPage] = useState(1);

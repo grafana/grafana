@@ -89,7 +89,13 @@ export const GroupToNestedTableTransformerEditor = ({
   return (
     <Stack direction="column">
       {showCalcAlert && (
-        <Alert title="Calculations will not have an effect if no fields are being grouped on." severity="warning" />
+        <Alert
+          title={t(
+            'transformers.group-to-nested-table-transformer-editor.title-calc-alert',
+            'Calculations will not have an effect if no fields are being grouped on.'
+          )}
+          severity="warning"
+        />
       )}
       <div>
         {fieldNames.map((key) => (
@@ -106,7 +112,10 @@ export const GroupToNestedTableTransformerEditor = ({
           'transformers.group-to-nested-table-transformer-editor.label-show-field-names-in-nested-tables',
           'Show field names in nested tables'
         )}
-        description="If enabled nested tables will show field names as a table header"
+        description={t(
+          'transformers.group-to-nested-table-transformer-editor.description-show-field-names',
+          'If enabled nested tables will show field names as a table header'
+        )}
       >
         <Switch value={showHeaders} onChange={onShowFieldNamesChange} />
       </Field>

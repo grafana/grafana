@@ -199,8 +199,8 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     }
   }
 
-  fetchLabelValues = async (range: TimeRange, key: string): Promise<string[]> => {
-    const params = this.datasource.getAdjustedInterval(range);
+  fetchLabelValues = async (range: TimeRange, key: string, limit?: string): Promise<string[]> => {
+    const params = { ...this.datasource.getAdjustedInterval(range), ...(limit ? { limit } : {}) };
     const interpolatedName = this.datasource.interpolateString(key);
     const interpolatedAndEscapedName = escapeForUtf8Support(removeQuotesIfExist(interpolatedName));
     const url = `/api/v1/label/${interpolatedAndEscapedName}/values`;
@@ -215,12 +215,12 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   /**
    * Fetches all label keys
    */
-  fetchLabels = async (timeRange: TimeRange, queries?: PromQuery[]): Promise<string[]> => {
+  fetchLabels = async (timeRange: TimeRange, queries?: PromQuery[], limit?: string): Promise<string[]> => {
     let url = '/api/v1/labels';
     const timeParams = this.datasource.getAdjustedInterval(timeRange);
     this.labelFetchTs = Date.now().valueOf();
 
-    const searchParams = new URLSearchParams({ ...timeParams });
+    const searchParams = new URLSearchParams({ ...timeParams, ...(limit ? { limit } : {}) });
     queries?.forEach((q) => {
       const visualQuery = buildVisualQueryFromString(q.expr);
       if (visualQuery.query.metric !== '') {
@@ -262,16 +262,13 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   /**
    * Fetches all values for a label, with optional match[]
-   * @param name
-   * @param match
-   * @param timeRange
-   * @param requestId
    */
   fetchSeriesValuesWithMatch = async (
     timeRange: TimeRange,
     name: string,
-    match: string,
-    requestId?: string
+    match?: string,
+    requestId?: string,
+    withLimit?: string
   ): Promise<string[]> => {
     const interpolatedName = name ? this.datasource.interpolateString(name) : null;
     const interpolatedMatch = match ? this.datasource.interpolateString(match) : null;
@@ -279,6 +276,7 @@ export default class PromQlLanguageProvider extends LanguageProvider {
     const urlParams = {
       ...range,
       ...(interpolatedMatch && { 'match[]': interpolatedMatch }),
+      ...(withLimit ? { limit: withLimit } : {}),
     };
     let requestOptions: Partial<BackendSrvRequest> | undefined = {
       ...this.getDefaultCacheHeaders(),
@@ -305,9 +303,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
    * Function to replace old getSeries calls in a way that will provide faster endpoints for new prometheus instances,
    * while maintaining backward compatability. The old API call got the labels and the values in a single query,
    * but with the new query we need two calls, one to get the labels, and another to get the values.
-   *
-   * @param selector
-   * @param otherLabels
    */
   getSeriesLabels = async (timeRange: TimeRange, selector: string, otherLabels: Label[]): Promise<string[]> => {
     let possibleLabelNames, data: Record<string, string[]>;
@@ -333,10 +328,11 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchLabelsWithMatch = async (
     timeRange: TimeRange,
     name: string,
-    withName?: boolean
+    withName?: boolean,
+    withLimit?: string
   ): Promise<Record<string, string[]>> => {
     if (this.datasource.hasLabelsMatchAPISupport()) {
-      return this.fetchSeriesLabelsMatch(timeRange, name, withName);
+      return this.fetchSeriesLabelsMatch(timeRange, name, withLimit);
     } else {
       return this.fetchSeriesLabels(timeRange, name, withName, REMOVE_SERIES_LIMIT);
     }
@@ -377,13 +373,14 @@ export default class PromQlLanguageProvider extends LanguageProvider {
   fetchSeriesLabelsMatch = async (
     timeRange: TimeRange,
     name: string,
-    withName?: boolean
+    withLimit?: string
   ): Promise<Record<string, string[]>> => {
     const interpolatedName = this.datasource.interpolateString(name);
     const range = this.datasource.getAdjustedInterval(timeRange);
     const urlParams = {
       ...range,
       'match[]': interpolatedName,
+      ...(withLimit ? { limit: withLimit } : {}),
     };
     const url = `/api/v1/labels`;
 
@@ -414,13 +411,6 @@ export default class PromQlLanguageProvider extends LanguageProvider {
 
   /**
    * Fetch labels or values for a label based on the queries, scopes, filters and time range
-   * @param timeRange
-   * @param queries
-   * @param scopes
-   * @param adhocFilters
-   * @param labelName
-   * @param limit
-   * @param requestId
    */
   fetchSuggestions = async (
     timeRange?: TimeRange,

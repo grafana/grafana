@@ -7,7 +7,7 @@ import { t, Trans } from 'app/core/internationalization';
 
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
-import { FolderRepositoryList } from './Shared/FolderRepositoryList';
+import { RepositoryList } from './Shared/RepositoryList';
 import { useRepositoryList } from './hooks/useRepositoryList';
 
 enum TabSelection {
@@ -51,7 +51,7 @@ export default function HomePage() {
   const renderTabContent = () => {
     switch (activeTab) {
       case TabSelection.Repositories:
-        return <FolderRepositoryList items={items ?? []} />;
+        return <RepositoryList items={items ?? []} />;
       case TabSelection.GettingStarted:
         return <GettingStarted items={items ?? []} />;
       default:

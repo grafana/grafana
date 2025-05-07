@@ -12,13 +12,15 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/grafana/grafana/pkg/expr/mathexp"
+	"github.com/grafana/grafana/pkg/expr/metrics"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 )
 
 // Command is an interface for all expression commands.
 type Command interface {
 	NeedsVars() []string
-	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error)
+	Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, metrics *metrics.ExprMetrics) (mathexp.Results, error)
 	Type() string
 }
 
@@ -69,7 +71,7 @@ func (gm *MathCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (gm *MathCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer, _ *metrics.ExprMetrics) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteMath")
 	span.SetAttributes(attribute.String("expression", gm.RawExpression))
 	defer span.End()
@@ -165,7 +167,7 @@ func (gr *ReduceCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (gr *ReduceCommand) Execute(ctx context.Context, _ time.Time, vars mathexp.Vars, tracer tracing.Tracer, _ *metrics.ExprMetrics) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteReduce")
 	defer span.End()
 
@@ -295,7 +297,7 @@ func (gr *ResampleCommand) NeedsVars() []string {
 
 // Execute runs the command and returns the results or an error if the command
 // failed to execute.
-func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer) (mathexp.Results, error) {
+func (gr *ResampleCommand) Execute(ctx context.Context, now time.Time, vars mathexp.Vars, tracer tracing.Tracer, _ *metrics.ExprMetrics) (mathexp.Results, error) {
 	_, span := tracer.Start(ctx, "SSE.ExecuteResample")
 	defer span.End()
 	newRes := mathexp.Results{}

@@ -98,7 +98,9 @@ function DashboardInfo({ data }: { data: ResourceTableItem }) {
         <Text italic>
           <Trans i18nKey="migrate-to-cloud.resource-table.dashboard-load-error">Unable to load dashboard</Trans>
         </Text>
-        <Text color="secondary">Dashboard {dashboardUID}</Text>
+        <Text color="secondary">
+          <Trans i18nKey="migrate-to-cloud.dashboard-info.dashboard">Dashboard {{ dashboardUID }}</Trans>
+        </Text>
       </>
     );
   }
@@ -130,7 +132,11 @@ function FolderInfo({ data }: { data: ResourceTableItem }) {
         <Text italic>
           <Trans i18nKey="migrate-to-cloud.folder-info.unable-to-load-folder">Unable to load folder</Trans>
         </Text>
-        <Text color="secondary">Folder {data.refId}</Text>
+        <Text color="secondary">
+          <Trans i18nKey="migrate-to-cloud.folder-info.folder" values={{ folderUid: data.refId }}>
+            Folder {'{{folderUid}}'}
+          </Trans>
+        </Text>
       </>
     );
   }

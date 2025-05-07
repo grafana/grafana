@@ -4,12 +4,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 )
 
-type jaegerQuery struct {
+type JaegerQuery struct {
 	QueryType   string `json:"queryType"`
 	Service     string `json:"service"`
 	Operation   string `json:"operation"`
@@ -22,15 +24,39 @@ type jaegerQuery struct {
 
 func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 	response := backend.NewQueryDataResponse()
+	logger := dsInfo.JaegerClient.logger.FromContext(ctx)
 
 	for _, q := range req.Queries {
-		var query jaegerQuery
+		var query JaegerQuery
 
 		err := json.Unmarshal(q.JSON, &query)
 		if err != nil {
 			err = backend.DownstreamError(fmt.Errorf("error while parsing the query json. %w", err))
 			response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
 			continue
+		}
+
+		// Handle "Upload" query type
+		if query.QueryType == "upload" {
+			logger.Debug("upload query type is not supported in backend mode")
+			response.Responses[q.RefID] = backend.DataResponse{
+				Error:       fmt.Errorf("unsupported query type %s. only available in frontend mode", query.QueryType),
+				ErrorSource: backend.ErrorSourceDownstream,
+			}
+			continue
+		}
+
+		// Handle "Search" query type
+		if query.QueryType == "search" {
+			traces, err := dsInfo.JaegerClient.Search(&query, q.TimeRange.From.UnixMicro(), q.TimeRange.To.UnixMicro())
+			if err != nil {
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
+			}
+			frames := transformSearchResponse(traces, dsInfo)
+			response.Responses[q.RefID] = backend.DataResponse{
+				Frames: data.Frames{frames},
+			}
 		}
 
 		// No query type means traceID query
@@ -45,12 +71,120 @@ func queryData(ctx context.Context, dsInfo *datasourceInfo, req *backend.QueryDa
 				Frames: []*data.Frame{frame},
 			}
 		}
+
+		if query.QueryType == "dependencyGraph" {
+			dependencies, err := dsInfo.JaegerClient.Dependencies(ctx, q.TimeRange.From.UnixMilli(), q.TimeRange.To.UnixMilli())
+			if err != nil {
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(err)
+				continue
+			}
+
+			if len(dependencies.Errors) > 0 {
+				response.Responses[q.RefID] = backend.ErrorResponseWithErrorSource(backend.DownstreamError(fmt.Errorf("error while fetching dependencies, code: %v, message: %v", dependencies.Errors[0].Code, dependencies.Errors[0].Msg)))
+				continue
+			}
+			frames := transformDependenciesResponse(dependencies, q.RefID)
+			response.Responses[q.RefID] = backend.DataResponse{
+				Frames: frames,
+			}
+		}
 	}
 
 	return response, nil
 }
 
-// transformTraceResponse converts Jaeger trace data to a Data frame
+func transformSearchResponse(response []TraceResponse, dsInfo *datasourceInfo) *data.Frame {
+	// Create a frame for the traces
+	frame := data.NewFrame("traces",
+		data.NewField("traceID", nil, []string{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Trace ID",
+			Links: []data.DataLink{
+				{
+					Title: "Trace: ${__value.raw}",
+					URL:   "",
+					Internal: &data.InternalDataLink{
+						DatasourceUID:  dsInfo.JaegerClient.settings.UID,
+						DatasourceName: dsInfo.JaegerClient.settings.Name,
+						Query: map[string]interface{}{
+							"query": "${__value.raw}",
+						},
+					},
+				},
+			},
+		}),
+		data.NewField("traceName", nil, []string{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Trace name",
+		}),
+		data.NewField("startTime", nil, []time.Time{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Start time",
+		}),
+		data.NewField("duration", nil, []int64{}).SetConfig(&data.FieldConfig{
+			DisplayName: "Duration",
+			Unit:        "µs",
+		}),
+	)
+
+	// Set the visualization type to table
+	frame.Meta = &data.FrameMeta{
+		PreferredVisualization: "table",
+	}
+
+	// Sort traces by start time in descending order (newest first)
+	sort.Slice(response, func(i, j int) bool {
+		rootSpanI := response[i].Spans[0]
+		rootSpanJ := response[j].Spans[0]
+
+		for _, span := range response[i].Spans {
+			if span.StartTime < rootSpanI.StartTime {
+				rootSpanI = span
+			}
+		}
+
+		for _, span := range response[j].Spans {
+			if span.StartTime < rootSpanJ.StartTime {
+				rootSpanJ = span
+			}
+		}
+
+		return rootSpanI.StartTime > rootSpanJ.StartTime
+	})
+
+	// Process each trace
+	for _, trace := range response {
+		if len(trace.Spans) == 0 {
+			continue
+		}
+
+		// Get the root span
+		rootSpan := trace.Spans[0]
+		for _, span := range trace.Spans {
+			if span.StartTime < rootSpan.StartTime {
+				rootSpan = span
+			}
+		}
+
+		// Get the service name for the trace
+		serviceName := ""
+		if process, ok := trace.Processes[rootSpan.ProcessID]; ok {
+			serviceName = process.ServiceName
+		}
+
+		// Get the trace name and start time
+		traceName := fmt.Sprintf("%s: %s", serviceName, rootSpan.OperationName)
+		startTime := time.Unix(0, rootSpan.StartTime*1000)
+
+		// Append the row to the frame
+		frame.AppendRow(
+			trace.TraceID,
+			traceName,
+			startTime,
+			rootSpan.Duration,
+		)
+	}
+
+	return frame
+}
+
 func transformTraceResponse(trace TraceResponse, refID string) *data.Frame {
 	frame := data.NewFrame(refID,
 		data.NewField("traceID", nil, []string{}),
@@ -159,6 +293,73 @@ func transformTraceResponse(trace TraceResponse, refID string) *data.Frame {
 	}
 
 	return frame
+}
+
+func transformDependenciesResponse(dependencies DependenciesResponse, refID string) []*data.Frame {
+	// Create nodes frame
+	nodesFrame := data.NewFrame(refID+"_nodes",
+		data.NewField("id", nil, []string{}),
+		data.NewField("title", nil, []string{}),
+	)
+	nodesFrame.Meta = &data.FrameMeta{
+		PreferredVisualization: "nodeGraph",
+	}
+
+	// Create edges frame
+	mainStatField := data.NewField("mainstat", nil, []int64{})
+	mainStatField.Config = &data.FieldConfig{
+		DisplayName: "Call count",
+	}
+	edgesFrame := data.NewFrame(refID+"_edges",
+		data.NewField("id", nil, []string{}),
+		data.NewField("source", nil, []string{}),
+		data.NewField("target", nil, []string{}),
+		mainStatField,
+	)
+
+	edgesFrame.Meta = &data.FrameMeta{
+		PreferredVisualization: "nodeGraph",
+	}
+
+	// Return early if there are no dependencies
+	if len(dependencies.Data) == 0 {
+		return []*data.Frame{nodesFrame, edgesFrame}
+	}
+
+	// Create a map to store unique service nodes
+	servicesByName := make(map[string]bool)
+
+	// Process each dependency
+	for _, dependency := range dependencies.Data {
+		// Add services to the map to track unique services
+		servicesByName[dependency.Parent] = true
+		servicesByName[dependency.Child] = true
+
+		// Add edge data
+		edgesFrame.AppendRow(
+			dependency.Parent+"--"+dependency.Child,
+			dependency.Parent,
+			dependency.Child,
+			int64(dependency.CallCount),
+		)
+	}
+
+	// Convert map keys to slice and sort them - this is to ensure the returned nodes are in a consistent order
+	services := make([]string, 0, len(servicesByName))
+	for service := range servicesByName {
+		services = append(services, service)
+	}
+	sort.Strings(services)
+
+	// Add node data in sorted order
+	for _, service := range services {
+		nodesFrame.AppendRow(
+			service,
+			service,
+		)
+	}
+
+	return []*data.Frame{nodesFrame, edgesFrame}
 }
 
 type TraceKeyValuePair struct {

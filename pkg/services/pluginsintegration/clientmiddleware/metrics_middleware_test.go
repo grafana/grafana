@@ -89,7 +89,7 @@ func TestInstrumentationMiddleware(t *testing.T) {
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationMs))
 				require.Equal(t, 1, testutil.CollectAndCount(promRegistry, metricRequestDurationS))
 
-				counter := mw.pluginMetrics.pluginRequestCounter.WithLabelValues(pluginID, string(tc.expEndpoint), instrumentationutils.RequestStatusOK.String(), string(backendplugin.TargetUnknown), string(backend.DefaultErrorSource))
+				counter := mw.pluginRequestCounter.WithLabelValues(pluginID, string(tc.expEndpoint), instrumentationutils.RequestStatusOK.String(), string(backendplugin.TargetUnknown), string(backend.DefaultErrorSource))
 				require.Equal(t, 1.0, testutil.ToFloat64(counter))
 				for _, m := range []string{metricRequestDurationMs, metricRequestDurationS} {
 					require.NoError(t, checkHistogram(promRegistry, m, map[string]string{
@@ -162,14 +162,14 @@ func TestInstrumentationMiddlewareStatusSource(t *testing.T) {
 	))
 
 	t.Run("Metrics", func(t *testing.T) {
-		metricsMw.pluginMetrics.pluginRequestCounter.Reset()
+		metricsMw.pluginRequestCounter.Reset()
 
 		cdt.TestHandler.QueryDataFunc = func(ctx context.Context, req *backend.QueryDataRequest) (*backend.QueryDataResponse, error) {
 			return &backend.QueryDataResponse{Responses: map[string]backend.DataResponse{"A": downstreamErrorResponse}}, nil
 		}
 		_, err := cdt.MiddlewareHandler.QueryData(context.Background(), &backend.QueryDataRequest{PluginContext: pCtx})
 		require.NoError(t, err)
-		counter, err := metricsMw.pluginMetrics.pluginRequestCounter.GetMetricWith(newLabels(
+		counter, err := metricsMw.pluginRequestCounter.GetMetricWith(newLabels(
 			queryDataErrorCounterLabels,
 			prometheus.Labels{
 				labelStatusSource: string(backend.ErrorSourceDownstream),

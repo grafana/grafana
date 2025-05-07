@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Field, Input, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 function getStyles(theme: GrafanaTheme2) {
   return {
@@ -17,7 +18,12 @@ export function LogsColumnSearch(props: { onChange: (e: React.FormEvent<HTMLInpu
   const styles = getStyles(theme);
   return (
     <Field className={styles.searchWrap}>
-      <Input value={props.value} type={'text'} placeholder={'Search fields by name'} onChange={props.onChange} />
+      <Input
+        value={props.value}
+        type={'text'}
+        placeholder={t('explore.logs-column-search.placeholder-search-fields-by-name', 'Search fields by name')}
+        onChange={props.onChange}
+      />
     </Field>
   );
 }

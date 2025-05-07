@@ -8,7 +8,14 @@ import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';
 import { LogsEditorMode } from '../../dataquery.gen';
 import Datasource from '../../datasource';
 import { selectors } from '../../e2e/selectors';
-import { AzureMonitorErrorish, AzureMonitorOption, AzureMonitorQuery, ResultFormat, EngineSchema } from '../../types';
+import {
+  AzureMonitorErrorish,
+  AzureMonitorOption,
+  AzureMonitorQuery,
+  ResultFormat,
+  EngineSchema,
+  AzureLogAnalyticsMetadataTable,
+} from '../../types';
 import { LogsQueryBuilder } from '../LogsQueryBuilder/LogsQueryBuilder';
 import ResourceField from '../ResourceField';
 import { ResourceRow, ResourceRowGroup, ResourceRowType } from '../ResourcePicker/types';
@@ -60,6 +67,7 @@ const LogsQueryEditor = ({
   const to = templateSrv?.replace('$__to');
   const templateVariableOptions = templateSrv.getVariables();
   const isBasicLogsQuery = (basicLogsEnabled && query.azureLogAnalytics?.basicLogsQuery) ?? false;
+  const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
   const disableRow = (row: ResourceRow, selectedRows: ResourceRowGroup) => {
     if (selectedRows.length === 0) {
@@ -83,12 +91,41 @@ const LogsQueryEditor = ({
   const [schema, setSchema] = useState<EngineSchema | undefined>();
 
   useEffect(() => {
-    if (query.azureLogAnalytics?.resources && query.azureLogAnalytics.resources.length) {
-      datasource.azureLogAnalyticsDatasource.getKustoSchema(query.azureLogAnalytics.resources[0]).then((schema) => {
-        setSchema(schema);
+    const resources = query.azureLogAnalytics?.resources;
+    if (resources) {
+      setIsLoadingSchema(true);
+      const fetchAllPlans = async (tables: AzureLogAnalyticsMetadataTable[]) => {
+        const promises = [];
+        for (const table of tables) {
+          promises.push({
+            ...table,
+            plan: await datasource.azureMonitorDatasource.getWorkspaceTablePlan(resources, table.name),
+          });
+        }
+
+        const tablesWithPlan = await Promise.all(promises);
+        return tablesWithPlan;
+      };
+      datasource.azureLogAnalyticsDatasource.getKustoSchema(resources[0]).then((schema) => {
+        if (schema?.database?.tables && query.azureLogAnalytics?.mode === LogsEditorMode.Builder) {
+          fetchAllPlans(schema?.database?.tables).then(async (t) => {
+            if (schema.database?.tables) {
+              schema.database.tables = t;
+            }
+            setSchema(schema);
+          });
+        } else {
+          setSchema(schema);
+        }
+        setIsLoadingSchema(false);
       });
     }
-  }, [query.azureLogAnalytics?.resources, datasource.azureLogAnalyticsDatasource]);
+  }, [
+    query.azureLogAnalytics?.resources,
+    datasource.azureLogAnalyticsDatasource,
+    datasource.azureMonitorDatasource,
+    query.azureLogAnalytics?.mode,
+  ]);
 
   useEffect(() => {
     if (shouldShowBasicLogsToggle(query.azureLogAnalytics?.resources || [], basicLogsEnabled)) {
@@ -254,6 +291,7 @@ const LogsQueryEditor = ({
             templateVariableOptions={templateVariableOptions}
             datasource={datasource}
             timeRange={timeRange}
+            isLoadingSchema={isLoadingSchema}
           />
         ) : (
           <QueryField

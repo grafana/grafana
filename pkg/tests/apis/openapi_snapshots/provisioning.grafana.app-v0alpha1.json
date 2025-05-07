@@ -1270,6 +1270,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1366,6 +1374,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "requestBody": {
@@ -1461,6 +1477,14 @@
             "description": "optional message sent with any changes",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "skipDryRun",
+            "in": "query",
+            "description": "do not pro-actively verify the payload",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -2467,6 +2491,24 @@
             "default": ""
           },
           "username": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "type": {
             "type": "string",
             "default": ""
           }
@@ -3762,20 +3804,16 @@
             "format": "int32",
             "default": 0
           },
-          "details": {
-            "description": "Optional details",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apimachinery.apis.common.v0alpha1.Unstructured"
-              }
-            ]
-          },
           "errors": {
-            "description": "Error descriptions",
+            "description": "Field related errors",
             "type": "array",
             "items": {
-              "type": "string",
-              "default": ""
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.pkg.apis.provisioning.v0alpha1.ErrorDetails"
+                }
+              ]
             }
           },
           "kind": {

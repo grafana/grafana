@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 import { GrafanaTheme2, RelativeTimeRange, dateTime, getDefaultRelativeTimeRange, rangeUtil } from '@grafana/data';
 import { Icon, InlineField, RelativeTimeRangePicker, Toggletip, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { AlertQueryOptions, MaxDataPointsOption, MinIntervalOption } from './QueryWrapper';
@@ -29,6 +29,8 @@ export const QueryOptions = ({
 
   const timeRange = query.relativeTimeRange ? rangeUtil.relativeToTimeRange(query.relativeTimeRange) : undefined;
 
+  const separator = <span>, </span>;
+
   return (
     <>
       <Toggletip
@@ -50,14 +52,33 @@ export const QueryOptions = ({
         placement="bottom-start"
       >
         <button type="button" className={styles.actionLink} onClick={() => setShowOptions(!showOptions)}>
-          Options {showOptions ? <Icon name="angle-right" /> : <Icon name="angle-down" />}
+          <Trans i18nKey="alerting.query-options.button-options">Options</Trans>{' '}
+          {showOptions ? <Icon name="angle-right" /> : <Icon name="angle-down" />}
         </button>
       </Toggletip>
 
       <div className={styles.staticValues}>
         <span>{dateTime(timeRange?.from).locale('en').fromNow(true)}</span>
-        {queryOptions.maxDataPoints && <span>, MD = {queryOptions.maxDataPoints}</span>}
-        {queryOptions.minInterval && <span>, Min. Interval = {queryOptions.minInterval}</span>}
+
+        {queryOptions.maxDataPoints && (
+          <>
+            {separator}
+            <Trans
+              i18nKey="alerting.query-options.max-data-points"
+              values={{ maxDataPoints: queryOptions.maxDataPoints }}
+            >
+              MD = {'{{maxDataPoints}}'}
+            </Trans>
+          </>
+        )}
+        {queryOptions.minInterval && (
+          <>
+            {separator}
+            <Trans i18nKey="alerting.query-options.min-interval" values={{ minInterval: queryOptions.minInterval }}>
+              Min. Interval = {'{{minInterval}}'}
+            </Trans>
+          </>
+        )}
       </div>
     </>
   );

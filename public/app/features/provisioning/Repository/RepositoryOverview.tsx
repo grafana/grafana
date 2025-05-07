@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 
 import { Box, Card, CellProps, Grid, InteractiveTable, LinkButton, Stack, Text, useStyles2 } from '@grafana/ui';
 import { Repository, ResourceCount } from 'app/api/clients/provisioning';
-import { Trans } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { RecentJobs } from '../Job/RecentJobs';
 import { formatTimestamp } from '../utils/time';
@@ -85,7 +85,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                       </Text>
                     </div>
                     <div className={styles.valueColumn}>
-                      <Text variant="body">{status?.health?.healthy ? 'Healthy' : 'Unhealthy'}</Text>
+                      <Text variant="body">
+                        {status?.health?.healthy
+                          ? t('provisioning.repository-overview.healthy', 'Healthy')
+                          : t('provisioning.repository-overview.unhealthy', 'Unhealthy')}
+                      </Text>
                     </div>
 
                     <div className={styles.labelColumn}>
@@ -154,7 +158,11 @@ export function RepositoryOverview({ repo }: { repo: Repository }) {
                     </Text>
                   </div>
                   <div className={styles.valueColumn}>
-                    <Text variant="body">{status?.sync.lastRef ? status.sync.lastRef.substring(0, 7) : 'N/A'}</Text>
+                    <Text variant="body">
+                      {status?.sync.lastRef
+                        ? status.sync.lastRef.substring(0, 7)
+                        : t('provisioning.repository-overview.not-available', 'N/A')}
+                    </Text>
                   </div>
 
                   <div className={styles.labelColumn}>

@@ -1,21 +1,26 @@
 import { css } from '@emotion/css';
 import { memo } from 'react';
 
-import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels } from '@grafana/data';
+import { LogsDedupStrategy, LogsMetaItem, LogsMetaKind, LogRowModel, CoreApp, Labels, store } from '@grafana/data';
 import { config, reportInteraction } from '@grafana/runtime';
-import { Button, Dropdown, Menu, ToolbarButton, Tooltip, useStyles2 } from '@grafana/ui';
+import { Button, Dropdown, Menu, ToolbarButton, useStyles2 } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
-import { LogLabels, LogLabelsList } from '../../logs/components/LogLabels';
-import { MAX_CHARACTERS } from '../../logs/components/LogRowMessage';
+import { LogLabels, LogLabelsList, Props as LogLabelsProps } from '../../logs/components/LogLabels';
 import { DownloadFormat, downloadLogs } from '../../logs/utils';
 import { MetaInfoText, MetaItemProps } from '../MetaInfoText';
+
+import { SETTINGS_KEYS } from './utils/logs';
 
 const getStyles = () => ({
   metaContainer: css({
     flex: 1,
     display: 'flex',
     flexWrap: 'wrap',
+    '& span': {
+      fontWeight: 'normal',
+      lineHeight: '1.25em',
+    },
   }),
 });
 
@@ -24,25 +29,12 @@ export type Props = {
   dedupStrategy: LogsDedupStrategy;
   dedupCount: number;
   displayedFields: string[];
-  hasUnescapedContent: boolean;
-  forceEscape: boolean;
   logRows: LogRowModel[];
-  onEscapeNewlines: () => void;
   clearDetectedFields: () => void;
 };
 
 export const LogsMetaRow = memo(
-  ({
-    meta,
-    dedupStrategy,
-    dedupCount,
-    displayedFields,
-    clearDetectedFields,
-    hasUnescapedContent,
-    forceEscape,
-    onEscapeNewlines,
-    logRows,
-  }: Props) => {
+  ({ meta, dedupStrategy, dedupCount, displayedFields, clearDetectedFields, logRows }: Props) => {
     const style = useStyles2(getStyles);
 
     const logsMetaItem: Array<LogsMetaItem | MetaItemProps> = [...meta];
@@ -53,14 +45,6 @@ export const LogsMetaRow = memo(
         label: 'Deduplication count',
         value: dedupCount,
         kind: LogsMetaKind.Number,
-      });
-    }
-    // Add info about limit for highlighting
-    if (logRows.some((r) => r.entry.length > MAX_CHARACTERS)) {
-      logsMetaItem.push({
-        label: 'Info',
-        value: 'Logs with more than 100,000 characters could not be parsed and highlighted',
-        kind: LogsMetaKind.String,
       });
     }
 
@@ -91,22 +75,6 @@ export const LogsMetaRow = memo(
       downloadLogs(format, logRows, meta);
     }
 
-    // Add unescaped content info
-    if (hasUnescapedContent) {
-      logsMetaItem.push({
-        label: 'Your logs might have incorrectly escaped content',
-        value: (
-          <Tooltip
-            content="Fix incorrectly escaped newline and tab sequences in log lines. Manually review the results to confirm that the replacements are correct."
-            placement="right"
-          >
-            <Button variant="secondary" size="sm" onClick={onEscapeNewlines}>
-              {forceEscape ? 'Remove escaping' : 'Escape newlines'}
-            </Button>
-          </Tooltip>
-        ),
-      });
-    }
     const downloadMenu = (
       <Menu>
         {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
@@ -117,6 +85,17 @@ export const LogsMetaRow = memo(
         <Menu.Item label="csv" onClick={() => download(DownloadFormat.CSV)} />
       </Menu>
     );
+
+    const onCommonLabelsToggle = (state: boolean) => {
+      store.set(SETTINGS_KEYS.commonLabels, state);
+    };
+
+    const commonLabelsProps = {
+      onDisplayMaxToggle: onCommonLabelsToggle,
+      displayMax: 3,
+      displayAll: store.getBool(SETTINGS_KEYS.commonLabels, false),
+    };
+
     return (
       <>
         {logsMetaItem && (
@@ -125,7 +104,7 @@ export const LogsMetaRow = memo(
               metaItems={logsMetaItem.map((item) => {
                 return {
                   label: item.label,
-                  value: 'kind' in item ? renderMetaItem(item.value, item.kind) : item.value,
+                  value: 'kind' in item ? renderMetaItem(item.value, item.kind, commonLabelsProps) : item.value,
                 };
               })}
             />
@@ -145,12 +124,12 @@ export const LogsMetaRow = memo(
 
 LogsMetaRow.displayName = 'LogsMetaRow';
 
-function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind) {
+function renderMetaItem(value: string | number | Labels, kind: LogsMetaKind, logLabelsProps: Partial<LogLabelsProps>) {
   if (typeof value === 'string' || typeof value === 'number') {
     return <>{value}</>;
   }
   if (kind === LogsMetaKind.LabelsMap) {
-    return <LogLabels labels={value} />;
+    return <LogLabels labels={value} {...logLabelsProps} />;
   }
   if (kind === LogsMetaKind.Error) {
     return <span className="logs-meta-item__error">{value.toString()}</span>;

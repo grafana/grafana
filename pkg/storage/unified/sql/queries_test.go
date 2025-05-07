@@ -12,7 +12,8 @@ import (
 
 func TestUnifiedStorageQueries(t *testing.T) {
 	mocks.CheckQuerySnapshots(t, mocks.TemplateTestSetup{
-		RootDir: "testdata",
+		RootDir:        "testdata",
+		SQLTemplatesFS: sqlTemplatesFS,
 		Templates: map[*template.Template][]mocks.TemplateTestCase{
 			sqlResourceDelete: {
 				{
@@ -331,6 +332,16 @@ func TestUnifiedStorageQueries(t *testing.T) {
 					Data: &sqlResourceVersionUpsertRequest{
 						SQLTemplate:     mocks.NewTestingSQLTemplate(),
 						ResourceVersion: int64(12354),
+					},
+				},
+			},
+
+			sqlResourceVersionList: {
+				{
+					Name: "single path",
+					Data: &sqlResourceVersionListRequest{
+						SQLTemplate:          mocks.NewTestingSQLTemplate(),
+						groupResourceVersion: new(groupResourceVersion),
 					},
 				},
 			},

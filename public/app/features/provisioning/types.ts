@@ -1,8 +1,11 @@
 import { GitHubRepositoryConfig, LocalRepositoryConfig, RepositorySpec } from '../../api/clients/provisioning';
 
-export type RepositoryFormData = Omit<RepositorySpec, 'github' | 'local'> &
+export type RepositoryFormData = Omit<RepositorySpec, 'github' | 'local' | 'workflows'> &
   GitHubRepositoryConfig &
-  LocalRepositoryConfig;
+  LocalRepositoryConfig & {
+    readOnly: boolean;
+    prWorkflow: boolean;
+  };
 
 // Added to DashboardDTO to help editor
 export interface ProvisioningPreview {
@@ -11,7 +14,7 @@ export interface ProvisioningPreview {
   ref?: string;
 }
 
-export type WorkflowOption = 'branch' | 'write';
+export type WorkflowOption = RepositorySpec['workflows'][number];
 
 export type HistoryItem = {
   ref: string;

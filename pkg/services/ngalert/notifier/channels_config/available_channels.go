@@ -952,6 +952,13 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "authorization_credentials",
 					Secure:       true,
 				},
+				{ // New in 12.0.
+					Label:        "Extra Headers",
+					Description:  "Optionally provide extra headers to be used in the request.",
+					Element:      ElementTypeKeyValueMap,
+					InputType:    InputTypeText,
+					PropertyName: "headers",
+				},
 				{ // New in 8.0. TODO: How to enforce only numbers?
 					Label:        "Max Alerts",
 					Description:  "Max alerts to include in a notification. Remaining alerts in the same batch will be ignored above this number. 0 means no limit.",
@@ -974,6 +981,30 @@ func GetAvailableNotifiers() []*NotifierPlugin {
 					PropertyName: "message",
 					Placeholder:  alertingTemplates.DefaultMessageEmbed,
 				},
+				{ // New in 12.0.
+					Label:        "Custom Payload",
+					Description:  "Optionally provide a templated payload. Overrides 'Message' and 'Title' field.",
+					Element:      ElementTypeSubform,
+					PropertyName: "payload",
+					SubformOptions: []NotifierOption{
+						{
+							Label:        "Payload Template",
+							Description:  "Custom payload template.",
+							Element:      ElementTypeTextArea,
+							PropertyName: "template",
+							Placeholder:  `{{ template "webhook.default.payload" . }}`,
+							Required:     true,
+						},
+						{
+							Label:        "Payload Variables",
+							Description:  "Optionally provide a variables to be used in the payload template. They will be available in the template as `.Vars.<variable_name>`.",
+							Element:      ElementTypeKeyValueMap,
+							InputType:    InputTypeText,
+							PropertyName: "vars",
+						},
+					},
+				},
+
 				{
 					Label:        "TLS",
 					PropertyName: "tlsConfig",

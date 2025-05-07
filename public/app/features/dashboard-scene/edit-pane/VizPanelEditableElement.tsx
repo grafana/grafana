@@ -13,9 +13,10 @@ import {
   PanelBackgroundSwitch,
   PanelDescriptionTextArea,
   PanelFrameTitleInput,
+  setPanelTitle,
 } from '../panel-edit/getPanelFrameOptions';
+import { AutoGridItem } from '../scene/layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
-import { AutoGridItem } from '../scene/layout-responsive-grid/ResponsiveGridItem';
 import { BulkActionElement } from '../scene/types/BulkActionElement';
 import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 import { EditableDashboardElement, EditableDashboardElementInfo } from '../scene/types/EditableDashboardElement';
@@ -38,7 +39,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
     };
   }
 
-  public useEditPaneOptions(): OptionsPaneCategoryDescriptor[] {
+  public useEditPaneOptions(isNewElement: boolean): OptionsPaneCategoryDescriptor[] {
     const panel = this.panel;
     const layoutElement = panel.parent!;
 
@@ -55,7 +56,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
             title: t('dashboard.viz-panel.options.title-option', 'Title'),
             value: panel.state.title,
             popularRank: 1,
-            render: () => <PanelFrameTitleInput panel={panel} />,
+            render: () => <PanelFrameTitleInput panel={panel} isNewElement={isNewElement} />,
           })
         )
         .addItem(
@@ -71,7 +72,7 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
             render: () => <PanelBackgroundSwitch panel={panel} />,
           })
         );
-    }, [panel]);
+    }, [panel, isNewElement]);
 
     const layoutCategories = useMemo(
       () => (isDashboardLayoutItem(layoutElement) && layoutElement.getOptions ? layoutElement.getOptions() : []),
@@ -110,6 +111,10 @@ export class VizPanelEditableElement implements EditableDashboardElement, BulkAc
   public onCopy() {
     const dashboard = getDashboardSceneFor(this.panel);
     dashboard.copyPanel(this.panel);
+  }
+
+  public onChangeName(name: string) {
+    setPanelTitle(this.panel, name);
   }
 
   public createMultiSelectedElement(items: VizPanelEditableElement[]) {

@@ -64,8 +64,8 @@ func Test_ReadPluginJSON(t *testing.T) {
 				Dependencies: Dependencies{
 					GrafanaVersion: "3.x.x",
 					Plugins: []Dependency{
-						{Type: "datasource", ID: "graphite", Name: "Graphite", Version: "1.0.0"},
-						{Type: "panel", ID: "graph", Name: "Graph", Version: "1.0.0"},
+						{Type: "datasource", ID: "graphite", Name: "Graphite"},
+						{Type: "panel", ID: "graph", Name: "Graph"},
 					},
 					Extensions: ExtensionsDependencies{
 						ExposedComponents: []string{},

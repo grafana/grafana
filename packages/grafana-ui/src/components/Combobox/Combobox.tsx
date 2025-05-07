@@ -20,15 +20,12 @@ import { isNewGroup } from './utils';
 
 // TODO: It would be great if ComboboxOption["label"] was more generic so that if consumers do pass it in (for async),
 // then the onChange handler emits ComboboxOption with the label as non-undefined.
-export interface ComboboxBaseProps<T extends string | number>
+
+interface ComboboxStaticProps<T extends string | number>
   extends Pick<
     InputProps,
     'placeholder' | 'autoFocus' | 'id' | 'aria-labelledby' | 'disabled' | 'loading' | 'invalid'
   > {
-  /**
-   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
-   */
-  isClearable?: boolean;
   /**
    * Allows the user to set a value which is not in the list of options.
    */
@@ -39,11 +36,6 @@ export interface ComboboxBaseProps<T extends string | number>
    * If a function, it will be called when the menu is opened and on keypress with the current search query.
    */
   options: Array<ComboboxOption<T>> | ((inputValue: string) => Promise<Array<ComboboxOption<T>>>);
-
-  /**
-   * onChange handler is called with the newly selected option.
-   */
-  onChange: (option: ComboboxOption<T>) => void;
 
   /**
    * Current selected value. Most consumers should pass a scalar value (string | number). However, sometimes with Async
@@ -64,18 +56,32 @@ export interface ComboboxBaseProps<T extends string | number>
   onBlur?: () => void;
 }
 
-type ClearableConditionals<T extends number | string> =
-  | {
-      /**
-       * Allow the user to clear the selected value. `null` is emitted from the onChange handler
-       */
-      isClearable: true;
-      /**
-       * The onChange handler is called with `null` when clearing the Combobox.
-       */
-      onChange: (option: ComboboxOption<T> | null) => void;
-    }
-  | { isClearable?: false; onChange: (option: ComboboxOption<T>) => void };
+interface ClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable: true;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T> | null) => void;
+}
+
+interface NotClearableProps<T extends string | number> {
+  /**
+   * An `X` appears in the UI, which clears the input and sets the value to `null`. Do not use if you have no `null` case.
+   */
+  isClearable?: false;
+
+  /**
+   * onChange handler is called with the newly selected option.
+   */
+  onChange: (option: ComboboxOption<T>) => void;
+}
+
+export type ComboboxBaseProps<T extends string | number> = (ClearableProps<T> | NotClearableProps<T>) &
+  ComboboxStaticProps<T>;
 
 export type AutoSizeConditionals =
   | {
@@ -95,9 +101,7 @@ export type AutoSizeConditionals =
       maxWidth?: never;
     };
 
-export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> &
-  AutoSizeConditionals &
-  ClearableConditionals<T>;
+export type ComboboxProps<T extends string | number> = ComboboxBaseProps<T> & AutoSizeConditionals;
 
 const noop = () => {};
 
@@ -114,7 +118,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     onChange,
     value: valueProp,
     placeholder: placeholderProp,
-    isClearable = false,
+    isClearable, // this should be default false, but TS can't infer the conditional type if you do
     createCustomValue = false,
     id,
     width,
@@ -244,7 +248,20 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
     // Instead, stateReducer is called in the same tick as state changes, before that state is committed and rendered.
 
     onSelectedItemChange: ({ selectedItem }) => {
-      onChange(selectedItem);
+      // `selectedItem` type is `ComboboxOption<T> | null`
+      // It can be null when `selectItem()` is called with null, and we never do that unless `isClearable` is true.
+      // So, when `isClearable` is false, `selectedItem` is always non-null. However, the types don't reflect that,
+      // which is why the conditions are needed.
+      //
+      // this is an else if because TS can't infer the correct onChange types from
+      // (isClearable || selectedItem !== null)
+      if (isClearable) {
+        // onChange argument type allows null
+        onChange(selectedItem);
+      } else if (selectedItem !== null) {
+        // onChange argument type *does not* allow null
+        onChange(selectedItem);
+      }
     },
 
     defaultHighlightedIndex: selectedItemIndex ?? 0,

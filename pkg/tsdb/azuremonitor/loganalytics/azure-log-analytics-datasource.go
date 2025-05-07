@@ -186,7 +186,7 @@ func (e *AzureLogAnalyticsDatasource) GetBasicLogsUsage(ctx context.Context, url
 	if err != nil {
 		return rw, err
 	}
-	_, err = rw.Write([]byte(fmt.Sprintf("%f", value)))
+	_, err = fmt.Fprintf(rw, "%f", value)
 	if err != nil {
 		return rw, err
 	}

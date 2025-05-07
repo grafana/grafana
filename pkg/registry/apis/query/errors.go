@@ -44,7 +44,7 @@ func MakePublicQueryError(refID, err string) error {
 	return QueryError.Build(data)
 }
 
-var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure to of the dependent expression or query [{{.Public.depRefId}}]"
+var depErrStr = "did not execute expression [{{ .Public.refId }}] due to a failure of the dependent expression or query [{{.Public.depRefId}}]"
 
 var dependencyError = errutil.BadRequest("sse.dependencyError").MustTemplate(
 	depErrStr,
@@ -56,7 +56,7 @@ func makeDependencyError(refID, depRefID string) error {
 			"refId":    refID,
 			"depRefId": depRefID,
 		},
-		Error: fmt.Errorf("did not execute expression %v due to a failure to of the dependent expression or query %v", refID, depRefID),
+		Error: fmt.Errorf("did not execute expression %v due to a failure of the dependent expression or query %v", refID, depRefID),
 	}
 
 	return dependencyError.Build(data)

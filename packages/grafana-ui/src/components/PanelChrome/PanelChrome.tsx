@@ -10,6 +10,7 @@ import { useStyles2, useTheme2 } from '../../themes';
 import { getFocusStyles } from '../../themes/mixins';
 import { usePointerDistance } from '../../utils';
 import { DelayRender } from '../../utils/DelayRender';
+import { t } from '../../utils/i18n';
 import { useElementSelection } from '../ElementSelectionContext/ElementSelectionContext';
 import { Icon } from '../Icon/Icon';
 import { LoadingBar } from '../LoadingBar/LoadingBar';
@@ -275,7 +276,9 @@ export function PanelChrome({
               <Icon
                 name={!collapsed ? 'angle-down' : 'angle-right'}
                 aria-hidden={!!title}
-                aria-label={!title ? 'toggle collapse panel' : undefined}
+                aria-label={
+                  !title ? t('grafana-ui.panel-chrome.aria-label-toggle-collapse', 'toggle collapse panel') : undefined
+                }
               />
               <Text variant="h6" truncate id={panelTitleId}>
                 {title}
@@ -290,7 +293,13 @@ export function PanelChrome({
         {titleItems}
       </div>
       {loadingState === LoadingState.Streaming && (
-        <Tooltip content={onCancelQuery ? 'Stop streaming' : 'Streaming'}>
+        <Tooltip
+          content={
+            onCancelQuery
+              ? t('grafana-ui.panel-chrome.tooltip-stop-streaming', 'Stop streaming')
+              : t('grafana-ui.panel-chrome.tooltip-streaming', 'Streaming')
+          }
+        >
           <TitleItem className={dragClassCancel} data-testid="panel-streaming" onClick={onCancelQuery}>
             <Icon name="circle-mono" size="md" className={styles.streaming} />
           </TitleItem>
@@ -298,7 +307,7 @@ export function PanelChrome({
       )}
       {loadingState === LoadingState.Loading && onCancelQuery && (
         <DelayRender delay={2000}>
-          <Tooltip content="Cancel query">
+          <Tooltip content={t('grafana-ui.panel-chrome.tooltip-cancel', 'Cancel query')}>
             <TitleItem
               className={cx(dragClassCancel, styles.pointer)}
               data-testid="panel-cancel-query"
@@ -363,7 +372,7 @@ export function PanelChrome({
         <div
           className={cx(styles.headerContainer, dragClass)}
           style={headerStyles}
-          data-testid="header-container"
+          data-testid={selectors.components.Panels.Panel.headerContainer}
           onPointerDown={onPointerDown}
           onMouseEnter={isSelectable ? onHeaderEnter : undefined}
           onMouseLeave={isSelectable ? onHeaderLeave : undefined}

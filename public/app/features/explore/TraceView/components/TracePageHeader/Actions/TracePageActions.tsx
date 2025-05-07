@@ -88,10 +88,19 @@ export default function TracePageActions(props: TracePageActionsProps) {
       <ActionButton
         onClick={copyTraceId}
         ariaLabel={'Copy Trace ID'}
-        label={copyTraceIdClicked ? 'Copied!' : 'Trace ID'}
+        label={
+          copyTraceIdClicked
+            ? t('explore.trace-page-actions.label-copied', 'Copied!')
+            : t('explore.trace-page-actions.label-trace-id', 'Trace ID')
+        }
         icon={'copy'}
       />
-      <ActionButton onClick={exportTrace} ariaLabel={'Export Trace'} label={'Export'} icon={'save'} />
+      <ActionButton
+        onClick={exportTrace}
+        ariaLabel={'Export Trace'}
+        label={t('explore.trace-page-actions.label-export', 'Export')}
+        icon={'save'}
+      />
     </div>
   );
 }

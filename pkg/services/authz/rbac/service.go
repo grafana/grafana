@@ -18,6 +18,7 @@ import (
 	authzv1 "github.com/grafana/authlib/authz/proto/v1"
 	"github.com/grafana/authlib/cache"
 	"github.com/grafana/authlib/types"
+	"github.com/grafana/grafana/pkg/apimachinery/utils"
 
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
@@ -42,6 +43,7 @@ type Service struct {
 	folderStore     store.FolderStore
 	permissionStore store.PermissionStore
 	identityStore   legacy.LegacyIdentityStore
+	settings        Settings
 
 	mapper mapper
 
@@ -53,12 +55,19 @@ type Service struct {
 	sf *singleflight.Group
 
 	// Cache for user permissions, user team memberships and user basic roles
-	idCache         *cacheWrap[store.UserIdentifiers]
-	permCache       *cacheWrap[map[string]bool]
-	permDenialCache *cacheWrap[bool]
-	teamCache       *cacheWrap[[]int64]
-	basicRoleCache  *cacheWrap[store.BasicRole]
-	folderCache     *cacheWrap[folderTree]
+	idCache         cacheWrap[store.UserIdentifiers]
+	permCache       cacheWrap[map[string]bool]
+	permDenialCache cacheWrap[bool]
+	teamCache       cacheWrap[[]int64]
+	basicRoleCache  cacheWrap[store.BasicRole]
+	folderCache     cacheWrap[folderTree]
+}
+
+type Settings struct {
+	AnonOrgRole string
+	// CacheTTL is the time to live for the permission cache entries.
+	// Set to 0 to disable caching.
+	CacheTTL time.Duration
 }
 
 func NewService(
@@ -70,22 +79,27 @@ func NewService(
 	tracer tracing.Tracer,
 	reg prometheus.Registerer,
 	cache cache.Cache,
+	settings Settings,
 ) *Service {
+	if settings.AnonOrgRole == "" {
+		settings.AnonOrgRole = "Viewer"
+	}
 	return &Service{
 		store:           store.NewStore(sql, tracer),
 		folderStore:     folderStore,
 		permissionStore: permissionStore,
 		identityStore:   identityStore,
+		settings:        settings,
 		logger:          logger,
 		tracer:          tracer,
 		metrics:         newMetrics(reg),
 		mapper:          newMapper(),
 		idCache:         newCacheWrap[store.UserIdentifiers](cache, logger, longCacheTTL),
-		permCache:       newCacheWrap[map[string]bool](cache, logger, shortCacheTTL),
-		permDenialCache: newCacheWrap[bool](cache, logger, shortCacheTTL),
-		teamCache:       newCacheWrap[[]int64](cache, logger, shortCacheTTL),
-		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, shortCacheTTL),
-		folderCache:     newCacheWrap[folderTree](cache, logger, shortCacheTTL),
+		permCache:       newCacheWrap[map[string]bool](cache, logger, settings.CacheTTL),
+		permDenialCache: newCacheWrap[bool](cache, logger, settings.CacheTTL),
+		teamCache:       newCacheWrap[[]int64](cache, logger, settings.CacheTTL),
+		basicRoleCache:  newCacheWrap[store.BasicRole](cache, logger, settings.CacheTTL),
+		folderCache:     newCacheWrap[folderTree](cache, logger, settings.CacheTTL),
 		sf:              new(singleflight.Group),
 	}
 }
@@ -422,7 +436,7 @@ func (s *Service) getAnonymousPermissions(ctx context.Context, ns types.Namespac
 
 	anonPermKey := anonymousPermCacheKey(ns.Value, action)
 	res, err, _ := s.sf.Do(anonPermKey+"_getAnonymousPermissions", func() (interface{}, error) {
-		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: "Viewer"})
+		permissions, err := s.permissionStore.GetUserPermissions(ctx, ns, store.PermissionsQuery{Action: action, ActionSets: actionSets, Role: s.settings.AnonOrgRole})
 		if err != nil {
 			return nil, err
 		}
@@ -540,8 +554,12 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 	ctxLogger := s.logger.FromContext(ctx)
 
 	// Only check action if the request doesn't specify scope
-	if req.Name == "" {
+	if req.Name == "" && req.Verb != utils.VerbCreate {
 		return len(scopeMap) > 0, nil
+	}
+
+	if req.Verb == utils.VerbCreate && req.ParentFolder == "" {
+		req.ParentFolder = accesscontrol.GeneralFolderUID
 	}
 
 	// Wildcard grant, no further checks needed
@@ -555,7 +573,7 @@ func (s *Service) checkPermission(ctx context.Context, scopeMap map[string]bool,
 		return false, status.Error(codes.NotFound, "unsupported resource")
 	}
 
-	if scopeMap[t.scope(req.Name)] {
+	if req.Name != "" && scopeMap[t.scope(req.Name)] {
 		return true, nil
 	}
 

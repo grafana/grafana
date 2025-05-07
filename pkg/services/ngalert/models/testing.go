@@ -1028,20 +1028,20 @@ func CopySilence(s Silence) Silence {
 	if s.UpdatedAt != nil {
 		c.UpdatedAt = util.Pointer(*s.UpdatedAt)
 	}
-	if s.Silence.Comment != nil {
-		c.Silence.Comment = util.Pointer(*s.Silence.Comment)
+	if s.Comment != nil {
+		c.Comment = util.Pointer(*s.Comment)
 	}
-	if s.Silence.CreatedBy != nil {
-		c.Silence.CreatedBy = util.Pointer(*s.Silence.CreatedBy)
+	if s.CreatedBy != nil {
+		c.CreatedBy = util.Pointer(*s.CreatedBy)
 	}
-	if s.Silence.EndsAt != nil {
-		c.Silence.EndsAt = util.Pointer(*s.Silence.EndsAt)
+	if s.EndsAt != nil {
+		c.EndsAt = util.Pointer(*s.EndsAt)
 	}
-	if s.Silence.StartsAt != nil {
-		c.Silence.StartsAt = util.Pointer(*s.Silence.StartsAt)
+	if s.StartsAt != nil {
+		c.StartsAt = util.Pointer(*s.StartsAt)
 	}
-	if s.Silence.Matchers != nil {
-		c.Silence.Matchers = CopyMatchers(s.Silence.Matchers)
+	if s.Matchers != nil {
+		c.Matchers = CopyMatchers(s.Matchers)
 	}
 
 	return c
@@ -1106,7 +1106,7 @@ func (n SilenceMutators) WithMatcher(name, value string, matchType labels.MatchT
 			IsRegex: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchNotRegexp),
 			IsEqual: util.Pointer(matchType == labels.MatchRegexp || matchType == labels.MatchEqual),
 		}
-		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+		s.Matchers = append(s.Matchers, &m)
 	}
 }
 func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
@@ -1118,13 +1118,13 @@ func (n SilenceMutators) WithRuleUID(value string) Mutator[Silence] {
 			IsRegex: util.Pointer(false),
 			IsEqual: util.Pointer(true),
 		}
-		for _, matcher := range s.Silence.Matchers {
+		for _, matcher := range s.Matchers {
 			if isRuleUIDMatcher(*matcher) {
 				*matcher = m
 				return
 			}
 		}
-		s.Silence.Matchers = append(s.Silence.Matchers, &m)
+		s.Matchers = append(s.Matchers, &m)
 	}
 }
 func (n SilenceMutators) Expired() Mutator[Silence] {

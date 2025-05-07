@@ -70,7 +70,9 @@ export const SilencedInstancesPreview = ({ amSourceName, matchers: inputMatchers
         title={t('alerting.silenced-instances-preview.title-preview-not-available', 'Preview not available')}
         severity="error"
       >
-        Error occurred when generating preview of affected alerts. Are your matchers valid?
+        <Trans i18nKey="alerting.silenced-instances-preview.error-generating-preview">
+          Error occurred when generating preview of affected alerts. Are your matchers valid?
+        </Trans>
       </Alert>
     );
   }

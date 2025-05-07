@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 
 import {
   EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
@@ -10,12 +10,20 @@ import {
   useExtensionSidebarContext,
 } from './ExtensionSidebarProvider';
 
-export const EXTENSION_SIDEBAR_WIDTH = '300px';
+export const DEFAULT_EXTENSION_SIDEBAR_WIDTH = 300;
+export const MIN_EXTENSION_SIDEBAR_WIDTH = 100;
+export const MAX_EXTENSION_SIDEBAR_WIDTH = 700;
+
+type ExtensionSidebarComponentProps = {
+  props?: Record<string, unknown>;
+};
 
 export function ExtensionSidebar() {
   const styles = getStyles(useTheme2());
-  const { dockedComponentId, isEnabled } = useExtensionSidebarContext();
-  const { components, isLoading } = usePluginComponents({ extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID });
+  const { dockedComponentId, isEnabled, props = {} } = useExtensionSidebarContext();
+  const { components, isLoading } = usePluginComponents<ExtensionSidebarComponentProps>({
+    extensionPointId: EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
+  });
 
   if (isLoading || !dockedComponentId || !isEnabled) {
     return null;
@@ -37,7 +45,9 @@ export function ExtensionSidebar() {
   return (
     <div className={styles.sidebarWrapper}>
       <div className={styles.content}>
-        <ExtensionComponent />
+        <ErrorBoundaryAlert>
+          <ExtensionComponent {...props} />
+        </ErrorBoundaryAlert>
       </div>
     </div>
   );
@@ -52,13 +62,13 @@ const getStyles = (theme: GrafanaTheme2) => {
       flexDirection: 'column',
       gap: theme.spacing(1),
       padding: theme.spacing(1),
-      width: EXTENSION_SIDEBAR_WIDTH,
+      width: '100%',
       height: '100%',
+      overflow: 'auto',
     }),
     content: css({
       flex: 1,
       minHeight: 0,
-      overflow: 'auto',
     }),
   };
 };

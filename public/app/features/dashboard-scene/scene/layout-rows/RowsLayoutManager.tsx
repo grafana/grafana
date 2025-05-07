@@ -1,4 +1,11 @@
-import { SceneGridItemLike, SceneGridRow, SceneObjectBase, SceneObjectState, VizPanel } from '@grafana/scenes';
+import {
+  sceneGraph,
+  SceneGridItemLike,
+  SceneGridRow,
+  SceneObjectBase,
+  SceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { t } from 'app/core/internationalization';
 
@@ -8,12 +15,13 @@ import {
   ObjectsReorderedOnCanvasEvent,
 } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
-import { isClonedKey } from '../../utils/clone';
+import { isClonedKey, joinCloneKeys } from '../../utils/clone';
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
 import { RowRepeaterBehavior } from '../layout-default/RowRepeaterBehavior';
+import { TabItemRepeaterBehavior } from '../layout-tabs/TabItemRepeaterBehavior';
 import { TabsLayoutManager } from '../layout-tabs/TabsLayoutManager';
 import { getRowFromClipboard } from '../layouts-shared/paste';
 import { generateUniqueTitle, ungroupLayout } from '../layouts-shared/utils';
@@ -81,7 +89,16 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public cloneLayout(ancestorKey: string, isSource: boolean): DashboardLayoutManager {
-    throw new Error('Method not implemented.');
+    return this.clone({
+      rows: this.state.rows.map((row) => {
+        const key = joinCloneKeys(ancestorKey, row.state.key!);
+
+        return row.clone({
+          key,
+          layout: row.state.layout.cloneLayout(key, isSource),
+        });
+      }),
+    });
   }
 
   public duplicate(): DashboardLayoutManager {
@@ -95,7 +112,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
   }
 
   public addNewRow(row?: RowItem): RowItem {
-    const newRow = row ?? new RowItem({ isNew: true });
+    const newRow = row ?? new RowItem({});
     const existingNames = new Set(this.state.rows.map((row) => row.state.title).filter((title) => title !== undefined));
 
     const newTitle = generateUniqueTitle(newRow.state.title, existingNames);
@@ -179,7 +196,21 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
     if (layout instanceof TabsLayoutManager) {
       for (const tab of layout.state.tabs) {
-        rows.push(new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title }));
+        if (isClonedKey(tab.state.key!)) {
+          continue;
+        }
+
+        const conditionalRendering = tab.state.conditionalRendering;
+        conditionalRendering?.clearParent();
+
+        const behavior = tab.state.$behaviors?.find((b) => b instanceof TabItemRepeaterBehavior);
+        const $behaviors = !behavior
+          ? undefined
+          : [new RowItemRepeaterBehavior({ variableName: behavior.state.variableName })];
+
+        rows.push(
+          new RowItem({ layout: tab.state.layout.clone(), title: tab.state.title, conditionalRendering, $behaviors })
+        );
       }
     } else if (layout instanceof DefaultGridLayoutManager) {
       const config: Array<{
@@ -253,7 +284,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
     const duplicateTitles = new Set<string | undefined>();
 
     this.state.rows.forEach((row) => {
-      const title = row.state.title;
+      const title = sceneGraph.interpolate(row, row.state.title);
       const count = (titleCounts.get(title) ?? 0) + 1;
       titleCounts.set(title, count);
       if (count > 1 && title) {

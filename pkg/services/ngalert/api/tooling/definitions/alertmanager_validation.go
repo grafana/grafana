@@ -2,12 +2,10 @@ package definitions
 
 import (
 	"fmt"
-	tmplhtml "html/template"
 	"regexp"
 	"strings"
-	tmpltext "text/template"
 
-	"github.com/prometheus/alertmanager/template"
+	"github.com/grafana/alerting/templates"
 	"gopkg.in/yaml.v3"
 )
 
@@ -35,17 +33,12 @@ func (t *NotificationTemplate) Validate() error {
 	t.Template = content
 
 	// Validate template contents. We try to stick as close to what will actually happen when the templates are parsed
-	// by the alertmanager as possible. That means parsing with both the text and html parsers and making sure we set
-	// the template name and options.
-	ttext := tmpltext.New(t.Name).Option("missingkey=zero")
-	ttext.Funcs(tmpltext.FuncMap(template.DefaultFuncs))
-	if _, err := ttext.Parse(t.Template); err != nil {
-		return fmt.Errorf("invalid template: %w", err)
+	// by the alertmanager as possible.
+	tmpl, err := templates.NewTemplate()
+	if err != nil {
+		return fmt.Errorf("failed to create template: %w", err)
 	}
-
-	thtml := tmplhtml.New(t.Name).Option("missingkey=zero")
-	thtml.Funcs(tmplhtml.FuncMap(template.DefaultFuncs))
-	if _, err := thtml.Parse(t.Template); err != nil {
+	if err := tmpl.Parse(strings.NewReader(t.Template)); err != nil {
 		return fmt.Errorf("invalid template: %w", err)
 	}
 

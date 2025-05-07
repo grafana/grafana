@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/bwmarrin/snowflake"
 	"golang.org/x/exp/rand"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
@@ -27,9 +28,8 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 	"k8s.io/apiserver/pkg/storage/storagebackend/factory"
+	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
-
-	"github.com/bwmarrin/snowflake"
 
 	authtypes "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
@@ -75,9 +75,10 @@ type Storage struct {
 	trigger      storage.IndexerFuncs
 	indexers     *cache.Indexers
 
-	store     resource.ResourceClient
-	getKey    func(string) (*resource.ResourceKey, error)
-	snowflake *snowflake.Node // used to enforce internal ids
+	store          resource.ResourceClient
+	getKey         func(string) (*resource.ResourceKey, error)
+	snowflake      *snowflake.Node    // used to enforce internal ids
+	configProvider RestConfigProvider // used for provisioning
 
 	versioner storage.Versioner
 
@@ -91,6 +92,10 @@ var ErrFileNotExists = fmt.Errorf("file doesn't exist")
 // ErrNamespaceNotExists means the directory for the namespace doesn't actually exist.
 var ErrNamespaceNotExists = errors.New("namespace does not exist")
 
+type RestConfigProvider interface {
+	GetRestConfig(context.Context) (*clientrest.Config, error)
+}
+
 // NewStorage instantiates a new Storage.
 func NewStorage(
 	config *storagebackend.ConfigForResource,
@@ -102,18 +107,20 @@ func NewStorage(
 	getAttrsFunc storage.AttrFunc,
 	trigger storage.IndexerFuncs,
 	indexers *cache.Indexers,
+	configProvider RestConfigProvider,
 	opts StorageOptions,
 ) (storage.Interface, factory.DestroyFunc, error) {
 	s := &Storage{
-		store:        store,
-		gr:           config.GroupResource,
-		codec:        config.Codec,
-		keyFunc:      keyFunc,
-		newFunc:      newFunc,
-		newListFunc:  newListFunc,
-		getAttrsFunc: getAttrsFunc,
-		trigger:      trigger,
-		indexers:     indexers,
+		store:          store,
+		gr:             config.GroupResource,
+		codec:          config.Codec,
+		keyFunc:        keyFunc,
+		newFunc:        newFunc,
+		newListFunc:    newListFunc,
+		getAttrsFunc:   getAttrsFunc,
+		trigger:        trigger,
+		indexers:       indexers,
+		configProvider: configProvider,
 
 		getKey: keyParser,
 
@@ -173,7 +180,7 @@ func (s *Storage) Create(ctx context.Context, key string, obj runtime.Object, ou
 	req := &resource.CreateRequest{}
 	req.Value, permissions, err = s.prepareObjectForStorage(ctx, obj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_ADDED, key, obj, out)
 	}
 
 	req.Key, err = s.getKey(key)
@@ -280,7 +287,7 @@ func (s *Storage) Delete(
 		return fmt.Errorf("unable to read object %w", err)
 	}
 	if err = checkManagerPropertiesOnDelete(info, meta); err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_DELETED, key, out, out)
 	}
 
 	rsp, err := s.store.Delete(ctx, cmd)
@@ -580,7 +587,7 @@ func (s *Storage) GuaranteedUpdate(
 
 	req.Value, err = s.prepareObjectForUpdate(ctx, updatedObj, existingObj)
 	if err != nil {
-		return err
+		return s.handleManagedResourceRouting(ctx, err, resource.WatchEvent_MODIFIED, key, updatedObj, destination)
 	}
 
 	var rv uint64

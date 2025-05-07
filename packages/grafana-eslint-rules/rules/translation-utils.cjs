@@ -23,6 +23,13 @@ const elementIsTrans = (node) => {
 };
 
 /**
+ * @param {Node} node
+ */
+const isStringLiteral = (node) => {
+  return node.type === AST_NODE_TYPES.Literal && typeof node.value === 'string';
+};
+
+/**
  * Converts a string to kebab case
  * @param {string} str The string to convert
  * @returns {string} The kebab case string
@@ -34,6 +41,14 @@ function toKebabCase(str) {
     .replace(/\s+/g, '-');
 }
 
+/**
+ * Checks if a string is non-alphanumeric
+ * @param {string} str The string to check
+ * @returns {boolean}
+ */
+function isStringNonAlphanumeric(str) {
+  return !/[a-zA-Z0-9]/.test(str);
+}
 /**
  * Checks if we _should_ fix an error automatically
  * @param {RuleContextWithOptions} context
@@ -71,7 +86,7 @@ function canBeFixed(node, context) {
       return false;
     }
     if (node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
-      return false;
+      return isStringLiteral(node.value.expression);
     }
   }
 
@@ -296,6 +311,13 @@ function getNodeValue(node) {
     // Return the raw value if we can, so we can work out if there are any HTML entities
     return node.raw;
   }
+  if (node.type === AST_NODE_TYPES.JSXAttribute && node.value?.type === AST_NODE_TYPES.JSXExpressionContainer) {
+    // this condition is basically `isStringLiteral`, but we can't use the function
+    // else it doesn't narrow the type correctly :(
+    if (node.value.expression.type === AST_NODE_TYPES.Literal && typeof node.value.expression.value === 'string') {
+      return node.value.expression.value;
+    }
+  }
   return '';
 }
 
@@ -307,4 +329,5 @@ module.exports = {
   canBeFixed,
   shouldBeFixed,
   elementIsTrans,
+  isStringNonAlphanumeric,
 };

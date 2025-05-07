@@ -18,14 +18,14 @@ func TestFolderConversions(t *testing.T) {
 	input := &unstructured.Unstructured{}
 	err := input.UnmarshalJSON([]byte(`{
       "kind": "Folder",
-      "apiVersion": "folder.grafana.app/v0alpha1",
+      "apiVersion": "folder.grafana.app/v1beta1",
       "metadata": {
         "name": "be79sztagf20wd",
         "namespace": "default",
         "uid": "wfi3RARqQREzEKtUJCWurWevwbQ7i9ii0cA7JUIbMtEX",
         "resourceVersion": "1734509107000",
         "creationTimestamp": "2022-12-02T02:02:02Z",
-				"generation": 4,
+		"generation": 4,
         "labels": {
           "grafana.app/deprecatedInternalID": "234"
         },
@@ -45,7 +45,7 @@ func TestFolderConversions(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := time.Parse(time.RFC3339, "2022-12-02T02:02:02Z")
-	created = created.UTC()
+	created = created.Local()
 	require.NoError(t, err)
 
 	fake := usertest.NewUserServiceFake()
@@ -67,29 +67,31 @@ func TestFolderConversions(t *testing.T) {
 	require.Equal(t, 1, len(fake.ListUsersByIdOrUidCalls)) // only one call to the user service
 	require.Equal(t, usertest.ListUsersByIdOrUidCall{Uids: []string{"useruid"}, Ids: []int64{2}}, fake.ListUsersByIdOrUidCalls[0])
 	require.Equal(t, folder.Folder{
-		ID:          234,
-		OrgID:       1,
-		Version:     4,
-		UID:         "be79sztagf20wd",
-		ParentUID:   "parent-folder-name",
-		Title:       "test folder",
-		Description: "Something set in the file",
-		URL:         "/dashboards/f/be79sztagf20wd/test-folder",
-		ManagedBy:   utils.ManagerKindRepo,
-		Created:     created,
-		Updated:     created.Add(time.Hour * 5),
-		CreatedBy:   1,
-		UpdatedBy:   2,
+		ID:           234,
+		OrgID:        1,
+		Version:      4,
+		UID:          "be79sztagf20wd",
+		ParentUID:    "parent-folder-name",
+		Title:        "test folder",
+		Description:  "Something set in the file",
+		URL:          "/dashboards/f/be79sztagf20wd/test-folder",
+		ManagedBy:    utils.ManagerKindRepo,
+		Created:      created,
+		Updated:      created.Add(time.Hour * 5),
+		CreatedBy:    1,
+		UpdatedBy:    2,
+		CreatedByUID: "useruid",
+		UpdatedByUID: "useruid2",
 	}, *converted)
 }
 
 func TestFolderListConversions(t *testing.T) {
 	input := &unstructured.UnstructuredList{}
 	err := input.UnmarshalJSON([]byte(`{
-	  "apiVersion": "folder.grafana.app/v0alpha1",
+	  "apiVersion": "folder.grafana.app/v1beta1",
 	  "items": [
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1beta1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -113,11 +115,12 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1beta1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
-			  "grafana.app/createdBy": "user:uuuuuuuuuuuuuu"
+			  "grafana.app/createdBy": "user:uuuuuuuuuuuuuu",
+			  "grafana.app/updatedBy": "user:uuuuuuuuuuuuuu"
 			},
 			"creationTimestamp": "2022-12-02T02:02:02Z",
 			"generation": 1,
@@ -135,7 +138,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1beta1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -158,11 +161,12 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1beta1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
-			  "grafana.app/createdBy": "user:1"
+			  "grafana.app/createdBy": "user:1",
+			  "grafana.app/updatedBy": "user:1"
 			},
 			"creationTimestamp": "2022-12-02T02:02:02Z",
 			"generation": 1,
@@ -180,7 +184,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1beta1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {
@@ -203,7 +207,7 @@ func TestFolderListConversions(t *testing.T) {
 		  }
 		},
 		{
-		  "apiVersion": "folder.grafana.app/v0alpha1",
+		  "apiVersion": "folder.grafana.app/v1beta1",
 		  "kind": "Folder",
 		  "metadata": {
 			"annotations": {},
@@ -232,7 +236,7 @@ func TestFolderListConversions(t *testing.T) {
 	require.NoError(t, err)
 
 	created, err := time.Parse(time.RFC3339, "2022-12-02T02:02:02Z")
-	created = created.UTC()
+	created = created.Local()
 	require.NoError(t, err)
 
 	fake := usertest.NewUserServiceFake()
@@ -268,7 +272,8 @@ func TestFolderListConversions(t *testing.T) {
 	converted, err := fs.UnstructuredToLegacyFolderList(context.Background(), input)
 	require.NoError(t, err)
 	require.Equal(t, 1, len(fake.ListUsersByIdOrUidCalls)) // only one call to the user service
-	require.Equal(t, usertest.ListUsersByIdOrUidCall{Uids: []string{"uuuuuuuuuuuuuu", "iiiiiiiiiiiiii", "jjjjjjjjjjjjjj"}, Ids: []int64{1, 2, 3}}, fake.ListUsersByIdOrUidCalls[0])
+	require.ElementsMatch(t, []string{"uuuuuuuuuuuuuu", "iiiiiiiiiiiiii", "jjjjjjjjjjjjjj"}, fake.ListUsersByIdOrUidCalls[0].Uids)
+	require.ElementsMatch(t, []int64{1, 2, 3}, fake.ListUsersByIdOrUidCalls[0].Ids)
 	require.Equal(t, 6, len(converted))
 	require.Equal(t, []*folder.Folder{
 		{
@@ -287,64 +292,72 @@ func TestFolderListConversions(t *testing.T) {
 			UpdatedBy:   0, // service account,
 		},
 		{
-			ID:          149,
-			OrgID:       1,
-			Version:     1,
-			UID:         "foldername2",
-			ParentUID:   "",
-			Title:       "yeye",
-			Description: "description yeye",
-			URL:         "/dashboards/f/foldername2/yeye",
-			ManagedBy:   "",
-			Created:     created,
-			Updated:     created,
-			CreatedBy:   4,
-			UpdatedBy:   4,
+			ID:           149,
+			OrgID:        1,
+			Version:      1,
+			UID:          "foldername2",
+			ParentUID:    "",
+			Title:        "yeye",
+			Description:  "description yeye",
+			URL:          "/dashboards/f/foldername2/yeye",
+			ManagedBy:    "",
+			Created:      created,
+			Updated:      created,
+			CreatedBy:    4,
+			UpdatedBy:    4,
+			CreatedByUID: "uuuuuuuuuuuuuu",
+			UpdatedByUID: "uuuuuuuuuuuuuu",
 		},
 		{
-			ID:          145,
-			OrgID:       1,
-			Version:     1,
-			UID:         "foldername3",
-			ParentUID:   "",
-			Title:       "yoyo",
-			Description: "description yoyo",
-			URL:         "/dashboards/f/foldername3/yoyo",
-			ManagedBy:   "",
-			Created:     created,
-			Updated:     created,
-			CreatedBy:   5,
-			UpdatedBy:   6,
+			ID:           145,
+			OrgID:        1,
+			Version:      1,
+			UID:          "foldername3",
+			ParentUID:    "",
+			Title:        "yoyo",
+			Description:  "description yoyo",
+			URL:          "/dashboards/f/foldername3/yoyo",
+			ManagedBy:    "",
+			Created:      created,
+			Updated:      created,
+			CreatedBy:    5,
+			UpdatedBy:    6,
+			CreatedByUID: "iiiiiiiiiiiiii",
+			UpdatedByUID: "jjjjjjjjjjjjjj",
 		},
 		{
-			ID:          146,
-			OrgID:       1,
-			Version:     1,
-			UID:         "foldername4",
-			ParentUID:   "",
-			Title:       "yaya",
-			Description: "description yaya",
-			URL:         "/dashboards/f/foldername4/yaya",
-			ManagedBy:   "",
-			Created:     created,
-			Updated:     created,
-			CreatedBy:   1,
-			UpdatedBy:   1,
+			ID:           146,
+			OrgID:        1,
+			Version:      1,
+			UID:          "foldername4",
+			ParentUID:    "",
+			Title:        "yaya",
+			Description:  "description yaya",
+			URL:          "/dashboards/f/foldername4/yaya",
+			ManagedBy:    "",
+			Created:      created,
+			Updated:      created,
+			CreatedBy:    1,
+			UpdatedBy:    1,
+			CreatedByUID: "aaaaaaaaaaaaaa",
+			UpdatedByUID: "aaaaaaaaaaaaaa",
 		},
 		{
-			ID:          147,
-			OrgID:       1,
-			Version:     1,
-			UID:         "foldername5",
-			ParentUID:   "",
-			Title:       "yiyi",
-			Description: "description yiyi",
-			URL:         "/dashboards/f/foldername5/yiyi",
-			ManagedBy:   "",
-			Created:     created,
-			Updated:     created,
-			CreatedBy:   2,
-			UpdatedBy:   3,
+			ID:           147,
+			OrgID:        1,
+			Version:      1,
+			UID:          "foldername5",
+			ParentUID:    "",
+			Title:        "yiyi",
+			Description:  "description yiyi",
+			URL:          "/dashboards/f/foldername5/yiyi",
+			ManagedBy:    "",
+			Created:      created,
+			Updated:      created,
+			CreatedBy:    2,
+			UpdatedBy:    3,
+			CreatedByUID: "oooooooooooooo",
+			UpdatedByUID: "eeeeeeeeeeeeee",
 		},
 		{
 			ID:          148,

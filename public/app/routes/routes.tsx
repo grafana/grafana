@@ -513,22 +513,13 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "NotificationsPage"*/ 'app/features/notifications/NotificationsPage')
       ),
     },
-    config.featureToggles.exploreMetrics && {
+    {
+      // A redirect to the Grafana Metrics Drilldown app from legacy Explore Metrics routes
       path: '/explore/metrics/*',
       roles: () => contextSrv.evaluatePermission([AccessControlAction.DataSourcesExplore]),
-      ...(config.featureToggles.exploreMetricsUseExternalAppPlugin
-        ? {
-            component: SafeDynamicImport(
-              () =>
-                import(/* webpackChunkName: "MetricsDrilldownRedirect"*/ 'app/features/trails/RedirectToDrilldownApp')
-            ),
-          }
-        : {
-            chromeless: false,
-            component: SafeDynamicImport(
-              () => import(/* webpackChunkName: "DataTrailsPage"*/ 'app/features/trails/DataTrailsPage')
-            ),
-          }),
+      component: SafeDynamicImport(
+        () => import(/* webpackChunkName: "MetricsDrilldownRedirect"*/ 'app/features/trails/RedirectToDrilldownApp')
+      ),
     },
     {
       path: '/bookmarks',

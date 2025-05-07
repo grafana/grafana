@@ -36,7 +36,11 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.enable === false) {
       return (
         <>
-          <em className="muted">(Disabled) &nbsp; {anno.name}</em>
+          <em className="muted">
+            <Trans i18nKey="dashboard.annotation-settings-list.disabled" values={{ name: anno.name }}>
+              (Disabled) {'{{name}}'}
+            </Trans>
+          </em>
         </>
       );
     }
@@ -44,7 +48,11 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
     if (anno.builtIn) {
       return (
         <>
-          <em className="muted">{anno.name} &nbsp; (Built-in)</em>
+          <em className="muted">
+            <Trans i18nKey="dashboard.annotation-settings-list.built-in" values={{ name: anno.name }}>
+              {'{{name}}'} (Built-in)
+            </Trans>
+          </em>
         </>
       );
     }
@@ -111,7 +119,11 @@ export const AnnotationSettingsList = ({ dashboard, onNew, onEdit }: Props) => {
                       <DeleteButton
                         size="sm"
                         onConfirm={() => onDelete(idx)}
-                        aria-label={`Delete query with title "${annotation.name}"`}
+                        aria-label={t(
+                          'dashboard.annotation-settings-list.aria-label-delete',
+                          'Delete query with title "{{title}}"',
+                          { title: annotation.name }
+                        )}
                       />
                     )}
                   </td>

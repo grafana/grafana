@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 
 import { locationService } from '@grafana/runtime';
 import { Alert, LoadingPlaceholder } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import {
   useCreateContactPoint,
   useUpdateContactPoint,
@@ -20,7 +20,6 @@ import { useDispatch } from 'app/types';
 import { alertmanagerApi } from '../../../api/alertmanagerApi';
 import { testReceiversAction } from '../../../state/actions';
 import { GrafanaChannelValues, ReceiverFormValues } from '../../../types/receiver-form';
-import { shouldUseK8sApi } from '../../../utils/k8s/utils';
 import {
   formChannelValuesToGrafanaChannelConfig,
   formValuesToGrafanaReceiver,
@@ -54,7 +53,6 @@ const { useGrafanaNotifiersQuery } = alertmanagerApi;
 
 export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }: Props) => {
   const dispatch = useDispatch();
-  const useK8sAPI = shouldUseK8sApi(GRAFANA_RULES_SOURCE_NAME);
   const [createContactPoint] = useCreateContactPoint({
     alertmanager: GRAFANA_RULES_SOURCE_NAME,
   });
@@ -84,15 +82,15 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
       return [undefined, {}];
     }
 
-    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint), grafanaNotifiers);
-  }, [contactPoint, isLoadingNotifiers, grafanaNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
+    return grafanaReceiverToFormValues(extendOnCallReceivers(contactPoint));
+  }, [contactPoint, isLoadingNotifiers, extendOnCallReceivers, isLoadingOnCallIntegration]);
 
   const onSubmit = async (values: ReceiverFormValues<GrafanaChannelValues>) => {
-    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues, grafanaNotifiers);
+    const newReceiver = formValuesToGrafanaReceiver(values, id2original, defaultChannelValues);
 
     try {
       if (editMode) {
-        if (useK8sAPI && contactPoint && contactPoint.id) {
+        if (contactPoint && contactPoint.id) {
           await updateContactPoint.execute({
             contactPoint: newReceiver,
             id: contactPoint.id,
@@ -158,6 +156,7 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
 
     return { dto: n };
   });
+
   return (
     <>
       {hasOnCallError && (
@@ -168,8 +167,10 @@ export const GrafanaReceiverForm = ({ contactPoint, readOnly = false, editMode }
             'Loading OnCall integration failed'
           )}
         >
-          Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
-          plugin configuration
+          <Trans i18nKey="alerting.grafana-receiver-form.body-loading-on-call-integration-failed">
+            Grafana OnCall plugin has been enabled in your Grafana instances but it is not reachable. Please check the
+            plugin configuration
+          </Trans>
         </Alert>
       )}
 
