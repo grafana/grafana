@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/datasources"
@@ -30,7 +30,6 @@ type check struct {
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
 	PluginRepo            repo.Service
-	log                   log.Logger
 }
 
 func New(
@@ -46,7 +45,6 @@ func New(
 		PluginContextProvider: pluginContextProvider,
 		PluginClient:          pluginClient,
 		PluginRepo:            pluginRepo,
-		log:                   log.New("advisor.datasourcecheck"),
 	}
 }
 
@@ -83,12 +81,10 @@ func (c *check) Steps() []checks.Step {
 		&healthCheckStep{
 			PluginContextProvider: c.PluginContextProvider,
 			PluginClient:          c.PluginClient,
-			log:                   c.log,
 		},
 		&missingPluginStep{
 			PluginStore: c.PluginStore,
 			PluginRepo:  c.PluginRepo,
-			log:         c.log,
 		},
 	}
 }
@@ -112,7 +108,7 @@ func (s *uidValidationStep) Resolution() string {
 		"target=_blank>documentation</a> for more information or delete the data source and create a new one."
 }
 
-func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -134,7 +130,6 @@ func (s *uidValidationStep) Run(ctx context.Context, obj *advisor.CheckSpec, i a
 type healthCheckStep struct {
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
-	log                   log.Logger
 }
 
 func (s *healthCheckStep) Title() string {
@@ -153,7 +148,7 @@ func (s *healthCheckStep) ID() string {
 	return HealthCheckStepID
 }
 
-func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -171,7 +166,7 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 			return nil, nil
 		}
 		// Unable to check health check
-		s.log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
+		log.Error("Failed to get plugin context", "datasource_uid", ds.UID, "error", err)
 		return nil, nil
 	}
 	req := &backend.CheckHealthRequest{
@@ -181,13 +176,13 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 	resp, err := s.PluginClient.CheckHealth(ctx, req)
 	if err != nil || resp.Status != backend.HealthStatusOk {
 		if err != nil {
-			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "error", err)
+			log.Debug("Failed to check health", "datasource_uid", ds.UID, "error", err)
 			if errors.Is(err, plugins.ErrMethodNotImplemented) || errors.Is(err, plugins.ErrPluginUnavailable) {
 				// The plugin does not support backend health checks
 				return nil, nil
 			}
 		} else {
-			s.log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
+			log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
 		}
 		return checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
@@ -208,7 +203,6 @@ func (s *healthCheckStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any
 type missingPluginStep struct {
 	PluginStore pluginstore.Store
 	PluginRepo  repo.Service
-	log         log.Logger
 }
 
 func (s *missingPluginStep) Title() string {
@@ -227,7 +221,7 @@ func (s *missingPluginStep) ID() string {
 	return MissingPluginStepID
 }
 
-func (s *missingPluginStep) Run(ctx context.Context, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
