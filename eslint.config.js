@@ -173,9 +173,7 @@ module.exports = [
     files: ['**/*.tsx'],
     ignores: ['**/*.{spec,test}.tsx'],
     rules: {
-      // rules marked "off" are those left in the recommended preset we need to fix
-      // we should remove the corresponding line and fix them one by one
-      // any marked "error" contain specific overrides we'll need to keep
+      ...jsxA11yPlugin.configs.recommended.rules,
       'jsx-a11y/no-autofocus': [
         'error',
         {
