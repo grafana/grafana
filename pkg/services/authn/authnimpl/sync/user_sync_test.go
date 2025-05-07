@@ -900,7 +900,7 @@ func TestUserSync_ValidateUserProvisioningHook(t *testing.T) {
 				return userSyncService
 			},
 			identity: &authn.Identity{
-				AuthenticatedBy: login.SAMLAuthModule,
+				AuthenticatedBy: login.GenericOAuthModule,
 				AuthID:          "1",
 				ExternalUID:     "",
 			},
