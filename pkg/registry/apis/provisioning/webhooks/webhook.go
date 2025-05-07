@@ -87,7 +87,8 @@ func (s *webhookConnector) UpdateStorage(storage map[string]rest.Storage) error 
 }
 
 func (s *webhookConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
-	repoprefix := provisioning.RepositoryResourceInfo.GetName() + "/"
+	root := "/apis/" + s.core.GetGroupVersion().String() + "/"
+	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
 	sub := oas.Paths.Paths[repoprefix+"/webhook"]
 	if sub != nil && sub.Get != nil {
 		sub.Post.Description = "Currently only supports github webhooks"
@@ -137,7 +138,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 			return
 		}
 
-		if err := s.updateLastEvent(ctx, repo, name, namespace); err != nil {
+		if err := s.updateLastEvent(ctx, repo); err != nil {
 			// Continue processing as this is non-critical; the update is purely informational
 			logger.Error("failed to update last event", "error", err)
 		}
@@ -160,7 +161,7 @@ func (s *webhookConnector) Connect(ctx context.Context, name string, opts runtim
 // updateLastEvent updates the last event time for the webhook
 // This is to provide some visibility that the webhook is still active and working
 // It's not a good idea to update the webhook status too often, so we only update it if it's been a while
-func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.Repository, name, namespace string) error {
+func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.Repository) error {
 	patcher := s.core.GetStatusPatcher()
 	if patcher == nil {
 		// This would only happen if we wired things up incorrectly
@@ -170,7 +171,6 @@ func (s *webhookConnector) updateLastEvent(ctx context.Context, repo repository.
 	lastEvent := time.UnixMilli(repo.Config().Status.Webhook.LastEvent)
 	eventAge := time.Since(lastEvent)
 
-	// TODO: Use status patcher
 	if repo.Config().Status.Webhook != nil && (eventAge > time.Minute) {
 		patchOp := map[string]interface{}{
 			"op":    "replace",

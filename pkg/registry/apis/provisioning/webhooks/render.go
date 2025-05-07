@@ -23,11 +23,13 @@ import (
 
 type renderConnector struct {
 	unified resource.ResourceClient
+	core    *provisioningapis.APIBuilder
 }
 
-func NewRenderConnector(unified resource.ResourceClient) *renderConnector {
+func NewRenderConnector(unified resource.ResourceClient, core *provisioningapis.APIBuilder) *renderConnector {
 	return &renderConnector{
 		unified: unified,
+		core:    core,
 	}
 }
 
@@ -62,7 +64,9 @@ func (c *renderConnector) Authorize(_ context.Context, a authorizer.Attributes) 
 }
 
 func (c *renderConnector) PostProcessOpenAPI(oas *spec3.OpenAPI) error {
-	repoprefix := provisioning.RepositoryResourceInfo.GetName() + "/"
+	root := "/apis/" + c.core.GetGroupVersion().String() + "/"
+	repoprefix := root + "namespaces/{namespace}/repositories/{name}"
+
 	delete(oas.Paths.Paths, repoprefix+"/render")
 	sub := oas.Paths.Paths[repoprefix+"/render/{path}"]
 	if sub != nil {

@@ -52,7 +52,7 @@ func ProvideWebhooks(
 			parsers := resources.NewParserFactory(clients)
 
 			screenshotRenderer := pullrequest.NewScreenshotRenderer(renderer, blobstore)
-			render := NewRenderConnector(blobstore)
+			render := NewRenderConnector(blobstore, b)
 			webhook := NewWebhookConnector(
 				isPublic,
 				b,
