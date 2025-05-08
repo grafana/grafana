@@ -51,13 +51,14 @@ func ConvertToK8sResource(orgID int64, r definitions.Route, version string, name
 
 func convertRouteToK8sSubRoute(r *definitions.Route) model.RoutingTreeRoute {
 	result := model.RoutingTreeRoute{
-		GroupBy:           r.GroupByStr,
-		MuteTimeIntervals: r.MuteTimeIntervals,
-		Continue:          r.Continue,
-		GroupWait:         optionalPrometheusDurationToString(r.GroupWait),
-		GroupInterval:     optionalPrometheusDurationToString(r.GroupInterval),
-		RepeatInterval:    optionalPrometheusDurationToString(r.RepeatInterval),
-		Routes:            make([]model.RoutingTreeRoute, 0, len(r.Routes)),
+		GroupBy:             r.GroupByStr,
+		MuteTimeIntervals:   r.MuteTimeIntervals,
+		ActiveTimeIntervals: r.ActiveTimeIntervals,
+		Continue:            r.Continue,
+		GroupWait:           optionalPrometheusDurationToString(r.GroupWait),
+		GroupInterval:       optionalPrometheusDurationToString(r.GroupInterval),
+		RepeatInterval:      optionalPrometheusDurationToString(r.RepeatInterval),
+		Routes:              make([]model.RoutingTreeRoute, 0, len(r.Routes)),
 	}
 	if r.Receiver != "" {
 		result.Receiver = util.Pointer(r.Receiver)
@@ -152,11 +153,12 @@ func convertToDomainModel(obj *model.RoutingTree) (definitions.Route, string, er
 
 func convertK8sSubRouteToRoute(r model.RoutingTreeRoute, path string) (definitions.Route, []error) {
 	result := definitions.Route{
-		GroupByStr:        r.GroupBy,
-		MuteTimeIntervals: r.MuteTimeIntervals,
-		Routes:            make([]*definitions.Route, 0, len(r.Routes)),
-		Matchers:          make(config.Matchers, 0, len(r.Matchers)),
-		Continue:          r.Continue,
+		GroupByStr:          r.GroupBy,
+		MuteTimeIntervals:   r.MuteTimeIntervals,
+		ActiveTimeIntervals: r.ActiveTimeIntervals,
+		Routes:              make([]*definitions.Route, 0, len(r.Routes)),
+		Matchers:            make(config.Matchers, 0, len(r.Matchers)),
+		Continue:            r.Continue,
 	}
 	if r.Receiver != nil {
 		result.Receiver = *r.Receiver
