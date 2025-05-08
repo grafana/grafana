@@ -6,7 +6,7 @@ import { useStyles2 } from '../../themes';
 
 export interface CounterProps {
   value: number;
-  className: string
+  className?: string
 }
 
 export const Counter = ({ value, className }: CounterProps) => {
