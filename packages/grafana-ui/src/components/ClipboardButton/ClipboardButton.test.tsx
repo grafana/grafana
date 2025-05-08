@@ -18,6 +18,7 @@ describe('ClipboardButton', () => {
   const originalWindow = { ...window };
 
   beforeAll(() => {
+    jest.useFakeTimers();
     Object.assign(window, {
       isSecureContext: true,
     });
@@ -25,10 +26,10 @@ describe('ClipboardButton', () => {
 
   afterAll(() => {
     Object.assign(window, originalWindow);
+    jest.useRealTimers();
   });
 
   it('should copy text to clipboard when clicked', async () => {
-    jest.useFakeTimers();
     const textToCopy = 'Copy me!';
     const onClipboardCopy = jest.fn();
 
@@ -52,6 +53,5 @@ describe('ClipboardButton', () => {
 
     expect(clipboardText).toBe(textToCopy);
     expect(onClipboardCopy).toHaveBeenCalledWith(textToCopy);
-    jest.useRealTimers();
   });
 });
