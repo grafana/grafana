@@ -66,12 +66,12 @@ export enum AlertmanagerAction {
   UpdateSilence = 'update-silence',
   PreviewSilencedInstances = 'preview-silenced-alerts',
 
-  // mute timings
-  ViewMuteTiming = 'view-mute-timing',
-  CreateMuteTiming = 'create-mute-timing',
-  UpdateMuteTiming = 'update-mute-timing',
-  DeleteMuteTiming = 'delete-mute-timing',
-  ExportMuteTimings = 'export-mute-timings',
+  // time intervals
+  ViewTimeInterval = 'view-time-interval',
+  CreateTimeInterval = 'create-time-interval',
+  UpdateTimeInterval = 'update-time-interval',
+  DeleteTimeInterval = 'delete-time-interval',
+  ExportTimeIntervals = 'export-time-intervals',
 
   // Alert groups
   ViewAlertGroups = 'view-alert-groups',
@@ -89,6 +89,12 @@ export enum AlertRuleAction {
   Pause = 'pause-alert-rule',
   Restore = 'restore-alert-rule',
   DeletePermanently = 'delete-alert-rule-permanently',
+}
+
+// this enum list all of the bulk actions we can perform on a folder
+export enum FolderBulkAction {
+  Pause = 'pause-folder', // unpause permissions are the same as pause
+  Delete = 'delete-folder',
 }
 
 // this enum lists all of the actions we can perform within alerting in general, not linked to a specific
@@ -113,9 +119,24 @@ export enum AlertingAction {
 const AlwaysSupported = true;
 const NotSupported = false;
 
-export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction;
+export type Action = AlertmanagerAction | AlertingAction | AlertRuleAction | FolderBulkAction;
 export type Ability = [actionSupported: boolean, actionAllowed: boolean];
 export type Abilities<T extends Action> = Record<T, Ability>;
+
+/**
+ * This one will check for folder abilities
+ */
+export const useFolderBulkActionAbilities = (): Abilities<FolderBulkAction> => {
+  return {
+    [FolderBulkAction.Pause]: [AlwaysSupported, isAdmin()],
+    [FolderBulkAction.Delete]: [AlwaysSupported, isAdmin()],
+  };
+};
+
+export const useFolderBulkActionAbility = (action: FolderBulkAction): Ability => {
+  const allAbilities = useFolderBulkActionAbilities();
+  return allAbilities[action];
+};
 
 /**
  * This one will check for alerting abilities that don't apply to any particular alert source or alert rule
@@ -400,28 +421,28 @@ export function useAllAlertmanagerAbilities(): Abilities<AlertmanagerAction> {
     [AlertmanagerAction.ViewSilence]: toAbility(AlwaysSupported, instancePermissions.read),
     [AlertmanagerAction.UpdateSilence]: toAbility(AlwaysSupported, instancePermissions.update),
     [AlertmanagerAction.PreviewSilencedInstances]: toAbility(AlwaysSupported, instancePermissions.read),
-    // -- mute timings --
-    [AlertmanagerAction.CreateMuteTiming]: toAbility(
+    // -- time intervals --
+    [AlertmanagerAction.CreateTimeInterval]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.create,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
-    [AlertmanagerAction.ViewMuteTiming]: toAbility(
+    [AlertmanagerAction.ViewTimeInterval]: toAbility(
       AlwaysSupported,
       notificationsPermissions.read,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_READ : [])
     ),
-    [AlertmanagerAction.UpdateMuteTiming]: toAbility(
+    [AlertmanagerAction.UpdateTimeInterval]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.update,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
-    [AlertmanagerAction.DeleteMuteTiming]: toAbility(
+    [AlertmanagerAction.DeleteTimeInterval]: toAbility(
       hasConfigurationAPI,
       notificationsPermissions.delete,
       ...(isGrafanaFlavoredAlertmanager ? PERMISSIONS_TIME_INTERVALS_MODIFY : [])
     ),
-    [AlertmanagerAction.ExportMuteTimings]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
+    [AlertmanagerAction.ExportTimeIntervals]: toAbility(isGrafanaFlavoredAlertmanager, notificationsPermissions.read),
     [AlertmanagerAction.ViewAlertGroups]: toAbility(AlwaysSupported, instancePermissions.read),
   };
 

@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useState } from 'react';
 
-import { Button, HorizontalGroup, useStyles2, VerticalGroup } from '@grafana/ui';
+import { Button, Stack, useStyles2 } from '@grafana/ui';
 
 function getStyles() {
   return {
@@ -35,8 +35,8 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
 
   return (
     <div className={styles.wrapper}>
-      <VerticalGroup spacing="sm">
-        <HorizontalGroup spacing="xs">
+      <Stack direction="column" gap={1}>
+        <Stack gap={0.5}>
           <Button
             icon={'plus-circle'}
             onClick={onPlus}
@@ -53,8 +53,8 @@ export function ViewControls<Config extends Record<string, any>>(props: Props<Co
             variant="secondary"
             disabled={disableZoomOut}
           />
-        </HorizontalGroup>
-      </VerticalGroup>
+        </Stack>
+      </Stack>
 
       {allowConfiguration && (
         <Button size={'xs'} fill="text" onClick={() => setShowConfig((showConfig) => !showConfig)}>

@@ -69,6 +69,9 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
     return !!query.service;
   }
 
+  /**
+   * Migrated to backend with feature toggle `jaegerBackendMigration`
+   */
   query(options: DataQueryRequest<JaegerQuery>): Observable<DataQueryResponse> {
     // At this moment we expect only one target. In case we somehow change the UI to be able to show multiple
     // traces at one we need to change this.
@@ -77,11 +80,7 @@ export class JaegerDatasource extends DataSourceWithBackend<JaegerQuery, JaegerJ
       return of({ data: [emptyTraceDataFrame] });
     }
 
-    if (
-      config.featureToggles.jaegerBackendMigration &&
-      // No query type means that the query is a trace ID query
-      (!target.queryType || target.queryType === 'dependencyGraph')
-    ) {
+    if (config.featureToggles.jaegerBackendMigration && target.queryType !== 'upload') {
       return super.query({ ...options, targets: [target] }).pipe(
         map((response) => {
           // If the node graph is enabled and the query is a trace ID query, add the node graph frames to the response

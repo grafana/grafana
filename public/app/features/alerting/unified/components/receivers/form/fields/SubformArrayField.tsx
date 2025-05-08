@@ -3,7 +3,7 @@ import { DeepMap, FieldError, useFormContext } from 'react-hook-form';
 import { Button, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { useControlledFieldArray } from 'app/features/alerting/unified/hooks/useControlledFieldArray';
-import { NotificationChannelOption } from 'app/types';
+import { NotificationChannelOption, NotificationChannelSecureFields, OptionMeta } from 'app/types';
 
 import { ActionIcon } from '../../../rules/ActionIcon';
 import { CollapsibleSection } from '../CollapsibleSection';
@@ -17,9 +17,19 @@ interface Props {
   pathPrefix: string;
   errors?: Array<DeepMap<any, FieldError>>;
   readOnly?: boolean;
+  secureFields: NotificationChannelSecureFields;
+  getOptionMeta?: (option: NotificationChannelOption) => OptionMeta;
 }
 
-export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, readOnly = false }: Props) => {
+export const SubformArrayField = ({
+  option,
+  pathPrefix,
+  errors,
+  defaultValues,
+  readOnly = false,
+  secureFields,
+  getOptionMeta,
+}: Props) => {
   const styles = useStyles2(getReceiverFormFieldStyles);
   const path = `${pathPrefix}${option.propertyName}`;
   const formAPI = useFormContext();
@@ -48,6 +58,8 @@ export const SubformArrayField = ({ option, pathPrefix, errors, defaultValues, r
               {option.subformOptions?.map((option) => (
                 <OptionField
                   readOnly={readOnly}
+                  getOptionMeta={getOptionMeta}
+                  secureFields={secureFields}
                   defaultValue={field?.[option.propertyName]}
                   key={option.propertyName}
                   option={option}
