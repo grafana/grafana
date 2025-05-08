@@ -272,3 +272,51 @@ func Test_readPluginSettings(t *testing.T) {
 		}
 	})
 }
+
+func Test_migrateInstallPluginsToPreinstall(t *testing.T) {
+	tests := []struct {
+		name                string
+		installPluginsVal   string
+		preInstallConfigVal string
+		expected            string
+	}{
+		{
+			name:                "preinstall should be empty when GF_INSTALL_PLUGINS is not set",
+			installPluginsVal:   "",
+			preInstallConfigVal: "",
+			expected:            "",
+		},
+		{
+			name:                "preinstall should be populated when GF_INSTALL_PLUGINS is set",
+			installPluginsVal:   "https://grafana.com/grafana/plugins/grafana-piechart-panel/;grafana-piechart-panel",
+			preInstallConfigVal: "",
+			expected:            "grafana-piechart-panel@@https://grafana.com/grafana/plugins/grafana-piechart-panel/",
+		},
+		{
+			name:                "should be able to parse when GF_INSTALL_PLUGINS is mixed of plugin-id and URL;folder",
+			installPluginsVal:   "https://github.com/VolkovLabs/business-links/releases/download/v1.2.1/volkovlabs-links-panel-1.2.1.zip;volkovlabs-links-panel,marcusolsson-static-datasource,volkovlabs-variable-panel",
+			preInstallConfigVal: "",
+			expected:            "volkovlabs-links-panel@@https://github.com/VolkovLabs/business-links/releases/download/v1.2.1/volkovlabs-links-panel-1.2.1.zip,marcusolsson-static-datasource,volkovlabs-variable-panel",
+		},
+		{
+			name:                "config preinstall should be used when both GF_INSTALL_PLUGINS config preinstall are defined",
+			installPluginsVal:   "https://grafana.com/grafana/plugins/grafana-piechart-panel/;grafana-piechart-panel",
+			preInstallConfigVal: "grafana-clock-panel,grafana-clickhouse-datasource",
+			expected:            "grafana-clock-panel,grafana-clickhouse-datasource",
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := NewCfg()
+			sec, err := cfg.Raw.NewSection("plugins")
+			require.NoError(t, err)
+			_, err = sec.NewKey("preinstall", tc.preInstallConfigVal)
+			require.NoError(t, err)
+			cfg.migrateInstallPluginsToPreinstall(cfg.Raw, tc.installPluginsVal)
+			section, err := cfg.Raw.GetSection("plugins")
+			require.NoError(t, err)
+			preinstall := section.Key("preinstall").Value()
+			require.Equal(t, tc.expected, preinstall)
+		})
+	}
+}
