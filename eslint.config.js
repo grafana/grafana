@@ -116,6 +116,12 @@ module.exports = [
       'no-restricted-imports': [
         'error',
         {
+          patterns: [
+            {
+              group: ['**/internationalization'],
+              importNames: ['Trans', 't'],
+            },
+          ],
           paths: [
             {
               name: 'react-redux',
