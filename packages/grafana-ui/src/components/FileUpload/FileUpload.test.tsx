@@ -1,4 +1,4 @@
-import { render, waitFor, fireEvent, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { selectors } from '@grafana/e2e-selectors';
@@ -6,6 +6,12 @@ import { selectors } from '@grafana/e2e-selectors';
 import { FileUpload } from './FileUpload';
 
 describe('FileUpload', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
+  beforeEach(() => {
+    user = userEvent.setup({ applyAccept: false });
+  });
+
   it('should render upload button with default text and no file name', () => {
     render(<FileUpload onFileUpload={() => {}} />);
     expect(screen.getByText('Upload file')).toBeInTheDocument();
@@ -14,9 +20,9 @@ describe('FileUpload', () => {
 
   it('clicking the button should trigger the input', async () => {
     const mockInputOnClick = jest.fn();
-    const { getByTestId } = render(<FileUpload onFileUpload={() => {}} />);
+    render(<FileUpload onFileUpload={() => {}} />);
     const button = screen.getByText('Upload file');
-    const input = getByTestId(selectors.components.FileUpload.inputField);
+    const input = screen.getByTestId(selectors.components.FileUpload.inputField);
 
     // attach a click listener to the input
     input.onclick = mockInputOnClick;
@@ -29,14 +35,10 @@ describe('FileUpload', () => {
     const testFileName = 'grafana.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
-    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
-    let uploader = getByTestId(selectors.components.FileUpload.inputField);
-    await waitFor(() =>
-      fireEvent.change(uploader, {
-        target: { files: [file] },
-      })
-    );
-    let uploaderLabel = getByTestId(selectors.components.FileUpload.fileNameSpan);
+    render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
+    let uploader = await screen.findByTestId(selectors.components.FileUpload.inputField);
+    await user.upload(uploader, file);
+    let uploaderLabel = await screen.findByTestId(selectors.components.FileUpload.fileNameSpan);
     expect(uploaderLabel).toHaveTextContent(testFileName);
   });
 
@@ -44,14 +46,10 @@ describe('FileUpload', () => {
     const testFileName = 'longFileName.something.png';
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
-    const { getByTestId } = render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
-    let uploader = getByTestId(selectors.components.FileUpload.inputField);
-    await waitFor(() =>
-      fireEvent.change(uploader, {
-        target: { files: [file] },
-      })
-    );
-    let uploaderLabel = getByTestId(selectors.components.FileUpload.fileNameSpan);
+    render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
+    let uploader = screen.getByTestId(selectors.components.FileUpload.inputField);
+    await user.upload(uploader, file);
+    let uploaderLabel = screen.getByTestId(selectors.components.FileUpload.fileNameSpan);
     expect(uploaderLabel).toHaveTextContent('longFileName.som....png');
   });
 });

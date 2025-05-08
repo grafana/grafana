@@ -1,4 +1,5 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { Button } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
@@ -6,15 +7,16 @@ import { IconButton } from '../IconButton/IconButton';
 import { Card } from './Card';
 
 describe('Card', () => {
-  it('should execute callback when clicked', () => {
+  it('should execute callback when clicked', async () => {
+    const user = userEvent.setup();
     const callback = jest.fn();
     render(
       <Card onClick={callback}>
         <Card.Heading>Test Heading</Card.Heading>
       </Card>
     );
-    fireEvent.click(screen.getByText('Test Heading'));
-    expect(callback).toBeCalledTimes(1);
+    await user.click(screen.getByText('Test Heading'));
+    expect(callback).toHaveBeenCalledTimes(1);
   });
 
   describe('Card Actions', () => {

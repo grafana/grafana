@@ -26,7 +26,7 @@ describe('SelectBase', () => {
   ];
 
   it('renders without error', () => {
-    render(<SelectBase onChange={onChangeHandler} />);
+    expect(() => render(<SelectBase onChange={onChangeHandler} />)).not.toThrow();
   });
 
   it('renders empty options information', async () => {
@@ -60,7 +60,7 @@ describe('SelectBase', () => {
     };
 
     render(<Test />);
-    expect(screen.queryByText('Test label')).toBeInTheDocument();
+    expect(screen.getByText('Test label')).toBeInTheDocument();
     await userEvent.click(screen.getByText('clear value'));
     expect(screen.queryByText('Test label')).not.toBeInTheDocument();
   });
@@ -76,13 +76,15 @@ describe('SelectBase', () => {
     describe('is not provided', () => {
       it.each`
         key
-        ${'ArrowDown'}
-        ${'ArrowUp'}
+        ${'{ArrowDown}'}
+        ${'{ArrowUp}'}
         ${' '}
-      `('opens on arrow down/up or space', ({ key }) => {
+      `('opens on arrow down/up or space', async ({ key }) => {
+        const user = userEvent.setup();
+
         render(<SelectBase onChange={onChangeHandler} />);
-        fireEvent.focus(screen.getByRole('combobox'));
-        fireEvent.keyDown(screen.getByRole('combobox'), { key });
+
+        await user.type(screen.getByRole('combobox'), key);
         expect(screen.queryByText(/no options found/i)).toBeVisible();
       });
     });

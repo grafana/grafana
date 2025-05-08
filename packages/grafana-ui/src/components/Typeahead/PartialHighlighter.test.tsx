@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 
 import { PartialHighlighter } from './PartialHighlighter';
 
-function assertPart(text: string, isHighlighted: boolean): void {
+function expectPart(text: string, isHighlighted: boolean): void {
   const element = screen.getByText(text);
   expect(element).toBeInTheDocument();
   if (isHighlighted) {
@@ -25,11 +25,11 @@ describe('PartialHighlighter component', () => {
       />
     );
 
-    assertPart('Lorem', false);
-    assertPart('ipsum', true);
-    assertPart('dolor', false);
-    assertPart('sit', true);
-    assertPart('amet', false);
+    expectPart('Lorem', false);
+    expectPart('ipsum', true);
+    expectPart('dolor', false);
+    expectPart('sit', true);
+    expectPart('amet', false);
   });
 
   it('should highlight outer parts correctly', () => {
@@ -43,9 +43,9 @@ describe('PartialHighlighter component', () => {
         ]}
       />
     );
-    assertPart('Lorem', true);
-    assertPart('ipsum dolor sit', false);
-    assertPart('amet', true);
+    expectPart('Lorem', true);
+    expectPart('ipsum dolor sit', false);
+    expectPart('amet', true);
   });
 
   it('renders nothing if highlightParts is empty', () => {

@@ -30,6 +30,12 @@ const numericOptions: Array<ComboboxOption<number>> = [
 ];
 
 describe('Combobox', () => {
+  let user: ReturnType<typeof userEvent.setup>;
+
+  beforeEach(() => {
+    user = userEvent.setup({ applyAccept: false });
+  });
+
   const onChangeHandler = jest.fn();
   beforeAll(() => {
     const mockGetBoundingClientRect = jest.fn(() => ({
@@ -116,13 +122,13 @@ describe('Combobox', () => {
     await userEvent.keyboard('{ArrowDown}{ArrowDown}{Enter}'); // Focus is at index 0 to start with
 
     expect(onChangeHandler).toHaveBeenCalledWith(options[2]);
-    expect(screen.queryByDisplayValue('Option 3')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Option 3')).toBeInTheDocument();
   });
 
   it('clears selected value', async () => {
     render(<Combobox options={options} value={options[1].value} onChange={onChangeHandler} isClearable />);
 
-    expect(screen.queryByDisplayValue('Option 2')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Option 2')).toBeInTheDocument();
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
 
@@ -158,7 +164,7 @@ describe('Combobox', () => {
     const input = screen.getByRole('combobox');
     await userEvent.click(input);
     await userEvent.click(screen.getByRole('option', { name: 'Default' }));
-    expect(screen.queryByDisplayValue('Default')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Default')).toBeInTheDocument();
 
     await userEvent.click(input);
 
@@ -252,6 +258,7 @@ describe('Combobox', () => {
   });
 
   describe('size support', () => {
+    // eslint-disable-next-line jest/expect-expect
     it('should require minWidth to be set with auto width', () => {
       // @ts-expect-error
       render(<Combobox options={options} value={null} onChange={onChangeHandler} width="auto" />);
@@ -264,7 +271,7 @@ describe('Combobox', () => {
       const inputWrapper = screen.getByTestId('input-wrapper');
       const initialWidth = getComputedStyle(inputWrapper).width;
 
-      fireEvent.change(input, { target: { value: 'very very long value' } });
+      await user.type(input, 'very very long value');
 
       const newWidth = getComputedStyle(inputWrapper).width;
 
@@ -278,7 +285,7 @@ describe('Combobox', () => {
       const inputWrapper = screen.getByTestId('input-wrapper');
       const initialWidth = getComputedStyle(inputWrapper).width;
 
-      fireEvent.change(input, { target: { value: 'very very long value' } });
+      await user.type(input, 'very very long value');
 
       const newWidth = getComputedStyle(inputWrapper).width;
 
