@@ -440,6 +440,7 @@ const countriesByTimeZone = ((): Record<string, TimeZoneCountry[]> => {
       }
 
       // Fix: Only include Antarctica if timezone starts with "Antarctica/"
+      // https://github.com/grafana/grafana/issues/104688
       if (code === 'AQ' && !timeZone.startsWith('Antarctica/')) {
         return all;
       }
