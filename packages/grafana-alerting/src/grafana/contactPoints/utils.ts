@@ -1,4 +1,4 @@
-import { countBy, isEmpty } from 'lodash';
+import { isEmpty, mapValues } from 'lodash';
 
 import { ContactPoint } from './types';
 
@@ -13,12 +13,15 @@ import { ContactPoint } from './types';
  * @returns A string description of the ContactPoint's integrations
  */
 export function getContactPointDescription(contactPoint: ContactPoint): string {
-  if (isEmpty(contactPoint.spec.integrations)) {
+  const integrations = contactPoint.spec.integrations;
+
+  const isEmptyContactPoint = Object.values(integrations).every(isEmpty);
+  if (isEmptyContactPoint) {
     return '<empty contact point>';
   }
 
   // Count the occurrences of each integration type
-  const integrationCounts = countBy(contactPoint.spec.integrations, (integration) => integration.type);
+  const integrationCounts = mapValues(integrations, (integrations) => integrations?.length ?? 0);
 
   const description = Object.entries(integrationCounts)
     .map(([type, count]) => {

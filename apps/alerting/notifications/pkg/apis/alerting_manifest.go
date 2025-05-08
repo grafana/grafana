@@ -26,6 +26,13 @@ var appManifestData = app.ManifestData{
 						"spec.title",
 					},
 				},
+
+				{
+					Name: "v0alpha2",
+					SelectableFields: []string{
+						"spec.title",
+					},
+				},
 			},
 		},
 

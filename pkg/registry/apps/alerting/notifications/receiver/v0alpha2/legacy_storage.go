@@ -1,4 +1,4 @@
-package receiver
+package v0alpha2
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/rest"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha2"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
@@ -75,10 +75,7 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 
 	q := ngmodels.GetReceiversQuery{
 		OrgID:   orgId,
-		Decrypt: false,
-		//Names:   ctx.QueryStrings("names"), // TODO: Query params.
-		//Limit:   ctx.QueryInt("limit"),
-		//Offset:  ctx.QueryInt("offset"),
+		Decrypt: true,
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -112,6 +109,10 @@ func (s *legacyStorage) List(ctx context.Context, opts *internalversion.ListOpti
 }
 
 func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOptions) (runtime.Object, error) {
+	return s.get(ctx, uid, false, true)
+}
+
+func (s *legacyStorage) get(ctx context.Context, uid string, keepSecrets bool, fillMetadata bool) (runtime.Object, error) {
 	info, err := request.NamespaceInfoFrom(ctx, true)
 	if err != nil {
 		return nil, err
@@ -124,7 +125,7 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	q := ngmodels.GetReceiverQuery{
 		OrgID:   info.OrgID,
 		Name:    name,
-		Decrypt: false,
+		Decrypt: true,
 	}
 
 	user, err := identity.GetRequester(ctx)
@@ -138,26 +139,28 @@ func (s *legacyStorage) Get(ctx context.Context, uid string, _ *metav1.GetOption
 	}
 
 	var access *ngmodels.ReceiverPermissionSet
-	accesses, err := s.metadata.AccessControlMetadata(ctx, user, r)
-	if err == nil {
-		if a, ok := accesses[r.GetUID()]; ok {
-			access = &a
-		}
-	} else {
-		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
-	}
-
 	var inUse *ngmodels.ReceiverMetadata
-	inUses, err := s.metadata.InUseMetadata(ctx, info.OrgID, r)
-	if err == nil {
-		if a, ok := inUses[r.GetUID()]; ok {
-			inUse = &a
-		}
-	} else {
-		return nil, fmt.Errorf("failed to get access control metadata: %w", err)
-	}
+	if fillMetadata {
 
-	return convertToK8sResource(info.OrgID, r, access, inUse, s.namespacer)
+		accesses, err := s.metadata.AccessControlMetadata(ctx, user, r)
+		if err == nil {
+			if a, ok := accesses[r.GetUID()]; ok {
+				access = &a
+			}
+		} else {
+			return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+		}
+
+		inUses, err := s.metadata.InUseMetadata(ctx, info.OrgID, r)
+		if err == nil {
+			if a, ok := inUses[r.GetUID()]; ok {
+				inUse = &a
+			}
+		} else {
+			return nil, fmt.Errorf("failed to get access control metadata: %w", err)
+		}
+	}
+	return convertToK8sResource(info.OrgID, r, access, inUse, s.namespacer, keepSecrets)
 }
 
 func (s *legacyStorage) Create(ctx context.Context,
@@ -181,7 +184,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if p.Name != "" { // TODO remove when metadata.name can be defined by user
 		return nil, apierrors.NewBadRequest("object's metadata.name should be empty")
 	}
-	model, _, err := convertToDomainModel(p)
+	model, err := convertToDomainModel(p)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +198,7 @@ func (s *legacyStorage) Create(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
-	return convertToK8sResource(info.OrgID, out, nil, nil, s.namespacer)
+	return convertToK8sResource(info.OrgID, out, nil, nil, s.namespacer, false)
 }
 
 func (s *legacyStorage) Update(ctx context.Context,
@@ -216,7 +219,7 @@ func (s *legacyStorage) Update(ctx context.Context,
 		return nil, false, err
 	}
 
-	old, err := s.Get(ctx, uid, nil)
+	old, err := s.get(ctx, uid, true, false)
 	if err != nil {
 		return old, false, err
 	}
@@ -233,17 +236,17 @@ func (s *legacyStorage) Update(ctx context.Context,
 	if !ok {
 		return nil, false, fmt.Errorf("expected receiver but got %s", obj.GetObjectKind().GroupVersionKind())
 	}
-	model, storedSecureFields, err := convertToDomainModel(p)
+	model, err := convertToDomainModel(p)
 	if err != nil {
 		return old, false, err
 	}
 
-	updated, err := s.service.UpdateReceiver(ctx, model, storedSecureFields, info.OrgID, user)
+	updated, err := s.service.UpdateReceiver(ctx, model, nil, info.OrgID, user)
 	if err != nil {
 		return nil, false, err
 	}
 
-	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer)
+	r, err := convertToK8sResource(info.OrgID, updated, nil, nil, s.namespacer, false)
 	return r, false, err
 }
 

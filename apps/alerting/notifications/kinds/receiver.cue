@@ -2,6 +2,7 @@ package kinds
 
 import (
 	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/kinds/v0alpha2"
 )
 
 receiver: {
@@ -19,6 +20,14 @@ receiver: {
 		"v0alpha1": {
 			schema: {
 				spec: v0alpha1.ReceiverSpec
+			}
+			selectableFields: [
+				"spec.title",
+			]
+		}
+		"v0alpha2": {
+			schema: {
+				spec: v0alpha2.ReceiverSpec
 			}
 			selectableFields: [
 				"spec.title",

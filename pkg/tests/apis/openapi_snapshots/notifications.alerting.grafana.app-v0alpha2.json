@@ -1,10 +1,10 @@
 {
   "openapi": "3.0.0",
   "info": {
-    "title": "investigations.grafana.app/v0alpha1"
+    "title": "notifications.alerting.grafana.app/v0alpha2"
   },
   "paths": {
-    "/apis/investigations.grafana.app/v0alpha1/": {
+    "/apis/notifications.alerting.grafana.app/v0alpha2/": {
       "get": {
         "tags": [
           "API Discovery"
@@ -35,13 +35,13 @@
         }
       }
     },
-    "/apis/investigations.grafana.app/v0alpha1/namespaces/{namespace}/investigationindexes": {
+    "/apis/notifications.alerting.grafana.app/v0alpha2/namespaces/{namespace}/receivers": {
       "get": {
         "tags": [
-          "InvestigationIndex"
+          "Receiver"
         ],
-        "description": "list or watch objects of kind InvestigationIndex",
-        "operationId": "listInvestigationIndex",
+        "description": "list objects of kind Receiver",
+        "operationId": "listReceiver",
         "parameters": [
           {
             "name": "allowWatchBookmarks",
@@ -140,27 +140,27 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ReceiverList"
                 }
               },
               "application/json;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ReceiverList"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ReceiverList"
                 }
               },
               "application/vnd.kubernetes.protobuf;stream=watch": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ReceiverList"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexList"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ReceiverList"
                 }
               }
             }
@@ -168,17 +168,17 @@
         },
         "x-kubernetes-action": "list",
         "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "InvestigationIndex"
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha2",
+          "kind": "Receiver"
         }
       },
       "post": {
         "tags": [
-          "InvestigationIndex"
+          "Receiver"
         ],
-        "description": "create an InvestigationIndex",
-        "operationId": "createInvestigationIndex",
+        "description": "create a Receiver",
+        "operationId": "createReceiver",
         "parameters": [
           {
             "name": "dryRun",
@@ -212,17 +212,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
               }
             }
           },
@@ -234,17 +234,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -254,17 +254,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -274,17 +274,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -292,17 +292,17 @@
         },
         "x-kubernetes-action": "post",
         "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "InvestigationIndex"
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha2",
+          "kind": "Receiver"
         }
       },
       "delete": {
         "tags": [
-          "InvestigationIndex"
+          "Receiver"
         ],
-        "description": "delete collection of InvestigationIndex",
-        "operationId": "deletecollectionInvestigationIndex",
+        "description": "delete collection of Receiver",
+        "operationId": "deletecollectionReceiver",
         "parameters": [
           {
             "name": "continue",
@@ -446,9 +446,9 @@
         },
         "x-kubernetes-action": "deletecollection",
         "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "InvestigationIndex"
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha2",
+          "kind": "Receiver"
         }
       },
       "parameters": [
@@ -473,30 +473,30 @@
         }
       ]
     },
-    "/apis/investigations.grafana.app/v0alpha1/namespaces/{namespace}/investigationindexes/{name}": {
+    "/apis/notifications.alerting.grafana.app/v0alpha2/namespaces/{namespace}/receivers/{name}": {
       "get": {
         "tags": [
-          "InvestigationIndex"
+          "Receiver"
         ],
-        "description": "read the specified InvestigationIndex",
-        "operationId": "getInvestigationIndex",
+        "description": "read the specified Receiver",
+        "operationId": "getReceiver",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -504,17 +504,17 @@
         },
         "x-kubernetes-action": "get",
         "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "InvestigationIndex"
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha2",
+          "kind": "Receiver"
         }
       },
       "put": {
         "tags": [
-          "InvestigationIndex"
+          "Receiver"
         ],
-        "description": "replace the specified InvestigationIndex",
-        "operationId": "replaceInvestigationIndex",
+        "description": "replace the specified Receiver",
+        "operationId": "replaceReceiver",
         "parameters": [
           {
             "name": "dryRun",
@@ -548,17 +548,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
               }
             },
             "application/vnd.kubernetes.protobuf": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
               }
             },
             "application/yaml": {
               "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
               }
             }
           },
@@ -570,17 +570,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -590,17 +590,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -608,17 +608,17 @@
         },
         "x-kubernetes-action": "put",
         "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "InvestigationIndex"
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha2",
+          "kind": "Receiver"
         }
       },
       "delete": {
         "tags": [
-          "InvestigationIndex"
+          "Receiver"
         ],
-        "description": "delete an InvestigationIndex",
-        "operationId": "deleteInvestigationIndex",
+        "description": "delete a Receiver",
+        "operationId": "deleteReceiver",
         "parameters": [
           {
             "name": "dryRun",
@@ -710,17 +710,17 @@
         },
         "x-kubernetes-action": "delete",
         "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "InvestigationIndex"
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha2",
+          "kind": "Receiver"
         }
       },
       "patch": {
         "tags": [
-          "InvestigationIndex"
+          "Receiver"
         ],
-        "description": "partially update the specified InvestigationIndex",
-        "operationId": "updateInvestigationIndex",
+        "description": "partially update the specified Receiver",
+        "operationId": "updateReceiver",
         "parameters": [
           {
             "name": "dryRun",
@@ -790,17 +790,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -810,17 +810,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/vnd.kubernetes.protobuf": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               },
               "application/yaml": {
                 "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               }
             }
@@ -828,846 +828,16 @@
         },
         "x-kubernetes-action": "patch",
         "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "InvestigationIndex"
+          "group": "notifications.alerting.grafana.app",
+          "version": "v0alpha2",
+          "kind": "Receiver"
         }
       },
       "parameters": [
         {
           "name": "name",
           "in": "path",
-          "description": "name of the InvestigationIndex",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/investigations.grafana.app/v0alpha1/namespaces/{namespace}/investigations": {
-      "get": {
-        "tags": [
-          "Investigation"
-        ],
-        "description": "list or watch objects of kind Investigation",
-        "operationId": "listInvestigation",
-        "parameters": [
-          {
-            "name": "allowWatchBookmarks",
-            "in": "query",
-            "description": "allowWatchBookmarks requests watch events with type \"BOOKMARK\". Servers that do not implement bookmarks may ignore this flag and bookmarks are sent at the server's discretion. Clients should not assume bookmarks are returned at any specific interval, nor may they assume the server will send any BOOKMARK event during a session. If this is not a watch, this field is ignored.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "watch",
-            "in": "query",
-            "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationList"
-                }
-              },
-              "application/json;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationList"
-                }
-              },
-              "application/vnd.kubernetes.protobuf;stream=watch": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationList"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationList"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "list",
-        "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Investigation"
-        }
-      },
-      "post": {
-        "tags": [
-          "Investigation"
-        ],
-        "description": "create an Investigation",
-        "operationId": "createInvestigation",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-              }
-            },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "post",
-        "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Investigation"
-        }
-      },
-      "delete": {
-        "tags": [
-          "Investigation"
-        ],
-        "description": "delete collection of Investigation",
-        "operationId": "deletecollectionInvestigation",
-        "parameters": [
-          {
-            "name": "continue",
-            "in": "query",
-            "description": "The continue option should be set when retrieving more results from the server. Since this value is server defined, clients may only use the continue value from a previous query result with identical query parameters (except for the value of continue) and the server may reject a continue value it does not recognize. If the specified continue value is no longer valid whether due to expiration (generally five to fifteen minutes) or a configuration change on the server, the server will respond with a 410 ResourceExpired error together with a continue token. If the client needs a consistent list, it must restart their list without the continue field. Otherwise, the client may send another list request with the token received with the 410 error, the server will respond with a list starting from the next key, but from the latest snapshot, which is inconsistent from the previous list results - objects that are created, modified, or deleted after the first list request will be included in the response, as long as their keys are after the \"next key\".\n\nThis field is not supported when watch is true. Clients may start a watch from the last resourceVersion value returned by the server and not miss any modifications.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "labelSelector",
-            "in": "query",
-            "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "description": "limit is a maximum number of responses to return for a list call. If more items exist, the server will set the `continue` field on the list metadata to a value that can be used with the same initial query to retrieve the next set of results. Setting a limit may return fewer than the requested amount of items (up to zero items) in the event all requested objects are filtered out and clients should only use the presence of the continue field to determine whether more results are available. Servers may choose not to support the limit argument and will return all of the available results. If limit is specified and the continue field is empty, clients may assume that no more results are available. This field is not supported if watch is true.\n\nThe server guarantees that the objects returned when using continue will be identical to issuing a single list call without a limit - that is, no objects created, modified, or deleted after the first request is issued will be included in any subsequent continued requests. This is sometimes referred to as a consistent snapshot, and ensures that a client that is using limit to receive smaller chunks of a very large result can ensure they see all possible objects. If objects are updated during a chunked list the version of the object that was present at the time the first list result was calculated is returned.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersion",
-            "in": "query",
-            "description": "resourceVersion sets a constraint on what resource versions a request may be served from. See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "resourceVersionMatch",
-            "in": "query",
-            "description": "resourceVersionMatch determines how resourceVersion is applied to list calls. It is highly recommended that resourceVersionMatch be set for list calls where resourceVersion is set See https://kubernetes.io/docs/reference/using-api/api-concepts/#resource-versions for details.\n\nDefaults to unset",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "sendInitialEvents",
-            "in": "query",
-            "description": "`sendInitialEvents=true` may be set together with `watch=true`. In that case, the watch stream will begin with synthetic events to produce the current state of objects in the collection. Once all such events have been sent, a synthetic \"Bookmark\" event  will be sent. The bookmark will report the ResourceVersion (RV) corresponding to the set of objects, and be marked with `\"k8s.io/initial-events-end\": \"true\"` annotation. Afterwards, the watch stream will proceed as usual, sending watch events corresponding to changes (subsequent to the RV) to objects watched.\n\nWhen `sendInitialEvents` option is set, we require `resourceVersionMatch` option to also be set. The semantic of the watch request is as following: - `resourceVersionMatch` = NotOlderThan\n  is interpreted as \"data at least as new as the provided `resourceVersion`\"\n  and the bookmark event is send when the state is synced\n  to a `resourceVersion` at least as fresh as the one provided by the ListOptions.\n  If `resourceVersion` is unset, this is interpreted as \"consistent read\" and the\n  bookmark event is send when the state is synced at least to the moment\n  when request started being processed.\n- `resourceVersionMatch` set to any other value or unset\n  Invalid error is returned.\n\nDefaults to true if `resourceVersion=\"\"` or `resourceVersion=\"0\"` (for backward compatibility reasons) and to false otherwise.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "timeoutSeconds",
-            "in": "query",
-            "description": "Timeout for the list/watch call. This limits the duration of the call, regardless of any activity or inactivity.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "deletecollection",
-        "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Investigation"
-        }
-      },
-      "parameters": [
-        {
-          "name": "namespace",
-          "in": "path",
-          "description": "object name and auth scope, such as for teams and projects",
-          "required": true,
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        },
-        {
-          "name": "pretty",
-          "in": "query",
-          "description": "If 'true', then the output is pretty printed. Defaults to 'false' unless the user-agent indicates a browser or command-line HTTP tool (curl and wget).",
-          "schema": {
-            "type": "string",
-            "uniqueItems": true
-          }
-        }
-      ]
-    },
-    "/apis/investigations.grafana.app/v0alpha1/namespaces/{namespace}/investigations/{name}": {
-      "get": {
-        "tags": [
-          "Investigation"
-        ],
-        "description": "read the specified Investigation",
-        "operationId": "getInvestigation",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "get",
-        "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Investigation"
-        }
-      },
-      "put": {
-        "tags": [
-          "Investigation"
-        ],
-        "description": "replace the specified Investigation",
-        "operationId": "replaceInvestigation",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-              }
-            },
-            "application/vnd.kubernetes.protobuf": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-              }
-            },
-            "application/yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "put",
-        "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Investigation"
-        }
-      },
-      "delete": {
-        "tags": [
-          "Investigation"
-        ],
-        "description": "delete an Investigation",
-        "operationId": "deleteInvestigation",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "gracePeriodSeconds",
-            "in": "query",
-            "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
-            "schema": {
-              "type": "integer",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "ignoreStoreReadErrorWithClusterBreakingPotential",
-            "in": "query",
-            "description": "if set to true, it will trigger an unsafe deletion of the resource in case the normal deletion flow fails with a corrupt object error. A resource is considered corrupt if it can not be retrieved from the underlying storage successfully because of a) its data can not be transformed e.g. decryption failure, or b) it fails to decode into an object. NOTE: unsafe deletion ignores finalizer constraints, skips precondition checks, and removes the object from the storage. WARNING: This may potentially break the cluster if the workload associated with the resource being unsafe-deleted relies on normal deletion flow. Use only if you REALLY know what you are doing. The default value is false, and the user must opt in to enable it",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "orphanDependents",
-            "in": "query",
-            "description": "Deprecated: please use the PropagationPolicy, this field will be deprecated in 1.7. Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list. Either this field or PropagationPolicy may be set, but not both.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "propagationPolicy",
-            "in": "query",
-            "description": "Whether and how garbage collection will be performed. Either this field or OrphanDependents may be set, but not both. The default policy is decided by the existing finalizer set in the metadata.finalizers and the resource-specific default policy. Acceptable values are: 'Orphan' - orphan the dependents; 'Background' - allow the garbage collector to delete the dependents in the background; 'Foreground' - a cascading policy that deletes all dependents in the foreground.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          },
-          "202": {
-            "description": "Accepted",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "delete",
-        "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Investigation"
-        }
-      },
-      "patch": {
-        "tags": [
-          "Investigation"
-        ],
-        "description": "partially update the specified Investigation",
-        "operationId": "updateInvestigation",
-        "parameters": [
-          {
-            "name": "dryRun",
-            "in": "query",
-            "description": "When present, indicates that modifications should not be persisted. An invalid or unrecognized dryRun directive will result in an error response and no further processing of the request. Valid values are: - All: all dry run stages will be processed",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldManager",
-            "in": "query",
-            "description": "fieldManager is a name associated with the actor or entity that is making these changes. The value must be less than or 128 characters long, and only contain printable characters, as defined by https://golang.org/pkg/unicode/#IsPrint. This field is required for apply requests (application/apply-patch) but optional for non-apply patch types (JsonPatch, MergePatch, StrategicMergePatch).",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "fieldValidation",
-            "in": "query",
-            "description": "fieldValidation instructs the server on how to handle objects in the request (POST/PUT/PATCH) containing unknown or duplicate fields. Valid values are: - Ignore: This will ignore any unknown fields that are silently dropped from the object, and will ignore all but the last duplicate field that the decoder encounters. This is the default behavior prior to v1.23. - Warn: This will send a warning via the standard warning response header for each unknown field that is dropped from the object, and for each duplicate field that is encountered. The request will still succeed if there are no other errors, and will only persist the last of any duplicate fields. This is the default in v1.23+ - Strict: This will fail the request with a BadRequest error if any unknown fields would be dropped from the object, or if any duplicate fields are present. The error returned from the server will contain all unknown and duplicate fields encountered.",
-            "schema": {
-              "type": "string",
-              "uniqueItems": true
-            }
-          },
-          {
-            "name": "force",
-            "in": "query",
-            "description": "Force is going to \"force\" Apply requests. It means user will re-acquire conflicting fields owned by other people. Force flag must be unset for non-apply patch requests.",
-            "schema": {
-              "type": "boolean",
-              "uniqueItems": true
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/apply-patch+yaml": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/json-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            },
-            "application/strategic-merge-patch+json": {
-              "schema": {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          },
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/vnd.kubernetes.protobuf": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              },
-              "application/yaml": {
-                "schema": {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              }
-            }
-          }
-        },
-        "x-kubernetes-action": "patch",
-        "x-kubernetes-group-version-kind": {
-          "group": "investigations.grafana.app",
-          "version": "v0alpha1",
-          "kind": "Investigation"
-        }
-      },
-      "parameters": [
-        {
-          "name": "name",
-          "in": "path",
-          "description": "name of the Investigation",
+          "description": "name of the Receiver",
           "required": true,
           "schema": {
             "type": "string",
@@ -1698,132 +868,23 @@
   },
   "components": {
     "schemas": {
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.AlertmanagerIntegration": {
         "type": "object",
         "required": [
-          "metadata",
-          "spec",
-          "status"
+          "url"
         ],
         "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "basicAuthPassword": {
             "type": "string"
           },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "basicAuthUser": {
             "type": "string"
           },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
-              }
-            ]
+          "disable_resolve_message": {
+            "type": "boolean"
           },
-          "spec": {
-            "description": "Spec is the spec of the Investigation",
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationSpec"
-              }
-            ]
-          },
-          "status": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationStatus"
-              }
-            ]
-          }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "investigations.grafana.app",
-            "kind": "Investigation",
-            "version": "v0alpha1"
-          }
-        ]
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationCollectable": {
-        "description": "Collectable represents an item collected during investigation",
-        "type": "object",
-        "required": [
-          "id",
-          "createdAt",
-          "title",
-          "origin",
-          "type",
-          "queries",
-          "timeRange",
-          "datasource",
-          "url",
-          "note",
-          "noteUpdatedAt",
-          "fieldConfig"
-        ],
-        "properties": {
-          "createdAt": {
-            "type": "string",
-            "default": ""
-          },
-          "datasource": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationDatasourceRef"
-              }
-            ]
-          },
-          "fieldConfig": {
-            "type": "string",
-            "default": ""
-          },
-          "id": {
-            "type": "string",
-            "default": ""
-          },
-          "logoPath": {
+          "uid": {
             "type": "string"
-          },
-          "note": {
-            "type": "string",
-            "default": ""
-          },
-          "noteUpdatedAt": {
-            "type": "string",
-            "default": ""
-          },
-          "origin": {
-            "type": "string",
-            "default": ""
-          },
-          "queries": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "default": ""
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "timeRange": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationTimeRange"
-              }
-            ]
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          },
-          "type": {
-            "type": "string",
-            "default": ""
           },
           "url": {
             "type": "string",
@@ -1831,20 +892,547 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationDatasourceRef": {
-        "description": "DatasourceRef is a reference to a datasource",
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.CustomPayload": {
+        "type": "object",
+        "properties": {
+          "template": {
+            "type": "string"
+          },
+          "vars": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.DingdingIntegration": {
+        "type": "object",
+        "properties": {
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "msgType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.DiscordIntegration": {
         "type": "object",
         "required": [
-          "uid"
+          "url"
         ],
         "properties": {
+          "avatar_url": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
           "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "default": ""
+          },
+          "use_discord_username": {
+            "type": "boolean"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.EmailIntegration": {
+        "type": "object",
+        "required": [
+          "addresses"
+        ],
+        "properties": {
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "singleEmail": {
+            "type": "boolean"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.GooglechatIntegration": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.HMACConfig": {
+        "type": "object",
+        "required": [
+          "header",
+          "timestampHeader"
+        ],
+        "properties": {
+          "header": {
+            "type": "string",
+            "default": ""
+          },
+          "secret": {
+            "type": "string"
+          },
+          "timestampHeader": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.JiraIntegration": {
+        "type": "object",
+        "required": [
+          "api_url",
+          "project",
+          "issue_type"
+        ],
+        "properties": {
+          "api_token": {
+            "type": "string"
+          },
+          "api_url": {
+            "type": "string",
+            "default": ""
+          },
+          "dedup_key_field": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "fields": {
+            "type": "object"
+          },
+          "issue_type": {
+            "type": "string",
+            "default": ""
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "password": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "project": {
+            "type": "string",
+            "default": ""
+          },
+          "reopen_duration": {
+            "type": "string"
+          },
+          "reopen_transition": {
+            "type": "string"
+          },
+          "resolve_transition": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "user": {
+            "type": "string"
+          },
+          "wont_fix_resolution": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.KafkaIntegration": {
+        "type": "object",
+        "required": [
+          "kafkaRestProxy",
+          "kafkaTopic"
+        ],
+        "properties": {
+          "apiVersion": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "details": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "kafkaClusterId": {
+            "type": "string"
+          },
+          "kafkaRestProxy": {
+            "type": "string",
+            "default": ""
+          },
+          "kafkaTopic": {
+            "type": "string",
+            "default": ""
+          },
+          "password": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.LineIntegration": {
+        "type": "object",
+        "required": [
+          "token"
+        ],
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "title": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "default": ""
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.MqttIntegration": {
+        "type": "object",
+        "properties": {
+          "brokerUrl": {
+            "type": "string"
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "messageFormat": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "qos": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "retain": {
+            "type": "boolean"
+          },
+          "tlsConfig": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.TLSConfig"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.OnCallIntegration": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "authorization_credentials": {
+            "type": "string"
+          },
+          "authorization_scheme": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "httpMethod": {
+            "type": "string"
+          },
+          "maxAlerts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "default": ""
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.OpsgenieIntegration": {
+        "type": "object",
+        "required": [
+          "apiKey"
+        ],
+        "properties": {
+          "apiKey": {
+            "type": "string",
+            "default": ""
+          },
+          "apiUrl": {
+            "type": "string"
+          },
+          "autoClose": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "overridePriority": {
+            "type": "boolean"
+          },
+          "responders": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.OpsgenieIntegrationResponder"
+                }
+              ]
+            }
+          },
+          "sendTagsAs": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.OpsgenieIntegrationResponder": {
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "default": ""
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.PagerdutyIntegration": {
+        "type": "object",
+        "required": [
+          "integrationKey"
+        ],
+        "properties": {
+          "class": {
+            "type": "string"
+          },
+          "client": {
+            "type": "string"
+          },
+          "client_url": {
+            "type": "string"
+          },
+          "component": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "group": {
+            "type": "string"
+          },
+          "integrationKey": {
+            "type": "string",
+            "default": ""
+          },
+          "severity": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.PushoverIntegration": {
+        "type": "object",
+        "required": [
+          "userKey",
+          "apiToken"
+        ],
+        "properties": {
+          "apiToken": {
+            "type": "string",
+            "default": ""
+          },
+          "device": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "expire": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "okPriority": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "okSound": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "retry": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "sound": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "uploadImage": {
+            "type": "boolean"
+          },
+          "userKey": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver": {
         "type": "object",
         "required": [
           "metadata",
@@ -1869,11 +1457,11 @@
             ]
           },
           "spec": {
-            "description": "Spec is the spec of the InvestigationIndex",
+            "description": "Spec is the spec of the Receiver",
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexSpec"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Spec"
               }
             ]
           },
@@ -1881,111 +1469,20 @@
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexStatus"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Status"
               }
             ]
           }
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "investigations.grafana.app",
-            "kind": "InvestigationIndex",
-            "version": "v0alpha1"
+            "group": "notifications.alerting.grafana.app",
+            "kind": "Receiver",
+            "version": "v0alpha2"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexCollectableSummary": {
-        "type": "object",
-        "required": [
-          "id",
-          "title",
-          "logoPath",
-          "origin"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "default": ""
-          },
-          "logoPath": {
-            "type": "string",
-            "default": ""
-          },
-          "origin": {
-            "type": "string",
-            "default": ""
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexInvestigationSummary": {
-        "description": "Type definition for investigation summaries",
-        "type": "object",
-        "required": [
-          "title",
-          "createdByProfile",
-          "hasCustomName",
-          "isFavorite",
-          "overviewNote",
-          "overviewNoteUpdatedAt",
-          "viewMode",
-          "collectableSummaries"
-        ],
-        "properties": {
-          "collectableSummaries": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexCollectableSummary"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "createdByProfile": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexPerson"
-              }
-            ]
-          },
-          "hasCustomName": {
-            "type": "boolean",
-            "default": false
-          },
-          "isFavorite": {
-            "type": "boolean",
-            "default": false
-          },
-          "overviewNote": {
-            "type": "string",
-            "default": ""
-          },
-          "overviewNoteUpdatedAt": {
-            "type": "string",
-            "default": ""
-          },
-          "title": {
-            "type": "string",
-            "default": ""
-          },
-          "viewMode": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexViewMode"
-              }
-            ]
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexList": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ReceiverList": {
         "type": "object",
         "required": [
           "metadata",
@@ -2002,7 +1499,7 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndex"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Receiver"
                 }
               ]
             }
@@ -2022,76 +1519,189 @@
         },
         "x-kubernetes-group-version-kind": [
           {
-            "group": "investigations.grafana.app",
-            "kind": "InvestigationIndexList",
-            "version": "v0alpha1"
+            "group": "notifications.alerting.grafana.app",
+            "kind": "ReceiverList",
+            "version": "v0alpha2"
           }
         ]
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexPerson": {
-        "description": "Person represents a user profile with basic information",
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SensugoIntegration": {
         "type": "object",
         "required": [
-          "uid",
-          "name",
-          "gravatarUrl"
+          "url",
+          "apikey"
         ],
         "properties": {
-          "gravatarUrl": {
-            "description": "URL to user's Gravatar image",
+          "apikey": {
             "type": "string",
             "default": ""
           },
-          "name": {
-            "description": "Display name of the user",
-            "type": "string",
-            "default": ""
+          "check": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "handler": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "namespace": {
+            "type": "string"
           },
           "uid": {
-            "description": "Unique identifier for the user",
+            "type": "string"
+          },
+          "url": {
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexSpec": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SigV4Config": {
+        "type": "object",
+        "properties": {
+          "access_key": {
+            "type": "string"
+          },
+          "profile": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "role_arn": {
+            "type": "string"
+          },
+          "secret_key": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SlackIntegration": {
+        "type": "object",
+        "properties": {
+          "color": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "endpointUrl": {
+            "type": "string"
+          },
+          "icon_emoji": {
+            "type": "string"
+          },
+          "icon_url": {
+            "type": "string"
+          },
+          "mentionChannel": {
+            "type": "string"
+          },
+          "mentionGroups": {
+            "type": "string"
+          },
+          "mentionUsers": {
+            "type": "string"
+          },
+          "recipient": {
+            "type": "string"
+          },
+          "text": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SnsIntegration": {
         "type": "object",
         "required": [
-          "title",
-          "owner",
-          "investigationSummaries"
+          "sigv4"
         ],
         "properties": {
-          "investigationSummaries": {
-            "description": "Array of investigation summaries",
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexInvestigationSummary"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
+          "api_url": {
+            "type": "string"
           },
-          "owner": {
-            "description": "The Person who owns this investigation index",
+          "attributes": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "default": ""
+            }
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "phone_number": {
+            "type": "string"
+          },
+          "sigv4": {
             "default": {},
             "allOf": [
               {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexPerson"
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SigV4Config"
+              }
+            ]
+          },
+          "subject": {
+            "type": "string"
+          },
+          "target_arn": {
+            "type": "string"
+          },
+          "topic_arn": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Spec": {
+        "type": "object",
+        "required": [
+          "title",
+          "integrations"
+        ],
+        "properties": {
+          "integrations": {
+            "default": {},
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.V0alpha2SpecIntegrations"
               }
             ]
           },
           "title": {
-            "description": "Title of the index, e.g. 'Favorites' or 'My Investigations'",
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexStatus": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.Status": {
         "type": "object",
         "properties": {
           "additionalFields": {
@@ -2108,36 +1718,14 @@
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexstatusOperatorState"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.StatusOperatorState"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexViewMode": {
-        "type": "object",
-        "required": [
-          "mode",
-          "showComments",
-          "showTooltips"
-        ],
-        "properties": {
-          "mode": {
-            "type": "string",
-            "default": ""
-          },
-          "showComments": {
-            "type": "boolean",
-            "default": false
-          },
-          "showTooltips": {
-            "type": "boolean",
-            "default": false
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationIndexstatusOperatorState": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.StatusOperatorState": {
         "type": "object",
         "required": [
           "lastEvaluation",
@@ -2167,256 +1755,533 @@
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationList": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.TLSConfig": {
         "type": "object",
-        "required": [
-          "metadata",
-          "items"
-        ],
         "properties": {
-          "apiVersion": {
-            "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources",
+          "caCertificate": {
             "type": "string"
           },
-          "items": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.Investigation"
-                }
-              ]
-            }
-          },
-          "kind": {
-            "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds",
+          "clientCertificate": {
             "type": "string"
           },
-          "metadata": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.apis.meta.v1.ListMeta"
-              }
-            ]
+          "clientKey": {
+            "type": "string"
+          },
+          "insecureSkipVerify": {
+            "type": "boolean"
           }
-        },
-        "x-kubernetes-group-version-kind": [
-          {
-            "group": "investigations.grafana.app",
-            "kind": "InvestigationList",
-            "version": "v0alpha1"
-          }
-        ]
+        }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationPerson": {
-        "description": "Person represents a user profile with basic information",
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.TeamsIntegration": {
         "type": "object",
         "required": [
-          "uid",
-          "name",
-          "gravatarUrl"
+          "url"
         ],
         "properties": {
-          "gravatarUrl": {
-            "description": "URL to user's Gravatar image",
-            "type": "string",
-            "default": ""
+          "disable_resolve_message": {
+            "type": "boolean"
           },
-          "name": {
-            "description": "Display name of the user",
-            "type": "string",
-            "default": ""
+          "message": {
+            "type": "string"
+          },
+          "sectiontitle": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
           },
           "uid": {
-            "description": "Unique identifier for the user",
+            "type": "string"
+          },
+          "url": {
             "type": "string",
             "default": ""
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationSpec": {
-        "description": "spec is the schema of our resource",
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.TelegramIntegration": {
         "type": "object",
         "required": [
-          "title",
-          "createdByProfile",
-          "hasCustomName",
-          "isFavorite",
-          "overviewNote",
-          "overviewNoteUpdatedAt",
-          "collectables",
-          "viewMode"
+          "bottoken",
+          "chatid",
+          "message_thread_id"
         ],
         "properties": {
-          "collectables": {
-            "type": "array",
-            "items": {
-              "default": {},
-              "allOf": [
-                {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationCollectable"
-                }
-              ]
-            },
-            "x-kubernetes-list-type": "atomic"
-          },
-          "createdByProfile": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationPerson"
-              }
-            ]
-          },
-          "hasCustomName": {
-            "type": "boolean",
-            "default": false
-          },
-          "isFavorite": {
-            "type": "boolean",
-            "default": false
-          },
-          "overviewNote": {
+          "bottoken": {
             "type": "string",
             "default": ""
           },
-          "overviewNoteUpdatedAt": {
+          "chatid": {
+            "type": "string",
+            "default": ""
+          },
+          "disable_notifications": {
+            "type": "boolean"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "disable_web_page_preview": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "message_thread_id": {
+            "type": "string",
+            "default": ""
+          },
+          "parse_mode": {
+            "type": "string"
+          },
+          "protect_content": {
+            "type": "boolean"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ThreemaIntegration": {
+        "type": "object",
+        "required": [
+          "gateway_id",
+          "recipient_id",
+          "api_secret"
+        ],
+        "properties": {
+          "api_secret": {
+            "type": "string",
+            "default": ""
+          },
+          "description": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "gateway_id": {
+            "type": "string",
+            "default": ""
+          },
+          "recipient_id": {
             "type": "string",
             "default": ""
           },
           "title": {
-            "type": "string",
-            "default": ""
+            "type": "string"
           },
-          "viewMode": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationViewMode"
-              }
-            ]
+          "uid": {
+            "type": "string"
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationStatus": {
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.V0alpha2SpecIntegrations": {
         "type": "object",
         "properties": {
-          "additionalFields": {
-            "description": "additionalFields is reserved for future use",
-            "type": "object",
-            "additionalProperties": {
-              "type": "object"
-            }
-          },
-          "operatorStates": {
-            "description": "operatorStates is a map of operator ID to operator state evaluations. Any operator which consumes this kind SHOULD add its state evaluation information to this field.",
-            "type": "object",
-            "additionalProperties": {
+          "alertmanager": {
+            "type": "array",
+            "items": {
               "default": {},
               "allOf": [
                 {
-                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationstatusOperatorState"
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.AlertmanagerIntegration"
+                }
+              ]
+            }
+          },
+          "dingding": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.DingdingIntegration"
+                }
+              ]
+            }
+          },
+          "discord": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.DiscordIntegration"
+                }
+              ]
+            }
+          },
+          "email": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.EmailIntegration"
+                }
+              ]
+            }
+          },
+          "googlechat": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.GooglechatIntegration"
+                }
+              ]
+            }
+          },
+          "jira": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.JiraIntegration"
+                }
+              ]
+            }
+          },
+          "kafka": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.KafkaIntegration"
+                }
+              ]
+            }
+          },
+          "line": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.LineIntegration"
+                }
+              ]
+            }
+          },
+          "mqtt": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.MqttIntegration"
+                }
+              ]
+            }
+          },
+          "oncall": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.OnCallIntegration"
+                }
+              ]
+            }
+          },
+          "opsgenie": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.OpsgenieIntegration"
+                }
+              ]
+            }
+          },
+          "pagerduty": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.PagerdutyIntegration"
+                }
+              ]
+            }
+          },
+          "pushover": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.PushoverIntegration"
+                }
+              ]
+            }
+          },
+          "sensugo": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SensugoIntegration"
+                }
+              ]
+            }
+          },
+          "slack": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SlackIntegration"
+                }
+              ]
+            }
+          },
+          "sns": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.SnsIntegration"
+                }
+              ]
+            }
+          },
+          "teams": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.TeamsIntegration"
+                }
+              ]
+            }
+          },
+          "telegram": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.TelegramIntegration"
+                }
+              ]
+            }
+          },
+          "threema": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.ThreemaIntegration"
+                }
+              ]
+            }
+          },
+          "victorops": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.VictoropsIntegration"
+                }
+              ]
+            }
+          },
+          "webex": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.WebexIntegration"
+                }
+              ]
+            }
+          },
+          "webhook": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.WebhookIntegration"
+                }
+              ]
+            }
+          },
+          "wecom": {
+            "type": "array",
+            "items": {
+              "default": {},
+              "allOf": [
+                {
+                  "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.WecomIntegration"
                 }
               ]
             }
           }
         }
       },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationTimeRange": {
-        "description": "TimeRange represents a time range with both absolute and relative values",
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.VictoropsIntegration": {
         "type": "object",
         "required": [
-          "from",
-          "to",
-          "raw"
+          "url"
         ],
         "properties": {
-          "from": {
-            "type": "string",
-            "default": ""
-          },
-          "raw": {
-            "default": {},
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationV0alpha1TimeRangeRaw"
-              }
-            ]
-          },
-          "to": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationV0alpha1TimeRangeRaw": {
-        "type": "object",
-        "required": [
-          "from",
-          "to"
-        ],
-        "properties": {
-          "from": {
-            "type": "string",
-            "default": ""
-          },
-          "to": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationViewMode": {
-        "type": "object",
-        "required": [
-          "mode",
-          "showComments",
-          "showTooltips"
-        ],
-        "properties": {
-          "mode": {
-            "type": "string",
-            "default": ""
-          },
-          "showComments": {
-            "type": "boolean",
-            "default": false
-          },
-          "showTooltips": {
-            "type": "boolean",
-            "default": false
-          }
-        }
-      },
-      "com.github.grafana.grafana.apps.investigations.pkg.apis.investigations.v0alpha1.InvestigationstatusOperatorState": {
-        "type": "object",
-        "required": [
-          "lastEvaluation",
-          "state"
-        ],
-        "properties": {
-          "descriptiveState": {
-            "description": "descriptiveState is an optional more descriptive state field which has no requirements on format",
+          "description": {
             "type": "string"
           },
-          "details": {
-            "description": "details contains any extra information that is operator-specific",
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "messageType": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "default": ""
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.WebexIntegration": {
+        "type": "object",
+        "required": [
+          "bot_token"
+        ],
+        "properties": {
+          "api_url": {
+            "type": "string"
+          },
+          "bot_token": {
+            "type": "string",
+            "default": ""
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "room_id": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.WebhookIntegration": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "authorization_credentials": {
+            "type": "string"
+          },
+          "authorization_scheme": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "headers": {
             "type": "object",
             "additionalProperties": {
-              "type": "object"
+              "type": "string",
+              "default": ""
             }
           },
-          "lastEvaluation": {
-            "description": "lastEvaluation is the ResourceVersion last evaluated",
+          "hmacConfig": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.HMACConfig"
+          },
+          "httpMethod": {
+            "type": "string"
+          },
+          "maxAlerts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "message": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "payload": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.CustomPayload"
+          },
+          "title": {
+            "type": "string"
+          },
+          "tlsConfig": {
+            "$ref": "#/components/schemas/com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.TLSConfig"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
             "type": "string",
             "default": ""
           },
-          "state": {
-            "description": "state describes the state of the lastEvaluation. It is limited to three possible states for machine evaluation.",
-            "type": "string",
-            "default": ""
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "com.github.grafana.grafana.apps.alerting.notifications.pkg.apis.receiver.v0alpha2.WecomIntegration": {
+        "type": "object",
+        "properties": {
+          "agent_id": {
+            "type": "string"
+          },
+          "corp_id": {
+            "type": "string"
+          },
+          "disable_resolve_message": {
+            "type": "boolean"
+          },
+          "endpointUrl": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "msgtype": {
+            "type": "string"
+          },
+          "secret": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "touser": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
           }
         }
       },
@@ -2927,32 +2792,6 @@
         "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
         "type": "string",
         "format": "date-time"
-      },
-      "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
-        "description": "Event represents a single event to a watched resource.",
-        "type": "object",
-        "required": [
-          "type",
-          "object"
-        ],
-        "properties": {
-          "object": {
-            "description": "Object is:\n * If Type is Added or Modified: the new state of the object.\n * If Type is Deleted: the state of the object immediately before deletion.\n * If Type is Error: *Status is recommended; other types may make sense\n   depending on context.",
-            "allOf": [
-              {
-                "$ref": "#/components/schemas/io.k8s.apimachinery.pkg.runtime.RawExtension"
-              }
-            ]
-          },
-          "type": {
-            "type": "string",
-            "default": ""
-          }
-        }
-      },
-      "io.k8s.apimachinery.pkg.runtime.RawExtension": {
-        "description": "RawExtension is used to hold extensions in external versions.\n\nTo use this, make a field which has RawExtension as its type in your external, versioned struct, and Object in your internal struct. You also need to register your various plugin types.\n\n// Internal package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.Object `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// External package:\n\n\ttype MyAPIObject struct {\n\t\truntime.TypeMeta `json:\",inline\"`\n\t\tMyPlugin runtime.RawExtension `json:\"myPlugin\"`\n\t}\n\n\ttype PluginA struct {\n\t\tAOption string `json:\"aOption\"`\n\t}\n\n// On the wire, the JSON will look something like this:\n\n\t{\n\t\t\"kind\":\"MyAPIObject\",\n\t\t\"apiVersion\":\"v1\",\n\t\t\"myPlugin\": {\n\t\t\t\"kind\":\"PluginA\",\n\t\t\t\"aOption\":\"foo\",\n\t\t},\n\t}\n\nSo what happens? Decode first uses json or yaml to unmarshal the serialized data into your external MyAPIObject. That causes the raw JSON to be stored, but not unpacked. The next step is to copy (using pkg/conversion) into the internal struct. The runtime package's DefaultScheme has conversion functions installed which will unpack the JSON stored in RawExtension, turning it into the correct object type, and storing it in the Object. (TODO: In the case where the object is of an unknown type, a runtime.Unknown object will be created and stored.)",
-        "type": "object"
       }
     }
   }
