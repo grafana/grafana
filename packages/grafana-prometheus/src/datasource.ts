@@ -8,11 +8,8 @@ import { gte } from 'semver';
 import {
   AbstractQuery,
   AdHocVariableFilter,
-  AnnotationEvent,
-  AnnotationQueryRequest,
   CoreApp,
   CustomVariableModel,
-  DataFrame,
   DataQueryRequest,
   DataQueryResponse,
   DataSourceGetTagKeysOptions,
@@ -27,14 +24,12 @@ import {
   QueryFixAction,
   QueryVariableModel,
   rangeUtil,
-  renderLegendFormat,
   ScopedVars,
   scopeFilterOperatorMap,
   ScopeSpecFilter,
   TimeRange,
 } from '@grafana/data';
 import {
-  BackendDataSourceResponse,
   BackendSrvRequest,
   config,
   DataSourceWithBackend,
@@ -43,11 +38,10 @@ import {
   getTemplateSrv,
   isFetchError,
   TemplateSrv,
-  toDataQueryResponse,
 } from '@grafana/runtime';
 
 import { addLabelToQuery } from './add_label_to_query';
-import { AnnotationQueryEditor } from './components/AnnotationQueryEditor';
+import { PrometheusAnnotationSupport } from './annotations';
 import PrometheusLanguageProvider, { SUGGESTIONS_LIMIT } from './language_provider';
 import {
   expandRecordingRules,
@@ -75,7 +69,6 @@ import {
 import { utf8Support, wrapUtf8Filters } from './utf8_support';
 import { PrometheusVariableSupport } from './variables';
 
-const ANNOTATION_QUERY_STEP_DEFAULT = '60s';
 const GET_AND_POST_METADATA_ENDPOINTS = [
   'api/v1/query',
   'api/v1/query_range',
@@ -152,13 +145,7 @@ export class PrometheusDatasource
       applyInterpolation: this.interpolateString.bind(this),
     });
 
-    // This needs to be here and cannot be static because of how annotations typing affects casting of data source
-    // objects to DataSourceApi types.
-    // We don't use the default processing for prometheus.
-    // See standardAnnotationSupport.ts/[shouldUseMappingUI|shouldUseLegacyRunner]
-    this.annotations = {
-      QueryEditor: AnnotationQueryEditor,
-    };
+    this.annotations = PrometheusAnnotationSupport(this);
   }
 
   init = async () => {
@@ -510,144 +497,6 @@ export class PrometheusDatasource
       __range: { text: sRange + 's', value: sRange + 's' },
     };
   }
-
-  async annotationQuery(options: AnnotationQueryRequest<PromQuery>): Promise<AnnotationEvent[]> {
-    if (this.access === 'direct') {
-      const error = new Error(
-        'Browser access mode in the Prometheus datasource is no longer available. Switch to server access mode.'
-      );
-      return Promise.reject(error);
-    }
-
-    const annotation = options.annotation;
-    const { expr = '' } = annotation;
-
-    if (!expr) {
-      return Promise.resolve([]);
-    }
-
-    const step = options.annotation.step || ANNOTATION_QUERY_STEP_DEFAULT;
-    const queryModel = {
-      expr,
-      range: true,
-      instant: false,
-      exemplar: false,
-      interval: step,
-      refId: 'X',
-      datasource: this.getRef(),
-    };
-
-    return await lastValueFrom(
-      getBackendSrv()
-        .fetch<BackendDataSourceResponse>({
-          url: '/api/ds/query',
-          method: 'POST',
-          headers: this.getRequestHeaders(),
-          data: {
-            from: (getPrometheusTime(options.range.from, false) * 1000).toString(),
-            to: (getPrometheusTime(options.range.to, true) * 1000).toString(),
-            queries: [this.applyTemplateVariables(queryModel, {})],
-          },
-          requestId: `prom-query-${annotation.name}`,
-        })
-        .pipe(
-          map((rsp: FetchResponse<BackendDataSourceResponse>) => {
-            return this.processAnnotationResponse(options, rsp.data);
-          })
-        )
-    );
-  }
-
-  processAnnotationResponse = (options: AnnotationQueryRequest<PromQuery>, data: BackendDataSourceResponse) => {
-    const frames: DataFrame[] = toDataQueryResponse({ data: data }).data;
-    if (!frames || !frames.length) {
-      return [];
-    }
-
-    const annotation = options.annotation;
-    const { tagKeys = '', titleFormat = '', textFormat = '' } = annotation;
-
-    const input = frames[0].meta?.executedQueryString || '';
-    const regex = /Step:\s*([\d\w]+)/;
-    const match = input.match(regex);
-    const stepValue = match ? match[1] : null;
-    const step = rangeUtil.intervalToSeconds(stepValue || ANNOTATION_QUERY_STEP_DEFAULT) * 1000;
-    const tagKeysArray = tagKeys.split(',');
-
-    const eventList: AnnotationEvent[] = [];
-
-    for (const frame of frames) {
-      if (frame.fields.length === 0) {
-        continue;
-      }
-      const timeField = frame.fields[0];
-      const valueField = frame.fields[1];
-      const labels = valueField?.labels || {};
-
-      const tags = Object.keys(labels)
-        .filter((label) => tagKeysArray.includes(label))
-        .map((label) => labels[label]);
-
-      const timeValueTuple: Array<[number, number]> = [];
-
-      let idx = 0;
-      valueField.values.forEach((value: string) => {
-        let timeStampValue: number;
-        let valueValue: number;
-        const time = timeField.values[idx];
-
-        // If we want to use value as a time, we use value as timeStampValue and valueValue will be 1
-        if (options.annotation.useValueForTime) {
-          timeStampValue = Math.floor(parseFloat(value));
-          valueValue = 1;
-        } else {
-          timeStampValue = Math.floor(parseFloat(time));
-          valueValue = parseFloat(value);
-        }
-
-        idx++;
-        timeValueTuple.push([timeStampValue, valueValue]);
-      });
-
-      const activeValues = timeValueTuple.filter((value) => value[1] > 0);
-      const activeValuesTimestamps = activeValues.map((value) => value[0]);
-
-      // Instead of creating singular annotation for each active event we group events into region if they are less
-      // or equal to `step` apart.
-      let latestEvent: AnnotationEvent | null = null;
-
-      for (const timestamp of activeValuesTimestamps) {
-        // We already have event `open` and we have new event that is inside the `step` so we just update the end.
-        if (latestEvent && (latestEvent.timeEnd ?? 0) + step >= timestamp) {
-          latestEvent.timeEnd = timestamp;
-          continue;
-        }
-
-        // Event exists but new one is outside of the `step` so we add it to eventList.
-        if (latestEvent) {
-          eventList.push(latestEvent);
-        }
-
-        // We start a new region.
-        latestEvent = {
-          time: timestamp,
-          timeEnd: timestamp,
-          annotation,
-          title: renderLegendFormat(titleFormat, labels),
-          tags,
-          text: renderLegendFormat(textFormat, labels),
-        };
-      }
-
-      if (latestEvent) {
-        // Finish up last point if we have one
-        latestEvent.timeEnd = activeValuesTimestamps[activeValuesTimestamps.length - 1];
-        eventList.push(latestEvent);
-      }
-    }
-
-    return eventList;
-  };
 
   // By implementing getTagKeys and getTagValues we add ad-hoc filters functionality
   // this is used to get label keys, a.k.a label names
