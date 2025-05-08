@@ -535,10 +535,16 @@ type AlertRuleNotificationSettings struct {
 	RepeatInterval *model.Duration `json:"repeat_interval,omitempty"`
 
 	// Override the times when notifications should be muted. These must match the name of a mute time interval defined
-	// in the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but
+	// in the alertmanager configuration time_intervals section. When muted it will not send any notifications, but
 	// otherwise acts normally.
 	// example: ["maintenance"]
 	MuteTimeIntervals []string `json:"mute_time_intervals,omitempty"`
+
+	// Override the times when notifications should not be muted. These must match the name of a mute time interval defined
+	// in the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent
+	// at the time that matches any interval.
+	// example: ["maintenance"]
+	ActiveTimeIntervals []string `json:"active_time_intervals,omitempty"`
 }
 
 // swagger:model

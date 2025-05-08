@@ -15,6 +15,7 @@ import {
   getPanelIdForVizPanel,
   getVizPanelKeyForPanelId,
 } from '../../utils/utils';
+import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { clearClipboard, getAutoGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
 import { LayoutRegistryItem } from '../types/LayoutRegistryItem';
@@ -261,7 +262,8 @@ export class AutoGridLayoutManager
     const children: AutoGridItem[] = [];
 
     for (let panel of panels) {
-      children.push(new AutoGridItem({ body: panel.clone() }));
+      const variableName = panel.parent instanceof DashboardGridItem ? panel.parent.state.variableName : undefined;
+      children.push(new AutoGridItem({ body: panel.clone(), variableName }));
     }
 
     const layoutManager = AutoGridLayoutManager.createEmpty();
