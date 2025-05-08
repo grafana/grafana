@@ -223,7 +223,11 @@ function getImportsFixer(fixer, importName, context) {
   const body = context.sourceCode.ast.body;
 
   const existingAppCoreI18n = body.find(
-    (node) => node.type === AST_NODE_TYPES.ImportDeclaration && node.source.value === PACKAGE_IMPORT_NAME
+    (node) =>
+      node.type === AST_NODE_TYPES.ImportDeclaration &&
+      (node.source.value === PACKAGE_IMPORT_NAME ||
+        // "legacy" imports:
+        node.source.value.endsWith('core/internationalization'))
   );
 
   // If there's no existing import at all, add it
