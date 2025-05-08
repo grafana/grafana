@@ -18,9 +18,9 @@ weight: 200
 
 # Dashboard JSON schema v2
 
-Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
-
 {{< docs/experimental product="Dashboard JSON schema v2" featureFlag="`dashboardNewLayouts`" >}}
+
+Grafana dashboards are represented as JSON objects that store metadata, panels, variables, and settings.
 
 Observability as Code works with all versions of the JSON model, and it's fully compatible with version 2.
 

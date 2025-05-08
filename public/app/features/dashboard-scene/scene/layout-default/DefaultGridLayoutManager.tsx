@@ -40,6 +40,7 @@ import {
   getLayoutOrchestratorFor,
   getDashboardSceneFor,
 } from '../../utils/utils';
+import { AutoGridItem } from '../layout-auto-grid/AutoGridItem';
 import { CanvasGridAddActions } from '../layouts-shared/CanvasGridAddActions';
 import { clearClipboard, getDashboardGridItemFromClipboard } from '../layouts-shared/paste';
 import { DashboardLayoutManager } from '../types/DashboardLayoutManager';
@@ -490,6 +491,8 @@ export class DefaultGridLayoutManager
     let currentX = 0;
 
     for (let panel of panels) {
+      const variableName = panel.parent instanceof AutoGridItem ? panel.parent.state.variableName : undefined;
+
       panel.clearParent();
 
       children.push(
@@ -499,7 +502,9 @@ export class DefaultGridLayoutManager
           y: currentY,
           width: panelWidth,
           height: panelHeight,
+          itemHeight: panelHeight,
           body: panel,
+          variableName,
         })
       );
 
