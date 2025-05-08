@@ -33,7 +33,12 @@ jobs:
           make gen-go
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
   mysql:
-    name: MySQL
+    strategy:
+      matrix:
+        mysql-version: ['8.0', '8.4', '9.3']
+      fail-fast: false
+
+    name: MySQL ${{ matrix.mysql-version }}
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
@@ -42,7 +47,7 @@ jobs:
       MYSQL_HOST: 127.0.0.1
     services:
       mysql:
-        image: mysql:8.0.32
+        image: mysql:${{ matrix.mysql-version }}-oracle
         env:
           MYSQL_ROOT_PASSWORD: rootpass
           MYSQL_DATABASE: grafana_tests
