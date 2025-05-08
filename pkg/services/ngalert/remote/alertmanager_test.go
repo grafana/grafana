@@ -476,8 +476,7 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			}
 			raw, err := json.Marshal(test.config)
 			require.NoError(tt, err)
-			isDefault, _ := am.isDefaultConfiguration(md5.Sum(raw))
-			require.Equal(tt, test.expected, isDefault)
+			require.Equal(tt, test.expected, am.isDefaultConfiguration(md5.Sum(raw)))
 		})
 	}
 }
