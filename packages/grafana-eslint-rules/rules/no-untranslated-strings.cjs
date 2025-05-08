@@ -90,7 +90,12 @@ const noUntranslatedStrings = createRule({
 
         const errorCanBeFixed = canBeFixed(node, context);
         const errorShouldBeFixed = shouldBeFixed(context);
-        if (isUntranslated) {
+        if (
+          isUntranslated &&
+          // TODO: Remove this check in the future when we've fixed all cases of untranslated properties
+          // For now, we're only reporting the issues that can be auto-fixed, rather than adding to betterer results
+          errorCanBeFixed
+        ) {
           context.report({
             node,
             messageId: 'noUntranslatedStringsProperties',
