@@ -8,72 +8,69 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 
-	v0alpha1_receiver "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
-	v0alpha1_routingtree "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
-	v0alpha1_templategroup "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/templategroup/v0alpha1"
-	v0alpha1_timeinterval "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 )
 
-func NewReceiverClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1_receiver.Receiver, v0alpha1_receiver.ReceiverList] {
+func NewReceiverClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.TypedClient[v0alpha1_receiver.Receiver, v0alpha1_receiver.ReceiverList]{
+	return &apis.TypedClient[v0alpha1.Receiver, v0alpha1.ReceiverList]{
 		Client: client.Resource(
 			schema.GroupVersionResource{
-				Group:    v0alpha1_receiver.Kind().Group(),
-				Version:  v0alpha1_receiver.Kind().Version(),
-				Resource: v0alpha1_receiver.Kind().Plural(),
+				Group:    v0alpha1.ReceiverKind().Group(),
+				Version:  v0alpha1.ReceiverKind().Version(),
+				Resource: v0alpha1.ReceiverKind().Plural(),
 			}).Namespace("default"),
 	}
 }
 
-func NewRoutingTreeClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1_routingtree.RoutingTree, v0alpha1_routingtree.RoutingTreeList] {
+func NewRoutingTreeClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.TypedClient[v0alpha1_routingtree.RoutingTree, v0alpha1_routingtree.RoutingTreeList]{
+	return &apis.TypedClient[v0alpha1.RoutingTree, v0alpha1.RoutingTreeList]{
 		Client: client.Resource(
 			schema.GroupVersionResource{
-				Group:    v0alpha1_routingtree.Kind().Group(),
-				Version:  v0alpha1_routingtree.Kind().Version(),
-				Resource: v0alpha1_routingtree.Kind().Plural(),
+				Group:    v0alpha1.RoutingTreeKind().Group(),
+				Version:  v0alpha1.RoutingTreeKind().Version(),
+				Resource: v0alpha1.RoutingTreeKind().Plural(),
 			}).Namespace("default"),
 	}
 }
 
-func NewTemplateGroupClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1_templategroup.TemplateGroup, v0alpha1_templategroup.TemplateGroupList] {
+func NewTemplateGroupClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.TypedClient[v0alpha1_templategroup.TemplateGroup, v0alpha1_templategroup.TemplateGroupList]{
+	return &apis.TypedClient[v0alpha1.TemplateGroup, v0alpha1.TemplateGroupList]{
 		Client: client.Resource(
 			schema.GroupVersionResource{
-				Group:    v0alpha1_templategroup.Kind().Group(),
-				Version:  v0alpha1_templategroup.Kind().Version(),
-				Resource: v0alpha1_templategroup.Kind().Plural(),
+				Group:    v0alpha1.TemplateGroupKind().Group(),
+				Version:  v0alpha1.TemplateGroupKind().Version(),
+				Resource: v0alpha1.TemplateGroupKind().Plural(),
 			}).Namespace("default"),
 	}
 }
 
-func NewTimeIntervalClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1_timeinterval.TimeInterval, v0alpha1_timeinterval.TimeIntervalList] {
+func NewTimeIntervalClient(t *testing.T, user apis.User) *apis.TypedClient[v0alpha1.TimeInterval, v0alpha1.TimeIntervalList] {
 	t.Helper()
 
 	client, err := dynamic.NewForConfig(user.NewRestConfig())
 	require.NoError(t, err)
 
-	return &apis.TypedClient[v0alpha1_timeinterval.TimeInterval, v0alpha1_timeinterval.TimeIntervalList]{
+	return &apis.TypedClient[v0alpha1.TimeInterval, v0alpha1.TimeIntervalList]{
 		Client: client.Resource(
 			schema.GroupVersionResource{
-				Group:    v0alpha1_timeinterval.Kind().Group(),
-				Version:  v0alpha1_timeinterval.Kind().Version(),
-				Resource: v0alpha1_timeinterval.Kind().Plural(),
+				Group:    v0alpha1.TimeIntervalKind().Group(),
+				Version:  v0alpha1.TimeIntervalKind().Version(),
+				Resource: v0alpha1.TimeIntervalKind().Plural(),
 			}).Namespace("default"),
 	}
 }

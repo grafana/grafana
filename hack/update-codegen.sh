@@ -88,7 +88,6 @@ grafana::codegen:run pkg/apimachinery
 grafana::codegen:run pkg/aggregator
 grafana::codegen:run apps/dashboard/pkg
 grafana::codegen:run apps/folder/pkg
-grafana::codegen:run apps/alerting/notifications/pkg
 
 if [ -d "pkg/extensions/apis" ]; then
   grafana::codegen:run pkg/extensions

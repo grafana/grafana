@@ -8,7 +8,7 @@ import (
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 
-	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/receiver/v0alpha1"
+	model "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/apiserver/endpoints/request"
 	gapiutil "github.com/grafana/grafana/pkg/services/apiserver/utils"
 	ngmodels "github.com/grafana/grafana/pkg/services/ngalert/models"
@@ -42,7 +42,7 @@ func convertToK8sResources(
 		if err != nil {
 			return nil, err
 		}
-		if selector != nil && !selector.Empty() && !selector.Matches(model.SelectableFields(k8sResource)) {
+		if selector != nil && !selector.Empty() && !selector.Matches(model.ReceiverSelectableFields(k8sResource)) {
 			continue
 		}
 		result.Items = append(result.Items, *k8sResource)
@@ -57,12 +57,12 @@ func convertToK8sResource(
 	metadata *ngmodels.ReceiverMetadata,
 	namespacer request.NamespaceMapper,
 ) (*model.Receiver, error) {
-	spec := model.Spec{
+	spec := model.ReceiverSpec{
 		Title:        receiver.Name,
-		Integrations: make([]model.Integration, 0, len(receiver.Integrations)),
+		Integrations: make([]model.ReceiverIntegration, 0, len(receiver.Integrations)),
 	}
 	for _, integration := range receiver.Integrations {
-		spec.Integrations = append(spec.Integrations, model.Integration{
+		spec.Integrations = append(spec.Integrations, model.ReceiverIntegration{
 			Uid:                   &integration.UID,
 			Type:                  integration.Config.Type,
 			DisableResolveMessage: &integration.DisableResolveMessage,

@@ -17,8 +17,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1/fakes"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
@@ -64,7 +64,7 @@ func TestIntegrationResourceIdentifier(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TimeIntervalSpec{
 			Name:          "time-newInterval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -201,7 +201,7 @@ func TestIntegrationTimeIntervalAccessControl(t *testing.T) {
 				ObjectMeta: v1.ObjectMeta{
 					Namespace: "default",
 				},
-				Spec: v0alpha1.Spec{
+				Spec: v0alpha1.TimeIntervalSpec{
 					Name:          fmt.Sprintf("time-interval-1-%s", tc.user.Identity.GetLogin()),
 					TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 				},
@@ -361,7 +361,7 @@ func TestIntegrationTimeIntervalProvisioning(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TimeIntervalSpec{
 			Name:          "time-interval-1",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -408,7 +408,7 @@ func TestIntegrationTimeIntervalOptimisticConcurrency(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TimeIntervalSpec{
 			Name:          "time-interval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -492,7 +492,7 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TimeIntervalSpec{
 			Name:          "time-interval",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -532,9 +532,9 @@ func TestIntegrationTimeIntervalPatch(t *testing.T) {
 
 		result, err := adminClient.Patch(ctx, current.Name, types.JSONPatchType, patchData, v1.PatchOptions{})
 		require.NoError(t, err)
-		expectedSpec := v0alpha1.Spec{
+		expectedSpec := v0alpha1.TimeIntervalSpec{
 			Name: current.Spec.Name,
-			TimeIntervals: []v0alpha1.Interval{
+			TimeIntervals: []v0alpha1.TimeIntervalInterval{
 				expected,
 			},
 		}
@@ -557,7 +557,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TimeIntervalSpec{
 			Name:          "test1",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -569,7 +569,7 @@ func TestIntegrationTimeIntervalListSelector(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{
+		Spec: v0alpha1.TimeIntervalSpec{
 			Name:          "test2",
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(2),
 		},
@@ -790,20 +790,20 @@ func TestIntegrationTimeIntervalValidation(t *testing.T) {
 
 	testCases := []struct {
 		name     string
-		interval v0alpha1.Spec
+		interval v0alpha1.TimeIntervalSpec
 	}{
 		{
 			name: "missing name",
-			interval: v0alpha1.Spec{
+			interval: v0alpha1.TimeIntervalSpec{
 				Name:          "",
 				TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
 			},
 		},
 		{
 			name: "invalid interval",
-			interval: v0alpha1.Spec{
+			interval: v0alpha1.TimeIntervalSpec{
 				Name: "test",
-				TimeIntervals: []v0alpha1.Interval{
+				TimeIntervals: []v0alpha1.TimeIntervalInterval{
 					{
 						DaysOfMonth: []string{"1-31"},
 					},
