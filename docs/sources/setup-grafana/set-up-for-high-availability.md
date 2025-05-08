@@ -19,11 +19,11 @@ weight: 900
 
 # Set up Grafana for high availability
 
-{{% admonition type="note" %}}
+{{< admonition type="note" >}}
 To prevent duplicate alerts in Grafana high availability, additional steps are required.
 
 Please refer to [Alerting high availability](#alerting-high-availability) for more information.
-{{% /admonition %}}
+{{<> /admonition >}}
 
 Grafana uses an embedded sqlite3 database to store users, dashboards, and other persistent data by default. For high availability, you must use a shared database to store this data. This shared database can be either MySQL or Postgres.
 
@@ -33,7 +33,7 @@ Grafana uses an embedded sqlite3 database to store users, dashboards, and other 
 
 ## Architecture
 
-Your Grafana HA environment will consist of two or more Grafana servers (cluster nodes) served by a load balancing reverse proxy. The cluster uses an active-active architecture with the load balancer allocating traffic between nodes and re-allocating traffic to surviving nodes should there be failures. You need to configure your load balancer with a listener that responds to a shared cluster hostname. The shared name is the hostname your users use to access Grafana.
+Your Grafana high availability environment will consist of two or more Grafana servers (cluster nodes) served by a load balancing reverse proxy. The cluster uses an active-active architecture with the load balancer allocating traffic between nodes and re-allocating traffic to surviving nodes should there be failures. You need to configure your load balancer with a listener that responds to a shared cluster hostname. The shared name is the hostname your users use to access Grafana.
 
 For ease of use, we recommend you configure your load balancer to provide SSL termination. The shared Grafana database tracks session information, so your load balancer won't need to provide session affinity services. See your load balancer's documentation for details on its configuration and operations.
 
