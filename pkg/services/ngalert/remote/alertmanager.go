@@ -171,7 +171,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		return nil, err
 	}
 
-	if err := autogenFn(ctx, logger, 1, &pCfg.AlertmanagerConfig, true); err != nil {
+	if err := autogenFn(ctx, logger, cfg.OrgID, &pCfg.AlertmanagerConfig, true); err != nil {
 		return nil, err
 	}
 
