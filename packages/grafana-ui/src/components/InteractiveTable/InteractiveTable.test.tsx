@@ -95,9 +95,9 @@ describe('InteractiveTable', () => {
 
       expect(screen.getByTestId('test-1')).toHaveTextContent('Sweden');
 
-      expect(expanderButton.getAttribute('aria-controls')).toBe(
+      expect(expanderButton).toHaveAttribute(
         // ancestor tr's id should match the expander button's aria-controls attribute
-        screen.getByTestId('test-1').parentElement?.parentElement?.id
+        'aria-controls', screen.getByTestId('test-1').parentElement?.parentElement?.id
       );
     });
     it('does not render expand all when showExpandAll is false', async () => {

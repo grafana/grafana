@@ -31,8 +31,8 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
 
       rerender(
         <Card disabled>
@@ -78,8 +78,8 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
-      expect(screen.getByRole('button', { name: 'Delete' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
+      expect(screen.getByRole('button', { name: 'Delete' })).toBeEnabled();
     });
 
     it('Children should be conditional', () => {
@@ -97,7 +97,7 @@ describe('Card', () => {
         </Card>
       );
 
-      expect(screen.getByRole('button', { name: 'Click Me' })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: 'Click Me' })).toBeEnabled();
       expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
     });
 

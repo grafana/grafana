@@ -293,7 +293,7 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Option 1/i));
         const toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (1)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (1)');
       });
 
       it('correctly removes all selected options when in indeterminate state', async () => {
@@ -308,7 +308,7 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Option 1/i));
         let toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (1)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (1)');
 
         // Toggle all unselected when in indeterminate state
         await userEvent.click(toggleAllOptions);
@@ -327,7 +327,7 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Option 1/i));
         let toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (2)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (2)');
 
         // Toggle all unselected when in indeterminate state
         await userEvent.click(toggleAllOptions);
@@ -346,7 +346,7 @@ describe('SelectBase', () => {
         );
         await userEvent.click(screen.getByText(/Choose/i));
         let toggleAllOptions = screen.getByTestId(selectors.components.Select.toggleAllOptions);
-        expect(toggleAllOptions.textContent).toBe('Selected (0)');
+        expect(toggleAllOptions).toHaveTextContent('Selected (0)');
 
         // Toggle all unselected when in indeterminate state
         await userEvent.click(toggleAllOptions);

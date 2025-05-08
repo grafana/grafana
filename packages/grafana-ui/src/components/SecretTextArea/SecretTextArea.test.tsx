@@ -15,7 +15,7 @@ describe('<SecretTextArea />', () => {
 
     // Should show an enabled input
     expect(input).toBeInTheDocument();
-    expect(input).not.toBeDisabled();
+    expect(input).toBeEnabled();
 
     // Should not show a "Reset" button
     expect(screen.queryByRole('button', { name: RESET_BUTTON_TEXT })).not.toBeInTheDocument();

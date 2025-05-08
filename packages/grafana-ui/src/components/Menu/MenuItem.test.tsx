@@ -60,7 +60,7 @@ describe('MenuItem', () => {
     fireEvent.mouseOver(screen.getByLabelText(selectors.components.Menu.MenuItem('Test')));
 
     const subMenuContainer = screen.queryByLabelText(selectors.components.Menu.SubMenu.container);
-    expect(subMenuContainer).toBe(null);
+    expect(subMenuContainer).not.toBeInTheDocument();
   });
 
   it('opens subMenu on ArrowRight', async () => {

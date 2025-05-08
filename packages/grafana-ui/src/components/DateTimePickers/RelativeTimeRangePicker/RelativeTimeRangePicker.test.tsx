@@ -32,8 +32,8 @@ describe('RelativeTimePicker', () => {
 
   it('should not have open picker without clicking the button', () => {
     const { queryByText } = setup({ from: 900, to: 0 });
-    expect(queryByText('Specify time range')).toBeNull();
-    expect(queryByText('Example time ranges')).toBeNull();
+    expect(queryByText('Specify time range')).not.toBeInTheDocument();
+    expect(queryByText('Example time ranges')).not.toBeInTheDocument();
   });
 
   it('should not be able to apply range via quick options', async () => {
@@ -42,8 +42,8 @@ describe('RelativeTimePicker', () => {
     await userEvent.click(getByText('now-15m to now')); // open the picker
     await userEvent.click(getByText('Last 30 minutes')); // select the quick range, should close picker.
 
-    expect(queryByText('Specify time range')).toBeNull();
-    expect(queryByText('Example time ranges')).toBeNull();
+    expect(queryByText('Specify time range')).not.toBeInTheDocument();
+    expect(queryByText('Example time ranges')).not.toBeInTheDocument();
 
     expect(getByText('now-30m to now')).toBeInTheDocument(); // new text on picker button
   });

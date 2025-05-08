@@ -130,14 +130,14 @@ describe('TimeRangeForm', () => {
     expect(getByRole('button', { name: 'Close calendar' })).toBeInTheDocument();
 
     fireEvent.click(getByRole('button', { name: 'Close calendar' }));
-    expect(queryByLabelText(TimePicker.calendar.label)).toBeNull();
+    expect(queryByLabelText(TimePicker.calendar.label)).not.toBeInTheDocument();
   });
 
   it('should not display calendar without clicking the calendar icon', () => {
     const { queryByLabelText } = setup();
     const { TimePicker } = selectors.components;
 
-    expect(queryByLabelText(TimePicker.calendar.label)).toBeNull();
+    expect(queryByLabelText(TimePicker.calendar.label)).not.toBeInTheDocument();
   });
 
   it('should have passed time range selected in calendar', () => {

@@ -162,7 +162,7 @@ it('collapses the controlled panel when user clicks on the chevron or the title'
   const button = screen.getByRole('button', { name: 'Default title' });
   const content = screen.getByTestId(selectors.components.Panels.Panel.content);
   // collapse button should have same aria-controls as the panel's content
-  expect(button.getAttribute('aria-controls')).toBe(content.id);
+  expect(button).toHaveAttribute('aria-controls', content.id);
 
   fireEvent.click(button);
 
@@ -181,7 +181,7 @@ it('collapses the uncontrolled panel when user clicks on the chevron or the titl
   const content = screen.getByTestId(selectors.components.Panels.Panel.content);
 
   // collapse button should have same aria-controls as the panel's content
-  expect(button.getAttribute('aria-controls')).toBe(content.id);
+  expect(button).toHaveAttribute('aria-controls', content.id);
 
   fireEvent.click(button);
   expect(screen.queryByText("Panel's Content")).not.toBeInTheDocument();

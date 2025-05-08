@@ -597,7 +597,7 @@ describe('TableNG', () => {
 
         // Check that the pagination summary shows we're on a different page
         // The format appears to be "X - Y of Z rows" where X and Y are the row range
-        expect(container.textContent).toMatch(/\d+ - \d+ of 100 rows/);
+        expect(container).toHaveTextContent(/\d+ - \d+ of 100 rows/);
 
         // Verify that the pagination summary has changed
         const paginationSummary = container.querySelector('.paginationSummary, [class*="paginationSummary"]');
@@ -606,7 +606,7 @@ describe('TableNG', () => {
           expect(summaryText).toContain('of 100 rows');
         } else {
           // If we can't find the pagination summary by class, just check the container text
-          expect(container.textContent).toContain('of 100 rows');
+          expect(container).toHaveTextContent(/of 100 rows/);
         }
       }
     });
@@ -682,19 +682,19 @@ describe('TableNG', () => {
         const sortButton = columnHeader.querySelector('button') || columnHeader;
 
         // Initial state - no sort
-        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+        expect(columnHeader).not.toHaveAttribute('aria-sort');
 
         // First click - should sort ascending
         fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBe('ascending');
+        expect(columnHeader).toHaveAttribute('aria-sort', 'ascending');
 
         // Second click - should sort descending
         fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBe('descending');
+        expect(columnHeader).toHaveAttribute('aria-sort', 'descending');
 
         // Third click - should remove sort
         fireEvent.click(sortButton);
-        expect(columnHeader.getAttribute('aria-sort')).toBeNull();
+        expect(columnHeader).not.toHaveAttribute('aria-sort');
       }
     });
 

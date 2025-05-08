@@ -9,7 +9,7 @@ describe('FileUpload', () => {
   it('should render upload button with default text and no file name', () => {
     render(<FileUpload onFileUpload={() => {}} />);
     expect(screen.getByText('Upload file')).toBeInTheDocument();
-    expect(screen.queryByLabelText('File name')).toBeNull();
+    expect(screen.queryByLabelText('File name')).not.toBeInTheDocument();
   });
 
   it('clicking the button should trigger the input', async () => {
