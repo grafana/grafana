@@ -72,7 +72,10 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
-			PluginRepo: c.PluginRepo,
+			PluginRepo:         c.PluginRepo,
+			PluginPreinstall:   c.PluginPreinstall,
+			ManagedPlugins:     c.ManagedPlugins,
+			ProvisionedPlugins: c.ProvisionedPlugins,
 		},
 		&updateStep{
 			PluginRepo:         c.PluginRepo,
@@ -84,7 +87,11 @@ func (c *check) Steps() []checks.Step {
 }
 
 type deprecationStep struct {
-	PluginRepo repo.Service
+	PluginRepo         repo.Service
+	PluginPreinstall   plugininstaller.Preinstall
+	ManagedPlugins     managedplugins.Manager
+	ProvisionedPlugins provisionedplugins.Manager
+	provisionedPlugins []string
 }
 
 func (s *deprecationStep) Title() string {
@@ -112,6 +119,19 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 
 	// Skip if it's a core plugin
 	if p.IsCorePlugin() {
+		log.Debug("Skipping core plugin", "plugin", p.ID)
+		return nil, nil
+	}
+
+	// Skip if it's managed or pinned
+	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
+		log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
+		return nil, nil
+	}
+
+	// Skip if it's provisioned
+	if s.isProvisioned(ctx, p.ID) {
+		log.Debug("Skipping provisioned plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
@@ -232,6 +252,27 @@ func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
 }
 
 func (s *updateStep) isProvisioned(ctx context.Context, pluginID string) bool {
+	if s.provisionedPlugins == nil {
+		var err error
+		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
+		if err != nil {
+			return false
+		}
+	}
+	return slices.Contains(s.provisionedPlugins, pluginID)
+}
+
+// Temporary duplicated code until there is a common IsUpdatable function
+func (s *deprecationStep) isManaged(ctx context.Context, pluginID string) bool {
+	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
+		if managedPlugin == pluginID {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *deprecationStep) isProvisioned(ctx context.Context, pluginID string) bool {
 	if s.provisionedPlugins == nil {
 		var err error
 		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
