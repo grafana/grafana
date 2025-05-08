@@ -37,7 +37,7 @@
   },
   "scripts": {
     "typecheck": "tsc --emitDeclarationOnly false --noEmit",
-    "codegen": "yarn run rtk-query-codegen-openapi ./scripts/codegen.ts"
+    "codegen": "rtk-query-codegen-openapi ./scripts/codegen.ts"
   },
   "devDependencies": {
     "@grafana/tsconfig": "^2.0.0",
@@ -57,7 +57,7 @@
     "react-dom": "^18.0.0"
   },
   "dependencies": {
-    "@reduxjs/toolkit": "^2.7.0",
+    "@reduxjs/toolkit": "^2.8.0",
     "lodash": "^4.17.21"
   }
 }

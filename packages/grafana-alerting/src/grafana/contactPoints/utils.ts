@@ -1,6 +1,6 @@
 import { countBy, isEmpty } from 'lodash';
 
-import { ContactPoint } from './types';
+import { ContactPoint } from '../api/v0alpha1/types';
 
 /**
  * Generates a human-readable description of a ContactPoint by summarizing its integrations.
