@@ -13,7 +13,6 @@ import (
 	"time"
 	"unicode"
 
-	"github.com/go-kit/log/level"
 	"github.com/prometheus/alertmanager/api/v2/models"
 	"github.com/prometheus/client_golang/prometheus"
 	common_config "github.com/prometheus/common/config"
@@ -182,7 +181,7 @@ func (s *ExternalAlertmanager) SendAlerts(alerts apimodels.PostableAlerts) {
 		na := s.alertToNotifierAlert(a)
 		as = append(as, na)
 
-		level.Debug(s.logger).Log("msg",
+		s.logger.Debug("msg",
 			"Sending alert",
 			"alert",
 			a,
