@@ -2,8 +2,6 @@ package pyroscope
 
 import (
 	"context"
-	"encoding/json"
-	"strings"
 	"testing"
 	"time"
 
@@ -261,11 +259,50 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 		require.Equal(t, 2, len(frames[0].Fields))
 	})
 
-	t.Run("annotations are correctly serialized", func(t *testing.T) {
+	t.Run("throttling annotations are correctly processed", func(t *testing.T) {
+		rawAnnotation := `{"body":{"periodType":"day","periodLimitMb":1024,"limitResetTime":1609459200}}`
+
 		series := &SeriesResponse{
 			Series: []*Series{
 				{
-					Labels: []*LabelPair{},
+					Points: []*Point{
+						{
+							Timestamp: int64(1609455600000),
+							Value:     30,
+							Annotations: []*typesv1.ProfileAnnotation{
+								{Key: string(profileAnnotationKeyThrottled), Value: rawAnnotation},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		frames, err := seriesToDataFrames(series)
+		require.NoError(t, err)
+		require.Equal(t, 2, len(frames))
+
+		annotationsFrame := frames[1]
+		require.Equal(t, "annotations", annotationsFrame.Name)
+		require.Equal(t, data.DataTopicAnnotations, annotationsFrame.Meta.DataTopic)
+
+		require.Equal(t, 5, len(annotationsFrame.Fields))
+		require.Equal(t, "time", annotationsFrame.Fields[0].Name)
+		require.Equal(t, "timeEnd", annotationsFrame.Fields[1].Name)
+		require.Equal(t, "text", annotationsFrame.Fields[2].Name)
+		require.Equal(t, "isRegion", annotationsFrame.Fields[3].Name)
+		require.Equal(t, "color", annotationsFrame.Fields[4].Name)
+
+		require.Equal(t, 1, annotationsFrame.Fields[0].Len())
+		require.Equal(t, time.UnixMilli(1609455600000), annotationsFrame.Fields[0].At(0))
+		require.Equal(t, time.UnixMilli(1609459200000), annotationsFrame.Fields[1].At(0))
+		require.Contains(t, annotationsFrame.Fields[2].At(0).(string), "Ingestion limit")
+	})
+
+	t.Run("non-throttling annotations are ignored", func(t *testing.T) {
+		series := &SeriesResponse{
+			Series: []*Series{
+				{
 					Points: []*Point{
 						{
 							Timestamp: int64(1000),
@@ -285,26 +322,23 @@ func Test_seriesToDataFrameAnnotations(t *testing.T) {
 					},
 				},
 			},
-			Units: "short",
-			Label: "samples",
 		}
 
 		frames, err := seriesToDataFrames(series)
 		require.NoError(t, err)
 		require.Equal(t, 2, len(frames))
-		require.Equal(t, 1, len(frames[1].Fields))
-		annotationsField := frames[1].Fields[0]
-		require.Equal(t, "annotations", annotationsField.Name)
 
-		require.Equal(t, 1, annotationsField.Len())
+		annotationsFrame := frames[1]
+		require.Equal(t, "annotations", annotationsFrame.Name)
+		require.Equal(t, data.DataTopicAnnotations, annotationsFrame.Meta.DataTopic)
 
-		annotations := annotationsField.At(0).(json.RawMessage)
-		require.True(t, strings.Contains(string(annotations), "key1"))
-		require.True(t, strings.Contains(string(annotations), "key2"))
-		require.True(t, strings.Contains(string(annotations), "value1"))
-		require.True(t, strings.Contains(string(annotations), "value2"))
-		require.True(t, strings.Contains(string(annotations), "key3"))
-		require.True(t, strings.Contains(string(annotations), "value3"))
+		require.Equal(t, 5, len(annotationsFrame.Fields))
+
+		require.Equal(t, 0, annotationsFrame.Fields[0].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[1].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[2].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[3].Len())
+		require.Equal(t, 0, annotationsFrame.Fields[4].Len())
 	})
 }
 

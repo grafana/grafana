@@ -424,6 +424,14 @@ type TimedAnnotation struct {
 	Annotation *typesv1.ProfileAnnotation `json:"annotation"`
 }
 
+func (ta *TimedAnnotation) getKey() string {
+	return ta.Annotation.Key
+}
+
+func (ta *TimedAnnotation) getValue() string {
+	return ta.Annotation.Value
+}
+
 func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 	frames := make([]*data.Frame, 0, len(resp.Series))
 	annotations := make([]*TimedAnnotation, 0)
@@ -462,7 +470,7 @@ func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 	}
 
 	if len(annotations) > 0 {
-		frame, err := annotationsToDataFrame(annotations)
+		frame, err := createAnnotationFrame(annotations)
 		if err != nil {
 			return nil, err
 		}
@@ -470,19 +478,4 @@ func seriesToDataFrames(resp *SeriesResponse) ([]*data.Frame, error) {
 	}
 
 	return frames, nil
-}
-
-func annotationsToDataFrame(annotations []*TimedAnnotation) (*data.Frame, error) {
-	annotationsField := data.NewField("annotations", nil, []json.RawMessage{})
-	annotationsJson, err := json.Marshal(annotations)
-	if err != nil {
-		return nil, err
-	}
-	annotationsField.Append(json.RawMessage(annotationsJson))
-	frame := data.NewFrame("annotations")
-	frame.SetMeta(&data.FrameMeta{
-		DataTopic: data.DataTopicAnnotations,
-	})
-	frame.Fields = data.Fields{annotationsField}
-	return frame, nil
 }
