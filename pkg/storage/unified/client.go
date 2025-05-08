@@ -201,7 +201,7 @@ func grpcConn(address string, metrics *clientMetrics) (*grpc.ClientConn, error) 
 	// Set the defaults that are normally set by Config.RegisterFlags.
 	flagext.DefaultValues(&cfg)
 
-	opts, err := cfg.DialOption(unary, stream)
+	opts, err := cfg.DialOption(unary, stream, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not instrument grpc client: %w", err)
 	}

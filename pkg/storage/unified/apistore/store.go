@@ -645,6 +645,20 @@ func (s *Storage) ReadinessCheck() error {
 	return nil
 }
 
+// GetCurrentResourceVersion returns the current resource version of the latest written object.
+func (s *Storage) GetCurrentResourceVersion(ctx context.Context) (uint64, error) {
+	resp, err := s.store.List(ctx, &resource.ListRequest{
+		Limit: 0,
+	})
+	if err != nil {
+		return 0, resource.GetError(resource.AsErrorResult(err))
+	}
+	if resp.Error != nil {
+		return 0, resource.GetError(resp.Error)
+	}
+	return uint64(resp.GetResourceVersion()), nil
+}
+
 // validateMinimumResourceVersion returns a 'too large resource' version error when the provided minimumResourceVersion is
 // greater than the most recent actualRevision available from storage.
 func (s *Storage) validateMinimumResourceVersion(minimumResourceVersion string, actualRevision uint64) error {

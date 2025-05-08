@@ -6,7 +6,9 @@ import (
 	"time"
 
 	grpcAuth "github.com/grpc-ecosystem/go-grpc-middleware/v2/interceptors/auth"
+	codes "google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/status"
 )
 
 // Compile-time assertion
@@ -85,4 +87,10 @@ func (s *healthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream grpc
 			return errors.New("stream closed, context cancelled")
 		}
 	}
+}
+
+func (s *healthServer) List(context.Context, *grpc_health_v1.HealthListRequest) (*grpc_health_v1.HealthListResponse, error) {
+	// The DiagnosticsServer does not support listing health services.
+	// Instead, we just pretend as if we have too many services to list.
+	return nil, status.Error(codes.ResourceExhausted, "cannot list health services")
 }
