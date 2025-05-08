@@ -298,6 +298,7 @@ func InstallAPIs(
 	// this is needed to support setting a default RESTOptionsGetter for new APIs that don't
 	// support the legacy storage type.
 	var dualWrite grafanarest.DualWriteBuilder
+	metrics := newBuilderMetrics(reg)
 
 	// nolint:staticcheck
 	if storageOpts.StorageType != options.StorageTypeLegacy {
@@ -359,6 +360,14 @@ func InstallAPIs(
 			if err != nil {
 				return nil, err
 			}
+
+			metrics.recordDualWriterMode(
+				gr.Resource,
+				gr.Group,
+				int(mode),
+				int(currentMode),
+			)
+
 			switch currentMode {
 			case grafanarest.Mode0:
 				return legacy, nil
@@ -366,6 +375,7 @@ func InstallAPIs(
 				return storage, nil
 			default:
 			}
+
 			if dualWriterPeriodicDataSyncJobEnabled {
 				// The mode might have changed in SetDualWritingMode, so apply current mode first.
 				syncerCfg.Mode = currentMode
