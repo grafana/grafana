@@ -538,13 +538,14 @@ func TestIntegrationDataConsistency(t *testing.T) {
 					ensureMatcher(t, labels.MatchRegexp, "o", "1"),
 					ensureMatcher(t, labels.MatchNotRegexp, "p", "1"),
 				},
-				Receiver:          receiver,
-				GroupByStr:        []string{"test-789"},
-				GroupWait:         util.Pointer(model.Duration(2 * time.Minute)),
-				GroupInterval:     util.Pointer(model.Duration(5 * time.Minute)),
-				RepeatInterval:    util.Pointer(model.Duration(30 * time.Hour)),
-				MuteTimeIntervals: []string{timeInterval},
-				Continue:          true,
+				Receiver:            receiver,
+				GroupByStr:          []string{"test-789"},
+				GroupWait:           util.Pointer(model.Duration(2 * time.Minute)),
+				GroupInterval:       util.Pointer(model.Duration(5 * time.Minute)),
+				RepeatInterval:      util.Pointer(model.Duration(30 * time.Hour)),
+				MuteTimeIntervals:   []string{timeInterval},
+				ActiveTimeIntervals: []string{timeInterval},
+				Continue:            true,
 			},
 		},
 	}
@@ -562,13 +563,14 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
 		assert.Equal(t, v0alpha1.Route{
-			Continue:          true,
-			Receiver:          util.Pointer(receiver),
-			GroupBy:           []string{"test-789"},
-			GroupWait:         util.Pointer("2m"),
-			GroupInterval:     util.Pointer("5m"),
-			RepeatInterval:    util.Pointer("1d6h"),
-			MuteTimeIntervals: []string{timeInterval},
+			Continue:            true,
+			Receiver:            util.Pointer(receiver),
+			GroupBy:             []string{"test-789"},
+			GroupWait:           util.Pointer("2m"),
+			GroupInterval:       util.Pointer("5m"),
+			RepeatInterval:      util.Pointer("1d6h"),
+			MuteTimeIntervals:   []string{timeInterval},
+			ActiveTimeIntervals: []string{timeInterval},
 			Matchers: []v0alpha1.Matcher{
 				{
 					Label: "m",

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/services/login"
@@ -30,10 +31,10 @@ func TestListFormatValidation_Run(t *testing.T) {
 	providerLabel := login.GetAuthProviderLabel(provider)
 
 	tests := []struct {
-		name            string
-		objToCheck      any
-		expectedError   string
-		expectedFailure *advisor.CheckReportFailure
+		name             string
+		objToCheck       any
+		expectedError    string
+		expectedFailures []advisor.CheckReportFailure
 	}{
 		{
 			name:          "invalid object type",
@@ -46,7 +47,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 				Provider: provider,
 				Settings: map[string]any{"other_setting": "value"},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
 		},
 		{
 			name: "one setting exists and is nil",
@@ -56,7 +57,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups": nil,
 				},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
 		},
 		{
 			name: "one setting exists and is empty string",
@@ -66,7 +67,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups": "",
 				},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
 		},
 		{
 			name: "one setting exists and is empty JSON array",
@@ -76,7 +77,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups": "[]",
 				},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
 		},
 		{
 			name: "one setting exists and is valid (comma-separated)",
@@ -86,7 +87,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups": "group1, group2",
 				},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
 		},
 		{
 			name: "one setting exists and is valid (JSON array)",
@@ -96,7 +97,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_domains": `["domain1.com", "domain2.com"]`,
 				},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
 		},
 		{
 			name: "one setting exists and is valid (space-separated)",
@@ -106,7 +107,7 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups": "group1 group2",
 				},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
 		},
 		{
 			name: "one setting exists and is not a string",
@@ -116,13 +117,13 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups": 123,
 				},
 			},
-			expectedFailure: checks.NewCheckReportFailure(
+			expectedFailures: []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				ListFormatValidationStepID,
 				fmt.Sprintf("%s - Invalid type for '%s': expected string, got %T", providerLabel, "allowed_groups", 123),
 				provider,
 				generateExpectedLinks(provider),
-			),
+			)},
 		},
 		{
 			name: "one setting exists and has invalid format (bad JSON)",
@@ -132,13 +133,13 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups": `["group1", "group2"`,
 				},
 			},
-			expectedFailure: checks.NewCheckReportFailure(
+			expectedFailures: []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				ListFormatValidationStepID,
 				fmt.Sprintf("%s - Invalid format for '%s': %s", providerLabel, "allowed_groups", `["group1", "group2"`),
 				provider,
 				generateExpectedLinks(provider),
-			),
+			)},
 		},
 		{
 			name: "multiple settings exist, first one is invalid (type)",
@@ -149,13 +150,13 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups":  "group1, group2",
 				},
 			},
-			expectedFailure: checks.NewCheckReportFailure(
+			expectedFailures: []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				ListFormatValidationStepID,
 				fmt.Sprintf("%s - Invalid type for '%s': expected string, got %T", providerLabel, "allowed_domains", 123),
 				provider,
 				generateExpectedLinks(provider),
-			),
+			)},
 		},
 		{
 			name: "multiple settings exist, second one is invalid (format)",
@@ -166,13 +167,13 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"allowed_groups":  `["group1",`,
 				},
 			},
-			expectedFailure: checks.NewCheckReportFailure(
+			expectedFailures: []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 				advisor.CheckReportFailureSeverityHigh,
 				ListFormatValidationStepID,
 				fmt.Sprintf("%s - Invalid format for '%s': %s", providerLabel, "allowed_groups", `["group1",`),
 				provider,
 				generateExpectedLinks(provider),
-			),
+			)},
 		},
 		{
 			name: "all settings exist and are valid",
@@ -189,31 +190,62 @@ func TestListFormatValidation_Run(t *testing.T) {
 					"role_values_viewer":        "Viewer",
 				},
 			},
-			expectedFailure: nil,
+			expectedFailures: nil,
+		},
+		{
+			name: "returns multiple errors",
+			objToCheck: &models.SSOSettings{
+				Provider: provider,
+				Settings: map[string]any{
+					"allowed_domains":    `[\"group1\", \"group2\"]`,
+					"allowed_groups":     `["group1", "group2"`,
+					"role_values_editor": `["group1-`,
+				},
+			},
+			expectedFailures: []advisor.CheckReportFailure{
+				checks.NewCheckReportFailure(
+					advisor.CheckReportFailureSeverityHigh,
+					ListFormatValidationStepID,
+					fmt.Sprintf("%s - Invalid format for '%s': %v", providerLabel, "allowed_domains", `[\"group1\", \"group2\"]`),
+					provider,
+					generateExpectedLinks(provider),
+				),
+				checks.NewCheckReportFailure(
+					advisor.CheckReportFailureSeverityHigh,
+					ListFormatValidationStepID,
+					fmt.Sprintf("%s - Invalid format for '%s': %s", providerLabel, "allowed_groups", `["group1", "group2"`),
+					provider,
+					generateExpectedLinks(provider),
+				),
+				checks.NewCheckReportFailure(
+					advisor.CheckReportFailureSeverityHigh,
+					ListFormatValidationStepID,
+					fmt.Sprintf("%s - Invalid format for '%s': %v", providerLabel, "role_values_editor", `["group1-`),
+					provider,
+					generateExpectedLinks(provider),
+				),
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			failure, err := validator.Run(ctx, spec, tt.objToCheck)
+			failures, err := validator.Run(ctx, logging.DefaultLogger, spec, tt.objToCheck)
 
 			if tt.expectedError != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.expectedError)
-				require.Nil(t, failure)
+				require.Nil(t, failures)
 				return
 			}
 
 			require.NoError(t, err)
-			if tt.expectedFailure != nil {
-				require.NotNil(t, failure, "Expected a failure report, but got nil")
-				require.Equal(t, tt.expectedFailure.Severity, failure.Severity)
-				require.Equal(t, tt.expectedFailure.StepID, failure.StepID)
-				require.Equal(t, tt.expectedFailure.Item, failure.Item)
-				require.Equal(t, tt.expectedFailure.ItemID, failure.ItemID)
-				require.ElementsMatch(t, tt.expectedFailure.Links, failure.Links)
+			if len(tt.expectedFailures) > 0 {
+				require.NotNil(t, failures)
+				require.Len(t, failures, len(tt.expectedFailures))
+				require.ElementsMatch(t, tt.expectedFailures, failures)
 			} else {
-				require.Nil(t, failure, "Expected no failure report, but got one: %+v", failure)
+				require.Empty(t, failures, "Expected no failure reports, but got some: %+v", failures)
 			}
 		})
 	}
