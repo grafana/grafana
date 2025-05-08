@@ -2754,7 +2754,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/plugin-configs": "npm:11.2.10"
     "@grafana/runtime": "npm:11.2.10"
@@ -2798,7 +2798,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/plugin-configs": "npm:11.2.10"
     "@grafana/runtime": "npm:11.2.10"
@@ -2870,7 +2870,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/plugin-configs": "npm:11.2.10"
     "@grafana/runtime": "npm:11.2.10"
@@ -2953,7 +2953,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/plugin-configs": "npm:11.2.10"
     "@grafana/runtime": "npm:11.2.10"
@@ -3016,7 +3016,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/google-sdk": "npm:0.1.2"
     "@grafana/plugin-configs": "npm:11.2.10"
@@ -3233,7 +3233,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@grafana/e2e-selectors@npm:11.2.10, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
+"@grafana/e2e-selectors@npm:^11.0.0, @grafana/e2e-selectors@workspace:*, @grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors":
   version: 0.0.0-use.local
   resolution: "@grafana/e2e-selectors@workspace:packages/grafana-e2e-selectors"
   dependencies:
@@ -3250,17 +3250,6 @@ __metadata:
     typescript: "npm:5.4.5"
   languageName: unknown
   linkType: soft
-
-"@grafana/e2e-selectors@npm:^11.0.0":
-  version: 11.1.0
-  resolution: "@grafana/e2e-selectors@npm:11.1.0"
-  dependencies:
-    "@grafana/tsconfig": "npm:^1.3.0-rc1"
-    tslib: "npm:2.6.3"
-    typescript: "npm:5.4.5"
-  checksum: 10/010a32e8b562d0da83b008646b9928a96a79957096eed713aa67b227d8ad6055d22cc0ec26f87fd9839cfb28344d0012f49c3c823defc6e91f4ab05ed7d8c465
-  languageName: node
-  linkType: hard
 
 "@grafana/eslint-config@npm:7.0.0":
   version: 7.0.0
@@ -3481,7 +3470,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/runtime": "npm:11.2.10"
     "@grafana/schema": "npm:11.2.10"
@@ -3552,7 +3541,7 @@ __metadata:
     "@emotion/eslint-plugin": "npm:11.11.0"
     "@floating-ui/react": "npm:0.26.22"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/faro-web-sdk": "npm:1.9.0"
     "@grafana/runtime": "npm:11.2.10"
@@ -3660,7 +3649,7 @@ __metadata:
   resolution: "@grafana/runtime@workspace:packages/grafana-runtime"
   dependencies:
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/schema": "npm:11.2.10"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -3777,7 +3766,7 @@ __metadata:
   dependencies:
     "@emotion/css": "npm:11.11.2"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/experimental": "npm:1.7.13"
     "@grafana/runtime": "npm:11.2.10"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
@@ -3834,7 +3823,7 @@ __metadata:
     "@faker-js/faker": "npm:^8.4.1"
     "@floating-ui/react": "npm:0.26.22"
     "@grafana/data": "npm:11.2.10"
-    "@grafana/e2e-selectors": "npm:11.2.10"
+    "@grafana/e2e-selectors": "workspace:*"
     "@grafana/faro-web-sdk": "npm:^1.3.6"
     "@grafana/schema": "npm:11.2.10"
     "@grafana/tsconfig": "npm:^1.3.0-rc1"
