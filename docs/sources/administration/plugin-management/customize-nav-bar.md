@@ -87,4 +87,3 @@ If your navigation changes don't appear:
 1. Verify your configuration syntax is correct
 2. Ensure you've restarted Grafana after making changes
 3. Check that the plugin IDs and page paths exactly match what's defined in your plugin
-
