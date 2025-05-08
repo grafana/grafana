@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Továbbiak hozzáadása"
     },
@@ -581,6 +584,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Egyezés hozzáadása",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Némítási időzítés hozzáadása a házirendhez",
       "am-mute-timing-select-label-mute-timings": "Némítási időzítések",
       "aria-label-group-by": "Csoportosítási szempont",
@@ -617,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Irányítópult és panel összekapcsolása",
       "placeholder-value-input-default": "Adja meg az egyéni jegyzet tartalmát…"
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1030,6 +1046,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "szűrt-szabálylista"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Válasszon egy mappát a szabály tárolásához."
@@ -1451,29 +1494,21 @@
       "aria-label": "Továbbiak",
       "button-text": "Továbbiak"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Nem sikerült betölteni a némítási időzítéseket. Később próbálja meg újra.",
-        "title": "Hiba történt a némítási időzítések betöltésekor"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Letiltva",
       "title-delete-mute-timing": "Némítási időzítés törlése"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Válasszon egy némítási időzítést annak meghatározásához, hogy mikor ne legyenek értesítések küldve ehhez a riasztási szabályhoz",
       "am-mute-timing-select-label-mute-timings": "Némítási időzítések"
     },
     "mute-timing-form": {
-      "description-unique-timing": "A némítási időzítés egyedi neve",
-      "label-name": "",
-      "text-loading-mute-timing": "Némítási időzítés betöltése",
-      "title-no-matching-mute-timing-found": "Nem található egyező némítási időzítés"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Másik időintervallum hozzáadása",
-      "description": "Az időintervallum egy időpillanatot határoz meg. Minden mező lista, és legalább egy listaelemnek teljesülnie kell ahhoz, hogy megfeleljen a mezőnek. Ha egy mező üresen marad, az idő bármely pillanata megfelel a mezőnek. Ahhoz, hogy egy pillanatnyi idő megfeleljen egy teljes időintervallumnak, minden mezőnek egyeznie kell. A némítási időzítés több időintervallumot is tartalmazhat.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "A hónap napjai, 1:31. A negatív értékek felhasználhatók a hónap végén kezdődő napok jelölésére",
       "description-months": "Az év hónapjai numerikus vagy teljes naptári hónapban",
       "label-days-of-the-month": "A hónap napjai",
@@ -1499,21 +1534,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "ÓÓ:pp",
       "title-remove": "",
       "tooltip-remove-time-range": "Időtartomány eltávolítása"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Némítási időzítés hozzáadása",
-      "description": "Adjon meg konkrét időintervallumokat, amikor nem küld értesítéseket vagy be kell fagyasztani az értesítéseket ismétlődő időszakokra.",
-      "save": "Némítási időzítés mentése",
-      "saving": "Némítási időzítés mentése"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Némítási időzítések",
-      "placeholder-select-mute-timings": "Némítási időzítések kiválasztása…"
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Még nem hozott létre némítási időzítéseket",
-      "text-loading-mute-timings": "Némítási időzítések betöltése…",
-      "text-no-mute-timings-configured": "Nincs némítási időzítés konfigurálva"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1555,8 +1575,8 @@
       "title-notification-policies-have-changed": "Az értesítési házirendek megváltoztak"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Némítási időzítések",
-      "label-notification-policies": "Értesítési házirendek"
+      "label-notification-policies": "Értesítési házirendek",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2391,6 +2411,32 @@
     "threshold-expression-viewer": {
       "input": "Bemenet",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "Idősoros adatok",

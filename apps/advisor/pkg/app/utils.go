@@ -159,7 +159,7 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 			go func(step checks.Step, item any) {
 				defer wg.Done()
 				defer func() { <-limit }()
-				var stepErr *advisorv0alpha1.CheckReportFailure
+				var stepErr []advisorv0alpha1.CheckReportFailure
 				var err error
 				func() {
 					defer func() {
@@ -176,8 +176,8 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 					internalErr = fmt.Errorf("error running step %s: %w", step.ID(), err)
 					return
 				}
-				if stepErr != nil {
-					reportFailures = append(reportFailures, *stepErr)
+				if len(stepErr) > 0 {
+					reportFailures = append(reportFailures, stepErr...)
 				}
 			}(step, item)
 		}
