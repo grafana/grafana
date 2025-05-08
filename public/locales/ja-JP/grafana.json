@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "さらに追加"
     },
@@ -577,6 +580,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "マッチャーを追加",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "ポリシーにミュート期間を追加",
       "am-mute-timing-select-label-mute-timings": "ミュート期間",
       "aria-label-group-by": "グループ化",
@@ -613,6 +618,17 @@
       },
       "link-dashboard-and-panel": "ダッシュボードとパネルをリンク",
       "placeholder-value-input-default": "カスタム注釈内容を入力..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1024,6 +1040,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "フィルター済みルールリスト"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "ルールを保存するフォルダを選択します。"
@@ -1444,29 +1487,21 @@
       "aria-label": "その他",
       "button-text": "その他"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "ミュートタイミングを読み込めませんでした。後でもう一度お試しください。",
-        "title": "ミュートタイミングの読み込み中にエラーが発生しました"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "無効",
       "title-delete-mute-timing": "ミュート期間を削除"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "このアラートルールの通知を送信しない時間帯を定めるミュート期間を選択してください",
       "am-mute-timing-select-label-mute-timings": "ミュート期間"
     },
     "mute-timing-form": {
-      "description-unique-timing": "ミュート期間の一意の名前",
-      "label-name": "",
-      "text-loading-mute-timing": "ミュート期間を読み込み中",
-      "title-no-matching-mute-timing-found": "一致するミュート期間が見つかりません"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "別の時間間隔を追加",
-      "description": "時間間隔は、期間内のある時点を定義するものです。すべてのフィールドはリストであり、フィールドに一致するには少なくとも1つのリスト要素が合致する必要があります。フィールドが空白のままだと、そのフィールドにあらゆる時点が一致します。ある時点がすべての時間間隔と一致するには、すべてのフィールドが一致しなければなりません。ミュート期間には複数の時間間隔を含めることができます。",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "月の特定の日付（1:31）。負の値を使用すると、月末から数えた日を表すことができます",
       "description-months": "月（数字または月名で表記）",
       "label-days-of-the-month": "月の特定の日付",
@@ -1492,21 +1527,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "時:分",
       "title-remove": "",
       "tooltip-remove-time-range": "時間範囲を削除"
-    },
-    "mute-timings": {
-      "add-mute-timing": "ミュートタイミングを追加",
-      "description": "通知を送信しない特定の時間間隔を入力するか、定期的に通知を停止します。",
-      "save": "ミュートタイミングを保存",
-      "saving": "ミュートタイミングを保存"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "ミュート期間",
-      "placeholder-select-mute-timings": "ミュート期間を選択..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "まだミュート期間を作成していません",
-      "text-loading-mute-timings": "ミュート期間を読み込み中...",
-      "text-no-mute-timings-configured": "ミュート期間が設定されていません"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1548,8 +1568,8 @@
       "title-notification-policies-have-changed": "通知ポリシーが変更されました"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "ミュート期間",
-      "label-notification-policies": "通知ポリシー"
+      "label-notification-policies": "通知ポリシー",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2378,6 +2398,32 @@
     "threshold-expression-viewer": {
       "input": "入力",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "時系列データ",

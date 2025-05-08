@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Weitere hinzufügen"
     },
@@ -581,6 +584,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Matcher hinzufügen",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Stummschaltung zur Richtlinie hinzufügen",
       "am-mute-timing-select-label-mute-timings": "Stummschaltung",
       "aria-label-group-by": "Gruppieren nach",
@@ -617,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Dashboard und Panel verknüpfen",
       "placeholder-value-input-default": "Inhalt der benutzerdefinierten Anmerkung eingeben …"
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1030,6 +1046,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "gefilterte Regelliste"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Wählen Sie einen Ordner, in dem Sie Ihre Regel speichern."
@@ -1451,29 +1494,21 @@
       "aria-label": "Mehr",
       "button-text": "Mehr"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Die Stummschaltungszeiten konnten nicht geladen werden. Bitte versuchen Sie es später erneut.",
-        "title": "Fehler beim Laden der Stummschaltung"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Deaktiviert",
       "title-delete-mute-timing": "Stummschaltung löschen"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Wählen Sie eine Stummschaltung aus, um festzulegen, wann für diese Warnregel keine Benachrichtigungen gesendet werden sollen",
       "am-mute-timing-select-label-mute-timings": "Stummschaltung"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Ein eindeutiger Name für die Stummschaltung",
-      "label-name": "",
-      "text-loading-mute-timing": "Stummschaltung wird geladen",
-      "title-no-matching-mute-timing-found": "Keine übereinstimmende Stummschaltung gefunden"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Ein weiteres Zeitintervall hinzufügen",
-      "description": "Ein Zeitintervall ist eine Definition für einen speziellen Zeitpunkt. Alle Felder sind Listen, wobei mindestens ein Listenelement erfüllt sein muss, um dem Feld zu entsprechen. Wenn ein Feld leer bleibt, wird jeder Zeitpunkt dem Feld entsprechen. Damit ein Zeitpunkt einem vollständigen Zeitintervall entspricht, müssen alle Felder übereinstimmen. Eine Stummschaltung kann mehrere Zeitintervalle umfassen.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Die Tage des Monats, 1:31, eines Monats. Negative Werte können genutzt werden und für Tage stehen, die am Ende des Monats beginnen",
       "description-months": "Die Monate des Jahres sind entweder numerisch oder ein voller Kalendermonat",
       "label-days-of-the-month": "Tage des Monats",
@@ -1499,21 +1534,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Zeitbereich entfernen"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Stummschaltung hinzufügen",
-      "description": "Geben Sie bestimmte Zeitintervalle an, in denen keine Benachrichtigungen gesendet werden sollen oder in denen Benachrichtigungen regelmäßig pausiert werden sollen.",
-      "save": "Stummschaltung speichern",
-      "saving": "Stummschaltung wird gespeichert"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Stummschaltung",
-      "placeholder-select-mute-timings": "Stummschaltung auswählen ..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Sie haben noch keine Stummschaltungen erstellt",
-      "text-loading-mute-timings": "Stummschaltungen werden geladen ...",
-      "text-no-mute-timings-configured": "Keine Stummschaltung konfiguriert"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1555,8 +1575,8 @@
       "title-notification-policies-have-changed": "Benachrichtigungsrichtlinien haben sich geändert"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Stummschaltung",
-      "label-notification-policies": "Benachrichtigungsrichtlinien"
+      "label-notification-policies": "Benachrichtigungsrichtlinien",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2391,6 +2411,32 @@
     "threshold-expression-viewer": {
       "input": "Eingabe",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "Zeitreihendaten",

@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Ajouter plus"
     },
@@ -581,6 +584,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Ajouter un élément de correspondance",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Ajouter un horaire de mise en sourdine à la politique",
       "am-mute-timing-select-label-mute-timings": "Horaires de mise en sourdine",
       "aria-label-group-by": "Regrouper par",
@@ -617,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Lier le tableau de bord et le panneau",
       "placeholder-value-input-default": "Saisir le contenu de l’annotation personnalisée..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1030,6 +1046,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "liste-de-règles-filtrées"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Sélectionnez un dossier pour stocker votre règle."
@@ -1451,29 +1494,21 @@
       "aria-label": "Plus",
       "button-text": "Plus"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Impossible de charger les horaires de mise en sourdine. Veuillez réessayer plus tard.",
-        "title": "Erreur lors du chargement des horaires de mise en sourdine"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Désactivé",
       "title-delete-mute-timing": "Supprimer l’horaire de mise en sourdine"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Sélectionnez des horaires de mise en sourdine pour définir quand ne pas envoyer de notifications pour cette règle d’alerte.",
       "am-mute-timing-select-label-mute-timings": "Horaires de mise en sourdine"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Un nom unique pour l’horaire de mise en sourdine",
-      "label-name": "",
-      "text-loading-mute-timing": "Chargement de l’horaire de mise en sourdine",
-      "title-no-matching-mute-timing-found": "Aucun horaire de mise en sourdine correspondant trouvé"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Ajouter un autre intervalle de temps",
-      "description": "Un intervalle de temps est une définition d’un moment dans le temps. Tous les champs sont des listes, et au moins un élément de la liste doit être satisfait pour correspondre au champ. Si un champ est laissé vide, n’importe quel moment correspondra au champ. Pour qu’un instant de temps corresponde à un intervalle de temps complet, tous les champs doivent correspondre. Un horaire de mise en sourdine peut contenir plusieurs intervalles de temps.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Les jours du mois, 1:31, d’un mois. Les valeurs négatives peuvent être utilisées pour représenter les jours qui commencent à la fin du mois",
       "description-months": "Les mois de l’année en chiffres ou en mois civil complet",
       "label-days-of-the-month": "Jours du mois",
@@ -1499,21 +1534,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Supprimer la plage temporelle"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Ajouter un horaire de mise en sourdine",
-      "description": "Saisissez des intervalles de temps spécifiques pour ne pas envoyer de notifications ou pour geler les notifications pendant des périodes de temps récurrentes.",
-      "save": "Enregistrer l'horaire de mise en sourdine",
-      "saving": "Enregistrement de l'horaire de mise en sourdine"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Horaires de mise en sourdine",
-      "placeholder-select-mute-timings": "Sélectionner les horaires de mise en sourdine..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Vous n’avez pas encore créé d’horaires de mise en sourdine",
-      "text-loading-mute-timings": "Chargement des horaires de mise en sourdine...",
-      "text-no-mute-timings-configured": "Aucune horaire de mise en sourdine configurée"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1555,8 +1575,8 @@
       "title-notification-policies-have-changed": "Les politiques de notification ont changé"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Horaires de mise en sourdine",
-      "label-notification-policies": "Politiques de notification"
+      "label-notification-policies": "Politiques de notification",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2391,6 +2411,32 @@
     "threshold-expression-viewer": {
       "input": "Entrée",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "Données chronologiques",

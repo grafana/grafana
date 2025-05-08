@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Přidat další"
     },
@@ -589,6 +592,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Přidat modul pro porovnávání",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Přidat časování ztlumení do zásady",
       "am-mute-timing-select-label-mute-timings": "Ztlumit časování",
       "aria-label-group-by": "Seřadit podle",
@@ -625,6 +630,17 @@
       },
       "link-dashboard-and-panel": "Propojit nástěnku a panel",
       "placeholder-value-input-default": "Zadejte obsah vlastní vysvětlivky…"
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1042,6 +1058,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "seznam filtrovaných pravidel"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Vyberte složku, do které chcete uložit pravidlo."
@@ -1465,29 +1508,21 @@
       "aria-label": "Další",
       "button-text": "Další"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Nelze načíst časování ztlumení. Zkuste to znovu později.",
-        "title": "Chyba při načítání časování ztlumení"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Zakázáno",
       "title-delete-mute-timing": "Odstranit časování ztlumení"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Vyberte časování ztlumení, abyste definovali, kdy nechcete odesílat oznámení pro toto pravidlo výstrahy",
       "am-mute-timing-select-label-mute-timings": "Ztlumit časování"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Jedinečný název časování ztlumení",
-      "label-name": "",
-      "text-loading-mute-timing": "Načítání časování ztlumení",
-      "title-no-matching-mute-timing-found": "Nebylo nalezeno žádné odpovídající časování ztlumení"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Přidat další časový interval",
-      "description": "Časový interval je definice pro okamžik v čase. Všechna pole jsou seznamy a musí být splněn alespoň jeden prvek seznamu, aby odpovídal poli. Pokud pole zůstane prázdné, jakýkoli okamžik času bude odpovídat poli. Aby se okamžik shodoval s celým časovým intervalem, musí se shodovat všechna pole. Časování ztlumení může obsahovat více časových intervalů.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Dny v měsíci, 1:31, v měsíci. Záporné hodnoty lze použít k reprezentaci dnů, které začínají na konci měsíce",
       "description-months": "Měsíce v roce v číselném nebo úplném kalendářním měsíci",
       "label-days-of-the-month": "Dny v měsíci",
@@ -1513,21 +1548,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Odebrat časový rozsah"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Přidat časování ztlumení",
-      "description": "Zadejte konkrétní časové intervaly, kdy nechcete odesílat oznámení nebo zmrazit oznámení pro opakující se časová období.",
-      "save": "Uložit časování ztlumení",
-      "saving": "Ukládání časování ztlumení"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Ztlumit časování",
-      "placeholder-select-mute-timings": "Vyberte časování ztlumení…"
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Dosud jste nevytvořili žádná časování ztlumení",
-      "text-loading-mute-timings": "Načítání časování ztlumení…",
-      "text-no-mute-timings-configured": "Není nakonfigurováno žádné časování ztlumení"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1569,8 +1589,8 @@
       "title-notification-policies-have-changed": "Zásady oznamování se změnily"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Ztlumit časování",
-      "label-notification-policies": "Zásady oznamování"
+      "label-notification-policies": "Zásady oznamování",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2417,6 +2437,32 @@
     "threshold-expression-viewer": {
       "input": "Vstup",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "Data časových řad",
