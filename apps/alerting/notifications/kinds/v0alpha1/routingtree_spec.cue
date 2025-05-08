@@ -26,6 +26,7 @@ RouteTreeSpec: {
 
 	group_by?: [...string]
 	mute_time_intervals?: [...string]
+	active_time_intervals?: [...string]
 	routes?: [...#Route]
 	group_wait?:      string
 	group_interval?:  string
