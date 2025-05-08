@@ -102,6 +102,31 @@ export class ElementState implements LayerElement {
     return this.options.name;
   }
 
+  // NOTE: This migration ensures that the placement is converted to use top/left constraints.
+  // Proper placement requires knowing the size of the panel, which is not available during the usual migration stage.
+  // Therefore, this conversion is performed at runtime.
+  migratePlacementToTopLeft(placement: Placement) {
+    const scene = this.getScene();
+    if (scene) {
+      let isMigrated = false;
+      if (placement.bottom !== undefined) {
+        placement.top = scene.height - placement.bottom - (placement.height ?? 0);
+        delete placement.bottom;
+        isMigrated = true;
+      }
+      if (placement.right !== undefined) {
+        placement.left = scene.width - placement.right - (placement.width ?? 0);
+        delete placement.right;
+        isMigrated = true;
+      }
+
+      if (isMigrated) {
+        this.options.placement = placement;
+        scene.save();
+      }
+    }
+  }
+
   /** Use the configured options to update CSS style properties directly on the wrapper div **/
   applyLayoutStylesToDiv(disablePointerEvents?: boolean) {
     if (this.isRoot()) {
@@ -386,8 +411,6 @@ export class ElementState implements LayerElement {
 
   setPlacementFromGlobalCoordinates(left: number, top: number) {
     const placement: Placement = {
-      bottom: this.options.placement?.bottom,
-      height: this.options.placement?.height,
       left: left,
       right: this.options.placement?.right,
       rotation: this.options.placement?.rotation,
@@ -553,6 +576,7 @@ export class ElementState implements LayerElement {
 
   initElement = (target: HTMLDivElement) => {
     this.div = target;
+    this.migratePlacementToTopLeft(this.options.placement ?? {});
     this.applyLayoutStylesToDiv();
   };
 
