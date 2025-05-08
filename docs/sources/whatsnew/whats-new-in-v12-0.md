@@ -24,6 +24,7 @@ posts:
       - docs/grafana-cloud/whats-new/2025-04-28-logs-drilldown-improvements.md
       - docs/grafana-cloud/whats-new/2025-04-17-ga-release-of-grafana-traces-drilldown.md
       - docs/grafana-cloud/whats-new/2025-04-28-introducing-investigations
+      - docs/grafana-cloud/whats-new/2025-05-07-json-table-viewer-for-logs-drilldown.md
   - title: Cloud Migration Assistant
     items:
       - docs/grafana-cloud/whats-new/2025-04-11-grafana-cloud-migration-assistant-now-generally-available.md

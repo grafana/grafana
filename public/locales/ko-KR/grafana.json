@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "더 추가하기"
     },
@@ -577,6 +580,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "일치 조건 추가",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "정책에 알림 비활성화 타이밍 추가",
       "am-mute-timing-select-label-mute-timings": "알림 비활성화 타이밍",
       "aria-label-group-by": "그룹화 기준",
@@ -613,6 +618,17 @@
       },
       "link-dashboard-and-panel": "대시보드 및 패널 연결",
       "placeholder-value-input-default": "사용자 지정 주석 내용을 입력하세요..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1024,6 +1040,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "필터링된-규칙-목록"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "규칙을 저장할 폴더를 선택하세요."
@@ -1444,29 +1487,21 @@
       "aria-label": "더 보기",
       "button-text": "더 보기"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "알림 비활성화 시간을 로드할 수 없습니다. 나중에 다시 시도해 주세요.",
-        "title": "알림 비활성화 시간 로딩 중 오류 발생"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "비활성화됨",
       "title-delete-mute-timing": "알림 비활성화 타이밍 삭제"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "이 경고 규칙에 대한 알림을 보내지 않을 시점을 정의하려면 알림 비활성화 타이밍을 선택하세요",
       "am-mute-timing-select-label-mute-timings": "알림 비활성화 타이밍"
     },
     "mute-timing-form": {
-      "description-unique-timing": "알림 비활성화 타이밍에 대한 고유한 이름",
-      "label-name": "",
-      "text-loading-mute-timing": "알림 비활성화 타이밍 로딩 중",
-      "title-no-matching-mute-timing-found": "일치하는 알림 비활성화 타이밍을 찾을 수 없습니다"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "다른 시간 간격 추가",
-      "description": "시간 간격은 시간의 시점에 대한 정의입니다. 모든 필드는 목록이며, 필드와 일치하려면 하나 이상의 목록 요소를 충족해야 합니다. 필드를 비워두면 시간의 모든 시점이 필드와 일치하게 됩니다. 시간의 시점이 시간 간격과 완전히 일치하려면 모든 필드가 일치해야 합니다. 알림 비활성화 타이밍에는 여러 개의 시간 간격이 포함될 수 있습니다.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "매달 특정 날짜, 특정 달의 1:31. 음수 값을 사용하여 월말에 시작되는 날을 나타낼 수 있습니다",
       "description-months": "1년의 달을 숫자 또는 달 이름으로 나타냅니다",
       "label-days-of-the-month": "매달 특정 날짜",
@@ -1492,21 +1527,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "시간 범위 제거"
-    },
-    "mute-timings": {
-      "add-mute-timing": "알림 비활성화 시간 추가",
-      "description": "알림을 보내지 않거나 반복적으로 알림을 중단할 시간 간격을 입력합니다.",
-      "save": "알림 비활성화 시간 저장",
-      "saving": "알림 비활성화 시간 저장 중"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "알림 비활성화 타이밍",
-      "placeholder-select-mute-timings": "알림 비활성화 타이밍 선택..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "아직 생성된 알림 비활성화 타이밍이 없습니다",
-      "text-loading-mute-timings": "알림 비활성화 타이밍 로딩 중...",
-      "text-no-mute-timings-configured": "알림 비활성화 타이밍이 구성되지 않음"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1548,8 +1568,8 @@
       "title-notification-policies-have-changed": "알림 정책이 변경되었습니다"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "알림 비활성화 타이밍",
-      "label-notification-policies": "알림 정책"
+      "label-notification-policies": "알림 정책",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2378,6 +2398,32 @@
     "threshold-expression-viewer": {
       "input": "입력",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "시계열 데이터",

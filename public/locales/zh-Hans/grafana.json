@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "添加更多"
     },
@@ -577,6 +580,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "添加匹配器",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "向策略添加静音时间设定",
       "am-mute-timing-select-label-mute-timings": "静音时间设定",
       "aria-label-group-by": "分组依据",
@@ -613,6 +618,17 @@
       },
       "link-dashboard-and-panel": "关联数据面板和面板",
       "placeholder-value-input-default": "输入自定义注释内容..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1024,6 +1040,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "筛选规则列表"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "选择一个文件夹来存储规则。"
@@ -1444,29 +1487,21 @@
       "aria-label": "更多",
       "button-text": "更多"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "无法加载静音时间设定。请稍后重试。",
-        "title": "加载静音时间设定时出错"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "已禁用",
       "title-delete-mute-timing": "删除静音时间设定"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "选择一个静音时间设定，以定义何时不为此警报规则发送通知",
       "am-mute-timing-select-label-mute-timings": "静音时间设定"
     },
     "mute-timing-form": {
-      "description-unique-timing": "静音时间设定的唯一名称",
-      "label-name": "",
-      "text-loading-mute-timing": "正在加载静音时间设定",
-      "title-no-matching-mute-timing-found": "未找到匹配的静音时间设定"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "添加其他时间间隔",
-      "description": "时间间隔是对某一时刻的定义。所有字段都是列表，必须至少满足一个列表元素才能匹配字段。如果字段留空，则任何时间点都将匹配该字段。若要使某一时刻匹配整个时间间隔，则所有字段都必须匹配。静音时间设定可以包含多个时间间隔。",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "一个月中的某一天，一个月的 1:31。负值可用于表示从月底开始的日期",
       "description-months": "以数字或完整日历月份表示的一年中的月份",
       "label-days-of-the-month": "一个月中的哪一天",
@@ -1492,21 +1527,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "移除时间范围"
-    },
-    "mute-timings": {
-      "add-mute-timing": "添加静音时间设定",
-      "description": "输入特定的时间间隔，在此期间不发送通知或在重复的时间段内冻结通知操作。",
-      "save": "保存静音时间设定",
-      "saving": "正在保存静音时间设定"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "静音时间设定",
-      "placeholder-select-mute-timings": "选择静音时间设定…"
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "您尚未创建任何静音时间设定",
-      "text-loading-mute-timings": "正在加载静音时间设定...",
-      "text-no-mute-timings-configured": "未配置静音时间设定"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1548,8 +1568,8 @@
       "title-notification-policies-have-changed": "通知策略已更改"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "静音时间设定",
-      "label-notification-policies": "通知策略"
+      "label-notification-policies": "通知策略",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2378,6 +2398,32 @@
     "threshold-expression-viewer": {
       "input": "输入",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "时间序列数据",
