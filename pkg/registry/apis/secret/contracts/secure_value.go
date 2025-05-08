@@ -33,5 +33,5 @@ type SecureValueMetadataStorage interface {
 	List(ctx context.Context, namespace xkube.Namespace) ([]secretv0alpha1.SecureValue, error)
 	SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error
 	SetExternalID(ctx context.Context, namespace xkube.Namespace, name string, externalID ExternalID) error
-	ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string, opts ReadOpts) (*DecryptSecureValue, error)
+	ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*DecryptSecureValue, error)
 }

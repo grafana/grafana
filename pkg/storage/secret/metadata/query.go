@@ -31,6 +31,7 @@ var (
 	sqlSecureValueUpdate           = mustTemplate("secure_value_update.sql")
 	sqlSecureValueUpdateExternalId = mustTemplate("secure_value_updateExternalId.sql")
 	sqlSecureValueUpdateStatus     = mustTemplate("secure_value_updateStatus.sql")
+	sqlSecureValueReadForDecrypt   = mustTemplate("secure_value_read_for_decrypt.sql")
 
 	sqlSecureValueOutboxAppend   = mustTemplate("secure_value_outbox_append.sql")
 	sqlSecureValueOutboxReceiveN = mustTemplate("secure_value_outbox_receiveN.sql")
@@ -216,6 +217,14 @@ type updateStatusSecureValue struct {
 func (r updateStatusSecureValue) Validate() error {
 	return nil // TODO
 }
+
+type readSecureValueForDecrypt struct {
+	sqltemplate.SQLTemplate
+	Namespace string
+	Name      string
+}
+
+func (r readSecureValueForDecrypt) Validate() error { return nil }
 
 /*************************************/
 /**-- Secure Value Outbox Queries --**/

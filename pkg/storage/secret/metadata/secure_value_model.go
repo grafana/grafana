@@ -227,8 +227,16 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 	}, nil
 }
 
+// DTO for `secureValueForDecrypt` query result, only what we need.
+type secureValueForDecrypt struct {
+	Keeper     sql.NullString
+	Decrypters sql.NullString
+	Ref        sql.NullString
+	ExternalID string
+}
+
 // to Decrypt maps a DB row into a DecryptSecureValue object needed for decryption.
-func (sv *secureValueDB) toDecrypt() (*contracts.DecryptSecureValue, error) {
+func (sv *secureValueForDecrypt) toDecrypt() (*contracts.DecryptSecureValue, error) {
 	decrypters := make([]string, 0)
 	if sv.Decrypters.Valid && sv.Decrypters.String != "" {
 		if err := json.Unmarshal([]byte(sv.Decrypters.String), &decrypters); err != nil {
