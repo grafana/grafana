@@ -108,7 +108,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -168,6 +168,10 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	// Parse the default configuration into a postable config.
 	pCfg, err := notifier.Load([]byte(cfg.DefaultConfig))
 	if err != nil {
+		return nil, err
+	}
+
+	if err := autogenFn(ctx, logger, cfg.OrgID, &pCfg.AlertmanagerConfig, true); err != nil {
 		return nil, err
 	}
 
@@ -265,21 +269,16 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return nil
 	}
 
-	isDefault, err := am.isDefaultConfiguration(configHash)
-	if err != nil {
-		return err
-	}
-
 	decrypted, err := notifier.Load(rawDecrypted)
 	if err != nil {
 		return err
 	}
 
-	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, isDefault)
+	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
 }
 
-func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) (bool, error) {
-	return fmt.Sprintf("%x", configHash) == am.defaultConfigHash, nil
+func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
+	return fmt.Sprintf("%x", configHash) == am.defaultConfigHash
 }
 
 // decryptConfiguration decrypts the configuration in-place and returns the decrypted configuration alongside its hash.
