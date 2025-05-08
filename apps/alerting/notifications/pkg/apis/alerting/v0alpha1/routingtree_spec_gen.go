@@ -18,15 +18,16 @@ func NewRoutingTreeRouteDefaults() *RoutingTreeRouteDefaults {
 
 // +k8s:openapi-gen=true
 type RoutingTreeRoute struct {
-	Receiver          *string              `json:"receiver,omitempty"`
-	Matchers          []RoutingTreeMatcher `json:"matchers,omitempty"`
-	Continue          bool                 `json:"continue"`
-	GroupBy           []string             `json:"group_by,omitempty"`
-	MuteTimeIntervals []string             `json:"mute_time_intervals,omitempty"`
-	Routes            []RoutingTreeRoute   `json:"routes,omitempty"`
-	GroupWait         *string              `json:"group_wait,omitempty"`
-	GroupInterval     *string              `json:"group_interval,omitempty"`
-	RepeatInterval    *string              `json:"repeat_interval,omitempty"`
+	Receiver            *string              `json:"receiver,omitempty"`
+	Matchers            []RoutingTreeMatcher `json:"matchers,omitempty"`
+	Continue            bool                 `json:"continue"`
+	GroupBy             []string             `json:"group_by,omitempty"`
+	MuteTimeIntervals   []string             `json:"mute_time_intervals,omitempty"`
+	ActiveTimeIntervals []string             `json:"active_time_intervals,omitempty"`
+	Routes              []RoutingTreeRoute   `json:"routes,omitempty"`
+	GroupWait           *string              `json:"group_wait,omitempty"`
+	GroupInterval       *string              `json:"group_interval,omitempty"`
+	RepeatInterval      *string              `json:"repeat_interval,omitempty"`
 }
 
 // NewRoutingTreeRoute creates a new RoutingTreeRoute object.
