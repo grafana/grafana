@@ -11,7 +11,7 @@ import (
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/infra/db"
@@ -114,10 +114,10 @@ func (st DBstore) getLatestVersionOfRulesByUID(ctx context.Context, orgID int64,
 		rows, err := sess.SQL(fmt.Sprintf(`
 		SELECT v1.* FROM alert_rule_version AS v1
 			INNER JOIN (
-			    SELECT rule_guid, MAX(id) AS id 
-			    FROM alert_rule_version 
-			    WHERE rule_org_id = ? 
-			      AND rule_uid IN (%s) 
+			    SELECT rule_guid, MAX(id) AS id
+			    FROM alert_rule_version
+			    WHERE rule_org_id = ?
+			      AND rule_uid IN (%s)
 			    GROUP BY rule_guid
 			) AS v2 ON v1.rule_guid = v2.rule_guid AND v1.id = v2.id
 		`, strings.Join(in, ",")), append([]any{orgID}, args...)...).Rows(new(alertRuleVersion))
@@ -673,7 +673,7 @@ func (st DBstore) ListAlertRules(ctx context.Context, query *ngmodels.ListAlertR
 			}
 			if query.TimeIntervalName != "" {
 				if !slices.ContainsFunc(converted.NotificationSettings, func(settings ngmodels.NotificationSettings) bool {
-					return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName)
+					return slices.Contains(settings.MuteTimeIntervals, query.TimeIntervalName) || slices.Contains(settings.ActiveTimeIntervals, query.TimeIntervalName)
 				}) {
 					continue
 				}
@@ -985,7 +985,7 @@ func (st DBstore) ListNotificationSettings(ctx context.Context, q ngmodels.ListN
 			if q.ReceiverName != "" && q.ReceiverName != setting.Receiver { // currently, there can be only one setting. If in future there are more, we will return all settings of a rule that has a setting with receiver
 				continue
 			}
-			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) {
+			if q.TimeIntervalName != "" && !slices.Contains(setting.MuteTimeIntervals, q.TimeIntervalName) && !slices.Contains(setting.ActiveTimeIntervals, q.TimeIntervalName) {
 				continue
 			}
 			ns = append(ns, setting)
@@ -1015,7 +1015,8 @@ func (st DBstore) filterByContentInNotificationSettings(value string, sess *xorm
 		// this escapes escaped double quote (\") to \\\"
 		search = strings.ReplaceAll(strings.ReplaceAll(search, `\`, `\\`), `"`, `\"`)
 	}
-	return sess.And(fmt.Sprintf("notification_settings %s ?", st.SQLStore.GetDialect().LikeStr()), "%"+search+"%"), nil
+	sql, param := st.SQLStore.GetDialect().LikeOperator("notification_settings", true, search, true)
+	return sess.And(sql, param), nil
 }
 
 func (st DBstore) filterImportedPrometheusRules(value bool, sess *xorm.Session) (*xorm.Session, error) {
@@ -1154,6 +1155,11 @@ func (st DBstore) RenameTimeIntervalInNotificationSettings(
 			for mtIdx := range r.NotificationSettings[idx].MuteTimeIntervals {
 				if r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] == oldTimeInterval {
 					r.NotificationSettings[idx].MuteTimeIntervals[mtIdx] = newTimeInterval
+				}
+			}
+			for mtIdx := range r.NotificationSettings[idx].ActiveTimeIntervals {
+				if r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] == oldTimeInterval {
+					r.NotificationSettings[idx].ActiveTimeIntervals[mtIdx] = newTimeInterval
 				}
 			}
 		}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { CoreApp, GrafanaTheme2 } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { config, FetchError, getTemplateSrv, reportInteraction } from '@grafana/runtime';
-import { Alert, Button, HorizontalGroup, Select, useStyles2 } from '@grafana/ui';
+import { Alert, Button, Stack, Select, useStyles2 } from '@grafana/ui';
 
 import { RawQuery } from '../_importedDependencies/datasources/prometheus/RawQuery';
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
@@ -185,7 +185,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
             label={'Duration'}
             tooltip="The trace or span duration, i.e. end - start time of the trace/span. Accepted units are ns, ms, s, m, h"
           >
-            <HorizontalGroup spacing={'none'}>
+            <Stack gap={0}>
               <Select
                 options={[
                   { label: 'span', value: 'span' },
@@ -225,7 +225,7 @@ const TraceQLSearch = ({ datasource, query, onChange, onClearResults, app, addVa
                 operators={['<', '<=']}
                 updateFilter={updateFilter}
               />
-            </HorizontalGroup>
+            </Stack>
           </InlineSearchField>
           <InlineSearchField label={'Tags'}>
             <TagsInput

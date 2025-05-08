@@ -850,6 +850,22 @@ func TestDiff(t *testing.T) {
 					},
 				},
 			},
+			{
+				name:                 "should detect changes in ActiveTimeIntervals",
+				notificationSettings: CopyNotificationSettings(baseSettings, NSMuts.WithActiveTimeIntervals(baseSettings.ActiveTimeIntervals[0]+"-modified", baseSettings.ActiveTimeIntervals[1]+"-modified")),
+				diffs: []cmputil.Diff{
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[0]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[0]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[0] + "-modified"),
+					},
+					{
+						Path:  "NotificationSettings[0].ActiveTimeIntervals[1]",
+						Left:  reflect.ValueOf(baseSettings.ActiveTimeIntervals[1]),
+						Right: reflect.ValueOf(baseSettings.ActiveTimeIntervals[1] + "-modified"),
+					},
+				},
+			},
 		}
 
 		for _, tt := range testCases {
