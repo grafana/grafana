@@ -1151,6 +1151,7 @@ const UnthemedLogs: React.FunctionComponent<Props> = (props: Props) => {
                   filterLevels={filterLevels}
                   getFieldLinks={getFieldLinks}
                   getRowContextQuery={getRowContextQuery}
+                  loading={loading}
                   loadMore={loadMoreLogs}
                   logOptionsStorageKey={SETTING_KEY_ROOT}
                   logs={dedupedRows}

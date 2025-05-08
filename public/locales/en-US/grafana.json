@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "Auditing",
+      "title-custom-branding": "Custom branding",
       "title-dashboard-presence-indicators": "Dashboard presence indicators",
       "title-dashboard-usage-stats-drawer": "Dashboard usage stats drawer",
       "title-data-source-permissions": "Data source permissions",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "SAML authentication",
       "title-settings-updates-at-runtime": "Settings updates at runtime",
       "title-sort-dashboards-by-popularity-in-search": "Sort dashboards by popularity in search",
-      "title-team-sync": "Team Sync",
-      "title-white-labeling": "White labeling"
+      "title-team-sync": "Team Sync"
     },
     "feature-toggles": {
       "restart-pending": "A restart is pending for your Grafana instance to apply the latest feature toggle changes",
@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": "Active timings"
+    },
     "add-button": {
       "add-more": "Add more"
     },
@@ -404,7 +407,7 @@
     },
     "alert-labels": {
       "aria-label-labels": "Labels",
-      "common-labels-count_one": "+{{count}} common label",
+      "common-labels-count_one": "+{{count}} common labels",
       "common-labels-count_other": "+{{count}} common labels"
     },
     "alert-manager-manual-routing": {
@@ -581,6 +584,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Add matcher",
+      "am-active-timing-select-label-active-timings": "Active timings",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "Add active timing to policy",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Add mute timing to policy",
       "am-mute-timing-select-label-mute-timings": "Mute timings",
       "aria-label-group-by": "Group by",
@@ -617,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Link dashboard and panel",
       "placeholder-value-input-default": "Enter custom annotation content..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": "Rules successfully deleted from folder"
+      },
+      "pause": {
+        "success": "Rules evaluation successfully paused for folder"
+      },
+      "unpause": {
+        "success": "Rules successfully unpaused for this folder"
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1031,6 +1047,33 @@
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
     },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": "Delete rules"
+        }
+      },
+      "delete-modal-confirmation-text": "Delete",
+      "delete-modal-delete-button": "Delete",
+      "delete-modal-deleting": "Deleting...",
+      "delete-modal-text": "This action will delete all alert rules in the <1>{{folderName}}</1> folder. Nested folders will not be affected.",
+      "delete-modal-title": "Delete",
+      "error": "Failed to execute action for folder: {{error}}",
+      "more-button": {
+        "title": "Folder bulk Actions",
+        "tooltip": "Folder bulk Actions"
+      },
+      "pause": {
+        "button": {
+          "label": "Pause all rule evaluation"
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": "Resume all rule evaluation"
+        }
+      }
+    },
     "folder-selector": {
       "description-select-folder": "Select a folder to store your rule in."
     },
@@ -1384,7 +1427,7 @@
           "new-recording-rule": "New recording rule",
           "title": "Grafana-managed"
         },
-        "loading-rules_one": "Loading rules from {{count}} source",
+        "loading-rules_one": "Loading rules from {{count}} sources",
         "loading-rules_other": "Loading rules from {{count}} sources"
       }
     },
@@ -1451,29 +1494,21 @@
       "aria-label": "More",
       "button-text": "More"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Could not load mute timings. Please try again later.",
-        "title": "Error loading mute timings"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Disabled",
       "title-delete-mute-timing": "Delete mute timing"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "Select a time interval to define when not to send notifications for this alert rule",
       "am-mute-timing-select-description-mute-timings": "Select a mute timing to define when not to send notifications for this alert rule",
       "am-mute-timing-select-label-mute-timings": "Mute timings"
     },
     "mute-timing-form": {
-      "description-unique-timing": "A unique name for the mute timing",
-      "label-name": "Name",
-      "text-loading-mute-timing": "Loading mute timing",
-      "title-no-matching-mute-timing-found": "No matching mute timing found"
+      "label-name": "Name"
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Add another time interval",
-      "description": "A time interval is a definition for a moment in time. All fields are lists, and at least one list element must be satisfied to match the field. If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A mute timing can contain multiple time intervals.",
+      "add-another-time-interval-item": "Add another time interval item",
+      "description": "A time interval item is a definition for a moment in time. All fields are lists, and at least one list element must be satisfied to match the field. If a field is left blank, any moment of time will match the field. For an instant of time to match a complete time interval, all fields must match. A time interval can contain multiple time interval items.",
       "description-dats-of-the-month": "The days of the month, 1:31, of a month. Negative values can be used to represent days which begin at the end of the month",
       "description-months": "The months of the year in either numerical or the full calendar month",
       "label-days-of-the-month": "Days of the month",
@@ -1499,21 +1534,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "Remove",
       "tooltip-remove-time-range": "Remove time range"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Add mute timing",
-      "description": "Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of time.",
-      "save": "Save mute timing",
-      "saving": "Saving mute timing"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Mute timings",
-      "placeholder-select-mute-timings": "Select mute timings..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "You haven't created any mute timings yet",
-      "text-loading-mute-timings": "Loading mute timings...",
-      "text-no-mute-timings-configured": "No mute timings configured"
     },
     "namespace": {
       "title-alert-rules": "Alert rules"
@@ -1555,8 +1575,8 @@
       "title-notification-policies-have-changed": "Notification policies have changed"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Mute Timings",
-      "label-notification-policies": "Notification Policies"
+      "label-notification-policies": "Notification Policies",
+      "label-time-intervals": "Time intervals"
     },
     "notification-policy-matchers": {
       "default-policy": "Default policy",
@@ -2065,14 +2085,14 @@
       "unknown-rule-type": "Unknown rule type"
     },
     "rule-list-errors": {
-      "button-errors_one": "{{count}} error",
+      "button-errors_one": "{{count}} errors",
       "button-errors_other": "{{count}} errors",
       "cloud-rulessource-errors-title-errors-loading-rules": "Errors loading rules",
       "failed-to-load-grafana-rules-config": "Failed to load Grafana rules config:",
       "failed-to-load-grafana-rules-state": "Failed to load Grafana rules state:",
       "failed-to-load-rules-config": "Failed to load rules config from <2>{{dataSource}}</2>",
       "failed-to-load-rules-state": "Failed to load rules state from <2>{{dataSource}}</2>",
-      "more-errors_one": "{{count}} more error",
+      "more-errors_one": "{{count}} more errors",
       "more-errors_other": "{{count}} more errors",
       "unknown-error": "Unknown error."
     },
@@ -2099,7 +2119,7 @@
       }
     },
     "rule-stats": {
-      "error_one": "{{count}} error",
+      "error_one": "{{count}} errors",
       "error_other": "{{count}} errors",
       "firing": "{{alertingStats}} firing",
       "inactive": "{{normalStats}} normal",
@@ -2391,6 +2411,32 @@
     "threshold-expression-viewer": {
       "input": "Input",
       "stop-alerting-when": "Stop alerting (or pending state) when "
+    },
+    "time-interval": {
+      "add-time-interval": "Add time interval",
+      "save": "Save time interval",
+      "saving": "Saving time interval"
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "A unique name for the time interval",
+      "text-loading-time-interval": "Loading time interval",
+      "title-no-matching-time-interval-found": "No matching time interval found"
+    },
+    "time-intervals": {
+      "description": "Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of time.",
+      "error-loading": {
+        "description": "Could not load time intervals. Please try again later.",
+        "title": "Error loading time intervals"
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "Time intervals",
+      "placeholder-select-time-intervals": "Select time intervals..."
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "You haven't created any time intervals yet",
+      "text-loading-time-intervals": "Loading time intervals...",
+      "text-no-time-intervals-configured": "No time intervals configured"
     },
     "timeseries-row": {
       "time-series-data": "Time series data",
@@ -4033,7 +4079,7 @@
     },
     "library-viz-panel-info": {
       "last-edited": "{{timeAgo}} by<person />",
-      "usage-count_one": "Used on {{count}} dashboard",
+      "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "name-already-exists-error": {
@@ -4152,7 +4198,7 @@
       "save-variables-label-update-default-variable-values": "Update default variable values"
     },
     "save-library-viz-panel-modal": {
-      "affected-dashboards_one": "This update will affect <1>{{count}} dashboard.</1> The following dashboard using the panel will be affected:",
+      "affected-dashboards_one": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "affected-dashboards_other": "This update will affect <1>{{count}} dashboards.</1> The following dashboards using the panel will be affected:",
       "cancel": "Cancel",
       "dashboard-name": "Dashboard name",
@@ -4207,6 +4253,9 @@
     "text-box-variable-form": {
       "placeholder-default-value-if-any": "(optional)",
       "text-options": "Text options"
+    },
+    "textbox-variable-form": {
+      "label-value": "Value"
     },
     "title-field-label": {
       "title": "Title"
@@ -5663,9 +5712,9 @@
       "refresh": "Refresh"
     },
     "query-inspector": {
-      "count-frames_one": "{{count}} frame, ",
+      "count-frames_one": "{{count}} frames, ",
       "count-frames_other": "{{count}} frames, ",
-      "count-rows_one": "{{count}} row",
+      "count-rows_one": "{{count}} rows",
       "count-rows_other": "{{count}} rows",
       "query-inspector": "Query inspector",
       "text-loading-query-inspector": "Loading query inspector..."
@@ -5882,7 +5931,7 @@
     },
     "library-panel-info": {
       "last-edited": "Last edited on {{timeAgo}} by<person />",
-      "usage-count_one": "Used on {{count}} dashboard",
+      "usage-count_one": "Used on {{count}} dashboards",
       "usage-count_other": "Used on {{count}} dashboards"
     },
     "library-panels-search": {
@@ -5916,7 +5965,7 @@
       "dashboard-name": "Dashboard name",
       "discard": "Discard",
       "loading-connected-dashboards": "Loading connected dashboards...",
-      "num-affected_one": "This update will affect <1>{{count}} dashboard.</1>",
+      "num-affected_one": "This update will affect <1>{{count}} dashboards.</1>",
       "num-affected_other": "This update will affect <1>{{count}} dashboards.</1>",
       "placeholder-search-affected-dashboards": "Search affected dashboards",
       "update-all": "Update all"
@@ -6025,6 +6074,10 @@
     },
     "log-labels-list": {
       "log-line": "log line"
+    },
+    "log-line": {
+      "show-less": "show less",
+      "show-more": "show more"
     },
     "log-line-menu": {
       "copy-link": "Copy link to log line",

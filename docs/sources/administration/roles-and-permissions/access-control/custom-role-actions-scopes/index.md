@@ -238,6 +238,28 @@ For more information on Cloud Access Policies and how to use them, see [Access p
 | `alert.notifications.routes:read`            | None                               | Read notification policies.                                                                                 |
 | `alert.notifications.routes:write`           | None                               | Create new, update or delete notification policies                                                          |
 
+### Grafana Synthetic Monitoring action definitions
+
+The following list contains role-based access control actions used by Grafana Synthetic Monitoring.
+
+| Action                                                 | Applicable scopes | Description                                                 |
+| ------------------------------------------------------ | ----------------- | ----------------------------------------------------------- |
+| `grafana-synthetic-monitoring-app:read`                | None              | Read synthetic monitoring app.                              |
+| `grafana-synthetic-monitoring-app:write`               | None              | Write synthetic monitoring app.                             |
+| `grafana-synthetic-monitoring-app.checks:read`         | None              | Read checks in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.checks:write`        | None              | Create and edit checks in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.checks:delete`       | None              | Delete checks in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.probes:read`         | None              | Read probes in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.probes:write`        | None              | Create and edit probes in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.probes:delete`       | None              | Delete probes in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.alerts:read`         | None              | Read alerts in the Synthetic Monitoring app.                |
+| `grafana-synthetic-monitoring-app.alerts:write`        | None              | Create and edit alerts in the Synthetic Monitoring app.     |
+| `grafana-synthetic-monitoring-app.alerts:delete`       | None              | Delete alerts in the Synthetic Monitoring app.              |
+| `grafana-synthetic-monitoring-app.thresholds:read`     | None              | Read thresholds in the Synthetic Monitoring app.            |
+| `grafana-synthetic-monitoring-app.thresholds:write`    | None              | Create and edit thresholds in the Synthetic Monitoring app. |
+| `grafana-synthetic-monitoring-app.thresholds:delete`   | None              | Delete thresholds in the Synthetic Monitoring app.          |
+| `grafana-synthetic-monitoring-app.access-tokens:write` | None              | Create and delete synthetic monitoring access tokens.       |
+
 ## Scope definitions
 
 The following list contains role-based access control scopes.

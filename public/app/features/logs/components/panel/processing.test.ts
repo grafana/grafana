@@ -1,8 +1,10 @@
-import { Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
+import { createTheme, Field, FieldType, LogLevel, LogRowModel, LogsSortOrder, toDataFrame } from '@grafana/data';
 
-import { createLogRow } from '../__mocks__/logRow';
+import { LOG_LINE_BODY_FIELD_NAME } from '../LogDetailsBody';
+import { createLogLine, createLogRow } from '../__mocks__/logRow';
 
 import { LogListModel, preProcessLogs } from './processing';
+import { getTruncationLength, init } from './virtualization';
 
 describe('preProcessLogs', () => {
   let logFmtLog: LogRowModel, nginxLog: LogRowModel, jsonLog: LogRowModel;
@@ -137,5 +139,59 @@ describe('preProcessLogs', () => {
     expect(processedLogs[2].highlightedBody).toContain('log-token-json-key');
     expect(processedLogs[2].highlightedBody).toContain('log-token-string');
     expect(processedLogs[2].highlightedBody).not.toContain('log-token-method');
+  });
+
+  test('Returns displayed field values', () => {
+    expect(processedLogs[0].getDisplayedFieldValue('logger')).toBe('interceptor');
+    expect(processedLogs[1].getDisplayedFieldValue('method')).toBe('POST');
+    expect(processedLogs[2].getDisplayedFieldValue('kind')).toBe('Event');
+    expect(processedLogs[0].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[0].body);
+    expect(processedLogs[1].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[1].body);
+    expect(processedLogs[2].getDisplayedFieldValue(LOG_LINE_BODY_FIELD_NAME)).toBe(processedLogs[2].body);
+  });
+
+  describe('Collapsible log lines', () => {
+    let longLog: LogListModel, entry: string, container: HTMLDivElement;
+    beforeEach(() => {
+      init(createTheme());
+      container = document.createElement('div');
+      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(200);
+      entry = new Array(2 * getTruncationLength(null)).fill('e').join('');
+      longLog = createLogLine({ entry });
+    });
+
+    test('Long lines that are not truncated are not modified', () => {
+      expect(longLog.body).toBe(entry);
+      expect(longLog.highlightedBody).toBe(entry);
+    });
+
+    test('Sets the collapsed state based on the container size', () => {
+      // Make container half of the size
+      jest.spyOn(container, 'clientWidth', 'get').mockReturnValue(100);
+
+      expect(longLog.collapsed).toBeUndefined();
+
+      longLog.updateCollapsedState([], container);
+
+      expect(longLog.collapsed).toBe(true);
+      expect(longLog.body).not.toBe(entry);
+      expect(entry).toContain(longLog.body);
+    });
+
+    test('Updates the body based on the collapsed state', () => {
+      expect(longLog.collapsed).toBeUndefined();
+      expect(longLog.body).toBe(entry);
+
+      longLog.setCollapsedState(true);
+
+      expect(longLog.collapsed).toBe(true);
+      expect(longLog.body).not.toBe(entry);
+      expect(entry).toContain(longLog.body);
+
+      longLog.setCollapsedState(false);
+
+      expect(longLog.collapsed).toBe(false);
+      expect(longLog.body).toBe(entry);
+    });
   });
 });

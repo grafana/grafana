@@ -23,7 +23,7 @@ interface ChildrenProps {
 interface Props {
   children: (props: ChildrenProps) => ReactNode;
   displayedFields: string[];
-  handleOverflow: (index: number, id: string, height: number) => void;
+  handleOverflow: (index: number, id: string, height?: number) => void;
   loadMore?: (range: AbsoluteTimeRange) => void;
   logs: LogListModel[];
   scrollElement: HTMLDivElement | null;

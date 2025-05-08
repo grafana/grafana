@@ -28,7 +28,7 @@ type TableItem = {
   data: MuteTiming;
 };
 
-export const MuteTimingsTable = () => {
+export const TimeIntervalsTable = () => {
   const { selectedAlertmanager: alertManagerSourceName = '', hasConfigurationAPI } = useAlertmanager();
   const hideActions = !hasConfigurationAPI;
   const styles = useStyles2(getStyles);
@@ -47,26 +47,26 @@ export const MuteTimingsTable = () => {
     });
   }, [data]);
 
-  const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateMuteTiming);
+  const [_, allowedToCreateMuteTiming] = useAlertmanagerAbility(AlertmanagerAction.CreateTimeInterval);
 
   const [exportMuteTimingsSupported, exportMuteTimingsAllowed] = useAlertmanagerAbility(
-    AlertmanagerAction.ExportMuteTimings
+    AlertmanagerAction.ExportTimeIntervals
   );
   const columns = useColumns(alertManagerSourceName, hideActions);
 
   if (isLoading) {
     return (
       <LoadingPlaceholder
-        text={t('alerting.mute-timings-table.text-loading-mute-timings', 'Loading mute timings...')}
+        text={t('alerting.time-intervals-table.text-loading-time-intervals', 'Loading time intervals...')}
       />
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error" title={t('alerting.mute_timings.error-loading.title', 'Error loading mute timings')}>
-        <Trans i18nKey="alerting.mute_timings.error-loading.description">
-          Could not load mute timings. Please try again later.
+      <Alert severity="error" title={t('alerting.time-intervals.error-loading.title', 'Error loading time intervals')}>
+        <Trans i18nKey="alerting.time-intervals.error-loading.description">
+          Could not load time intervals. Please try again later.
         </Trans>
       </Alert>
     );
@@ -75,20 +75,20 @@ export const MuteTimingsTable = () => {
   return (
     <div className={styles.container}>
       <Stack direction="row" alignItems="center">
-        <Trans i18nKey="alerting.mute-timings.description">
+        <Trans i18nKey="alerting.time-intervals.description">
           Enter specific time intervals when not to send notifications or freeze notifications for recurring periods of
           time.
         </Trans>
         <Spacer />
         {!hideActions && items.length > 0 && (
-          <Authorize actions={[AlertmanagerAction.CreateMuteTiming]}>
+          <Authorize actions={[AlertmanagerAction.CreateTimeInterval]}>
             <LinkButton
               className={styles.muteTimingsButtons}
               icon="plus"
               variant="primary"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
             >
-              <Trans i18nKey="alerting.mute-timings.add-mute-timing">Add mute timing</Trans>
+              <Trans i18nKey="alerting.time-interval.add-time-interval">Add time interval</Trans>
             </LinkButton>
           </Authorize>
         )}
@@ -113,10 +113,10 @@ export const MuteTimingsTable = () => {
           {!hideActions ? (
             <EmptyAreaWithCTA
               text={t(
-                'alerting.mute-timings-table.text-havent-created-timings',
-                "You haven't created any mute timings yet"
+                'alerting.time-intervals-table.text-havent-created-time-intervals',
+                "You haven't created any time intervals yet"
               )}
-              buttonLabel="Add mute timing"
+              buttonLabel="Add time interval"
               buttonIcon="plus"
               buttonSize="lg"
               href={makeAMLink('alerting/routes/mute-timing/new', alertManagerSourceName)}
@@ -124,7 +124,10 @@ export const MuteTimingsTable = () => {
             />
           ) : (
             <EmptyAreaWithCTA
-              text={t('alerting.mute-timings-table.text-no-mute-timings-configured', 'No mute timings configured')}
+              text={t(
+                'alerting.time-intervals-table.text-no-time-intervals-configured',
+                'No time intervals configured'
+              )}
               buttonLabel={''}
               showButton={false}
             />
@@ -137,8 +140,8 @@ export const MuteTimingsTable = () => {
 
 function useColumns(alertManagerSourceName: string, hideActions = false) {
   const [[_editSupported, allowedToEdit], [_deleteSupported, allowedToDelete]] = useAlertmanagerAbilities([
-    AlertmanagerAction.UpdateMuteTiming,
-    AlertmanagerAction.DeleteMuteTiming,
+    AlertmanagerAction.UpdateTimeInterval,
+    AlertmanagerAction.DeleteTimeInterval,
   ]);
   const showActions = !hideActions && (allowedToEdit || allowedToDelete);
 
