@@ -11,13 +11,13 @@ import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alertin
 
 import { AlertmanagerPageWrapper } from './components/AlertingPageWrapper';
 import { GrafanaAlertmanagerDeliveryWarning } from './components/GrafanaAlertmanagerDeliveryWarning';
-import { MuteTimingsTable } from './components/mute-timings/MuteTimingsTable';
+import { TimeIntervalsTable } from './components/mute-timings/MuteTimingsTable';
 import { useAlertmanager } from './state/AlertmanagerContext';
 import { withPageErrorBoundary } from './withPageErrorBoundary';
 
 enum ActiveTab {
   NotificationPolicies = 'notification_policies',
-  MuteTimings = 'mute_timings',
+  TimeIntervals = 'time_intervals',
 }
 
 const NotificationPoliciesTabs = () => {
@@ -26,10 +26,10 @@ const NotificationPoliciesTabs = () => {
   // Alertmanager logic and data hooks
   const { selectedAlertmanager = '' } = useAlertmanager();
   const [policiesSupported, canSeePoliciesTab] = useAlertmanagerAbility(AlertmanagerAction.ViewNotificationPolicyTree);
-  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [timingsSupported, canSeeTimingsTab] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   const availableTabs = [
     canSeePoliciesTab && ActiveTab.NotificationPolicies,
-    canSeeTimingsTab && ActiveTab.MuteTimings,
+    canSeeTimingsTab && ActiveTab.TimeIntervals,
   ].filter((tab) => !!tab);
   const { data: muteTimings = [] } = useMuteTimings({
     alertmanager: selectedAlertmanager,
@@ -41,7 +41,7 @@ const NotificationPoliciesTabs = () => {
   const { tab } = getActiveTabFromUrl(queryParams, availableTabs[0]);
   const [activeTab, setActiveTab] = useState<ActiveTab>(tab);
 
-  const muteTimingsTabActive = activeTab === ActiveTab.MuteTimings;
+  const muteTimingsTabActive = activeTab === ActiveTab.TimeIntervals;
   const policyTreeTabActive = activeTab === ActiveTab.NotificationPolicies;
 
   const numberOfMuteTimings = muteTimings.length;
@@ -62,19 +62,19 @@ const NotificationPoliciesTabs = () => {
         )}
         {timingsSupported && canSeeTimingsTab && (
           <Tab
-            label={t('alerting.notification-policies-tabs.label-mute-timings', 'Mute Timings')}
+            label={t('alerting.notification-policies-tabs.label-time-intervals', 'Time intervals')}
             active={muteTimingsTabActive}
             counter={numberOfMuteTimings}
             onChangeTab={() => {
-              setActiveTab(ActiveTab.MuteTimings);
-              setQueryParams({ tab: ActiveTab.MuteTimings });
+              setActiveTab(ActiveTab.TimeIntervals);
+              setQueryParams({ tab: ActiveTab.TimeIntervals });
             }}
           />
         )}
       </TabsBar>
       <TabContent className={styles.tabContent}>
         {policyTreeTabActive && <NotificationPoliciesList />}
-        {muteTimingsTabActive && <MuteTimingsTable />}
+        {muteTimingsTabActive && <TimeIntervalsTable />}
       </TabContent>
     </>
   );
@@ -97,8 +97,8 @@ function getActiveTabFromUrl(queryParams: UrlQueryMap, defaultTab: ActiveTab): Q
     tab = ActiveTab.NotificationPolicies;
   }
 
-  if (queryParams.tab === ActiveTab.MuteTimings) {
-    tab = ActiveTab.MuteTimings;
+  if (queryParams.tab === ActiveTab.TimeIntervals) {
+    tab = ActiveTab.TimeIntervals;
   }
 
   return {

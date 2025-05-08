@@ -189,7 +189,7 @@
 
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
-/devenv/docker/blocks/elastic* @grafana/aws-datasources
+/devenv/docker/blocks/elastic* @grafana/partner-datasources
 /devenv/docker/blocks/self-instrumentation* @grafana/oss-big-tent
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
@@ -226,7 +226,7 @@
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 
-/devenv/dev-dashboards/datasource-elasticsearch/ @grafana/aws-datasources
+/devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-mssql/ @grafana/partner-datasources
@@ -330,7 +330,7 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/oss-big-tent
-/pkg/tsdb/elasticsearch/ @grafana/aws-datasources
+/pkg/tsdb/elasticsearch/ @grafana/partner-datasources
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
@@ -652,7 +652,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
-/public/app/plugins/datasource/elasticsearch/ @grafana/aws-datasources
+/public/app/plugins/datasource/elasticsearch/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
@@ -807,6 +807,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/verify-kinds.yml @grafana/platform-monitoring
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
+/.github/workflows/e2e-dashboard-new-layouts.yml  @grafana/dashboards-squad
 /.github/workflows/run-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/trigger-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-backend-services-squad

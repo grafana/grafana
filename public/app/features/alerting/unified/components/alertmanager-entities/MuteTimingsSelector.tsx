@@ -6,29 +6,29 @@ import { BaseAlertmanagerArgs } from 'app/features/alerting/unified/types/hooks'
 import { timeIntervalToString } from 'app/features/alerting/unified/utils/alertmanager';
 import { MuteTimeInterval } from 'app/plugins/datasource/alertmanager/types';
 
-const mapMuteTiming = ({ name, time_intervals }: MuteTimeInterval): SelectableValue<string> => ({
+const mapTimeInterval = ({ name, time_intervals }: MuteTimeInterval): SelectableValue<string> => ({
   value: name,
   label: name,
   description: time_intervals.map((interval) => timeIntervalToString(interval)).join(', AND '),
 });
 
-/** Provides a MultiSelect with available mute timings for the given alertmanager */
-const MuteTimingsSelector = ({
+/** Provides a MultiSelect with available time intervals for the given alertmanager */
+const TimeIntervalSelector = ({
   alertmanager,
   selectProps,
 }: BaseAlertmanagerArgs & { selectProps: MultiSelectCommonProps<string> }) => {
   const { data } = useMuteTimings({ alertmanager, skip: selectProps.disabled });
 
-  const muteTimingOptions = data?.map((value) => mapMuteTiming(value)) || [];
+  const timeIntervalOptions = data?.map((value) => mapTimeInterval(value)) || [];
 
   return (
     <MultiSelect
-      aria-label={t('alerting.mute-timings-selector.aria-label-mute-timings', 'Mute timings')}
-      options={muteTimingOptions}
-      placeholder={t('alerting.mute-timings-selector.placeholder-select-mute-timings', 'Select mute timings...')}
+      aria-label={t('alerting.time-intervals-selector.aria-label-time-intervals', 'Time intervals')}
+      options={timeIntervalOptions}
+      placeholder={t('alerting.time-intervals-selector.placeholder-select-time-intervals', 'Select time intervals...')}
       {...selectProps}
     />
   );
 };
 
-export default MuteTimingsSelector;
+export default TimeIntervalSelector;

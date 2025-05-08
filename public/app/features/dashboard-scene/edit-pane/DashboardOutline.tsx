@@ -90,6 +90,8 @@ function DashboardOutlineNode({
       >
         {elementInfo.isContainer && (
           <button
+            // TODO fix keyboard a11y here
+            // eslint-disable-next-line jsx-a11y/role-has-required-aria-props
             role="treeitem"
             className={styles.angleButton}
             onPointerDown={onToggleCollapse}
@@ -99,7 +101,6 @@ function DashboardOutlineNode({
           </button>
         )}
         <button
-          role="button"
           className={cx(styles.nodeName, isCloned && styles.nodeNameClone)}
           onDoubleClick={outlineRename.onNameDoubleClicked}
           data-testid={selectors.components.PanelEditor.Outline.item(instanceName)}
