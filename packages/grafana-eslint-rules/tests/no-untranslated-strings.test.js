@@ -95,12 +95,10 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       name: 'Ternary with falsy strings',
       code: `<div title={isAThing ? foo : ''} />`,
     },
-
     {
       name: 'Ternary with no strings',
       code: `<div title={isAThing ? 1 : 2} />`,
     },
-
     {
       name: 'Object property',
       code: `const thing = {
@@ -108,6 +106,8 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       }`,
     },
     {
+      // Ideally we would catch this, but test case is to ensure that
+      // we aren't reporting an error
       name: 'Object property using variable',
       code: `const foo = 'test';
       const thing = {
@@ -119,7 +119,7 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       code: `const foo = 'label';
       const thing = {
         [foo]: 'test',
-        ['abc']: 'test',
+        ['title']: 'test',
       }`,
     },
     {
@@ -912,18 +912,20 @@ const Foo = () => {
       errors: [{ messageId: 'noUntranslatedStringsProp' }, { messageId: 'noUntranslatedStringsProp' }],
     },
 
-    {
-      name: 'Object property at top level scope',
-      code: `
-const thing = {
-  label: 'test',
-}`,
-      filename,
-      errors: [
-        {
-          messageId: 'noUntranslatedStringsProperties',
-        },
-      ],
-    },
+    // TODO: Enable test once all top-level issues have been fixed
+    // and rule is enabled again
+    //     {
+    //       name: 'Object property at top level scope',
+    //       code: `
+    // const thing = {
+    //   label: 'test',
+    // }`,
+    //       filename,
+    //       errors: [
+    //         {
+    //           messageId: 'noUntranslatedStringsProperties',
+    //         },
+    //       ],
+    //     },
   ],
 });
