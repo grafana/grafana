@@ -967,6 +967,9 @@ func (cfg *Cfg) loadConfiguration(args CommandLineArgs) (*ini.File, error) {
 	// apply command line overrides
 	cfg.applyCommandLineProperties(commandLineProps, parsedFile)
 
+	// migrate install plugins to preinstall
+	cfg.migrateInstallPluginsToPreinstall(parsedFile, os.Getenv("GF_INSTALL_PLUGINS"))
+
 	// evaluate config values containing environment variables
 	err = expandConfig(parsedFile)
 	if err != nil {
