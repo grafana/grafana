@@ -169,6 +169,7 @@ describe('Combobox', () => {
     render(
       <Combobox options={numericOptions} value={numericOptions[0].value} onChange={onChangeHandler} isClearable />
     );
+    expect(screen.getByDisplayValue('Option 0')).toBeInTheDocument();
     expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 
