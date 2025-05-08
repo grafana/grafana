@@ -7,7 +7,7 @@ import { config } from '@grafana/runtime';
 export const getAPINamespace = () => config.namespace;
 
 export const getAPIBaseURL = (group: string, version: string) =>
-  `/apis/${group}/${version}/namespaces/${getAPINamespace()}`;
+  `/apis/${group}/${version}/namespaces/${getAPINamespace()}` as const;
 
 // By including the version in the reducer path we can prevent cache bugs when different versions of the API are used for the same entities
-export const getAPIReducerPath = (group: string, version: string) => `${group}/${version}`;
+export const getAPIReducerPath = (group: string, version: string) => `${group}/${version}` as const;
