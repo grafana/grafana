@@ -41,6 +41,9 @@ const (
 	// These headers control the paused state of newly created rules. By default, rules are not paused.
 	recordingRulesPausedHeader = "X-Grafana-Alerting-Recording-Rules-Paused"
 	alertRulesPausedHeader     = "X-Grafana-Alerting-Alert-Rules-Paused"
+
+	// notificationReceiver is the header that specifies the notification receiver to be used for the rules.
+	notificationReceiver = "X-Grafana-Alerting-Notification-Receiver"
 )
 
 var (
@@ -479,6 +482,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 			},
 			KeepOriginalRuleDefinition: util.Pointer(keepOriginalRuleDefinition),
 			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
+			NotificationReceiver:       c.Req.Header.Get(notificationReceiver),
 		},
 	)
 	if err != nil {

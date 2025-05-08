@@ -425,6 +425,40 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.NotNil(t, remaining[0].Record)
 		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
 	})
+
+	t.Run("sets notification receiver for rules if specified", func(t *testing.T) {
+		srv, _, ruleStore, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		receiver := "test-receiver"
+		rc.Req.Header.Set(notificationReceiver, receiver)
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+					For:   util.Pointer(prommodel.Duration(5 * time.Minute)),
+					Labels: map[string]string{
+						"severity": "critical",
+					},
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusAccepted, response.Status())
+
+		createdRules, err := ruleStore.ListAlertRules(context.Background(), &models.ListAlertRulesQuery{
+			OrgID: 1,
+		})
+		require.NoError(t, err)
+		require.Len(t, createdRules, 1)
+		require.Len(t, createdRules[0].NotificationSettings, 1)
+		require.Equal(t, receiver, createdRules[0].NotificationSettings[0].Receiver)
+	})
 }
 
 func TestRouteConvertPrometheusGetRuleGroup(t *testing.T) {

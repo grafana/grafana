@@ -811,6 +811,61 @@ func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 	}
 }
 
+func TestPrometheusRulesToGrafana_NotificationReceiver(t *testing.T) {
+	orgID := int64(1)
+	namespace := "namespace"
+
+	promGroup := PrometheusRuleGroup{
+		Name: "test-group",
+		Rules: []PrometheusRule{
+			{
+				Alert: "test-alert",
+				Expr:  "up == 0",
+			},
+		},
+	}
+
+	testCases := []struct {
+		name                 string
+		notificationReceiver string
+	}{
+		{
+			name:                 "with notification receiver specified",
+			notificationReceiver: "test-receiver",
+		},
+		{
+			name:                 "without notification receiver",
+			notificationReceiver: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			cfg := Config{
+				DatasourceUID:        "datasource-uid",
+				DatasourceType:       datasources.DS_PROMETHEUS,
+				DefaultInterval:      1 * time.Minute,
+				NotificationReceiver: tc.notificationReceiver,
+			}
+
+			converter, err := NewConverter(cfg)
+			require.NoError(t, err)
+
+			grafanaGroup, err := converter.PrometheusRulesToGrafana(orgID, namespace, promGroup)
+			require.NoError(t, err)
+			require.Len(t, grafanaGroup.Rules, 1)
+
+			if tc.notificationReceiver != "" {
+				require.NotNil(t, grafanaGroup.Rules[0].NotificationSettings)
+				require.Len(t, grafanaGroup.Rules[0].NotificationSettings, 1)
+				require.Equal(t, tc.notificationReceiver, grafanaGroup.Rules[0].NotificationSettings[0].Receiver)
+			} else {
+				require.Nil(t, grafanaGroup.Rules[0].NotificationSettings)
+			}
+		})
+	}
+}
+
 func TestQueryModelContainsRequiredParameters(t *testing.T) {
 	cfg := Config{
 		DatasourceUID:   "datasource-uid",
