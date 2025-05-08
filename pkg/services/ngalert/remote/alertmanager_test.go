@@ -281,7 +281,7 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 
 	cfgWithAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
 	require.NoError(t, err)
-	require.NoError(t, testAutogenFn(context.Background(), nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
+	require.NoError(t, testAutogenFn(nil, nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
 
 	tests := []struct {
 		name      string
