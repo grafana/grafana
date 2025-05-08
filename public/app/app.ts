@@ -119,9 +119,8 @@ export class GrafanaApp {
   context!: GrafanaContextType;
 
   async init() {
-    await preInitTasks();
-
     try {
+      await preInitTasks();
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');
 
