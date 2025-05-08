@@ -165,7 +165,7 @@ describe('Combobox', () => {
     expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
   });
 
-  it.only('does not show a hanging 0 when the value is 0', async () => {
+  it('does not show a hanging 0 when the value is 0', async () => {
     render(
       <Combobox options={numericOptions} value={numericOptions[0].value} onChange={onChangeHandler} isClearable />
     );
