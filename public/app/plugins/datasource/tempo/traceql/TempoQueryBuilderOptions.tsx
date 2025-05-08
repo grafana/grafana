@@ -51,7 +51,7 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
     }
 
     if (isAlerting && query.metricsQueryType === MetricsQueryType.Range) {
-      onChange({ ...query, step: '30s', metricsQueryType: MetricsQueryType.Instant });
+      onChange({ ...query, metricsQueryType: MetricsQueryType.Instant });
     }
 
     const onLimitChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -151,20 +151,21 @@ export const TempoQueryBuilderOptions = React.memo<Props>(
             isOpen={isOpen}
             onToggle={toggleOpen}
           >
-            <EditorField
-              label="Step"
-              tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
-            >
-              <AutoSizeInput
-                className="width-4"
-                placeholder="auto"
-                type="string"
-                defaultValue={query.step}
-                onCommitChange={onStepChange}
-                value={query.step}
-                disabled={isAlerting}
-              />
-            </EditorField>
+            {!isAlerting && (
+              <EditorField
+                label="Step"
+                tooltip="Defines the step for metric queries. Use duration notation, for example 30s or 1m"
+              >
+                <AutoSizeInput
+                  className="width-4"
+                  placeholder="auto"
+                  type="string"
+                  defaultValue={query.step}
+                  onCommitChange={onStepChange}
+                  value={query.step}
+                />
+              </EditorField>
+            )}
             <EditorField label="Type" tooltip="Type of metrics query to run">
               <RadioButtonGroup
                 options={[
