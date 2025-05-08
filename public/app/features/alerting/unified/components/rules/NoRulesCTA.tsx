@@ -83,15 +83,49 @@ export const NoRulesSplash = () => {
         }
       >
         <Trans i18nKey="alerting.list-view.empty.provisioning">
-          You can also define rules through file provisioning or Terraform.{' '}
-          <TextLink
-            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/"
-            external
-          >
-            Learn more
-          </TextLink>
+          You can also define rules through file provisioning or Terraform
         </Trans>
+        <TextLink href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/" external>
+          <Trans i18nKey="alerting.common.learn-more">Learn more</Trans>
+        </TextLink>
       </EmptyState>
     </div>
   );
 };
+
+export function GrafanaNoRulesCTA() {
+  const { canCreateGrafanaRules } = useRulesAccess();
+  const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
+
+  return (
+    <EmptyState message="You haven't created any rules yet" variant="call-to-action">
+      <Stack direction="column" alignItems="center" justifyContent="center" gap={2}>
+        <Stack direction="row" alignItems="center" justifyContent="center">
+          <Trans i18nKey="alerting.list-view.empty.provisioning">
+            You can also define rules through file provisioning or Terraform
+          </Trans>
+          <TextLink
+            href="https://grafana.com/docs/grafana/latest/alerting/set-up/provision-alerting-resources/"
+            external
+          >
+            <Trans i18nKey="alerting.common.learn-more">Learn more</Trans>
+          </TextLink>
+        </Stack>
+        <Stack direction="row" alignItems="center" justifyContent="center">
+          {canCreateGrafanaRules && (
+            <LinkButton variant="primary" icon="plus" href="alerting/new/alerting">
+              <Trans i18nKey="alerting.list-view.empty.new-grafana-alerting-rule">New Grafana-managed alert rule</Trans>
+            </LinkButton>
+          )}
+          {canCreateGrafanaRules && grafanaRecordingRulesEnabled && (
+            <LinkButton variant="primary" icon="plus" href="alerting/new/grafana-recording">
+              <Trans i18nKey="alerting.list-view.empty.new-grafana-recording-rule">
+                New Grafana-managed recording rule
+              </Trans>
+            </LinkButton>
+          )}
+        </Stack>
+      </Stack>
+    </EmptyState>
+  );
+}

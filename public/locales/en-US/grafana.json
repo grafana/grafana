@@ -731,6 +731,7 @@
       "edit": "Edit",
       "export": "Export",
       "export-all": "Export all",
+      "learn-more": "Learn more",
       "loading": "Loading...",
       "search-by-matchers": "Search by matchers",
       "titles": {
@@ -1410,9 +1411,10 @@
       "empty": {
         "new-alert-rule": "New alert rule",
         "new-ds-managed-recording-rule": "New data source-managed recording rule",
+        "new-grafana-alerting-rule": "New Grafana-managed alert rule",
         "new-grafana-recording-rule": "New Grafana-managed recording rule",
         "new-recording-rule": "New recording rule",
-        "provisioning": "You can also define rules through file provisioning or Terraform. <2>Learn more</2>"
+        "provisioning": "You can also define rules through file provisioning or Terraform"
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
       "no-rules": "No rules found.",
