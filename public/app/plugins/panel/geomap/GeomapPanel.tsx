@@ -16,6 +16,8 @@ import { Subscription } from 'rxjs';
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
 import { config, locationService } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
+import { appEvents } from 'app/core/app_events';
+import { VariablesChanged } from 'app/features/variables/types';
 import { PanelEditExitedEvent } from 'app/types/events';
 
 import { GeomapOverlay, OverlayProps } from './GeomapOverlay';
@@ -32,7 +34,7 @@ import { getActions } from './utils/actions';
 import { getLayersExtent } from './utils/getLayersExtent';
 import { applyLayerFilter, initLayer } from './utils/layers';
 import { pointerClickListener, pointerMoveListener, setTooltipListeners } from './utils/tooltip';
-import { updateMap, getNewOpenLayersMap, notifyPanelEditor } from './utils/utils';
+import { updateMap, getNewOpenLayersMap, notifyPanelEditor, hasVariableDependencies } from './utils/utils';
 import { centerPointRegistry, MapCenterID } from './view';
 
 // Allows multiple panels to share the same view instance
@@ -72,6 +74,25 @@ export class GeomapPanel extends Component<Props, State> {
       this.props.eventBus.subscribe(PanelEditExitedEvent, (evt) => {
         if (this.mapDiv && this.props.id === evt.payload) {
           this.initMapRef(this.mapDiv);
+        }
+      })
+    );
+    // Subscribe to variable changes
+    this.subs.add(
+      appEvents.subscribe(VariablesChanged, () => {
+        if (this.mapDiv) {
+          // Check if any of the map's layers are dependent on variables
+          const hasDependencies = this.layers.some((layer) => {
+            const config = layer.options.config;
+            if (!config || typeof config !== 'object') {
+              return false;
+            }
+            return hasVariableDependencies(config);
+          });
+
+          if (hasDependencies) {
+            this.initMapRef(this.mapDiv);
+          }
         }
       })
     );

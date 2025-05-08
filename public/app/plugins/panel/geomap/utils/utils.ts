@@ -2,6 +2,7 @@ import { Map as OpenLayersMap } from 'ol';
 import { defaults as interactionDefaults } from 'ol/interaction';
 
 import { DataFrame, GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { getTemplateSrv } from '@grafana/runtime';
 import { getColorDimension, getScalarDimension, getScaledDimension, getTextDimension } from 'app/features/dimensions';
 import { getGrafanaDatasource } from 'app/plugins/datasource/grafana/datasource';
 
@@ -72,6 +73,15 @@ async function initGeojsonFiles() {
     });
   }
 }
+
+/**
+ * Checks if an object contains any Grafana template variables
+ * @param obj - The object to check for variables
+ * @returns true if the object contains any template variables
+ */
+export const hasVariableDependencies = (obj: object): boolean => {
+  return getTemplateSrv().containsTemplate(JSON.stringify(obj));
+};
 
 export const getNewOpenLayersMap = (panel: GeomapPanel, options: Options, div: HTMLDivElement) => {
   const view = panel.initMapView(options.view);
