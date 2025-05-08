@@ -209,24 +209,26 @@ function getComponentNames(node, context) {
   return names;
 }
 
+/** Package to suggest importing translation utils from */
+const PACKAGE_IMPORT_NAME = '@grafana/i18n';
+
 /**
  * Gets the import fixer for a node
- * @param {JSXElement|JSXFragment|JSXAttribute} node
  * @param {RuleFixer} fixer The fixer
  * @param {string} importName The import name
  * @param {RuleContextWithOptions} context
  * @returns {import('@typescript-eslint/utils/ts-eslint').RuleFix|undefined} The fix
  */
-function getImportsFixer(node, fixer, importName, context) {
+function getImportsFixer(fixer, importName, context) {
   const body = context.sourceCode.ast.body;
 
   const existingAppCoreI18n = body.find(
-    (node) => node.type === AST_NODE_TYPES.ImportDeclaration && node.source.value === 'app/core/internationalization'
+    (node) => node.type === AST_NODE_TYPES.ImportDeclaration && node.source.value === PACKAGE_IMPORT_NAME
   );
 
   // If there's no existing import at all, add it
   if (!existingAppCoreI18n) {
-    return fixer.insertTextBefore(body[0], `import { ${importName} } from 'app/core/internationalization';\n`);
+    return fixer.insertTextBefore(body[0], `import { ${importName} } from '${PACKAGE_IMPORT_NAME}';\n`);
   }
 
   // To keep the typechecker happy - we have to explicitly check the type
@@ -269,7 +271,7 @@ const getTransFixers = (node, context) => (fixer) => {
     }
   });
 
-  const importsFixer = getImportsFixer(node, fixer, 'Trans', context);
+  const importsFixer = getImportsFixer(fixer, 'Trans', context);
   if (importsFixer) {
     fixes.push(importsFixer);
   }
@@ -291,7 +293,7 @@ const getTFixers = (node, context) => (fixer) => {
     fixer.replaceText(node, `${node.name.name}={t("${i18nKey}", ${wrappingQuotes}${value}${wrappingQuotes})}`)
   );
 
-  const importsFixer = getImportsFixer(node, fixer, 't', context);
+  const importsFixer = getImportsFixer(fixer, 't', context);
   if (importsFixer) {
     fixes.push(importsFixer);
   }
@@ -330,4 +332,5 @@ module.exports = {
   shouldBeFixed,
   elementIsTrans,
   isStringNonAlphanumeric,
+  PACKAGE_IMPORT_NAME,
 };
