@@ -1,6 +1,7 @@
 import { RuleTester } from 'eslint';
 
 import noUntranslatedStrings from '../rules/no-untranslated-strings.cjs';
+import { PACKAGE_IMPORT_NAME } from '../rules/translation-utils.cjs';
 
 RuleTester.setDefaultConfig({
   languageOptions: {
@@ -15,6 +16,10 @@ RuleTester.setDefaultConfig({
 });
 
 const filename = 'public/app/features/some-feature/SomeFile.tsx';
+
+const TRANS_IMPORT = `import { Trans } from '${PACKAGE_IMPORT_NAME}';`;
+const T_IMPORT = `import { t } from '${PACKAGE_IMPORT_NAME}';`;
+const ALL_IMPORT = `import { Trans, t } from '${PACKAGE_IMPORT_NAME}';`;
 
 const ruleTester = new RuleTester();
 
@@ -108,7 +113,7 @@ const Foo = () => <div>Untranslated text</div>`,
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
             },
           ],
@@ -126,7 +131,7 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untra
           suggestions: [
             {
               messageId: 'wrapWithTrans',
-              output: `import { Trans } from 'app/core/internationalization';
+              output: `${TRANS_IMPORT}
 const thing = <div><Trans i18nKey="some-feature.thing.foo">foo</Trans></div>`,
             },
           ],
@@ -146,7 +151,7 @@ const Foo = () => <div>This is a longer string that we will translate</div>`,
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => <div><Trans i18nKey="some-feature.foo.longer-string-translate">This is a longer string that we will translate</Trans></div>`,
             },
           ],
@@ -166,7 +171,7 @@ const Foo = () => <div>lots of sho rt word s to be filt ered</div>`,
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => <div><Trans i18nKey="some-feature.foo.lots-of-sho-rt-word-s">lots of sho rt word s to be filt ered</Trans></div>`,
             },
           ],
@@ -186,7 +191,7 @@ const foo = <>hello</>`,
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const foo = <><Trans i18nKey="some-feature.foo.hello">hello</Trans></>`,
             },
           ],
@@ -206,7 +211,7 @@ const Foo = () => <div><TestingComponent someProp={<>Test</>} /></div>`,
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-feature.foo.test">Test</Trans></>} /></div>`,
             },
           ],
@@ -217,7 +222,7 @@ const Foo = () => <div><TestingComponent someProp={<><Trans i18nKey="some-featur
     {
       name: 'Fixes and uses ID from attribute if exists',
       code: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => <div id="someid" title="foo"/>`,
       filename,
       errors: [
@@ -227,7 +232,7 @@ const Foo = () => <div id="someid" title="foo"/>`,
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => <div id="someid" title={t("some-feature.foo.someid-title-foo", "foo")}/>`,
             },
           ],
@@ -238,7 +243,7 @@ const Foo = () => <div id="someid" title={t("some-feature.foo.someid-title-foo",
     {
       name: 'Fixes correctly when Trans import already exists',
       code: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => <div>Untranslated text</div>`,
       filename,
       errors: [
@@ -248,7 +253,7 @@ const Foo = () => <div>Untranslated text</div>`,
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untranslated text</Trans></div>`,
             },
           ],
@@ -259,7 +264,7 @@ const Foo = () => <div><Trans i18nKey="some-feature.foo.untranslated-text">Untra
     {
       name: 'Fixes correctly when t() import already exists',
       code: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => <div title="foo" />`,
       filename,
       errors: [
@@ -269,7 +274,7 @@ const Foo = () => <div title="foo" />`,
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
             },
           ],
@@ -280,7 +285,7 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
     {
       name: 'Fixes correctly when import exists but needs to add t()',
       code: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => <div title="foo" />`,
       filename,
       errors: [
@@ -290,7 +295,7 @@ const Foo = () => <div title="foo" />`,
             {
               messageId: 'wrapWithT',
               output: `
-import { Trans, t } from 'app/core/internationalization';
+${ALL_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
             },
           ],
@@ -314,7 +319,7 @@ class Foo extends React.Component {
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 class Foo extends React.Component {
   render() {
     return <div><Trans i18nKey="some-feature.foo.untranslated-text">untranslated text</Trans></div>;
@@ -338,7 +343,7 @@ const Foo = () => <div title="foo" />`,
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
             },
           ],
@@ -358,7 +363,7 @@ const Foo = () => <div title={"foo"} />`,
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
             },
           ],
@@ -378,7 +383,7 @@ const Foo = () => <div title='"foo"' />`,
             {
               messageId: 'wrapWithT',
               output: `
-import { t } from 'app/core/internationalization';
+${T_IMPORT}
 const Foo = () => <div title={t("some-feature.foo.title-foo", '"foo"')} />`,
             },
           ],
@@ -389,7 +394,7 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", '"foo"')} />`,
     {
       name: 'Fixes case with nested functions/components',
       code: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => {
   const getSomething = () => {
     return <div>foo</div>;
@@ -406,7 +411,7 @@ const Foo = () => {
             {
               messageId: 'wrapWithTrans',
               output: `
-import { Trans } from 'app/core/internationalization';
+${TRANS_IMPORT}
 const Foo = () => {
   const getSomething = () => {
     return <div><Trans i18nKey="some-feature.foo.get-something.foo">foo</Trans></div>;
