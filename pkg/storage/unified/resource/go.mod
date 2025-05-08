@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/resource
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/fullstorydev/grpchan v1.1.1
