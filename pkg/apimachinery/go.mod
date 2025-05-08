@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apimachinery
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/grafana/authlib v0.0.0-20240730122259-a0d13672efb1
