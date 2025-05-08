@@ -173,9 +173,7 @@ module.exports = [
     files: ['**/*.tsx'],
     ignores: ['**/*.{spec,test}.tsx'],
     rules: {
-      // rules marked "off" are those left in the recommended preset we need to fix
-      // we should remove the corresponding line and fix them one by one
-      // any marked "error" contain specific overrides we'll need to keep
+      ...jsxA11yPlugin.configs.recommended.rules,
       'jsx-a11y/no-autofocus': [
         'error',
         {
@@ -288,7 +286,6 @@ module.exports = [
     },
     files: ['public/**/*.{ts,tsx,js,jsx}', 'packages/grafana-ui/**/*.{ts,tsx,js,jsx}'],
     ignores: [
-      'public/app/extensions/**',
       'public/app/plugins/**',
       '**/*.story.tsx',
       '**/*.{test,spec}.{ts,tsx}',

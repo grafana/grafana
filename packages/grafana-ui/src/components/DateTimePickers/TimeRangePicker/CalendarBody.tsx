@@ -109,7 +109,7 @@ export const getBodyStyles = (theme: GrafanaTheme2) => {
     }),
     body: css({
       zIndex: theme.zIndex.modal,
-      backgroundColor: theme.colors.background.primary,
+      backgroundColor: theme.colors.background.elevated,
       width: '268px',
 
       '.react-calendar__navigation': {

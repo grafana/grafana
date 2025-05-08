@@ -518,6 +518,20 @@ func schema_pkg_apis_alerting_v0alpha1_RoutingTreeRoute(ref common.ReferenceCall
 							},
 						},
 					},
+					"active_time_intervals": {
+						SchemaProps: spec.SchemaProps{
+							Type: []string{"array"},
+							Items: &spec.SchemaOrArray{
+								Schema: &spec.Schema{
+									SchemaProps: spec.SchemaProps{
+										Default: "",
+										Type:    []string{"string"},
+										Format:  "",
+									},
+								},
+							},
+						},
+					},
 					"routes": {
 						SchemaProps: spec.SchemaProps{
 							Type: []string{"array"},

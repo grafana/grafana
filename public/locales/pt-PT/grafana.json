@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Adicionar mais"
     },
@@ -581,6 +584,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Adicionar elemento de correspondência",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Adicionar tempo de silêncio à política",
       "am-mute-timing-select-label-mute-timings": "Tempos de silêncio",
       "aria-label-group-by": "Agrupar por",
@@ -617,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Associar painel de controlo e painel",
       "placeholder-value-input-default": "Introduzir o conteúdo da anotação personalizada..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1030,6 +1046,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "lista de regras filtradas"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Selecione uma pasta para armazenar a sua regra."
@@ -1451,29 +1494,21 @@
       "aria-label": "Mais",
       "button-text": "Mais"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Não foi possível carregar os tempos de silêncio. Tente novamente mais tarde.",
-        "title": "Erro ao carregar os tempos de silêncio"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Desativado",
       "title-delete-mute-timing": "Eliminar tempo de silêncio"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Selecionar um tempo de silêncio para definir quando não enviar notificações para esta regra de alerta",
       "am-mute-timing-select-label-mute-timings": "Tempos de silêncio"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Um nome exclusivo para o tempo de silêncio",
-      "label-name": "",
-      "text-loading-mute-timing": "A carregar tempo de silêncio",
-      "title-no-matching-mute-timing-found": "Nenhum tempo de silêncio correspondente encontrado"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Adicionar outro intervalo de tempo",
-      "description": "Um intervalo de tempo é uma definição para um momento no tempo. Todos os campos são listas e pelo menos um elemento da lista deve ser satisfeito para corresponder ao campo. Se um campo for deixado em branco, qualquer momento corresponderá ao campo. Para que um instante de tempo corresponda a um intervalo de tempo completo, todos os campos devem corresponder. Um tempo de silêncio pode conter vários intervalos de tempo.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Os dias do mês, 1:31, de um mês. Os valores negativos podem ser utilizados para representar dias que começam no final do mês",
       "description-months": "Os meses do ano em formato numérico ou o mês completo do calendário",
       "label-days-of-the-month": "Dias do mês",
@@ -1499,21 +1534,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Remover intervalo de tempo"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Adicionar tempos de silêncio",
-      "description": "Introduza intervalos de tempo específicos para não enviar notificações ou congelar notificações por períodos de tempo recorrentes.",
-      "save": "Guardar tempos de silêncio",
-      "saving": "A guardar tempos de silêncio"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Tempos de silêncio",
-      "placeholder-select-mute-timings": "Selecionar tempos de silêncio..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Ainda não criou qualquer tempo de silêncio",
-      "text-loading-mute-timings": "A carregar tempos de silêncio...",
-      "text-no-mute-timings-configured": "Nenhum tempo de silêncio configurado"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1555,8 +1575,8 @@
       "title-notification-policies-have-changed": "As políticas de notificação foram alteradas"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Tempos de silêncio",
-      "label-notification-policies": "Políticas de notificação"
+      "label-notification-policies": "Políticas de notificação",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2391,6 +2411,32 @@
     "threshold-expression-viewer": {
       "input": "Entrada",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "Dados de séries cronológicas",
