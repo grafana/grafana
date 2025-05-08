@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/apps/advisor
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/grafana/grafana-app-sdk v0.35.1
