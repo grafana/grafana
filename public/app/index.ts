@@ -19,8 +19,5 @@ if (window.nonce) {
 window.__grafana_app_bundle_loaded = true;
 
 import app from './app';
-import { notifyIfMockApiEnabled, potentiallySetupMockApi } from './mock-api-utils';
 
-potentiallySetupMockApi()
-  .then(() => app.init())
-  .then(() => notifyIfMockApiEnabled());
+app.init();
