@@ -36,6 +36,55 @@ var (
 	}
 )
 
+// migrateInstallPluginsToPreinstall populates cfg:plugins.preinstall
+// if cfg:plugins.preinstall is empty and GF_INSTALL_PLUGINS is set
+func (cfg *Cfg) migrateInstallPluginsToPreinstall(iniFile *ini.File, installPluginsVal string) {
+	if installPluginsVal == "" {
+		return
+	}
+	pluginsSection := iniFile.Section("plugins")
+	preinstall := pluginsSection.Key("preinstall").MustString("")
+	if preinstall != "" {
+		return
+	}
+	installPluginsEntries := strings.Split(installPluginsVal, ",")
+	var convertedPreinstallEntries []string
+	for _, entry := range installPluginsEntries {
+		trimmedEntry := strings.TrimSpace(entry)
+		if trimmedEntry == "" {
+			continue
+		}
+
+		var convertedEntry string
+		// value contains url and folder - https://grafana.com/grafana/plugins/grafana-piechart-panel/;grafana-piechart-panel
+		if strings.Contains(trimmedEntry, ";") {
+			parts := strings.SplitN(trimmedEntry, ";", 2)
+			url := strings.TrimSpace(parts[0])
+			folder := strings.TrimSpace(parts[1])
+			if folder != "" && url != "" {
+				convertedEntry = folder + "@@" + url
+			}
+		} else {
+			// value contains id and version or just id - grafana-piechart-panel 7.0.0 or grafana-piechart-panel
+			fields := strings.Fields(trimmedEntry) // Splits by whitespace
+			if len(fields) > 0 {
+				id := fields[0]
+				if len(fields) > 1 {
+					version := strings.Join(fields[1:], " ")
+					convertedEntry = id + "@" + version
+				} else {
+					convertedEntry = id
+				}
+			}
+		}
+
+		if convertedEntry != "" {
+			convertedPreinstallEntries = append(convertedPreinstallEntries, convertedEntry)
+		}
+	}
+	pluginsSection.Key("preinstall").SetValue(strings.Join(convertedPreinstallEntries, ","))
+}
+
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
 
