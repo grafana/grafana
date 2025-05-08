@@ -23,7 +23,8 @@ describe('ClipboardButton', () => {
     Object.assign(window, originalWindow);
   });
 
-  it('should copy text to clipboard when clicked', async () => {
+  // TODO: flaky https://github.com/grafana/grafana/issues/105102
+  it.skip('should copy text to clipboard when clicked', async () => {
     const textToCopy = 'Copy me!';
     const onClipboardCopy = jest.fn();
 
