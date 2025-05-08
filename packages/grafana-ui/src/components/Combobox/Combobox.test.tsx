@@ -22,6 +22,12 @@ const optionsWithGroups: ComboboxOption[] = [
   { label: 'Option 5', value: '5', group: 'Group 2' },
   { label: 'Option 6', value: '6', group: 'Group 2' },
 ];
+const numericOptions: Array<ComboboxOption<number>> = [
+  { label: 'Option 0', value: 0 },
+  { label: 'Option 1', value: 1 },
+  { label: 'Option 2', value: 2 },
+  { label: 'Option 3', value: 3 },
+];
 
 describe('Combobox', () => {
   const onChangeHandler = jest.fn();
@@ -157,6 +163,14 @@ describe('Combobox', () => {
     await userEvent.click(input);
 
     expect(screen.getByRole('option', { name: 'Default' })).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('does not show a hanging 0 when the value is 0', async () => {
+    render(
+      <Combobox options={numericOptions} value={numericOptions[0].value} onChange={onChangeHandler} isClearable />
+    );
+    expect(screen.getByDisplayValue('Option 0')).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 
   describe('groups', () => {
