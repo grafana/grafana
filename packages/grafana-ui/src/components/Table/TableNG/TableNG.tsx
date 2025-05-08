@@ -30,7 +30,7 @@ import { HeaderCell } from './Cells/HeaderCell';
 import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
 import { COLUMN, TABLE } from './constants';
-import { TableSortingTypes, useTableSorting } from './hooks/useTableSorting';
+import { TableSortingTypes, useTableSorting } from './hooks';
 import {
   TableNGProps,
   FilterType,
@@ -323,9 +323,10 @@ export function TableNG(props: TableNGProps) {
     });
   }, [rows, filter, isNestedTable, props.data.fields]);
 
+  /* --------------------------------- SORTING -------------------------------- */
   const { handleNestedTableSort, nestedTableSortColumns, onSort, sortColumns, sortedRows } = useTableSorting({
     columnTypes,
-    data: props.data,
+    data,
     filteredRows,
     initialSortBy,
     isNestedTable,

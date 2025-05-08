@@ -1,83 +1,19 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SortColumn, SortDirection } from 'react-data-grid';
 
-import { DataFrame } from '@grafana/data';
+import { TableRow } from '../../types';
+import { getComparator, processNestedTableRows } from '../../utils';
 
-import { ColumnTypes, TableRow, TableSortByActionCallback, TableSortByFieldState } from '../types';
-import { getComparator, processNestedTableRows } from '../utils';
-
-export type TableSortState = {
-  sortColumns: readonly SortColumn[];
-  nestedTableSortColumns: Record<number, readonly SortColumn[]>;
-  sortedRows: TableRow[];
-};
-
-export type SortHandlerParams = [
-  columnKey: string,
-  direction: SortDirection,
-  isMultiSort: boolean,
-  parentRowIdx?: number,
-  hasNestedFrames?: boolean,
-];
-
-export type TableSortHandlers = {
-  handleNestedTableSort: (parentRowIdx: number, newSortColumns: readonly SortColumn[]) => void;
-  onSort: (...args: SortHandlerParams) => void;
-};
-
-export type TableSortingTypes = TableSortState & TableSortHandlers;
-
-type UseTableSortingProps = {
-  data: DataFrame;
-  setRevId: React.Dispatch<React.SetStateAction<number>>;
-  onSortByChange?: TableSortByActionCallback;
-  initialSortBy?: TableSortByFieldState[];
-  filteredRows: TableRow[];
-  columnTypes: ColumnTypes;
-  isNestedTable: boolean;
-};
-
-const handleTableSort = (
-  columnKey: string,
-  direction: SortDirection,
-  isMultiSort: boolean,
-  setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>,
-  sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>
-) => {
-  let currentSortColumn: SortColumn | undefined;
-
-  const updatedSortColumns = sortColumnsRef.current.filter((column) => {
-    const isCurrentColumn = column.columnKey === columnKey;
-    if (isCurrentColumn) {
-      currentSortColumn = column;
-    }
-    return !isCurrentColumn;
-  });
-
-  // sorted column exists and is descending -> remove it to reset sorting
-  if (currentSortColumn && currentSortColumn.direction === 'DESC') {
-    setSortColumns(updatedSortColumns);
-    sortColumnsRef.current = updatedSortColumns;
-  } else {
-    // new sort column or changed direction
-    if (isMultiSort) {
-      setSortColumns([...updatedSortColumns, { columnKey, direction }]);
-      sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
-    } else {
-      setSortColumns([{ columnKey, direction }]);
-      sortColumnsRef.current = [{ columnKey, direction }];
-    }
-  }
-};
+import { UseTableSortingProps, TableSortingTypes, SortHandlerParams } from './types';
 
 export const useTableSorting = ({
-  data,
-  setRevId,
-  onSortByChange,
-  initialSortBy,
-  filteredRows,
   columnTypes,
+  data,
+  filteredRows,
+  initialSortBy,
   isNestedTable,
+  onSortByChange,
+  setRevId,
 }: UseTableSortingProps): TableSortingTypes => {
   const initialSortColumns = useMemo<SortColumn[]>(() => {
     const initialSort = initialSortBy?.map(({ displayName, desc }) => {
@@ -104,6 +40,41 @@ export const useTableSorting = ({
     }
   }, [initialSortColumns, setSortColumns]);
 
+  /* -------------------------- Non-nested table sort ------------------------- */
+  const handleTableSort = (
+    columnKey: string,
+    direction: SortDirection,
+    isMultiSort: boolean,
+    setSortColumns: React.Dispatch<React.SetStateAction<readonly SortColumn[]>>,
+    sortColumnsRef: React.MutableRefObject<readonly SortColumn[]>
+  ) => {
+    let currentSortColumn: SortColumn | undefined;
+
+    const updatedSortColumns = sortColumnsRef.current.filter((column) => {
+      const isCurrentColumn = column.columnKey === columnKey;
+      if (isCurrentColumn) {
+        currentSortColumn = column;
+      }
+      return !isCurrentColumn;
+    });
+
+    // sorted column exists and is descending -> remove it to reset sorting
+    if (currentSortColumn && currentSortColumn.direction === 'DESC') {
+      setSortColumns(updatedSortColumns);
+      sortColumnsRef.current = updatedSortColumns;
+    } else {
+      // new sort column or changed direction
+      if (isMultiSort) {
+        setSortColumns([...updatedSortColumns, { columnKey, direction }]);
+        sortColumnsRef.current = [...updatedSortColumns, { columnKey, direction }];
+      } else {
+        setSortColumns([{ columnKey, direction }]);
+        sortColumnsRef.current = [{ columnKey, direction }];
+      }
+    }
+  };
+
+  /* ---------------------------- Nested table sort ---------------------------- */
   const handleNestedTableSort = useCallback(
     (parentRowIdx: number, newSortColumns: readonly SortColumn[]) => {
       setNestedTableSortColumns((prev: Record<number, readonly SortColumn[]>) => ({
@@ -116,6 +87,7 @@ export const useTableSorting = ({
     [setNestedTableSortColumns, setRevId]
   );
 
+  /* ----------------------------- Main table sort ----------------------------- */
   const onSort = useCallback(
     (...[columnKey, direction, isMultiSort, parentRowIdx, hasNestedFrames]: SortHandlerParams) => {
       if (hasNestedFrames && parentRowIdx !== undefined) {
@@ -138,7 +110,7 @@ export const useTableSorting = ({
     [handleNestedTableSort, setSortColumns, sortColumnsRef, onSortByChange]
   );
 
-  // Sort rows
+  /* -------------------------- Calculate sorted rows ------------------------- */
   const sortedRows = useMemo(() => {
     if (sortColumns.length === 0) {
       return filteredRows;
@@ -171,8 +143,8 @@ export const useTableSorting = ({
 
   return {
     handleNestedTableSort,
-    onSort,
     nestedTableSortColumns,
+    onSort,
     sortColumns,
     sortedRows,
   };
