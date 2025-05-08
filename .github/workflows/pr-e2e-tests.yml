@@ -25,7 +25,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: 'grafana/grafana-build'
-          ref: 'main'
+          ref: fbeedd0e14d06ee28d95b8ac19ca349b1de61b47
           persist-credentials: false
       - uses: actions/checkout@v4
         with:
