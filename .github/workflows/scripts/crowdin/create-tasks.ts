@@ -25,7 +25,6 @@ const credentials = {
 
 const { tasksApi, projectsGroupsApi, sourceFilesApi, workflowsApi } = new crowdin(credentials);
 
-// then create new tasks for each language
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
 const workflowStepId = await getWorkflowStepId(PROJECT_ID);
