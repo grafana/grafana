@@ -12,11 +12,11 @@ import (
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	clientrest "k8s.io/client-go/rest"
-	utilversion "k8s.io/component-base/version"
 	"k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
 
+	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 )
 
@@ -28,7 +28,7 @@ func TestAggregatorPostStartHooks(t *testing.T) {
 	}
 
 	cfg.GenericConfig.ExternalAddress = "127.0.0.1:6443"
-	cfg.GenericConfig.EffectiveVersion = utilversion.DefaultBuildEffectiveVersion()
+	cfg.GenericConfig.EffectiveVersion = builder.GetEffectiveVersionForTest()
 	cfg.GenericConfig.LoopbackClientConfig = &clientrest.Config{}
 	cfg.GenericConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 

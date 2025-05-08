@@ -18,12 +18,14 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/apimachinery/pkg/util/version"
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	k8srequest "k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/util/openapi"
 	k8sscheme "k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/component-base/compatibility"
 	k8stracing "k8s.io/component-base/tracing"
 	utilversion "k8s.io/component-base/version"
 	"k8s.io/klog/v2"
@@ -231,22 +233,7 @@ func SetupConfig(
 	serverConfig.SkipOpenAPIInstallation = false
 	serverConfig.BuildHandlerChainFunc = buildHandlerChainFuncFromBuilders(builders)
 
-	v := utilversion.DefaultKubeEffectiveVersion()
-	patchver := 0 // required for semver
-
-	info := v.BinaryVersion().Info()
-	info.BuildDate = time.Unix(buildTimestamp, 0).UTC().Format(time.RFC3339)
-	info.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info.Major, info.Minor, patchver, buildVersion)
-	info.GitCommit = fmt.Sprintf("%s@%s", buildBranch, buildCommit)
-	info.GitTreeState = fmt.Sprintf("grafana v%s", buildVersion)
-
-	info2 := v.EmulationVersion().Info()
-	info2.BuildDate = info.BuildDate
-	info2.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info2.Major, info2.Minor, patchver, buildVersion)
-	info2.GitCommit = info.GitCommit
-	info2.GitTreeState = info.GitTreeState
-
-	serverConfig.EffectiveVersion = v
+	serverConfig.EffectiveVersion = GetEffectiveVersion(buildTimestamp, buildVersion, buildBranch, buildCommit)
 
 	// set priority for aggregated discovery
 	for i, b := range builders {
@@ -265,6 +252,35 @@ func SetupConfig(
 	}
 
 	return nil
+}
+
+// GetEffectiveVersion returns the effective version for the Grafana API server.
+// This is based on the Kubernetes default version, coming from the API server dependencies.
+func GetEffectiveVersion(buildTimestamp int64, buildVersion, buildBranch, buildCommit string) compatibility.EffectiveVersion {
+	kubeVersion := version.MustParse(utilversion.DefaultKubeBinaryVersion).WithInfo(utilversion.Get())
+	compatVersion := kubeVersion.SubtractMinor(1)
+	v := compatibility.NewEffectiveVersion(kubeVersion, false, kubeVersion, compatVersion)
+	patchver := 0 // required for semver
+
+	binaryVersionInfo := v.BinaryVersion().Info()
+	binaryVersionInfo.BuildDate = time.Unix(buildTimestamp, 0).UTC().Format(time.RFC3339)
+	binaryVersionInfo.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", binaryVersionInfo.Major, binaryVersionInfo.Minor, patchver, buildVersion)
+	binaryVersionInfo.GitCommit = fmt.Sprintf("%s@%s", buildBranch, buildCommit)
+	binaryVersionInfo.GitTreeState = fmt.Sprintf("grafana v%s", buildVersion)
+
+	info2 := v.EmulationVersion().Info()
+	info2.BuildDate = binaryVersionInfo.BuildDate
+	info2.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info2.Major, info2.Minor, patchver, buildVersion)
+	info2.GitCommit = binaryVersionInfo.GitCommit
+	info2.GitTreeState = binaryVersionInfo.GitTreeState
+
+	return v
+}
+
+// GetEffectiveVersionForTest is used for testing purposes only.
+// It calls GetEffectiveVersion with some generic values.
+func GetEffectiveVersionForTest() compatibility.EffectiveVersion {
+	return GetEffectiveVersion(time.Now().Unix(), "0.0.0", "main", "deadbeef")
 }
 
 type ServerLockService interface {

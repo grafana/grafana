@@ -198,7 +198,8 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 	}, []string{"operation", "status_code"})
 
 	factory := ringclient.PoolInstFunc(func(inst ring.InstanceDesc) (ringclient.PoolClient, error) {
-		opts, err := clientCfg.DialOption(grpcclient.Instrument(factoryRequestDuration))
+		unaryInterceptors, streamInterceptors := grpcclient.Instrument(factoryRequestDuration)
+		opts, err := clientCfg.DialOption(unaryInterceptors, streamInterceptors, nil)
 		if err != nil {
 			return nil, err
 		}

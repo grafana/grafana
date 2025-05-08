@@ -55,8 +55,9 @@ func (c *MockConnection) UnauthenticatedBind(username string) error {
 }
 
 // Close mocks Close connection function
-func (c *MockConnection) Close() {
+func (c *MockConnection) Close() error {
 	c.CloseCalled = true
+	return nil
 }
 
 func (c *MockConnection) setSearchResult(result *ldap.SearchResult) {

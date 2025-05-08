@@ -4,11 +4,14 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/version"
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 	"k8s.io/apiserver/pkg/server"
+	utilversion "k8s.io/component-base/version"
 	"k8s.io/kube-openapi/pkg/common"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -77,6 +80,30 @@ func TestAddPostStartHooks(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetEffectiveVersion(t *testing.T) {
+	t.Parallel()
+
+	t.Run("GetEffectiveVersion", func(t *testing.T) {
+		t.Parallel()
+
+		// buildTimestamp is 2025-05-08T13:33:07+02:00
+		ver := builder.GetEffectiveVersion(1746703987, "12.0.0", "main", "deadbeef")
+		// The call not panicking is the biggest part of this test. But we also want to check what we get back.
+		assert.True(t, ver.BinaryVersion().EqualTo(version.MustParse(utilversion.DefaultKubeBinaryVersion)), "binary version should be the same as the kube default version")
+		assert.True(t, ver.EmulationVersion().EqualTo(version.MustParse(utilversion.DefaultKubeBinaryVersion)), "emulation version should be the same as the kube default version")
+		assert.True(t, ver.MinCompatibilityVersion().EqualTo(version.MustParse(utilversion.DefaultKubeBinaryVersion).SubtractMinor(1)), "min compat version should be the same as the kube default version - 1 minor")
+	})
+
+	t.Run("GetEffectiveVersionForTest", func(t *testing.T) {
+		t.Parallel()
+
+		ver := builder.GetEffectiveVersionForTest()
+		assert.True(t, ver.BinaryVersion().EqualTo(version.MustParse(utilversion.DefaultKubeBinaryVersion)), "binary version should be the same as the kube default version")
+		assert.True(t, ver.EmulationVersion().EqualTo(version.MustParse(utilversion.DefaultKubeBinaryVersion)), "emulation version should be the same as the kube default version")
+		assert.True(t, ver.MinCompatibilityVersion().EqualTo(version.MustParse(utilversion.DefaultKubeBinaryVersion).SubtractMinor(1)), "min compat version should be the same as the kube default version - 1 minor")
+	})
 }
 
 var _ builder.APIGroupBuilder = &mockAPIGroupPostStartHookProvider{}

@@ -29,7 +29,7 @@ type IConnection interface {
 	Del(*ldap.DelRequest) error
 	Search(*ldap.SearchRequest) (*ldap.SearchResult, error)
 	StartTLS(*tls.Config) error
-	Close()
+	Close() error
 }
 
 // IServer is interface for LDAP authorization
