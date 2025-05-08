@@ -172,8 +172,8 @@ func TestRun(t *testing.T) {
 				for _, item := range items {
 					stepFailures, err := step.Run(context.Background(), logging.DefaultLogger, &advisor.CheckSpec{}, item)
 					assert.NoError(t, err)
-					if stepFailures != nil {
-						failures = append(failures, *stepFailures)
+					if len(stepFailures) > 0 {
+						failures = append(failures, stepFailures...)
 					}
 				}
 			}
