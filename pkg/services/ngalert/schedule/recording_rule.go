@@ -190,6 +190,8 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 	))
 	defer span.End()
 
+	nextRetryDelay := initialRetryDelay
+
 	var latestError error
 	for attempt := int64(1); attempt <= r.maxAttempts; attempt++ {
 		logger := logger.New("attempt", attempt)
@@ -206,7 +208,7 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 			break
 		}
 
-		logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err)
+		logger.Error("Failed to evaluate rule", "attempt", attempt, "error", err, "retryDelay", nextRetryDelay)
 		evalAttemptFailures.Inc()
 
 		if eval.IsNonRetryableError(err) {
@@ -218,7 +220,8 @@ func (r *recordingRule) doEvaluate(ctx context.Context, ev *Evaluation) {
 			case <-ctx.Done():
 				logger.Error("Context has been cancelled while backing off", "attempt", attempt)
 				return
-			case <-time.After(retryDelay):
+			case <-time.After(nextRetryDelay):
+				nextRetryDelay = doubleDuration(nextRetryDelay, maxRetryDelay)
 				continue
 			}
 		}
