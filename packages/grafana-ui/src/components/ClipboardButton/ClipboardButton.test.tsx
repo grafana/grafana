@@ -39,6 +39,7 @@ describe('ClipboardButton', () => {
     const clipboardText = await navigator.clipboard.readText();
 
     expect(clipboardText).toBe(textToCopy);
+    expect(await screen.findByText('Copied')).toBeInTheDocument();
     expect(onClipboardCopy).toHaveBeenCalledWith(textToCopy);
   });
 });
