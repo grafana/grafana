@@ -108,7 +108,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -168,6 +168,10 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 	// Parse the default configuration into a postable config.
 	pCfg, err := notifier.Load([]byte(cfg.DefaultConfig))
 	if err != nil {
+		return nil, err
+	}
+
+	if err := autogenFn(ctx, logger, 1, &pCfg.AlertmanagerConfig, true); err != nil {
 		return nil, err
 	}
 

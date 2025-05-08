@@ -110,7 +110,7 @@ func TestNewAlertmanager(t *testing.T) {
 				DefaultConfig:     defaultGrafanaConfig,
 			}
 			m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-			am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+			am, err := NewAlertmanager(context.Background(), cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 			if test.expErr != "" {
 				require.EqualError(tt, err, test.expErr)
 				return
@@ -189,7 +189,7 @@ func TestApplyConfig(t *testing.T) {
 
 	// An error response from the remote Alertmanager should result in the readiness check failing.
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	config := &ngmodels.AlertConfiguration{
@@ -269,6 +269,20 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 	}
 
+	testAutogenFn := func(_ context.Context, _ log.Logger, _ int64, config *apimodels.PostableApiAlertingConfig, _ bool) error {
+		newRoute := definition.Route{
+			Receiver: config.Receivers[0].Name,
+			Match:    map[string]string{"auto-gen-test": "true"},
+		}
+
+		config.Route.Routes = append(config.Route.Routes, &newRoute)
+		return nil
+	}
+
+	cfgWithAutogenRoutes, err := notifier.Load([]byte(testGrafanaConfigWithSecret))
+	require.NoError(t, err)
+	require.NoError(t, testAutogenFn(context.Background(), nil, 0, &cfgWithAutogenRoutes.AlertmanagerConfig, false))
+
 	tests := []struct {
 		name      string
 		config    string
@@ -315,23 +329,38 @@ func TestCompareAndSendConfiguration(t *testing.T) {
 			},
 			"",
 		},
+		{
+			"no error, with auto-generated routes",
+			strings.Replace(testGrafanaConfigWithSecret, `"password":"test"`, fmt.Sprintf("%q:%q", "password", base64.StdEncoding.EncodeToString(testValue)), 1),
+			testAutogenFn,
+			&client.UserGrafanaConfig{
+				GrafanaAlertmanagerConfig: cfgWithAutogenRoutes,
+			},
+			"",
+		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(tt *testing.T) {
-			am, err := NewAlertmanager(cfg,
+			ctx := context.Background()
+			am, err := NewAlertmanager(ctx,
+				cfg,
 				fstore,
 				decryptFn,
-				test.autogenFn,
+				NoopAutogenFn,
 				m,
 				tracing.InitializeTracerForTest(),
 			)
 			require.NoError(t, err)
 
+			// Adding the autogenFn after creating the Alertmanager
+			// to simulate errors when comparing the configuration.
+			am.autogenFn = test.autogenFn
+
 			cfg := ngmodels.AlertConfiguration{
 				AlertmanagerConfiguration: test.config,
 			}
-			err = am.CompareAndSendConfiguration(context.Background(), &cfg)
+			err = am.CompareAndSendConfiguration(ctx, &cfg)
 			if test.expErr == "" {
 				require.NoError(tt, err)
 				rawCfg, err := json.Marshal(test.expCfg)
@@ -375,7 +404,8 @@ func Test_TestReceiversDecryptsSecureSettings(t *testing.T) {
 		DefaultConfig: defaultGrafanaConfig,
 	}
 
-	am, err := NewAlertmanager(cfg,
+	am, err := NewAlertmanager(context.Background(),
+		cfg,
 		fstore,
 		decryptFn,
 		NoopAutogenFn,
@@ -492,7 +522,7 @@ func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
 
 	secretsService := secretsManager.SetupTestService(t, database.ProvideSecretsStore(db.InitTestDB(t)))
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	encodedFullState, err := am.getFullState(ctx)
@@ -647,13 +677,13 @@ func TestIntegrationRemoteAlertmanagerGetStatus(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
+	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should get the default Cloud Alertmanager configuration.
-	ctx := context.Background()
 	status, err := am.GetStatus(ctx)
 	require.NoError(t, err)
 	b, err := yaml.Marshal(status.Config)
@@ -681,51 +711,52 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
+	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should have no silences at first.
-	silences, err := am.ListSilences(context.Background(), []string{})
+	silences, err := am.ListSilences(ctx, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 0, len(silences))
 
 	// Creating a silence should succeed.
 	gen := ngmodels.SilenceGen(ngmodels.SilenceMuts.WithEmptyId())
 	testSilence := notifier.SilenceToPostableSilence(gen())
-	id, err := am.CreateSilence(context.Background(), testSilence)
+	id, err := am.CreateSilence(ctx, testSilence)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
 	testSilence.ID = id
 
 	// We should be able to retrieve a specific silence.
-	silence, err := am.GetSilence(context.Background(), testSilence.ID)
+	silence, err := am.GetSilence(ctx, testSilence.ID)
 	require.NoError(t, err)
 	require.Equal(t, testSilence.ID, *silence.ID)
 
 	// Trying to retrieve a non-existing silence should fail.
-	_, err = am.GetSilence(context.Background(), util.GenerateShortUID())
+	_, err = am.GetSilence(ctx, util.GenerateShortUID())
 	require.Error(t, err)
 
 	// After creating another silence, the total amount should be 2.
 	testSilence2 := notifier.SilenceToPostableSilence(gen())
-	id, err = am.CreateSilence(context.Background(), testSilence2)
+	id, err = am.CreateSilence(ctx, testSilence2)
 	require.NoError(t, err)
 	require.NotEmpty(t, id)
 	testSilence2.ID = id
 
-	silences, err = am.ListSilences(context.Background(), []string{})
+	silences, err = am.ListSilences(ctx, []string{})
 	require.NoError(t, err)
 	require.Equal(t, 2, len(silences))
 	require.True(t, *silences[0].ID == testSilence.ID || *silences[0].ID == testSilence2.ID)
 	require.True(t, *silences[1].ID == testSilence.ID || *silences[1].ID == testSilence2.ID)
 
 	// After deleting one of those silences, the total amount should be 2 but one of those should be expired.
-	err = am.DeleteSilence(context.Background(), testSilence.ID)
+	err = am.DeleteSilence(ctx, testSilence.ID)
 	require.NoError(t, err)
 
-	silences, err = am.ListSilences(context.Background(), []string{})
+	silences, err = am.ListSilences(ctx, []string{})
 	require.NoError(t, err)
 
 	for _, s := range silences {
@@ -737,10 +768,10 @@ func TestIntegrationRemoteAlertmanagerSilences(t *testing.T) {
 	}
 
 	// When deleting the other silence, both should be expired.
-	err = am.DeleteSilence(context.Background(), testSilence2.ID)
+	err = am.DeleteSilence(ctx, testSilence2.ID)
 	require.NoError(t, err)
 
-	silences, err = am.ListSilences(context.Background(), []string{})
+	silences, err = am.ListSilences(ctx, []string{})
 	require.NoError(t, err)
 	require.Equal(t, *silences[0].Status.State, "expired")
 	require.Equal(t, *silences[1].Status.State, "expired")
@@ -766,24 +797,25 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
+	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Wait until the Alertmanager is ready to send alerts.
-	require.NoError(t, am.checkReadiness(context.Background()))
+	require.NoError(t, am.checkReadiness(ctx))
 	require.True(t, am.Ready())
 	require.Eventually(t, func() bool {
 		return len(am.sender.Alertmanagers()) > 0
 	}, 10*time.Second, 500*time.Millisecond)
 
 	// We should have no alerts and no groups at first.
-	alerts, err := am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+	alerts, err := am.GetAlerts(ctx, true, true, true, []string{}, "")
 	require.NoError(t, err)
 	require.Equal(t, 0, len(alerts))
 
-	alertGroups, err := am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
+	alertGroups, err := am.GetAlertGroups(ctx, true, true, true, []string{}, "")
 	require.NoError(t, err)
 	require.Equal(t, 0, len(alertGroups))
 
@@ -796,17 +828,17 @@ func TestIntegrationRemoteAlertmanagerAlerts(t *testing.T) {
 	postableAlerts := apimodels.PostableAlerts{
 		PostableAlerts: []amv2.PostableAlert{alert1, alert2, alert3},
 	}
-	err = am.PutAlerts(context.Background(), postableAlerts)
+	err = am.PutAlerts(ctx, postableAlerts)
 	require.NoError(t, err)
 
 	// We should eventually have two active alerts.
 	require.Eventually(t, func() bool {
-		alerts, err = am.GetAlerts(context.Background(), true, true, true, []string{}, "")
+		alerts, err = am.GetAlerts(ctx, true, true, true, []string{}, "")
 		require.NoError(t, err)
 		return len(alerts) == 2
 	}, 16*time.Second, 1*time.Second)
 
-	alertGroups, err = am.GetAlertGroups(context.Background(), true, true, true, []string{}, "")
+	alertGroups, err = am.GetAlertGroups(ctx, true, true, true, []string{}, "")
 	require.NoError(t, err)
 	require.Equal(t, 1, len(alertGroups))
 
@@ -843,13 +875,14 @@ func TestIntegrationRemoteAlertmanagerReceivers(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
+	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// We should start with the default config.
-	rcvs, err := am.GetReceivers(context.Background())
+	rcvs, err := am.GetReceivers(ctx)
 	require.NoError(t, err)
 	require.Equal(t, []apimodels.Receiver{
 		{
@@ -881,9 +914,10 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 		DefaultConfig:     defaultGrafanaConfig,
 	}
 
+	ctx := context.Background()
 	secretsService := secretsManager.SetupTestService(t, fakes.NewFakeSecretsStore())
 	m := metrics.NewRemoteAlertmanagerMetrics(prometheus.NewRegistry())
-	am, err := NewAlertmanager(cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err := NewAlertmanager(ctx, cfg, nil, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 
 	// Valid template
@@ -903,7 +937,7 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 		Template: `{{ define "test" }} {{ index .Alerts 0 }} {{ end }}`,
 		Name:     "test",
 	}
-	res, err := am.TestTemplate(context.Background(), c)
+	res, err := am.TestTemplate(ctx, c)
 
 	require.NoError(t, err)
 	require.Len(t, res.Errors, 0)
@@ -912,7 +946,7 @@ func TestIntegrationRemoteAlertmanagerTestTemplates(t *testing.T) {
 
 	// Invalid template
 	c.Template = `{{ define "test" }} {{ index 0 .Alerts }} {{ end }}`
-	res, err = am.TestTemplate(context.Background(), c)
+	res, err = am.TestTemplate(ctx, c)
 
 	require.NoError(t, err)
 	require.Len(t, res.Results, 0)
