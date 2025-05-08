@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/storage/unified/apistore
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/grafana/authlib/claims v0.0.0-20240903121118-16441568af1e
