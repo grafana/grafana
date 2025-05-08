@@ -1,8 +1,8 @@
-import { fetchBaseQuery, TypedUseQueryHookResult } from '@reduxjs/toolkit/query/react';
+import { TypedUseQueryHookResult, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
 import { config } from '@grafana/runtime';
 
-import { alertingAPI, ListReceiverApiArg } from '../../api.gen';
+import { ListReceiverApiArg, alertingAPI } from '../../api.gen';
 import { EnhancedListReceiverResponse } from '../types';
 
 const { namespace } = config;
