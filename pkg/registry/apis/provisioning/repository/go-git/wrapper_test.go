@@ -19,20 +19,24 @@ import (
 	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	plumbing "github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/plumbing/object"
+	"github.com/go-git/go-git/v5/plumbing/transport/client"
 	githttp "github.com/go-git/go-git/v5/plumbing/transport/http"
+	"github.com/go-git/go-git/v5/plumbing/transport/server"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
 )
 
 type dummySecret struct{}
 
-// Decrypt implements secrets.Service.
-func (d *dummySecret) Decrypt(ctx context.Context, data []byte) ([]byte, error) {
+func (d *dummySecret) Decrypt(ctx context.Context, encrypted []byte) ([]byte, error) {
 	token, ok := os.LookupEnv("gitwraptoken")
 	if !ok {
 		return nil, fmt.Errorf("missing token in environment")
@@ -40,9 +44,8 @@ func (d *dummySecret) Decrypt(ctx context.Context, data []byte) ([]byte, error) 
 	return []byte(token), nil
 }
 
-// Encrypt implements secrets.Service.
-func (d *dummySecret) Encrypt(ctx context.Context, data []byte) ([]byte, error) {
-	panic("unimplemented")
+func (d *dummySecret) Encrypt(ctx context.Context, plain []byte) ([]byte, error) {
+	panic("not implemented")
 }
 
 // FIXME!! NOTE!!!!!
@@ -1179,6 +1182,7 @@ func TestGoGitRepo_Push(t *testing.T) {
 		})
 	}
 }
+
 func TestGoGitRepo_ReadTree(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -1369,4 +1373,297 @@ func TestGoGitRepo_ReadTree(t *testing.T) {
 			repo.tree.(*MockWorktree).AssertExpectations(t)
 		})
 	}
+}
+
+func TestClone(t *testing.T) {
+	tests := []struct {
+		name        string
+		root        string
+		config      *v0alpha1.Repository
+		createRepo  bool
+		opts        repository.CloneOptions
+		setupMock   func(secrets *secrets.MockService)
+		expectError bool
+		errorMsg    string
+	}{
+		{
+			name: "successful clone",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					GitHub: &v0alpha1.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+				},
+			},
+			createRepo: true,
+			opts: repository.CloneOptions{
+				PushOnWrites: false,
+			},
+			setupMock: func(mockSecrets *secrets.MockService) {
+				mockSecrets.On("Decrypt", mock.Anything, mock.Anything).Return([]byte("test-token"), nil)
+			},
+			expectError: false,
+		},
+		{
+			name: "successful clone with create if not exists",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					GitHub: &v0alpha1.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "non-existent-branch",
+					},
+				},
+			},
+			createRepo: true,
+			opts: repository.CloneOptions{
+				PushOnWrites:      false,
+				CreateIfNotExists: true,
+			},
+			setupMock: func(mockSecrets *secrets.MockService) {
+				mockSecrets.On("Decrypt", mock.Anything, mock.Anything).Return([]byte("test-token"), nil)
+			},
+			expectError: false,
+		},
+		{
+			name: "timeout cancellation",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					GitHub: &v0alpha1.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+				},
+			},
+			opts: repository.CloneOptions{
+				Timeout: 1 * time.Millisecond, // Very short timeout to trigger cancellation
+			},
+			setupMock: func(mockSecrets *secrets.MockService) {
+				mockSecrets.On("Decrypt", mock.Anything, mock.Anything).Return([]byte("test-token"), nil)
+				// Simulate a slow operation that will be cancelled by timeout
+				time.Sleep(20 * time.Millisecond)
+			},
+			expectError: true,
+			errorMsg:    "context deadline exceeded",
+		},
+		{
+			name: "empty root",
+			root: "",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+			},
+			setupMock:   func(mockSecrets *secrets.MockService) {},
+			expectError: true,
+			errorMsg:    "missing root config",
+		},
+		{
+			name: "missing namespace",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Name: "test-repo",
+				},
+			},
+			setupMock:   func(mockSecrets *secrets.MockService) {},
+			expectError: true,
+			errorMsg:    "missing namespace",
+		},
+		{
+			name: "missing name",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+				},
+			},
+			setupMock:   func(mockSecrets *secrets.MockService) {},
+			expectError: true,
+			errorMsg:    "missing name",
+		},
+		{
+			name: "beforeFn error",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+			},
+			opts: repository.CloneOptions{
+				BeforeFn: func() error {
+					return fmt.Errorf("beforeFn error")
+				},
+			},
+			setupMock:   func(mockSecrets *secrets.MockService) {},
+			expectError: true,
+			errorMsg:    "beforeFn error",
+		},
+		{
+			name: "secret decryption error",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					GitHub: &v0alpha1.GitHubRepositoryConfig{
+						EncryptedToken: []byte("test-token"),
+					},
+				},
+			},
+			setupMock: func(mockSecrets *secrets.MockService) {
+				mockSecrets.On("Decrypt", mock.Anything, mock.Anything).Return([]byte("test-token"), fmt.Errorf("error decrypting token"))
+			},
+			expectError: true,
+			errorMsg:    "error decrypting token",
+		},
+		{
+			name: "clone error",
+			root: "testdata/clone",
+			config: &v0alpha1.Repository{
+				ObjectMeta: v1.ObjectMeta{
+					Namespace: "test-ns",
+					Name:      "test-repo",
+				},
+				Spec: v0alpha1.RepositorySpec{
+					GitHub: &v0alpha1.GitHubRepositoryConfig{
+						URL:    "https://github.com/test/repo",
+						Branch: "main",
+					},
+				},
+			},
+			setupMock: func(mockSecrets *secrets.MockService) {
+				mockSecrets.On("Decrypt", mock.Anything, mock.Anything).Return([]byte("test-token"), nil)
+			},
+			expectError: true,
+			errorMsg:    "clone error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Setup test environment
+			mockSecrets := secrets.NewMockService(t)
+			tt.setupMock(mockSecrets)
+
+			// Create a temporary directory for each test
+			if tt.root != "" {
+				tempDir := t.TempDir()
+				tt.root = tempDir
+			}
+			if tt.createRepo {
+				tt.config.Spec.GitHub.URL = createTestRepo(t)
+			}
+
+			// Execute the test
+			ctx := context.Background()
+			repo, err := Clone(ctx, tt.root, tt.config, tt.opts, mockSecrets)
+
+			// Verify results
+			if tt.expectError {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.errorMsg)
+				require.Nil(t, repo)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, repo)
+
+				// Verify the returned repository
+				gitRepo, ok := repo.(*GoGitRepo)
+				require.True(t, ok)
+				require.Equal(t, tt.config, gitRepo.config)
+				require.NotEmpty(t, gitRepo.dir)
+				require.NotNil(t, gitRepo.tree)
+				require.NotNil(t, gitRepo.repo)
+
+				// Clean up
+				err = repo.Remove(ctx)
+				require.NoError(t, err)
+			}
+			mockSecrets.AssertExpectations(t)
+		})
+	}
+}
+
+func createTestRepo(t *testing.T) string {
+	// Create memory filesystem
+	fs := memfs.New()
+
+	// Initialize new repo
+	repo, err := git.Init(memory.NewStorage(), fs)
+	require.NoError(t, err, "Failed to init test repo")
+
+	w, err := repo.Worktree()
+	require.NoError(t, err, "Failed to get worktree")
+
+	// Create a dummy file
+	f, err := fs.Create("README.md")
+	require.NoError(t, err, "Failed to create file")
+	_, err = f.Write([]byte("Hello, world!"))
+	require.NoError(t, err, "Failed to write content")
+	err = f.Close()
+	require.NoError(t, err, "Failed to close file")
+
+	// Add and commit the file
+	_, err = w.Add("README.md")
+	require.NoError(t, err, "Failed to add file")
+
+	// Create initial commit
+	_, err = w.Commit("initial commit", &git.CommitOptions{
+		Author: &object.Signature{
+			Name:  "Test User",
+			Email: "test@example.com",
+			When:  time.Now(),
+		},
+	})
+	require.NoError(t, err, "Failed to commit")
+	// Create a branch
+	headRef, err := repo.Head()
+	require.NoError(t, err, "Failed to get HEAD reference")
+
+	// Create a new branch reference pointing to the current HEAD commit
+	branchRef := plumbing.NewBranchReferenceName("main")
+	ref := plumbing.NewHashReference(branchRef, headRef.Hash())
+
+	// Save the reference to create the branch
+	err = repo.Storer.SetReference(ref)
+	require.NoError(t, err, "Failed to create branch")
+
+	// Checkout the new branch
+	err = w.Checkout(&git.CheckoutOptions{
+		Branch: branchRef,
+	})
+	require.NoError(t, err, "Failed to checkout branch")
+
+	// Create a map of repositories for the server
+	repos := make(map[string]*git.Repository)
+	repos["test-repo.git"] = repo
+
+	// Create and install the server
+	loader := server.MapLoader{
+		"file://test-repo.git": repo.Storer,
+	}
+	srv := server.NewServer(loader)
+	client.InstallProtocol("file", srv)
+
+	return "file://test-repo.git"
 }

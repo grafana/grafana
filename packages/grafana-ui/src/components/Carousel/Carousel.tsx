@@ -1,11 +1,15 @@
 import { css, cx } from '@emotion/css';
-import { useState, useEffect } from 'react';
+import { useDialog } from '@react-aria/dialog';
+import { FocusScope } from '@react-aria/focus';
+import { OverlayContainer, useOverlay } from '@react-aria/overlays';
+import { useState, useEffect, useRef } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 import { t } from '../../utils/i18n';
 import { Alert } from '../Alert/Alert';
+import { clearButtonStyles } from '../Button';
 import { IconButton } from '../IconButton/IconButton';
 
 // Define the image item interface
@@ -23,7 +27,8 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [validImages, setValidImages] = useState<CarouselImage[]>(images);
 
-  const styles = useStyles2(getStyles());
+  const styles = useStyles2(getStyles);
+  const resetButtonStyles = useStyles2(clearButtonStyles);
 
   const handleImageError = (path: string) => {
     setImageErrors((prev) => ({
@@ -77,6 +82,11 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
     }
   };
 
+  const ref = useRef<HTMLDivElement>(null);
+
+  const { overlayProps, underlayProps } = useOverlay({ isOpen: selectedIndex !== null, onClose: closePreview }, ref);
+  const { dialogProps } = useDialog({}, ref);
+
   if (validImages.length === 0) {
     return (
       <Alert
@@ -88,72 +98,88 @@ export const Carousel: React.FC<CarouselProps> = ({ images }) => {
   }
 
   return (
-    <div onKeyDown={handleKeyDown} tabIndex={0}>
+    <>
       <div className={cx(styles.imageGrid)}>
         {validImages.map((image, index) => (
-          <div key={image.path} onClick={() => openPreview(index)} style={{ cursor: 'pointer' }}>
+          <button
+            type="button"
+            key={image.path}
+            onClick={() => openPreview(index)}
+            className={cx(resetButtonStyles, styles.imageButton)}
+          >
             <img src={image.path} alt={image.name} onError={() => handleImageError(image.path)} />
             <p>{image.name}</p>
-          </div>
+          </button>
         ))}
       </div>
 
       {selectedIndex !== null && (
-        <div className={cx(styles.fullScreenDiv)} onClick={closePreview} data-testid="carousel-full-screen">
-          <IconButton
-            name="times"
-            aria-label={t('carousel.close', 'Close')}
-            size="xl"
-            onClick={closePreview}
-            className={cx(styles.closeButton)}
-          />
+        <OverlayContainer>
+          <div role="presentation" className={styles.underlay} onClick={closePreview} {...underlayProps} />
+          <FocusScope contain autoFocus restoreFocus>
+            {/* convenience method for keyboard users */}
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+            <div
+              data-testid="carousel-full-screen"
+              ref={ref}
+              {...overlayProps}
+              {...dialogProps}
+              onKeyDown={handleKeyDown}
+              className={styles.overlay}
+            >
+              <IconButton
+                name="times"
+                aria-label={t('carousel.close', 'Close')}
+                size="xl"
+                onClick={closePreview}
+                className={cx(styles.closeButton)}
+              />
 
-          <IconButton
-            size="xl"
-            name="angle-left"
-            aria-label={t('carousel.previous', 'Previous')}
-            onClick={(e) => {
-              e.stopPropagation();
-              goToPrevious();
-            }}
-            className={cx(styles.navigationButton, styles.previousButton)}
-            data-testid="previous-button"
-          />
+              <IconButton
+                size="xl"
+                name="angle-left"
+                aria-label={t('carousel.previous', 'Previous')}
+                onClick={goToPrevious}
+                data-testid="previous-button"
+              />
 
-          <div
-            style={{ position: 'relative', maxWidth: '90%', maxHeight: '90%' }}
-            onClick={(e) => e.stopPropagation()}
-            data-testid="carousel-full-image"
-          >
-            <img
-              src={validImages[selectedIndex].path}
-              alt={validImages[selectedIndex].name}
-              onError={() => handleImageError(validImages[selectedIndex].path)}
-            />
-          </div>
+              <div data-testid="carousel-full-image">
+                <img
+                  className={styles.imagePreview}
+                  src={validImages[selectedIndex].path}
+                  alt={validImages[selectedIndex].name}
+                  onError={() => handleImageError(validImages[selectedIndex].path)}
+                />
+              </div>
 
-          <IconButton
-            size="xl"
-            name="angle-right"
-            aria-label={t('carousel.next', 'Next')}
-            onClick={(e) => {
-              e.stopPropagation();
-              goToNext();
-            }}
-            className={cx(styles.navigationButton, styles.nextButton)}
-            data-testid="next-button"
-          />
-        </div>
+              <IconButton
+                size="xl"
+                name="angle-right"
+                aria-label={t('carousel.next', 'Next')}
+                onClick={goToNext}
+                data-testid="next-button"
+              />
+            </div>
+          </FocusScope>
+        </OverlayContainer>
       )}
-    </div>
+    </>
   );
 };
 
-const getStyles = () => (theme: GrafanaTheme2) => ({
+const getStyles = (theme: GrafanaTheme2) => ({
+  imageButton: css({
+    textAlign: 'left',
+  }),
+  imagePreview: css({
+    maxWidth: '100%',
+    maxHeight: '80vh',
+    objectFit: 'contain',
+  }),
   imageGrid: css({
     display: 'grid',
     gridTemplateColumns: `repeat(auto-fill, minmax(200px, 1fr))`,
-    gap: '16px',
+    gap: theme.spacing(2),
     marginBottom: '20px',
 
     '& img': {
@@ -165,49 +191,33 @@ const getStyles = () => (theme: GrafanaTheme2) => ({
       boxShadow: theme.shadows.z1,
     },
     '& p': {
-      margin: '4px 0',
+      margin: theme.spacing(0.5, 0),
       fontWeight: theme.typography.fontWeightMedium,
       color: theme.colors.text.primary,
     },
   }),
-  fullScreenDiv: css({
+  underlay: css({
     position: 'fixed',
     zIndex: theme.zIndex.modalBackdrop,
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
+    inset: 0,
     backgroundColor: theme.components.overlay.background,
+  }),
+  overlay: css({
     alignItems: 'center',
-    justifyContent: 'center',
     display: 'flex',
-
-    '& img': {
-      maxWidth: '100%',
-      maxHeight: '80vh',
-      objectFit: 'contain',
-    },
+    gap: theme.spacing(1),
+    height: 'fit-content',
+    marginBottom: 'auto',
+    marginTop: 'auto',
+    padding: theme.spacing(2),
+    position: 'fixed',
+    inset: 0,
+    zIndex: theme.zIndex.modal,
   }),
   closeButton: css({
-    position: 'absolute',
-    top: '20px',
-    right: '20px',
-    backgroundColor: 'transparent',
     color: theme.colors.text.primary,
-  }),
-  navigationButton: css({
-    position: 'absolute',
-    backgroundColor: 'transparent',
-    color: theme.colors.text.primary,
-    cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }),
-  nextButton: css({
-    right: '20px',
-  }),
-  previousButton: css({
-    left: '20px',
+    position: 'fixed',
+    top: theme.spacing(2),
+    right: theme.spacing(2),
   }),
 });

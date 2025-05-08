@@ -1,7 +1,7 @@
 import { ReducersMapObject } from '@reduxjs/toolkit';
 import { AnyAction, combineReducers } from 'redux';
 
-import { alertingAPI as alertingPackageAPI } from '@grafana/alerting/internal';
+import { alertingAPIv0alpha1 } from '@grafana/alerting/unstable';
 import sharedReducers from 'app/core/reducers';
 import ldapReducers from 'app/features/admin/state/reducers';
 import alertingReducers from 'app/features/alerting/state/reducers';
@@ -33,6 +33,7 @@ import { folderAPI } from '../../api/clients/folder';
 import { iamAPI } from '../../api/clients/iam';
 import { playlistAPI } from '../../api/clients/playlist';
 import { provisioningAPI } from '../../api/clients/provisioning';
+import { reportingAPI } from '../../api/clients/reporting/baseAPI';
 import { alertingApi } from '../../features/alerting/unified/api/alertingApi';
 import { userPreferencesAPI } from '../../features/preferences/api';
 import { cleanUpAction } from '../actions/cleanUp';
@@ -63,7 +64,7 @@ const rootReducers = {
   ...authConfigReducers,
   plugins: pluginsReducer,
   [alertingApi.reducerPath]: alertingApi.reducer,
-  [alertingPackageAPI.reducerPath]: alertingPackageAPI.reducer,
+  [alertingAPIv0alpha1.reducerPath]: alertingAPIv0alpha1.reducer,
   [publicDashboardApi.reducerPath]: publicDashboardApi.reducer,
   [browseDashboardsAPI.reducerPath]: browseDashboardsAPI.reducer,
   [cloudMigrationAPI.reducerPath]: cloudMigrationAPI.reducer,
@@ -73,6 +74,7 @@ const rootReducers = {
   [provisioningAPI.reducerPath]: provisioningAPI.reducer,
   [folderAPI.reducerPath]: folderAPI.reducer,
   [advisorAPI.reducerPath]: advisorAPI.reducer,
+  [reportingAPI.reducerPath]: reportingAPI.reducer,
   // PLOP_INJECT_REDUCER
   // Used by the API client generator
 };

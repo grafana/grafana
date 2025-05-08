@@ -5,7 +5,9 @@
   "version": "12.1.0-pre",
   "description": "Grafana Prometheus Library",
   "keywords": [
-    "typescript"
+    "typescript",
+    "prometheus",
+    "grafana"
   ],
   "sideEffects": false,
   "repository": {

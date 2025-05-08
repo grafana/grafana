@@ -10,6 +10,7 @@ import { AlertManagerDataSource } from 'app/features/alerting/unified/utils/data
 import { NeedHelpInfo } from '../../NeedHelpInfo';
 
 import { ContactPointSelector } from './contactPoint/ContactPointSelector';
+import { ActiveTimingFields } from './route-settings/ActiveTimingFields';
 import { MuteTimingFields } from './route-settings/MuteTimingFields';
 import { RoutingSettings } from './route-settings/RouteSettings';
 
@@ -90,6 +91,7 @@ export function AlertManagerManualRouting({ alertManager }: AlertManagerManualRo
               />
             </Stack>
             <MuteTimingFields alertmanager={alertManagerName} />
+            <ActiveTimingFields alertmanager={alertManagerName} />
             <RoutingSettings alertManager={alertManagerName} />
           </Stack>
         </CollapsableSection>

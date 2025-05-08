@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -114,7 +115,7 @@ func TestRun(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin3", Name: "Plugin 3", Info: plugins.Info{Version: "1.0.0"}}},
 			},
 			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin3": {Status: "active"},
+				"plugin3": {Status: "deprecated"}, // This should be ignored
 			},
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin3": {Version: "1.1.0"},
@@ -128,7 +129,7 @@ func TestRun(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin4", Name: "Plugin 4", Info: plugins.Info{Version: "1.0.0"}}},
 			},
 			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin4": {Status: "active"},
+				"plugin4": {Status: "deprecated"}, // This should be ignored
 			},
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin4": {Version: "1.1.0"},
@@ -142,7 +143,7 @@ func TestRun(t *testing.T) {
 				{JSONData: plugins.JSONData{ID: "plugin5", Name: "Plugin 5", Info: plugins.Info{Version: "1.0.0"}}},
 			},
 			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin5": {Status: "active"},
+				"plugin5": {Status: "deprecated"}, // This should be ignored
 			},
 			pluginArchives: map[string]*repo.PluginArchiveInfo{
 				"plugin5": {Version: "1.1.0"},
@@ -169,10 +170,10 @@ func TestRun(t *testing.T) {
 			failures := []advisor.CheckReportFailure{}
 			for _, step := range check.Steps() {
 				for _, item := range items {
-					stepFailures, err := step.Run(context.Background(), &advisor.CheckSpec{}, item)
+					stepFailures, err := step.Run(context.Background(), logging.DefaultLogger, &advisor.CheckSpec{}, item)
 					assert.NoError(t, err)
-					if stepFailures != nil {
-						failures = append(failures, *stepFailures)
+					if len(stepFailures) > 0 {
+						failures = append(failures, stepFailures...)
 					}
 				}
 			}

@@ -63,7 +63,7 @@ it('renders an empty panel with padding', () => {
 it('renders panel header if prop title', () => {
   setup({ title: 'Test Panel Header' });
 
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
 });
 
 // Check for backwards compatibility
@@ -79,13 +79,13 @@ it('renders panel with a header if prop leftItems', () => {
     leftItems: [<div key="left-item-test"> This should be a self-contained node </div>],
   });
 
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
 });
 
 it('renders panel with a hovering header if prop hoverHeader is true', () => {
   setup({ title: 'Test Panel Header', hoverHeader: true });
 
-  expect(screen.queryByTestId('header-container')).not.toBeInTheDocument();
+  expect(screen.queryByTestId(selectors.components.Panels.Panel.headerContainer)).not.toBeInTheDocument();
 });
 
 it('renders panel with a header if prop titleItems', () => {
@@ -93,7 +93,7 @@ it('renders panel with a header if prop titleItems', () => {
     titleItems: [<div key="title-item-test"> This should be a self-contained node </div>],
   });
 
-  expect(screen.getByTestId('header-container')).toBeInTheDocument();
+  expect(screen.getByTestId(selectors.components.Panels.Panel.headerContainer)).toBeInTheDocument();
 });
 
 it('renders panel with a header with icons in place if prop titleItems', () => {

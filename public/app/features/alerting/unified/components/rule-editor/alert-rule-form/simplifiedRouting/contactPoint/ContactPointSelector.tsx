@@ -3,9 +3,10 @@ import { isEmpty } from 'lodash';
 import { useEffect } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
-import { alertingAPI } from '@grafana/alerting/internal';
-import { ContactPointSelector as GrafanaManagedContactPointSelector } from '@grafana/alerting/unstable';
-import { config } from '@grafana/runtime';
+import {
+  ContactPointSelector as GrafanaManagedContactPointSelector,
+  alertingAPIv0alpha1,
+} from '@grafana/alerting/unstable';
 import { Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
@@ -15,8 +16,6 @@ export interface ContactPointSelectorProps {
   alertManager: string;
 }
 
-const { namespace } = config;
-
 export function ContactPointSelector({ alertManager }: ContactPointSelectorProps) {
   const { control, watch, trigger } = useFormContext<RuleFormValues>();
 
@@ -25,9 +24,8 @@ export function ContactPointSelector({ alertManager }: ContactPointSelectorProps
 
   // check if the contact point still exists, we'll use listReceiver to check if the contact point exists because getReceiver doesn't work with
   // contact point titles but with UUIDs (which is not what we store on the alert rule definition)
-  const { currentData, status } = alertingAPI.endpoints.listReceiver.useQuery({
+  const { currentData, status } = alertingAPIv0alpha1.endpoints.listReceiver.useQuery({
     fieldSelector: `spec.title=${contactPointInForm}`,
-    namespace,
   });
 
   const contactPointNotFound = contactPointInForm && status === QueryStatus.fulfilled && isEmpty(currentData?.items);

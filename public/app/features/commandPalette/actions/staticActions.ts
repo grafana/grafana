@@ -1,9 +1,12 @@
+import { useMemo } from 'react';
+
 import { NavModelItem } from '@grafana/data';
 import { enrichHelpItem } from 'app/core/components/AppChrome/MegaMenu/utils';
 import { performInviteUserClick, shouldRenderInviteUserButton } from 'app/core/components/InviteUserButton/utils';
 import { t } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
+import { useSelector } from '../../../types';
 import { CommandPaletteAction } from '../types';
 import { ACTIONS_PRIORITY, DEFAULT_PRIORITY, PREFERENCES_PRIORITY } from '../values';
 
@@ -71,11 +74,11 @@ function navTreeToActions(navTree: NavModelItem[], parents: NavModelItem[] = [])
   return navActions;
 }
 
-export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteAction[]): CommandPaletteAction[] => {
-  const globalActions: CommandPaletteAction[] = [
+function getGlobalActions(): CommandPaletteAction[] {
+  return [
     {
       id: 'preferences/theme',
-      name: t('command-palette.action.change-theme', 'Change theme...'),
+      name: t('command-palette.action.change-theme', 'Change theme'),
       keywords: 'interface color dark light',
       section: t('command-palette.section.preferences', 'Preferences'),
       priority: PREFERENCES_PRIORITY,
@@ -97,20 +100,24 @@ export default (navBarTree: NavModelItem[], extensionActions: CommandPaletteActi
       priority: PREFERENCES_PRIORITY,
     },
   ];
+}
 
-  const navBarActions = navTreeToActions(navBarTree);
+export function useStaticActions(): CommandPaletteAction[] {
+  const navBarTree = useSelector((state) => state.navBarTree);
+  return useMemo(() => {
+    const navBarActions = navTreeToActions(navBarTree);
 
-  if (shouldRenderInviteUserButton) {
-    navBarActions.push({
-      id: 'invite-user',
-      name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
-      section: t('command-palette.section.actions', 'Actions'),
-      priority: ACTIONS_PRIORITY,
-      perform: () => {
-        performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
-      },
-    });
-  }
-
-  return [...globalActions, ...extensionActions, ...navBarActions];
-};
+    if (shouldRenderInviteUserButton) {
+      navBarActions.push({
+        id: 'invite-user',
+        name: t('navigation.invite-user.invite-new-member-button', 'Invite new member'),
+        section: t('command-palette.section.actions', 'Actions'),
+        priority: ACTIONS_PRIORITY,
+        perform: () => {
+          performInviteUserClick('command_palette_actions', 'invite-user-command-palette');
+        },
+      });
+    }
+    return [...getGlobalActions(), ...navBarActions];
+  }, [navBarTree]);
+}

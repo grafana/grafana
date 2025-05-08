@@ -25,13 +25,13 @@ import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { getCustomVariableOptions } from './components/CustomVariableForm';
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
-import { ConstantVariableEditor } from './editors/ConstantVariableEditor';
+import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { QueryVariableEditor } from './editors/QueryVariableEditor';
-import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
+import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
   name: string;
@@ -63,6 +63,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Constant',
     description: 'A hidden constant variable, useful for metric prefixes in dashboards you want to share',
     editor: ConstantVariableEditor,
+    getOptions: getConstantVariableOptions,
   },
   interval: {
     name: 'Interval',
@@ -88,6 +89,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Textbox',
     description: 'Users can enter any arbitrary strings in a textbox',
     editor: TextBoxVariableEditor,
+    getOptions: getTextBoxVariableOptions,
   },
 };
 

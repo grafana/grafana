@@ -325,7 +325,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     authStyle: {
       label: 'Auth style',
       type: 'select',
-      description: 'It determines how client_id and client_secret are sent to Oauth2 provider. Default is AutoDetect.',
+      description:
+        'It determines how "Client Id" and "Client secret" are sent to Oauth2 provider. Default is AutoDetect.',
       multi: false,
       options: [
         { value: 'AutoDetect', label: 'AutoDetect' },
@@ -365,7 +366,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.allowed-groups-description-oauth',
-              'If you configure allowed_groups, you must also configure groups_attribute_path.'
+              'If you configure "Allowed groups", you must also configure "Groups attribute path".'
             )}
         </>
       ),
@@ -504,7 +505,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     },
     orgAttributePath: {
       label: 'Organization attribute path',
-      description: 'JMESPath expression to use for organization lookup.',
+      description:
+        'JMESPath expression to use for organization lookup. If you configure "Organization mapping", you must also configure "Organization attribute path".',
       type: 'text',
       hidden: !(['generic_oauth', 'okta'].includes(provider) && contextSrv.isGrafanaAdmin),
     },
@@ -569,8 +571,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     groupsAttributePath: {
       label: 'Groups attribute path',
       description:
-        'JMESPath expression to use for user group lookup. If you configure allowed_groups, \n' +
-        'you must also configure groups_attribute_path.',
+        'JMESPath expression to use for user group lookup. If you configure "Allowed groups", \n' +
+        'you must also configure "Groups attribute path".',
       type: 'text',
     },
     teamsUrl: {
@@ -583,7 +585,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.teams-url-description-oauth',
-              'If you configure teams_url, you must also configure team_ids_attribute_path.'
+              'If you configure "Teams URL", you must also configure "Team Ids attribute path".'
             )}
         </>
       ),
@@ -606,7 +608,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     teamIdsAttributePath: {
       label: 'Team Ids attribute path',
       description:
-        'The JMESPath expression to use for Grafana Team Id lookup within the results returned by the teams_url endpoint.',
+        'The JMESPath expression to use for Grafana Team Id lookup within the results returned by the "Teams URL" endpoint.',
       type: 'text',
       validation: {
         validate: (value, formValues) => {
@@ -632,8 +634,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.team-ids-description-oauth',
-              'If you configure {{teamIds}}, you must also configure {{teamsUrl}} and {{teamIdsAttributePath}}.',
-              { teamIds: 'team_ids', teamsUrl: 'teams_url', teamIdsAttributePath: 'team_ids_attribute_path' }
+              'If you configure "{{teamIds}}", you must also configure "{{teamsUrl}}" and "{{teamIdsAttributePath}}".',
+              { teamIds: 'Team Ids', teamsUrl: 'Teams URL', teamIdsAttributePath: 'Team Ids attribute path' }
             )}
         </>
       ),

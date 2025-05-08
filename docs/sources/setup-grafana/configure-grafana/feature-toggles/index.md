@@ -41,7 +41,6 @@ Most [generally available](https://grafana.com/docs/release-life-cycle/#general-
 | `awsAsyncQueryCaching`                 | Enable caching for async queries for Redshift and Athena. Requires that the datasource has caching and async query support enabled  | Yes                |
 | `angularDeprecationUI`                 | Display Angular warnings in dashboards and panels                                                                                   | Yes                |
 | `dashgpt`                              | Enable AI powered features in dashboards                                                                                            | Yes                |
-| `alertingInsights`                     | Show the new alerting insights landing page                                                                                         | Yes                |
 | `externalCorePlugins`                  | Allow core plugins to be loaded as external                                                                                         | Yes                |
 | `panelMonitoring`                      | Enables panel monitoring through logs and measurements                                                                              | Yes                |
 | `formatString`                         | Enable format string transformer                                                                                                    | Yes                |
