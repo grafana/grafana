@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "Auditing",
+      "title-custom-branding": "Custom branding",
       "title-dashboard-presence-indicators": "Dashboard presence indicators",
       "title-dashboard-usage-stats-drawer": "Dashboard usage stats drawer",
       "title-data-source-permissions": "Data source permissions",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "SAML authentication",
       "title-settings-updates-at-runtime": "Settings updates at runtime",
       "title-sort-dashboards-by-popularity-in-search": "Sort dashboards by popularity in search",
-      "title-team-sync": "Team Sync",
-      "title-white-labeling": "White labeling"
+      "title-team-sync": "Team Sync"
     },
     "feature-toggles": {
       "restart-pending": "A restart is pending for your Grafana instance to apply the latest feature toggle changes",

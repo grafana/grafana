@@ -174,7 +174,7 @@ const FeatureListing = () => {
       <Item title={t('admin.feature-listing.title-team-sync', 'Team Sync')}>
         <Trans i18nKey="admin.get-enterprise.team-sync-details">LDAP, GitHub OAuth, Auth Proxy, Okta</Trans>
       </Item>
-      <Item title={t('admin.feature-listing.title-white-labeling', 'White labeling')} />
+      <Item title={t('admin.feature-listing.title-custom-branding', 'Custom branding')} />
       <Item title={t('admin.feature-listing.title-auditing', 'Auditing')} />
       <Item title={t('admin.feature-listing.title-settings-updates-at-runtime', 'Settings updates at runtime')} />
       <Item title={t('admin.feature-listing.title-grafana-usage-insights', 'Grafana usage insights')}>
