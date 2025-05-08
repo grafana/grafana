@@ -397,9 +397,10 @@ func InstallAPIs(
 			}); err != nil {
 				return err
 			}
-			if len(g.PrioritizedVersions) < 1 {
-				continue
-			}
+		}
+
+		if len(g.PrioritizedVersions) == 0 {
+			continue
 		}
 
 		err := server.InstallAPIGroup(&g)
