@@ -27,8 +27,8 @@ import { PanelContext, usePanelContext } from '../../PanelChrome';
 import { TableCellInspector, TableCellInspectorMode } from '../TableCellInspector';
 
 import { HeaderCell } from './Cells/HeaderCell';
-import { RowExpander } from './Cells/RowExpander';
 import { TableCellNG } from './Cells/TableCellNG';
+import { NestedTable } from './NestedTable/NestedTable';
 import { COLUMN, TABLE } from './constants';
 import { TableSortingTypes, useTableSorting } from './hooks';
 import {
@@ -47,7 +47,6 @@ import {
   frameToRecords,
   getCellColors,
   getCellHeightCalculator,
-  getComparator,
   getDefaultRowHeight,
   getDisplayName,
   getFooterItemNG,
@@ -693,83 +692,22 @@ export function mapFrameToDataGrid({
       colSpan(args) {
         return args.type === 'ROW' && Number(args.row.__depth) === 1 ? frame.fields.length : 1;
       },
-      renderCell: ({ row }) => {
-        // TODO add TableRow type extension to include row depth and optional data
-        if (Number(row.__depth) === 0) {
-          const rowIdx = Number(row.__index);
-          return (
-            <RowExpander
-              height={defaultRowHeight}
-              onCellExpand={() => onCellExpand(rowIdx)}
-              isExpanded={expandedRows.includes(rowIdx)}
-            />
-          );
-        }
-        // If it's a child, render entire DataGrid at first column position
-        let expandedColumns: TableColumn[] = [];
-        let expandedRecords: TableRow[] = [];
-        const nestedRowIdx = Number(row.__index);
-
-        // Type guard to check if data exists as it's optional
-        if (row.data) {
-          expandedColumns = mapFrameToDataGrid({
-            frame: row.data,
-            calcsRef,
-            options: { ...options },
-            handlers: {
-              onCellExpand,
-              onColumnResize,
-              handleNestedTableSort,
-              onSort,
-            },
-            availableWidth,
-            parentRowIdx: nestedRowIdx,
-          });
-          expandedRecords = frameToRecords(row.data);
-        }
-
-        // Get sort columns for this nested table
-        const nestedSortColumns = nestedTableSortColumns?.[nestedRowIdx] || [];
-
-        // Sort the nested table rows if we have sort columns
-        let nestedRows = expandedRecords;
-        if (nestedSortColumns.length > 0 && row.data) {
-          // Extract column types from nested frame
-          const nestedColumnTypes = row.data.fields.reduce<ColumnTypes>(
-            (acc, { name, type }) => ({ ...acc, [name]: type }),
-            {}
-          );
-
-          // Sort nested rows
-          nestedRows = [...expandedRecords].sort((a, b) => {
-            let result = 0;
-            for (let i = 0; i < nestedSortColumns.length; i++) {
-              const { columnKey, direction } = nestedSortColumns[i];
-              const compare = getComparator(nestedColumnTypes[columnKey]);
-              const sortDir = direction === 'ASC' ? 1 : -1;
-
-              result = sortDir * compare(a[columnKey], b[columnKey]);
-              if (result !== 0) {
-                break;
-              }
-            }
-            return result;
-          });
-        }
-
-        return (
-          <DataGrid<TableRow, TableSummaryRow>
-            rows={nestedRows}
-            columns={expandedColumns}
-            rowHeight={defaultRowHeight}
-            className={styles.dataGrid}
-            style={{ height: '100%', overflow: 'visible', marginLeft: COLUMN.EXPANDER_WIDTH - 1 }}
-            headerRowHeight={row.data?.meta?.custom?.noHeader ? 0 : undefined}
-            defaultColumnOptions={{ sortable: true, resizable: true }}
-            sortColumns={nestedSortColumns}
-          />
-        );
-      },
+      renderCell: ({ row }) => (
+        <NestedTable
+          availableWidth={availableWidth}
+          calcsRef={calcsRef}
+          defaultRowHeight={defaultRowHeight}
+          expandedRows={expandedRows}
+          handleNestedTableSort={handleNestedTableSort || (() => {})}
+          nestedTableSortColumns={nestedTableSortColumns}
+          onCellExpand={onCellExpand}
+          onColumnResize={onColumnResize}
+          onSort={onSort}
+          options={options}
+          row={row}
+          styles={styles}
+        />
+      ),
       width: COLUMN.EXPANDER_WIDTH,
       minWidth: COLUMN.EXPANDER_WIDTH,
     });
