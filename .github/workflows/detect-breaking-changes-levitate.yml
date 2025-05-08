@@ -202,7 +202,7 @@ jobs:
       - id: get-secrets
         uses: grafana/shared-workflows/actions/get-vault-secrets@28361cdb22223e5f1e34358c86c20908e7248760 # get-vault-secrets-v1.1.0
         with:
-          # Secrets placed in the ci/repo/grafana/plugin-tools in vault
+          # Secrets placed in the ci/repo/grafana/grafana in vault
           repo_secrets: |
             GITHUB_APP_ID=grafana_pr_automation_app:app_id
             GITHUB_APP_PRIVATE_KEY=grafana_pr_automation_app:app_pem
@@ -224,7 +224,7 @@ jobs:
           name: levitate
 
       - name: Parsing levitate result
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         id: levitate-run
         with:
           script: |
@@ -235,7 +235,7 @@ jobs:
       # Check if label exists
       - name: Check if "levitate breaking change" label exists
         id: does-label-exist
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         with:
@@ -328,7 +328,7 @@ jobs:
       # Add the label
       - name: Add "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 1 && steps.does-label-exist.outputs.result == 0
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:
@@ -344,7 +344,7 @@ jobs:
       # Remove label (no more breaking changes)
       - name: Remove "levitate breaking change" label
         if: steps.levitate-run.outputs.exit_code == 0 && steps.does-label-exist.outputs.result == 1
-        uses: actions/github-script@v6
+        uses: actions/github-script@v7
         env:
           PR_NUMBER: ${{ steps.levitate-run.outputs.pr_number }}
         with:

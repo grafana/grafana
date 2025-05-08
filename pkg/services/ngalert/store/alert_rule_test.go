@@ -907,7 +907,9 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 	gen = gen.With(gen.WithOrgID(1), gen.WithIntervalMatching(store.Cfg.BaseInterval))
 	rules := gen.GenerateManyRef(3)
 	receiveRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(receiverName)))).GenerateManyRef(3)
-	timeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	mutetimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithMuteTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	activeTimeIntervalRules := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithActiveTimeIntervals(timeIntervalName)))).GenerateManyRef(3)
+	timeIntervalRules := append(mutetimeIntervalRules, activeTimeIntervalRules...)
 	noise := gen.With(gen.WithNotificationSettingsGen(models.NotificationSettingsGen(models.NSMuts.WithReceiver(timeIntervalName), models.NSMuts.WithMuteTimeIntervals(receiverName)))).GenerateManyRef(3)
 
 	deref := make([]models.AlertRule, 0, len(rules)+len(receiveRules)+len(timeIntervalRules)+len(noise))
@@ -959,16 +961,21 @@ func TestIntegrationAlertRulesNotificationSettings(t *testing.T) {
 			deref[i], deref[j] = deref[j], deref[i]
 		})
 		for _, rule := range deref {
-			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 {
+			if len(rule.NotificationSettings) == 0 || rule.NotificationSettings[0].Receiver == "" || len(rule.NotificationSettings[0].MuteTimeIntervals) == 0 || len(rule.NotificationSettings[0].ActiveTimeIntervals) == 0 {
 				continue
 			}
 			if len(expected) > 0 {
-				if rule.NotificationSettings[0].Receiver == receiver && slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) {
+				if rule.NotificationSettings[0].Receiver == receiver && (slices.Contains(rule.NotificationSettings[0].MuteTimeIntervals, intervalName) || slices.Contains(rule.NotificationSettings[0].ActiveTimeIntervals, intervalName)) {
 					expected = append(expected, rule.GetKey())
 				}
 			} else {
 				receiver = rule.NotificationSettings[0].Receiver
-				intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				if len(rule.NotificationSettings[0].MuteTimeIntervals) > 0 {
+					intervalName = rule.NotificationSettings[0].MuteTimeIntervals[0]
+				}
+				if len(rule.NotificationSettings[0].ActiveTimeIntervals) > 0 {
+					intervalName = rule.NotificationSettings[0].ActiveTimeIntervals[0]
+				}
 				expected = append(expected, rule.GetKey())
 			}
 		}

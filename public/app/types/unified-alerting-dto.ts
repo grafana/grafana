@@ -13,6 +13,7 @@ export enum PromAlertingRuleState {
   Inactive = 'inactive',
   Pending = 'pending',
   Recovering = 'recovering',
+  Unknown = 'unknown',
 }
 
 export enum GrafanaAlertState {
@@ -129,6 +130,7 @@ interface PromRuleDTOBase {
 interface GrafanaPromRuleDTOBase extends PromRuleDTOBase {
   uid: string;
   folderUid: string;
+  isPaused: boolean;
   queriedDatasourceUIDs?: string[];
 }
 
@@ -145,6 +147,7 @@ export interface PromAlertingRuleDTO extends PromRuleDTOBase {
   duration?: number; // for
   state: PromAlertingRuleState;
   type: PromRuleType.Alerting;
+  notificationSettings?: GrafanaNotificationSettings;
 }
 
 export interface PromRecordingRuleDTO extends PromRuleDTOBase {
@@ -242,6 +245,7 @@ export interface GrafanaNotificationSettings {
   group_interval?: string;
   repeat_interval?: string;
   mute_time_intervals?: string[];
+  active_time_intervals?: string[];
 }
 
 export interface GrafanaEditorSettings {

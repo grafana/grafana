@@ -7,10 +7,10 @@ import (
 	"slices"
 
 	"github.com/Masterminds/semver/v3"
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
@@ -72,20 +72,26 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
-			PluginRepo: c.PluginRepo,
+			PluginRepo:         c.PluginRepo,
+			PluginPreinstall:   c.PluginPreinstall,
+			ManagedPlugins:     c.ManagedPlugins,
+			ProvisionedPlugins: c.ProvisionedPlugins,
 		},
 		&updateStep{
 			PluginRepo:         c.PluginRepo,
 			PluginPreinstall:   c.PluginPreinstall,
 			ManagedPlugins:     c.ManagedPlugins,
 			ProvisionedPlugins: c.ProvisionedPlugins,
-			log:                log.New("advisor.check.plugin.update"),
 		},
 	}
 }
 
 type deprecationStep struct {
-	PluginRepo repo.Service
+	PluginRepo         repo.Service
+	PluginPreinstall   plugininstaller.Preinstall
+	ManagedPlugins     managedplugins.Manager
+	ProvisionedPlugins provisionedplugins.Manager
+	provisionedPlugins []string
 }
 
 func (s *deprecationStep) Title() string {
@@ -105,7 +111,7 @@ func (s *deprecationStep) ID() string {
 	return DeprecationStepID
 }
 
-func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
+func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
 	p, ok := it.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", it)
@@ -113,6 +119,19 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 
 	// Skip if it's a core plugin
 	if p.IsCorePlugin() {
+		log.Debug("Skipping core plugin", "plugin", p.ID)
+		return nil, nil
+	}
+
+	// Skip if it's managed or pinned
+	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
+		log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
+		return nil, nil
+	}
+
+	// Skip if it's provisioned
+	if s.isProvisioned(ctx, p.ID) {
+		log.Debug("Skipping provisioned plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
@@ -123,7 +142,7 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 		return nil, nil
 	}
 	if i.Status == "deprecated" {
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			p.Name,
@@ -134,7 +153,7 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 					Url:     fmt.Sprintf("/plugins/%s", p.ID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
@@ -145,7 +164,6 @@ type updateStep struct {
 	ManagedPlugins     managedplugins.Manager
 	ProvisionedPlugins provisionedplugins.Manager
 	provisionedPlugins []string
-	log                log.Logger
 }
 
 func (s *updateStep) Title() string {
@@ -164,7 +182,7 @@ func (s *updateStep) ID() string {
 	return UpdateStepID
 }
 
-func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	p, ok := i.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -172,19 +190,19 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 
 	// Skip if it's a core plugin
 	if p.IsCorePlugin() {
-		s.log.Debug("Skipping core plugin", "plugin", p.ID)
+		log.Debug("Skipping core plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
 	// Skip if it's managed or pinned
 	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
-		s.log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
+		log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
 	// Skip if it's provisioned
 	if s.isProvisioned(ctx, p.ID) {
-		s.log.Debug("Skipping provisioned plugin", "plugin", p.ID)
+		log.Debug("Skipping provisioned plugin", "plugin", p.ID)
 		return nil, nil
 	}
 
@@ -196,7 +214,7 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 		return nil, nil
 	}
 	if hasUpdate(p, info) {
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			p.Name,
@@ -207,7 +225,7 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 					Url:     fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 
 	return nil, nil
@@ -234,6 +252,27 @@ func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
 }
 
 func (s *updateStep) isProvisioned(ctx context.Context, pluginID string) bool {
+	if s.provisionedPlugins == nil {
+		var err error
+		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
+		if err != nil {
+			return false
+		}
+	}
+	return slices.Contains(s.provisionedPlugins, pluginID)
+}
+
+// Temporary duplicated code until there is a common IsUpdatable function
+func (s *deprecationStep) isManaged(ctx context.Context, pluginID string) bool {
+	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
+		if managedPlugin == pluginID {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *deprecationStep) isProvisioned(ctx context.Context, pluginID string) bool {
 	if s.provisionedPlugins == nil {
 		var err error
 		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)

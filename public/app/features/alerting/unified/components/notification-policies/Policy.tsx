@@ -736,7 +736,7 @@ const TimeIntervals: FC<{ timings: string[]; alertManagerSourceName: string }> =
   timings,
   alertManagerSourceName,
 }) => {
-  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewMuteTiming);
+  const [, canSeeMuteTimings] = useAlertmanagerAbility(AlertmanagerAction.ViewTimeInterval);
   /* TODO make a better mute timing overview, allow combining multiple in to one overview */
   /*
     <HoverCard
