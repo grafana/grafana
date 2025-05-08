@@ -260,7 +260,7 @@ type MockPluginRepo struct {
 	exists bool
 }
 
-func (m *MockPluginRepo) PluginInfo(context.Context, string) (*repo.PluginInfo, error) {
+func (m *MockPluginRepo) PluginInfo(context.Context, string, repo.CompatOpts) (*repo.PluginInfo, error) {
 	if !m.exists {
 		return nil, errors.New("plugin not found")
 	}

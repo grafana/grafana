@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	sysruntime "runtime"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -30,6 +31,7 @@ type check struct {
 	PluginContextProvider pluginContextProvider
 	PluginClient          plugins.Client
 	PluginRepo            repo.Service
+	GrafanaVersion        string
 }
 
 func New(
@@ -38,6 +40,7 @@ func New(
 	pluginContextProvider pluginContextProvider,
 	pluginClient plugins.Client,
 	pluginRepo repo.Service,
+	grafanaVersion string,
 ) checks.Check {
 	return &check{
 		DatasourceSvc:         datasourceSvc,
@@ -45,6 +48,7 @@ func New(
 		PluginContextProvider: pluginContextProvider,
 		PluginClient:          pluginClient,
 		PluginRepo:            pluginRepo,
+		GrafanaVersion:        grafanaVersion,
 	}
 }
 
@@ -83,8 +87,9 @@ func (c *check) Steps() []checks.Step {
 			PluginClient:          c.PluginClient,
 		},
 		&missingPluginStep{
-			PluginStore: c.PluginStore,
-			PluginRepo:  c.PluginRepo,
+			PluginStore:    c.PluginStore,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
 		},
 	}
 }
@@ -201,8 +206,9 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 }
 
 type missingPluginStep struct {
-	PluginStore pluginstore.Store
-	PluginRepo  repo.Service
+	PluginStore    pluginstore.Store
+	PluginRepo     repo.Service
+	GrafanaVersion string
 }
 
 func (s *missingPluginStep) Title() string {
@@ -235,7 +241,8 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 				Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 			},
 		}
-		_, err := s.PluginRepo.PluginInfo(ctx, ds.Type)
+		compatOpts := repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+		_, err := s.PluginRepo.PluginInfo(ctx, ds.Type, compatOpts)
 		if err == nil {
 			// Plugin is available in the repo
 			links = append(links, advisor.CheckErrorLink{

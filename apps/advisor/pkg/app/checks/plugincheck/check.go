@@ -10,7 +10,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
@@ -30,6 +29,7 @@ func New(
 	pluginPreinstall plugininstaller.Preinstall,
 	managedPlugins managedplugins.Manager,
 	provisionedPlugins provisionedplugins.Manager,
+	grafanaVersion string,
 ) checks.Check {
 	return &check{
 		PluginStore:        pluginStore,
@@ -37,6 +37,7 @@ func New(
 		PluginPreinstall:   pluginPreinstall,
 		ManagedPlugins:     managedPlugins,
 		ProvisionedPlugins: provisionedPlugins,
+		GrafanaVersion:     grafanaVersion,
 	}
 }
 
@@ -46,6 +47,7 @@ type check struct {
 	PluginPreinstall   plugininstaller.Preinstall
 	ManagedPlugins     managedplugins.Manager
 	ProvisionedPlugins provisionedplugins.Manager
+	GrafanaVersion     string
 }
 
 func (c *check) ID() string {
@@ -76,12 +78,14 @@ func (c *check) Steps() []checks.Step {
 			PluginPreinstall:   c.PluginPreinstall,
 			ManagedPlugins:     c.ManagedPlugins,
 			ProvisionedPlugins: c.ProvisionedPlugins,
+			GrafanaVersion:     c.GrafanaVersion,
 		},
 		&updateStep{
 			PluginRepo:         c.PluginRepo,
 			PluginPreinstall:   c.PluginPreinstall,
 			ManagedPlugins:     c.ManagedPlugins,
 			ProvisionedPlugins: c.ProvisionedPlugins,
+			GrafanaVersion:     c.GrafanaVersion,
 		},
 	}
 }
@@ -91,6 +95,7 @@ type deprecationStep struct {
 	PluginPreinstall   plugininstaller.Preinstall
 	ManagedPlugins     managedplugins.Manager
 	ProvisionedPlugins provisionedplugins.Manager
+	GrafanaVersion     string
 	provisionedPlugins []string
 }
 
@@ -136,7 +141,8 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 	}
 
 	// Check if plugin is deprecated
-	i, err := s.PluginRepo.PluginInfo(ctx, p.ID)
+	compatOpts := repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+	i, err := s.PluginRepo.PluginInfo(ctx, p.ID, compatOpts)
 	if err != nil {
 		// Unable to check deprecation status
 		return nil, nil
@@ -164,6 +170,7 @@ type updateStep struct {
 	ManagedPlugins     managedplugins.Manager
 	ProvisionedPlugins provisionedplugins.Manager
 	provisionedPlugins []string
+	GrafanaVersion     string
 }
 
 func (s *updateStep) Title() string {
@@ -207,7 +214,7 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 	}
 
 	// Check if plugin has a newer version available
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+	compatOpts := repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
 	info, err := s.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
 	if err != nil {
 		// Unable to check updates
