@@ -122,13 +122,11 @@ A threshold returns `0` when the condition is false and `1` when true.
 
 If the threshold is set as the alert condition, the alert fires when the threshold returns `1`.
 
-#### Recovery threshold
+### Recovery threshold
 
-To reduce the noise from flapping alerts, you can set a recovery threshold different to the alert threshold.
+To reduce the noise from flapping alerts, you can set a recovery threshold so that the alert returns to the `Normal` state only after the recovery threshold is crossed.
 
-Flapping alerts occur when a metric hovers around the alert threshold condition and may lead to frequent state changes, resulting in too many notifications.
-
-The value of a flapping metric can continually go above and below a threshold, resulting in a series of firing-resolved-firing notifications and a noisy alert state history.
+Flapping alerts occur when the query value repeatedly crosses above and below the alert threshold, causing frequent state changes. This results in a series of firing-resolved-firing notifications and a noisy alert state history.
 
 For example, if you have an alert for latency with a threshold of 1000ms and the number fluctuates around 1000 (say 980 -> 1010 -> 990 -> 1020, and so on), then each of those might trigger a notification:
 
@@ -138,8 +136,8 @@ For example, if you have an alert for latency with a threshold of 1000ms and the
 
 To prevent this, you can set a recovery threshold to define two thresholds instead of one:
 
-1. An alert is triggered when the first threshold is crossed.
-1. An alert is resolved only when the second (recovery) threshold is crossed.
+1. An alert transitions to the `Pending` or `Alerting` state when the alert threshold is crossed.
+1. An alert transitions back to `Normal` state only after the recovery threshold is crossed.
 
 In the previous example, setting the recovery threshold to 900ms means the alert only resolves when the latency falls below 900ms:
 
