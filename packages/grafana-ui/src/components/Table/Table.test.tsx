@@ -523,9 +523,7 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent(
-        'Count'
-      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
     });
 
@@ -549,9 +547,7 @@ describe('Table', () => {
         }),
       });
 
-      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent(
-        'Count'
-      );
+      expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[0]).toHaveTextContent('Count');
       expect(within(getFooter()).getByRole('columnheader').getElementsByTagName('span')[1]).toHaveTextContent('5');
 
       const onSortByChange = jest.fn();
@@ -714,7 +710,7 @@ describe('Table', () => {
       tables = screen.getAllByRole('table');
       expect(tables).toHaveLength(3);
       let subTable = screen.getAllByRole('table')[2];
-      expect(subTable).toHaveStyle({height:'108px'});
+      expect(subTable).toHaveStyle({ height: '108px' });
 
       // Sort again rows
       tables = screen.getAllByRole('table');
@@ -732,7 +728,7 @@ describe('Table', () => {
       rows = within(getTable()).getAllByRole('row');
       await userEvent.click(within(rows[1]).getByLabelText('Expand row'));
       subTable = screen.getAllByRole('table')[2];
-      expect(subTable).toHaveStyle({height:'108px'});
+      expect(subTable).toHaveStyle({ height: '108px' });
     });
   });
 
