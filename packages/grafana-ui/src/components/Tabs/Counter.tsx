@@ -6,12 +6,13 @@ import { useStyles2 } from '../../themes';
 
 export interface CounterProps {
   value: number;
+  className: string
 }
 
-export const Counter = ({ value }: CounterProps) => {
+export const Counter = ({ value, className }: CounterProps) => {
   const styles = useStyles2(getStyles);
 
-  return <span className={styles.counter}>{locale(value, 0).text}</span>;
+  return <span className={styles.counter, className}>{locale(value, 0).text}</span>;
 };
 
 const getStyles = (theme: GrafanaTheme2) => ({
