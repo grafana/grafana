@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
@@ -49,7 +49,7 @@ export const ProviderConfigForm = ({ config, provider, isLoading }: ProviderConf
   const [isSaving, setIsSaving] = useState(false);
   const [submitError, setSubmitError] = useState(false);
   const dataSubmitted = isSubmitted && !submitError;
-  const sections = getSectionFields()[provider];
+  const sections = useMemo(() => getSectionFields()[provider], [provider]);
   const [resetConfig, setResetConfig] = useState(false);
 
   const additionalActionsMenu = (

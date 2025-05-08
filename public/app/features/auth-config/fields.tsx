@@ -283,6 +283,7 @@ const openIDConnectDiscoveryLabel = 'OpenID Connect Discovery URL';
 const authURLLabel = 'Auth URL';
 const tokenURLLabel = 'Token URL';
 const apiURLLabel = 'API URL';
+const jmesPathLabel = 'JMESPath';
 
 /**
  * List all the fields that can be used in the form
@@ -300,6 +301,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
   const allowedGroupsLabel = t('auth-config.fields.allowed-groups-label', 'Allowed groups');
   const groupsAttributePathLabel = t('auth-config.fields.groups-attribute-path-label', 'Groups attribute path');
   const teamIDsLabel = t('auth-config.fields.team-ids-label', 'Team IDs');
+  const allowedDomainsLabel = t('auth-config.fields.allowed-domains-label', 'Allowed domains');
 
   return {
     clientAuthentication: {
@@ -371,7 +373,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       ),
     },
     allowedDomains: {
-      label: t('auth-config.fields.allowed-domains-label', 'Allowed domains'),
+      label: allowedDomainsLabel,
       type: 'select',
       description: t(
         'auth-config.fields.allowed-domains-description',
@@ -424,9 +426,13 @@ export function fieldMap(provider: string): Record<string, FieldData> {
     scopes: {
       label: scopesLabel,
       type: 'select',
-      description: t('auth-config.fields.scopes-description', 'List of comma- or space-separated {{ scopesLabel }}.', {
-        scopesLabel,
-      }),
+      description: t(
+        'auth-config.fields.scopes-description',
+        'List of comma- or space-separated OAuth2 {{ scopesLabel }}.',
+        {
+          scopesLabel,
+        }
+      ),
       multi: true,
       allowCustomValue: true,
       options: [],
@@ -505,7 +511,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: t('auth-config.fields.role-attribute-path-label', 'Role attribute path'),
       description: t(
         'auth-config.fields.role-attribute-path-description',
-        'JMESPath expression to use for Grafana role lookup.'
+        '{{ jmesPathLabel }} expression to use for Grafana role lookup.',
+        { jmesPathLabel }
       ),
       type: 'text',
       validation: {
@@ -637,7 +644,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'switch',
     },
     defineAllowedTeamsIds: {
-      label: t('auth-config.fields.define-allowed-teams-ids-label', 'Define allowed teams ids'),
+      label: t('auth-config.fields.define-allowed-teams-ids-label', 'Define allowed teams IDs'),
       type: 'switch',
     },
     forceUseGraphApi: {
@@ -670,7 +677,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       type: 'checkbox',
     },
     tlsClientCa: {
-      label: t('auth-config.fields.tls-client-ca-label', 'TLS client ca'),
+      label: t('auth-config.fields.tls-client-ca-label', 'TLS client CA'),
       description: t(
         'auth-config.fields.tls-client-ca-description',
         'The file path to the trusted certificate authority list. Is not applicable on Grafana Cloud.'
@@ -743,7 +750,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t(
           'auth-config.fields.teams-url-required',
-          'This field must be set if {{ teamIDsLabel }} are configured and must be a valid URL.',
+          'This field must be set if "{{ teamIDsLabel }}" are configured and must be a valid URL.',
           { teamIDsLabel }
         ),
       },
@@ -765,7 +772,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
         },
         message: t(
           'auth-config.fields.team-ids-attribute-path-required',
-          'This field must be set if {{ teamIDsLabel }} are configured.',
+          'This field must be set if "{{ teamIDsLabel }}" are configured.',
           { teamIDsLabel }
         ),
       },
@@ -784,7 +791,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
           {provider === 'generic_oauth' &&
             t(
               'auth-config.fields.team-ids-description-oauth',
-              'If you configure "{{teamIDsLabel}}", you must also configure "{{teamsURLLabel}}" and "{{teamIDsAttributePathLabel}}".',
+              'If you configure "{{ teamIDsLabel }}", you must also configure "{{ teamsURLLabel }}" and "{{ teamIDsAttributePathLabel }}".',
               { teamIDsLabel, teamsURLLabel, teamIDsAttributePathLabel }
             )}
         </>
@@ -821,7 +828,8 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: t('auth-config.fields.validate-hosted-domain-label', 'Validate hosted domain'),
       description: t(
         'auth-config.fields.validate-hosted-domain-description',
-        'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the Allowed Domains list specified by the user.'
+        'If enabled, Grafana will match the Hosted Domain retrieved from the Google ID Token against the "{{ allowedDomainsLabel }}" list specified by the user.',
+        { allowedDomainsLabel }
       ),
       type: 'checkbox',
     },
@@ -829,7 +837,7 @@ export function fieldMap(provider: string): Record<string, FieldData> {
       label: openIDConnectDiscoveryLabel,
       description: t(
         'auth-config.fields.server-discovery-url-description',
-        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the {{ authURLLabel }}, {{ tokenURLLabel }} and {{ apiURLLabel }} fields.',
+        'The .well-known/openid-configuration endpoint for your IdP. The info extracted from this URL will be used to populate the "{{ authURLLabel }}", "{{ tokenURLLabel }}" and "{{ apiURLLabel }}" fields.',
         { authURLLabel, tokenURLLabel, apiURLLabel }
       ),
       type: 'custom',
