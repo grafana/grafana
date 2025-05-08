@@ -289,7 +289,7 @@ Complete the following steps to set up notifications.
 
 {{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
-## Bulk delete all alert rules for a rule group
+## Bulk delete all alert rules within a folder
 
 Admin users can delete all of the alert rules within a folder. To delete all the alert rules in a folder, click the menu icon and select **Delete**. Then type "Delete" into the field and click **Delete** to confirm the bulk deletion. 
 
