@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "新增更多"
     },
@@ -577,6 +580,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "新增匹配器",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "將靜音時間新增至原則",
       "am-mute-timing-select-label-mute-timings": "靜音時間",
       "aria-label-group-by": "分組依據",
@@ -613,6 +618,17 @@
       },
       "link-dashboard-and-panel": "連結儀表板和面板",
       "placeholder-value-input-default": "輸入自訂註解內容…"
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1024,6 +1040,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "選擇資料夾以儲存您的規則。"
@@ -1444,29 +1487,21 @@
       "aria-label": "更多",
       "button-text": "更多"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "無法載入靜音時間。請稍候再試。",
-        "title": "載入靜音時間時發生錯誤"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "已停用",
       "title-delete-mute-timing": "刪除靜音時間"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "選擇靜音時間以定義何時不要傳送此警報規則的通知",
       "am-mute-timing-select-label-mute-timings": "靜音時間"
     },
     "mute-timing-form": {
-      "description-unique-timing": "靜音時間的專屬名稱",
-      "label-name": "",
-      "text-loading-mute-timing": "正在載入靜音時間",
-      "title-no-matching-mute-timing-found": "找不到匹配的靜音時間"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "新增其他時間間隔",
-      "description": "時間間隔是對時間點的定義。所有欄位皆為清單，必須至少滿足一個清單元素以配對欄位。如果欄位留空，則任何時間點都將與該欄位相配。為了使時間點與完整的時間間隔相配，所有欄位都必須相符。靜音時間可以包含多個時間間隔。",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "一個月之中的當月天數，1:31。負值可用於表示從月底開始的日期",
       "description-months": "當年中的月份（以數字或完整日曆月份表示）",
       "label-days-of-the-month": "當月天數",
@@ -1492,21 +1527,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "移除時間範圍"
-    },
-    "mute-timings": {
-      "add-mute-timing": "新增靜音時間",
-      "description": "請輸入不傳送通知的時間區間，或設定週期性凍結通知的時段。",
-      "save": "儲存靜音計時",
-      "saving": "正在儲存靜音計時"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "靜音時間",
-      "placeholder-select-mute-timings": "選取靜音時間..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "您尚未建立任何靜音時間",
-      "text-loading-mute-timings": "正在載入靜音時間...",
-      "text-no-mute-timings-configured": "未設定靜音時間"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1548,8 +1568,8 @@
       "title-notification-policies-have-changed": "通知政策已變更"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "靜音時間",
-      "label-notification-policies": "通知政策"
+      "label-notification-policies": "通知政策",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2378,6 +2398,32 @@
     "threshold-expression-viewer": {
       "input": "輸入",
       "stop-alerting-when": ""
+    },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
     },
     "timeseries-row": {
       "time-series-data": "時間序列資料",
