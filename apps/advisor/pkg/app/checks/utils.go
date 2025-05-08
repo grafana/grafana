@@ -25,8 +25,8 @@ func NewCheckReportFailure(
 	item string,
 	itemID string,
 	links []advisor.CheckErrorLink,
-) *advisor.CheckReportFailure {
-	return &advisor.CheckReportFailure{
+) advisor.CheckReportFailure {
+	return advisor.CheckReportFailure{
 		Severity: severity,
 		StepID:   stepID,
 		Item:     item,

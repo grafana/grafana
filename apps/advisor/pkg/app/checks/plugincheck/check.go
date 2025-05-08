@@ -104,7 +104,7 @@ func (s *deprecationStep) ID() string {
 	return DeprecationStepID
 }
 
-func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
+func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
 	p, ok := it.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", it)
@@ -122,7 +122,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 		return nil, nil
 	}
 	if i.Status == "deprecated" {
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			p.Name,
@@ -133,7 +133,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 					Url:     fmt.Sprintf("/plugins/%s", p.ID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
@@ -162,7 +162,7 @@ func (s *updateStep) ID() string {
 	return UpdateStepID
 }
 
-func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	p, ok := i.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -194,7 +194,7 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 		return nil, nil
 	}
 	if hasUpdate(p, info) {
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			p.Name,
@@ -205,7 +205,7 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 					Url:     fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 
 	return nil, nil

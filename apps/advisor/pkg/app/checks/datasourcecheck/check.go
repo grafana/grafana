@@ -108,7 +108,7 @@ func (s *uidValidationStep) Resolution() string {
 		"target=_blank>documentation</a> for more information or delete the data source and create a new one."
 }
 
-func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -116,13 +116,13 @@ func (s *uidValidationStep) Run(ctx context.Context, log logging.Logger, obj *ad
 	// Data source UID validation
 	err := util.ValidateUID(ds.UID)
 	if err != nil {
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
 			fmt.Sprintf("%s (%s)", ds.Name, ds.UID),
 			ds.UID,
 			[]advisor.CheckErrorLink{},
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
@@ -148,7 +148,7 @@ func (s *healthCheckStep) ID() string {
 	return HealthCheckStepID
 }
 
-func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -184,7 +184,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 		} else {
 			log.Debug("Failed to check health", "datasource_uid", ds.UID, "status", resp.Status, "message", resp.Message)
 		}
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
@@ -195,7 +195,7 @@ func (s *healthCheckStep) Run(ctx context.Context, log logging.Logger, obj *advi
 					Url:     fmt.Sprintf("/connections/datasources/edit/%s", ds.UID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
@@ -221,7 +221,7 @@ func (s *missingPluginStep) ID() string {
 	return MissingPluginStepID
 }
 
-func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	ds, ok := i.(*datasources.DataSource)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
@@ -244,13 +244,13 @@ func (s *missingPluginStep) Run(ctx context.Context, log logging.Logger, obj *ad
 			})
 		}
 		// The plugin is not installed
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
 			ds.Name,
 			ds.UID,
 			links,
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
