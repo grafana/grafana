@@ -575,6 +575,27 @@ const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
     },
 
     {
+      name: 'Fixes correctly when import exists from a relative path',
+      code: `
+import { t } from '../../core/internationalization';
+const Foo = () => <div title="foo" />`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProp',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+import { t } from '../../core/internationalization';
+const Foo = () => <div title={t("some-feature.foo.title-foo", "foo")} />`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
       name: 'Fixes correctly with a Class component',
       code: `
 class Foo extends React.Component {
