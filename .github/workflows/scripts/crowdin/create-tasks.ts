@@ -25,6 +25,19 @@ const credentials = {
 
 const { tasksApi, projectsGroupsApi, sourceFilesApi, workflowsApi } = new crowdin(credentials);
 
+// first, clean up any existing completed tasks
+const tasks = await listTasks(PROJECT_ID);
+for (const task of tasks) {
+  const { id, status, progress } = task.data;
+  if (status === 'todo' && progress.done === progress.total) {
+    console.log(`Marking task ${id} as done`);
+    await markTaskAsDone(PROJECT_ID, id);
+  } else {
+    console.log(`Task ${id} is not done, skipping`);
+  }
+}
+
+// then create new tasks for each language
 const languages = await getLanguages(PROJECT_ID);
 const fileIds = await getFileIds(PROJECT_ID);
 const workflowStepId = await getWorkflowStepId(PROJECT_ID);
@@ -34,7 +47,7 @@ for (const language of languages) {
   await createTask(PROJECT_ID, `Translate to ${name}`, id, fileIds, workflowStepId);
 }
 
-async function getLanguages(projectId) {
+async function getLanguages(projectId: number) {
   try {
     const project = await projectsGroupsApi.getProject(projectId);
     const languages = project.data.targetLanguages;
@@ -49,7 +62,7 @@ async function getLanguages(projectId) {
   }
 }
 
-async function getFileIds(projectId) {
+async function getFileIds(projectId: number) {
   try {
     const response = await sourceFilesApi.listProjectFiles(projectId);
     const files = response.data;
@@ -65,7 +78,7 @@ async function getFileIds(projectId) {
   }
 }
 
-async function getWorkflowStepId(projectId) {
+async function getWorkflowStepId(projectId: number) {
   try {
     const response = await workflowsApi.listWorkflowSteps(projectId);
     const workflowSteps = response.data;
@@ -84,7 +97,7 @@ async function getWorkflowStepId(projectId) {
   }
 }
 
-async function createTask(projectId, title, languageId, fileIds, workflowStepId) {
+async function createTask(projectId: number, title: string, languageId: string, fileIds: number[], workflowStepId: number) {
   try {
     const taskParams = {
       title,
@@ -102,6 +115,42 @@ async function createTask(projectId, title, languageId, fileIds, workflowStepId)
     return response.data;
   } catch (error) {
     console.error('Failed to create Crowdin task: ', error.message);
+    if (error.response && error.response.data) {
+      console.error('Error details: ', JSON.stringify(error.response.data, null, 2));
+    }
+    process.exit(1);
+  }
+}
+
+async function listTasks(projectId: number) {
+  try {
+    const listTasksParams = {
+      limit: 500,
+    }
+    const response = await tasksApi.listTasks(projectId, listTasksParams);
+    const tasks = response.data;
+    console.log('Fetched tasks successfully!');
+    return tasks;
+  } catch (error) {
+    console.error('Failed to fetch tasks: ', error.message);
+    if (error.response && error.response.data) {
+      console.error('Error details: ', JSON.stringify(error.response.data, null, 2));
+    }
+    process.exit(1);
+  }
+}
+
+async function markTaskAsDone(projectId: number, taskId: number) {
+  try {
+    const response = await tasksApi.editTask(projectId, taskId, [{
+      op: 'replace',
+      path: '/status',
+      value: 'done',
+    }]);
+    console.log(`Task ${taskId} marked as done successfully!`);
+    return response.data;
+  } catch (error) {
+    console.error('Failed to mark task as done: ', error.message);
     if (error.response && error.response.data) {
       console.error('Error details: ', JSON.stringify(error.response.data, null, 2));
     }
