@@ -33,6 +33,7 @@ func DefaultDecorateFuncs(cfg *config.PluginManagementCfg) []DecorateFunc {
 		TemplateDecorateFunc,
 		AppChildDecorateFunc(),
 		SkipHostEnvVarsDecorateFunc(cfg),
+		EmptyCloudProvisioningMethodDecorateFunc(),
 	}
 }
 
@@ -142,6 +143,15 @@ func configureAppChildPlugin(parent *plugins.Plugin, child *plugins.Plugin) {
 func SkipHostEnvVarsDecorateFunc(cfg *config.PluginManagementCfg) DecorateFunc {
 	return func(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 		p.SkipHostEnvVars = cfg.Features.SkipHostEnvVarsEnabled && !slices.Contains(cfg.ForwardHostEnvVars, p.ID)
+		return p, nil
+	}
+}
+
+// EmptyCloudProvisioningMethodDecorateFunc returns a DecorateFunc that sets the CloudProvisioningMethod field of the plugin to None.
+// This is a no-op implementation, the actual implementation is Enterprise-only.
+func EmptyCloudProvisioningMethodDecorateFunc() DecorateFunc {
+	return func(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+		p.CloudProvisioningMethod = plugins.CloudProvisioningMethodNone
 		return p, nil
 	}
 }
