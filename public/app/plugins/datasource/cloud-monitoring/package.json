@@ -26,7 +26,7 @@
     "tslib": "2.6.3"
   },
   "devDependencies": {
-    "@grafana/e2e-selectors": "11.2.10",
+    "@grafana/e2e-selectors": "workspace:*",
     "@grafana/plugin-configs": "11.2.10",
     "@testing-library/dom": "10.0.0",
     "@testing-library/react": "15.0.2",
