@@ -175,7 +175,7 @@ var (
 			Name:        "individualCookiePreferences",
 			Description: "Support overriding cookie preferences per user",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaFrontendPlatformSquad,
+			Owner:       grafanaBackendGroup,
 		},
 		{
 			Name:           "influxdbBackendMigration",
