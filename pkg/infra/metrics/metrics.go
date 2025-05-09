@@ -585,7 +585,7 @@ func init() {
 		Name:      "plugin_load_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, version, cloud provisioning method and loading method",
 		Namespace: ExporterName,
-	}, []string{"plugin_id", "version", "cloud_provisioning_method", "loading_method"})
+	}, []string{"plugin_id", "version", "cloud_provisioning_method", "plugin_loading_method"})
 
 	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard_versions",
