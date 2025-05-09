@@ -356,6 +356,100 @@ func TestIntegrationDashboardDataAccess(t *testing.T) {
 		assert.Equal(t, len(queryResult), 1)
 	})
 
+	t.Run("CleanupAfterDelete should handle missing identifiers properly", func(t *testing.T) {
+		// Helper function to extract terms from dashboard tags
+		tagsToTerms := func(tags []*dashboards.DashboardTagCloudItem) []string {
+			terms := make([]string, len(tags))
+			for i, tag := range tags {
+				terms[i] = tag.Term
+			}
+			return terms
+		}
+		setup()
+
+		// Create test dashboard with tags and other associations
+		dash := insertTestDashboard(t, dashboardStore, "cleanup-test", 1, 0, "", false, "test-tag-1", "test-tag-2")
+
+		// Create a second dashboard to verify targeted cleanup
+		dash2 := insertTestDashboard(t, dashboardStore, "cleanup-test-2", 1, 0, "", false, "test-tag-3")
+
+		// Verify tags exist before cleanup
+		tags, err := dashboardStore.GetDashboardTags(context.Background(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		require.Contains(t, tagsToTerms(tags), "test-tag-1")
+		require.Contains(t, tagsToTerms(tags), "test-tag-2")
+		require.Contains(t, tagsToTerms(tags), "test-tag-3")
+
+		// Test with missing ID but valid UID and OrgID - should clean up dashboard_tag but not dashboard_version
+		err = dashboardStore.CleanupAfterDelete(context.Background(), &dashboards.DeleteDashboardCommand{
+			OrgID: dash.OrgID,
+			UID:   dash.UID,
+		})
+		require.NoError(t, err)
+
+		// Verify dashboard_tag entries are removed (requires UID and OrgID)
+		tags, err = dashboardStore.GetDashboardTags(context.Background(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		require.NotContains(t, tagsToTerms(tags), "test-tag-1")
+		require.NotContains(t, tagsToTerms(tags), "test-tag-2")
+		require.Contains(t, tagsToTerms(tags), "test-tag-3") // tags from other dashboard (dash2) remain
+
+		// Verify dash2 is unaffected by the cleanup
+		query := dashboards.GetDashboardQuery{
+			ID:    dash2.ID,
+			OrgID: dash2.OrgID,
+		}
+		queryResult, err := dashboardStore.GetDashboard(context.Background(), &query)
+		require.NoError(t, err)
+		require.Equal(t, queryResult.ID, dash2.ID)
+
+		// Test with missing UID but valid ID and OrgID - ID-dependent operations should work
+		dash3 := insertTestDashboard(t, dashboardStore, "cleanup-test-3", 1, 0, "", false, "test-tag-4")
+
+		// Get version count before cleanup
+		var versionCount int64
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.SQL("SELECT COUNT(*) FROM dashboard_version WHERE dashboard_id = ?", dash3.ID).Get(&versionCount)
+			return err
+		})
+		require.NoError(t, err)
+		require.Greater(t, versionCount, int64(0))
+
+		err = dashboardStore.CleanupAfterDelete(context.Background(), &dashboards.DeleteDashboardCommand{
+			ID:    dash3.ID,
+			OrgID: dash3.OrgID,
+			// UID missing
+		})
+		require.NoError(t, err)
+
+		// Verify dashboard_version entries are removed (requires ID)
+		err = sqlStore.WithDbSession(context.Background(), func(sess *db.Session) error {
+			_, err := sess.SQL("SELECT COUNT(*) FROM dashboard_version WHERE dashboard_id = ?", dash3.ID).Get(&versionCount)
+			return err
+		})
+		require.NoError(t, err)
+		require.Equal(t, int64(0), versionCount)
+
+		// Verify dashboard_tag entries for dash3 are NOT removed (requires UID)
+		tags, err = dashboardStore.GetDashboardTags(context.Background(), &dashboards.GetDashboardTagsQuery{OrgID: 1})
+		require.NoError(t, err)
+		require.Contains(t, tagsToTerms(tags), "test-tag-4")
+
+		// Test with missing OrgID - should skip resource permission deletion
+		dash4 := insertTestDashboard(t, dashboardStore, "cleanup-test-4", 1, 0, "", false)
+
+		err = dashboardStore.CleanupAfterDelete(context.Background(), &dashboards.DeleteDashboardCommand{
+			ID:  dash4.ID,
+			UID: dash4.UID,
+			// OrgID missing
+		})
+		require.NoError(t, err)
+
+		// Test with everything missing
+		err = dashboardStore.CleanupAfterDelete(context.Background(), &dashboards.DeleteDashboardCommand{})
+		require.NoError(t, err)
+	})
+
 	t.Run("Should be able to get all dashboards for an org", func(t *testing.T) {
 		setup()
 		dash1 := insertTestDashboard(t, dashboardStore, "org3test1", 3, 0, "", false, "org 1 test 1")

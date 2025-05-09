@@ -663,8 +663,12 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 			return err
 		}
 
-		if err := d.deleteResourcePermissions(sess, cmd.OrgID, ac.GetResourceScopeUID("dashboards", cmd.UID)); err != nil {
-			return err
+		if hasUID && hasOrgId {
+			if err := d.deleteResourcePermissions(sess, cmd.OrgID, ac.GetResourceScopeUID("dashboards", cmd.UID)); err != nil {
+				return err
+			}
+		} else {
+			d.log.Warn("CleanupAfterDelete: No orgId or uid provided, skipping resource permission deletion", "orgId", cmd.OrgID, "uid", cmd.UID)
 		}
 
 		return nil
