@@ -28,6 +28,9 @@ type IndexViewData struct {
 	CSPEnabled       bool
 	IsDevelopmentEnv bool
 
+	Config  *setting.Cfg
+	License licensing.Licensing
+
 	AppSubUrl    string
 	BuildVersion string
 	BuildCommit  string
@@ -49,10 +52,7 @@ var (
 )
 
 func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProvider, error) {
-	assets, err := webassets.GetWebAssets(context.Background(), cfg, license)
-	if err != nil {
-		return nil, err
-	}
+
 	t := htmlTemplates.Lookup("index.html")
 	if t == nil {
 		return nil, fmt.Errorf("missing index template")
@@ -66,7 +66,8 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProv
 			AppSubUrl:    cfg.AppSubURL, // Based on the request?
 			BuildVersion: cfg.BuildVersion,
 			BuildCommit:  cfg.BuildCommit,
-			Assets:       assets,
+			Config:       cfg,
+			License:      license,
 
 			CSPEnabled: cfg.CSPEnabled,
 			CSPContent: cfg.CSPTemplate,
@@ -96,6 +97,17 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	if data.CSPEnabled {
 		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
 	}
+
+	// TODO: moved to request handler to prevent stale assets during dev,
+	// but should we do this differently?
+	assets, err := webassets.GetWebAssets(context.Background(), data.Config, data.License)
+	if err != nil {
+		p.log.Error("error getting assets", "err", err)
+		writer.WriteHeader(500)
+		return
+	}
+
+	data.Assets = assets
 
 	writer.Header().Set("Content-Type", "text/html; charset=UTF-8")
 	writer.WriteHeader(200)
