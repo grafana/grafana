@@ -81,12 +81,7 @@ export const getDefaultFormValues = (): RuleFormValues => {
 };
 
 export const getDefautManualRouting = () => {
-  // first check if feature toggle for simplified routing is enabled
-  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
-  if (!simplifiedRoutingToggleEnabled) {
-    return false;
-  }
-  //then, check in local storage if the user has enabled simplified routing
+  // check in local storage
   // if it's not set, we'll default to true
   const manualRouting = localStorage.getItem(MANUAL_ROUTING_KEY);
   return manualRouting !== 'false';

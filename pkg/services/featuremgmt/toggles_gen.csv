@@ -94,7 +94,6 @@ pdfTables,preview,@grafana/sharing-squad,false,false,false
 ssoSettingsApi,GA,@grafana/identity-access-team,false,false,false
 canvasPanelPanZoom,preview,@grafana/dataviz-squad,false,false,true
 logsInfiniteScrolling,GA,@grafana/observability-logs,false,false,true
-alertingSimplifiedRouting,GA,@grafana/alerting-squad,false,false,false
 logRowsPopoverMenu,GA,@grafana/observability-logs,false,false,true
 pluginsSkipHostEnvVars,experimental,@grafana/plugins-platform-backend,false,false,false
 tableSharedCrosshair,experimental,@grafana/dataviz-squad,false,false,true

@@ -387,10 +387,6 @@ const (
 	// Enables infinite scrolling for the Logs panel in Explore and Dashboards
 	FlagLogsInfiniteScrolling = "logsInfiniteScrolling"
 
-	// FlagAlertingSimplifiedRouting
-	// Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-	FlagAlertingSimplifiedRouting = "alertingSimplifiedRouting"
-
 	// FlagLogRowsPopoverMenu
 	// Enable filtering menu displayed when text of a log line is selected
 	FlagLogRowsPopoverMenu = "logRowsPopoverMenu"
