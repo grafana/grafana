@@ -353,7 +353,7 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // we escape it. Otherwise, we return it directly.
     // The regex below searches for regexes within the query string
     const regexMatcher = new RegExp(
-      /\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
+      /(\s*(=|!)~\s*)\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
       'gm'
     );
     // If matches are found this regex is evaluated to check if the variable is contained in the regex /^...$/ (^ and $ is optional)
