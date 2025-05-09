@@ -60,11 +60,11 @@ export function ResourceExport({
               options={[
                 { label: t('dashboard-scene.resource-export.label.classic', 'Classic'), value: ExportMode.Classic },
                 {
-                  label: t('dashboard-scene.resource-export.label.v-resource', 'V1 Resource'),
+                  label: t('dashboard-scene.resource-export.label.v-resource1', 'V1 Resource'),
                   value: ExportMode.V1Resource,
                 },
                 {
-                  label: t('dashboard-scene.resource-export.label.v-resource', 'V2 Resource'),
+                  label: t('dashboard-scene.resource-export.label.v-resource2', 'V2 Resource'),
                   value: ExportMode.V2Resource,
                 },
               ]}
