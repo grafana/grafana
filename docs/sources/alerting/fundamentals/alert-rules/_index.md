@@ -102,7 +102,11 @@ Data source-managed alert rules can only be created using Grafana Mimir or Grafa
 1. Alert rules are evaluated by the Alert Rule Evaluation Engine within the data source.
 1. Firing and resolved alert instances are forwarded to [handle their notifications](ref:notifications).
 
-{{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+> Rules from a Prometheus data source appear in the **Data source-managed** section of the **Alert rules** page when [Manage alerts via Alerting UI](ref:shared-configure-prometheus-data-source-alerting) is enabled.
+>
+> However, Grafana can only create and edit data source-managed rules for Mimir and Loki, not for a Prometheus instance.
+
+[//]: # '{{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
 
 ## Comparison between alert rule types
 
