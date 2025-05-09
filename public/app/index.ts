@@ -1,3 +1,9 @@
+// FEMT index.html loads bootdata async so need to wait for that to complete.
+// Non-FEMT sets this to an immediately resolved promise.
+// It's important to wait for this until any other imports run, becuase there's a bunch
+// of module-side effects that depend on the bootdata.
+await window.__grafana_boot_data_promise;
+
 import './core/trustedTypePolicies';
 declare let __webpack_public_path__: string;
 declare let __webpack_nonce__: string;

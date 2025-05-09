@@ -4,6 +4,7 @@ export declare global {
     __grafana_app_bundle_loaded: boolean;
     __grafana_public_path__: string;
     __grafana_load_failed: () => void;
+    __grafana_boot_data_promise: Promise<void>;
     public_cdn_path: string;
     nonce: string | undefined;
     System: typeof System;
