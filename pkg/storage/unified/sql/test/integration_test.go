@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"os"
 	"testing"
 	"time"
 
@@ -12,12 +13,14 @@ import (
 	"github.com/grafana/authlib/authn"
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
+	"github.com/grafana/grafana/pkg/infra/db"
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/storage/unified"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/search"
 	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db/dbimpl"
 	unitest "github.com/grafana/grafana/pkg/storage/unified/testing"
@@ -94,6 +97,45 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 			return backend
 		}, nil)
 	})
+}
+
+func TestIntegrationSearchAndStorage(t *testing.T) {
+	if testing.Short() {
+		t.Skip("skipping integration test in short mode")
+	}
+	if db.IsTestDBSpanner() {
+		t.Skip("Skipping benchmark on Spanner")
+	}
+
+	ctx := context.Background()
+
+	tempDir := t.TempDir()
+	t.Cleanup(func() {
+		_ = os.RemoveAll(tempDir)
+	})
+	// Create a new bleve backend
+	search, err := search.NewBleveBackend(search.BleveOptions{
+		Root: tempDir,
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
+	require.NoError(t, err)
+	require.NotNil(t, search)
+
+	// Create a new resource backend
+	dbstore := db.InitTestDB(t)
+	eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
+	require.NoError(t, err)
+	require.NotNil(t, eDB)
+
+	storage, err := sql.NewBackend(sql.BackendOptions{
+		DBProvider: eDB,
+		IsHA:       false,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, storage)
+
+	err = storage.Init(ctx)
+	require.NoError(t, err)
+	unitest.RunTestSearchAndStorage(t, ctx, storage, search)
 }
 
 func TestClientServer(t *testing.T) {

@@ -336,12 +336,18 @@ func BenchmarkSearchBackend(tb testing.TB, backend resource.SearchBackend, opts 
 
 func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts *BenchmarkOptions) {
 	events := make(chan *resource.IndexEvent, opts.NumResources)
+	groupsResources := make(map[string]string)
+	for g := 0; g < opts.NumGroups; g++ {
+		for r := 0; r < opts.NumResourceTypes; r++ {
+			groupsResources[fmt.Sprintf("group-%d", g)] = fmt.Sprintf("resource-%d", r)
+		}
+	}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 		Search: resource.SearchOptions{
 			Backend:         searchBackend,
 			IndexEventsChan: events,
-			Resources:       &testDocumentBuilderSupplier{opts: opts},
+			Resources:       &testDocumentBuilderSupplier{groupsResources: groupsResources},
 		},
 	})
 	require.NoError(tb, err)
@@ -426,25 +432,21 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.R
 
 // testDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
 type testDocumentBuilderSupplier struct {
-	opts *BenchmarkOptions
+	groupsResources map[string]string
 }
 
 func (s *testDocumentBuilderSupplier) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
-	builders := make([]resource.DocumentBuilderInfo, 0, s.opts.NumGroups*s.opts.NumResourceTypes)
+	builders := make([]resource.DocumentBuilderInfo, 0, len(s.groupsResources))
 
 	// Add builders for all possible group/resource combinations
-	for g := 0; g < s.opts.NumGroups; g++ {
-		group := fmt.Sprintf("group-%d", g)
-		for r := 0; r < s.opts.NumResourceTypes; r++ {
-			resourceType := fmt.Sprintf("resource-%d", r)
-			builders = append(builders, resource.DocumentBuilderInfo{
-				GroupResource: schema.GroupResource{
-					Group:    group,
-					Resource: resourceType,
-				},
-				Builder: &testDocumentBuilder{},
-			})
-		}
+	for group, resourceType := range s.groupsResources {
+		builders = append(builders, resource.DocumentBuilderInfo{
+			GroupResource: schema.GroupResource{
+				Group:    group,
+				Resource: resourceType,
+			},
+			Builder: &testDocumentBuilder{},
+		})
 	}
 
 	return builders, nil
