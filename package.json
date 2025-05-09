@@ -280,7 +280,7 @@
     "@grafana/plugin-ui": "0.10.5",
     "@grafana/prometheus": "workspace:*",
     "@grafana/runtime": "workspace:*",
-    "@grafana/scenes": "link:/Users/mdvictor/Workspace/scenes/packages/scenes",
+    "@grafana/scenes": "6.10.4",
     "@grafana/scenes-react": "6.10.4",
     "@grafana/schema": "workspace:*",
     "@grafana/sql": "workspace:*",
