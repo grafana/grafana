@@ -106,7 +106,7 @@ Data source-managed alert rules can only be created using Grafana Mimir or Grafa
 >
 > However, Grafana can only create and edit data source-managed rules for Mimir and Loki, not for a Prometheus instance.
 
-[//]: # '{{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
+[//]: <> ({{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ## Comparison between alert rule types
 

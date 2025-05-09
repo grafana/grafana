@@ -122,7 +122,7 @@ Here is an example that shows how to exclude the label `Team`. You can choose be
 
 {{< /collapse >}}
 
-[//]: # '{{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
+[//]: <> ({{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 {{< figure src="/media/docs/alerting/notification-routing.png" max-width="750px" caption="Matching alert instances with notification policies" alt="Example of a notification policy tree" >}}
 

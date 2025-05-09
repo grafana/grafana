@@ -89,7 +89,7 @@ We recommend using [Grafana-managed alert rules](ref:configure-grafana-managed-r
 >
 > However, Grafana can only create and edit data source-managed rules for Mimir and Loki, not for a Prometheus instance.
 
-[//]: # '{{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
+[//]: <> ({{< docs/shared lookup="alerts/note-prometheus-ds-rules.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 To create or edit data source-managed alert rules, follow these instructions.
 
@@ -117,7 +117,7 @@ Note that if you delete an alert resource created in the UI, you can no longer r
 
 To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
 
-[//]: # '{{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
+[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 {{< docs/shared lookup="alerts/configure-alert-rule-name.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
@@ -194,4 +194,4 @@ Grafana provides several optional annotations.
 
 1. Click **Save rule**.
 
-[//]: # '{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
+[//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})

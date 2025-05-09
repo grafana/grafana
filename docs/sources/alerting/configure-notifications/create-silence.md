@@ -78,7 +78,7 @@ The following table highlights the key differences between mute timings and sile
 | **Setup**  | Created and then added to notification policies             | Matches alerts using labels to determine whether to silence them |
 | **Period** | Uses time interval definitions that can repeat periodically | Has a fixed start and end time                                   |
 
-[//]: # '{{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
+[//]: <> ({{< docs/shared lookup="alerts/mute-timings-vs-silences.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ## Add silences
 
@@ -143,7 +143,7 @@ Here is an example that shows how to exclude the label `Team`. You can choose be
 
     {{< /collapse >}}
 
-[//]: # '{{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}}'
+[//]: <> ({{< docs/shared lookup="alerts/how_label_matching_works.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 Any matching alerts (in the firing state only) display under **Affected alert instances**.
 
