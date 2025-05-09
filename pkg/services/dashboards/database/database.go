@@ -613,14 +613,40 @@ func (d *dashboardStore) CleanupAfterDelete(ctx context.Context, cmd *dashboards
 		SQL  string
 		args []any
 	}
-	sqlStatements := []statement{
-		{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
-		{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
-		{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(cmd.ID, 10)}}, // Column has TEXT type.
-		{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
-		{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
-		{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},
-		{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{cmd.ID, cmd.OrgID}},
+
+	hasOrgId := cmd.OrgID != 0
+	hasUID := cmd.UID != "" && cmd.UID != "null" && cmd.UID != "NULL" && cmd.UID != "0"
+	hasID := cmd.ID != 0
+
+	sqlStatements := []statement{}
+
+	// Log warning if missing critical identifiers
+	if !hasOrgId || !hasUID || !hasID {
+		d.log.Warn("CleanupAfterDelete: Missing identifiers, will only do partial cleanup", "orgId", cmd.OrgID, "uid", cmd.UID, "id", cmd.ID)
+	}
+
+	// UID-based cleanups
+	if hasUID && hasOrgId {
+		sqlStatements = append(sqlStatements,
+			statement{SQL: "DELETE FROM dashboard_tag WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
+			statement{SQL: "DELETE FROM star WHERE dashboard_uid = ? AND org_id = ?", args: []any{cmd.UID, cmd.OrgID}},
+		)
+	}
+
+	// ID-based cleanups
+	if hasID {
+		sqlStatements = append(sqlStatements,
+			statement{SQL: "DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?", args: []any{strconv.FormatInt(cmd.ID, 10)}},
+			statement{SQL: "DELETE FROM dashboard_version WHERE dashboard_id = ?", args: []any{cmd.ID}},
+			statement{SQL: "DELETE FROM dashboard_provisioning WHERE dashboard_id = ?", args: []any{cmd.ID}},
+			statement{SQL: "DELETE FROM dashboard_acl WHERE dashboard_id = ?", args: []any{cmd.ID}},
+		)
+
+		if hasOrgId {
+			sqlStatements = append(sqlStatements,
+				statement{SQL: "DELETE FROM annotation WHERE dashboard_id = ? AND org_id = ?", args: []any{cmd.ID, cmd.OrgID}},
+			)
+		}
 	}
 
 	err := d.store.WithTransactionalDbSession(ctx, func(sess *db.Session) error {
