@@ -15,9 +15,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Upload sources
-        uses: crowdin/github-action@v2
+        uses: crowdin/github-action@b8012bd5491b8aa8578b73ab5b5f5e7c94aaa6e2
         with:
           upload_sources: true
           upload_sources_args: '--dest=public/locales/en-US/grafana.json'

@@ -36,7 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Run community-release (manually invoked)
-        uses: grafana/grafana-github-actions-go/community-release@main
+        uses: grafana/grafana-github-actions-go/community-release@main # zizmor: ignore[unpinned-uses]
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: ${{ inputs.version }}

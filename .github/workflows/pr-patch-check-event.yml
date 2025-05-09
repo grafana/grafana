@@ -3,7 +3,7 @@
 name: Dispatch check for patch conflicts
 run-name: dispatch-check-patch-conflicts-${{ github.base_ref }}-${{ github.head_ref }}
 on:
-  pull_request:
+  pull_request_target:
     types:
       - opened
       - reopened
@@ -13,10 +13,22 @@ on:
       - "v*.*.*"
       - "release-*"
 
+permissions: {}
+
 # Since this is run on a pull request, we want to apply the patches intended for the
 # target branch onto the source branch, to verify compatibility before merging.
 jobs:
   dispatch-job:
+    permissions:
+      contents: read
+      actions: write
+    env:
+      HEAD_REF: ${{ github.head_ref }}
+      BASE_REF: ${{ github.base_ref }}
+      REPO: ${{ github.repository }}
+      SENDER: ${{ github.event.sender.login }}
+      SHA: ${{ github.sha }}
+      PR_COMMIT_SHA: ${{ github.event.pull_request.head.sha }}
     runs-on: ubuntu-latest
     steps:
       - name: "Generate token"
@@ -26,24 +38,25 @@ jobs:
           # App needs Actions: Read/Write for the grafana/security-patch-actions repo
           app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
           private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
-
       - name: "Dispatch job"
         uses: actions/github-script@v7
         with:
           github-token: ${{ steps.generate_token.outputs.token }}
           script: |
+            const {HEAD_REF, BASE_REF, REPO, SENDER, SHA, PR_COMMIT_SHA} = process.env;
+
             await github.rest.actions.createWorkflowDispatch({
                 owner: 'grafana',
                 repo: 'security-patch-actions',
                 workflow_id: 'test-patches-event.yml',
                 ref: 'main',
                 inputs: {
-                  src_repo: "${{ github.repository }}",
-                  src_ref: "${{ github.head_ref }}",
-                  src_merge_sha: "${{ github.sha }}",
-                  src_pr_commit_sha: "${{ github.event.pull_request.head.sha }}",
-                  patch_repo: "${{ github.repository }}-security-patches",
-                  patch_ref: "${{ github.base_ref }}",
-                  triggering_github_handle: "${{ github.event.sender.login }}"
+                  src_repo: REPO,
+                  src_ref: HEAD_REF,
+                  src_merge_sha: SHA,
+                  src_pr_commit_sha: PR_COMMIT_SHA,
+                  patch_repo: REPO + '-security-patches',
+                  patch_ref: BASE_REF,
+                  triggering_github_handle: SENDER
                 }
             })

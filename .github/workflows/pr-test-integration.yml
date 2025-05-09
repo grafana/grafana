@@ -1,0 +1,89 @@
+name: Integration Tests
+
+on:
+  push:
+    branches:
+      - main
+      - release-*.*.*
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
+
+jobs:
+  sqlite:
+    name: Sqlite
+    runs-on: ubuntu-latest-8-cores
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: |
+          make gen-go
+          go test -tags=sqlite -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+  mysql:
+    name: MySQL
+    runs-on: ubuntu-latest-8-cores
+    env:
+      GRAFANA_TEST_DB: mysql
+      MYSQL_HOST: 127.0.0.1
+    services:
+      mysql:
+        image: mysql:8.0.32
+        env:
+          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_DATABASE: grafana_tests
+          MYSQL_USER: grafana
+          MYSQL_PASSWORD: password
+        options: --health-cmd="mysqladmin ping --silent" --health-interval=10s --health-timeout=5s --health-retries=3
+        ports:
+          - 3306:3306
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: |
+          sudo apt-get update -yq && sudo apt-get install mariadb-client
+          cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
+          make gen-go
+          go test -tags=mysql -p=1 -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+  postgres:
+    name: Postgres
+    runs-on: ubuntu-latest-8-cores
+    services:
+      postgres:
+        image: postgres:12.3-alpine
+        env:
+          POSTGRES_USER: grafanatest
+          POSTGRES_PASSWORD: grafanatest
+          POSTGRES_DB: grafanatest
+        ports:
+          - 5432:5432
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - env:
+          GRAFANA_TEST_DB: postgres
+          PGPASSWORD: grafanatest
+          POSTGRES_HOST: 127.0.0.1
+        run: |
+          sudo apt-get update -yq && sudo apt-get install postgresql-client
+          psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
+          make gen-go
+          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
