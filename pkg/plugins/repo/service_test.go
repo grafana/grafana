@@ -127,7 +127,7 @@ func TestPluginIndex(t *testing.T) {
 		BaseURL:       srv.URL,
 		Logger:        log.NewTestPrettyLogger(),
 	})
-	pi, err := m.PluginIndex(context.Background(), CompatOpts{
+	pi, err := m.GetPluginsInfo(context.Background(), CompatOpts{
 		grafanaVersion: "12.0.0",
 		system: SystemCompatOpts{
 			os:   "darwin",

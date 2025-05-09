@@ -132,7 +132,7 @@ func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID 
 	return v.Versions, nil
 }
 
-func (m *Manager) PluginIndex(ctx context.Context, compatOpts CompatOpts) ([]PluginInfo, error) {
+func (m *Manager) GetPluginsInfo(ctx context.Context, compatOpts CompatOpts) ([]PluginInfo, error) {
 	u, err := url.Parse(m.client.grafanaComAPIURL)
 	if err != nil {
 		return nil, err

@@ -82,7 +82,7 @@ func (c *check) ID() string {
 
 func (c *check) Init(ctx context.Context) error {
 	compatOpts := repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-	plugins, err := c.PluginRepo.PluginIndex(ctx, compatOpts)
+	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, compatOpts)
 	if err != nil {
 		return err
 	}

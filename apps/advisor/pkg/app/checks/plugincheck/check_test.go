@@ -84,20 +84,7 @@ func TestRun(t *testing.T) {
 			pluginInfo: []repo.PluginInfo{
 				{Status: "active", Slug: "plugin2", Version: "beta"},
 			},
-			expectedFailures: []advisor.CheckReportFailure{
-				{
-					Severity: advisor.CheckReportFailureSeverityLow,
-					StepID:   "update",
-					Item:     "Plugin 2",
-					ItemID:   "plugin2",
-					Links: []advisor.CheckErrorLink{
-						{
-							Url:     "/plugins/plugin2?page=version-history",
-							Message: "Upgrade",
-						},
-					},
-				},
-			},
+			expectedFailures: []advisor.CheckReportFailure{}, // Cannot be compared because the version is not semver
 		},
 		{
 			name: "Plugin pinned",
@@ -181,7 +168,7 @@ type mockPluginRepo struct {
 	pluginInfo []repo.PluginInfo
 }
 
-func (m *mockPluginRepo) PluginIndex(ctx context.Context, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
+func (m *mockPluginRepo) GetPluginsInfo(ctx context.Context, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
 	return m.pluginInfo, nil
 }
 

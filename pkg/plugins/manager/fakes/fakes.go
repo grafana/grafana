@@ -276,7 +276,7 @@ func (r *FakePluginRepo) PluginInfo(ctx context.Context, pluginID string, compat
 	return &repo.PluginInfo{}, nil
 }
 
-func (r *FakePluginRepo) PluginIndex(ctx context.Context, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
+func (r *FakePluginRepo) GetPluginsInfo(ctx context.Context, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
 	return []repo.PluginInfo{}, nil
 }
 
