@@ -1,23 +1,7 @@
 import { ReactElement } from 'react';
 
 import { Trans as TransCore, TransProps } from '@grafana/i18n';
-import { changeLanguage as changeLanguageCore, initTranslations, t as tCore } from '@grafana/i18n/internal';
-
-import { NAMESPACES, VALID_LANGUAGES } from './constants';
-import { loadTranslations } from './loadTranslations';
-
-// This is a placeholder so we can put a 'comment' in the message json files.
-// Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
-// t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
-
-export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
-  return initTranslations({ language, ns: NAMESPACES, module: loadTranslations });
-}
-
-export function changeLanguage(locale: string) {
-  const validLocale = VALID_LANGUAGES.includes(locale) ? locale : undefined;
-  return changeLanguageCore(validLocale);
-}
+import { t as tCore } from '@grafana/i18n/internal';
 
 export const Trans = (props: TransProps): ReactElement => <TransCore {...props} />;
 
