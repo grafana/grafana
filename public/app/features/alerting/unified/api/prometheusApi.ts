@@ -1,3 +1,6 @@
+import { useCallback } from 'react';
+
+import { useDispatch } from 'app/types';
 import { GrafanaPromRuleGroupDTO, PromRuleDTO, PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
@@ -79,6 +82,31 @@ export const prometheusApi = alertingApi.injectEndpoints({
           group_next_token: groupNextToken,
         },
       }),
+      providesTags: (_result, _error, { folderUid, groupName, ruleName }) => {
+        const folderKey = folderUid ?? '__any__';
+        const groupKey = groupName ?? '__any__';
+        const ruleKey = ruleName ?? '__any__';
+        return [{ type: 'GrafanaPrometheusGroups', id: `grafana/${folderKey}/${groupKey}/${ruleKey}` }];
+      },
     }),
   }),
 });
+
+export function usePopulateGrafanaPrometheusApiCache() {
+  const dispatch = useDispatch();
+
+  const populateGroupResponseCache = useCallback(
+    (group: GrafanaPromRuleGroupDTO) => {
+      dispatch(
+        prometheusApi.util.upsertQueryData(
+          'getGrafanaGroups',
+          { folderUid: group.folderUid, groupName: group.name },
+          { data: { groups: [group] }, status: 'success' }
+        )
+      );
+    },
+    [dispatch]
+  );
+
+  return { populateGroupResponseCache };
+}

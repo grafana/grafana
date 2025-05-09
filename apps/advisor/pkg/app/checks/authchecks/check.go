@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
 )
 
@@ -17,13 +16,11 @@ var _ checks.Check = (*check)(nil)
 
 type check struct {
 	ssoSettingsService ssosettings.Service
-	log                log.Logger
 }
 
 func New(ssoSettingsService ssosettings.Service) checks.Check {
 	return &check{
 		ssoSettingsService: ssoSettingsService,
-		log:                log.New("advisor.ssosettingcheck"),
 	}
 }
 
