@@ -31,6 +31,7 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
     {
       name: 'Text in Trans component',
       code: `const Foo = () => <Bar><Trans>Translated text</Trans></Bar>`,
+      filename,
     },
     {
       name: 'Text in Trans component with whitespace/JSXText elements',
@@ -38,58 +39,72 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
       <Trans>
         Translated text
     </Trans>   </Bar>`,
+      filename,
     },
     {
       name: 'Empty component',
       code: `<div>     </div>`,
+      filename,
     },
     {
       name: 'Text using t() function',
       code: `<div>{t('translated.key', 'Translated text')}</div>`,
+      filename,
     },
     {
       name: 'Prop using t() function',
       code: `<div aria-label={t('aria.label', 'Accessible label')} />`,
+      filename,
     },
     {
       name: 'Empty string prop',
       code: `<div title="" />`,
+      filename,
     },
     {
       name: 'Prop using boolean',
       code: `<div title={false} />`,
+      filename,
     },
     {
       name: 'Prop using number',
       code: `<div title={0} />`,
+      filename,
     },
     {
       name: 'Prop using null',
       code: `<div title={null} />`,
+      filename,
     },
     {
       name: 'Prop using undefined',
       code: `<div title={undefined} />`,
+      filename,
     },
     {
       name: 'Variable interpolation',
       code: `<div>{variable}</div>`,
+      filename,
     },
     {
       name: 'Entirely non-alphanumeric text (prop)',
       code: `<div title="-" />`,
+      filename,
     },
     {
       name: 'Entirely non-alphanumeric text',
       code: `<div>-</div>`,
+      filename,
     },
     {
       name: 'Non-alphanumeric siblings',
       code: `<div>({variable})</div>`,
+      filename,
     },
     {
       name: "Ternary in an attribute we don't care about",
       code: `<div icon={isAThing ? 'Foo' : 'Bar'} />`,
+      filename,
     },
     {
       name: 'Ternary with falsy strings',
@@ -98,36 +113,59 @@ ruleTester.run('eslint no-untranslated-strings', noUntranslatedStrings, {
     {
       name: 'Ternary with no strings',
       code: `<div title={isAThing ? 1 : 2} />`,
+      filename,
     },
     {
       name: 'Object property',
-      code: `const thing = {
+      code: `const getThing = () => ({
         label: t('test', 'Test'),
-      }`,
+      })`,
+      filename,
     },
     {
       // Ideally we would catch this, but test case is to ensure that
       // we aren't reporting an error
       name: 'Object property using variable',
-      code: `const foo = 'test';
-      const thing = {
-        label: foo,
+      code: `
+      const getThing = () => {
+        const foo = 'test';
+        const thing = {
+          label: foo,
+        }
       }`,
+      filename,
     },
     {
       name: 'Object property using dynamic keys',
-      code: `const foo = 'label';
-      const thing = {
-        [foo]: 'test',
-        ['title']: 'test',
+      code: `
+      const getThing = () => {
+        const foo = 'label';
+        const thing = {
+          [foo]: 'test',
+          ['title']: 'test',
+        }
       }`,
+      filename,
     },
     {
       name: 'Label reference inside `css` call',
-      code: `const foo = css({
-        label: 'red',
-      });`,
+      code: `const getThing = () => {
+        const thing = css({
+          label: 'red',
+        });
+      }`,
       options: [{ calleesToIgnore: ['somethingelse', '^css$'] }],
+      filename,
+    },
+    {
+      name: 'Object property that is a boolean or number',
+      code: `const getThing = () => {
+        const thing = {
+          label: true,
+          title: 1
+        };
+      }`,
+      filename,
     },
   ],
   invalid: [
@@ -721,6 +759,35 @@ const Foo = () => {
     {
       name: 'Untranslated object property',
       code: `
+const Foo = () => {
+  const thing = {
+    label: 'test',
+  }
+}`,
+      filename,
+      errors: [
+        {
+          messageId: 'noUntranslatedStringsProperties',
+          suggestions: [
+            {
+              messageId: 'wrapWithT',
+              output: `
+import { t } from 'app/core/internationalization';
+const Foo = () => {
+  const thing = {
+    label: t(\"some-feature.foo.thing.label.test\", \"test\"),
+  }
+}`,
+            },
+          ],
+        },
+      ],
+    },
+
+    {
+      name: 'Untranslated object property with existing import',
+      code: `
+import { t } from 'app/core/internationalization';
 const Foo = () => {
   const thing = {
     label: 'test',
