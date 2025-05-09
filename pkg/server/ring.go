@@ -13,7 +13,6 @@ import (
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"google.golang.org/grpc"
@@ -123,15 +122,28 @@ func newClientPool(clientCfg grpcclient.Config, log log.Logger, reg prometheus.R
 			return nil, fmt.Errorf("failed to dial resource server %s %s: %s", inst.Id, inst.Addr, err)
 		}
 
-		// TODO only use this if FlagAppPlatformGrpcClientAuth is not enabled
-		client := resource.NewLegacyResourceClient(conn)
-
-		return &resource.RingClient{
-			Client:       client,
+		return &ringClient{
 			HealthClient: grpc_health_v1.NewHealthClient(conn),
-			Conn:         conn,
+			conn:         conn,
 		}, nil
 	})
 
 	return ringclient.NewPool(ringName, poolCfg, nil, factory, clientsCount, log)
+}
+
+type ringClient struct {
+	grpc_health_v1.HealthClient
+	conn *grpc.ClientConn
+}
+
+func (c *ringClient) Close() error {
+	return c.conn.Close()
+}
+
+func (c *ringClient) String() string {
+	return c.RemoteAddress()
+}
+
+func (c *ringClient) RemoteAddress() string {
+	return c.conn.Target()
 }

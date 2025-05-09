@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"google.golang.org/grpc/metadata"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -63,6 +64,8 @@ func (h *k8sHandler) GetNamespace(orgID int64) string {
 }
 
 func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, options v1.GetOptions, subresource ...string) (*unstructured.Unstructured, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", h.GetNamespace(orgID))
+
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -72,6 +75,8 @@ func (h *k8sHandler) Get(ctx context.Context, name string, orgID int64, options 
 }
 
 func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.CreateOptions) (*unstructured.Unstructured, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", h.GetNamespace(orgID))
+
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -81,6 +86,8 @@ func (h *k8sHandler) Create(ctx context.Context, obj *unstructured.Unstructured,
 }
 
 func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured, orgID int64, opts v1.UpdateOptions) (*unstructured.Unstructured, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", h.GetNamespace(orgID))
+
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -90,6 +97,8 @@ func (h *k8sHandler) Update(ctx context.Context, obj *unstructured.Unstructured,
 }
 
 func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, options v1.DeleteOptions) error {
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", h.GetNamespace(orgID))
+
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return err
@@ -99,6 +108,8 @@ func (h *k8sHandler) Delete(ctx context.Context, name string, orgID int64, optio
 }
 
 func (h *k8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", h.GetNamespace(orgID))
+
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return err
@@ -108,6 +119,8 @@ func (h *k8sHandler) DeleteCollection(ctx context.Context, orgID int64) error {
 }
 
 func (h *k8sHandler) List(ctx context.Context, orgID int64, options v1.ListOptions) (*unstructured.UnstructuredList, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", h.GetNamespace(orgID))
+
 	client, err := h.getClient(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -130,10 +143,14 @@ func (h *k8sHandler) Search(ctx context.Context, orgID int64, in *resource.Resou
 		}
 	}
 
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", in.Options.Key.Namespace)
+
 	return h.searcher.Search(ctx, in)
 }
 
 func (h *k8sHandler) GetStats(ctx context.Context, orgID int64) (*resource.ResourceStatsResponse, error) {
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", h.GetNamespace(orgID))
+
 	// goes directly through grpc, so doesn't need the new context
 	return h.searcher.GetStats(ctx, &resource.ResourceStatsRequest{
 		Namespace: h.GetNamespace(orgID),
