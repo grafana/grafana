@@ -16,11 +16,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/routingtree/v0alpha1"
-	v0alpha1_timeinterval "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/routingtree"
 
-	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/timeinterval/v0alpha1/fakes"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1/fakes"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -60,7 +59,7 @@ func TestIntegrationNotAllowedMethods(t *testing.T) {
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1.Spec{},
+		Spec: v0alpha1.RoutingTreeSpec{},
 	}
 	_, err := client.Create(ctx, route, v1.CreateOptions{})
 	assert.Error(t, err)
@@ -204,12 +203,12 @@ func TestIntegrationAccessControl(t *testing.T) {
 			current, err := adminClient.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 			require.NoError(t, err)
 			expected := current.Copy().(*v0alpha1.RoutingTree)
-			expected.Spec.Routes = []v0alpha1.Route{
+			expected.Spec.Routes = []v0alpha1.RoutingTreeRoute{
 				{
-					Matchers: []v0alpha1.Matcher{
+					Matchers: []v0alpha1.RoutingTreeMatcher{
 						{
 							Label: "test",
-							Type:  v0alpha1.MatcherTypeEqual,
+							Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
 							Value: "test",
 						},
 					},
@@ -313,12 +312,12 @@ func TestIntegrationProvisioning(t *testing.T) {
 	})
 	t.Run("should not let update if provisioned", func(t *testing.T) {
 		updated := current.Copy().(*v0alpha1.RoutingTree)
-		updated.Spec.Routes = []v0alpha1.Route{
+		updated.Spec.Routes = []v0alpha1.RoutingTreeRoute{
 			{
-				Matchers: []v0alpha1.Matcher{
+				Matchers: []v0alpha1.RoutingTreeMatcher{
 					{
 						Label: "test",
-						Type:  v0alpha1.MatcherTypeNotEqual,
+						Type:  v0alpha1.RoutingTreeMatcherTypeNotEqual,
 						Value: "123",
 					},
 				},
@@ -370,7 +369,7 @@ func TestIntegrationOptimisticConcurrency(t *testing.T) {
 		require.NoError(t, err)
 		updated := current.Copy().(*v0alpha1.RoutingTree)
 		updated.ResourceVersion = ""
-		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.Route{Continue: true})
+		updated.Spec.Routes = append(updated.Spec.Routes, v0alpha1.RoutingTreeRoute{Continue: true})
 
 		actualUpdated, err := adminClient.Update(ctx, updated, v1.UpdateOptions{})
 		require.NoError(t, err)
@@ -403,11 +402,11 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	_, err := common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1_timeinterval.TimeInterval{
+	_, err := common.NewTimeIntervalClient(t, helper.Org1.Admin).Create(ctx, &v0alpha1.TimeInterval{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: "default",
 		},
-		Spec: v0alpha1_timeinterval.Spec{
+		Spec: v0alpha1.TimeIntervalSpec{
 			Name:          timeInterval,
 			TimeIntervals: fakes.IntervalGenerator{}.GenerateMany(1),
 		},
@@ -447,25 +446,25 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			createRoute(t, route)
 			tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 			require.NoError(t, err)
-			expected := []v0alpha1.Matcher{
+			expected := []v0alpha1.RoutingTreeMatcher{
 				{
 					Label: "label_match",
-					Type:  v0alpha1.MatcherTypeEqual,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
 					Value: "test-123",
 				},
 				{
 					Label: "label_re",
-					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
 					Value: ".*",
 				},
 				{
 					Label: "label_matchers",
-					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
 					Value: "test-321",
 				},
 				{
 					Label: "object-label-matchers",
-					Type:  v0alpha1.MatcherTypeNotEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqualRegex,
 					Value: "test-456",
 				},
 			}
@@ -538,13 +537,14 @@ func TestIntegrationDataConsistency(t *testing.T) {
 					ensureMatcher(t, labels.MatchRegexp, "o", "1"),
 					ensureMatcher(t, labels.MatchNotRegexp, "p", "1"),
 				},
-				Receiver:          receiver,
-				GroupByStr:        []string{"test-789"},
-				GroupWait:         util.Pointer(model.Duration(2 * time.Minute)),
-				GroupInterval:     util.Pointer(model.Duration(5 * time.Minute)),
-				RepeatInterval:    util.Pointer(model.Duration(30 * time.Hour)),
-				MuteTimeIntervals: []string{timeInterval},
-				Continue:          true,
+				Receiver:            receiver,
+				GroupByStr:          []string{"test-789"},
+				GroupWait:           util.Pointer(model.Duration(2 * time.Minute)),
+				GroupInterval:       util.Pointer(model.Duration(5 * time.Minute)),
+				RepeatInterval:      util.Pointer(model.Duration(30 * time.Hour)),
+				MuteTimeIntervals:   []string{timeInterval},
+				ActiveTimeIntervals: []string{timeInterval},
+				Continue:            true,
 			},
 		},
 	}
@@ -553,7 +553,7 @@ func TestIntegrationDataConsistency(t *testing.T) {
 	t.Run("correctly reads all fields", func(t *testing.T) {
 		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 		require.NoError(t, err)
-		assert.Equal(t, v0alpha1.RouteDefaults{
+		assert.Equal(t, v0alpha1.RoutingTreeRouteDefaults{
 			Receiver:       receiver,
 			GroupBy:        []string{"test-123", "test-456"},
 			GroupWait:      util.Pointer("30s"),
@@ -561,33 +561,34 @@ func TestIntegrationDataConsistency(t *testing.T) {
 			RepeatInterval: util.Pointer("1d"),
 		}, tree.Spec.Defaults)
 		assert.Len(t, tree.Spec.Routes, 1)
-		assert.Equal(t, v0alpha1.Route{
-			Continue:          true,
-			Receiver:          util.Pointer(receiver),
-			GroupBy:           []string{"test-789"},
-			GroupWait:         util.Pointer("2m"),
-			GroupInterval:     util.Pointer("5m"),
-			RepeatInterval:    util.Pointer("1d6h"),
-			MuteTimeIntervals: []string{timeInterval},
-			Matchers: []v0alpha1.Matcher{
+		assert.Equal(t, v0alpha1.RoutingTreeRoute{
+			Continue:            true,
+			Receiver:            util.Pointer(receiver),
+			GroupBy:             []string{"test-789"},
+			GroupWait:           util.Pointer("2m"),
+			GroupInterval:       util.Pointer("5m"),
+			RepeatInterval:      util.Pointer("1d6h"),
+			MuteTimeIntervals:   []string{timeInterval},
+			ActiveTimeIntervals: []string{timeInterval},
+			Matchers: []v0alpha1.RoutingTreeMatcher{
 				{
 					Label: "m",
-					Type:  v0alpha1.MatcherTypeNotEqual,
+					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqual,
 					Value: "1",
 				},
 				{
 					Label: "n",
-					Type:  v0alpha1.MatcherTypeEqual,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqual,
 					Value: "1",
 				},
 				{
 					Label: "o",
-					Type:  v0alpha1.MatcherTypeEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeEqualRegex,
 					Value: "1",
 				},
 				{
 					Label: "p",
-					Type:  v0alpha1.MatcherTypeNotEqualRegex,
+					Type:  v0alpha1.RoutingTreeMatcherTypeNotEqualRegex,
 					Value: "1",
 				},
 			},
@@ -651,13 +652,13 @@ func TestIntegrationDataConsistency(t *testing.T) {
 		tree, err := client.Get(ctx, v0alpha1.UserDefinedRoutingTreeName, v1.GetOptions{})
 		require.NoError(t, err)
 		assert.Equal(t, "foo🙂", tree.Spec.Routes[0].GroupBy[0])
-		expected := []v0alpha1.Matcher{
-			{Label: "foo🙂", Type: v0alpha1.MatcherTypeEqual, Value: "bar"},
-			{Label: "_bar1", Type: v0alpha1.MatcherTypeNotEqual, Value: "baz🙂"},
-			{Label: "0baz", Type: v0alpha1.MatcherTypeEqualRegex, Value: "[a-zA-Z0-9]+,?"},
-			{Label: "corge", Type: v0alpha1.MatcherTypeNotEqualRegex, Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$"},
-			{Label: "Προμηθέας", Type: v0alpha1.MatcherTypeEqual, Value: "Prom"},
-			{Label: "犬", Type: v0alpha1.MatcherTypeNotEqual, Value: "Shiba Inu"},
+		expected := []v0alpha1.RoutingTreeMatcher{
+			{Label: "foo🙂", Type: v0alpha1.RoutingTreeMatcherTypeEqual, Value: "bar"},
+			{Label: "_bar1", Type: v0alpha1.RoutingTreeMatcherTypeNotEqual, Value: "baz🙂"},
+			{Label: "0baz", Type: v0alpha1.RoutingTreeMatcherTypeEqualRegex, Value: "[a-zA-Z0-9]+,?"},
+			{Label: "corge", Type: v0alpha1.RoutingTreeMatcherTypeNotEqualRegex, Value: "^[0-9]+((,[0-9]{3})*(,[0-9]{0,3})?)?$"},
+			{Label: "Προμηθέας", Type: v0alpha1.RoutingTreeMatcherTypeEqual, Value: "Prom"},
+			{Label: "犬", Type: v0alpha1.RoutingTreeMatcherTypeNotEqual, Value: "Shiba Inu"},
 		}
 		assert.ElementsMatch(t, expected, tree.Spec.Routes[0].Matchers)
 	})

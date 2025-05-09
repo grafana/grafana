@@ -1,6 +1,6 @@
 import { css } from '@emotion/css';
 import { orderBy } from 'lodash';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
@@ -8,20 +8,19 @@ import { Card, FilterInput, Icon, Pagination, Select, Stack, TagList, useStyles2
 import { DEFAULT_PER_PAGE_PAGINATION } from 'app/core/constants';
 import { Trans, t } from 'app/core/internationalization';
 import { getQueryParamValue } from 'app/core/utils/query';
-import { FolderState, useDispatch } from 'app/types';
-import { CombinedRule } from 'app/types/unified-alerting';
+import { FolderDTO } from 'app/types';
+import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
-import { useCombinedRuleNamespaces } from './hooks/useCombinedRuleNamespaces';
 import { usePagination } from './hooks/usePagination';
 import { useURLSearchParams } from './hooks/useURLSearchParams';
-import { fetchPromRulesAction, fetchRulerRulesAction } from './state/actions';
 import { combineMatcherStrings, labelsMatchMatchers } from './utils/alertmanager';
 import { GRAFANA_RULES_SOURCE_NAME } from './utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from './utils/matchers';
-import { createViewLink } from './utils/misc';
+import { rulesNav } from './utils/navigation';
 
 interface Props {
-  folder: FolderState;
+  folder: FolderDTO;
+  rules: RulerGrafanaRuleDTO[];
 }
 
 enum SortOrder {
@@ -34,31 +33,20 @@ const sortOptions: Array<SelectableValue<SortOrder>> = [
   { label: 'Alphabetically [Z-A]', value: SortOrder.Descending },
 ];
 
-export const AlertsFolderView = ({ folder }: Props) => {
+export const AlertsFolderView = ({ folder, rules }: Props) => {
   const styles = useStyles2(getStyles);
-  const dispatch = useDispatch();
 
   const onTagClick = (tagName: string) => {
     const matchersString = combineMatcherStrings(labelFilter, tagName);
     setLabelFilter(matchersString);
   };
 
-  useEffect(() => {
-    dispatch(fetchPromRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
-    dispatch(fetchRulerRulesAction({ rulesSourceName: GRAFANA_RULES_SOURCE_NAME }));
-  }, [dispatch]);
-
-  const combinedNamespaces = useCombinedRuleNamespaces(GRAFANA_RULES_SOURCE_NAME);
   const { nameFilter, labelFilter, sortOrder, setNameFilter, setLabelFilter, setSortOrder } =
     useAlertsFolderViewParams();
 
-  const matchingNamespace = combinedNamespaces.find((namespace) => namespace.uid === folder.uid);
+  const filteredRules = filterAndSortRules(rules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
+  const hasNoResults = filteredRules.length === 0;
 
-  const alertRules = matchingNamespace?.groups.flatMap((group) => group.rules) ?? [];
-
-  const filteredRules = filterAndSortRules(alertRules, nameFilter, labelFilter, sortOrder ?? SortOrder.Ascending);
-
-  const hasNoResults = alertRules.length === 0 || filteredRules.length === 0;
   const { page, numberOfPages, onPageChange, pageItems } = usePagination(filteredRules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
   return (
@@ -96,18 +84,18 @@ export const AlertsFolderView = ({ folder }: Props) => {
         </Stack>
 
         <Stack direction="column" gap={1}>
-          {pageItems.map((currentRule) => (
+          {pageItems.map(({ grafana_alert, labels = {} }) => (
             <Card
-              key={Boolean(currentRule.uid) ? currentRule.uid : currentRule.name}
-              href={createViewLink('grafana', currentRule, '')}
+              key={grafana_alert.uid}
+              href={createGrafanaRuleViewLink(grafana_alert)}
               className={styles.card}
               data-testid="alert-card-row"
             >
-              <Card.Heading>{currentRule.name}</Card.Heading>
+              <Card.Heading>{grafana_alert.title}</Card.Heading>
               <Card.Tags>
                 <TagList
                   onClick={onTagClick}
-                  tags={Object.entries(currentRule.labels).map(([label, value]) => `${label}=${value}`)}
+                  tags={Object.entries(labels).map(([label, value]) => `${label}=${value}`)}
                 />
               </Card.Tags>
               <Card.Meta>
@@ -178,17 +166,32 @@ function useAlertsFolderViewParams() {
 }
 
 function filterAndSortRules(
-  originalRules: CombinedRule[],
+  originalRules: RulerGrafanaRuleDTO[],
   nameFilter: string,
   labelFilter: string,
   sortOrder: SortOrder
 ) {
   const matchers = parsePromQLStyleMatcherLooseSafe(labelFilter);
-  const rules = originalRules.filter(
-    (rule) => rule.name.toLowerCase().includes(nameFilter.toLowerCase()) && labelsMatchMatchers(rule.labels, matchers)
-  );
+  const rules = originalRules.filter((rule) => {
+    const nameMatch = rule.grafana_alert.title.toLowerCase().includes(nameFilter.toLowerCase());
+    const labelMatch = labelsMatchMatchers(rule.labels ?? {}, matchers);
+    return nameMatch && labelMatch;
+  });
 
-  return orderBy(rules, (x) => x.name.toLowerCase(), [sortOrder === SortOrder.Ascending ? 'asc' : 'desc']);
+  return orderBy(rules, (rule) => rule.grafana_alert.title.toLowerCase(), [
+    sortOrder === SortOrder.Ascending ? 'asc' : 'desc',
+  ]);
+}
+
+function createGrafanaRuleViewLink(ruleDefinition: GrafanaRuleDefinition): string {
+  return rulesNav.detailsPageLink(
+    GRAFANA_RULES_SOURCE_NAME,
+    {
+      uid: ruleDefinition.uid,
+      ruleSourceName: GRAFANA_RULES_SOURCE_NAME,
+    },
+    undefined
+  );
 }
 
 export const getStyles = (theme: GrafanaTheme2) => ({

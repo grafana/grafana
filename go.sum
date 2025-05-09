@@ -1565,8 +1565,8 @@ github.com/gorilla/sessions v1.2.1 h1:DHd3rPN5lE3Ts3D8rKkQ8x/0kqfeNmBAaiSi+o7Fsg
 github.com/gorilla/sessions v1.2.1/go.mod h1:dk2InVEVJ0sfLlnXv9EAgkf6ecYs/i80K/zI+bUmuGM=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/grafana/alerting v0.0.0-20250425150043-be11a2ae18bb h1:Nkqatz7R7K/2YaK+7pw8CAYgylKfksPVeT7gMARKjwI=
-github.com/grafana/alerting v0.0.0-20250425150043-be11a2ae18bb/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
+github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35 h1:/FvrKg5ZtJ09oWOt91lIPpeWtWGcNqXv/9UOQaRDyQE=
+github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
 github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a h1:irEH0Abl6mKbkPx/xtmB5Wai4ipzEB6hGPNsLya/p9Y=
 github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAhdDOiSEyrMaYaHwnJpM8w9QKzVQZIBzLNmM=
@@ -1603,8 +1603,8 @@ github.com/grafana/grafana-plugin-sdk-go v0.277.0 h1:VDU2F4Y5NeRS//ejctdZtsAshrG
 github.com/grafana/grafana-plugin-sdk-go v0.277.0/go.mod h1:mAUWg68w5+1f5TLDqagIr8sWr1RT9h7ufJl5NMcWJAU=
 github.com/grafana/grafana/apps/advisor v0.0.0-20250506052906-7a2fc797fb4a h1:pcrnyCVvShv7XXdOKpLswEqigk0sYkBeEskYpb3Xnf8=
 github.com/grafana/grafana/apps/advisor v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:xOL9buMMbQg+3m0jPfrza4/5iwe4EBrnur/aJGAA1pM=
-github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250506052906-7a2fc797fb4a h1:2wLw1n/lTM8woHPBwLzJtyh2M/74GDF8vx/sEzQB2qM=
-github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:VkX53kBiqIMHBoGgeEDJnzm5Nwcmv/726tuZuT5SvJY=
+github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250508142345-620260fabcfb h1:8EYzQWdva4DhkXWIjM089N1lsyUxAK+7eG1+Ol55owE=
+github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250508142345-620260fabcfb/go.mod h1:t+FXs1v6c+HRAtnWhd4OHi1hOjTtiUr/8ZfBD4UOEZA=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250506052906-7a2fc797fb4a h1:Op8IaMLc8GyltYqTHbBJqEJE53K7u/kgeRRKldnbIoU=
 github.com/grafana/grafana/apps/dashboard v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:Jm+oN15Mz5zLomueCvg7JTzc0bU5TDf8FVEsVYRbivU=
 github.com/grafana/grafana/apps/folder v0.0.0-20250506052906-7a2fc797fb4a h1:/P+/CCZQ76reMtSvUdyTKSXBQjX+DDNBa1MXgXRRHy8=

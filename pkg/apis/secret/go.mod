@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/apis/secret
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20250422074709-7c8433fbb2c2
