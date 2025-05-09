@@ -47,7 +47,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')], 'B');
+    await runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -104,7 +104,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')], 'B');
+    await runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -135,7 +135,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')], 'B');
+    await runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(2))).toEmitValuesWith((values) => {
       const [loading, data] = values;
@@ -189,7 +189,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')], 'B');
+    await runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(data.pipe(take(1))).toEmitValuesWith((values) => {
       const [data] = values;
@@ -211,7 +211,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run([createQuery('A'), createQuery('B')], 'B');
+    await runner.run([createQuery('A'), createQuery('B')], 'B');
 
     await expect(lastValueFrom(data.pipe(timeout(200)))).rejects.toThrow(TimeoutError);
   });
@@ -231,7 +231,7 @@ describe('AlertingQueryRunner', () => {
     );
 
     const data = runner.get();
-    runner.run(
+    await runner.run(
       [
         createQuery('A', {
           model: {

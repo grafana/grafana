@@ -781,7 +781,7 @@ describe('DashboardScene', () => {
       });
     });
 
-    it('should return early if historySrv does not return a valid version number', () => {
+    it('should return early if historySrv does not return a valid version number', async () => {
       jest
         .mocked(historySrv.restoreDashboard)
         .mockResolvedValueOnce({ version: null })
@@ -791,7 +791,7 @@ describe('DashboardScene', () => {
         .mockResolvedValue({ version: '10' });
 
       for (let i = 0; i < 5; i++) {
-        scene.onRestore(getVersionMock()).then((res) => {
+        await scene.onRestore(getVersionMock()).then((res) => {
           expect(res).toBe(false);
         });
       }

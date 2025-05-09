@@ -147,7 +147,7 @@ const DeleteTestComponent = ({ rule }: DeleteTestComponentProps) => {
   const ruleGroupID = getRuleGroupLocationFromCombinedRule(rule);
   const ruleID = fromRulerRuleAndRuleGroupIdentifier(ruleGroupID, rule.rulerRule!);
   const onClick = () => {
-    deleteRuleFromGroup.execute(ruleGroupID, ruleID);
+    void deleteRuleFromGroup.execute(ruleGroupID, ruleID);
   };
 
   return (

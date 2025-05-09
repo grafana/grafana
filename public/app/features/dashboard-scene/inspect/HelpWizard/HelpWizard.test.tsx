@@ -1,5 +1,5 @@
 import userEvent from '@testing-library/user-event';
-import { render, screen } from 'test/test-utils';
+import { render, screen, waitFor } from 'test/test-utils';
 
 import { FieldType, getDefaultTimeRange, LoadingState, toDataFrame } from '@grafana/data';
 import { getPanelPlugin } from '@grafana/data/test';
@@ -19,8 +19,8 @@ jest.mock('./utils.ts', () => ({
   getGithubMarkdown: () => new Uint8Array(1024 * 1024).toString(),
 }));
 
-async function setup() {
-  const { panel } = await buildTestScene();
+function setup() {
+  const { panel } = buildTestScene();
   panel.getPlugin = () => getPanelPlugin({ skipDataQuery: false });
 
   return render(<HelpWizard panel={panel} onClose={() => {}} />);
@@ -39,7 +39,7 @@ describe('HelpWizard', () => {
     config.supportBundlesEnabled = false;
     setup();
 
-    expect(screen.queryByText('You can also retrieve a support bundle')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('You can also retrieve a support bundle')).not.toBeInTheDocument());
   });
 
   it('should show error as alert', async () => {
@@ -80,7 +80,7 @@ describe('SupportSnapshot', () => {
   });
 });
 
-async function buildTestScene() {
+function buildTestScene() {
   const menu = new VizPanelMenu({
     $behaviors: [panelMenuBehavior],
   });
@@ -125,8 +125,6 @@ async function buildTestScene() {
     },
     body: DefaultGridLayoutManager.fromVizPanels([panel]),
   });
-
-  await new Promise((r) => setTimeout(r, 1));
 
   return { scene, panel, menu };
 }

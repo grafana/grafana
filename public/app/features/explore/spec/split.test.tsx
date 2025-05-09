@@ -183,8 +183,8 @@ describe('Handles open/close splits and related events in UI and URL', () => {
       expect(await screen.findByText(`loki Editor input: { label="value"}`)).toBeInTheDocument();
     });
 
-    act(() => {
-      store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', queries: [{ expr: 'error', refId: 'A' }] }));
+    await act(async () => {
+      await store.dispatch(mainState.splitOpen({ datasourceUid: 'elastic', queries: [{ expr: 'error', refId: 'A' }] }));
     });
 
     // Editor renders the new query

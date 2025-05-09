@@ -113,7 +113,7 @@ describe('QueryEditorRows', () => {
 
     renderScenario({ onAddQuery, onQueryCopied });
     const queryEditorRows = await screen.findAllByTestId('query-editor-row');
-    queryEditorRows.map(async (childQuery) => {
+    queryEditorRows.map((childQuery) => {
       const duplicateQueryButton = queryByLabelText(childQuery, 'Duplicate query') as HTMLElement;
 
       expect(duplicateQueryButton).toBeInTheDocument();
@@ -131,7 +131,7 @@ describe('QueryEditorRows', () => {
     renderScenario({ onQueriesChange, onQueryRemoved });
 
     const queryEditorRows = await screen.findAllByTestId('query-editor-row');
-    queryEditorRows.map(async (childQuery) => {
+    queryEditorRows.map((childQuery) => {
       const deleteQueryButton = queryByLabelText(childQuery, 'Remove query') as HTMLElement;
 
       expect(deleteQueryButton).toBeInTheDocument();
