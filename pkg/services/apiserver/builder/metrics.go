@@ -3,7 +3,7 @@ package builder
 import (
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/unknwon/log"
+	"k8s.io/klog/v2"
 )
 
 type builderMetrics struct {
@@ -12,16 +12,15 @@ type builderMetrics struct {
 }
 
 func newBuilderMetrics(reg prometheus.Registerer) *builderMetrics {
+	log := klog.NewKlogr()
 	metrics := &builderMetrics{
 		dualWriterTargetMode: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name:        "unified_storage_dual_writer_target_mode",
-			Help:        "Unified Storage dual writer target mode",
-			ConstLabels: prometheus.Labels{"component": "builder"},
+			Name: "unified_storage_dual_writer_target_mode",
+			Help: "Unified Storage dual writer target mode",
 		}, []string{"resource", "group"}),
 		dualWriterCurrentMode: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name:        "unified_storage_dual_writer_current_mode",
-			Help:        "Unified storage dual writer current mode",
-			ConstLabels: prometheus.Labels{"component": "builder"},
+			Name: "unified_storage_dual_writer_current_mode",
+			Help: "Unified storage dual writer current mode",
 		}, []string{"resource", "group"}),
 	}
 
