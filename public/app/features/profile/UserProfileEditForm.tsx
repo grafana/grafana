@@ -94,7 +94,12 @@ export default UserProfileEditForm;
 
 const InputSuffix = () => {
   return disableLoginForm ? (
-    <Tooltip content="Login details locked because they are managed in another system.">
+    <Tooltip
+      content={t(
+        'profile.input-suffix.content-login-details-locked-because-managed-another',
+        'Login details locked because they are managed in another system.'
+      )}
+    >
       <Icon name="lock" />
     </Tooltip>
   ) : null;

@@ -6,7 +6,7 @@ import useAsync from 'react-use/lib/useAsync';
 import { SelectableValue } from '@grafana/data';
 import { TemporaryAlert } from '@grafana/o11y-ds-frontend';
 import { FetchError, getTemplateSrv, isFetchError } from '@grafana/runtime';
-import { Select, HorizontalGroup, useStyles2, InputActionMeta } from '@grafana/ui';
+import { Select, Stack, useStyles2, InputActionMeta } from '@grafana/ui';
 
 import { TraceqlFilter, TraceqlSearchScope } from '../dataquery.gen';
 import { TempoDatasource } from '../datasource';
@@ -144,7 +144,7 @@ const SearchField = ({
 
   return (
     <>
-      <HorizontalGroup spacing={'none'} width={'auto'}>
+      <Stack gap={0} width="auto">
         {!hideScope && (
           <Select
             className={styles.dropdown}
@@ -228,7 +228,7 @@ const SearchField = ({
             allowCreateWhileLoading
           />
         )}
-      </HorizontalGroup>
+      </Stack>
       {alertText && <TemporaryAlert severity="error" text={alertText} />}
     </>
   );

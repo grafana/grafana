@@ -273,11 +273,6 @@ export interface FeatureToggles {
   */
   wargamesTesting?: boolean;
   /**
-  * Show the new alerting insights landing page
-  * @default true
-  */
-  alertingInsights?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
@@ -433,11 +428,6 @@ export interface FeatureToggles {
   * @default true
   */
   logsInfiniteScrolling?: boolean;
-  /**
-  * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-  * @default true
-  */
-  alertingSimplifiedRouting?: boolean;
   /**
   * Enable filtering menu displayed when text of a log line is selected
   * @default true
@@ -1031,4 +1021,8 @@ export interface FeatureToggles {
   * @default true
   */
   alertingBulkActionsInUI?: boolean;
+  /**
+  * Use proxy-based read-only objects for plugin extensions instead of deep cloning
+  */
+  extensionsReadOnlyProxy?: boolean;
 }

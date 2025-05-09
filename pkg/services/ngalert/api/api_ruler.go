@@ -582,7 +582,7 @@ func (srv RulerSrv) updateAlertRulesInGroup(c *contextmodel.ReqContext, groupKey
 		return ErrResp(http.StatusInternalServerError, err, "failed to update rule group")
 	}
 
-	if srv.featureManager.IsEnabled(c.Req.Context(), featuremgmt.FlagAlertingSimplifiedRouting) && dbConfig != nil {
+	if dbConfig != nil {
 		// This isn't strictly necessary since the alertmanager config is periodically synced.
 		err := srv.amRefresher.ApplyConfig(c.Req.Context(), groupKey.OrgID, dbConfig)
 		if err != nil {
