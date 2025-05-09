@@ -9,7 +9,6 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/kube-openapi/pkg/common"
 	"k8s.io/kube-openapi/pkg/spec3"
-	"k8s.io/kube-openapi/pkg/validation/spec"
 
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
 )
@@ -59,37 +58,17 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 	return &builder.APIRoutes{
 		Root: []builder.APIRouteHandler{
 			{
-				Path: "/",
+				Path: "evaluate",
 				Spec: &spec3.PathProps{
-					Get: &spec3.Operation{
-						OperationProps: spec3.OperationProps{
-							Responses: &spec3.Responses{
-								ResponsesProps: spec3.ResponsesProps{
-									StatusCodeResponses: map[int]*spec3.Response{
-										200: {
-											ResponseProps: spec3.ResponseProps{
-												Content: map[string]*spec3.MediaType{
-													"application/json": {
-														MediaTypeProps: spec3.MediaTypeProps{
-															Schema: &spec.Schema{},
-														},
-													},
-												},
-											},
-										},
-									},
-								},
-							},
-						},
-					},
+					Get: &spec3.Operation{},
 				},
-				Handler: b.handleListProxy,
+				Handler: b.handleEvaluateList,
 			},
 		},
 	}
 }
 
-func (b *APIBuilder) handleListProxy(w http.ResponseWriter, r *http.Request) {
+func (b *APIBuilder) handleEvaluateList(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	_, err := w.Write([]byte("[]"))
 	if err != nil {
