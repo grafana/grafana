@@ -14,6 +14,9 @@ type QueryTemplate struct {
 	// Longer description for why it is interesting
 	Description string `json:"description,omitempty"`
 
+	// Whether the query is locked and cannot be edited
+	IsLocked bool `json:"isLocked,omitempty"`
+
 	// The variables that can be used to render
 	// +listType=map
 	// +listMapKey=key
