@@ -1,4 +1,3 @@
-import './topOfTheFileSideEffect';
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 

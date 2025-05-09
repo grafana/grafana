@@ -306,6 +306,7 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   });
 }
 
+console.log('creating config');
 let bootData = (window as any).grafanaBootData;
 
 if (!bootData) {

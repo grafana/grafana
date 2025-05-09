@@ -2,13 +2,10 @@
 // Non-FEMT sets this to an immediately resolved promise.
 // It's important to wait for this until any other imports run, becuase there's a bunch
 // of module-side effects that depend on the bootdata.
-console.log('Waiting for boot data promise');
-await window.__grafana_boot_data_promise;
-console.log('Boot data promise resolved');
 
-import './core/trustedTypePolicies';
-declare let __webpack_public_path__: string;
-declare let __webpack_nonce__: string;
+// Do we need these anymore?
+// declare let __webpack_public_path__: string;
+// declare let __webpack_nonce__: string;
 
 // Check if we are hosting files on cdn and set webpack public path
 if (window.public_cdn_path) {
@@ -26,9 +23,15 @@ if (window.nonce) {
 // This is an indication to the window.onLoad failure check that the app bundle has loaded.
 window.__grafana_app_bundle_loaded = true;
 
-console.log('Importing app');
-import app from './app';
+async function bootstrap() {
+  console.log('Waiting for boot data promise');
+  await window.__grafana_boot_data_promise;
+  console.log('Boot data promise resolved, importing initApp');
+  await import(
+    /* webpackChunkName: "app-init" */
+    /* webpackMode: "eager" */
+    './initApp'
+  );
+}
 
-console.log('Initializing app');
-app.init();
-console.log('App initialized');
+bootstrap();
