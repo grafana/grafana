@@ -3,8 +3,8 @@ import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export default function GettingStarted() {
   const theme = useTheme2();
@@ -119,7 +119,7 @@ const getWelcomePageStyles = (theme: GrafanaTheme2) => ({
 
 export function WelcomeHeader({ className }: { className?: string }) {
   const styles = useStyles2(getWelcomeHeaderStyles);
-
+  const { t } = useTranslate();
   return (
     <Stack gap={2} direction="column">
       <ContentBox className={cx(styles.ctaContainer, className)}>

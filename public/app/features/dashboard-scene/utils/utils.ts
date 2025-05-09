@@ -1,4 +1,5 @@
 import { getDataSourceRef, IntervalVariableModel } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   CancelActivationHandler,
@@ -12,7 +13,6 @@ import {
   VizPanel,
   VizPanelMenu,
 } from '@grafana/scenes';
-import { t } from 'app/core/internationalization';
 import { initialIntervalVariableModelState } from 'app/features/variables/interval/reducer';
 
 import { DashboardDatasourceBehaviour } from '../scene/DashboardDatasourceBehaviour';
@@ -322,6 +322,7 @@ export function getClosestVizPanel(sceneObject: SceneObject): VizPanel | null {
 }
 
 export function getDefaultVizPanel(): VizPanel {
+  const { t } = useTranslate();
   const defaultPluginId = config.featureToggles.dashboardNewLayouts ? UNCONFIGURED_PANEL_PLUGIN_ID : 'timeseries';
   const newPanelTitle = t('dashboard.new-panel-title', 'New panel');
 

@@ -3,9 +3,9 @@ import { Draggable } from '@hello-pangea/dnd';
 import { useLocation } from 'react-router';
 
 import { locationUtil, textUtil } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { SceneComponentProps, sceneGraph } from '@grafana/scenes';
 import { Tab, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useIsClone } from '../../utils/clone';
@@ -30,7 +30,7 @@ export function TabItemRenderer({ model }: SceneComponentProps<TabItem>) {
   const pointerDistance = usePointerDistance();
   const [isConditionallyHidden] = useIsConditionallyHidden(model);
   const isClone = useIsClone(model);
-
+  const { t } = useTranslate();
   const isDraggable = !isClone && isEditing;
 
   if (isConditionallyHidden && !isEditing && !isActive) {

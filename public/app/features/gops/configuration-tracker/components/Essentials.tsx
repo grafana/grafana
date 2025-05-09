@@ -1,8 +1,8 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';
@@ -17,6 +17,8 @@ export interface EssentialsProps {
 }
 
 export function Essentials({ onClose, essentialsConfig, stepsDone, totalStepsToDo }: EssentialsProps) {
+  const { t } = useTranslate();
+
   return (
     <Drawer
       title={t('gops.essentials.title-essentials', 'Essentials')}

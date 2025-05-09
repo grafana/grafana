@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';
@@ -58,7 +58,7 @@ export const GrafanaRules = ({ namespaces, expandAll }: Props) => {
   const hasGrafanaAlerts = namespaces.length > 0;
 
   const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
-
+  const { t } = useTranslate();
   return (
     <section className={styles.wrapper}>
       <div className={styles.sectionHeader}>
