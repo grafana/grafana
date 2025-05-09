@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -420,12 +422,46 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 type testDocumentBuilder struct{}
 
 func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+	// convert value to unstructured.Unstructured
+	var u unstructured.Unstructured
+	if err := json.Unmarshal(value, &u); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
+	}
+
+	title := ""
+	tags := []string{}
+	v := ""
+
+	spec, ok, _ := unstructured.NestedMap(u.Object, "spec")
+	if ok {
+		if v, ok := spec["title"]; ok {
+			title = v.(string)
+		}
+		if v, ok := spec["tags"]; ok {
+			if tagSlice, ok := v.([]interface{}); ok {
+				tags = make([]string, len(tagSlice))
+				for i, tag := range tagSlice {
+					if strTag, ok := tag.(string); ok {
+						tags[i] = strTag
+					}
+				}
+			}
+		}
+		if v, ok := spec["value"]; ok {
+			v = v.(string)
+		}
+	}
 	return &resource.IndexableDocument{
-		Key:   key,
-		Title: fmt.Sprintf("Document %s", key.Name),
-		Tags:  []string{"test", "benchmark"},
+		Key: &resource.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Name:      u.GetName(),
+		},
+		Title: title,
+		Tags:  tags,
 		Fields: map[string]interface{}{
-			"value": string(value),
+			"value": v,
 		},
 	}, nil
 }

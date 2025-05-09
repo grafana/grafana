@@ -37,13 +37,13 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		}{
 			{
 				name:  "initial1",
-				title: "Initial Document 1",
-				tags:  []string{"tag1", "initial"},
+				title: "First Initial Document",
+				tags:  []string{"tag0", "initial"},
 			},
 			{
 				name:  "initial2",
-				title: "Initial Document 2",
-				tags:  []string{"tag2", "initial"},
+				title: "Second Initial Document",
+				tags:  []string{"tag0", "initial"},
 			},
 		}
 
@@ -59,7 +59,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			obj := &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "test.grafana.app/v1",
-					"kind":       "TestResource",
+					"kind":       "testresources",
 					"metadata": map[string]interface{}{
 						"name":      doc.name,
 						"namespace": nsPrefix,
@@ -89,6 +89,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			require.Greater(t, rv, int64(0))
 		}
 	})
+	ch := make(chan *resource.IndexEvent)
 
 	t.Run("Create a resource server with both backends", func(t *testing.T) {
 		// Create a resource server with both backends
@@ -102,6 +103,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 						"test.grafana.app": "testresources",
 					},
 				},
+				IndexEventsChan: ch,
 			},
 		})
 		require.NoError(t, err)
@@ -135,17 +137,17 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			{
 				name:  "doc1",
 				title: "First Test Document",
-				tags:  []string{"test", "first"},
+				tags:  []string{"hello", "tag1"},
 			},
 			{
 				name:  "doc2",
 				title: "Second Test Document",
-				tags:  []string{"test", "second"},
+				tags:  []string{"hello", "tag2"},
 			},
 			{
 				name:  "doc3",
 				title: "Third Test Document",
-				tags:  []string{"test", "third"},
+				tags:  []string{"hello", "tag3"},
 			},
 		}
 
@@ -161,7 +163,7 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			obj := &unstructured.Unstructured{
 				Object: map[string]interface{}{
 					"apiVersion": "test.grafana.app/v1",
-					"kind":       "TestResource",
+					"kind":       "testresources",
 					"metadata": map[string]interface{}{
 						"name":      doc.name,
 						"namespace": nsPrefix,
@@ -185,6 +187,9 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 			require.NoError(t, err)
 			require.NotNil(t, createResp)
 			require.Nil(t, createResp.Error)
+
+			ev := <-ch
+			require.NotNil(t, ev)
 		}
 	})
 
@@ -197,13 +202,13 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "Test Document",
+			Query: "Document",
 			Limit: 10,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
 		require.Nil(t, searchResp.Error)
-		require.Equal(t, int64(3), searchResp.TotalHits)
+		require.Equal(t, int64(5), searchResp.TotalHits)
 	})
 
 	t.Run("Search with tags", func(t *testing.T) {
@@ -215,13 +220,13 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "first",
+			Query: "hello",
 			Limit: 10,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
 		require.Nil(t, searchResp.Error)
-		require.Equal(t, int64(1), searchResp.TotalHits)
+		require.Equal(t, int64(3), searchResp.TotalHits)
 	})
 
 	t.Run("Search with specific tag", func(t *testing.T) {
@@ -233,12 +238,12 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 					Namespace: nsPrefix,
 				},
 			},
-			Query: "test",
+			Query: "tag1",
 			Limit: 10,
 		})
 		require.NoError(t, err)
 		require.NotNil(t, searchResp)
 		require.Nil(t, searchResp.Error)
-		require.Equal(t, int64(3), searchResp.TotalHits)
+		require.Equal(t, int64(1), searchResp.TotalHits)
 	})
 }
