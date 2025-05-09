@@ -1,11 +1,6 @@
-// FEMT index.html loads bootdata async so need to wait for that to complete.
-// Non-FEMT sets this to an immediately resolved promise.
-// It's important to wait for this until any other imports run, becuase there's a bunch
-// of module-side effects that depend on the bootdata.
-
-// Do we need these anymore?
-// declare let __webpack_public_path__: string;
-// declare let __webpack_nonce__: string;
+// The new index.html fetches window.grafanaBootData asynchronously.
+// Since much of Grafana depends on it in includes side effects at import time,
+// we delay loading the rest of the app using import() until the boot data is ready.
 
 // Check if we are hosting files on cdn and set webpack public path
 if (window.public_cdn_path) {
@@ -24,14 +19,15 @@ if (window.nonce) {
 window.__grafana_app_bundle_loaded = true;
 
 async function bootstrap() {
-  console.log('Waiting for boot data promise');
+  // Wait for window.grafanaBootData is ready. The new index.html loads it from
+  // an API call, but the old one just sets an immediately resolving promise.
   await window.__grafana_boot_data_promise;
-  console.log('Boot data promise resolved, importing initApp');
-  await import(
-    /* webpackChunkName: "app-init" */
-    /* webpackMode: "eager" */
-    './initApp'
-  );
+
+  // Use eager to ensure the app is included in the initial chunk and does not
+  // require additional network requests to load.
+  await import(/* webpackMode: "eager" */ './initApp');
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error('Error bootstrapping Grafana', error);
+});

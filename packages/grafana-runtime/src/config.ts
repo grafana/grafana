@@ -306,11 +306,13 @@ function overrideFeatureTogglesFromUrl(config: GrafanaBootConfig) {
   });
 }
 
-console.log('creating config');
 let bootData = (window as any).grafanaBootData;
 
 if (!bootData) {
-  console.error('window.grafanaBootData was not set by the time config was initialized');
+  if (process.env.NODE_ENV !== 'test') {
+    console.error('window.grafanaBootData was not set by the time config was initialized');
+  }
+
   bootData = {
     settings: {},
     user: {},

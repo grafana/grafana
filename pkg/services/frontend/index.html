@@ -53,25 +53,16 @@
         window.nonce = '[[.Nonce]]';
       [[end]]
 
-      function _log(message) {
-        performance.mark(message);
-        console.log(`[index.html] ${message}`);
-      }
-
       window.__grafana_load_failed = function(...args) {
         console.error('Failed to load Grafana', ...args);
       };
 
-      _log("Creating boot data promise")
       window.__grafana_boot_data_promise = new Promise(async (resolve) => {
         // window.__grafana_boot_data_promise_resolve = resolve;
-        _log("Fetching boot data")
         const bootData = await fetch("/bootdata");
 
-        _log("Parsing boot data")
         const rawBootData = await bootData.json();
 
-        _log("Setting boot data object")
         window.grafanaBootData = {
           _femt: true,
           ...rawBootData,
@@ -100,7 +91,6 @@
 
         document.head.appendChild(cssLink);
 
-        _log("Resolving __grafana_boot_data_promise")
         resolve();
       });
     </script>
