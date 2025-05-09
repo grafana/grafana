@@ -20,6 +20,7 @@ import {
   ThresholdsConfig,
   applyNullInsertThreshold,
   nullToValue,
+  SpecialValueMatch,
 } from '@grafana/data';
 import { maybeSortFrame, NULL_RETAIN } from '@grafana/data/internal';
 import {
@@ -95,13 +96,11 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     return !(mode && field.display && mode.startsWith('continuous-'));
   };
 
-  const hasMappedNull = (field: Field) => {
-    return (
-      field.config.mappings?.some(
-        (mapping) => mapping.type === MappingType.SpecialValue && mapping.options.match === 'null'
-      ) || false
-    );
-  };
+  // checks if a mapped value of the specified type exists for the given field
+  const hasSpecialMappedValue = (field: Field, match: SpecialValueMatch): boolean =>
+    field.config.mappings?.some(
+      (mapping) => mapping.type === MappingType.SpecialValue && mapping.options.match === match
+    ) || false;
 
   const getValueColorFn = (seriesIdx: number, value: unknown) => {
     const field = frame.fields[seriesIdx];
@@ -121,7 +120,12 @@ export const preparePlotConfigBuilder: UPlotConfigPrepFn<UPlotConfigOptions> = (
     mode: mode!,
     numSeries: frame.fields.length - 1,
     isDiscrete: (seriesIdx) => isDiscrete(frame.fields[seriesIdx]),
-    hasMappedNull: (seriesIdx) => hasMappedNull(frame.fields[seriesIdx]),
+    hasMappedNull: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.Null) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
+    hasMappedNaN: (seriesIdx) =>
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NaN) ||
+      hasSpecialMappedValue(frame.fields[seriesIdx], SpecialValueMatch.NullAndNaN),
     mergeValues,
     rowHeight: rowHeight,
     colWidth: colWidth,

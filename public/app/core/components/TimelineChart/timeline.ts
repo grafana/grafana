@@ -47,6 +47,7 @@ export interface TimelineCoreOptions {
   mergeValues?: boolean;
   isDiscrete: (seriesIdx: number) => boolean;
   hasMappedNull: (seriesIdx: number) => boolean;
+  hasMappedNaN: (seriesIdx: number) => boolean;
   getValueColor: (seriesIdx: number, value: unknown) => string;
   label: (seriesIdx: number) => string;
   getTimeRange: () => TimeRange;
@@ -64,6 +65,7 @@ export function getConfig(opts: TimelineCoreOptions) {
     numSeries,
     isDiscrete,
     hasMappedNull,
+    hasMappedNaN,
     rowHeight = 0,
     colWidth = 0,
     showValue,
@@ -87,6 +89,17 @@ export function getConfig(opts: TimelineCoreOptions) {
     boxRectsBySeries = Array(numSeries)
       .fill(null)
       .map((v) => Array(count).fill(null));
+  };
+
+  // handle null and NaN mapped values
+  const shouldDraw = (sidx: number, yVal: number | null): boolean => {
+    if (yVal == null) {
+      return isDiscrete(sidx) && hasMappedNull(sidx);
+    }
+    if (Number.isNaN(yVal)) {
+      return isDiscrete(sidx) && hasMappedNaN(sidx);
+    }
+    return true;
   };
 
   const font = `500 ${Math.round(12 * devicePixelRatio)}px ${theme.typography.fontFamily}`;
@@ -195,10 +208,7 @@ export function getConfig(opts: TimelineCoreOptions) {
       u,
       sidx,
       (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim, moveTo, lineTo, rect) => {
-        let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
-
-        let discrete = isDiscrete(sidx);
-        let mappedNull = discrete && hasMappedNull(sidx);
+        const strokeWidth = round((series.width || 0) * uPlot.pxRatio);
 
         u.ctx.save();
         rect(u.ctx, u.bbox.left, u.bbox.top, u.bbox.width, u.bbox.height);
@@ -207,10 +217,9 @@ export function getConfig(opts: TimelineCoreOptions) {
         walk(rowHeight, sidx - 1, numSeries, yDim, (iy, y0, height) => {
           if (mode === TimelineMode.Changes) {
             for (let ix = 0; ix < dataY.length; ix++) {
-              let yVal = dataY[ix];
-
-              if (yVal != null || mappedNull) {
-                let left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
+              const yVal = dataY[ix];
+              if (shouldDraw(sidx, yVal)) {
+                const left = Math.round(valToPosX(dataX[ix], scaleX, xDim, xOff));
 
                 let nextIx = ix;
                 while (
@@ -219,7 +228,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                 ) {}
 
                 // to now (not to end of chart)
-                let right =
+                const right =
                   nextIx === dataY.length
                     ? xOff + xDim + strokeWidth
                     : Math.round(valToPosX(dataX[nextIx], scaleX, xDim, xOff));
@@ -237,25 +246,24 @@ export function getConfig(opts: TimelineCoreOptions) {
                   iy,
                   ix,
                   yVal,
-                  discrete
+                  isDiscrete(sidx)
                 );
 
                 ix = nextIx - 1;
               }
             }
           } else if (mode === TimelineMode.Samples) {
-            let colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
-            let gapWid = colWid * gapFactor;
-            let barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
-            let xShift = barWid / 2;
+            const colWid = valToPosX(dataX[1], scaleX, xDim, xOff) - valToPosX(dataX[0], scaleX, xDim, xOff);
+            const gapWid = colWid * gapFactor;
+            const barWid = round(min(maxWidth, colWid - gapWid) - strokeWidth);
+            const xShift = barWid / 2;
             //let xShift = align === 1 ? 0 : align === -1 ? barWid : barWid / 2;
 
             for (let ix = idx0; ix <= idx1; ix++) {
-              let yVal = dataY[ix];
-
-              if (yVal != null || mappedNull) {
+              const yVal = dataY[ix];
+              if (shouldDraw(sidx, yVal)) {
                 // TODO: all xPos can be pre-computed once for all series in aligned set
-                let left = valToPosX(dataX[ix], scaleX, xDim, xOff);
+                const left = valToPosX(dataX[ix], scaleX, xDim, xOff);
 
                 putBox(
                   u.ctx,
@@ -270,14 +278,14 @@ export function getConfig(opts: TimelineCoreOptions) {
                   iy,
                   ix,
                   yVal,
-                  discrete
+                  isDiscrete(sidx)
                 );
               }
             }
           }
         });
 
-        if (discrete) {
+        if (isDiscrete(sidx)) {
           u.ctx.lineWidth = strokeWidth;
           drawBoxes(u.ctx);
         }
@@ -305,15 +313,11 @@ export function getConfig(opts: TimelineCoreOptions) {
             u,
             sidx,
             (series, dataX, dataY, scaleX, scaleY, valToPosX, valToPosY, xOff, yOff, xDim, yDim) => {
-              let strokeWidth = round((series.width || 0) * uPlot.pxRatio);
-
-              let discrete = isDiscrete(sidx);
-              let mappedNull = discrete && hasMappedNull(sidx);
-
-              let y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
+              const strokeWidth = round((series.width || 0) * uPlot.pxRatio);
+              const y = round(valToPosY(ySplits[sidx - 1], scaleY, yDim, yOff));
 
               for (let ix = 0; ix < dataY.length; ix++) {
-                if (dataY[ix] != null || mappedNull) {
+                if (shouldDraw(sidx, dataY[ix])) {
                   const boxRect = boxRectsBySeries[sidx - 1][ix];
 
                   if (!boxRect || boxRect.x >= xDim) {
@@ -330,7 +334,7 @@ export function getConfig(opts: TimelineCoreOptions) {
                     continue;
                   }
 
-                  let txt = formatValue(sidx, dataY[ix]);
+                  const txt = formatValue(sidx, dataY[ix]);
 
                   // center-aligned
                   let x = round(boxRect.x + xOff + boxRect.w / 2);
