@@ -1,6 +1,5 @@
 import { PluginExtensionAddedLinkConfig, PluginExtensionPoints } from '@grafana/data';
 import { contextSrv } from 'app/core/core';
-import { t } from 'app/core/internationalization';
 import { dispatch } from 'app/store/store';
 import { AccessControlAction } from 'app/types';
 
@@ -17,7 +16,9 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
   try {
     return [
       createAddedLinkConfig<PluginExtensionExploreContext>({
-        title: t('explore.get-explore-extension-configs.title.add-to-dashboard', 'Add to dashboard'),
+        // This is called at the top level, so will break if we add a translation here 😱
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        title: 'Add to dashboard',
         description: 'Use the query and panel from explore and create/add it to a dashboard',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
         icon: 'apps',
@@ -42,11 +43,11 @@ export function getExploreExtensionConfigs(): PluginExtensionAddedLinkConfig[] {
         },
       }),
       createAddedLinkConfig<PluginExtensionExploreContext>({
-        title: t('explore.get-explore-extension-configs.title.add-correlation', 'Add correlation'),
-        description: t(
-          'explore.get-explore-extension-configs.description.create-a-correlation-from-this-query',
-          'Create a correlation from this query'
-        ),
+        // This is called at the top level, so will break if we add a translation here 😱
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        title: 'Add correlation',
+        // eslint-disable-next-line @grafana/no-untranslated-strings
+        description: 'Create a correlation from this query',
         targets: [PluginExtensionPoints.ExploreToolbarAction],
         icon: 'link',
         configure: (context) => {
