@@ -35,7 +35,6 @@ const propertiesToCheck = [
   'text',
   'tooltip',
   'message',
-  'name',
 ];
 
 /** @type {RuleDefinition} */
