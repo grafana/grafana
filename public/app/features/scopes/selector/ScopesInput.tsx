@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { IconButton, Input, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { NodesMap, SelectedScope } from './types';
 

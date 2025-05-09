@@ -4,6 +4,8 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMeasure } from 'react-use';
 
 import { GrafanaTheme2, IconName, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   CustomVariable,
   SceneComponentProps,
@@ -14,7 +16,6 @@ import {
   sceneGraph,
 } from '@grafana/scenes';
 import { Alert, Icon, LoadingBar, Pagination, Stack, Text, Tooltip, useStyles2, withErrorBoundary } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   GrafanaAlertStateWithReason,
   isAlertStateWithReason,

@@ -1,8 +1,9 @@
 import { ReactNode, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Collapse, Field, Link, MultiSelect, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { handleContactPointSelect } from 'app/features/alerting/unified/components/notification-policies/utils';
 import { RouteWithID } from 'app/plugins/datasource/alertmanager/types';

@@ -2,9 +2,10 @@ import { SyntheticEvent, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Tooltip, Field, Button, Alert, useStyles2, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getStyles } from '../Login/LoginForm';
 import { PasswordField } from '../PasswordField/PasswordField';

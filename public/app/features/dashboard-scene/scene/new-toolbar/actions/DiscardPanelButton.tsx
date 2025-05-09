@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { PanelEditor } from '../../../panel-edit/PanelEditor';
 import { ToolbarActionProps } from '../types';

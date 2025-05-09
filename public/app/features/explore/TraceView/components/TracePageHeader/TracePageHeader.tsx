@@ -18,9 +18,10 @@ import { memo, useEffect, useMemo } from 'react';
 import * as React from 'react';
 
 import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { TimeZone } from '@grafana/schema';
 import { Badge, BadgeColor, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { SearchProps } from '../../useSearch';
 import ExternalLinks from '../common/ExternalLinks';

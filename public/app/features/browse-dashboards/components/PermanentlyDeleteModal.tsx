@@ -1,7 +1,7 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Text } from '@grafana/ui';
-
-import { Trans, t } from '../../../core/internationalization';
 
 interface PermanentlyDeleteModalProps {
   isOpen: boolean;

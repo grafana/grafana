@@ -6,6 +6,8 @@ import { useEffectOnce } from 'react-use';
 
 import { GrafanaTheme2, getDefaultRelativeTimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import {
   Alert,
@@ -21,7 +23,6 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { isExpressionQuery } from 'app/features/expressions/guards';
 import {
   ExpressionDatasourceUID,

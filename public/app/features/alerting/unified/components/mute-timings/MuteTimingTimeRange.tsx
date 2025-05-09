@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Field, Icon, IconButton, InlineField, InlineFieldRow, Input, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { MuteTimingFields } from '../../types/mute-timing-form';
 import ConditionalWrap from '../ConditionalWrap';

@@ -2,9 +2,10 @@ import { FormEvent, useCallback } from 'react';
 
 import { DataSourceInstanceSettings, MetricFindValue, readCSV } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { DataSourceRef } from '@grafana/schema';
 import { Alert, CodeEditor, Field, Switch } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import { VariableCheckboxField } from './VariableCheckboxField';

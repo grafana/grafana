@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { Button, Menu, Stack, Text, useStyles2, Dropdown, Icon, IconButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';
 

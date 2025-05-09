@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n/internal';
 import { Badge } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export const UnusedContactPointBadge = () => (
   <Badge

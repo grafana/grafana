@@ -2,10 +2,11 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { FetchError } from '@grafana/runtime';
 import { Dashboard } from '@grafana/schema';
 import { Button, ConfirmModal, Modal, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../state/DashboardModel';
 

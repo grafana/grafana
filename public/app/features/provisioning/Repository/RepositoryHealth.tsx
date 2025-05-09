@@ -1,6 +1,7 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Stack, Alert, Text } from '@grafana/ui';
 import { HealthStatus } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 interface Props {
   health: HealthStatus;

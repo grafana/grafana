@@ -4,9 +4,9 @@ import { useCallback, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { SceneComponentProps } from '@grafana/scenes';
 import { clearButtonStyles, Icon, Tooltip, useElementSelection, usePointerDistance, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useIsConditionallyHidden } from '../../conditional-rendering/useIsConditionallyHidden';
 import { useIsClone } from '../../utils/clone';

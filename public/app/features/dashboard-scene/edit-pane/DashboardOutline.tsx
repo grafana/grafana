@@ -4,9 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { SceneObject } from '@grafana/scenes';
 import { Box, Icon, Text, useElementSelection, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardGridItem } from '../scene/layout-default/DashboardGridItem';
 import { EditableDashboardElement } from '../scene/types/EditableDashboardElement';

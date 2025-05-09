@@ -2,6 +2,8 @@ import { css } from '@emotion/css';
 import { useEffect, useMemo } from 'react';
 
 import { GrafanaTheme2, VariableHide } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   CustomVariable,
   EmbeddedScene,
@@ -37,7 +39,6 @@ import {
   TooltipDisplayMode,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { LogMessages, logInfo } from '../../../Analytics';
 

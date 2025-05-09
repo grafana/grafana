@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
 import { dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Column, EmptyState, InteractiveTable, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { GrafanaRuleDefinition, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 
 import { trackDeletedRuleRestoreFail, trackDeletedRuleRestoreSuccess } from '../../../Analytics';

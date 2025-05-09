@@ -1,12 +1,13 @@
 import * as React from 'react';
 
 import { CoreApp, IconName, LinkModel, PluginExtensionPoints, RawTimeRange, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { config, locationService, reportInteraction, usePluginLinks } from '@grafana/runtime';
 import { DataSourceRef } from '@grafana/schema';
 import { DataLinkButton, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
 import { RelatedProfilesTitle } from '@grafana-plugins/tempo/resultTransformer';
-import { t, Trans } from 'app/core/internationalization';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { SpanLinkFunc } from '../../types';

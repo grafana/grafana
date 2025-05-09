@@ -2,6 +2,8 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, dateMath } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Alert,
   CollapsableSection,
@@ -14,7 +16,6 @@ import {
   useStyles2,
 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { featureDiscoveryApi } from 'app/features/alerting/unified/api/featureDiscoveryApi';
 import { MATCHER_ALERT_RULE_UID, SILENCES_POLL_INTERVAL_MS } from 'app/features/alerting/unified/utils/constants';

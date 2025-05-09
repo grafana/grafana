@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Field, Input, Select, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
 import { timeOptions } from '../../utils/time';

@@ -2,8 +2,9 @@ import { ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { urlUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, ConfirmModal, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useRuleWithLocation } from 'app/features/alerting/unified/hooks/useCombinedRule';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { rulerRuleToFormValues } from 'app/features/alerting/unified/utils/rule-form';

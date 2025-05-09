@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { Drawer, Tab, TabsBar } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { GRAFANA_RULES_SOURCE_NAME, isVanillaPrometheusAlertManagerDataSource } from '../../utils/datasource';
 

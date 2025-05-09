@@ -12,8 +12,9 @@ import {
   dateTimeFormat,
   isTimeSeriesFrames,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, AutoSizeInput, Button, IconButton, Stack, Text, clearButtonStyles, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ClassicConditions } from 'app/features/expressions/components/ClassicConditions';
 import { Math } from 'app/features/expressions/components/Math';
 import { Reduce } from 'app/features/expressions/components/Reduce';

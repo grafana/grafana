@@ -1,9 +1,10 @@
 import { useState } from 'react';
 
 import { SelectableValue, UrlQueryMap, urlUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Box, Button, Checkbox, Field, FieldSet, Modal, RadioButtonGroup, Stack } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Playlist } from '../../api/clients/playlist';
 

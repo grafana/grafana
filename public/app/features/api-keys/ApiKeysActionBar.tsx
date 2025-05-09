@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n/internal';
 import { FilterInput, InlineField } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 interface Props {
   searchQuery: string;

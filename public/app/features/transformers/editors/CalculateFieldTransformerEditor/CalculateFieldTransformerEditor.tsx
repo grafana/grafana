@@ -22,9 +22,9 @@ import {
   getNameFromOptions,
   defaultWindowOptions,
 } from '@grafana/data/internal';
+import { t } from '@grafana/i18n/internal';
 import { getTemplateSrv, config as cfg } from '@grafana/runtime';
 import { InlineField, InlineSwitch, Input, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../../docs/getTransformationContent';
 

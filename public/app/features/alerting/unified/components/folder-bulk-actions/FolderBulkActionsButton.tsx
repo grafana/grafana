@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { config, locationService } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
 import { alertingFolderActionsApi } from '../../api/alertingFolderActionsApi';

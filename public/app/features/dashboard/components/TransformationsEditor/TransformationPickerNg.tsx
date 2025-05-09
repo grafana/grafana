@@ -11,9 +11,10 @@ import {
   SelectableValue,
 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Card, Drawer, FilterPill, IconButton, Input, Switch, useStyles2 } from '@grafana/ui';
 import config from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 import { PluginStateInfo } from 'app/features/plugins/components/PluginStateInfo';
 import { categoriesLabels } from 'app/features/transformers/utils';
 

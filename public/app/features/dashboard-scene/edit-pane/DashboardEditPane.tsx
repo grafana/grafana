@@ -4,6 +4,8 @@ import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   SceneObjectState,
   SceneObjectBase,
@@ -24,7 +26,6 @@ import {
   Text,
   Icon,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
 import { findEditPanel, getDashboardSceneFor } from '../utils/utils';

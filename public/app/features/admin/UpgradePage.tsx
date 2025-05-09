@@ -3,9 +3,10 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 
 import { GrafanaTheme2, NavModel } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans, t } from 'app/core/internationalization';
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';

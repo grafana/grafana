@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { PropsWithChildren } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Icon, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { PromApplication, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 
 import { WithReturnButton } from '../../components/WithReturnButton';

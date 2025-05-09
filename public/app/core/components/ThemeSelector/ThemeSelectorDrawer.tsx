@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
 import { FeatureState, GrafanaTheme2, ThemeRegistryItem } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Drawer, FeatureBadge, RadioButtonDot, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { changeTheme } from 'app/core/services/theme';
 
 import { ThemePreview } from '../Theme/ThemePreview';

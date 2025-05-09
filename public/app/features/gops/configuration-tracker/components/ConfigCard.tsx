@@ -2,8 +2,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Icon, LoadingPlaceholder, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { IrmCardConfiguration } from './ConfigureIRM';
 import { ProgressBar, StepsStatus } from './ProgressBar';

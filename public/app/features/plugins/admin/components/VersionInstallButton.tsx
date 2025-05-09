@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { gt, valid } from 'semver';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Badge, Button, ConfirmModal, Icon, Spinner, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { isPreinstalledPlugin } from '../helpers';
 import { useInstall } from '../state/hooks';

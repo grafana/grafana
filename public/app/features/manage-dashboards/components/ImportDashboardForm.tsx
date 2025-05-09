@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import { Controller, FieldErrors, UseFormReturn } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { Button, Field, FormFieldErrors, FormsOnSubmit, Stack, Input, Legend } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 
 import {

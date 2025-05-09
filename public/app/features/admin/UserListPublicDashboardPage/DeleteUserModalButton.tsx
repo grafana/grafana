@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Button, Modal, ModalsController, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { SessionUser } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 
 import { useRevokeAllAccessMutation } from '../../dashboard/api/publicDashboardApi';

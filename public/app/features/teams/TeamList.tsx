@@ -4,6 +4,8 @@ import Skeleton from 'react-loading-skeleton';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Avatar,
   CellProps,
@@ -22,7 +24,6 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { fetchRoleOptions } from 'app/core/components/RolePicker/api';
-import { Trans, t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction, Role, StoreState, TeamWithRoles } from 'app/types';
 

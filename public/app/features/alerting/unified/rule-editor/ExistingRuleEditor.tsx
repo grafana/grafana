@@ -1,6 +1,7 @@
 import { NavModelItem } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RuleIdentifier } from 'app/types/unified-alerting';
 
 import { AlertWarning } from '../AlertWarning';

@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 import { PromAlertingRuleState } from 'app/types/unified-alerting-dto';
 

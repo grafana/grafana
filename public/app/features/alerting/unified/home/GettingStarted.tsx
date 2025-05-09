@@ -3,8 +3,9 @@ import * as React from 'react';
 import SVG from 'react-inlinesvg';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export default function GettingStarted() {
   const theme = useTheme2();

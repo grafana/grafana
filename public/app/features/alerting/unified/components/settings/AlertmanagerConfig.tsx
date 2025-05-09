@@ -4,8 +4,9 @@ import { useForm } from 'react-hook-form';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Button, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { reportFormErrors } from '../../Analytics';
 import { useAlertmanagerConfig } from '../../hooks/useAlertmanagerConfig';

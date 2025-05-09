@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Badge, ConfirmModal, LinkButton, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { useExportMuteTimingsDrawer } from 'app/features/alerting/unified/components/mute-timings/useExportMuteTimingsDrawer';
 
 import { Authorize } from '../../components/Authorize';

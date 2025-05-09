@@ -1,11 +1,12 @@
 import { connect, ConnectedProps } from 'react-redux';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Input, Field, FieldSet } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 
 import { createOrganization } from './state/actions';
 

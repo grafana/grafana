@@ -1,5 +1,6 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, LinkButton, Menu, Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { usePluginBridge } from '../../hooks/usePluginBridge';
 import { getIrmIfPresentOrIncidentPluginId } from '../../utils/config';

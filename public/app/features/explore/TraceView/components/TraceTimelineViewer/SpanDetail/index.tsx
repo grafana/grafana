@@ -26,10 +26,11 @@ import {
   TraceKeyValuePair,
   TraceLog,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
 import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';

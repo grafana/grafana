@@ -1,7 +1,8 @@
 import { capitalize } from 'lodash';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Badge, Button, Card, Stack, Text, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { ConnectionStatus } from '../../hooks/useExternalAmSelector';
 import { ProvisioningBadge } from '../Provisioning';

@@ -3,9 +3,10 @@ import { debounce, uniqueId } from 'lodash';
 import { FormEvent, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Field, Icon, Input, Label, Stack, Tooltip, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 
 import { parsePromQLStyleMatcherLoose } from '../../utils/matchers';
 import { getSilenceFiltersFromUrlParams } from '../../utils/misc';

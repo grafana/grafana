@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Checkbox, Field, Input, Stack, Text, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { checkPublicAccess, checkImageRenderer } from '../GettingStarted/features';
 

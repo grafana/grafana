@@ -1,5 +1,5 @@
 import { selectors } from '@grafana/e2e-selectors';
-import { t } from 'app/core/internationalization';
+import { t } from '@grafana/i18n/internal';
 import { playlistSrv } from 'app/features/playlist/PlaylistSrv';
 
 import { ToolbarActionProps } from '../types';

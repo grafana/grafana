@@ -4,6 +4,8 @@ import { useState } from 'react';
 
 import { DataTransformerConfig, GrafanaTheme2, PanelData } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   SceneObjectBase,
   SceneComponentProps,
@@ -14,7 +16,6 @@ import {
   SceneObjectState,
 } from '@grafana/scenes';
 import { Button, ButtonGroup, ConfirmModal, Tab, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { TransformationOperationRows } from 'app/features/dashboard/components/TransformationsEditor/TransformationOperationRows';
 
 import { getQueryRunnerFor } from '../../utils/utils';

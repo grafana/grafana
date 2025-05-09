@@ -1,7 +1,7 @@
 import * as React from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { Badge, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getBadgeColor } from './sharedStyles';
 

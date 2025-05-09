@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { ClipboardButton, CodeEditor, Modal } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 export interface ViewJsonModalProps {

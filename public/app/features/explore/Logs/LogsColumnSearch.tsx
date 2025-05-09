@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Field, Input, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 function getStyles(theme: GrafanaTheme2) {
   return {

@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { ComponentProps } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError } from 'app/core/utils/errors';
 import { useAsync } from 'app/features/alerting/unified/hooks/useAsync';

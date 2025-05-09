@@ -2,9 +2,10 @@ import { FormEvent } from 'react';
 import { lastValueFrom } from 'rxjs';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { CustomVariable, SceneVariable } from '@grafana/scenes';
 import { TextArea } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 import { VariableLegend } from '../components/VariableLegend';

@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 export interface MinimalisticPaginationProps {
   currentPage: number;

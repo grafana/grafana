@@ -3,10 +3,11 @@ import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Input, Field } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { Trans, t } from 'app/core/internationalization';
 
 interface UserDTO {
   name: string;

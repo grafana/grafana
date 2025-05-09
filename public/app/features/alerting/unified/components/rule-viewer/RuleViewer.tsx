@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useMeasure } from 'react-use';
 
 import { NavModelItem, UrlQueryValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Alert,
   LinkButton,
@@ -17,7 +19,6 @@ import {
 } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import InfoPausedRule from 'app/features/alerting/unified/components/InfoPausedRule';
 import { RuleActionsButtons } from 'app/features/alerting/unified/components/rules/RuleActionsButtons';
 import {

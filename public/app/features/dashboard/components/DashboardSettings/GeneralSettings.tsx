@@ -2,6 +2,8 @@ import { useCallback, ChangeEvent, useState } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
 
 import { TimeZone } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import {
   CollapsableSection,
@@ -17,7 +19,6 @@ import {
 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 import { updateTimeZoneDashboard, updateWeekStartDashboard } from 'app/features/dashboard/state/actions';
 
 import { DeleteDashboardButton } from '../DeleteDashboard/DeleteDashboardButton';

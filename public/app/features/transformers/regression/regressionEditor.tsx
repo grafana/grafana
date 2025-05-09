@@ -9,10 +9,10 @@ import {
   FieldMatcherID,
   Field,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { InlineField, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

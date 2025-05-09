@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useRef } from 'react';
 import { CSSTransition } from 'react-transition-group';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Tooltip, ButtonGroup, ToolbarButton } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 type LiveTailButtonProps = {
   splitted: boolean;

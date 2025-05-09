@@ -1,9 +1,10 @@
 import { useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { DataSourceJsonData } from '@grafana/schema';
 import { RadioButtonGroup, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertQuery } from 'app/types/unified-alerting-dto';
 
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';

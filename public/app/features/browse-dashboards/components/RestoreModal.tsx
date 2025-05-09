@@ -1,10 +1,11 @@
 import { useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
 
 import { FolderPicker } from '../../../core/components/Select/FolderPicker';
-import { Trans, t } from '../../../core/internationalization';
 
 export interface RestoreModalProps {
   isOpen: boolean;

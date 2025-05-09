@@ -1,5 +1,6 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 const UnknownContactPointDetails = ({ receiverName }: { receiverName?: string }) => (
   <span style={{ cursor: 'help' }}>

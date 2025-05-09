@@ -1,8 +1,9 @@
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { toOption } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Drawer, Field, RadioButtonGroup, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { OrgRole } from 'app/types';
 
 const roleOptions = Object.keys(OrgRole).map(toOption);

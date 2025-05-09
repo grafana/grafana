@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useRef, MouseEvent } from 'react';
 
 import { LogRowContextOptions, LogRowModel } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { DataQuery } from '@grafana/schema';
 import { Dropdown, IconButton, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { copyText, handleOpenLogsContextClick } from '../../utils';
 

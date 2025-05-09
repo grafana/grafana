@@ -3,10 +3,10 @@ import { PureComponent, ReactNode } from 'react';
 
 // Types
 import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
-
-import { t, Trans } from '../../../core/internationalization';
 
 interface Props {
   title: string;

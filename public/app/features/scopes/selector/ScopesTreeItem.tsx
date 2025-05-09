@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { Dictionary } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Checkbox, Icon, RadioButtonDot, ScrollContainer, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { ScopesTree } from './ScopesTree';
 import { Node, NodeReason, OnNodeSelectToggle, OnNodeUpdate, TreeScope } from './types';

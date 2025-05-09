@@ -1,7 +1,7 @@
 import { useFormContext } from 'react-hook-form';
 
+import { t } from '@grafana/i18n/internal';
 import { Checkbox, Field } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { CommonSettingsComponentProps } from '../../../types/receiver-form';
 

@@ -13,9 +13,9 @@ import {
   getTimeZones,
 } from '@grafana/data';
 import { ConvertFieldTypeOptions, ConvertFieldTypeTransformerOptions } from '@grafana/data/internal';
+import { t } from '@grafana/i18n/internal';
 import { Button, InlineField, InlineFieldRow, Input, Select } from '@grafana/ui';
 import { allFieldTypeIconOptions, FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 import { findField } from 'app/features/dimensions';
 
 import { getTransformationContent } from '../docs/getTransformationContent';

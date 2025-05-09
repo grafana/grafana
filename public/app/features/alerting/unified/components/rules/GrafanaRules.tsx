@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';

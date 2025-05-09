@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Dropdown, Icon, LinkButton, Menu, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';
 import RulesFilter from '../components/rules/Filter/RulesFilter';

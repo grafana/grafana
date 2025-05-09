@@ -3,9 +3,10 @@ import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { RadioButtonGroup, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 
 import { alertmanagerApi } from '../../api/alertmanagerApi';

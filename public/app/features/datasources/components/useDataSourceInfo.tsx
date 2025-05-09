@@ -1,7 +1,6 @@
+import { t } from '@grafana/i18n/internal';
 import { Badge } from '@grafana/ui';
 import { PageInfoItem } from 'app/core/components/Page/types';
-
-import { t } from '../../../core/internationalization';
 
 type DataSourceInfo = {
   dataSourcePluginName: string;

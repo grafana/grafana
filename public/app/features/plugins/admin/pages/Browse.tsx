@@ -3,10 +3,11 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { locationSearchToObject } from '@grafana/runtime';
 import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
 import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';

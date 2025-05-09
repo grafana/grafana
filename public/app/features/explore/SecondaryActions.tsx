@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { ToolbarButton, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { createDatasourcesList } from '../../core/utils/richHistory';

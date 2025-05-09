@@ -4,10 +4,11 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { LinkButton, RadioButtonGroup, useStyles2, FilterInput, EmptyState } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 
 import { AccessControlAction, StoreState, UserFilter } from '../../types';
 

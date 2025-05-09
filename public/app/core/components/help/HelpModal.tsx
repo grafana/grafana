@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Grid, Modal, useStyles2, Text } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { getModKey } from 'app/core/utils/browser';
 
 const getShortcuts = (modKey: string) => {

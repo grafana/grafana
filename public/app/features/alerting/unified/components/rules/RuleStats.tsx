@@ -3,8 +3,8 @@ import pluralize from 'pluralize';
 import * as React from 'react';
 import { Fragment, useDeferredValue, useMemo } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { Badge, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import {
   AlertGroupTotals,
   AlertInstanceTotalState,

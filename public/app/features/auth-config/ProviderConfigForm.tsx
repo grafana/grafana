@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { AppEvents } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getAppEvents, getBackendSrv, isFetchError, locationService, reportInteraction } from '@grafana/runtime';
 import {
   Box,
@@ -16,7 +18,6 @@ import {
   Stack,
   Switch,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { FormPrompt } from '../../core/components/FormPrompt/FormPrompt';
 import { Page } from '../../core/components/Page/Page';

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ConfirmModal } from '@grafana/ui';
 import { Repository, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 

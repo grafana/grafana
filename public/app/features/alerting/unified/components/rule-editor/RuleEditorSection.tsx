@@ -4,8 +4,8 @@ import { ReactElement } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { FieldSet, InlineSwitch, Stack, Text, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface RuleEditorSectionProps {
   title: string;

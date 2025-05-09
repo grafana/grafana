@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Button, Field, FieldSet, Input, LinkButton, Stack } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { TagFilter } from 'app/core/components/TagFilter/TagFilter';
-import { Trans, t } from 'app/core/internationalization';
 
 import { Playlist } from '../../api/clients/playlist';
 import { getGrafanaSearcher } from '../search/service/searcher';

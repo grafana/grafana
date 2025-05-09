@@ -12,8 +12,9 @@ import {
   ThresholdsMode,
   ThemeContext,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ColorPicker, colors, IconButton, Input, Label, RadioButtonGroup, stylesFactory } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 const modes: Array<SelectableValue<ThresholdsMode>> = [
   { value: ThresholdsMode.Absolute, label: 'Absolute', description: 'Pick thresholds based on the absolute values' },

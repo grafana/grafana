@@ -4,8 +4,9 @@ import { groupBy, uniqueId } from 'lodash';
 import { Fragment, memo, useEffect } from 'react';
 
 import { GrafanaTheme2, dateTimeFormat } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Icon, Stack, TagList, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { Label } from '../../Label';
 import { AlertStateTag } from '../AlertStateTag';

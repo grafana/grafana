@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Checkbox, Button, Tag, ModalsController, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';

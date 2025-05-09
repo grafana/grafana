@@ -3,8 +3,8 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { FieldType, GrafanaTheme2, store } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Button, Card, IconButton, Space, Stack, Text, useStyles2, Box, Sparkline, useTheme2, Icon } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { HISTORY_LOCAL_STORAGE_KEY } from '../AppChromeService';

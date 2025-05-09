@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { useInstall, useInstallStatus } from '../state/hooks';
 import { CatalogPlugin, PluginStatus } from '../types';

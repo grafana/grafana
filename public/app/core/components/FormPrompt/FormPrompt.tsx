@@ -3,8 +3,9 @@ import history from 'history';
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom-v5-compat';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Modal } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Prompt } from './Prompt';
 

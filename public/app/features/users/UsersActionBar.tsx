@@ -1,10 +1,11 @@
 import { connect, ConnectedProps } from 'react-redux';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { RadioButtonGroup, LinkButton, FilterInput, InlineField } from '@grafana/ui';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, StoreState } from 'app/types';
 
 import { selectTotal } from '../invites/state/selectors';

@@ -3,12 +3,13 @@ import { ReactElement, useEffect, useState } from 'react';
 import { Controller, DeepMap, FieldError, FieldErrors, useForm } from 'react-hook-form';
 
 import { SelectableValue, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { Panel } from '@grafana/schema';
 import { Alert, Button, Field, Modal, RadioButtonGroup } from '@grafana/ui';
 import { DashboardPicker } from 'app/core/components/Select/DashboardPicker';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { addToDashboard, SubmissionError } from './addToDashboard';

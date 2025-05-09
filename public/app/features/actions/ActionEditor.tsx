@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { memo } from 'react';
 
 import { Action, GrafanaTheme2, httpMethodOptions, HttpRequestMethod, VariableSuggestion } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import {
   Switch,
   Field,
@@ -13,7 +14,6 @@ import {
   ColorPicker,
   useTheme2,
 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { HTMLElementType, SuggestionsInput } from '../transformers/suggestionsInput/SuggestionsInput';
 

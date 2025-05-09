@@ -3,9 +3,10 @@ import { useMemo } from 'react';
 import { useLocation } from 'react-router-dom-v5-compat';
 
 import { GrafanaTheme2, urlUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Badge, LinkButton, LoadingPlaceholder, Pagination, Spinner, Stack, Text, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleNamespace } from 'app/types/unified-alerting';
 
 import { DEFAULT_PER_PAGE_PAGINATION } from '../../../../../core/constants';

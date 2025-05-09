@@ -1,5 +1,6 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
 import { useRulesAccess } from '../../utils/accessControlHooks';

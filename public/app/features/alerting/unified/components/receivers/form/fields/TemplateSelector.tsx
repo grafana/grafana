@@ -4,6 +4,8 @@ import { useFormContext } from 'react-hook-form';
 import { useCopyToClipboard } from 'react-use';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Button,
   Drawer,
@@ -16,7 +18,6 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   trackEditInputWithTemplate,
   trackUseCustomInputInTemplate,

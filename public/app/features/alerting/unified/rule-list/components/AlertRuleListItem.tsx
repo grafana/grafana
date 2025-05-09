@@ -3,8 +3,9 @@ import pluralize from 'pluralize';
 import { ReactNode, useEffect, useId } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Icon, Stack, Text, TextLink, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { Rule, RuleGroupIdentifierV2, RuleHealth, RulesSourceIdentifier } from 'app/types/unified-alerting';
 import { Labels, PromAlertingRuleState, RulerRuleDTO, RulesSourceApplication } from 'app/types/unified-alerting-dto';
 

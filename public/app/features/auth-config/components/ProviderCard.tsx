@@ -1,7 +1,7 @@
 import { isIconName } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Badge, Card, Icon } from '@grafana/ui';
 
-import { t } from '../../../core/internationalization';
 import { UIMap } from '../constants';
 import { getProviderUrl } from '../utils/url';
 

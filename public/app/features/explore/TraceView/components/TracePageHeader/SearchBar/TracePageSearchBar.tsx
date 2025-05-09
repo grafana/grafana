@@ -16,9 +16,10 @@ import { css } from '@emotion/css';
 import { memo, Dispatch, SetStateAction, useMemo } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Switch, useStyles2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
 
 import { SearchProps } from '../../../useSearch';
 import { Trace } from '../../types';

@@ -1,8 +1,9 @@
 import { useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Input, Field, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { validationSrv } from '../../manage-dashboards/services/ValidationSrv';
 

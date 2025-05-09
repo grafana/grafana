@@ -10,10 +10,11 @@ import {
   SplitOpen,
   SupplementaryQueryType,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 
 import { LogRows } from '../../logs/components/LogRows';

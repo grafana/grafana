@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { locationService } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { alertmanagerApi } from 'app/features/alerting/unified/api/alertmanagerApi';
 import {
   useCreateContactPoint,

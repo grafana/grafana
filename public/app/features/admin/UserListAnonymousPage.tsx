@@ -4,9 +4,9 @@ import { connect, ConnectedProps } from 'react-redux';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { t } from '@grafana/i18n/internal';
 import { RadioButtonGroup, useStyles2, FilterInput } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t } from 'app/core/internationalization';
 
 import { StoreState } from '../../types';
 

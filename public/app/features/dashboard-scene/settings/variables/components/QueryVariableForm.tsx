@@ -3,11 +3,12 @@ import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, SelectableValue, TimeRange } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable } from '@grafana/scenes';
 import { DataSourceRef, VariableRefresh, VariableSort } from '@grafana/schema';
 import { Field, TextLink } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { QueryEditor } from 'app/features/dashboard-scene/settings/variables/components/QueryEditor';
 import { SelectionOptionsForm } from 'app/features/dashboard-scene/settings/variables/components/SelectionOptionsForm';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';

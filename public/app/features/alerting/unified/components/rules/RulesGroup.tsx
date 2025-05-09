@@ -3,9 +3,10 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';

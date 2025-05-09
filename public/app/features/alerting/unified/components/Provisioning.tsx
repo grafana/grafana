@@ -1,7 +1,8 @@
 import { ComponentPropsWithoutRef } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Badge, Tooltip } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 export enum ProvisionedResource {
   ContactPoint = 'contact point',

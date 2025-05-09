@@ -10,10 +10,11 @@ import {
   DataFrame,
   LogRowContextOptions,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { ConfirmModal, Icon, PopoverContent, useTheme2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { PopoverMenu } from '../../explore/Logs/PopoverMenu';

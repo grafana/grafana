@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Branding } from '../../../../core/components/Branding/Branding';
 import { getLoginStyles } from '../../../../core/components/Login/LoginLayout';

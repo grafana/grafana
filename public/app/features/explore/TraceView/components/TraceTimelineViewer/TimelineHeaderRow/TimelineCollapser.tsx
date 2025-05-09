@@ -14,8 +14,8 @@
 
 import { css } from '@emotion/css';
 
+import { t } from '@grafana/i18n/internal';
 import { IconButton, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 const getStyles = () => ({
   TimelineCollapser: css({

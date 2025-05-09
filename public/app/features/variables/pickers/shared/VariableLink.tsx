@@ -3,9 +3,9 @@ import { MouseEvent, useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { Icon, useStyles2 } from '@grafana/ui';
 import { LoadingIndicator } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getStyles as getTagBadgeStyles } from '../../../../core/components/TagFilter/TagBadge';
 import { ALL_VARIABLE_TEXT } from '../../constants';

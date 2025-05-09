@@ -1,9 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getResourceStats, useModeOptions } from './actions';
 import { StepStatusInfo, WizardFormData } from './types';

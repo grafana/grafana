@@ -3,10 +3,11 @@ import { ConnectedProps, connect } from 'react-redux';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem, getTimeZone } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ConfirmModal, IconButton, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, ApiKey, ServiceAccountDTO, StoreState } from 'app/types';
 
 import { ServiceAccountPermissions } from './ServiceAccountPermissions';

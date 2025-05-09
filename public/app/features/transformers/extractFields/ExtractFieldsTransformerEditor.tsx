@@ -9,9 +9,9 @@ import {
   StandardEditorsRegistryItem,
   TransformerCategory,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { InlineField, InlineFieldRow, Select, InlineSwitch, Input, Combobox, ComboboxOption } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

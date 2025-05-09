@@ -4,9 +4,10 @@ import { Navigate } from 'react-router-dom-v5-compat';
 import { useLocation } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, isFetchError } from '@grafana/runtime';
 import { Alert, Card, Icon, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { AlertLabels } from './components/AlertLabels';
 import { RuleViewerLayout } from './components/rule-viewer/RuleViewerLayout';

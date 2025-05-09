@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 import { ComponentProps } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { ConfirmModal, Stack, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 
 import { alertRuleApi } from '../../../api/alertRuleApi';
 

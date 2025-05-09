@@ -3,9 +3,10 @@ import { ChangeEvent, useState } from 'react';
 import { UseFormSetValue, useForm } from 'react-hook-form';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Input, Switch, Field, Label, TextArea, Stack, Alert, Box } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { Trans, t } from 'app/core/internationalization';
 import { validationSrv } from 'app/features/manage-dashboards/services/ValidationSrv';
 
 import { DashboardScene } from '../scene/DashboardScene';

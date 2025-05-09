@@ -2,9 +2,10 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useAsync } from 'react-use';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 
 import {
   PostableRulerRuleGroupDTO,

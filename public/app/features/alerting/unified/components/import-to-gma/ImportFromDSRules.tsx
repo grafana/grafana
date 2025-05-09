@@ -2,6 +2,8 @@ import { Controller, FormProvider, useForm } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
 import { DataSourceInstanceSettings } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Box,
   Button,
@@ -17,7 +19,6 @@ import {
 } from '@grafana/ui';
 import { NestedFolderPicker } from 'app/core/components/NestedFolderPicker/NestedFolderPicker';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { Trans, t } from 'app/core/internationalization';
 import { DataSourcePicker } from 'app/features/datasources/components/picker/DataSourcePicker';
 import { useDatasource } from 'app/features/datasources/hooks';
 

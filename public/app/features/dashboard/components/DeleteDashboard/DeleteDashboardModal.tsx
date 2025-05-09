@@ -2,12 +2,13 @@ import { css } from '@emotion/css';
 import { connect, ConnectedProps } from 'react-redux';
 import useAsyncFn from 'react-use/lib/useAsyncFn';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { locationService, reportInteraction } from '@grafana/runtime';
 import { Modal, Button, Text, Space, TextLink } from '@grafana/ui';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';
 import { cleanUpDashboardAndVariables } from 'app/features/dashboard/state/actions';
 
-import { Trans, t } from '../../../../core/internationalization';
 import { useDeleteItemsMutation } from '../../../browse-dashboards/api/browseDashboardsAPI';
 import { DeleteDashboardModal as DeleteModal } from '../../../dashboard-scene/settings/DeleteDashboardButton';
 

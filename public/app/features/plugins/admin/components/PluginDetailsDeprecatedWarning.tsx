@@ -2,8 +2,9 @@ import { useState } from 'react';
 import * as React from 'react';
 
 import { renderMarkdown } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { CatalogPlugin } from '../types';
 

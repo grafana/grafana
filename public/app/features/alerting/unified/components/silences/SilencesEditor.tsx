@@ -13,6 +13,8 @@ import {
   isValidDate,
   parseDuration,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, isFetchError, locationService } from '@grafana/runtime';
 import {
   Alert,
@@ -26,7 +28,6 @@ import {
   TextArea,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { SilenceCreatedResponse, alertSilencesApi } from 'app/features/alerting/unified/api/alertSilencesApi';
 import { MATCHER_ALERT_RULE_UID } from 'app/features/alerting/unified/utils/constants';
 import { GRAFANA_RULES_SOURCE_NAME, getDatasourceAPIUid } from 'app/features/alerting/unified/utils/datasource';

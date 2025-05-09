@@ -3,6 +3,8 @@ import { useMemo, useEffect } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2, FeatureState } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
 import {
@@ -22,7 +24,6 @@ import {
   Stack,
   TextLink,
 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { AccessControlAction } from 'app/types';
 
