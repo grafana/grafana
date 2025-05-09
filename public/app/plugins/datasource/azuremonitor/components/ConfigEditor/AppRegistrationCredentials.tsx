@@ -136,7 +136,7 @@ export const AppRegistrationCredentials = (props: AppRegistrationCredentialsProp
             <Input
               className="width-30"
               aria-label="Client Secret"
-              placeholder="XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX"
+              placeholder="aVeryLongRandomStringOfLettersNumbersAndSymbols"
               value={credentials.clientSecret || ''}
               onChange={onClientSecretChange}
               id="client-secret"
