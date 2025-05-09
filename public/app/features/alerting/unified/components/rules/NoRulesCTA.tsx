@@ -72,7 +72,7 @@ export const NoRulesSplash = () => {
   return (
     <div>
       <EmptyState
-        message="You haven't created any rules yet"
+        message={t('alerting.list-view.empty.no-rules-created', "You haven't created any rules yet")}
         variant="call-to-action"
         button={
           canCreateAnything ? (
@@ -103,7 +103,10 @@ export function GrafanaNoRulesCTA() {
   const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
 
   return (
-    <EmptyState message="You haven't created any rules yet" variant="call-to-action">
+    <EmptyState
+      message={t('alerting.list-view.empty.no-rules-created', "You haven't created any rules yet")}
+      variant="call-to-action"
+    >
       <Stack direction="column" alignItems="center" justifyContent="center" gap={2}>
         <Stack direction="row" alignItems="center" justifyContent="center">
           <Trans i18nKey="alerting.list-view.empty.provisioning">

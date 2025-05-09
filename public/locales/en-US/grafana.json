@@ -1416,6 +1416,7 @@
         "new-grafana-alerting-rule": "New Grafana-managed alert rule",
         "new-grafana-recording-rule": "New Grafana-managed recording rule",
         "new-recording-rule": "New recording rule",
+        "no-rules-created": "You haven't created any rules yet",
         "provisioning": "You can also define rules through file provisioning or Terraform"
       },
       "no-prom-or-loki-rules": "There are no Prometheus or Loki data sources configured",
