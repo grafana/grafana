@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert, ConfirmModal, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { useDeletecollectionRepositoryMutation, useGetFrontendSettingsQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 
 import GettingStarted from './GettingStarted/GettingStarted';
 import GettingStartedPage from './GettingStarted/GettingStartedPage';
@@ -21,7 +21,7 @@ export default function HomePage() {
   const [deleteAll] = useDeletecollectionRepositoryMutation();
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [activeTab, setActiveTab] = useState<TabSelection>(TabSelection.Repositories);
-
+  const { t } = useTranslate();
   const tabInfo = useMemo(
     () => [
       {
@@ -35,7 +35,7 @@ export default function HomePage() {
         title: t('provisioning.home-page.tab-getting-started-title', 'Getting started'),
       },
     ],
-    []
+    [t]
   );
 
   // Early return for onboarding

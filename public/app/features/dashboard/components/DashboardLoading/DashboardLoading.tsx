@@ -1,9 +1,9 @@
 import { css, keyframes } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { locationService } from '@grafana/runtime';
 import { Button, HorizontalGroup, Spinner, useStyles2, VerticalGroup } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DashboardInitPhase } from 'app/types';
 
 export interface Props {

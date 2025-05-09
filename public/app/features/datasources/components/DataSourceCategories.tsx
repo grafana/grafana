@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { DataSourcePluginMeta, GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { reportInteraction } from '@grafana/runtime';
 import { LinkButton, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 import { DataSourcePluginCategory } from 'app/types';
 
 import { ROUTES } from '../../connections/constants';

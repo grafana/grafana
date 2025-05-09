@@ -17,9 +17,9 @@ import { sortBy as _sortBy } from 'lodash';
 import * as React from 'react';
 
 import { GrafanaTheme2, TraceKeyValuePair, TraceLog } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Icon, useStyles2 } from '@grafana/ui';
 
-import { Trans } from '../../../../../../core/internationalization';
 import { autoColor } from '../../Theme';
 import { TNil } from '../../types';
 import { TraceLink } from '../../types/trace';

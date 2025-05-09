@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import { saveAs } from 'file-saver';
 import { useCallback, useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
 import { Button, ClipboardButton, HorizontalGroup, TextArea, Stack, TextLink } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { SaveDashboardFormProps } from '../types';
 

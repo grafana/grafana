@@ -9,10 +9,10 @@ import {
   FieldMatcherID,
   Field,
 } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, Select } from '@grafana/ui';
 import { FieldNamePicker } from '@grafana/ui/internal';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -72,6 +72,8 @@ export const RegressionTransformerEditor = ({
       onChange({ ...options, xFieldName: x.name, yFieldName: y.name });
     }
   });
+
+  const { t } = useTranslate();
 
   return (
     <>

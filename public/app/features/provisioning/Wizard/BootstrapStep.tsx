@@ -1,9 +1,9 @@
 import { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Card, Field, Input, LoadingPlaceholder, Stack, Text } from '@grafana/ui';
 import { RepositoryViewList, useGetRepositoryFilesQuery, useGetResourceStatsQuery } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 import { getResourceStats, useModeOptions } from './actions';
 import { StepStatusInfo, WizardFormData } from './types';
@@ -61,6 +61,8 @@ export function BootstrapStep({ onOptionSelect, settingsData, repoName, onStepSt
     // Only run this effect on mount
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const { t } = useTranslate();
 
   if (resourceStats.isLoading || filesQuery.isLoading) {
     return (
