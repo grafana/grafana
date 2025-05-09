@@ -1,11 +1,19 @@
-import { alertingAPI as alertingAPIv0alpha1 } from './api/v0alpha1/api.gen';
-import type { ContactPoint as ContactPoint_v0alpha1 } from './api/v0alpha1/types';
+import { fetchBaseQuery, TypedUseQueryHookResult } from '@reduxjs/toolkit/query/react';
+
+import { alertingAPI as alertingAPIv0alpha1, ListReceiverApiArg } from './api/v0alpha1/api.gen';
+import type { ContactPoint as ContactPoint_v0alpha1, EnhancedListReceiverApiResponse } from './api/v0alpha1/types';
 import { type ContactPointAdapter, type GenericContactPoint } from './contactPoints/types';
 import { getContactPointDescription } from './contactPoints/utils';
 
+type EnhancedHookResult = TypedUseQueryHookResult<
+  EnhancedListReceiverApiResponse,
+  ListReceiverApiArg,
+  ReturnType<typeof fetchBaseQuery>
+>;
+
 export const v0alpha1ContactPointAdapter: ContactPointAdapter<ContactPoint_v0alpha1> = {
   useListContactPoints: () => {
-    const result = alertingAPIv0alpha1.useListReceiverQuery({}); // Assuming this is the v0alpha1 hook
+    const result = alertingAPIv0alpha1.useListReceiverQuery<EnhancedHookResult>({}); // Assuming this is the v0alpha1 hook
     return {
       data: result.currentData?.items,
       isLoading: result.isLoading,
