@@ -127,7 +127,15 @@ var (
 	_ ManagedObjectIndexServer = (*searchSupport)(nil)
 )
 
-func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.AccessClient, blob BlobSupport, tracer trace.Tracer, indexMetrics *BleveIndexMetrics) (support *searchSupport, err error) {
+func newSearchSupport(
+	opts SearchOptions,
+	storage StorageBackend,
+	access types.AccessClient,
+	blob BlobSupport,
+	tracer trace.Tracer,
+	indexMetrics *BleveIndexMetrics,
+	broadcaster Broadcaster[*WrittenEvent],
+) (support *searchSupport, err error) {
 	// No backend search support
 	if opts.Backend == nil {
 		return nil, nil
@@ -152,6 +160,7 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 		clientIndexEventsChan: opts.IndexEventsChan,
 		indexEventsChan:       make(chan *IndexEvent),
 		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
+		broadcaster:           broadcaster,
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
