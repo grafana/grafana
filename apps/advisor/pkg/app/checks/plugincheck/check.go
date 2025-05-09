@@ -9,7 +9,6 @@ import (
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
@@ -25,18 +24,21 @@ func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
 	updateChecker pluginchecker.PluginUpdateChecker,
+	grafanaVersion string,
 ) checks.Check {
 	return &check{
-		PluginStore:   pluginStore,
-		PluginRepo:    pluginRepo,
-		updateChecker: updateChecker,
+		PluginStore:    pluginStore,
+		PluginRepo:     pluginRepo,
+		GrafanaVersion: grafanaVersion,
+		updateChecker:  updateChecker,
 	}
 }
 
 type check struct {
-	PluginStore   pluginstore.Store
-	PluginRepo    repo.Service
-	updateChecker pluginchecker.PluginUpdateChecker
+	PluginStore    pluginstore.Store
+	PluginRepo     repo.Service
+	updateChecker  pluginchecker.PluginUpdateChecker
+	GrafanaVersion string
 }
 
 func (c *check) ID() string {
@@ -63,19 +65,22 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
-			PluginRepo:    c.PluginRepo,
-			updateChecker: c.updateChecker,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
+			updateChecker:  c.updateChecker,
 		},
 		&updateStep{
-			PluginRepo:    c.PluginRepo,
-			updateChecker: c.updateChecker,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
+			updateChecker:  c.updateChecker,
 		},
 	}
 }
 
 type deprecationStep struct {
-	PluginRepo    repo.Service
-	updateChecker pluginchecker.PluginUpdateChecker
+	PluginRepo     repo.Service
+	GrafanaVersion string
+	updateChecker  pluginchecker.PluginUpdateChecker
 }
 
 func (s *deprecationStep) Title() string {
@@ -106,7 +111,8 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 	}
 
 	// Check if plugin is deprecated
-	i, err := s.PluginRepo.PluginInfo(ctx, p.ID)
+	compatOpts := repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+	i, err := s.PluginRepo.PluginInfo(ctx, p.ID, compatOpts)
 	if err != nil {
 		// Unable to check deprecation status
 		return nil, nil
@@ -129,8 +135,9 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 }
 
 type updateStep struct {
-	PluginRepo    repo.Service
-	updateChecker pluginchecker.PluginUpdateChecker
+	PluginRepo     repo.Service
+	GrafanaVersion string
+	updateChecker  pluginchecker.PluginUpdateChecker
 }
 
 func (s *updateStep) Title() string {
@@ -160,7 +167,7 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 	}
 
 	// Check if plugin has a newer version available
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+	compatOpts := repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
 	info, err := s.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
 	if err != nil {
 		// Unable to check updates

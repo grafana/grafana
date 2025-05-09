@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/grafana/grafana/pkg/services/ssosettings"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type CheckService interface {
@@ -31,13 +32,14 @@ type Service struct {
 	managedPlugins        managedplugins.Manager
 	provisionedPlugins    provisionedplugins.Manager
 	ssoSettingsSvc        ssosettings.Service
+	GrafanaVersion        string
 }
 
 func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore pluginstore.Store,
 	pluginContextProvider *plugincontext.Provider, pluginClient plugins.Client,
 	updateChecker pluginchecker.PluginUpdateChecker,
 	pluginRepo repo.Service, pluginPreinstall pluginchecker.Preinstall, managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service,
+	provisionedPlugins provisionedplugins.Manager, ssoSettingsSvc ssosettings.Service, settings *setting.Cfg,
 ) *Service {
 	return &Service{
 		datasourceSvc:         datasourceSvc,
@@ -50,6 +52,7 @@ func ProvideService(datasourceSvc datasources.DataSourceService, pluginStore plu
 		managedPlugins:        managedPlugins,
 		provisionedPlugins:    provisionedPlugins,
 		ssoSettingsSvc:        ssoSettingsSvc,
+		GrafanaVersion:        settings.BuildVersion,
 	}
 }
 
@@ -61,11 +64,13 @@ func (s *Service) Checks() []checks.Check {
 			s.pluginContextProvider,
 			s.pluginClient,
 			s.pluginRepo,
+			s.GrafanaVersion,
 		),
 		plugincheck.New(
 			s.pluginStore,
 			s.pluginRepo,
 			s.updateChecker,
+			s.GrafanaVersion,
 		),
 		authchecks.New(s.ssoSettingsSvc),
 	}

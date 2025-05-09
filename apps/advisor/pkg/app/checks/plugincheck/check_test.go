@@ -164,7 +164,7 @@ func TestRun(t *testing.T) {
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
 			provisionedPlugins := &mockProvisionedPlugins{provisioned: tt.pluginProvisioned}
 			updateChecker := pluginchecker.ProvideService(managedPlugins, provisionedPlugins, pluginPreinstall)
-			check := New(pluginStore, pluginRepo, updateChecker)
+			check := New(pluginStore, pluginRepo, updateChecker, "12.0.0")
 
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
@@ -200,7 +200,7 @@ type mockPluginRepo struct {
 	pluginArchiveInfo map[string]*repo.PluginArchiveInfo
 }
 
-func (m *mockPluginRepo) PluginInfo(ctx context.Context, id string) (*repo.PluginInfo, error) {
+func (m *mockPluginRepo) PluginInfo(ctx context.Context, id string, compatOpts repo.CompatOpts) (*repo.PluginInfo, error) {
 	return m.pluginInfo[id], nil
 }
 
