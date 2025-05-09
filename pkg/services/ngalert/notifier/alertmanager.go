@@ -60,8 +60,6 @@ type alertmanager struct {
 
 	decryptFn alertingNotify.GetDecryptedValueFn
 	orgID     int64
-
-	withAutogen bool
 }
 
 // maintenanceOptions represent the options for components that need maintenance on a frequency within the Alertmanager.
@@ -152,9 +150,6 @@ func NewAlertmanager(ctx context.Context, orgID int64, cfg *setting.Cfg, store A
 		decryptFn:           decryptFn,
 		stateStore:          stateStore,
 		logger:              l,
-
-		// TODO: Preferably, logic around autogen would be outside of the specific alertmanager implementation so that remote alertmanager will get it for free.
-		withAutogen: featureToggles.IsEnabled(ctx, featuremgmt.FlagAlertingSimplifiedRouting),
 	}
 
 	return am, nil
@@ -322,11 +317,9 @@ func (am *alertmanager) aggregateInhibitMatchers(rules []config.InhibitRule, amu
 // It returns a boolean indicating whether the user config was changed and an error.
 // It is not safe to call concurrently.
 func (am *alertmanager) applyConfig(ctx context.Context, cfg *apimodels.PostableUserConfig, skipInvalid bool) (bool, error) {
-	if am.withAutogen {
-		err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, skipInvalid)
-		if err != nil {
-			return false, err
-		}
+	err := AddAutogenConfig(ctx, am.logger, am.Store, am.orgID, &cfg.AlertmanagerConfig, skipInvalid)
+	if err != nil {
+		return false, err
 	}
 
 	// First, let's make sure this config is not already loaded

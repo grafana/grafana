@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	sysruntime "runtime"
-	"slices"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -12,10 +11,8 @@ import (
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 )
 
 const (
@@ -27,28 +24,22 @@ const (
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
-	pluginPreinstall plugininstaller.Preinstall,
-	managedPlugins managedplugins.Manager,
-	provisionedPlugins provisionedplugins.Manager,
+	updateChecker pluginchecker.PluginUpdateChecker,
 	grafanaVersion string,
 ) checks.Check {
 	return &check{
-		PluginStore:        pluginStore,
-		PluginRepo:         pluginRepo,
-		PluginPreinstall:   pluginPreinstall,
-		ManagedPlugins:     managedPlugins,
-		ProvisionedPlugins: provisionedPlugins,
-		GrafanaVersion:     grafanaVersion,
+		PluginStore:    pluginStore,
+		PluginRepo:     pluginRepo,
+		GrafanaVersion: grafanaVersion,
+		updateChecker:  updateChecker,
 	}
 }
 
 type check struct {
-	PluginStore        pluginstore.Store
-	PluginRepo         repo.Service
-	PluginPreinstall   plugininstaller.Preinstall
-	ManagedPlugins     managedplugins.Manager
-	ProvisionedPlugins provisionedplugins.Manager
-	GrafanaVersion     string
+	PluginStore    pluginstore.Store
+	PluginRepo     repo.Service
+	updateChecker  pluginchecker.PluginUpdateChecker
+	GrafanaVersion string
 }
 
 func (c *check) ID() string {
@@ -75,29 +66,22 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
-			PluginRepo:         c.PluginRepo,
-			PluginPreinstall:   c.PluginPreinstall,
-			ManagedPlugins:     c.ManagedPlugins,
-			ProvisionedPlugins: c.ProvisionedPlugins,
-			GrafanaVersion:     c.GrafanaVersion,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
+			updateChecker:  c.updateChecker,
 		},
 		&updateStep{
-			PluginRepo:         c.PluginRepo,
-			PluginPreinstall:   c.PluginPreinstall,
-			ManagedPlugins:     c.ManagedPlugins,
-			ProvisionedPlugins: c.ProvisionedPlugins,
-			GrafanaVersion:     c.GrafanaVersion,
+			PluginRepo:     c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
+			updateChecker:  c.updateChecker,
 		},
 	}
 }
 
 type deprecationStep struct {
-	PluginRepo         repo.Service
-	PluginPreinstall   plugininstaller.Preinstall
-	ManagedPlugins     managedplugins.Manager
-	ProvisionedPlugins provisionedplugins.Manager
-	GrafanaVersion     string
-	provisionedPlugins []string
+	PluginRepo     repo.Service
+	GrafanaVersion string
+	updateChecker  pluginchecker.PluginUpdateChecker
 }
 
 func (s *deprecationStep) Title() string {
@@ -123,21 +107,7 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 		return nil, fmt.Errorf("invalid item type %T", it)
 	}
 
-	// Skip if it's a core plugin
-	if p.IsCorePlugin() {
-		log.Debug("Skipping core plugin", "plugin", p.ID)
-		return nil, nil
-	}
-
-	// Skip if it's managed or pinned
-	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
-		log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
-		return nil, nil
-	}
-
-	// Skip if it's provisioned
-	if s.isProvisioned(ctx, p.ID) {
-		log.Debug("Skipping provisioned plugin", "plugin", p.ID)
+	if !s.updateChecker.IsUpdatable(ctx, p) {
 		return nil, nil
 	}
 
@@ -166,12 +136,9 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 }
 
 type updateStep struct {
-	PluginRepo         repo.Service
-	PluginPreinstall   plugininstaller.Preinstall
-	ManagedPlugins     managedplugins.Manager
-	ProvisionedPlugins provisionedplugins.Manager
-	provisionedPlugins []string
-	GrafanaVersion     string
+	PluginRepo     repo.Service
+	GrafanaVersion string
+	updateChecker  pluginchecker.PluginUpdateChecker
 }
 
 func (s *updateStep) Title() string {
@@ -196,21 +163,7 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 		return nil, fmt.Errorf("invalid item type %T", i)
 	}
 
-	// Skip if it's a core plugin
-	if p.IsCorePlugin() {
-		log.Debug("Skipping core plugin", "plugin", p.ID)
-		return nil, nil
-	}
-
-	// Skip if it's managed or pinned
-	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
-		log.Debug("Skipping managed or pinned plugin", "plugin", p.ID)
-		return nil, nil
-	}
-
-	// Skip if it's provisioned
-	if s.isProvisioned(ctx, p.ID) {
-		log.Debug("Skipping provisioned plugin", "plugin", p.ID)
+	if !s.updateChecker.IsUpdatable(ctx, p) {
 		return nil, nil
 	}
 
@@ -248,51 +201,4 @@ func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool 
 	}
 	// In other case, assume that a different latest version will always be newer
 	return current.Info.Version != latest.Version
-}
-
-func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
-		if managedPlugin == pluginID {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *updateStep) isProvisioned(ctx context.Context, pluginID string) bool {
-	if s.provisionedPlugins == nil {
-		pps, err := s.ProvisionedPlugins.ProvisionedPlugins(ctx)
-		if err != nil {
-			return false
-		}
-		s.provisionedPlugins = make([]string, 0, len(pps))
-		for _, p := range pps {
-			s.provisionedPlugins = append(s.provisionedPlugins, p.ID)
-		}
-	}
-	return slices.Contains(s.provisionedPlugins, pluginID)
-}
-
-// Temporary duplicated code until there is a common IsUpdatable function
-func (s *deprecationStep) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
-		if managedPlugin == pluginID {
-			return true
-		}
-	}
-	return false
-}
-
-func (s *deprecationStep) isProvisioned(ctx context.Context, pluginID string) bool {
-	if s.provisionedPlugins == nil {
-		pps, err := s.ProvisionedPlugins.ProvisionedPlugins(ctx)
-		if err != nil {
-			return false
-		}
-		s.provisionedPlugins = make([]string, 0, len(pps))
-		for _, pp := range pps {
-			s.provisionedPlugins = append(s.provisionedPlugins, pp.ID)
-		}
-	}
-	return slices.Contains(s.provisionedPlugins, pluginID)
 }
