@@ -2,7 +2,9 @@
 // Non-FEMT sets this to an immediately resolved promise.
 // It's important to wait for this until any other imports run, becuase there's a bunch
 // of module-side effects that depend on the bootdata.
+console.log('Waiting for boot data promise');
 await window.__grafana_boot_data_promise;
+console.log('Boot data promise resolved');
 
 import './core/trustedTypePolicies';
 declare let __webpack_public_path__: string;
@@ -24,6 +26,9 @@ if (window.nonce) {
 // This is an indication to the window.onLoad failure check that the app bundle has loaded.
 window.__grafana_app_bundle_loaded = true;
 
+console.log('Importing app');
 import app from './app';
 
+console.log('Initializing app');
 app.init();
+console.log('App initialized');

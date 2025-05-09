@@ -1,3 +1,4 @@
+import './topOfTheFileSideEffect';
 import 'symbol-observable';
 import 'regenerator-runtime/runtime';
 
@@ -112,6 +113,7 @@ import { configureStore } from './store/configureStore';
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
 const extensionsExports = extensionsIndex.keys().map((key) => {
+  console.log('Importing extension', key);
   return extensionsIndex(key);
 });
 
@@ -284,6 +286,7 @@ function addExtensionReducers() {
 
 function initExtensions() {
   if (extensionsExports.length > 0) {
+    console.log('Initializing extension', extensionsExports);
     extensionsExports[0].init();
   }
 }
