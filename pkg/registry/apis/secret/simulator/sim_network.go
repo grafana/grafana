@@ -1,9 +1,11 @@
 package simulator
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/coro"
 )
 
@@ -28,7 +30,7 @@ func NewSimNetwork(config SimNetworkConfig, activityLog *ActivityLog) *SimNetwor
 	return &SimNetwork{config: config, activityLog: activityLog}
 }
 
-func (network *SimNetwork) Send(input SendInput) any {
+func (network *SimNetwork) Send(ctx context.Context, input SendInput) any {
 	// Yield before executing the action to simulate a message in flight
 	if v := coro.Yield(); v != nil {
 		panic(fmt.Sprintf("network.Send resumed with non-nil value, it should always be nil: %+v", v))
@@ -40,7 +42,7 @@ func (network *SimNetwork) Send(input SendInput) any {
 	reply := input.Execute()
 
 	// Log that the message was delivered to the destination
-	network.activityLog.Record("[NETWORK] ->%s", input.Debug)
+	network.activityLog.Record("(%+v) [NETWORK] ->%s", contracts.GetRequestId(ctx), input.Debug)
 
 	// Yield before returning the reply to simulate a reply message in flight
 	if v := coro.Yield(); v != nil {
@@ -48,7 +50,7 @@ func (network *SimNetwork) Send(input SendInput) any {
 	}
 
 	// Log that the reply was delivered to the source
-	network.activityLog.Record("[NETWORK] <-%s (%T%+v)", input.Debug, reply, reply)
+	network.activityLog.Record("(%+v) [NETWORK] <-%s (%T%+v)", contracts.GetRequestId(ctx), input.Debug, reply, reply)
 
 	return reply
 }

@@ -30,7 +30,7 @@ func (client *SimDatabaseClient) DriverName() string {
 
 func (client *SimDatabaseClient) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	// Send a request to the database server to start a transaction
-	reply := client.simNetwork.Send(SendInput{
+	reply := client.simNetwork.Send(ctx, SendInput{
 		Debug: "BeginTx",
 		Execute: func() any {
 			txID, err := client.simDatabase.QueryBeginTx(ctx)
@@ -47,19 +47,19 @@ func (client *SimDatabaseClient) Transaction(ctx context.Context, fn func(ctx co
 	// Run the function with the transaction in the context
 	if err := fn(context.WithValue(ctx, transactionContextKey, transactionID)); err != nil {
 		// If an error happened, rollback the transaction
-		rollbackErr := toError(client.simNetwork.Send(SendInput{
+		rollbackErr := toError(client.simNetwork.Send(ctx, SendInput{
 			Debug: fmt.Sprintf("RollbackTx(%+v)", transactionID),
 			Execute: func() any {
-				return client.simDatabase.QueryRollbackTx(transactionID)
+				return client.simDatabase.QueryRollbackTx(ctx, transactionID)
 			}}))
 
 		return errors.Join(err, rollbackErr)
 	}
 
-	commitErr := toError(client.simNetwork.Send(SendInput{
+	commitErr := toError(client.simNetwork.Send(ctx, SendInput{
 		Debug: fmt.Sprintf("CommiTx(%+v)", transactionID),
 		Execute: func() any {
-			return client.simDatabase.QueryCommitTx(transactionID)
+			return client.simDatabase.QueryCommitTx(ctx, transactionID)
 		}}))
 
 	// If an error happened when committing the transaction
@@ -109,7 +109,7 @@ func (db *SimDatabaseClient2) DriverName() string {
 }
 
 func (db *SimDatabaseClient2) Transaction(ctx context.Context, callback func(context.Context) error) error {
-	reply := db.simNetwork.Send(SendInput{
+	reply := db.simNetwork.Send(ctx, SendInput{
 		Debug: "Transaction",
 		Execute: func() any {
 			txCtx := ctx
@@ -149,7 +149,7 @@ func (db *SimDatabaseClient2) Transaction(ctx context.Context, callback func(con
 }
 
 func (db *SimDatabaseClient2) ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error) {
-	reply := db.simNetwork.Send(SendInput{
+	reply := db.simNetwork.Send(ctx, SendInput{
 		Debug: "ExecContext",
 		Execute: func() any {
 			// If another transaction is already open, we just use that one instead of nesting.
@@ -169,7 +169,7 @@ func (db *SimDatabaseClient2) ExecContext(ctx context.Context, query string, arg
 }
 
 func (db *SimDatabaseClient2) QueryContext(ctx context.Context, query string, args ...any) (contracts.Rows, error) {
-	reply := db.simNetwork.Send(SendInput{
+	reply := db.simNetwork.Send(ctx, SendInput{
 		Debug: "QueryContext",
 		Execute: func() any {
 			// If another transaction is already open, we just use that one instead of nesting.

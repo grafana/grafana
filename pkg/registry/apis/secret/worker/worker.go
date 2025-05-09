@@ -73,6 +73,8 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 		}
 
 		for _, message := range messages {
+			fmt.Printf("\n\naaaaaaa message.RequestID %+v\n\n", message.RequestID)
+			ctx := contracts.ContextWithRequestID(ctx, message.RequestID)
 			if err := w.processMessage(ctx, message); err != nil {
 				return fmt.Errorf("processing message: %+v %w", message, err)
 			}

@@ -38,6 +38,7 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+		fmt.Printf("\n\naaaaaaa SecretService.Create inside tx callback %+v\n\n", ctx.Value("SimRequestContextKey"))
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
 		if err != nil {
 			return fmt.Errorf("failed to create securevalue: %w", err)
@@ -45,6 +46,7 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 		out = createdSecureValue
 
 		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
+			RequestID: contracts.GetRequestId(ctx),
 			Type:      contracts.CreateSecretOutboxMessage,
 			Name:      sv.Name,
 			Namespace: sv.Namespace,
@@ -140,12 +142,18 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 
 func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+		// TODO: ForUpdate should be true
 		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
 		if err != nil {
 			return fmt.Errorf("fetching secure value: %+w", err)
 		}
+		fmt.Printf("\n\naaaaaaa SecretService.Delete read sv.Status %+v\n\n", sv.Status)
 
-		if err := s.secureValueMetadataStorage.SetStatus(ctx, namespace, name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending}); err != nil {
+		if sv.Status.Phase == secretv0alpha1.SecureValuePhasePending {
+			return contracts.ErrSecureValueOperationInProgress
+		}
+
+		if err := s.secureValueMetadataStorage.SetStatus(ctx, namespace, name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhasePending, Message: "Deleting secure value"}); err != nil {
 			return fmt.Errorf("setting secure value status phase: %+w", err)
 		}
 

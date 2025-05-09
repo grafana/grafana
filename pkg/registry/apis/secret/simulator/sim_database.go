@@ -20,7 +20,7 @@ func NewSimDatabase2(simNetwork *SimNetwork, db db.DB) *SimDatabase2 {
 
 func (client *SimDatabase2) Transaction(ctx context.Context, fn func(ctx context.Context) error) error {
 	// Send a request to the database server to start a transaction
-	reply := client.simNetwork.Send(SendInput{
+	reply := client.simNetwork.Send(ctx, SendInput{
 		Debug: "Transaction",
 		Execute: func() any {
 			return client.db.InTransaction(ctx, fn)

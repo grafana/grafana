@@ -149,7 +149,7 @@ func (db *SimDatabaseServer) lockRow(transactionID TransactionID, row secureValu
 	}
 }
 
-func (db *SimDatabaseServer) releaseLocks(transactionID TransactionID) {
+func (db *SimDatabaseServer) releaseLocks(ctx context.Context, transactionID TransactionID) {
 	for row, locks := range db.locks {
 		for i, lock := range locks {
 			if lock.transactionID == transactionID {
@@ -159,7 +159,7 @@ func (db *SimDatabaseServer) releaseLocks(transactionID TransactionID) {
 				if len(db.locks[row]) > 0 {
 					// Mark the coroutine as ready to resume
 					db.locks[row][0].coroutine.ReadyToResume(nil)
-					db.activityLog.Record("releasing lock %+d", lock.transactionID)
+					db.activityLog.Record("(%+v) releasing lock %+d", contracts.GetRequestId(ctx), lock.transactionID)
 				}
 				break
 			}
@@ -175,7 +175,7 @@ func (db *SimDatabaseServer) QueryBeginTx(ctx context.Context) (TransactionID, e
 	return transactionId, nil
 }
 
-func (db *SimDatabaseServer) QueryCommitTx(transactionID TransactionID) error {
+func (db *SimDatabaseServer) QueryCommitTx(ctx context.Context, transactionID TransactionID) error {
 	transaction, ok := db.ongoingTransactions[transactionID]
 	if !ok {
 		return fmt.Errorf("tried to commit a transaction that doesn't exist: transactionID=%+v", transactionID)
@@ -205,14 +205,14 @@ func (db *SimDatabaseServer) QueryCommitTx(transactionID TransactionID) error {
 	}
 
 	delete(db.ongoingTransactions, transactionID)
-	db.releaseLocks(transactionID)
+	db.releaseLocks(ctx, transactionID)
 
 	return nil
 }
 
-func (db *SimDatabaseServer) QueryRollbackTx(transactionID TransactionID) error {
+func (db *SimDatabaseServer) QueryRollbackTx(ctx context.Context, transactionID TransactionID) error {
 	delete(db.ongoingTransactions, transactionID)
-	db.releaseLocks(transactionID)
+	db.releaseLocks(ctx, transactionID)
 	return nil
 }
 
@@ -222,6 +222,7 @@ func (db *SimDatabaseServer) QueryOutboxAppend(transactionID TransactionID, mess
 
 	messageID := fmt.Sprintf("message_%d", db.getNextCounter())
 	transaction.addToOutboxQueue = append(transaction.addToOutboxQueue, contracts.OutboxMessage{
+		RequestID:       message.RequestID,
 		Type:            message.Type,
 		MessageID:       messageID,
 		Name:            message.Name,
@@ -274,7 +275,7 @@ func (db *SimDatabaseServer) QueryOutboxDelete(transactionID TransactionID, mess
 	return nil
 }
 
-func (db *SimDatabaseServer) QueryCreateSecureValueMetadata(transactionID TransactionID, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
+func (db *SimDatabaseServer) QueryCreateSecureValueMetadata(ctx context.Context, transactionID TransactionID, sv *secretv0alpha1.SecureValue) (*secretv0alpha1.SecureValue, error) {
 	assert.True(transactionID > 0, "transaction id is missing: transactionID=%+v", transactionID)
 	transaction := db.ongoingTransactions[transactionID]
 
@@ -291,7 +292,7 @@ func (db *SimDatabaseServer) QueryCreateSecureValueMetadata(transactionID Transa
 	if ok {
 		if _, ok := ns[sv.Name]; ok {
 			// Rollback on error
-			if err := db.QueryRollbackTx(transactionID); err != nil {
+			if err := db.QueryRollbackTx(ctx, transactionID); err != nil {
 				panic(fmt.Sprintf("rolling tx back after error happened while creating secure value metadata: %+v", err))
 			}
 			// Return error if it exists

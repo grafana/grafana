@@ -34,13 +34,14 @@ type Coroutine interface {
 }
 
 type CoroutineImpl struct {
+	name    string
 	runtime *Runtime
 	resume  func(any) bool
 	yield   func() any
 }
 
-func newCoroutineImpl(runtime *Runtime, resume func(any) bool, yield func() any) *CoroutineImpl {
-	return &CoroutineImpl{runtime: runtime, resume: resume, yield: yield}
+func newCoroutineImpl(name string, runtime *Runtime, resume func(any) bool, yield func() any) *CoroutineImpl {
+	return &CoroutineImpl{name: name, runtime: runtime, resume: resume, yield: yield}
 }
 
 func (c *CoroutineImpl) Yield() any {
@@ -91,7 +92,7 @@ func (runtime *Runtime) readyToResume(coroutine Coroutine, payload any) {
 	runtime.ReadySet = append(runtime.ReadySet, ready{Coroutine: coroutine, Payload: payload})
 }
 
-func (runtime *Runtime) Spawn(f func()) Coroutine {
+func (runtime *Runtime) SpawnNamed(name string, f func()) Coroutine {
 	cin := make(chan any)
 	cout := make(chan msg)
 	done := false
@@ -111,7 +112,7 @@ func (runtime *Runtime) Spawn(f func()) Coroutine {
 		return <-cin
 	}
 
-	coroutine := newCoroutineImpl(runtime, resume, yield)
+	coroutine := newCoroutineImpl(name, runtime, resume, yield)
 	runtime.readyToResume(coroutine, nil)
 
 	go func() {
@@ -128,4 +129,8 @@ func (runtime *Runtime) Spawn(f func()) Coroutine {
 		cout <- msg{}
 	}()
 	return coroutine
+}
+
+func (runtime *Runtime) Spawn(f func()) Coroutine {
+	return runtime.SpawnNamed("", f)
 }

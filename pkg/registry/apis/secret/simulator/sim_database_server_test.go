@@ -30,12 +30,12 @@ func TestRowLocks(t *testing.T) {
 
 		require.Nil(t, coro.Yield())
 
-		_, err = simDatabaseServer.QueryCreateSecureValueMetadata(transactionID, &sv)
+		_, err = simDatabaseServer.QueryCreateSecureValueMetadata(ctx, transactionID, &sv)
 		require.NoError(t, err)
 
 		require.Nil(t, coro.Yield())
 
-		require.NoError(t, simDatabaseServer.QueryCommitTx(transactionID))
+		require.NoError(t, simDatabaseServer.QueryCommitTx(ctx, transactionID))
 	})
 	_ = c1.Resume(nil)
 
@@ -46,13 +46,13 @@ func TestRowLocks(t *testing.T) {
 
 		require.Nil(t, coro.Yield())
 
-		_, err = simDatabaseServer.QueryCreateSecureValueMetadata(transactionID, &sv)
+		_, err = simDatabaseServer.QueryCreateSecureValueMetadata(ctx, transactionID, &sv)
 		require.ErrorIs(t, err, contracts.ErrSecureValueAlreadyExists)
 
 		require.Nil(t, coro.Yield())
 
 		// Since an error was returned when creating the secure value metadata, the tx should have been rolled back automatically
-		require.Contains(t, simDatabaseServer.QueryCommitTx(transactionID).Error(), "tried to commit a transaction that doesn't exist")
+		require.Contains(t, simDatabaseServer.QueryCommitTx(ctx, transactionID).Error(), "tried to commit a transaction that doesn't exist")
 	})
 	_ = c2.Resume(nil)
 
@@ -86,14 +86,14 @@ func TestTransaction(t *testing.T) {
 	sv.Namespace = namespace
 	sv.Name = name
 
-	_, err = db.QueryCreateSecureValueMetadata(txID, sv)
+	_, err = db.QueryCreateSecureValueMetadata(ctx, txID, sv)
 	require.NoError(t, err)
 
 	// There's nothing in the database before the tx is committed
 	require.Empty(t, db.outboxQueue)
 	require.Empty(t, db.secretMetadata)
 
-	require.NoError(t, db.QueryCommitTx(txID))
+	require.NoError(t, db.QueryCommitTx(ctx, txID))
 
 	// Data is stored in the db when the tx is committed
 	require.NotEmpty(t, db.outboxQueue)
@@ -115,7 +115,7 @@ func TestTransaction(t *testing.T) {
 	// The row was not deleted yet since the transaction is not completed yet
 	require.NotEmpty(t, db.outboxQueue)
 
-	require.NoError(t, db.QueryCommitTx(txID))
+	require.NoError(t, db.QueryCommitTx(ctx, txID))
 
 	// The row should have been deleted when the transaction was committed
 	require.Empty(t, db.outboxQueue)
