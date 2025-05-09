@@ -1,4 +1,4 @@
-package updatechecker
+package updatemanager
 
 import (
 	"context"
@@ -7,35 +7,54 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/grafana/grafana-plugin-sdk-go/backend/httpclient"
-	"github.com/hashicorp/go-version"
 	"go.opentelemetry.io/otel/codes"
 
 	"github.com/grafana/grafana/pkg/infra/httpclient/httpclientprovider"
 	"github.com/grafana/grafana/pkg/infra/log"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type PluginsService struct {
-	availableUpdates map[string]string
-
-	enabled        bool
-	grafanaVersion string
-	pluginStore    pluginstore.Store
-	httpClient     httpClient
-	mutex          sync.RWMutex
-	log            log.Logger
-	tracer         tracing.Tracer
-	updateCheckURL *url.URL
+type availableUpdate struct {
+	localVersion     string
+	availableVersion string
 }
 
-func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, tracer tracing.Tracer) (*PluginsService, error) {
+type PluginsService struct {
+	availableUpdates map[string]availableUpdate
+
+	enabled         bool
+	grafanaVersion  string
+	pluginStore     pluginstore.Store
+	httpClient      httpClient
+	mutex           sync.RWMutex
+	log             log.Logger
+	tracer          tracing.Tracer
+	updateCheckURL  *url.URL
+	pluginInstaller plugins.Installer
+	updateChecker   *pluginchecker.Service
+	updateStrategy  string
+
+	features featuremgmt.FeatureToggles
+}
+
+func ProvidePluginsService(cfg *setting.Cfg,
+	pluginStore pluginstore.Store,
+	pluginInstaller plugins.Installer,
+	tracer tracing.Tracer,
+	features featuremgmt.FeatureToggles,
+	updateChecker *pluginchecker.Service,
+) (*PluginsService, error) {
 	logger := log.New("plugins.update.checker")
 	cl, err := httpclient.New(httpclient.Options{
 		Middlewares: []httpclient.Middleware{
@@ -63,8 +82,12 @@ func ProvidePluginsService(cfg *setting.Cfg, pluginStore pluginstore.Store, trac
 		log:              logger,
 		tracer:           tracer,
 		pluginStore:      pluginStore,
-		availableUpdates: make(map[string]string),
+		availableUpdates: make(map[string]availableUpdate),
 		updateCheckURL:   parsedUpdateCheckURL,
+		pluginInstaller:  pluginInstaller,
+		features:         features,
+		updateChecker:    updateChecker,
+		updateStrategy:   cfg.PluginUpdateStrategy,
 	}, nil
 }
 
@@ -74,6 +97,9 @@ func (s *PluginsService) IsDisabled() bool {
 
 func (s *PluginsService) Run(ctx context.Context) error {
 	s.instrumentedCheckForUpdates(ctx)
+	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+		s.updateAll(ctx)
+	}
 
 	ticker := time.NewTicker(time.Minute * 10)
 	run := true
@@ -82,6 +108,9 @@ func (s *PluginsService) Run(ctx context.Context) error {
 		select {
 		case <-ticker.C:
 			s.instrumentedCheckForUpdates(ctx)
+			if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+				s.updateAll(ctx)
+			}
 		case <-ctx.Done():
 			run = false
 		}
@@ -92,7 +121,7 @@ func (s *PluginsService) Run(ctx context.Context) error {
 
 func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string, bool) {
 	s.mutex.RLock()
-	updateVers, updateAvailable := s.availableUpdates[pluginID]
+	update, updateAvailable := s.availableUpdates[pluginID]
 	s.mutex.RUnlock()
 	if updateAvailable {
 		// check if plugin has already been updated since the last invocation of `checkForUpdates`
@@ -101,8 +130,8 @@ func (s *PluginsService) HasUpdate(ctx context.Context, pluginID string) (string
 			return "", false
 		}
 
-		if canUpdate(plugin.Info.Version, updateVers) {
-			return updateVers, true
+		if s.canUpdate(ctx, plugin, update.availableVersion) {
+			return update.availableVersion, true
 		}
 	}
 
@@ -164,11 +193,15 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 		return fmt.Errorf("failed to unmarshal plugin repo, reading response from grafana.com: %w", err)
 	}
 
-	availableUpdates := map[string]string{}
+	availableUpdates := make(map[string]availableUpdate)
+
 	for _, gcomP := range gcomPlugins {
 		if localP, exists := localPlugins[gcomP.Slug]; exists {
-			if canUpdate(localP.Info.Version, gcomP.Version) {
-				availableUpdates[localP.ID] = gcomP.Version
+			if s.canUpdate(ctx, localP, gcomP.Version) {
+				availableUpdates[localP.ID] = availableUpdate{
+					localVersion:     localP.Info.Version,
+					availableVersion: gcomP.Version,
+				}
 			}
 		}
 	}
@@ -182,17 +215,20 @@ func (s *PluginsService) checkForUpdates(ctx context.Context) error {
 	return nil
 }
 
-func canUpdate(v1, v2 string) bool {
-	ver1, err1 := version.NewVersion(v1)
-	if err1 != nil {
-		return false
-	}
-	ver2, err2 := version.NewVersion(v2)
-	if err2 != nil {
+func (s *PluginsService) canUpdate(ctx context.Context, plugin pluginstore.Plugin, gcomVersion string) bool {
+	if !s.updateChecker.IsUpdatable(ctx, plugin) {
 		return false
 	}
 
-	return ver1.LessThan(ver2)
+	if plugin.Info.Version == gcomVersion {
+		return false
+	}
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagPluginsAutoUpdate) {
+		return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, s.updateStrategy == setting.PluginUpdateStrategyMinor)
+	}
+
+	return s.updateChecker.CanUpdate(plugin.ID, plugin.Info.Version, gcomVersion, false)
 }
 
 func (s *PluginsService) pluginIDsCSV(m map[string]pluginstore.Plugin) string {
@@ -214,4 +250,25 @@ func (s *PluginsService) pluginsEligibleForVersionCheck(ctx context.Context) map
 	}
 
 	return result
+}
+func (s *PluginsService) updateAll(ctx context.Context) {
+	ctxLogger := s.log.FromContext(ctx)
+
+	failedUpdates := make(map[string]availableUpdate)
+
+	for pluginID, availableUpdate := range s.availableUpdates {
+		compatOpts := plugins.NewAddOpts(s.grafanaVersion, runtime.GOOS, runtime.GOARCH, "")
+
+		ctxLogger.Info("Auto updating plugin", "pluginID", pluginID, "from", availableUpdate.localVersion, "to", availableUpdate.availableVersion)
+
+		err := s.pluginInstaller.Add(ctx, pluginID, availableUpdate.availableVersion, compatOpts)
+		if err != nil {
+			ctxLogger.Error("Failed to auto update plugin", "pluginID", pluginID, "from", availableUpdate.localVersion, "to", availableUpdate.availableVersion, "error", err)
+			failedUpdates[pluginID] = availableUpdate
+		}
+	}
+
+	s.mutex.Lock()
+	s.availableUpdates = failedUpdates
+	s.mutex.Unlock()
 }
