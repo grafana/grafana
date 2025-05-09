@@ -6,6 +6,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
@@ -95,7 +96,7 @@ func (r deleteEncryptedValue) Validate() error {
 /*************************************/
 type createDataKey struct {
 	sqltemplate.SQLTemplate
-	Row *SecretDataKey
+	Row *contracts.SecretDataKey
 }
 
 func (r createDataKey) Validate() error { return nil }

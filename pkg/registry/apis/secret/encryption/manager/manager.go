@@ -23,7 +23,6 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/cipher/service"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/encryption/kmsproviders"
 	"github.com/grafana/grafana/pkg/setting"
-	encryptionstorage "github.com/grafana/grafana/pkg/storage/secret/encryption"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -39,7 +38,7 @@ var (
 
 type EncryptionManager struct {
 	tracer     tracing.Tracer
-	store      encryptionstorage.DataKeyStorage
+	store      contracts.DataKeyStorage
 	enc        cipher.Cipher
 	cfg        *setting.Cfg
 	usageStats usagestats.Service
@@ -58,7 +57,7 @@ type EncryptionManager struct {
 // ProvideEncryptionManager returns an EncryptionManager that uses the OSS KMS providers, along with any additional third-party (e.g. Enterprise) KMS providers
 func ProvideEncryptionManager(
 	tracer tracing.Tracer,
-	store encryptionstorage.DataKeyStorage,
+	store contracts.DataKeyStorage,
 	cfg *setting.Cfg,
 	usageStats usagestats.Service,
 	thirdPartyKMS encryption.ProviderMap,
@@ -230,7 +229,7 @@ func (s *EncryptionManager) dataKeyByLabel(ctx context.Context, namespace, label
 	// 1. Get data key from database.
 	dataKey, err := s.store.GetCurrentDataKey(ctx, namespace, label)
 	if err != nil {
-		if errors.Is(err, encryptionstorage.ErrDataKeyNotFound) {
+		if errors.Is(err, contracts.ErrDataKeyNotFound) {
 			return "", nil, nil
 		}
 		return "", nil, err
@@ -277,7 +276,7 @@ func (s *EncryptionManager) newDataKey(ctx context.Context, namespace string, la
 	// 3. Store its encrypted value into the DB.
 	id := util.GenerateShortUID()
 
-	dbDataKey := encryptionstorage.SecretDataKey{
+	dbDataKey := contracts.SecretDataKey{
 		Active:        true,
 		UID:           id,
 		Namespace:     namespace,
@@ -481,7 +480,7 @@ func (s *EncryptionManager) Run(ctx context.Context) error {
 // Look at the comments inline for further details.
 // You can also take a look at the issue below for more context:
 // https://github.com/grafana/grafana-enterprise/issues/4252
-func (s *EncryptionManager) cacheDataKey(dataKey *encryptionstorage.SecretDataKey, decrypted []byte) {
+func (s *EncryptionManager) cacheDataKey(dataKey *contracts.SecretDataKey, decrypted []byte) {
 	// First, we cache the data key by id, because cache "by id" is
 	// only used by decrypt operations, so no risk of corrupting data.
 	entry := &dataKeyCacheEntry{
