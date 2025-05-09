@@ -3169,6 +3169,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
+  version: 0.0.0-use.local
+  resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
+  dependencies:
+    "@grafana/tsconfig": "npm:^2.0.0"
+    "@types/react": "npm:18.3.18"
+    i18next: "npm:^24.0.0"
+    i18next-browser-languagedetector: "npm:^8.0.0"
+    i18next-pseudo: "npm:^2.2.1"
+    react-i18next: "npm:^15.0.0"
+    rollup: "npm:^4.22.4"
+    typescript: "npm:5.7.3"
+  peerDependencies:
+    react: ">=18"
+  languageName: unknown
+  linkType: soft
+
 "@grafana/lezer-logql@npm:0.2.7":
   version: 0.2.7
   resolution: "@grafana/lezer-logql@npm:0.2.7"
@@ -17660,6 +17677,7 @@ __metadata:
     "@grafana/faro-web-tracing": "npm:^1.13.2"
     "@grafana/flamegraph": "workspace:*"
     "@grafana/google-sdk": "npm:0.1.2"
+    "@grafana/i18n": "workspace:*"
     "@grafana/lezer-logql": "npm:0.2.7"
     "@grafana/llm": "npm:0.13.2"
     "@grafana/monaco-logql": "npm:^0.0.8"
