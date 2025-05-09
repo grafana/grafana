@@ -112,6 +112,7 @@ export function getNotificationSettingsForDTO(
     return {
       receiver: contactPoints?.grafana?.selectedContactPoint,
       mute_time_intervals: contactPoints?.grafana?.muteTimeIntervals,
+      active_time_intervals: contactPoints?.grafana?.activeTimeIntervals,
       group_by: contactPoints?.grafana?.overrideGrouping ? contactPoints?.grafana?.groupBy : undefined,
       group_wait:
         contactPoints?.grafana?.overrideTimings && contactPoints?.grafana?.groupWaitValue
@@ -233,6 +234,7 @@ export function getContactPointsFromDTO(ga: GrafanaRuleDefinition): AlertManager
     ? {
         selectedContactPoint: ga.notification_settings.receiver,
         muteTimeIntervals: ga.notification_settings.mute_time_intervals ?? [],
+        activeTimeIntervals: ga.notification_settings.active_time_intervals ?? [],
         overrideGrouping:
           Array.isArray(ga.notification_settings.group_by) && ga.notification_settings.group_by.length > 0,
         overrideTimings: [

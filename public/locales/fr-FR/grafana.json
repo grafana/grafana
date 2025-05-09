@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "Auditer",
+      "title-custom-branding": "",
       "title-dashboard-presence-indicators": "Indicateurs de présence du tableau de bord",
       "title-dashboard-usage-stats-drawer": "Tiroir des statistiques d’utilisation du tableau de bord",
       "title-data-source-permissions": "Autorisations de la source de données",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "Authentification SAML",
       "title-settings-updates-at-runtime": "Mises à jour des paramètres au moment de l’exécution",
       "title-sort-dashboards-by-popularity-in-search": "Trier les tableaux de bord par popularité dans la recherche",
-      "title-team-sync": "Synchronisation d’équipe",
-      "title-white-labeling": "Marque blanche"
+      "title-team-sync": "Synchronisation d’équipe"
     },
     "feature-toggles": {
       "restart-pending": "Un redémarrage est en attente pour que votre instance Grafana applique les dernières modifications de basculement de fonctionnalité",
@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Ajouter plus"
     },
@@ -581,6 +584,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Ajouter un élément de correspondance",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Ajouter un horaire de mise en sourdine à la politique",
       "am-mute-timing-select-label-mute-timings": "Horaires de mise en sourdine",
       "aria-label-group-by": "Regrouper par",
@@ -617,6 +622,17 @@
       },
       "link-dashboard-and-panel": "Lier le tableau de bord et le panneau",
       "placeholder-value-input-default": "Saisir le contenu de l’annotation personnalisée..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1030,6 +1046,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "liste-de-règles-filtrées"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Sélectionnez un dossier pour stocker votre règle."
@@ -1451,29 +1494,21 @@
       "aria-label": "Plus",
       "button-text": "Plus"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Impossible de charger les horaires de mise en sourdine. Veuillez réessayer plus tard.",
-        "title": "Erreur lors du chargement des horaires de mise en sourdine"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Désactivé",
       "title-delete-mute-timing": "Supprimer l’horaire de mise en sourdine"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Sélectionnez des horaires de mise en sourdine pour définir quand ne pas envoyer de notifications pour cette règle d’alerte.",
       "am-mute-timing-select-label-mute-timings": "Horaires de mise en sourdine"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Un nom unique pour l’horaire de mise en sourdine",
-      "label-name": "",
-      "text-loading-mute-timing": "Chargement de l’horaire de mise en sourdine",
-      "title-no-matching-mute-timing-found": "Aucun horaire de mise en sourdine correspondant trouvé"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Ajouter un autre intervalle de temps",
-      "description": "Un intervalle de temps est une définition d’un moment dans le temps. Tous les champs sont des listes, et au moins un élément de la liste doit être satisfait pour correspondre au champ. Si un champ est laissé vide, n’importe quel moment correspondra au champ. Pour qu’un instant de temps corresponde à un intervalle de temps complet, tous les champs doivent correspondre. Un horaire de mise en sourdine peut contenir plusieurs intervalles de temps.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Les jours du mois, 1:31, d’un mois. Les valeurs négatives peuvent être utilisées pour représenter les jours qui commencent à la fin du mois",
       "description-months": "Les mois de l’année en chiffres ou en mois civil complet",
       "label-days-of-the-month": "Jours du mois",
@@ -1499,21 +1534,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Supprimer la plage temporelle"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Ajouter un horaire de mise en sourdine",
-      "description": "Saisissez des intervalles de temps spécifiques pour ne pas envoyer de notifications ou pour geler les notifications pendant des périodes de temps récurrentes.",
-      "save": "Enregistrer l'horaire de mise en sourdine",
-      "saving": "Enregistrement de l'horaire de mise en sourdine"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Horaires de mise en sourdine",
-      "placeholder-select-mute-timings": "Sélectionner les horaires de mise en sourdine..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Vous n’avez pas encore créé d’horaires de mise en sourdine",
-      "text-loading-mute-timings": "Chargement des horaires de mise en sourdine...",
-      "text-no-mute-timings-configured": "Aucune horaire de mise en sourdine configurée"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1555,8 +1575,8 @@
       "title-notification-policies-have-changed": "Les politiques de notification ont changé"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Horaires de mise en sourdine",
-      "label-notification-policies": "Politiques de notification"
+      "label-notification-policies": "Politiques de notification",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2392,6 +2412,32 @@
       "input": "Entrée",
       "stop-alerting-when": ""
     },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
+    },
     "timeseries-row": {
       "time-series-data": "Données chronologiques",
       "timestamp": "",
@@ -2582,16 +2628,109 @@
       "refer-documentation-configure-authentication": "Reportez-vous à la documentation sur la façon de configurer l’authentification"
     },
     "fields": {
+      "allow-assign-grafana-admin-description": "",
+      "allow-assign-grafana-admin-label": "",
+      "allow-sign-up-description": "",
+      "allow-sign-up-label": "",
+      "allowed-domains-description": "",
+      "allowed-domains-label": "",
       "allowed-groups-description": "Liste des groupes séparés par des virgules ou des espaces. L’utilisateur doit être membre d’au moins un groupe pour se connecter.",
       "allowed-groups-description-oauth": "",
+      "allowed-groups-label": "",
+      "allowed-groups-object-ids": "",
+      "allowed-organizations-description": "",
+      "allowed-organizations-label": "",
+      "allowed-organizations-placeholder": "",
       "api-url-description": "Le point de terminaison des informations utilisateur de votre fournisseur OAuth2. Les informations renvoyées par ce point de terminaison doivent être compatibles avec <2>OpenID UserInfo</2>.",
+      "api-url-required": "",
+      "auth-style-description": "",
+      "auth-style-label": "",
+      "auth-url-description": "",
+      "auth-url-required": "",
+      "auto-login-description": "",
+      "auto-login-label": "",
+      "client-authentication-description": "",
+      "client-authentication-label": "",
+      "client-authentication-none": "",
+      "client-id-description": "",
+      "client-secret-description": "",
+      "define-allowed-groups-label": "",
+      "define-allowed-teams-ids-label": "",
+      "display-name-description": "",
+      "display-name-label": "",
+      "email-attribute-name-description": "",
+      "email-attribute-name-label": "",
+      "email-attribute-path-description": "",
+      "email-attribute-path-label": "",
+      "federated-credential-audience-description": "",
+      "federated-credential-audience-label": "",
+      "force-use-graph-api-description": "",
+      "force-use-graph-api-label": "",
+      "groups-attribute-path-description": "",
+      "groups-attribute-path-label": "",
+      "hosted-domain-description": "",
+      "hosted-domain-label": "",
+      "id-token-attribute-name-description": "",
+      "id-token-attribute-name-label": "",
+      "login-attribute-path-description": "",
+      "login-attribute-path-label": "",
+      "managed-identity-client-id-description": "",
+      "managed-identity-client-id-label": "",
+      "name-attribute-path-description": "",
+      "name-attribute-path-label": "",
+      "org-mapping-description-azuread": "",
+      "org-mapping-description-generic": "",
+      "org-mapping-description-github": "",
+      "org-mapping-description-gitlab": "",
+      "org-mapping-description-google": "",
+      "organization-attribute-path-description": "",
+      "organization-attribute-path-label": "",
+      "organization-mapping-label": "",
+      "organization-mapping-placeholder": "",
+      "required": "",
+      "role-attribute-path-description": "",
+      "role-attribute-path-label": "",
+      "role-attribute-strict-description": "",
+      "role-attribute-strict-label": "",
+      "scopes-description": "",
+      "section-extra-security": "",
+      "section-general-settings": "",
+      "section-user-mapping": "",
+      "server-discovery-url-description": "",
+      "signout-redirect-url-description": "",
+      "signout-redirect-url-label": "",
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": "",
+      "team-ids-attribute-path-description": "",
+      "team-ids-attribute-path-label": "",
+      "team-ids-attribute-path-required": "",
       "team-ids-description": "Si défini, l’utilisateur doit être membre de l’une des équipes données pour se connecter.",
       "team-ids-description-oauth": "",
-      "team-ids-github": "Liste d’identifiants d’équipe sous forme de nombres entiers.",
+      "team-ids-github": "",
+      "team-ids-label": "",
+      "team-ids-numbers": "",
       "team-ids-other": "Liste des chaînes de caractères des identifiants d’équipe.",
-      "teams-url-description": "L’URL utilisée pour interroger les identifiants d’équipe. Si elle n’est pas définie, la valeur par défaut est /teams.",
+      "team-ids-placeholder": "",
+      "teams-url-description": "",
       "teams-url-description-oauth": "",
-      "use-pkce-description": "Si cette option est activée, Grafana utilisera la <2>clé de preuve pour l’échange de code (PKCE)</2> avec l’octroi de code d’autorisation OAuth2."
+      "teams-url-label": "",
+      "teams-url-required": "",
+      "tls-client-ca-description": "",
+      "tls-client-ca-label": "",
+      "tls-client-cert-description": "",
+      "tls-client-cert-label": "",
+      "tls-client-key-description": "",
+      "tls-client-key-label": "",
+      "tls-skip-verify-description": "",
+      "tls-skip-verify-label": "",
+      "token-url-description": "",
+      "token-url-required": "",
+      "use-pkce-description": "Si cette option est activée, Grafana utilisera la <2>clé de preuve pour l’échange de code (PKCE)</2> avec l’octroi de code d’autorisation OAuth2.",
+      "use-pkce-label": "",
+      "use-refresh-token-description": "",
+      "use-refresh-token-label": "",
+      "validate-hosted-domain-description": "",
+      "validate-hosted-domain-label": ""
     },
     "provider-card": {
       "text-badge-enabled": "",
@@ -2601,12 +2740,15 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Rétablir les valeurs par défaut"
       },
+      "disable": "",
+      "disabling": "",
       "discard": "Abandonner",
       "enabled-label-enabled": "",
       "label-enabled": "Activé",
       "reset-configuration": "Voulez-vous vraiment réinitialiser cette configuration ?",
       "reset-configuration-description": "Après avoir réinitialisé ces paramètres, Grafana utilisera la configuration du fournisseur à partir du système (fichier de configuration/variables d’environnement), le cas échéant.",
       "save": "",
+      "save-and-enable": "",
       "saving": "",
       "title-more-actions": "Plus d’actions",
       "title-reset": "Réinitialiser",
@@ -6089,8 +6231,8 @@
       "escape-newlines": "Correction des séquences de sauts de ligne et de tabulations incorrectement échappées dans les lignes du journal",
       "hide-timestamps": "Masquer les horodatages",
       "hide-unique-labels": "Masquer les étiquettes uniques",
-      "newest-first": "Les journaux les plus récents en premier",
-      "oldest-first": "Les journaux les plus anciens en premier",
+      "newest-first": "",
+      "oldest-first": "",
       "prettify-json": "Développer les journaux JSON",
       "remove-escaping": "Supprimer l’échappement",
       "scroll-bottom": "",

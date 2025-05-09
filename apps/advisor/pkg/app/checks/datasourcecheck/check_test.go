@@ -32,8 +32,8 @@ func runChecks(check *check) ([]advisor.CheckReportFailure, error) {
 			if err != nil {
 				return nil, err
 			}
-			if stepFailures != nil {
-				failures = append(failures, *stepFailures)
+			if len(stepFailures) > 0 {
+				failures = append(failures, stepFailures...)
 			}
 		}
 	}
@@ -260,7 +260,7 @@ type MockPluginRepo struct {
 	exists bool
 }
 
-func (m *MockPluginRepo) PluginInfo(context.Context, string) (*repo.PluginInfo, error) {
+func (m *MockPluginRepo) PluginInfo(context.Context, string, repo.CompatOpts) (*repo.PluginInfo, error) {
 	if !m.exists {
 		return nil, errors.New("plugin not found")
 	}
