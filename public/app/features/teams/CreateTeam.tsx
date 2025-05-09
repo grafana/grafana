@@ -2,6 +2,7 @@ import { JSX, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 import { NavModelItem } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { getBackendSrv, locationService } from '@grafana/runtime';
 import { Button, Field, Input, FieldSet } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -9,7 +10,6 @@ import { TeamRolePicker } from 'app/core/components/RolePicker/TeamRolePicker';
 import { updateTeamRoles } from 'app/core/components/RolePicker/api';
 import { useRoleOptions } from 'app/core/components/RolePicker/hooks';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, Role, TeamDTO } from 'app/types';
 
 const pageNav: NavModelItem = {
@@ -28,6 +28,7 @@ export const CreateTeam = (): JSX.Element => {
     register,
     formState: { errors },
   } = useForm<TeamDTO>();
+  const { t } = useTranslate();
   const canUpdateRoles =
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesAdd) &&
     contextSrv.hasPermission(AccessControlAction.ActionUserRolesRemove);

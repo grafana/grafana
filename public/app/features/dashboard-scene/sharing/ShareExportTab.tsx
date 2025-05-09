@@ -4,12 +4,13 @@ import { cloneDeep } from 'lodash';
 import { useAsync } from 'react-use';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase } from '@grafana/scenes';
 import { Dashboard } from '@grafana/schema/dist/esm/index.gen';
 import { Spec as DashboardV2Spec } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import { Button, ClipboardButton, CodeEditor, Field, Modal, Stack, Switch } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { ObjectMeta } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { isDashboardV2Spec } from 'app/features/dashboard/api/utils';

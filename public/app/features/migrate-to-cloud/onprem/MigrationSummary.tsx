@@ -1,5 +1,5 @@
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Box, Button, Switch, Space, Stack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { formatDate } from 'app/core/internationalization/dates';
 
 import { GetSessionApiResponse, GetSnapshotResponseDto } from '../api';
@@ -32,6 +32,7 @@ const DATE_FORMAT: Intl.DateTimeFormatOptions = {
 };
 
 export function MigrationSummary(props: MigrationSummaryProps) {
+  const { t } = useTranslate();
   const {
     session,
     snapshot,

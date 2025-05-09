@@ -1,7 +1,7 @@
 import { ReducerID, SelectableValue } from '@grafana/data';
 import { CalculateFieldMode, CalculateFieldTransformerOptions, CumulativeOptions } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, Select, StatsPicker } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -10,6 +10,7 @@ export const CumulativeOptionsEditor = (props: {
   names: string[];
   onChange: (options: CalculateFieldTransformerOptions) => void;
 }) => {
+  const { t } = useTranslate();
   const { names, onChange, options } = props;
   const { cumulative } = options;
   const selectOptions = names.map((v) => ({ label: v, value: v }));

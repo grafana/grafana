@@ -8,8 +8,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { histogramFieldInfo, HistogramTransformerInputs } from '@grafana/data/internal';
+import { useTranslate } from '@grafana/i18n';
 import { InlineField, InlineFieldRow, InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { SuggestionsInput } from '../suggestionsInput/SuggestionsInput';
@@ -70,6 +70,8 @@ export const HistogramTransformerEditor = ({
       combine: !options.combine,
     });
   }, [onChange, options]);
+
+  const { t } = useTranslate();
 
   const suggestions = getVariableSuggestions();
 

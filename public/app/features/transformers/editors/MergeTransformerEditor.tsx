@@ -6,8 +6,8 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { MergeTransformerOptions } from '@grafana/data/internal';
+import { Trans } from '@grafana/i18n';
 import { FieldValidationMessage } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

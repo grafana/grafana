@@ -1,9 +1,10 @@
 import { PureComponent } from 'react';
 
 import { dateTimeFormat } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction, SyncInfo, UserDTO } from 'app/types';
 
 import { TagBadge } from '../../core/components/TagFilter/TagBadge';

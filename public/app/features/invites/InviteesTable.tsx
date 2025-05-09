@@ -1,6 +1,6 @@
 import { PureComponent } from 'react';
 
-import { Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
 import { Invitee } from 'app/types';
 
 import InviteeRow from './InviteeRow';

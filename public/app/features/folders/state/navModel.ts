@@ -1,6 +1,6 @@
 import { NavModel, NavModelItem } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 import { getNavSubTitle } from 'app/core/utils/navBarItem-translations';
 import { AccessControlAction, FolderDTO, FolderParent } from 'app/types';
@@ -14,6 +14,8 @@ export const getPermissionsTabID = (folderUID: string) => `folder-permissions-${
 export const getSettingsTabID = (folderUID: string) => `folder-settings-${folderUID}`;
 
 export function buildNavModel(folder: FolderDTO | FolderParent, parentsArg?: FolderParent[]): NavModelItem {
+  const { t } = useTranslate();
+
   const parents = parentsArg ?? ('parents' in folder ? folder.parents : undefined);
 
   const model: NavModelItem = {
