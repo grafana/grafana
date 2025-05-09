@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/repo"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/provisionedplugins"
 	"github.com/stretchr/testify/assert"
@@ -163,7 +163,8 @@ func TestRun(t *testing.T) {
 			pluginPreinstall := &mockPluginPreinstall{pinned: tt.pluginPreinstalled}
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
 			provisionedPlugins := &mockProvisionedPlugins{provisioned: tt.pluginProvisioned}
-			check := New(pluginStore, pluginRepo, pluginPreinstall, managedPlugins, provisionedPlugins)
+			updateChecker := pluginchecker.ProvideService(managedPlugins, provisionedPlugins, pluginPreinstall)
+			check := New(pluginStore, pluginRepo, updateChecker, "12.0.0")
 
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
@@ -199,7 +200,7 @@ type mockPluginRepo struct {
 	pluginArchiveInfo map[string]*repo.PluginArchiveInfo
 }
 
-func (m *mockPluginRepo) PluginInfo(ctx context.Context, id string) (*repo.PluginInfo, error) {
+func (m *mockPluginRepo) PluginInfo(ctx context.Context, id string, compatOpts repo.CompatOpts) (*repo.PluginInfo, error) {
 	return m.pluginInfo[id], nil
 }
 
@@ -208,7 +209,7 @@ func (m *mockPluginRepo) GetPluginArchiveInfo(ctx context.Context, id, version s
 }
 
 type mockPluginPreinstall struct {
-	plugininstaller.Preinstall
+	pluginchecker.Preinstall
 	pinned []string
 }
 
