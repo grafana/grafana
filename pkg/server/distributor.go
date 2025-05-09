@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"hash/fnv"
 	"io"
@@ -171,10 +172,11 @@ func (ds *DistributorServer) handler(srv interface{}, serverStream grpc.ServerSt
 	for i := 0; i < 2; i++ {
 		select {
 		case s2cErr := <-s2cErrChan:
-			if s2cErr == io.EOF {
+			if errors.Is(s2cErr, io.EOF) {
 				// this is the happy case where the sender has encountered io.EOF, and won't be sending anymore./
 				// the clientStream>serverStream may continue pumping though.
-				clientStream.CloseSend()
+				// TODO handle err?
+				_ = clientStream.CloseSend()
 			} else {
 				// however, we may have gotten a receive error (stream disconnected, a read error etc) in which case we need
 				// to cancel the clientStream to the backend, let all of its goroutines be freed up by the CancelFunc and
@@ -188,7 +190,7 @@ func (ds *DistributorServer) handler(srv interface{}, serverStream grpc.ServerSt
 			// will be nil.
 			serverStream.SetTrailer(clientStream.Trailer())
 			// c2sErr will contain RPC error from client code. If not io.EOF return the RPC error as server stream error.
-			if c2sErr != io.EOF {
+			if errors.Is(c2sErr, io.EOF) {
 				return c2sErr
 			}
 			return nil
