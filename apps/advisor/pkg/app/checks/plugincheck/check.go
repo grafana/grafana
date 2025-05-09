@@ -8,6 +8,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/grafana/grafana-app-sdk/logging"
+
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
 	"github.com/grafana/grafana/pkg/plugins/repo"
@@ -260,10 +261,13 @@ func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
 
 func (s *updateStep) isProvisioned(ctx context.Context, pluginID string) bool {
 	if s.provisionedPlugins == nil {
-		var err error
-		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
+		pps, err := s.ProvisionedPlugins.ProvisionedPlugins(ctx)
 		if err != nil {
 			return false
+		}
+		s.provisionedPlugins = make([]string, 0, len(pps))
+		for _, p := range pps {
+			s.provisionedPlugins = append(s.provisionedPlugins, p.ID)
 		}
 	}
 	return slices.Contains(s.provisionedPlugins, pluginID)
@@ -281,10 +285,13 @@ func (s *deprecationStep) isManaged(ctx context.Context, pluginID string) bool {
 
 func (s *deprecationStep) isProvisioned(ctx context.Context, pluginID string) bool {
 	if s.provisionedPlugins == nil {
-		var err error
-		s.provisionedPlugins, err = s.ProvisionedPlugins.ProvisionedPlugins(ctx)
+		pps, err := s.ProvisionedPlugins.ProvisionedPlugins(ctx)
 		if err != nil {
 			return false
+		}
+		s.provisionedPlugins = make([]string, 0, len(pps))
+		for _, pp := range pps {
+			s.provisionedPlugins = append(s.provisionedPlugins, pp.ID)
 		}
 	}
 	return slices.Contains(s.provisionedPlugins, pluginID)

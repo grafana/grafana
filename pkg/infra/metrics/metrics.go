@@ -583,9 +583,9 @@ func init() {
 	// TODO: loading strategy?
 	grafanaPluginLoadInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_load_info",
-		Help:      "A metric with a constant '1' value labeled by pluginId, version, type and loading method",
+		Help:      "A metric with a constant '1' value labeled by pluginId, version, cloud provisioning method and loading method",
 		Namespace: ExporterName,
-	}, []string{"plugin_id", "version", "provisioned", "method"})
+	}, []string{"plugin_id", "version", "cloud_provisioning_method", "loading_method"})
 
 	StatsTotalDashboardVersions = prometheus.NewGauge(prometheus.GaugeOpts{
 		Name:      "stat_totals_dashboard_versions",
@@ -731,14 +731,8 @@ func SetPluginTargetInformation(pluginID, target string) {
 	grafanaPluginTargetInfoDesc.WithLabelValues(pluginID, target).Set(1)
 }
 
-func SetPluginLoadInformation(pluginID, version string, provisioned bool, method string) {
-	var provisionedStr string
-	if provisioned {
-		provisionedStr = "true"
-	} else {
-		provisionedStr = "false"
-	}
-	grafanaPluginLoadInfoDesc.WithLabelValues(pluginID, version, provisionedStr, method).Set(1)
+func SetPluginLoadInformation(pluginID, version, cloudProvisiningMethod, loadingMethod string) {
+	grafanaPluginLoadInfoDesc.WithLabelValues(pluginID, version, cloudProvisiningMethod, loadingMethod).Set(1)
 }
 
 func initMetricVars(reg prometheus.Registerer) {

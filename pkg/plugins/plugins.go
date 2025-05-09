@@ -67,8 +67,7 @@ type Plugin struct {
 
 	Translations map[string]string
 
-	// IsCloudProvisioned is true if the plugin is a Grafana Cloud provisioned plugin.
-	IsCloudProvisioned bool
+	CloudProvisioningMethod CloudProvisioningMethod
 }
 
 var (

@@ -148,6 +148,7 @@ type reportLoadingMetricsStep struct {
 
 func (s *reportLoadingMetricsStep) initialize(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.IsCorePlugin() {
+		// No metrics for core plugins
 		return p, nil
 	}
 	var method string
@@ -157,7 +158,7 @@ func (s *reportLoadingMetricsStep) initialize(_ context.Context, p *plugins.Plug
 	case plugins.ClassExternal:
 		method = "fs"
 	}
-	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, p.IsCloudProvisioned, method)
+	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, string(p.CloudProvisioningMethod), method)
 	return p, nil
 }
 

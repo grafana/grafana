@@ -455,3 +455,17 @@ type QueryCachingConfig struct {
 	Enabled bool  `json:"enabled"`
 	TTLMS   int64 `json:"TTLMs"`
 }
+
+// CloudProvisioningMethod is the method used to provision the plugin in Grafana Cloud.
+type CloudProvisioningMethod string
+
+const (
+	// CloudProvisioningMethodNone is used when the plugin is not provisioned in Grafana Cloud.
+	CloudProvisioningMethodNone CloudProvisioningMethod = "none"
+
+	// CloudProvisioningMethodURL is used when the plugin is provisioned from a URL.
+	CloudProvisioningMethodURL CloudProvisioningMethod = "url"
+
+	// CloudProvisioningMethodCatalog is used when the plugin is provisioned from the catalog.
+	CloudProvisioningMethodCatalog CloudProvisioningMethod = "catalog"
+)
