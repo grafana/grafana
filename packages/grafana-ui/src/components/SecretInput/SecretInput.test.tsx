@@ -13,7 +13,7 @@ describe('<SecretInput />', () => {
 
     // Should show an enabled input
     expect(input).toBeInTheDocument();
-    expect(input).not.toBeDisabled();
+    expect(input).toBeEnabled();
 
     // Should not show a "Reset" button
     expect(screen.queryByRole('button', { name: RESET_BUTTON_TEXT })).not.toBeInTheDocument();
@@ -30,7 +30,7 @@ describe('<SecretInput />', () => {
     expect(input).toHaveValue(CONFIGURED_TEXT);
 
     // Should show a reset button
-    expect(screen.queryByRole('button', { name: RESET_BUTTON_TEXT })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: RESET_BUTTON_TEXT })).toBeInTheDocument();
   });
 
   it('should be possible to reset a configured secret', async () => {
@@ -40,7 +40,7 @@ describe('<SecretInput />', () => {
 
     // Should show a reset button and a disabled input
     expect(screen.queryByPlaceholderText(PLACEHOLDER_TEXT)).toBeDisabled();
-    expect(screen.queryByRole('button', { name: RESET_BUTTON_TEXT })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: RESET_BUTTON_TEXT })).toBeInTheDocument();
 
     // Click on "Reset"
     await userEvent.click(screen.getByRole('button', { name: RESET_BUTTON_TEXT }));

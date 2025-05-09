@@ -30,7 +30,7 @@ describe('Input', () => {
     await userEvent.type(inputEl, 'abcde');
     // blur the field
     await userEvent.click(document.body);
-    await screen.findByText(TEST_ERROR_MESSAGE);
+    expect(await screen.findByText(TEST_ERROR_MESSAGE)).toBeInTheDocument();
   });
 
   it('should validate without error onBlur', async () => {
