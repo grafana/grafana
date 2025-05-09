@@ -1,8 +1,12 @@
-import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, TextLink } from '@grafana/ui';
+import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
 import { useRulesAccess } from '../../utils/accessControlHooks';
+import { GrafanaTheme2 } from '@grafana/data';
+import { css } from '@emotion/css';
+import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { createRelativeUrl } from '../../utils/url';
 
 const RecordingRulesButtons = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
@@ -129,3 +133,61 @@ export function GrafanaNoRulesCTA() {
     </EmptyState>
   );
 }
+
+export function CloudNoRulesCTA({ dataSourceName }: { dataSourceName: string }) {
+  const styles = useStyles2(getCloudNoRulesStyles);
+  const { canCreateCloudRules } = useRulesAccess();
+
+  const newAlertingRuleUrl = getNewDataSourceRuleUrl(dataSourceName, RuleFormType.cloudAlerting);
+  const newRecordingRuleUrl = getNewDataSourceRuleUrl(dataSourceName, RuleFormType.cloudRecording);
+
+  return (
+    <div className={styles.container}>
+      <Text variant="h5">
+        <Trans i18nKey="alerting.list-view.empty.ds-no-rules">This data source has no rules configured</Trans>
+      </Text>
+      {canCreateCloudRules && (
+        <Stack direction="row" alignItems="center" justifyContent="center">
+          <LinkButton variant="secondary" size="sm" icon="plus" href={newAlertingRuleUrl}>
+            <Trans i18nKey="alerting.list-view.empty.new-ds-managed-alerting-rule">
+              New data source-managed alerting rule
+            </Trans>
+          </LinkButton>
+          <LinkButton variant="secondary" size="sm" icon="plus" href={newRecordingRuleUrl}>
+            <Trans i18nKey="alerting.list-view.empty.new-ds-managed-recording-rule">
+              New data source-managed recording rule
+            </Trans>
+          </LinkButton>
+        </Stack>
+      )}
+    </div>
+  );
+}
+
+function getNewDataSourceRuleUrl(
+  dataSourceName: string,
+  type: RuleFormType.cloudAlerting | RuleFormType.cloudRecording
+) {
+  const urlRuleType = type === RuleFormType.cloudAlerting ? 'alerting' : 'recording';
+  const formDefaults: Partial<RuleFormValues> = {
+    dataSourceName,
+    editorSettings: {
+      simplifiedQueryEditor: false,
+      simplifiedNotificationEditor: false,
+    },
+    type,
+  };
+
+  return createRelativeUrl(`/alerting/new/${urlRuleType}`, { defaults: JSON.stringify(formDefaults) });
+}
+
+const getCloudNoRulesStyles = (theme: GrafanaTheme2) => ({
+  container: css({
+    display: 'flex',
+    gap: theme.spacing(1),
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: theme.spacing(2, 1),
+  }),
+});

@@ -7,6 +7,7 @@ import { GrafanaRuleGroupIdentifier, GrafanaRulesSourceSymbol } from 'app/types/
 import { GrafanaPromRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { FolderBulkActionsButton } from '../components/folder-bulk-actions/FolderBulkActionsButton';
+import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { GRAFANA_RULES_SOURCE_NAME } from '../utils/datasource';
 import { groups } from '../utils/navigation';
 
@@ -18,7 +19,6 @@ import { ListSection } from './components/ListSection';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { toIndividualRuleGroups, useGrafanaGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
-import { GrafanaNoRulesCTA } from '../components/rules/NoRulesCTA';
 
 const GRAFANA_GROUP_PAGE_SIZE = 40;
 
@@ -47,7 +47,7 @@ export function PaginatedGrafanaLoader() {
 
   const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
 
-  const hasNoRules = isEmpty(groupsByFolder);
+  const hasNoRules = isEmpty(groupsByFolder) && !isLoading;
 
   return (
     <DataSourceSection name="Grafana" application="grafana" uid={GrafanaRulesSourceSymbol} isLoading={isLoading}>

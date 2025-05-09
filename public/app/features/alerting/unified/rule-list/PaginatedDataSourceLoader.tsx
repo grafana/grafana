@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash';
+import { groupBy, isEmpty } from 'lodash';
 import { useEffect, useMemo, useRef } from 'react';
 
 import { Icon, Stack, Text } from '@grafana/ui';
@@ -14,6 +14,7 @@ import { ListSection } from './components/ListSection';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
+import { CloudNoRulesCTA } from '../components/rules/NoRulesCTA';
 
 const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 
@@ -47,6 +48,8 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
 
   const groupsByNamespace = useMemo(() => groupBy(groupsPage, 'file'), [groupsPage]);
 
+  const hasNoRules = isEmpty(groupsByNamespace) && !isLoading;
+
   return (
     <DataSourceSection name={name} application={application} uid={uid} isLoading={isLoading}>
       <Stack direction="column" gap={1}>
@@ -72,12 +75,15 @@ export function PaginatedDataSourceLoader({ rulesSourceIdentifier, application }
             ))}
           </ListSection>
         ))}
-        <LazyPagination
-          nextPage={nextPage}
-          previousPage={previousPage}
-          canMoveForward={canMoveForward}
-          canMoveBackward={canMoveBackward}
-        />
+        {hasNoRules && <CloudNoRulesCTA dataSourceName={name} />}
+        {!hasNoRules && (
+          <LazyPagination
+            nextPage={nextPage}
+            previousPage={previousPage}
+            canMoveForward={canMoveForward}
+            canMoveBackward={canMoveBackward}
+          />
+        )}
       </Stack>
     </DataSourceSection>
   );
