@@ -70,14 +70,14 @@ There are three key components that help you understand how your alerts behave d
 
 An alert instance can be in either of the following states:
 
-| State                    | Description                                                                                                                                                                                               |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Normal**               | The state of an alert when the condition (threshold) is not met.                                                                                                                                          |
-| **Pending**              | The state of an alert that has breached the threshold but for less than the [pending period](ref:pending-period).                                                                                         |
-| **Alerting**             | The state of an alert that has breached the threshold for longer than the [pending period](ref:pending-period).                                                                                           |
-| **Recovering**           | The state of an alert that has been configured to keep [firing for a duration after it is triggered](ref:keep-firing).                                                                                    |
-| **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurred evaluating the alert rule. <br/> You can customize the behaviour of the [Error state](#error-state), which by default triggers a different alert. |
-| **No Data<sup>\*</sup>** | The state of an alert whose query returns no data or all values are null. <br/> You can customize the behaviour of the [No Data state](#no-data-state), which by default triggers a different alert.      |
+| State                    | Description                                                                                                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Normal**               | The state of an alert when the condition (threshold) is not met.                                                                                                                                         |
+| **Pending**              | The state of an alert that has breached the threshold but for less than the [pending period](ref:pending-period).                                                                                        |
+| **Alerting**             | The state of an alert that has breached the threshold for longer than the [pending period](ref:pending-period).                                                                                          |
+| **Recovering**           | The state of an alert that has been configured to keep [firing for a duration after it is triggered](ref:keep-firing).                                                                                   |
+| **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurred evaluating the alert rule. <br/> You can customize the behavior of the [Error state](#error-state), which by default triggers a different alert. |
+| **No Data<sup>\*</sup>** | The state of an alert whose query returns no data or all values are null. <br/> You can customize the behavior of the [No Data state](#no-data-state), which by default triggers a different alert.      |
 
 If an alert rule changes (except for updates to annotations, the evaluation interval, or other internal fields), its alert instances reset to the `Normal` state. The alert instance state then updates accordingly during the next evaluation.
 
@@ -153,7 +153,7 @@ If the alert rule is configured to send notifications directly to a selected con
 
 These states are supported only for Grafana-managed alert rules.
 
-In [Configure no data and error handling](ref:no-data-and-error-handling), you can change the default behaviour when the evaluation returns no data or an error. You can set the alert instance state to `Alerting`, `Normal`, `Error`, or `Keep Last State`.
+In [Configure no data and error handling](ref:no-data-and-error-handling), you can change the default behavior when the evaluation returns no data or an error. You can set the alert instance state to `Alerting`, `Normal`, `Error`, or `Keep Last State`.
 
 {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error-v2.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
 
