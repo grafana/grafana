@@ -22,9 +22,14 @@ const createRule = ESLintUtils.RuleCreator(
   (name) => `https://github.com/grafana/grafana/blob/main/packages/grafana-eslint-rules/README.md#${name}`
 );
 
-/** @type {string[]} */
+/**
+ * JSX props to check for untranslated strings
+ */
 const propsToCheck = ['content', 'label', 'description', 'placeholder', 'aria-label', 'title', 'text', 'tooltip'];
 
+/**
+ * Object properties to check for untranslated strings
+ */
 const propertiesToCheck = [
   'label',
   'description',
@@ -49,10 +54,6 @@ const noUntranslatedStrings = createRule({
     });
 
     return {
-      // TODO:
-      // support for ignoring based on regex (e.g. {{ template }}, __foo__)
-      // ignore special values (e.g. `uid`)
-      // handle template literals
       Property(node) {
         const { key, value, parent } = node;
         const keyName =
