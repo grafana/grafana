@@ -14,13 +14,13 @@ type builderMetrics struct {
 func newBuilderMetrics(reg prometheus.Registerer) *builderMetrics {
 	metrics := &builderMetrics{
 		dualWriterTargetMode: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name:        "dual_writer_target_mode",
-			Help:        "Dual writer target mode",
+			Name:        "unified_storage_dual_writer_target_mode",
+			Help:        "Unified Storage dual writer target mode",
 			ConstLabels: prometheus.Labels{"component": "builder"},
 		}, []string{"resource", "group"}),
 		dualWriterCurrentMode: prometheus.NewGaugeVec(prometheus.GaugeOpts{
-			Name:        "dual_writer_current_mode",
-			Help:        "Dual writer current mode",
+			Name:        "unified_storage_dual_writer_current_mode",
+			Help:        "Unified storage dual writer current mode",
 			ConstLabels: prometheus.Labels{"component": "builder"},
 		}, []string{"resource", "group"}),
 	}
