@@ -245,6 +245,7 @@ export interface GrafanaNotificationSettings {
   group_interval?: string;
   repeat_interval?: string;
   mute_time_intervals?: string[];
+  active_time_intervals?: string[];
 }
 
 export interface GrafanaEditorSettings {
