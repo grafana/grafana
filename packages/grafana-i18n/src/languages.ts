@@ -1,27 +1,25 @@
-export const ENGLISH_US = 'en-US';
-export const FRENCH_FRANCE = 'fr-FR';
-export const SPANISH_SPAIN = 'es-ES';
-export const GERMAN_GERMANY = 'de-DE';
-export const BRAZILIAN_PORTUGUESE = 'pt-BR';
-export const CHINESE_SIMPLIFIED = 'zh-Hans';
-export const ITALIAN_ITALY = 'it-IT';
-export const JAPANESE_JAPAN = 'ja-JP';
-export const INDONESIAN_INDONESIA = 'id-ID';
-export const KOREAN_KOREA = 'ko-KR';
-export const RUSSIAN_RUSSIA = 'ru-RU';
-export const CZECH_CZECHIA = 'cs-CZ';
-export const DUTCH_NETHERLANDS = 'nl-NL';
-export const HUNGARIAN_HUNGARY = 'hu-HU';
-export const PORTUGUESE_PORTUGAL = 'pt-PT';
-export const POLISH_POLAND = 'pl-PL';
-export const SWEDISH_SWEDEN = 'sv-SE';
-export const TURKISH_TURKEY = 'tr-TR';
-export const CHINESE_TRADITIONAL = 'zh-Hant';
-
-/**
- * Default language.
- */
-export const DEFAULT_LANGUAGE = ENGLISH_US;
+import {
+  ENGLISH_US,
+  FRENCH_FRANCE,
+  SPANISH_SPAIN,
+  GERMAN_GERMANY,
+  CHINESE_SIMPLIFIED,
+  BRAZILIAN_PORTUGUESE,
+  CHINESE_TRADITIONAL,
+  ITALIAN_ITALY,
+  JAPANESE_JAPAN,
+  INDONESIAN_INDONESIA,
+  KOREAN_KOREA,
+  RUSSIAN_RUSSIA,
+  CZECH_CZECHIA,
+  DUTCH_NETHERLANDS,
+  HUNGARIAN_HUNGARY,
+  PORTUGUESE_PORTUGAL,
+  POLISH_POLAND,
+  SWEDISH_SWEDEN,
+  TURKISH_TURKEY,
+  PSEUDO_LOCALE,
+} from './constants';
 
 interface TranslationDefinition {
   code: string;
@@ -52,3 +50,7 @@ export const LANGUAGES: TranslationDefinition[] = [
   { code: SWEDISH_SWEDEN, name: 'Svenska' },
   { code: TURKISH_TURKEY, name: 'Türkçe' },
 ];
+
+if (process.env.NODE_ENV === 'development') {
+  LANGUAGES.push({ code: PSEUDO_LOCALE, name: 'Pseudo-locale' });
+}
