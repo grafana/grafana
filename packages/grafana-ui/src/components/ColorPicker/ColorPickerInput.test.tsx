@@ -27,7 +27,7 @@ describe('ColorPickerInput', () => {
     await userEvent.click(screen.getByRole('textbox'));
     expect(screen.getByTestId('color-popover')).toBeInTheDocument();
     await userEvent.click(screen.getAllByRole('slider')[0]);
-    expect(screen.queryByTestId('color-popover')).toBeInTheDocument();
+    expect(screen.getByTestId('color-popover')).toBeInTheDocument();
   });
 
   it('should pass correct color to onChange callback', async () => {
