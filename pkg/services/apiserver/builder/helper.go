@@ -361,12 +361,7 @@ func InstallAPIs(
 				return nil, err
 			}
 
-			metrics.recordDualWriterMode(
-				gr.Resource,
-				gr.Group,
-				int(mode),
-				int(currentMode),
-			)
+			metrics.recordDualWriterModes(gr.Resource, gr.Group, mode, currentMode)
 
 			switch currentMode {
 			case grafanarest.Mode0:
