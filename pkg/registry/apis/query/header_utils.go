@@ -25,6 +25,7 @@ var expectedHeaders = map[string]string{
 	strings.ToLower("X-Rule-Type"):              "X-Rule-Type",
 	strings.ToLower("X-Rule-Version"):           "X-Rule-Version",
 	strings.ToLower("X-Grafana-Org-Id"):         "X-Grafana-Org-Id",
+	strings.ToLower("User-Agent"):               "User-Agent",
 }
 
 func ExtractKnownHeaders(header http.Header) map[string]string {
