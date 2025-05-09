@@ -299,7 +299,7 @@ module.exports = [
     },
   },
   {
-    name: 'grafana/alerting-test-overrides',
+    name: 'grafana/tests',
     plugins: {
       'testing-library': testingLibraryPlugin,
       'jest-dom': jestDomPlugin,
@@ -307,12 +307,25 @@ module.exports = [
     files: [
       'public/app/features/alerting/**/__tests__/**/*.[jt]s?(x)',
       'public/app/features/alerting/**/?(*.)+(spec|test).[jt]s?(x)',
+      'packages/grafana-ui/**/*.{spec,test}.{ts,tsx}',
     ],
     rules: {
       ...testingLibraryPlugin.configs['flat/react'].rules,
       ...jestDomPlugin.configs['flat/recommended'].rules,
       'testing-library/prefer-user-event': 'error',
-      'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'reducerTester'] }],
+      'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'assert*', 'reducerTester'] }],
+    },
+  },
+  {
+    name: 'grafana/test-overrides-to-fix',
+    plugins: {
+      'testing-library': testingLibraryPlugin,
+    },
+    files: ['packages/grafana-ui/**/*.{spec,test}.{ts,tsx}'],
+    rules: {
+      // grafana-ui has lots of violations of direct node access and container methods, so disabling for now
+      'testing-library/no-node-access': 'off',
+      'testing-library/no-container': 'off',
     },
   },
   {

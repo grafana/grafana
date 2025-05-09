@@ -1,6 +1,6 @@
 import { i18n } from 'i18next';
 
-import { getI18next } from 'app/core/internationalization';
+import * as i18nModule from '@grafana/i18n/internal';
 
 import { server } from './loader/pluginLoader.mock';
 import { SystemJS } from './loader/systemjs';
@@ -25,7 +25,7 @@ describe('plugin_loader', () => {
 
     beforeEach(() => {
       addResourceBundleSpy = jest
-        .spyOn(getI18next(), 'addResourceBundle')
+        .spyOn(i18nModule, 'addResourceBundle')
         .mockImplementation(() => ({}) as unknown as i18n);
     });
 
@@ -54,14 +54,7 @@ describe('plugin_loader', () => {
       });
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
-      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
-        1,
-        'pt-BR',
-        'test-panel',
-        { testKey: 'valorDeTeste' },
-        undefined,
-        true
-      );
+      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(1, 'pt-BR', 'test-panel', { testKey: 'valorDeTeste' });
     });
 
     it('should add translations that match the fallback language if the resolved language is not in the translations', async () => {
@@ -78,14 +71,7 @@ describe('plugin_loader', () => {
       });
 
       expect(addResourceBundleSpy).toHaveBeenCalledTimes(1);
-      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(
-        1,
-        'en-US',
-        'test-panel',
-        { testKey: 'testValue' },
-        undefined,
-        true
-      );
+      expect(addResourceBundleSpy).toHaveBeenNthCalledWith(1, 'en-US', 'test-panel', { testKey: 'testValue' });
     });
 
     it('should warn if no translations are found', async () => {
