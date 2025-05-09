@@ -132,7 +132,7 @@ func (m *Manager) grafanaCompatiblePluginVersions(ctx context.Context, pluginID 
 	return v.Versions, nil
 }
 
-func (m *Manager) PluginInfo(ctx context.Context, pluginID string) (*PluginInfo, error) {
+func (m *Manager) PluginInfo(ctx context.Context, pluginID string, compatOpts CompatOpts) (*PluginInfo, error) {
 	u, err := url.Parse(m.client.grafanaComAPIURL)
 	if err != nil {
 		return nil, err
@@ -140,7 +140,7 @@ func (m *Manager) PluginInfo(ctx context.Context, pluginID string) (*PluginInfo,
 
 	u.Path = path.Join(u.Path, pluginID)
 
-	body, err := m.client.SendReq(ctx, u, CompatOpts{})
+	body, err := m.client.SendReq(ctx, u, compatOpts)
 	if err != nil {
 		return nil, err
 	}

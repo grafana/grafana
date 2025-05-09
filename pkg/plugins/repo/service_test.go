@@ -126,7 +126,7 @@ func TestPluginInfo(t *testing.T) {
 		BaseURL:       srv.URL,
 		Logger:        log.NewTestPrettyLogger(),
 	})
-	pi, err := m.PluginInfo(context.Background(), pluginID)
+	pi, err := m.PluginInfo(context.Background(), pluginID, CompatOpts{})
 	require.NoError(t, err)
 	require.Equal(t, 1, pi.ID)
 	require.Equal(t, pluginID, pi.Slug)
