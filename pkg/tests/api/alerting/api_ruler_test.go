@@ -4415,16 +4415,27 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 		t.Log(body)
 	})
 
-	t.Run("create should fail if mute timing does not exist", func(t *testing.T) {
-		var copyD testData
-		err = json.Unmarshal(testDataRaw, &copyD)
-		group := copyD.RuleGroup
-		ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
-		ns.MuteTimeIntervals = []string{"random-time-interval"}
+	t.Run("create should fail if time interval does not exist", func(t *testing.T) {
+		t.Run("mute time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.MuteTimeIntervals = []string{"random-time-interval"}
 
-		_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
-		require.Equalf(t, http.StatusBadRequest, status, body)
-		t.Log(body)
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
+		t.Run("active time interval", func(t *testing.T) {
+			var copyD testData
+			err = json.Unmarshal(testDataRaw, &copyD)
+			group := copyD.RuleGroup
+			ns := group.Rules[0].GrafanaManagedAlert.NotificationSettings
+			ns.ActiveTimeIntervals = []string{"random-time-interval"}
+
+			_, status, body := apiClient.PostRulesGroupWithStatus(t, folder, &group, false)
+			require.Equalf(t, http.StatusBadRequest, status, body)
+		})
 	})
 
 	t.Run("create should not fail if group_by is missing required labels but they should still be used", func(t *testing.T) {
@@ -4483,6 +4494,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, autogenRoute.GroupInterval)
 			assert.Nil(c, autogenRoute.RepeatInterval)
 			assert.Empty(c, autogenRoute.MuteTimeIntervals)
+			assert.Empty(c, autogenRoute.ActiveTimeIntervals)
 			assert.Empty(c, autogenRoute.GroupBy)
 			if !canContinue {
 				return
@@ -4511,6 +4523,7 @@ func TestIntegrationRuleNotificationSettings(t *testing.T) {
 			assert.Nil(c, receiverRoute.GroupInterval)
 			assert.Nil(c, receiverRoute.RepeatInterval)
 			assert.Empty(c, receiverRoute.MuteTimeIntervals)
+			assert.Empty(c, receiverRoute.ActiveTimeIntervals)
 			var groupBy []string
 			for _, name := range receiverRoute.GroupBy {
 				groupBy = append(groupBy, string(name))

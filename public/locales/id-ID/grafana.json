@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "Audit",
+      "title-custom-branding": "",
       "title-dashboard-presence-indicators": "Indikator presensi dasbor",
       "title-dashboard-usage-stats-drawer": "Panel statistik penggunaan dasbor",
       "title-data-source-permissions": "Izin sumber data",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "Autentikasi SAML",
       "title-settings-updates-at-runtime": "Pembaruan pengaturan saat runtime",
       "title-sort-dashboards-by-popularity-in-search": "Urutkan dasbor berdasarkan popularitas dalam pencarian",
-      "title-team-sync": "Sinkronisasi Tim",
-      "title-white-labeling": "Label putih"
+      "title-team-sync": "Sinkronisasi Tim"
     },
     "feature-toggles": {
       "restart-pending": "Restart menunggu instans Grafana Anda menerapkan perubahan tombol alih fitur terbaru",
@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Tambah lagi"
     },
@@ -577,6 +580,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Tambahkan pencocok",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Tambahkan pengaturan waktu senyap ke kebijakan",
       "am-mute-timing-select-label-mute-timings": "Pengaturan waktu pembisuan",
       "aria-label-group-by": "Kelompokkan berdasarkan",
@@ -613,6 +618,17 @@
       },
       "link-dashboard-and-panel": "Tautkan dasbor dan panel",
       "placeholder-value-input-default": "Masukkan konten anotasi kustom..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1024,6 +1040,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "filtered-rule-list"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Pilih folder untuk menyimpan aturan Anda."
@@ -1444,29 +1487,21 @@
       "aria-label": "Lebih banyak",
       "button-text": "Lebih banyak"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Tidak dapat memuat pengaturan waktu bisu. Coba lagi nanti.",
-        "title": "Kesalahan saat memuat pengaturan waktu bisu"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Dinonaktifkan",
       "title-delete-mute-timing": "Hapus pengaturan waktu pembisuan"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Pilih waktu senyap untuk menentukan kapan tidak mengirim pemberitahuan untuk aturan peringatan ini",
       "am-mute-timing-select-label-mute-timings": "Pengaturan waktu pembisuan"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Nama unik untuk pengaturan waktu pembisuan",
-      "label-name": "",
-      "text-loading-mute-timing": "Memuat pengaturan waktu pembisuan",
-      "title-no-matching-mute-timing-found": "Tidak ada pengaturan waktu pembisuan yang cocok yang ditemukan"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Tambahkan interval waktu lain",
-      "description": "Interval waktu adalah definisi untuk momen dalam waktu. Semua bidang adalah daftar, dan setidaknya satu elemen daftar harus dipenuhi untuk mencocokkan bidang. Jika bidang dibiarkan kosong, momen waktu apa pun akan cocok dengan bidang tersebut. Agar suatu waktu cocok dengan interval waktu lengkap, semua bidang harus cocok. Waktu yang dibisukan dapat berisi beberapa interval waktu.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Hari dalam sebulan, 1:31, dalam sebulan. Nilai negatif dapat digunakan untuk merepresentasikan hari yang dimulai pada akhir bulan",
       "description-months": "Bulan dalam setahun baik dalam numerik atau bulan kalender penuh",
       "label-days-of-the-month": "Hari dalam sebulan",
@@ -1492,21 +1527,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "JJ:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Hapus rentang waktu"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Tambahkan waktu bisu",
-      "description": "Masukkan interval waktu tertentu saat tidak mengirim pemberitahuan atau membekukan pemberitahuan untuk periode waktu berulang.",
-      "save": "Simpan waktu bisu",
-      "saving": "Menyimpan waktu bisu"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Pengaturan waktu pembisuan",
-      "placeholder-select-mute-timings": "Pilih pengaturan waktu pembisuan..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Anda belum membuat pengaturan waktu pembisuan",
-      "text-loading-mute-timings": "Memuat pengaturan waktu pembisuan...",
-      "text-no-mute-timings-configured": "Tidak ada pengaturan waktu pembisuan yang dikonfigurasi"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1548,8 +1568,8 @@
       "title-notification-policies-have-changed": "Kebijakan pemberitahuan telah berubah"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Pengaturan Waktu Pembisuan",
-      "label-notification-policies": "Kebijakan Pemberitahuan"
+      "label-notification-policies": "Kebijakan Pemberitahuan",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2379,6 +2399,32 @@
       "input": "Input",
       "stop-alerting-when": ""
     },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
+    },
     "timeseries-row": {
       "time-series-data": "Data deret waktu",
       "timestamp": "",
@@ -2569,16 +2615,109 @@
       "refer-documentation-configure-authentication": "Lihat dokumentasi tentang cara mengonfigurasi autentikasi"
     },
     "fields": {
+      "allow-assign-grafana-admin-description": "",
+      "allow-assign-grafana-admin-label": "",
+      "allow-sign-up-description": "",
+      "allow-sign-up-label": "",
+      "allowed-domains-description": "",
+      "allowed-domains-label": "",
       "allowed-groups-description": "Daftar grup yang dipisahkan koma atau spasi. Pengguna harus menjadi anggota dari setidaknya satu grup untuk masuk.",
       "allowed-groups-description-oauth": "",
+      "allowed-groups-label": "",
+      "allowed-groups-object-ids": "",
+      "allowed-organizations-description": "",
+      "allowed-organizations-label": "",
+      "allowed-organizations-placeholder": "",
       "api-url-description": "Endpoint informasi pengguna penyedia OAuth2 Anda. Informasi yang dikembalikan oleh endpoint ini harus kompatibel dengan <2>OpenID UserInfo</2>.",
+      "api-url-required": "",
+      "auth-style-description": "",
+      "auth-style-label": "",
+      "auth-url-description": "",
+      "auth-url-required": "",
+      "auto-login-description": "",
+      "auto-login-label": "",
+      "client-authentication-description": "",
+      "client-authentication-label": "",
+      "client-authentication-none": "",
+      "client-id-description": "",
+      "client-secret-description": "",
+      "define-allowed-groups-label": "",
+      "define-allowed-teams-ids-label": "",
+      "display-name-description": "",
+      "display-name-label": "",
+      "email-attribute-name-description": "",
+      "email-attribute-name-label": "",
+      "email-attribute-path-description": "",
+      "email-attribute-path-label": "",
+      "federated-credential-audience-description": "",
+      "federated-credential-audience-label": "",
+      "force-use-graph-api-description": "",
+      "force-use-graph-api-label": "",
+      "groups-attribute-path-description": "",
+      "groups-attribute-path-label": "",
+      "hosted-domain-description": "",
+      "hosted-domain-label": "",
+      "id-token-attribute-name-description": "",
+      "id-token-attribute-name-label": "",
+      "login-attribute-path-description": "",
+      "login-attribute-path-label": "",
+      "managed-identity-client-id-description": "",
+      "managed-identity-client-id-label": "",
+      "name-attribute-path-description": "",
+      "name-attribute-path-label": "",
+      "org-mapping-description-azuread": "",
+      "org-mapping-description-generic": "",
+      "org-mapping-description-github": "",
+      "org-mapping-description-gitlab": "",
+      "org-mapping-description-google": "",
+      "organization-attribute-path-description": "",
+      "organization-attribute-path-label": "",
+      "organization-mapping-label": "",
+      "organization-mapping-placeholder": "",
+      "required": "",
+      "role-attribute-path-description": "",
+      "role-attribute-path-label": "",
+      "role-attribute-strict-description": "",
+      "role-attribute-strict-label": "",
+      "scopes-description": "",
+      "section-extra-security": "",
+      "section-general-settings": "",
+      "section-user-mapping": "",
+      "server-discovery-url-description": "",
+      "signout-redirect-url-description": "",
+      "signout-redirect-url-label": "",
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": "",
+      "team-ids-attribute-path-description": "",
+      "team-ids-attribute-path-label": "",
+      "team-ids-attribute-path-required": "",
       "team-ids-description": "Jika diatur, pengguna harus menjadi anggota dari salah satu tim tertentu untuk masuk.",
       "team-ids-description-oauth": "",
-      "team-ids-github": "Daftar bilangan bulat ID Tim.",
+      "team-ids-github": "",
+      "team-ids-label": "",
+      "team-ids-numbers": "",
       "team-ids-other": "Daftar string ID Tim.",
-      "teams-url-description": "URL yang digunakan untuk kueri ID Tim. Jika tidak diatur, nilai defaultnya adalah /teams.",
+      "team-ids-placeholder": "",
+      "teams-url-description": "",
       "teams-url-description-oauth": "",
-      "use-pkce-description": "Jika diaktifkan, Grafana akan menggunakan <2>Proof Key for Code Exchange (PKCE)</2> dengan Pemberian Kode Otorisasi OAuth2."
+      "teams-url-label": "",
+      "teams-url-required": "",
+      "tls-client-ca-description": "",
+      "tls-client-ca-label": "",
+      "tls-client-cert-description": "",
+      "tls-client-cert-label": "",
+      "tls-client-key-description": "",
+      "tls-client-key-label": "",
+      "tls-skip-verify-description": "",
+      "tls-skip-verify-label": "",
+      "token-url-description": "",
+      "token-url-required": "",
+      "use-pkce-description": "Jika diaktifkan, Grafana akan menggunakan <2>Proof Key for Code Exchange (PKCE)</2> dengan Pemberian Kode Otorisasi OAuth2.",
+      "use-pkce-label": "",
+      "use-refresh-token-description": "",
+      "use-refresh-token-label": "",
+      "validate-hosted-domain-description": "",
+      "validate-hosted-domain-label": ""
     },
     "provider-card": {
       "text-badge-enabled": "",
@@ -2588,12 +2727,15 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Atur ulang ke nilai default"
       },
+      "disable": "",
+      "disabling": "",
       "discard": "Buang",
       "enabled-label-enabled": "",
       "label-enabled": "Diaktifkan",
       "reset-configuration": "Anda yakin ingin mengatur ulang konfigurasi ini?",
       "reset-configuration-description": "Setelah mengatur ulang pengaturan ini, Grafana akan menggunakan konfigurasi penyedia dari sistem (file konfigurasi/variabel lingkungan) jika ada.",
       "save": "",
+      "save-and-enable": "",
       "saving": "",
       "title-more-actions": "Tindakan lainnya",
       "title-reset": "Atur ulang",
@@ -6063,8 +6205,8 @@
       "escape-newlines": "Perbaiki escape sequence baris baru dan tab yang salah di baris log",
       "hide-timestamps": "Sembunyikan stempel waktu",
       "hide-unique-labels": "Sembunyikan label unik",
-      "newest-first": "Log terbaru lebih dulu",
-      "oldest-first": "Log terlama lebih dulu",
+      "newest-first": "",
+      "oldest-first": "",
       "prettify-json": "Perluas log JSON",
       "remove-escaping": "Hapus escape",
       "scroll-bottom": "",
