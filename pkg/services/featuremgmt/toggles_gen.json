@@ -1533,16 +1533,16 @@
     {
       "metadata": {
         "name": "individualCookiePreferences",
-        "resourceVersion": "1746651535573",
+        "resourceVersion": "1746800362427",
         "creationTimestamp": "2023-02-21T10:19:07Z",
         "annotations": {
-          "grafana.app/updatedTimestamp": "2025-05-07 20:58:55.573227 +0000 UTC"
+          "grafana.app/updatedTimestamp": "2025-05-09 14:19:22.427054 +0000 UTC"
         }
       },
       "spec": {
         "description": "Support overriding cookie preferences per user",
         "stage": "experimental",
-        "codeowner": "@grafana/grafana-frontend-platform"
+        "codeowner": "@grafana/grafana-backend-group"
       }
     },
     {
