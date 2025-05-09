@@ -24,9 +24,10 @@ type IndexProvider struct {
 }
 
 type IndexViewData struct {
-	CSPContent       string
-	CSPEnabled       bool
-	IsDevelopmentEnv bool
+	CSPContent           string
+	CSPReportOnlyContent string
+	CSPEnabled           bool
+	IsDevelopmentEnv     bool
 
 	Config  *setting.Cfg
 	License licensing.Licensing
@@ -69,8 +70,9 @@ func NewIndexProvider(cfg *setting.Cfg, license licensing.Licensing) (*IndexProv
 			Config:       cfg,
 			License:      license,
 
-			CSPEnabled: cfg.CSPEnabled,
-			CSPContent: cfg.CSPTemplate,
+			CSPEnabled:           cfg.CSPEnabled,
+			CSPContent:           cfg.CSPTemplate,
+			CSPReportOnlyContent: cfg.CSPReportOnlyTemplate,
 
 			IsDevelopmentEnv: cfg.Env == setting.Dev,
 		},
@@ -97,6 +99,9 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 	if data.CSPEnabled {
 		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
 		writer.Header().Set("Content-Security-Policy", data.CSPContent)
+
+		policy := middleware.ReplacePolicyVariables(p.data.CSPReportOnlyContent, p.data.AppSubUrl, data.Nonce)
+		writer.Header().Set("Content-Security-Policy-Report-Only", policy)
 	}
 
 	// TODO: moved to request handler to prevent stale assets during dev,
