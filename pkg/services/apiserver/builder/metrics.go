@@ -4,7 +4,6 @@ import (
 	"strconv"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promauto"
 )
 
 type builderMetrics struct {
@@ -12,8 +11,8 @@ type builderMetrics struct {
 }
 
 func newBuilderMetrics(reg prometheus.Registerer) *builderMetrics {
-	return &builderMetrics{
-		dualWriterMode: promauto.With(reg).NewCounterVec(
+	metrics := &builderMetrics{
+		dualWriterMode: prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Name: "dual_writer_mode",
 				Help: "Dual writer mode",
@@ -21,6 +20,8 @@ func newBuilderMetrics(reg prometheus.Registerer) *builderMetrics {
 			[]string{"resource", "group", "targetMode", "currentMode"},
 		),
 	}
+	reg.MustRegister(metrics.dualWriterMode)
+	return metrics
 }
 
 func (m *builderMetrics) recordDualWriterMode(resource, group string, targetMode, currentMode int) {
