@@ -14,7 +14,6 @@ import (
 	"github.com/grafana/authlib/types"
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana/pkg/infra/db"
-	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/setting"
@@ -33,11 +32,11 @@ func TestMain(m *testing.M) {
 }
 
 func TestIntegrationStorageServer(t *testing.T) {
-	if infraDB.IsTestDBSpanner() {
+	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}
 	unitest.RunStorageServerTest(t, func(ctx context.Context) resource.StorageBackend {
-		dbstore := infraDB.InitTestDB(t)
+		dbstore := db.InitTestDB(t)
 		eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 		require.NoError(t, err)
 		require.NotNil(t, eDB)
@@ -56,13 +55,13 @@ func TestIntegrationStorageServer(t *testing.T) {
 
 // TestStorageBackend is a test for the StorageBackend interface.
 func TestIntegrationSQLStorageBackend(t *testing.T) {
-	if infraDB.IsTestDBSpanner() {
+	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}
 
 	t.Run("IsHA (polling notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			dbstore := infraDB.InitTestDB(t)
+			dbstore := db.InitTestDB(t)
 			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 			require.NoError(t, err)
 			require.NotNil(t, eDB)
@@ -81,7 +80,7 @@ func TestIntegrationSQLStorageBackend(t *testing.T) {
 
 	t.Run("NotHA (in process notifier)", func(t *testing.T) {
 		unitest.RunStorageBackendTest(t, func(ctx context.Context) resource.StorageBackend {
-			dbstore := infraDB.InitTestDB(t)
+			dbstore := db.InitTestDB(t)
 			eDB, err := dbimpl.ProvideResourceDB(dbstore, setting.NewCfg(), nil)
 			require.NoError(t, err)
 			require.NotNil(t, eDB)
@@ -139,15 +138,15 @@ func TestIntegrationSearchAndStorage(t *testing.T) {
 }
 
 func TestClientServer(t *testing.T) {
-	if infraDB.IsTestDbSQLite() {
+	if db.IsTestDbSQLite() {
 		t.Skip("TODO: test blocking, skipping to unblock Enterprise until we fix this")
 	}
-	if infraDB.IsTestDBSpanner() {
+	if db.IsTestDBSpanner() {
 		t.Skip("skipping integration test")
 	}
 
 	ctx := testutil.NewTestContext(t, time.Now().Add(5*time.Second))
-	dbstore := infraDB.InitTestDB(t)
+	dbstore := db.InitTestDB(t)
 
 	cfg := setting.NewCfg()
 	cfg.GRPCServer.Address = "localhost:0" // get a free address

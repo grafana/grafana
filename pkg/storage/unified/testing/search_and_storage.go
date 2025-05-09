@@ -204,7 +204,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		require.NotNil(t, searchResp)
 		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(3), searchResp.TotalHits)
-
 	})
 
 	t.Run("Search with tags", func(t *testing.T) {
@@ -223,7 +222,6 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		require.NotNil(t, searchResp)
 		require.Nil(t, searchResp.Error)
 		require.Equal(t, int64(1), searchResp.TotalHits)
-
 	})
 
 	t.Run("Search with specific tag", func(t *testing.T) {
