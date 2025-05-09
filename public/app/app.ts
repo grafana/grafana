@@ -285,7 +285,6 @@ function addExtensionReducers() {
 
 function initExtensions() {
   if (extensionsExports.length > 0) {
-    console.log('Initializing extension', extensionsExports);
     extensionsExports[0].init();
   }
 }
