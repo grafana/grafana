@@ -1,20 +1,23 @@
 import { ChangeEvent, FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
-import { IntervalVariable } from '@grafana/scenes';
+import { IntervalVariable, SceneVariable } from '@grafana/scenes';
 import {
   getIntervalsFromQueryString,
   getIntervalsQueryFromNewIntervalModel,
 } from 'app/features/dashboard-scene/utils/utils';
 
 import { IntervalVariableForm } from '../components/IntervalVariableForm';
+import { noop } from 'lodash';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 interface IntervalVariableEditorProps {
   variable: IntervalVariable;
   onRunQuery: () => void;
+  inline?: boolean;
 }
 
-export function IntervalVariableEditor({ variable, onRunQuery }: IntervalVariableEditorProps) {
+export function IntervalVariableEditor({ variable, onRunQuery, inline }: IntervalVariableEditorProps) {
   const { intervals, autoStepCount, autoEnabled, autoMinInterval, value } = variable.useState();
 
   //transform intervals array into string
@@ -55,6 +58,20 @@ export function IntervalVariableEditor({ variable, onRunQuery }: IntervalVariabl
       onAutoEnabledChange={onAutoEnabledChange}
       onAutoMinIntervalChanged={onAutoMinIntervalChanged}
       autoMinInterval={autoMinInterval}
+      inline={inline}
     />
   );
+}
+
+export function getIntervalVariableOptions(variable: SceneVariable): OptionsPaneItemDescriptor[] {
+  if (!(variable instanceof IntervalVariable)) {
+    console.warn('getIntervalVariableOptions: variable is not an IntervalVariable');
+    return [];
+  }
+
+  return [
+    new OptionsPaneItemDescriptor({
+      render: () => <IntervalVariableEditor variable={variable} onRunQuery={noop} inline={true}/>,
+    }),
+  ];
 }
