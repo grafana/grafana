@@ -56,3 +56,37 @@ func provider(t *testing.T, conf []byte) *OpenFeatureService {
 	require.NoError(t, err)
 	return p
 }
+
+func Test_CompareStaticProviderWithFeatureManager(t *testing.T) {
+	cfg := setting.NewCfg()
+	sec, err := cfg.Raw.NewSection("feature_toggles")
+	require.NoError(t, err)
+	_, err = sec.NewKey("ABCD", "true")
+	require.NoError(t, err)
+
+	p, err := ProvideOpenFeatureService(cfg)
+	require.NoError(t, err)
+
+	_, ok := p.provider.(*inMemoryBulkProvider)
+	if !ok {
+		t.Fatalf("expected inMemoryBulkProvider, got %T", p.provider)
+	}
+
+	ctx := openfeature.WithTransactionContext(context.Background(), openfeature.NewEvaluationContext("grafana", nil))
+	allFlags, err := p.EvalAllFlagsWithStaticProvider(ctx)
+	require.NoError(t, err)
+
+	openFeatureEnabledFlags := map[string]bool{}
+	for _, flag := range allFlags.Flags {
+		if flag.Value {
+			openFeatureEnabledFlags[flag.Key] = true
+		}
+	}
+
+	mgr, err := ProvideManagerService(cfg)
+	require.NoError(t, err)
+
+	// compare enabled feature flags match between OpenFeature static provider and Feature Manager
+	enabledFeatureManager := mgr.GetEnabled(ctx)
+	assert.Equal(t, openFeatureEnabledFlags, enabledFeatureManager)
+}

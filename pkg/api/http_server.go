@@ -201,6 +201,7 @@ type HTTPServer struct {
 	kvStore                      kvstore.KVStore
 	pluginsCDNService            *pluginscdn.Service
 	managedPluginsService        managedplugins.Manager
+	openFeature                  *featuremgmt.OpenFeatureService
 
 	userService          user.Service
 	tempUserService      tempUser.Service
@@ -271,7 +272,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 	annotationRepo annotations.Repository, tagService tag.Service, searchv2HTTPService searchV2.SearchHTTPService, oauthTokenService oauthtoken.OAuthTokenService,
 	statsService stats.Service, authnService authn.Service, pluginsCDNService *pluginscdn.Service, promGatherer prometheus.Gatherer,
 	starApi *starApi.API, promRegister prometheus.Registerer, clientConfigProvider grafanaapiserver.DirectRestConfigProvider, anonService anonymous.Service,
-	userVerifier user.Verifier, pluginPreinstall plugininstaller.Preinstall,
+	userVerifier user.Verifier, pluginPreinstall plugininstaller.Preinstall, openFeature *featuremgmt.OpenFeatureService,
 ) (*HTTPServer, error) {
 	web.Env = cfg.Env
 	m := web.New()
@@ -376,6 +377,7 @@ func ProvideHTTPServer(opts ServerOptions, cfg *setting.Cfg, routeRegister routi
 		namespacer:                   request.GetNamespaceMapper(cfg),
 		anonService:                  anonService,
 		userVerifier:                 userVerifier,
+		openFeature:                  openFeature,
 	}
 	if hs.Listener != nil {
 		hs.log.Debug("Using provided listener")
