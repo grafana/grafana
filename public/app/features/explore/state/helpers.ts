@@ -1,3 +1,4 @@
+/* eslint-disable @grafana/no-untranslated-strings */
 import { TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
 import { defaultTimeZone } from '@grafana/schema';
 

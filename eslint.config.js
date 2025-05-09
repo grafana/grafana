@@ -300,7 +300,7 @@ module.exports = [
       '**/*.story.tsx',
       '**/*.{test,spec}.{ts,tsx}',
       '**/{tests,__mocks__,__tests__,fixtures}/**',
-      '**/test-utils.{ts,tsx}',
+      '**/{test-utils,testHelpers}.{ts,tsx}',
       '**/mocks.{ts,tsx}',
       'public/test/**',
       '**/{spec,mocks}/**/*.{ts,tsx}',
