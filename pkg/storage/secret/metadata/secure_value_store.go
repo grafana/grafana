@@ -128,14 +128,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 			return fmt.Errorf("reading secure value: %w", err)
 		}
 
-		// From this point on, we should not have a need to read value.
-		newSecureValue.Spec.Value = ""
-
-		// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
-		// Temporarily mark succeeded here since the value is already stored in the keeper.
-		newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
-		newSecureValue.Status.Message = ""
-
 		// TODO: Confirm the ExternalID should come from the read model.
 		var updateErr error
 		newRow, updateErr = toUpdateRow(&read, newSecureValue, actorUID, read.ExternalID)
@@ -312,12 +304,12 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	return nil
 }
 
-func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
 	req := updateStatusSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
-		Phase:       string(secretv0alpha1.SecureValuePhaseSucceeded),
+		Phase:       string(status.Phase),
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueUpdateStatus, req)
