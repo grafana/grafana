@@ -173,7 +173,7 @@ If an alert instance becomes stale, you’ll find in the [alert history](ref:ale
 
 ###
 
-### Why doesn’t MissingSeries match No Data behaviour?
+### Why doesn’t MissingSeries match No Data behavior?
 
 In dynamic environments — autoscaling groups, ephemeral pods, spot instances — series naturally come and go. **MissingSeries** normally signals infrastructure or deployment changes.
 

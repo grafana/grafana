@@ -206,6 +206,8 @@ type Cfg struct {
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
 
+	PluginUpdateStrategy string
+
 	// Panels
 	DisableSanitizeHtml bool
 
