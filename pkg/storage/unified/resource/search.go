@@ -21,6 +21,8 @@ import (
 	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 )
 
+const maxBatchSize = 1000
+
 type NamespacedResource struct {
 	Namespace string
 	Group     string
@@ -32,15 +34,28 @@ func (s *NamespacedResource) Valid() bool {
 	return s.Namespace != "" && s.Group != "" && s.Resource != ""
 }
 
+type IndexAction int
+
+const (
+	ActionIndex IndexAction = iota
+	ActionDelete
+)
+
+type BulkIndexItem struct {
+	Action IndexAction
+	Key    *ResourceKey       // Only used for delete actions
+	Doc    *IndexableDocument // Only used for index actions
+}
+
+type BulkIndexRequest struct {
+	Items           []*BulkIndexItem
+	ResourceVersion int64
+}
+
 type ResourceIndex interface {
-	// Add a document to the index.  Note it may not be searchable until after flush is called
-	Write(doc *IndexableDocument) error
-
-	// Mark a resource as deleted.  Note it may not be searchable until after flush is called
-	Delete(key *ResourceKey) error
-
-	// Make sure any changes to the index are flushed and available in the next search/origin calls
-	Flush() error
+	// BulkIndex allows for multiple index actions to be performed in a single call.
+	// The order of the items is guaranteed to be the same as the input
+	BulkIndex(req *BulkIndexRequest) error
 
 	// Search within a namespaced resource
 	// When working with federated queries, the additional indexes will be passed in explicitly
@@ -96,6 +111,14 @@ type searchSupport struct {
 	builders     *builderCache
 	initWorkers  int
 	initMinSize  int
+
+	// Index queue processors
+	indexQueueProcessorsMutex sync.Mutex
+	indexQueueProcessors      map[string]*indexQueueProcessor
+	indexEventsChan           chan *IndexEvent
+
+	// testing
+	clientIndexEventsChan chan *IndexEvent
 }
 
 var (
@@ -117,14 +140,17 @@ func newSearchSupport(opts SearchOptions, storage StorageBackend, access types.A
 	}
 
 	support = &searchSupport{
-		access:       access,
-		tracer:       tracer,
-		storage:      storage,
-		search:       opts.Backend,
-		log:          slog.Default().With("logger", "resource-search"),
-		initWorkers:  opts.WorkerThreads,
-		initMinSize:  opts.InitMinCount,
-		indexMetrics: indexMetrics,
+		access:                access,
+		tracer:                tracer,
+		storage:               storage,
+		search:                opts.Backend,
+		log:                   slog.Default().With("logger", "resource-search"),
+		initWorkers:           opts.WorkerThreads,
+		initMinSize:           opts.InitMinCount,
+		indexMetrics:          indexMetrics,
+		clientIndexEventsChan: opts.IndexEventsChan,
+		indexEventsChan:       make(chan *IndexEvent),
+		indexQueueProcessors:  make(map[string]*indexQueueProcessor),
 	}
 
 	info, err := opts.Resources.GetDocumentBuilders()
@@ -394,9 +420,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 				continue
 			}
 
-			s.handleEvent(watchctx, v)
+			s.dispatchEvent(watchctx, v)
 		}
 	}()
+
+	go s.monitorIndexEvents(ctx)
 
 	end := time.Now().Unix()
 	s.log.Info("search index initialized", "duration_secs", end-start, "total_docs", s.search.TotalDocs())
@@ -407,13 +435,11 @@ func (s *searchSupport) init(ctx context.Context) error {
 	return nil
 }
 
-// Async event
-func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
-	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"HandleEvent")
-	if !slices.Contains([]WatchEvent_Type{WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED}, evt.Type) {
-		s.log.Info("ignoring watch event", "type", evt.Type)
-		return
-	}
+// Async event dispatching
+// This is called from the watch event loop
+// It will dispatch the event to the appropriate index queue processor
+func (s *searchSupport) dispatchEvent(ctx context.Context, evt *WrittenEvent) {
+	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"dispatchEvent")
 	defer span.End()
 	span.SetAttributes(
 		attribute.String("event_type", evt.Type.String()),
@@ -423,69 +449,60 @@ func (s *searchSupport) handleEvent(ctx context.Context, evt *WrittenEvent) {
 		attribute.String("name", evt.Key.Name),
 	)
 
+	switch evt.Type {
+	case WatchEvent_ADDED, WatchEvent_MODIFIED, WatchEvent_DELETED: // OK
+	default:
+		s.log.Info("ignoring watch event", "type", evt.Type)
+		span.AddEvent("ignoring watch event", trace.WithAttributes(attribute.String("type", evt.Type.String())))
+	}
+
 	nsr := NamespacedResource{
 		Namespace: evt.Key.Namespace,
 		Group:     evt.Key.Group,
 		Resource:  evt.Key.Resource,
 	}
-
 	index, err := s.getOrCreateIndex(ctx, nsr)
 	if err != nil {
 		s.log.Warn("error getting index for watch event", "error", err)
+		span.RecordError(err)
 		return
 	}
-
-	builder, err := s.builders.get(ctx, nsr)
+	// Get or create index queue processor for this index
+	indexQueueProcessor, err := s.getOrCreateIndexQueueProcessor(index, nsr)
 	if err != nil {
-		s.log.Warn("error getting builder for watch event", "error", err)
+		s.log.Error("error getting index queue processor for watch event", "error", err)
+		span.RecordError(err)
 		return
 	}
+	indexQueueProcessor.Add(evt)
+}
 
-	_, buildDocSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"BuildDocument")
-	doc, err := builder.BuildDocument(ctx, evt.Key, evt.ResourceVersion, evt.Value)
-	if err != nil {
-		s.log.Warn("error building document watch event", "error", err)
-		return
-	}
-	buildDocSpan.End()
-
-	switch evt.Type {
-	case WatchEvent_ADDED, WatchEvent_MODIFIED:
-		_, writeSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"WriteDocument")
-		err = index.Write(doc)
-		writeSpan.End()
-		if err != nil {
-			s.log.Warn("error writing document watch event", "error", err)
+func (s *searchSupport) monitorIndexEvents(ctx context.Context) {
+	var evt *IndexEvent
+	for {
+		select {
+		case <-ctx.Done():
 			return
+		case evt = <-s.indexEventsChan:
 		}
-		if evt.Type == WatchEvent_ADDED && s.indexMetrics != nil {
-			s.indexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Inc()
+		if evt.Err != nil {
+			s.log.Error("error indexing watch event", "error", evt.Err)
+			continue
 		}
-	case WatchEvent_DELETED:
-		_, deleteSpan := s.tracer.Start(ctx, tracingPrexfixSearch+"DeleteDocument")
-		err = index.Delete(evt.Key)
-		deleteSpan.End()
-		if err != nil {
-			s.log.Warn("error deleting document watch event", "error", err)
-			return
+		_, span := s.tracer.Start(ctx, tracingPrexfixSearch+"monitorIndexEvents")
+		defer span.End()
+		// record latency from when event was created to when it was indexed
+		span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", evt.Latency.Seconds())))
+		s.log.Debug("indexed new object", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
+		if evt.Latency.Seconds() > 1 {
+			s.log.Warn("high index latency object details", "resource", evt.WrittenEvent.Key.Resource, "latency_seconds", evt.Latency.Seconds(), "name", evt.WrittenEvent.Key.Name, "namespace", evt.WrittenEvent.Key.Namespace, "rv", evt.WrittenEvent.ResourceVersion)
 		}
 		if s.indexMetrics != nil {
-			s.indexMetrics.IndexedKinds.WithLabelValues(evt.Key.Resource).Dec()
+			s.indexMetrics.IndexLatency.WithLabelValues(evt.WrittenEvent.Key.Resource).Observe(evt.Latency.Seconds())
 		}
-	default:
-		// do nothing
-		s.log.Warn("unknown watch event", "type", evt.Type)
-	}
-
-	// record latency from when event was created to when it was indexed
-	latencySeconds := float64(time.Now().UnixMicro()-evt.ResourceVersion) / 1e6
-	span.AddEvent("index latency", trace.WithAttributes(attribute.Float64("latency_seconds", latencySeconds)))
-	s.log.Debug("indexed new object", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
-	if latencySeconds > 1 {
-		s.log.Warn("high index latency object details", "resource", evt.Key.Resource, "latency_seconds", latencySeconds, "name", evt.Key.Name, "namespace", evt.Key.Namespace, "rv", evt.ResourceVersion)
-	}
-	if s.indexMetrics != nil {
-		s.indexMetrics.IndexLatency.WithLabelValues(evt.Key.Resource).Observe(latencySeconds)
+		if s.clientIndexEventsChan != nil {
+			s.clientIndexEventsChan <- evt
+		}
 	}
 }
 
@@ -534,6 +551,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		Resource:  nsr.Resource,
 		Namespace: nsr.Namespace,
 	}
+
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &ListRequest{
 			Limit: 1000000000000, // big number
@@ -541,13 +559,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				Key: key,
 			},
 		}, func(iter ListIterator) error {
+			// Collect all documents in a single bulk request
+			items := make([]*BulkIndexItem, 0)
+
 			for iter.Next() {
 				if err = iter.Error(); err != nil {
 					return err
 				}
 
 				// Update the key name
-				// Or should we read it from the body?
 				key.Name = iter.Name()
 
 				// Convert it to an indexable document
@@ -557,8 +577,18 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 					continue
 				}
 
-				// And finally write it to the index
-				if err = index.Write(doc); err != nil {
+				// Add to bulk items
+				items = append(items, &BulkIndexItem{
+					Action: ActionIndex,
+					Doc:    doc,
+				})
+			}
+
+			// Perform single bulk index operation
+			if len(items) > 0 {
+				if err = index.BulkIndex(&BulkIndexRequest{
+					Items: items,
+				}); err != nil {
 					return err
 				}
 			}
@@ -578,10 +608,6 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 	}
 	if s.indexMetrics != nil {
 		s.indexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
-	}
-
-	if err == nil {
-		err = index.Flush()
 	}
 
 	// rv is the last RV we read.  when watching, we must add all events since that time
@@ -702,4 +728,24 @@ func AsResourceKey(ns string, t string) (*ResourceKey, error) {
 	}
 
 	return nil, fmt.Errorf("unknown resource type")
+}
+
+// getOrCreateIndexQueueProcessor returns an IndexQueueProcessor for the given index
+func (s *searchSupport) getOrCreateIndexQueueProcessor(index ResourceIndex, nsr NamespacedResource) (*indexQueueProcessor, error) {
+	s.indexQueueProcessorsMutex.Lock()
+	defer s.indexQueueProcessorsMutex.Unlock()
+
+	key := fmt.Sprintf("%s/%s/%s", nsr.Namespace, nsr.Group, nsr.Resource)
+	if indexQueueProcessor, ok := s.indexQueueProcessors[key]; ok {
+		return indexQueueProcessor, nil
+	}
+
+	builder, err := s.builders.get(context.Background(), nsr)
+	if err != nil {
+		s.log.Error("error getting document builder", "error", err)
+		return nil, err
+	}
+	indexQueueProcessor := newIndexQueueProcessor(index, nsr, maxBatchSize, builder, s.indexEventsChan)
+	s.indexQueueProcessors[key] = indexQueueProcessor
+	return indexQueueProcessor, nil
 }
