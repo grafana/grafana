@@ -138,14 +138,22 @@ func wrapContext(ctx context.Context) (context.Context, error) {
 		return ctx, err
 	}
 
+	var namespace string
+	if md, ok := metadata.FromOutgoingContext(ctx); ok {
+		// TODO use const instead of "namespace"
+		if ns := md.Get("namespace"); len(ns) > 0 {
+			namespace = ns[0]
+		}
+	}
+
 	// set grpc metadata into the context to pass to the grpc server
-	return metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user)), nil
+	return metadata.NewOutgoingContext(ctx, encodeIdentityInMetadata(user, namespace)), nil
 }
 
-func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
+func encodeIdentityInMetadata(user identity.Requester, namespace string) metadata.MD {
 	id, _ := user.GetInternalID()
 
-	logger.Debug("encodeIdentityInMetadata", "user.id", user.GetID(), "user.Login", user.GetLogin(), "user.Name", user.GetName())
+	logger.Info("encodeIdentityInMetadata", "user.id", user.GetID(), "user.Login", user.GetLogin(), "user.Name", user.GetName(), "namespace", user.GetNamespace())
 
 	return metadata.Pairs(
 		// This should be everything needed to recreate the user
@@ -157,6 +165,9 @@ func encodeIdentityInMetadata(user identity.Requester) metadata.MD {
 		mdOrgID, strconv.FormatInt(user.GetOrgID(), 10),
 		mdOrgRole, string(user.GetOrgRole()),
 		mdLogin, user.GetLogin(),
+
+		// TODO check if there's a better way
+		"namespace", namespace,
 
 		// TODO, Remove after this is deployed to unified storage
 		"grafana-userid", strconv.FormatInt(id, 10),

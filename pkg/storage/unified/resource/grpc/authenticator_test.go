@@ -22,7 +22,7 @@ func TestBasicEncodeDecode(t *testing.T) {
 
 	auth := &Authenticator{Tracer: noop.NewTracerProvider().Tracer("")}
 
-	md := encodeIdentityInMetadata(before)
+	md := encodeIdentityInMetadata(before, "")
 	after, err := auth.decodeMetadata(md)
 	require.NoError(t, err)
 	require.Equal(t, before.GetID(), after.GetID())

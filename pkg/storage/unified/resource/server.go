@@ -13,8 +13,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health/grpc_health_v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -303,24 +301,6 @@ type server struct {
 	// init checking
 	once    sync.Once
 	initErr error
-}
-
-type RingClient struct {
-	Client ResourceClient
-	grpc_health_v1.HealthClient
-	Conn *grpc.ClientConn
-}
-
-func (c *RingClient) Close() error {
-	return c.Conn.Close()
-}
-
-func (c *RingClient) String() string {
-	return c.RemoteAddress()
-}
-
-func (c *RingClient) RemoteAddress() string {
-	return c.Conn.Target()
 }
 
 // Init implements ResourceServer.
