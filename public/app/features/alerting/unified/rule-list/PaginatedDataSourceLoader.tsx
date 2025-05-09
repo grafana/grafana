@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Icon, Stack, Text } from '@grafana/ui';
 import { DataSourceRuleGroupIdentifier, DataSourceRulesSourceIdentifier, RuleGroup } from 'app/types/unified-alerting';
 
+import { CloudNoRulesCTA } from '../components/rules/NoRulesCTA';
 import { groups } from '../utils/navigation';
 
 import { DataSourceGroupLoader } from './DataSourceGroupLoader';
@@ -14,7 +15,6 @@ import { ListSection } from './components/ListSection';
 import { RuleGroupActionsMenu } from './components/RuleGroupActionsMenu';
 import { toIndividualRuleGroups, usePrometheusGroupsGenerator } from './hooks/prometheusGroupsGenerator';
 import { usePaginatedPrometheusGroups } from './hooks/usePaginatedPrometheusGroups';
-import { CloudNoRulesCTA } from '../components/rules/NoRulesCTA';
 
 const DATA_SOURCE_GROUP_PAGE_SIZE = 40;
 

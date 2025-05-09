@@ -1,11 +1,12 @@
+import { css } from '@emotion/css';
+
+import { GrafanaTheme2 } from '@grafana/data';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
-import { useRulesAccess } from '../../utils/accessControlHooks';
-import { GrafanaTheme2 } from '@grafana/data';
-import { css } from '@emotion/css';
 import { RuleFormType, RuleFormValues } from '../../types/rule-form';
+import { useRulesAccess } from '../../utils/accessControlHooks';
 import { createRelativeUrl } from '../../utils/url';
 
 const RecordingRulesButtons = () => {

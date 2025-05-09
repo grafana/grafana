@@ -1409,7 +1409,9 @@
     },
     "list-view": {
       "empty": {
+        "ds-no-rules": "This data source has no rules configured",
         "new-alert-rule": "New alert rule",
+        "new-ds-managed-alerting-rule": "New data source-managed alerting rule",
         "new-ds-managed-recording-rule": "New data source-managed recording rule",
         "new-grafana-alerting-rule": "New Grafana-managed alert rule",
         "new-grafana-recording-rule": "New Grafana-managed recording rule",
