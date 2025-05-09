@@ -32,8 +32,8 @@ func runChecks(check *check) ([]advisor.CheckReportFailure, error) {
 			if err != nil {
 				return nil, err
 			}
-			if stepFailures != nil {
-				failures = append(failures, *stepFailures)
+			if len(stepFailures) > 0 {
+				failures = append(failures, stepFailures...)
 			}
 		}
 	}

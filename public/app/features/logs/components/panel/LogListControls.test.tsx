@@ -32,7 +32,7 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
-    expect(screen.getByLabelText('Oldest logs first')).toBeInTheDocument();
+    expect(screen.getByLabelText(/oldest logs first/)).toBeInTheDocument();
     expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
     expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
     expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
@@ -68,7 +68,7 @@ describe('LogListControls', () => {
       expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
       expect(screen.getByLabelText('Scroll to top')).toBeInTheDocument();
       expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
-      expect(screen.queryByLabelText('Oldest logs first')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText(/oldest logs first/)).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Deduplication')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Show timestamps')).not.toBeInTheDocument();
       expect(screen.queryByLabelText('Wrap lines')).not.toBeInTheDocument();
@@ -83,7 +83,7 @@ describe('LogListControls', () => {
       </LogListContextProvider>
     );
     expect(screen.getByLabelText('Scroll to bottom')).toBeInTheDocument();
-    expect(screen.getByLabelText('Oldest logs first')).toBeInTheDocument();
+    expect(screen.getByLabelText(/oldest logs first/)).toBeInTheDocument();
     expect(screen.getByLabelText('Deduplication')).toBeInTheDocument();
     expect(screen.getByLabelText('Display levels')).toBeInTheDocument();
     expect(screen.getByLabelText('Show timestamps')).toBeInTheDocument();
@@ -132,7 +132,7 @@ describe('LogListControls', () => {
         <LogListControls eventBus={new EventBusSrv()} />
       </LogListContextProvider>
     );
-    await userEvent.click(screen.getByLabelText('Oldest logs first'));
+    await userEvent.click(screen.getByLabelText(/oldest logs first/));
     expect(onLogOptionsChange).toHaveBeenCalledTimes(1);
     expect(onLogOptionsChange).toHaveBeenCalledWith('sortOrder', LogsSortOrder.Descending);
   });
