@@ -2,34 +2,39 @@ import { chain } from 'lodash';
 
 import { Combobox, ComboboxOption } from '@grafana/ui';
 
-import { ContactPoint } from '../../api/v0alpha1/types';
-import { useListContactPointsv0alpha1 } from '../hooks/useContactPoints';
-import { getContactPointDescription } from '../utils';
+// TODO: Make the types external
+import { Resource } from '../../../../../../public/app/features/apiserver/types';
+import { ContactPointAdapter } from '../types';
 
 const collator = new Intl.Collator('en', { sensitivity: 'accent' });
 
-type ContactPointSelectorProps = {
-  onChange: (contactPoint: ContactPoint) => void;
+export type ContactPointSelectorProps<ActualApiContactPointType> = {
+  adapter: ContactPointAdapter<ActualApiContactPointType>;
+  onChange: (contactPointResource: Resource<ActualApiContactPointType> | null) => void;
 };
-
 /**
  * Contact Point Combobox which lists all available contact points
  * @TODO make ComboBox accept a ReactNode so we can use icons and such
  */
-function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
-  const { currentData: contactPoints, isLoading } = useListContactPointsv0alpha1();
+function ContactPointSelector<ActualApiContactPointType>({
+  onChange,
+  adapter,
+}: ContactPointSelectorProps<ActualApiContactPointType>) {
+  const { currentData: contactPoints, isLoading } = adapter.useListContactPoints();
 
-  // Create a mapping of options with their corresponding contact points
-  const contactPointOptions = chain(contactPoints?.items)
+  const contactPointOptions = chain(contactPoints?.items ?? [])
     .toArray()
-    .map((contactPoint) => ({
-      option: {
-        label: contactPoint.spec.title,
-        value: contactPoint.metadata.uid ?? contactPoint.spec.title,
-        description: getContactPointDescription(contactPoint),
-      } satisfies ComboboxOption<string>,
-      contactPoint,
-    }))
+    .map((contactPoint) => {
+      const genericCp = adapter.toGenericContactPoint(contactPoint);
+      return {
+        option: {
+          label: genericCp.title,
+          value: genericCp.uid,
+          description: genericCp.description,
+        } satisfies ComboboxOption,
+        originalContactPoint: contactPoint,
+      };
+    })
     .value()
     .sort((a, b) => collator.compare(a.option.label, b.option.label));
 
@@ -41,7 +46,7 @@ function ContactPointSelector({ onChange }: ContactPointSelectorProps) {
       return;
     }
 
-    onChange(selectedItem.contactPoint);
+    onChange(selectedItem.originalContactPoint);
   };
 
   return <Combobox loading={isLoading} onChange={handleChange} options={options} />;
