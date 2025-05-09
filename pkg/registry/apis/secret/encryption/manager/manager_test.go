@@ -85,7 +85,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	ctx := context.Background()
 	namespace := "test-namespace"
 
-	dataKey := &encryptionstorage.SecretDataKey{
+	dataKey := &contracts.SecretDataKey{
 		UID:           util.GenerateShortUID(),
 		Label:         "test1",
 		Active:        true,
@@ -96,7 +96,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 
 	t.Run("querying for a DEK that does not exist", func(t *testing.T) {
 		res, err := store.GetDataKey(ctx, namespace, dataKey.UID)
-		assert.ErrorIs(t, encryptionstorage.ErrDataKeyNotFound, err)
+		assert.ErrorIs(t, contracts.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
@@ -122,7 +122,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 	})
 
 	t.Run("creating an inactive DEK", func(t *testing.T) {
-		k := &encryptionstorage.SecretDataKey{
+		k := &contracts.SecretDataKey{
 			UID:           util.GenerateShortUID(),
 			Namespace:     namespace,
 			Active:        false,
@@ -135,7 +135,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 		require.Error(t, err)
 
 		res, err := store.GetDataKey(ctx, namespace, k.UID)
-		assert.Equal(t, encryptionstorage.ErrDataKeyNotFound, err)
+		assert.Equal(t, contracts.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 
@@ -155,7 +155,7 @@ func TestEncryptionService_DataKeys(t *testing.T) {
 		require.NoError(t, err)
 
 		res, err := store.GetDataKey(ctx, namespace, dataKey.UID)
-		assert.Equal(t, encryptionstorage.ErrDataKeyNotFound, err)
+		assert.Equal(t, contracts.ErrDataKeyNotFound, err)
 		assert.Nil(t, res)
 	})
 }
