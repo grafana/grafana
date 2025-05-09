@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { Page } from 'app/core/components/Page/Page';
+import { t } from 'app/core/internationalization';
 
 import { ProvisioningWizard } from './ProvisioningWizard';
 import { RepoType } from './types';
@@ -17,7 +18,10 @@ export default function ConnectPage() {
       navId="provisioning"
       pageNav={{
         text: type === 'github' ? 'Configure Git Sync' : 'Configure local file path',
-        subTitle: 'Connect to an external storage to manage your resources',
+        subTitle: t(
+          'provisioning.connect-page.subTitle.connect-external-storage-manage-resources',
+          'Connect to an external storage to manage your resources'
+        ),
       }}
     >
       <Page.Contents>

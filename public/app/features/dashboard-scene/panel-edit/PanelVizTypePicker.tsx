@@ -75,8 +75,14 @@ export function PanelVizTypePicker({ panel, data, onChange, onClose }: Props) {
   }, [defaultTab, listMode, setListMode, supportedListModes]);
 
   const radioOptions: Array<SelectableValue<VisualizationSelectPaneTab>> = [
-    { label: 'Visualizations', value: VisualizationSelectPaneTab.Visualizations },
-    { label: 'Suggestions', value: VisualizationSelectPaneTab.Suggestions },
+    {
+      label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.visualizations', 'Visualizations'),
+      value: VisualizationSelectPaneTab.Visualizations,
+    },
+    {
+      label: t('dashboard-scene.panel-viz-type-picker.radio-options.label.suggestions', 'Suggestions'),
+      value: VisualizationSelectPaneTab.Suggestions,
+    },
   ];
 
   return (

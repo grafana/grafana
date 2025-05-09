@@ -142,12 +142,12 @@ export function useCombinedLabels(
   // create two groups of labels, one for ops and one for custom
   const groupedOptions = [
     {
-      label: 'From alerts',
+      label: t('alerting.use-combined-labels.grouped-options.label.from-alerts', 'From alerts'),
       options: keysFromExistingAlerts,
       expanded: true,
     },
     {
-      label: 'From system',
+      label: t('alerting.use-combined-labels.grouped-options.label.from-system', 'From system'),
       options: keysFromGopsLabels,
       expanded: true,
     },
@@ -370,7 +370,10 @@ export const LabelsWithoutSuggestions: FC = () => {
               >
                 <Input
                   {...register(`labels.${index}.key`, {
-                    required: { value: !!labels[index]?.value, message: 'Required.' },
+                    required: {
+                      value: !!labels[index]?.value,
+                      message: t('alerting.labels-without-suggestions.message.required', 'Required.'),
+                    },
                   })}
                   placeholder={t('alerting.labels-without-suggestions.placeholder-key', 'key')}
                   data-testid={`label-key-${index}`}
@@ -385,7 +388,10 @@ export const LabelsWithoutSuggestions: FC = () => {
               >
                 <Input
                   {...register(`labels.${index}.value`, {
-                    required: { value: !!labels[index]?.key, message: 'Required.' },
+                    required: {
+                      value: !!labels[index]?.key,
+                      message: t('alerting.labels-without-suggestions.message.required', 'Required.'),
+                    },
                   })}
                   placeholder={t('alerting.labels-without-suggestions.placeholder-value', 'value')}
                   data-testid={`label-value-${index}`}

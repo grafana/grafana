@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { GrafanaTheme2, PluginState } from '@grafana/data';
 import { TextDimensionMode } from '@grafana/schema';
 import { Button, Spinner, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -194,9 +195,9 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         name: 'Align text',
         settings: {
           options: [
-            { value: Align.Left, label: 'Left' },
-            { value: Align.Center, label: 'Center' },
-            { value: Align.Right, label: 'Right' },
+            { value: Align.Left, label: t('canvas.button-item.label.left', 'Left') },
+            { value: Align.Center, label: t('canvas.button-item.label.center', 'Center') },
+            { value: Align.Right, label: t('canvas.button-item.label.right', 'Right') },
           ],
         },
         defaultValue: Align.Left,
@@ -206,7 +207,7 @@ export const buttonItem: CanvasElementItem<ButtonConfig, ButtonData> = {
         path: 'config.size',
         name: 'Text size',
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('canvas.button-item.placeholder.auto', 'Auto'),
         },
       })
       .addCustomEditor({

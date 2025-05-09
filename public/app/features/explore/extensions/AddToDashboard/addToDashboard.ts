@@ -1,6 +1,7 @@
 import { DataFrame, ExplorePanelsState } from '@grafana/data';
 import { DataQuery, DataSourceRef, Panel } from '@grafana/schema';
 import { DataTransformerConfig } from '@grafana/schema/dist/esm/raw/dashboard/x/dashboard_types.gen';
+import { t } from 'app/core/internationalization';
 import { ExplorePanelData } from 'app/types';
 
 interface ExploreToDashboardPanelOptions {
@@ -65,7 +66,7 @@ export function buildDashboardPanelFromExploreState(options: ExploreToDashboardP
     //@ts-ignore
     targets: options.queries,
     type: panelType,
-    title: 'New Panel',
+    title: t('explore.build-dashboard-panel-from-explore-state.title.new-panel', 'New Panel'),
     gridPos: { x: 0, y: 0, w: 12, h: 8 },
     datasource: options.datasource,
     transformations: getLogsTableTransformations(panelType, options),

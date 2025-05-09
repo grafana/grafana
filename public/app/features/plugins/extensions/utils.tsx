@@ -19,6 +19,7 @@ import {
 import { reportInteraction, config, AppPluginConfig } from '@grafana/runtime';
 import { Modal } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
+import { t } from 'app/core/internationalization';
 import { getPluginSettings } from 'app/features/plugins/pluginSettings';
 import { OpenExtensionSidebarEvent, ShowModalReactEvent } from 'app/types/events';
 
@@ -377,7 +378,7 @@ export function createExtensionSubMenu(extensions: PluginExtensionLink[]): Panel
   if (uncategorized.length > 0) {
     if (subMenu.length > 0) {
       subMenu.push({
-        text: 'divider',
+        text: t('plugins.create-extension-sub-menu.text.divider', 'divider'),
         type: 'divider',
       });
     }

@@ -83,7 +83,10 @@ export const ServiceAccountPageUnconnected = ({
   const pageNav: NavModelItem = {
     text: serviceAccount.name,
     img: serviceAccount.avatarUrl,
-    subTitle: 'Manage settings for an individual service account.',
+    subTitle: t(
+      'serviceaccounts.service-account-page-unconnected.page-nav.subTitle.manage-settings-individual-service-account',
+      'Manage settings for an individual service account.'
+    ),
   };
 
   useEffect(() => {

@@ -8,6 +8,7 @@ import {
 } from '@grafana/data';
 import { config, getBackendSrv } from '@grafana/runtime';
 import { TermCount } from 'app/core/components/TagFilter/TagFilter';
+import { t } from 'app/core/internationalization';
 
 import { DashboardQueryResult, GrafanaSearcher, QueryResponse, SearchQuery, SearchResultMeta } from './types';
 import { replaceCurrentFolderQuery } from './utils';
@@ -87,8 +88,8 @@ export class BlugeSearcher implements GrafanaSearcher {
   // This should eventually be filled by an API call, but hardcoded is a good start
   getSortOptions(): Promise<SelectableValue[]> {
     const opts: SelectableValue[] = [
-      { value: folderViewSort, label: 'Alphabetically (A-Z)' },
-      { value: '-name_sort', label: 'Alphabetically (Z-A)' },
+      { value: folderViewSort, label: t('search.bluge-searcher.opts.label.alphabetically-az', 'Alphabetically (A-Z)') },
+      { value: '-name_sort', label: t('search.bluge-searcher.opts.label.alphabetically-za', 'Alphabetically (Z-A)') },
     ];
 
     if (config.licenseInfo.enabledFeatures.analytics) {

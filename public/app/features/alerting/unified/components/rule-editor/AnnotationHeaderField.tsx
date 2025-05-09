@@ -1,6 +1,7 @@
 import { Controller, FieldArrayWithId, useFormContext } from 'react-hook-form';
 
 import { Stack, Text } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { RuleFormValues } from '../../types/rule-form';
 import { Annotation, annotationDescriptions, annotationLabels } from '../../utils/constants';
@@ -56,7 +57,12 @@ const AnnotationHeaderField = ({
               );
             }}
             control={control}
-            rules={{ required: { value: !!annotations[index]?.value, message: 'Required.' } }}
+            rules={{
+              required: {
+                value: !!annotations[index]?.value,
+                message: t('alerting.annotation-header-field.message.required', 'Required.'),
+              },
+            }}
           />
         }
       </label>

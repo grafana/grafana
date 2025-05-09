@@ -15,6 +15,7 @@ import {
   VizPanel,
 } from '@grafana/scenes';
 import { Panel } from '@grafana/schema/dist/esm/index.gen';
+import { t } from 'app/core/internationalization';
 import { OptionFilter } from 'app/features/dashboard/components/PanelEditor/OptionsPaneOptions';
 import { getLastUsedDatasourceFromStorage } from 'app/features/dashboard/utils/dashboard';
 import { saveLibPanel } from 'app/features/library-panels/state/api';
@@ -245,7 +246,7 @@ export class PanelEditor extends SceneObjectBase<PanelEditorState> {
     const dashboard = getDashboardSceneFor(this);
 
     return {
-      text: 'Edit panel',
+      text: t('dashboard-scene.panel-editor.text.edit-panel', 'Edit panel'),
       parentItem: dashboard.getPageNav(location, navIndex),
     };
   }

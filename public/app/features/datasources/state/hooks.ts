@@ -4,6 +4,7 @@ import { DataSourcePluginMeta, DataSourceSettings } from '@grafana/data';
 import { cleanUpAction } from 'app/core/actions/cleanUp';
 import appEvents from 'app/core/app_events';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { AccessControlAction, useDispatch, useSelector } from 'app/types';
 import { ShowConfirmModalEvent } from 'app/types/events';
 
@@ -95,7 +96,7 @@ export const useDeleteLoadedDataSource = () => {
   return () => {
     appEvents.publish(
       new ShowConfirmModalEvent({
-        title: 'Delete',
+        title: t('datasources.use-delete-loaded-data-source.title.delete', 'Delete'),
         text: `Are you sure you want to delete the "${name}" data source?`,
         yesText: 'Delete',
         icon: 'trash-alt',

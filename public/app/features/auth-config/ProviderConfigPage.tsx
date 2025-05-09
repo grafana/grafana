@@ -17,8 +17,11 @@ import { SSOProvider } from './types';
 const getPageNav = (config?: SSOProvider): NavModelItem => {
   if (!config) {
     return {
-      text: 'Authentication',
-      subTitle: 'Configure authentication providers',
+      text: t('auth-config.get-page-nav.text.authentication', 'Authentication'),
+      subTitle: t(
+        'auth-config.get-page-nav.subTitle.configure-authentication-providers',
+        'Configure authentication providers'
+      ),
       icon: 'shield',
       id: 'authentication',
     };

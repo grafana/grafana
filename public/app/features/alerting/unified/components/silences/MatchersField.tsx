@@ -62,7 +62,10 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                   >
                     <Input
                       {...register(`matchers.${index}.name` as const, {
-                        required: { value: required, message: 'Required.' },
+                        required: {
+                          value: required,
+                          message: t('alerting.matchers-field.message.required', 'Required.'),
+                        },
                       })}
                       defaultValue={matcher.name}
                       placeholder={t('alerting.matchers-field.placeholder-label', 'label')}
@@ -84,7 +87,12 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                       )}
                       defaultValue={matcher.operator || matcherFieldOptions[0].value}
                       name={`matchers.${index}.operator`}
-                      rules={{ required: { value: required, message: 'Required.' } }}
+                      rules={{
+                        required: {
+                          value: required,
+                          message: t('alerting.matchers-field.message.required', 'Required.'),
+                        },
+                      }}
                     />
                   </Field>
                   <Field
@@ -94,7 +102,10 @@ const MatchersField = ({ className, required, ruleUid }: Props) => {
                   >
                     <Input
                       {...register(`matchers.${index}.value` as const, {
-                        required: { value: required, message: 'Required.' },
+                        required: {
+                          value: required,
+                          message: t('alerting.matchers-field.message.required', 'Required.'),
+                        },
                       })}
                       defaultValue={matcher.value}
                       placeholder={t('alerting.matchers-field.placeholder-value', 'value')}

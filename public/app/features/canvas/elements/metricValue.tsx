@@ -7,6 +7,7 @@ import { DataFrame, FieldNamePickerConfigSettings, GrafanaTheme2, StandardEditor
 import { TextDimensionMode } from '@grafana/schema';
 import { usePanelContext, useStyles2 } from '@grafana/ui';
 import { FieldNamePicker, frameHasName, getFrameFieldsDisplayNames } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 import { DimensionContext } from 'app/features/dimensions/context';
 import { ColorDimensionEditor } from 'app/features/dimensions/editors/ColorDimensionEditor';
 import { TextDimensionEditor } from 'app/features/dimensions/editors/TextDimensionEditor';
@@ -220,9 +221,9 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
         name: 'Align text',
         settings: {
           options: [
-            { value: Align.Left, label: 'Left' },
-            { value: Align.Center, label: 'Center' },
-            { value: Align.Right, label: 'Right' },
+            { value: Align.Left, label: t('canvas.metric-value-item.label.left', 'Left') },
+            { value: Align.Center, label: t('canvas.metric-value-item.label.center', 'Center') },
+            { value: Align.Right, label: t('canvas.metric-value-item.label.right', 'Right') },
           ],
         },
         defaultValue: Align.Left,
@@ -233,9 +234,9 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
         name: 'Vertical align',
         settings: {
           options: [
-            { value: VAlign.Top, label: 'Top' },
-            { value: VAlign.Middle, label: 'Middle' },
-            { value: VAlign.Bottom, label: 'Bottom' },
+            { value: VAlign.Top, label: t('canvas.metric-value-item.label.top', 'Top') },
+            { value: VAlign.Middle, label: t('canvas.metric-value-item.label.middle', 'Middle') },
+            { value: VAlign.Bottom, label: t('canvas.metric-value-item.label.bottom', 'Bottom') },
           ],
         },
         defaultValue: VAlign.Middle,
@@ -245,7 +246,7 @@ export const metricValueItem: CanvasElementItem<TextConfig, TextData> = {
         path: 'config.size',
         name: 'Text size',
         settings: {
-          placeholder: 'Auto',
+          placeholder: t('canvas.metric-value-item.placeholder.auto', 'Auto'),
         },
       });
   },

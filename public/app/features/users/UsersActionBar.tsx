@@ -45,7 +45,7 @@ export const UsersActionBarUnconnected = ({
   showInvites,
 }: Props): JSX.Element => {
   const options = [
-    { label: 'Users', value: 'users' },
+    { label: t('users.users-action-bar-unconnected.options.label.users', 'Users'), value: 'users' },
     { label: `Pending Invites (${pendingInvitesCount})`, value: 'invites' },
   ];
   const canAddToOrg: boolean = contextSrv.hasPermission(AccessControlAction.OrgUsersAdd);

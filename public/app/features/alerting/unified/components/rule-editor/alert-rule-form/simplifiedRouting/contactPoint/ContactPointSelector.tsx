@@ -77,7 +77,10 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
             rules={{
               required: {
                 value: true,
-                message: 'Contact point is required.',
+                message: t(
+                  'alerting.contact-point-selector.message.contact-point-is-required',
+                  'Contact point is required.'
+                ),
               },
             }}
             control={control}

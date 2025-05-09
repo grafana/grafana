@@ -6,6 +6,7 @@ import { CoreApp, GrafanaTheme2, LoadingState } from '@grafana/data';
 import { reportInteraction } from '@grafana/runtime';
 import { defaultTimeZone, TimeZone } from '@grafana/schema';
 import { TabbedContainer, TabConfig, useStyles2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { requestIdGenerator } from 'app/core/utils/explore';
 import { ExploreDrawer } from 'app/features/explore/ExploreDrawer';
 import { InspectDataTab } from 'app/features/inspector/InspectDataTab';
@@ -46,21 +47,21 @@ export function ExploreQueryInspector(props: Props) {
   }, []);
 
   const statsTab: TabConfig = {
-    label: 'Stats',
+    label: t('explore.explore-query-inspector.stats-tab.label.stats', 'Stats'),
     value: 'stats',
     icon: 'chart-line',
     content: <InspectStatsTab data={queryResponse!} timeZone={queryResponse?.request?.timezone ?? defaultTimeZone} />,
   };
 
   const jsonTab: TabConfig = {
-    label: 'JSON',
+    label: t('explore.explore-query-inspector.json-tab.label.json', 'JSON'),
     value: 'json',
     icon: 'brackets-curly',
     content: <InspectJSONTab data={queryResponse} onClose={onClose} />,
   };
 
   const dataTab: TabConfig = {
-    label: 'Data',
+    label: t('explore.explore-query-inspector.data-tab.label.data', 'Data'),
     value: 'data',
     icon: 'database',
     content: (
@@ -78,7 +79,7 @@ export function ExploreQueryInspector(props: Props) {
   };
 
   const queryTab: TabConfig = {
-    label: 'Query',
+    label: t('explore.explore-query-inspector.query-tab.label.query', 'Query'),
     value: 'query',
     icon: 'info-circle',
     content: (
@@ -95,7 +96,7 @@ export function ExploreQueryInspector(props: Props) {
   const tabs = [statsTab, queryTab, jsonTab, dataTab];
   if (errors?.length) {
     const errorTab: TabConfig = {
-      label: 'Error',
+      label: t('explore.explore-query-inspector.error-tab.label.error', 'Error'),
       value: 'error',
       icon: 'exclamation-triangle',
       content: <InspectErrorTab errors={errors} />,

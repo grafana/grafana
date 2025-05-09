@@ -9,7 +9,7 @@ import { ConfigPublicDashboardBase } from 'app/features/dashboard/components/Sha
 import { PublicDashboard } from 'app/features/dashboard/components/ShareModal/SharePublicDashboard/SharePublicDashboardUtils';
 import { AccessControlAction } from 'app/types';
 
-import { Trans } from '../../../../core/internationalization';
+import { Trans, t } from '../../../../core/internationalization';
 import { shareDashboardType } from '../../../dashboard/components/ShareModal/utils';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { ShareModal } from '../ShareModal';
@@ -45,7 +45,7 @@ export function ConfigPublicDashboard({ model, publicDashboard, isGetLoading }: 
         dashboard.showModal(
           new ConfirmModal({
             isOpen: true,
-            title: 'Revoke public URL',
+            title: t('dashboard-scene.config-public-dashboard.title.revoke-public-url', 'Revoke public URL'),
             icon: 'trash-alt',
             confirmText: 'Revoke public URL',
             body: (

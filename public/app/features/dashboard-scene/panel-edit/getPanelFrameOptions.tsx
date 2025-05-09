@@ -3,6 +3,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { SceneTimeRangeLike, VizPanel } from '@grafana/scenes';
 import { DataLinksInlineEditor, Input, TextArea, Switch } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { GenAIPanelDescriptionButton } from 'app/features/dashboard/components/GenAI/GenAIPanelDescriptionButton';
 import { GenAIPanelTitleButton } from 'app/features/dashboard/components/GenAI/GenAIPanelTitleButton';
 import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
@@ -19,7 +20,7 @@ import { getDashboardSceneFor } from '../utils/utils';
 
 export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescriptor {
   const descriptor = new OptionsPaneCategoryDescriptor({
-    title: 'Panel options',
+    title: t('dashboard-scene.get-panel-frame-options.descriptor.title.panel-options', 'Panel options'),
     id: 'Panel options',
     isOpenDefault: true,
   });
@@ -32,7 +33,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
   descriptor
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Title',
+        title: t('dashboard-scene.get-panel-frame-options.title.title', 'Title'),
         value: panel.state.title,
         popularRank: 1,
         render: function renderTitle() {
@@ -49,7 +50,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Description',
+        title: t('dashboard-scene.get-panel-frame-options.title.description', 'Description'),
         value: panel.state.description,
         render: function renderDescription() {
           return <PanelDescriptionTextArea panel={panel} />;
@@ -64,7 +65,7 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     )
     .addItem(
       new OptionsPaneItemDescriptor({
-        title: 'Transparent background',
+        title: t('dashboard-scene.get-panel-frame-options.title.transparent-background', 'Transparent background'),
         render: function renderTransparent() {
           return <PanelBackgroundSwitch panel={panel} />;
         },
@@ -72,13 +73,13 @@ export function getPanelFrameOptions(panel: VizPanel): OptionsPaneCategoryDescri
     )
     .addCategory(
       new OptionsPaneCategoryDescriptor({
-        title: 'Panel links',
+        title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
         id: 'Panel links',
         isOpenDefault: false,
         itemsCount: links?.length,
       }).addItem(
         new OptionsPaneItemDescriptor({
-          title: 'Panel links',
+          title: t('dashboard-scene.get-panel-frame-options.title.panel-links', 'Panel links'),
           render: () => <ScenePanelLinksEditor panelLinks={panelLinksObject ?? undefined} />,
         })
       )

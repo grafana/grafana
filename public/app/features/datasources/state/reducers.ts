@@ -2,6 +2,7 @@ import { AnyAction, createAction } from '@reduxjs/toolkit';
 
 import { DataSourcePluginMeta, DataSourceSettings, LayoutMode, LayoutModes } from '@grafana/data';
 import { TestingStatus } from '@grafana/runtime';
+import { t } from 'app/core/internationalization';
 import { DataSourcesState, DataSourceSettingsState } from 'app/types';
 
 import { GenericDataSourcePlugin } from '../types';
@@ -146,7 +147,10 @@ export const dataSourceSettingsReducer = (
     return {
       ...state,
       testingStatus: {
-        message: 'Testing... this could take up to a couple of minutes',
+        message: t(
+          'datasources.data-source-settings-reducer.message.testing-could-couple-minutes',
+          'Testing... this could take up to a couple of minutes'
+        ),
         status: 'info',
       },
     };

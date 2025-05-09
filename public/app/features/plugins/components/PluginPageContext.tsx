@@ -1,6 +1,7 @@
 import { createContext } from 'react';
 
 import { NavModel } from '@grafana/data';
+import { t } from 'app/core/internationalization';
 
 export interface PluginPageContextType {
   sectionNav: NavModel;
@@ -13,8 +14,8 @@ PluginPageContext.displayName = 'PluginPageContext';
 function getInitialPluginPageContext(): PluginPageContextType {
   return {
     sectionNav: {
-      main: { text: 'Plugin page' },
-      node: { text: 'Plugin page' },
+      main: { text: t('plugins.get-initial-plugin-page-context.text.plugin-page', 'Plugin page') },
+      node: { text: t('plugins.get-initial-plugin-page-context.text.plugin-page', 'Plugin page') },
     },
   };
 }

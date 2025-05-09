@@ -1,5 +1,6 @@
 import { TimeRange, toUtc, SupplementaryQueryType } from '@grafana/data';
 import { defaultTimeZone } from '@grafana/schema';
+import { t } from 'app/core/internationalization';
 
 export const createDefaultInitialState = () => {
   const t = toUtc();
@@ -39,7 +40,7 @@ export const createDefaultInitialState = () => {
           range: testRange,
           history: [],
           refreshInterval: {
-            label: 'Off',
+            label: t('explore.create-default-initial-state.default-initial-state.label.off', 'Off'),
             value: 0,
           },
           cache: [],

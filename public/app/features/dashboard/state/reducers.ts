@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { PanelPlugin } from '@grafana/data';
 import { defaultDashboard } from '@grafana/schema';
+import { t } from 'app/core/internationalization';
 import { DashboardInitError, DashboardInitPhase, DashboardState } from 'app/types';
 
 import { DashboardModel } from './DashboardModel';
@@ -33,7 +34,10 @@ const dashboardSlice = createSlice({
       state.initError = action.payload;
       state.getModel = () => {
         return new DashboardModel(
-          { ...defaultDashboard, title: 'Dashboard init failed' },
+          {
+            ...defaultDashboard,
+            title: t('dashboard.dashboard-slice.title.dashboard-init-failed', 'Dashboard init failed'),
+          },
           { canSave: false, canEdit: false }
         );
       };
