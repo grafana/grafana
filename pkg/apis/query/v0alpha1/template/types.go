@@ -14,6 +14,9 @@ type QueryTemplate struct {
 	// Longer description for why it is interesting
 	Description string `json:"description,omitempty"`
 
+	// Toggle for visible/hidden queries
+	IsVisible bool `json:"isVisible,omitempty"`
+
 	// The variables that can be used to render
 	// +listType=map
 	// +listMapKey=key
