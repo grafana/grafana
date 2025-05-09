@@ -4,10 +4,10 @@ import { GrafanaTheme2, locale } from '@grafana/data';
 
 import { useStyles2 } from '../../themes';
 
-type CounterVariant = 'primary' | 'secondary'
+type CounterVariant = 'primary' | 'secondary';
 export interface CounterProps {
   value: number;
-  variant?: CounterVariant
+  variant?: CounterVariant;
 }
 
 export const Counter = ({ value, variant = 'secondary' }: CounterProps) => {
@@ -21,7 +21,7 @@ const getStyles = (theme: GrafanaTheme2, variant: CounterVariant) => ({
     label: 'counter',
     marginLeft: theme.spacing(1),
     borderRadius: theme.spacing(3),
-    backgroundColor: variant === "primary" ? theme.colors.primary.main : theme.colors.action.hover,
+    backgroundColor: variant === 'primary' ? theme.colors.primary.main : theme.colors.action.hover,
     padding: theme.spacing(0.25, 1),
     color: theme.colors.text.secondary,
     fontWeight: theme.typography.fontWeightMedium,
