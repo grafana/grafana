@@ -472,6 +472,11 @@ function getNodeValue(node) {
     (node.type === AST_NODE_TYPES.JSXAttribute || node.type === AST_NODE_TYPES.Property) &&
     node.value?.type === AST_NODE_TYPES.Literal
   ) {
+    // TODO: Update this to return bool/number values and handle the type issues elsewhere
+    // For now, we'll just return an empty string so we consider any numbers or booleans as not being issues
+    if (typeof node.value.value === 'boolean' || typeof node.value.value === 'number') {
+      return '';
+    }
     return String(node.value.value) || '';
   }
   if (node.type === AST_NODE_TYPES.JSXText) {
