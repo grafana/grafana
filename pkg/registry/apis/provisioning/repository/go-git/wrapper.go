@@ -26,6 +26,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/safepath"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/secrets"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 const (
@@ -36,7 +37,7 @@ const (
 
 func init() {
 	// Create a size-limited writer that will cancel the context if size is exceeded
-	limitedTransport := NewByteLimitedTransport(http.DefaultTransport, maxOperationBytes)
+	limitedTransport := NewByteLimitedTransport(httpclient.NewHTTPTransport(), maxOperationBytes)
 	httpClient := githttp.NewClient(&http.Client{
 		Transport: limitedTransport,
 	})

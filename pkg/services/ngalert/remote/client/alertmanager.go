@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 	amclient "github.com/prometheus/alertmanager/api/v2/client"
 )
 
@@ -37,7 +38,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 	c := &http.Client{Transport: &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
-		Next:     http.DefaultTransport,
+		Next:     httpclient.NewHTTPTransport(),
 	}}
 
 	tc := client.NewTimedClient(c, metrics.RequestLatency)

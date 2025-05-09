@@ -19,6 +19,7 @@ import (
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
 	"github.com/grafana/grafana/pkg/services/ngalert/client"
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
+	"github.com/grafana/grafana/pkg/util/httpclient"
 )
 
 // MimirClient contains all the methods to query the migration critical endpoints of Mimir instance, it's an interface to allow multiple implementations.
@@ -86,7 +87,7 @@ func New(cfg *Config, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer
 	rt := &MimirAuthRoundTripper{
 		TenantID: cfg.TenantID,
 		Password: cfg.Password,
-		Next:     http.DefaultTransport,
+		Next:     httpclient.NewHTTPTransport(),
 	}
 
 	c := &http.Client{
