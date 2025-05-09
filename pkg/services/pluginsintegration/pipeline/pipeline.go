@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/plugins/auth"
@@ -19,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 )
 
 func ProvideDiscoveryStage(cfg *config.PluginManagementCfg, pf finder.Finder, pr registry.Service) *discovery.Discovery {
@@ -64,8 +64,7 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 	roleRegistry pluginaccesscontrol.RoleRegistry,
 	actionSetRegistry pluginaccesscontrol.ActionSetRegistry,
 	pluginEnvProvider envvars.Provider,
-	tracer tracing.Tracer,
-	store pluginStore.Store) *initialization.Initialize {
+	tracer tracing.Tracer) *initialization.Initialize {
 	return initialization.New(cfg, initialization.Opts{
 		InitializeFuncs: []initialization.InitializeFunc{
 			ExternalServiceRegistrationStep(cfg, externalServiceRegistry, tracer),
@@ -75,7 +74,7 @@ func ProvideInitializationStage(cfg *config.PluginManagementCfg, pr registry.Ser
 			RegisterActionSetsStep(actionSetRegistry),
 			ReportBuildMetrics,
 			ReportTargetMetrics,
-			ReportLoadingMetricsStep(cfg, store),
+			ReportLoadingMetricsStep(cfg),
 			initialization.PluginRegistrationStep(pr),
 		},
 	})

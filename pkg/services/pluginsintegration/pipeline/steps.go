@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	pluginStore "github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
 	"slices"
 
 	"go.opentelemetry.io/otel/attribute"
@@ -21,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -141,36 +141,28 @@ func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin,
 }
 
 type reportLoadingMetricsStep struct {
-	cfg *config.PluginManagementCfg
-	// pluginAssets *pluginassets.Service
-	pluginsStore pluginStore.Store
+	cfg          *config.PluginManagementCfg
+	pluginAssets *pluginassets.Service
+	// pluginsStore pluginStore.Store
 }
 
-func (s *reportLoadingMetricsStep) initialize(ctx context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+func (s *reportLoadingMetricsStep) initialize(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
 	if p.IsCorePlugin() {
 		return p, nil
 	}
-	_, ok := s.pluginsStore.Plugin(ctx, p.PluginID())
-	if !ok {
-		// TODO: warn
-		return p, nil
-	}
 	var method string
-	strategy := "default"
 	switch p.Class {
 	case plugins.ClassCDN:
 		method = "cdn"
-		// strategy = string(s.pluginAssets.LoadingStrategy(ctx, ps))
 	case plugins.ClassExternal:
 		method = "fs"
-		strategy = "default"
 	}
-	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, p.IsCloudProvisioned, method, strategy)
+	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, p.IsCloudProvisioned, method)
 	return p, nil
 }
 
-func ReportLoadingMetricsStep(cfg *config.PluginManagementCfg, pluginStore pluginStore.Store) initialization.InitializeFunc {
-	step := &reportLoadingMetricsStep{cfg: cfg, pluginsStore: pluginStore}
+func ReportLoadingMetricsStep(cfg *config.PluginManagementCfg) initialization.InitializeFunc {
+	step := &reportLoadingMetricsStep{cfg: cfg}
 	return step.initialize
 }
 
