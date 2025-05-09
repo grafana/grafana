@@ -74,7 +74,6 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
       case MappingType.SpecialValue:
         switch ((vm.options as SpecialValueOptions).match) {
           case SpecialValueMatch.Null: {
-            console.warn('null only', value, vm.options);
             if (value == null) {
               return vm.options.result;
             }
@@ -87,7 +86,6 @@ export function getValueMappingResult(valueMappings: ValueMapping[], value: any)
             break;
           }
           case SpecialValueMatch.NullAndNaN: {
-            console.warn('null and nan', value, vm.options);
             if ((typeof value === 'number' && isNaN(value)) || value == null) {
               return vm.options.result;
             }
