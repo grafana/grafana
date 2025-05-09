@@ -36,9 +36,9 @@ describe('FileUpload', () => {
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
     render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
-    let uploader = await screen.findByTestId(selectors.components.FileUpload.inputField);
+    const uploader = await screen.findByTestId(selectors.components.FileUpload.inputField);
     await user.upload(uploader, file);
-    let uploaderLabel = await screen.findByTestId(selectors.components.FileUpload.fileNameSpan);
+    const uploaderLabel = await screen.findByTestId(selectors.components.FileUpload.fileNameSpan);
     expect(uploaderLabel).toHaveTextContent(testFileName);
   });
 
@@ -47,9 +47,9 @@ describe('FileUpload', () => {
     const file = new File(['(⌐□_□)'], testFileName, { type: 'image/png' });
     const onFileUpload = jest.fn();
     render(<FileUpload onFileUpload={onFileUpload} showFileName={true} />);
-    let uploader = screen.getByTestId(selectors.components.FileUpload.inputField);
+    const uploader = screen.getByTestId(selectors.components.FileUpload.inputField);
     await user.upload(uploader, file);
-    let uploaderLabel = screen.getByTestId(selectors.components.FileUpload.fileNameSpan);
+    const uploaderLabel = screen.getByTestId(selectors.components.FileUpload.fileNameSpan);
     expect(uploaderLabel).toHaveTextContent('longFileName.som....png');
   });
 });

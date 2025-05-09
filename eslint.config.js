@@ -313,7 +313,7 @@ module.exports = [
       ...testingLibraryPlugin.configs['flat/react'].rules,
       ...jestDomPlugin.configs['flat/recommended'].rules,
       'testing-library/prefer-user-event': 'error',
-      'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'reducerTester'] }],
+      'jest/expect-expect': ['error', { assertFunctionNames: ['expect*', 'assert*', 'reducerTester'] }],
     },
   },
   {

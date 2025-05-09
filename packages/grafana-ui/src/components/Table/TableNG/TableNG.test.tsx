@@ -290,9 +290,13 @@ const createTimeDataFrame = (): DataFrame => {
 
 describe('TableNG', () => {
   let user: ReturnType<typeof userEvent.setup>;
+  let origResizeObserver = global.ResizeObserver;
+  let origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
 
   beforeEach(() => {
     user = userEvent.setup();
+    origResizeObserver = global.ResizeObserver;
+    origScrollIntoView = window.HTMLElement.prototype.scrollIntoView;
     // Mock ResizeObserver
     global.ResizeObserver = class ResizeObserver {
       constructor(callback: any) {
@@ -312,6 +316,11 @@ describe('TableNG', () => {
     };
 
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
+  });
+
+  afterEach(() => {
+    global.ResizeObserver = origResizeObserver;
+    window.HTMLElement.prototype.scrollIntoView = origScrollIntoView;
   });
 
   describe('Basic TableNG rendering', () => {
