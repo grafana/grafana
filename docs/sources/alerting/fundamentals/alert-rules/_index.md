@@ -20,9 +20,9 @@ weight: 100
 refs:
   shared-configure-prometheus-data-source-alerting:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure-prometheus-data-source/#alerting
+      destination: /docs/grafana/<GRAFANA_VERSION>/datasources/prometheus/configure/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure-prometheus-data-source/#alerting
+      destination: /docs/grafana-cloud/connect-externally-hosted/data-sources/prometheus/configure/
   queries-and-conditions:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#data-source-queries
