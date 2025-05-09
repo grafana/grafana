@@ -28,6 +28,7 @@ ruleTester.run('eslint no-restricted-img-srcs', noRestrictedImgSrcs, {
       code: `
 import foo from 'img/checkbox.png';
 const bar = foo;
+const baz = <img src={foo} />;
 `,
     },
     {
