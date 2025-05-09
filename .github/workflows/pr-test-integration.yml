@@ -6,6 +6,10 @@ on:
       - main
       - release-*.*.*
   pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
