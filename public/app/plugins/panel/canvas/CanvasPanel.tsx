@@ -75,7 +75,7 @@ export class CanvasPanel extends Component<Props, State> {
       allowEditing,
       this.props.options.showAdvancedTypes,
       this.props.options.panZoom,
-      this.props.options.infinitePan,
+      this.props.options.zoomToContent,
       this.onUpdateScene,
       this
     );
@@ -238,13 +238,13 @@ export class CanvasPanel extends Component<Props, State> {
     const shouldShowAdvancedTypesSwitched =
       this.props.options.showAdvancedTypes !== nextProps.options.showAdvancedTypes;
     const panZoomSwitched = this.props.options.panZoom !== nextProps.options.panZoom;
-    const infinitePanSwitched = this.props.options.infinitePan !== nextProps.options.infinitePan;
+    const zoomToContentSwitched = this.props.options.zoomToContent !== nextProps.options.zoomToContent;
     if (
       this.needsReload ||
       inlineEditingSwitched ||
       shouldShowAdvancedTypesSwitched ||
       panZoomSwitched ||
-      infinitePanSwitched
+      zoomToContentSwitched
     ) {
       if (inlineEditingSwitched) {
         // Replace scene div to prevent selecto instance leaks
@@ -257,7 +257,7 @@ export class CanvasPanel extends Component<Props, State> {
         nextProps.options.inlineEditing,
         nextProps.options.showAdvancedTypes,
         nextProps.options.panZoom,
-        nextProps.options.infinitePan
+        nextProps.options.zoomToContent
       );
       this.scene.updateSize(nextProps.width, nextProps.height);
       this.scene.updateData(nextProps.data);
