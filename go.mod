@@ -1,6 +1,6 @@
 module github.com/grafana/grafana
 
-go 1.24.2
+go 1.24.3
 
 require (
 	buf.build/gen/go/parca-dev/parca/connectrpc/go v1.17.0-20240902100956-02fd72488966.1 // @grafana/observability-traces-and-profiling
@@ -207,7 +207,7 @@ require (
 
 require (
 	github.com/grafana/grafana/apps/advisor v0.0.0-20250506052906-7a2fc797fb4a // @grafana/plugins-platform-backend
-	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250506052906-7a2fc797fb4a // @grafana/alerting-backend
+	github.com/grafana/grafana/apps/alerting/notifications v0.0.0-20250508142345-620260fabcfb // @grafana/alerting-backend
 	github.com/grafana/grafana/apps/dashboard v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-app-platform-squad @grafana/dashboards-squad
 	github.com/grafana/grafana/apps/folder v0.0.0-20250506052906-7a2fc797fb4a // @grafana/grafana-search-and-storage
 	github.com/grafana/grafana/apps/investigations v0.0.0-20250506052906-7a2fc797fb4a // @fcjack @matryer
