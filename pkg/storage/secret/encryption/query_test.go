@@ -5,6 +5,7 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate/mocks"
 )
 
@@ -72,7 +73,7 @@ func TestDataKeyQueries(t *testing.T) {
 					Name: "create",
 					Data: &createDataKey{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &SecretDataKey{
+						Row: &contracts.SecretDataKey{
 							UID:           "abc123",
 							Active:        true,
 							Namespace:     "ns",
@@ -86,7 +87,7 @@ func TestDataKeyQueries(t *testing.T) {
 					Name: "create-not-active",
 					Data: &createDataKey{
 						SQLTemplate: mocks.NewTestingSQLTemplate(),
-						Row: &SecretDataKey{
+						Row: &contracts.SecretDataKey{
 							UID:           "abc123",
 							Active:        false,
 							Namespace:     "ns",
