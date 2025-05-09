@@ -9,6 +9,7 @@ import (
 	"k8s.io/apiserver/pkg/authorization/authorizer"
 
 	notificationsResource "github.com/grafana/grafana/apps/alerting/notifications/pkg/apis"
+	"github.com/grafana/grafana/apps/alerting/notifications/pkg/apis/alerting/v0alpha1"
 	notificationsApp "github.com/grafana/grafana/apps/alerting/notifications/pkg/app"
 	grafanarest "github.com/grafana/grafana/pkg/apiserver/rest"
 	"github.com/grafana/grafana/pkg/registry/apps/alerting/notifications/receiver"
@@ -38,7 +39,7 @@ func RegisterApp(
 	appCfg := &runner.AppBuilderConfig{
 		Authorizer:          getAuthorizer(ng.Api.AccessControl),
 		LegacyStorageGetter: getLegacyStorage(request.GetNamespaceMapper(cfg), ng),
-		OpenAPIDefGetter:    notificationsResource.GetOpenAPIDefinitions,
+		OpenAPIDefGetter:    v0alpha1.GetOpenAPIDefinitions,
 		ManagedKinds:        notificationsResource.GetKinds(),
 	}
 
