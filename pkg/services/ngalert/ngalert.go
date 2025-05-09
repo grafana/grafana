@@ -195,11 +195,8 @@ func (ng *AlertNG) init() error {
 			ExternalURL:       ng.Cfg.AppURL,
 			StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 		}
-		autogenFn := remote.NoopAutogenFn
-		if ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertingSimplifiedRouting) {
-			autogenFn = func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
-				return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
-			}
+		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
+			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
 		}
 
 		var override notifier.Option

@@ -6,6 +6,8 @@ import { config } from '@grafana/runtime';
 import { GrafanaManagedContactPoint, GrafanaManagedReceiverConfig } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 import {
+  GrafanaAlertStateDecision,
+  GrafanaAlertingRuleDefinition,
   GrafanaRecordingRuleDefinition,
   PromAlertingRuleDTO,
   PromAlertingRuleState,
@@ -14,11 +16,13 @@ import {
   RulerAlertingRuleDTO,
   RulerCloudRuleDTO,
   RulerGrafanaRuleDTO,
+  RulerGrafanaRuleGroupDTO,
   RulerRecordingRuleDTO,
   RulerRuleGroupDTO,
 } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
+import { Annotation } from '../../utils/constants';
 import { DataSourceType } from '../../utils/datasource';
 import { namespaces } from '../mimirRulerApi';
 
@@ -94,6 +98,12 @@ const rulerGroupFactory = Factory.define<RulerRuleGroupDTO<RulerCloudRuleDTO>, {
     };
   }
 );
+
+const rulerGrafanaGroupFactory = Factory.define<RulerGrafanaRuleGroupDTO>(({ sequence }) => ({
+  name: `test-group-${sequence}`,
+  interval: '1m',
+  rules: grafanaAlertingRuleFactory.buildList(3),
+}));
 
 class DataSourceFactory extends Factory<DataSourceInstanceSettings> {
   vanillaPrometheus() {
@@ -178,6 +188,26 @@ const grafanaRecordingRule = Factory.define<RulerGrafanaRuleDTO<GrafanaRecording
   labels: { 'label-key-1': 'label-value-1' },
   annotations: {}, // @TODO recording rules don't have annotations, we need to fix this type definition
 }));
+
+const grafanaAlertingRuleFactory = Factory.define<RulerGrafanaRuleDTO<GrafanaAlertingRuleDefinition>>(
+  ({ sequence }) => ({
+    grafana_alert: {
+      id: String(sequence),
+      uid: uniqueId(),
+      title: `Alerting rule ${sequence}`,
+      namespace_uid: 'test-namespace',
+      rule_group: 'test-group',
+      condition: 'A',
+      data: [],
+      is_paused: false,
+      no_data_state: GrafanaAlertStateDecision.NoData,
+      exec_err_state: GrafanaAlertStateDecision.Error,
+    } satisfies GrafanaAlertingRuleDefinition,
+    for: '5m',
+    labels: { 'label-key-1': 'label-value-1' },
+    annotations: { [Annotation.summary]: 'test alert' },
+  })
+);
 
 class GrafanaContactPointFactory extends Factory<GrafanaManagedContactPoint> {
   withIntegrations(builder: (factory: GrafanaReceiverConfigFactory) => GrafanaManagedReceiverConfig[]) {
@@ -282,7 +312,9 @@ export const alertingFactory = {
     alertingRule: rulerAlertingRuleFactory,
     recordingRule: rulerRecordingRuleFactory,
     grafana: {
+      group: rulerGrafanaGroupFactory,
       recordingRule: grafanaRecordingRule,
+      alertingRule: grafanaAlertingRuleFactory,
     },
   },
   dataSource: dataSourceFactory,
