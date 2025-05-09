@@ -425,22 +425,28 @@ export function sceneVariablesSetToSchemaV2Variables(
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
           baseFilters:
             variable.state.baseFilters?.map((filter) => {
-              const origin: 'dashboard' | 'scope' | undefined =
-                filter.origin === 'dashboard' ? 'dashboard' : filter.origin === 'scope' ? 'scope' : undefined;
+              const { origin: originalOrigin, ...restOfFilter } = filter;
 
-              return {
-                ...filter,
-                origin,
-              };
+              if (originalOrigin === 'dashboard' || originalOrigin === 'scope') {
+                return {
+                  ...restOfFilter,
+                  origin: originalOrigin,
+                };
+              }
+
+              return restOfFilter;
             }) || [],
           filters: variable.state.filters.map((filter) => {
-            const origin: 'dashboard' | 'scope' | undefined =
-              filter.origin === 'dashboard' ? 'dashboard' : filter.origin === 'scope' ? 'scope' : undefined;
+            const { origin: originalOrigin, ...restOfFilter } = filter;
 
-            return {
-              ...filter,
-              origin,
-            };
+            if (originalOrigin === 'dashboard' || originalOrigin === 'scope') {
+              return {
+                ...restOfFilter,
+                origin: originalOrigin,
+              };
+            }
+
+            return restOfFilter;
           }),
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
         },
