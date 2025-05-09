@@ -38,7 +38,7 @@ export class ScopesService implements ScopesContextValue {
 
     this._stateObservable = new BehaviorSubject({
       ...this._state.getValue(),
-      value: this.selectorService.state.selectedScopes.map(({ scope }) => scope),
+      value: this.selectorService.state.appliedScopes.map((s) => this.selectorService.state.scopes[s.scopeId]),
       loading: this.selectorService.state.loading,
       drawerOpened: this.dashboardsService.state.drawerOpened,
     });
@@ -90,8 +90,8 @@ export class ScopesService implements ScopesContextValue {
     // Update the URL based on change in the scopes state
     this.subscriptions.push(
       selectorService.subscribeToState((state, prev) => {
-        const oldScopeNames = prev.selectedScopes.map((scope) => scope.scope.metadata.name);
-        const newScopeNames = state.selectedScopes.map((scope) => scope.scope.metadata.name);
+        const oldScopeNames = prev.appliedScopes.map((scope) => scope.scopeId);
+        const newScopeNames = state.appliedScopes.map((scope) => scope.scopeId);
         if (!isEqual(oldScopeNames, newScopeNames)) {
           this.locationService.partial(
             {
@@ -143,7 +143,7 @@ export class ScopesService implements ScopesContextValue {
       if (enabled) {
         this.locationService.partial(
           {
-            scopes: this.selectorService.state.selectedScopes.map(({ scope }) => scope.metadata.name),
+            scopes: this.selectorService.state.appliedScopes.map((s) => s.scopeId),
           },
           true
         );
@@ -160,7 +160,7 @@ export class ScopesService implements ScopesContextValue {
       map((state) => ({
         // We only need these 2 properties from the selectorService state.
         // We do mapping here but mainly to make the distinctUntilChanged simpler
-        selectedScopes: state.selectedScopes.map(({ scope }) => scope),
+        selectedScopes: state.appliedScopes.map((s) => state.scopes[s.scopeId]),
         loading: state.loading,
       })),
       distinctUntilChanged(

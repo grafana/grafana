@@ -4,7 +4,6 @@ import { getBackendSrv } from '@grafana/runtime';
 import { getAPINamespace } from '../../api/utils';
 
 import { ScopeNavigation } from './dashboards/types';
-import { NodeReason, NodesMap, SelectedScope, TreeScope } from './selector/types';
 import { getEmptyScopeObject } from './utils';
 
 const apiGroup = 'scope.grafana.app';
@@ -52,15 +51,8 @@ export class ScopesApiClient {
     return response;
   }
 
-  async fetchMultipleScopes(treeScopes: TreeScope[]): Promise<SelectedScope[]> {
-    const scopes = await Promise.all(treeScopes.map(({ scopeName }) => this.fetchScope(scopeName)));
-
-    return scopes.map<SelectedScope>((scope, idx) => {
-      return {
-        scope,
-        path: treeScopes[idx].path,
-      };
-    });
+  async fetchMultipleScopes(scopesIds: string[]): Promise<Scope[]> {
+    return Promise.all(scopesIds.map((id) => this.fetchScope(id)));
   }
 
   /**
@@ -70,9 +62,9 @@ export class ScopesApiClient {
    * @param {string|undefined} options.parent The parent node identifier to fetch children for, or undefined if no parent scope is required.
    * @param {string|undefined} options.query A query string to filter the nodes, or undefined for no filtering.
    * @param {number|undefined} options.limit The maximum number of nodes to fetch, defaults to 1000 if undefined. Must be between 1 and 10000.
-   * @return {Promise<NodesMap>} A promise that resolves to a map of fetched nodes. Returns an empty object if an error occurs.
+   * @return {Promise<ScopeNode[]>} A promise that resolves to a map of fetched nodes. Returns an empty object if an error occurs.
    */
-  async fetchNode(options: { parent?: string; query?: string; limit?: number }): Promise<NodesMap> {
+  async fetchNode(options: { parent?: string; query?: string; limit?: number }): Promise<ScopeNode[]> {
     const limit = options.limit ?? 1000;
 
     if (!(0 < limit && limit <= 10000)) {
@@ -89,21 +81,9 @@ export class ScopesApiClient {
           })
         )?.items ?? [];
 
-      return nodes.reduce<NodesMap>((acc, { metadata: { name }, spec }) => {
-        acc[name] = {
-          name,
-          ...spec,
-          expandable: spec.nodeType === 'container',
-          selectable: spec.linkType === 'scope',
-          expanded: false,
-          query: '',
-          reason: NodeReason.Result,
-          nodes: {},
-        };
-        return acc;
-      }, {});
+      return nodes;
     } catch (err) {
-      return {};
+      return [];
     }
   }
 

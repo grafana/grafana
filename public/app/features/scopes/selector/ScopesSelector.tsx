@@ -31,11 +31,28 @@ export const ScopesSelector = () => {
   if (!services || !scopes || !scopes.state.enabled || !selectorServiceState) {
     return null;
   }
-  const { nodes, loadingNodeName, selectedScopes, opened, treeScopes } = selectorServiceState;
+
+  const {
+    nodes,
+    loadingNodeName,
+    opened,
+    selectedScopes,
+    appliedScopes,
+    tree,
+    scopes: scopesMap,
+  } = selectorServiceState;
   const { scopesService, scopesSelectorService, scopesDashboardsService } = services;
   const { readOnly, drawerOpened, loading } = scopes.state;
-  const { open, removeAllScopes, closeAndApply, closeAndReset, updateNode, toggleNodeSelect, getRecentScopes } =
-    scopesSelectorService;
+  const {
+    open,
+    removeAllScopes,
+    closeAndApply,
+    closeAndReset,
+    updateNode,
+    selectScope,
+    deselectScope,
+    getRecentScopes,
+  } = scopesSelectorService;
 
   const recentScopes = getRecentScopes();
 
@@ -59,7 +76,8 @@ export const ScopesSelector = () => {
 
       <ScopesInput
         nodes={nodes}
-        scopes={selectedScopes}
+        scopes={scopesMap}
+        appliedScopes={appliedScopes}
         disabled={readOnly}
         loading={loading}
         onInputClick={() => {
@@ -74,20 +92,21 @@ export const ScopesSelector = () => {
         <Drawer title={t('scopes.selector.title', 'Select scopes')} size="sm" onClose={closeAndReset}>
           <div className={styles.drawerContainer}>
             <div className={styles.treeContainer}>
-              {loading ? (
+              {loading || !tree ? (
                 <Spinner data-testid="scopes-selector-loading" />
               ) : (
                 <>
                   <ScopesTree
-                    nodes={nodes}
-                    nodePath={['']}
+                    tree={tree}
                     loadingNodeName={loadingNodeName}
-                    scopes={treeScopes}
                     onNodeUpdate={updateNode}
-                    onNodeSelectToggle={toggleNodeSelect}
                     recentScopes={recentScopes}
+                    selectedScopes={selectedScopes}
+                    scopeNodes={nodes}
+                    selectScope={selectScope}
+                    deselectScope={deselectScope}
                     onRecentScopesSelect={(recentScopeSet) => {
-                      scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scope.metadata.name));
+                      scopesSelectorService.changeScopes(recentScopeSet.map((s) => s.scopeId));
                       scopesSelectorService.closeAndApply();
                     }}
                   />
