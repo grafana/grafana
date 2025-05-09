@@ -1,15 +1,15 @@
+import { noop } from 'lodash';
 import { ChangeEvent, FormEvent } from 'react';
 
 import { SelectableValue } from '@grafana/data';
 import { IntervalVariable, SceneVariable } from '@grafana/scenes';
+import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import {
   getIntervalsFromQueryString,
   getIntervalsQueryFromNewIntervalModel,
 } from 'app/features/dashboard-scene/utils/utils';
 
 import { IntervalVariableForm } from '../components/IntervalVariableForm';
-import { noop } from 'lodash';
-import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 
 interface IntervalVariableEditorProps {
   variable: IntervalVariable;
@@ -71,7 +71,7 @@ export function getIntervalVariableOptions(variable: SceneVariable): OptionsPane
 
   return [
     new OptionsPaneItemDescriptor({
-      render: () => <IntervalVariableEditor variable={variable} onRunQuery={noop} inline={true}/>,
+      render: () => <IntervalVariableEditor variable={variable} onRunQuery={noop} inline={true} />,
     }),
   ];
 }

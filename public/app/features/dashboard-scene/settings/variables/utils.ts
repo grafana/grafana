@@ -70,7 +70,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Interval',
     description: 'Values are timespans, ex 1m, 1h, 1d',
     editor: IntervalVariableEditor,
-    getOptions: getIntervalVariableOptions
+    getOptions: getIntervalVariableOptions,
   },
   datasource: {
     name: 'Data source',
