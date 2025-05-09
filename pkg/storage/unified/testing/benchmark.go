@@ -2,7 +2,6 @@ package test
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
@@ -58,7 +57,7 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
-					WithValue([]byte("init")))
+					WithValue("init"))
 				if err != nil {
 					return fmt.Errorf("failed to initialize backend: %w", err)
 				}
@@ -109,7 +108,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
-					WithValue([]byte(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20)))) // ~1.21 KiB
+					WithValue(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20))) // ~1.21 KiB
 
 				if err != nil {
 					errors <- err
@@ -424,7 +423,7 @@ type testDocumentBuilder struct{}
 func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
 	// convert value to unstructured.Unstructured
 	var u unstructured.Unstructured
-	if err := json.Unmarshal(value, &u); err != nil {
+	if err := u.UnmarshalJSON(value); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
 	}
 

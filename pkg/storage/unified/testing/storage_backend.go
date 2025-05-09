@@ -1037,9 +1037,22 @@ func WithFolder(folder string) WriteEventOption {
 }
 
 // WithValue sets the value for the write event
-func WithValue(value []byte) WriteEventOption {
+func WithValue(value string) WriteEventOption {
 	return func(o *WriteEventOptions) {
-		o.Value = value
+		u := unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": o.Group + "/v1",
+				"kind":       o.Resource,
+				"metadata": map[string]any{
+					"name":      "name",
+					"namespace": "ns",
+				},
+				"spec": map[string]any{
+					"value": value,
+				},
+			},
+		}
+		o.Value, _ = u.MarshalJSON()
 	}
 }
 
@@ -1064,10 +1077,21 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 	for _, opt := range opts {
 		opt(&options)
 	}
-
-	// Set default value if not provided
 	if options.Value == nil {
-		options.Value = []byte(name + " " + resource.WatchEvent_Type_name[int32(action)])
+		u := unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": options.Group + "/v1",
+				"kind":       options.Resource,
+				"metadata": map[string]any{
+					"name":      name,
+					"namespace": options.Namespace,
+				},
+				"spec": map[string]any{
+					"value": name + " " + resource.WatchEvent_Type_name[int32(action)],
+				},
+			},
+		}
+		options.Value, _ = u.MarshalJSON()
 	}
 
 	res := &unstructured.Unstructured{
