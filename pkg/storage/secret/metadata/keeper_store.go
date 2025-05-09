@@ -81,8 +81,8 @@ func (s *keeperMetadataStorage) Create(ctx context.Context, keeper *secretv0alph
 	return createdKeeper, nil
 }
 
-func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.Keeper, error) {
-	keeperDB, err := s.read(ctx, namespace.String(), name, notForUpdate)
+func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namespace, name string, opts contracts.ReadOpts) (*secretv0alpha1.Keeper, error) {
+	keeperDB, err := s.read(ctx, namespace.String(), name, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -95,12 +95,12 @@ func (s *keeperMetadataStorage) Read(ctx context.Context, namespace xkube.Namesp
 	return keeper, nil
 }
 
-func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string, forUpdate sqlForUpdate) (*keeperDB, error) {
+func (s *keeperMetadataStorage) read(ctx context.Context, namespace, name string, opts contracts.ReadOpts) (*keeperDB, error) {
 	req := &readKeeper{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace,
 		Name:        name,
-		IsForUpdate: bool(forUpdate),
+		IsForUpdate: opts.ForUpdate,
 	}
 
 	query, err := sqltemplate.Execute(sqlKeeperRead, req)
@@ -143,7 +143,7 @@ func (s *keeperMetadataStorage) Update(ctx context.Context, newKeeper *secretv0a
 		}
 
 		// Read old value first.
-		oldKeeperRow, err := s.read(ctx, newKeeper.Namespace, newKeeper.Name, yesForUpdate)
+		oldKeeperRow, err := s.read(ctx, newKeeper.Namespace, newKeeper.Name, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
 			return err
 		}
@@ -404,14 +404,14 @@ func (s *keeperMetadataStorage) validateSecureValueReferences(ctx context.Contex
 	return nil
 }
 
-func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string) (secretv0alpha1.KeeperConfig, error) {
+func (s *keeperMetadataStorage) GetKeeperConfig(ctx context.Context, namespace string, name *string, opts contracts.ReadOpts) (secretv0alpha1.KeeperConfig, error) {
 	// Check if keeper is the systemwide one.
 	if name == nil {
 		return nil, nil
 	}
 
 	// Load keeper config from metadata store, or TODO: keeper cache.
-	kp, err := s.read(ctx, namespace, *name, notForUpdate)
+	kp, err := s.read(ctx, namespace, *name, opts)
 	if err != nil {
 		return nil, err
 	}

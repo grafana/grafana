@@ -2767,12 +2767,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Ubah tema...",
+      "change-theme": "",
       "dark-theme": "Gelap",
-      "light-theme": "Terang"
+      "light-theme": "Terang",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Hasil tidak ditemukan"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Cari atau lompat ke..."

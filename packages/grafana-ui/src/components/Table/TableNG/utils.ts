@@ -313,7 +313,7 @@ export function getFooterItemNG(rows: TableRow[], field: Field, options: TableFo
   const value = reduceField({
     field: {
       ...field,
-      values: rows.map((row) => row[field.name]),
+      values: rows.map((row) => row[getDisplayName(field)]),
     },
     reducers: options.reducer,
   })[calc];
@@ -470,7 +470,7 @@ export const frameToRecords = (frame: DataFrame): TableRow[] => {
       rows[rowCount] = {
         __depth: 0,
         __index: i,
-        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(field.name)}: values[${fieldIdx}][i]`).join(',')}
+        ${frame.fields.map((field, fieldIdx) => `${JSON.stringify(getDisplayName(field))}: values[${fieldIdx}][i]`).join(',')}
       };
       rowCount += 1;
       if (rows[rowCount-1]['Nested frames']){
@@ -502,7 +502,6 @@ export interface MapFrameToGridOptions extends TableNGProps {
   ctx: CanvasRenderingContext2D;
   onSortByChange?: (sortBy: TableSortByFieldState[]) => void;
   rows: TableRow[];
-  sortedRows: TableRow[];
   setContextMenuProps: (props: { value: string; top?: number; left?: number; mode?: TableCellInspectorMode }) => void;
   setFilter: React.Dispatch<React.SetStateAction<FilterType>>;
   setIsInspecting: (isInspecting: boolean) => void;
@@ -520,6 +519,12 @@ export interface MapFrameToGridOptions extends TableNGProps {
 const compare = new Intl.Collator('en', { sensitivity: 'base', numeric: true }).compare;
 export function getComparator(sortColumnType: FieldType): Comparator {
   switch (sortColumnType) {
+    // Handle sorting for frame type fields (sparklines)
+    case FieldType.frame:
+      return (a, b) => {
+        // @ts-ignore The values are DataFrameWithValue
+        return (a?.value ?? 0) - (b?.value ?? 0);
+      };
     case FieldType.time:
     case FieldType.number:
     case FieldType.boolean:
@@ -594,3 +599,7 @@ export function migrateTableDisplayModeToCellOptions(displayMode: TableCellDispl
 /** Returns true if the DataFrame contains nested frames */
 export const getIsNestedTable = (dataFrame: DataFrame): boolean =>
   dataFrame.fields.some(({ type }) => type === FieldType.nestedFrames);
+
+export const getDisplayName = (field: Field): string => {
+  return field.state?.displayName ?? field.name;
+};

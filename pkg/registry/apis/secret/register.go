@@ -75,8 +75,9 @@ func NewSecretAPIBuilder(
 		database:                   database,
 		accessClient:               accessClient,
 		worker: worker.NewWorker(worker.Config{
-			BatchSize:      1,
-			ReceiveTimeout: 5 * time.Second,
+			BatchSize:       1,
+			ReceiveTimeout:  5 * time.Second,
+			PollingInterval: 500 * time.Millisecond,
 		},
 			database,
 			secretsOutboxQueue,
@@ -403,6 +404,7 @@ spec:
 		}
 	}
 
+	exampleRef := "my-secret-in-aws"
 	exampleKeeperAWS := "{aws-keeper-that-must-already-exist}"
 
 	sub = oas.Paths.Paths[smprefix+"/securevalues"]
@@ -449,7 +451,7 @@ spec:
 											Object: map[string]interface{}{
 												"spec": &secretv0alpha1.SecureValueSpec{
 													Description: "A secret from aws",
-													Ref:         "my-secret-in-aws",
+													Ref:         &exampleRef,
 													Keeper:      &exampleKeeperAWS,
 													Decrypters:  []string{"actor_k6"},
 												},

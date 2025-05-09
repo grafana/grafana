@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Thema wijzigen ...",
+      "change-theme": "",
       "dark-theme": "Donker",
-      "light-theme": "Licht"
+      "light-theme": "Licht",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Geen resultaten gevonden"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Zoek of ga naar ..."

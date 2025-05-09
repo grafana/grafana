@@ -267,11 +267,11 @@ func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
 		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `description` is required"))
 	}
 
-	if sv.Spec.Value == "" && sv.Spec.Ref == "" {
+	if sv.Spec.Value == "" && (sv.Spec.Ref == nil || (sv.Spec.Ref != nil && *sv.Spec.Ref == "")) {
 		errs = append(errs, field.Required(field.NewPath("spec"), "either a `value` or `ref` is required"))
 	}
 
-	if sv.Spec.Value != "" && sv.Spec.Ref != "" {
+	if sv.Spec.Value != "" && (sv.Spec.Ref != nil && *sv.Spec.Ref != "") {
 		errs = append(errs, field.Forbidden(field.NewPath("spec"), "only one of `value` or `ref` can be set"))
 	}
 
@@ -290,12 +290,12 @@ func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.Erro
 	}
 
 	// Only validate if one of the fields is being changed/set.
-	if sv.Spec.Value != "" || sv.Spec.Ref != "" {
-		if oldSv.Spec.Ref != "" && sv.Spec.Value != "" {
+	if sv.Spec.Value != "" || (sv.Spec.Ref != nil && *sv.Spec.Ref != "") {
+		if (oldSv.Spec.Ref != nil && *oldSv.Spec.Ref != "") && sv.Spec.Value != "" {
 			errs = append(errs, field.Forbidden(field.NewPath("spec"), "cannot set `value` when `ref` was already previously set"))
 		}
 
-		if oldSv.Spec.Ref == "" && sv.Spec.Ref != "" {
+		if (oldSv.Spec.Ref == nil || (oldSv.Spec.Ref != nil && *oldSv.Spec.Ref == "")) && (sv.Spec.Ref != nil && *sv.Spec.Ref != "") {
 			errs = append(errs, field.Forbidden(field.NewPath("spec"), "cannot set `ref` when `value` was already previously set"))
 		}
 	}

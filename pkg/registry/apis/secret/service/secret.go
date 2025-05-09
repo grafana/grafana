@@ -66,6 +66,7 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 }
 
 func (s *SecretService) Read(ctx context.Context, namespace xkube.Namespace, name string) (*secretv0alpha1.SecureValue, error) {
+	// TODO: readopts
 	return s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{})
 }
 

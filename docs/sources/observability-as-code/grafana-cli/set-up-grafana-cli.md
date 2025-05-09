@@ -1,7 +1,4 @@
 ---
-_build:
-  list: false
-noindex: true
 cascade:
   noindex: true
 description: Configuration guide for Grafana CLI, a command line tool for managing Grafana resources as code.
@@ -80,11 +77,11 @@ In these examples, `default` and `staging` are the names of the contexts.
 Grafana CLI stores its configuration in a YAML file. The CLI determines the configuration file location in the following order:
 
 1. If the `--config` flag is provided, the specified file is used.
-2. If `$XDG_CONFIG_HOME` is set:  
+2. If `$XDG_CONFIG_HOME` is set:
    `$XDG_CONFIG_HOME/grafanactl/config.yaml`
-3. If `$HOME` is set:  
+3. If `$HOME` is set:
    `$HOME/.config/grafanactl/config.yaml`
-4. If `$XDG_CONFIG_DIRS` is set:  
+4. If `$XDG_CONFIG_DIRS` is set:
    `$XDG_CONFIG_DIRS/grafanactl/config.yaml`
 
 {{< admonition type="note" >}}

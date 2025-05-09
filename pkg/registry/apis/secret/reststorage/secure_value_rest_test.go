@@ -37,14 +37,15 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("either a `value` or `ref` must be present but not both", func(t *testing.T) {
 			sv := validSecureValue.DeepCopy()
 			sv.Spec.Value = ""
-			sv.Spec.Ref = ""
+			sv.Spec.Ref = nil
 
 			errs := ValidateSecureValue(sv, nil, admission.Create, nil)
 			require.Len(t, errs, 1)
 			require.Equal(t, "spec", errs[0].Field)
 
+			ref := "value"
 			sv.Spec.Value = "value"
-			sv.Spec.Ref = "value"
+			sv.Spec.Ref = &ref
 
 			errs = ValidateSecureValue(sv, nil, admission.Create, nil)
 			require.Len(t, errs, 1)
@@ -56,13 +57,14 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("when trying to switch from a `value` (old) to a `ref` (new), it returns an error", func(t *testing.T) {
 			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Ref: "", // empty `ref` means a `value` was present.
+					Ref: nil, // empty `ref` means a `value` was present.
 				},
 			}
 
+			ref := "ref"
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Ref: "ref",
+					Ref: &ref,
 				},
 			}
 
@@ -72,9 +74,10 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("when trying to switch from a `ref` (old) to a `value` (new), it returns an error", func(t *testing.T) {
+			ref := "non-empty"
 			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Ref: "non-empty",
+					Ref: &ref,
 				},
 			}
 
@@ -90,16 +93,18 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("when both `value` and `ref` are set, it returns an error", func(t *testing.T) {
+			refNonEmpty := "non-empty"
 			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Ref: "non-empty",
+					Ref: &refNonEmpty,
 				},
 			}
 
+			ref := "ref"
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
 					Value: "value",
-					Ref:   "ref",
+					Ref:   &ref,
 				},
 			}
 
@@ -166,9 +171,10 @@ func TestValidateSecureValue(t *testing.T) {
 	})
 
 	t.Run("`decrypters` must have unique items", func(t *testing.T) {
+		ref := "ref"
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
-				Description: "description", Ref: "ref",
+				Description: "description", Ref: &ref,
 
 				Decrypters: []string{
 					"actor_app1",
@@ -183,9 +189,10 @@ func TestValidateSecureValue(t *testing.T) {
 	})
 
 	t.Run("`decrypters` must match the expected format", func(t *testing.T) {
+		ref := "ref"
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
-				Description: "description", Ref: "ref",
+				Description: "description", Ref: &ref,
 
 				Decrypters: []string{
 					"app1",
@@ -211,9 +218,10 @@ func TestValidateSecureValue(t *testing.T) {
 		decrypters := slices.Collect(maps.Keys(allowList))
 
 		t.Run("no matches, returns an error", func(t *testing.T) {
+			ref := "ref"
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Description: "description", Ref: "ref",
+					Description: "description", Ref: &ref,
 
 					Decrypters: []string{"actor_app3"},
 				},
@@ -224,9 +232,10 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("no decrypters, returns no error", func(t *testing.T) {
+			ref := "ref"
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Description: "description", Ref: "ref",
+					Description: "description", Ref: &ref,
 
 					Decrypters: []string{},
 				},
@@ -237,9 +246,10 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("one match, returns no errors", func(t *testing.T) {
+			ref := "ref"
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Description: "description", Ref: "ref",
+					Description: "description", Ref: &ref,
 
 					Decrypters: []string{decrypters[0]},
 				},
@@ -250,9 +260,10 @@ func TestValidateSecureValue(t *testing.T) {
 		})
 
 		t.Run("all matches, returns no errors", func(t *testing.T) {
+			ref := "ref"
 			sv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
-					Description: "description", Ref: "ref",
+					Description: "description", Ref: &ref,
 
 					Decrypters: decrypters,
 				},
@@ -269,9 +280,10 @@ func TestValidateSecureValue(t *testing.T) {
 			decrypters = append(decrypters, fmt.Sprintf("actor_app%d", i))
 		}
 
+		ref := "ref"
 		sv := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
-				Description: "description", Ref: "ref",
+				Description: "description", Ref: &ref,
 
 				Decrypters: decrypters,
 			},

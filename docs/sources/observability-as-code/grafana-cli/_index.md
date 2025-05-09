@@ -1,7 +1,4 @@
 ---
-_build:
-  list: false
-noindex: true
 cascade:
   noindex: true
 description: Overview of Grafana CLI, a command line tool for managing Grafana resources as code.

@@ -120,19 +120,21 @@ func (s *secureValueMetadataStorage) Read(ctx context.Context, namespace xkube.N
 }
 
 func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
-	currentRow := &secureValueDB{Name: newSecureValue.Name, Namespace: newSecureValue.Namespace}
+	var newRow *secureValueDB
 
-	read, err := s.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{})
-	if err != nil || read == nil {
-		return nil, fmt.Errorf("db failure: %w", err)
-	}
+	err := s.db.Transaction(ctx, func(ctx context.Context) error {
+		read, err := s.read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{ForUpdate: true})
+		if err != nil {
+			return fmt.Errorf("reading secure value: %w", err)
+		}
 
-	newRow, err := toUpdateRow(currentRow, newSecureValue, actorUID, currentRow.ExternalID)
-	if err != nil {
-		return nil, fmt.Errorf("to update row: %w", err)
-	}
+		// TODO: Confirm the ExternalID should come from the read model.
+		var updateErr error
+		newRow, updateErr = toUpdateRow(&read, newSecureValue, actorUID, read.ExternalID)
+		if updateErr != nil {
+			return fmt.Errorf("model to update row: %w", updateErr)
+		}
 
-	err = s.db.Transaction(ctx, func(ctx context.Context) error {
 		if newRow.Keeper.Valid {
 			// Validate before updating that the new `keeper` exists.
 
@@ -164,7 +166,7 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 			SQLTemplate: sqltemplate.New(s.dialect),
 			Namespace:   newRow.Namespace,
 			Name:        newRow.Name,
-			Row:         nil,
+			Row:         newRow,
 		}
 
 		query, err := sqltemplate.Execute(sqlSecureValueUpdate, req)
@@ -332,9 +334,35 @@ func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xk
 }
 
 func (s *secureValueMetadataStorage) ReadForDecrypt(ctx context.Context, namespace xkube.Namespace, name string) (*contracts.DecryptSecureValue, error) {
-	row, err := s.read(ctx, namespace, name, contracts.ReadOpts{})
+	req := readSecureValueForDecrypt{
+		SQLTemplate: sqltemplate.New(s.dialect),
+		Namespace:   namespace.String(),
+		Name:        name,
+	}
+
+	query, err := sqltemplate.Execute(sqlSecureValueReadForDecrypt, req)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("execute template %q: %w", sqlSecureValueReadForDecrypt.Name(), err)
+	}
+
+	res, err := s.db.QueryContext(ctx, query, req.GetArgs()...)
+	if err != nil {
+		return nil, fmt.Errorf("reading row: %w", err)
+	}
+	defer func() { _ = res.Close() }()
+
+	var row secureValueForDecrypt
+	if !res.Next() {
+		return nil, contracts.ErrSecureValueNotFound
+	}
+	if err := res.Scan(
+		&row.Keeper, &row.Decrypters,
+		&row.Ref, &row.ExternalID); err != nil {
+		return nil, fmt.Errorf("failed to scan secure value row: %w", err)
+	}
+
+	if err := res.Err(); err != nil {
+		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
 	secureValue, err := row.toDecrypt()

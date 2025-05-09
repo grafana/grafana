@@ -2821,12 +2821,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Změnit motiv…",
+      "change-theme": "",
       "dark-theme": "Tmavý",
-      "light-theme": "Světlý"
+      "light-theme": "Světlý",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Nebyly nalezeny žádné výsledky"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Hledat nebo přejít na…"

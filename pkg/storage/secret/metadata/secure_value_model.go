@@ -83,7 +83,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 		resource.Spec.Keeper = &sv.Keeper.String
 	}
 	if sv.Ref.Valid {
-		resource.Spec.Ref = sv.Ref.String
+		resource.Spec.Ref = &sv.Ref.String
 	}
 	if sv.Message.Valid {
 		resource.Status.Message = sv.Message.String
@@ -200,11 +200,6 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		return nil, fmt.Errorf("failed to get resource version: %w", err)
 	}
 
-	var ref *string
-	if sv.Spec.Ref != "" {
-		ref = &sv.Spec.Ref
-	}
-
 	var statusMessage *string
 	if sv.Status.Message != "" {
 		statusMessage = &sv.Status.Message
@@ -227,13 +222,21 @@ func toRow(sv *secretv0alpha1.SecureValue, externalID string) (*secureValueDB, e
 		Description: sv.Spec.Description,
 		Keeper:      toNullString(sv.Spec.Keeper),
 		Decrypters:  toNullString(decrypters),
-		Ref:         toNullString(ref),
+		Ref:         toNullString(sv.Spec.Ref),
 		ExternalID:  externalID,
 	}, nil
 }
 
+// DTO for `secureValueForDecrypt` query result, only what we need.
+type secureValueForDecrypt struct {
+	Keeper     sql.NullString
+	Decrypters sql.NullString
+	Ref        sql.NullString
+	ExternalID string
+}
+
 // to Decrypt maps a DB row into a DecryptSecureValue object needed for decryption.
-func (sv *secureValueDB) toDecrypt() (*contracts.DecryptSecureValue, error) {
+func (sv *secureValueForDecrypt) toDecrypt() (*contracts.DecryptSecureValue, error) {
 	decrypters := make([]string, 0)
 	if sv.Decrypters.Valid && sv.Decrypters.String != "" {
 		if err := json.Unmarshal([]byte(sv.Decrypters.String), &decrypters); err != nil {

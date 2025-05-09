@@ -339,7 +339,7 @@ func newTestSecureValue(ctx context.Context, t *testing.T, db contracts.SecureVa
 	require.NoError(t, err)
 
 	// Since creating secrets is async, store the secret in the keeper synchronously to make testing easier
-	cfg, err := keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper)
+	cfg, err := keeperMetadataStorage.GetKeeperConfig(ctx, sv.Namespace, sv.Spec.Keeper, contracts.ReadOpts{})
 	require.NoError(t, err)
 
 	keeper, err := keeperService.KeeperForConfig(cfg)

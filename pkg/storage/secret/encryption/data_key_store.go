@@ -2,7 +2,6 @@ package encryption
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -13,22 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
-var (
-	ErrDataKeyNotFound = errors.New("data key not found")
-)
-
-// DataKeyStorage is the interface for wiring and dependency injection.
-type DataKeyStorage interface {
-	CreateDataKey(ctx context.Context, dataKey *SecretDataKey) error
-	GetDataKey(ctx context.Context, namespace, uid string) (*SecretDataKey, error)
-	GetCurrentDataKey(ctx context.Context, namespace, label string) (*SecretDataKey, error)
-	GetAllDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error)
-	DisableDataKeys(ctx context.Context, namespace string) error
-	DeleteDataKey(ctx context.Context, namespace, uid string) error
-
-	ReEncryptDataKeys(ctx context.Context, namespace string, providers encryption.ProviderMap, currProvider encryption.ProviderID) error
-}
-
 // encryptionStoreImpl is the actual implementation of the data key storage.
 type encryptionStoreImpl struct {
 	db      contracts.Database
@@ -36,7 +19,7 @@ type encryptionStoreImpl struct {
 	log     log.Logger
 }
 
-func ProvideDataKeyStorage(db contracts.Database, features featuremgmt.FeatureToggles) (DataKeyStorage, error) {
+func ProvideDataKeyStorage(db contracts.Database, features featuremgmt.FeatureToggles) (contracts.DataKeyStorage, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagGrafanaAPIServerWithExperimentalAPIs) ||
 		!features.IsEnabledGlobally(featuremgmt.FlagSecretsManagementAppPlatform) {
 		return &encryptionStoreImpl{}, nil
@@ -51,7 +34,7 @@ func ProvideDataKeyStorage(db contracts.Database, features featuremgmt.FeatureTo
 	return store, nil
 }
 
-func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid string) (*SecretDataKey, error) {
+func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid string) (*contracts.SecretDataKey, error) {
 	req := readDataKey{
 		SQLTemplate: sqltemplate.New(ss.dialect),
 		Namespace:   namespace,
@@ -70,7 +53,7 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 	defer func() { _ = res.Close() }()
 
 	if !res.Next() {
-		return nil, ErrDataKeyNotFound
+		return nil, contracts.ErrDataKeyNotFound
 	}
 
 	var dataKey SecretDataKey
@@ -91,10 +74,19 @@ func (ss *encryptionStoreImpl) GetDataKey(ctx context.Context, namespace, uid st
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
-	return &dataKey, nil
+	return &contracts.SecretDataKey{
+		UID:           dataKey.UID,
+		Namespace:     dataKey.Namespace,
+		Label:         dataKey.Label,
+		Provider:      dataKey.Provider,
+		EncryptedData: dataKey.EncryptedData,
+		Active:        dataKey.Active,
+		Created:       dataKey.Created,
+		Updated:       dataKey.Updated,
+	}, nil
 }
 
-func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*SecretDataKey, error) {
+func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace, label string) (*contracts.SecretDataKey, error) {
 	req := readCurrentDataKey{
 		SQLTemplate: sqltemplate.New(ss.dialect),
 		Namespace:   namespace,
@@ -113,7 +105,7 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 	defer func() { _ = res.Close() }()
 
 	if !res.Next() {
-		return nil, ErrDataKeyNotFound
+		return nil, contracts.ErrDataKeyNotFound
 	}
 
 	var dataKey SecretDataKey
@@ -134,10 +126,19 @@ func (ss *encryptionStoreImpl) GetCurrentDataKey(ctx context.Context, namespace,
 		return nil, fmt.Errorf("read rows error: %w", err)
 	}
 
-	return &dataKey, nil
+	return &contracts.SecretDataKey{
+		UID:           dataKey.UID,
+		Namespace:     dataKey.Namespace,
+		Label:         dataKey.Label,
+		Provider:      dataKey.Provider,
+		EncryptedData: dataKey.EncryptedData,
+		Active:        dataKey.Active,
+		Created:       dataKey.Created,
+		Updated:       dataKey.Updated,
+	}, nil
 }
 
-func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*SecretDataKey, error) {
+func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace string) ([]*contracts.SecretDataKey, error) {
 	req := listDataKeys{
 		SQLTemplate: sqltemplate.New(ss.dialect),
 		Namespace:   namespace,
@@ -154,7 +155,7 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 	}
 	defer func() { _ = rows.Close() }()
 
-	dataKeys := make([]*SecretDataKey, 0)
+	dataKeys := make([]*contracts.SecretDataKey, 0)
 	for rows.Next() {
 		var row SecretDataKey
 		err = rows.Scan(
@@ -171,7 +172,16 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 			return nil, fmt.Errorf("error reading data key row: %w", err)
 		}
 
-		dataKeys = append(dataKeys, &row)
+		dataKeys = append(dataKeys, &contracts.SecretDataKey{
+			UID:           row.UID,
+			Namespace:     row.Namespace,
+			Label:         row.Label,
+			Provider:      row.Provider,
+			EncryptedData: row.EncryptedData,
+			Active:        row.Active,
+			Created:       row.Created,
+			Updated:       row.Updated,
+		})
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("read rows error: %w", err)
@@ -180,7 +190,7 @@ func (ss *encryptionStoreImpl) GetAllDataKeys(ctx context.Context, namespace str
 	return dataKeys, nil
 }
 
-func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *SecretDataKey) error {
+func (ss *encryptionStoreImpl) CreateDataKey(ctx context.Context, dataKey *contracts.SecretDataKey) error {
 	if !dataKey.Active {
 		return fmt.Errorf("cannot insert deactivated data keys")
 	}

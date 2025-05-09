@@ -2821,12 +2821,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Изменить тему...",
+      "change-theme": "",
       "dark-theme": "Темная",
-      "light-theme": "Светлая"
+      "light-theme": "Светлая",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Результаты не найдены"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Поиск или переход к..."

@@ -2785,12 +2785,17 @@
   },
   "command-palette": {
     "action": {
-      "change-theme": "Téma módosítása...",
+      "change-theme": "",
       "dark-theme": "Sötét",
-      "light-theme": "Világos"
+      "light-theme": "Világos",
+      "scopes": ""
     },
     "empty-state": {
       "message": "Nincs eredmény"
+    },
+    "scopes": {
+      "apply-selected-scopes": "",
+      "selected-scopes-label": ""
     },
     "search-box": {
       "placeholder": "Keresés vagy ugrás ide:"

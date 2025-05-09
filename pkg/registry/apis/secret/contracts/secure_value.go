@@ -21,6 +21,10 @@ var (
 	ErrSecureValueOperationInProgress = errors.New("an operation is already in progress for the secure value")
 )
 
+type ReadOpts struct {
+	ForUpdate bool
+}
+
 // SecureValueMetadataStorage is the interface for wiring and dependency injection.
 type SecureValueMetadataStorage interface {
 	Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error)
