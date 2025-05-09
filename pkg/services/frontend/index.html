@@ -55,7 +55,7 @@
 
       function _log(message) {
         performance.mark(message);
-        console.log(message);
+        console.log(`[index.html] ${message}`);
       }
 
       window.__grafana_load_failed = function(...args) {

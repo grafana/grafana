@@ -1,1 +1,1 @@
-console.log('app.ts topOfTheFileSideEffect');
+console.log('app.ts first side effect');
