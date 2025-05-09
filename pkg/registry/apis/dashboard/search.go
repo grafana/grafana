@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"go.opentelemetry.io/otel/trace"
+	"google.golang.org/grpc/metadata"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/kube-openapi/pkg/common"
@@ -361,6 +362,8 @@ func (s *SearchHandler) DoSearch(w http.ResponseWriter, r *http.Request) {
 		}}
 		searchRequest.Options.Fields = append(searchRequest.Options.Fields, namesFilter...)
 	}
+
+	ctx = metadata.AppendToOutgoingContext(ctx, "namespace", searchRequest.Options.Key.Namespace)
 
 	result, err := s.client.Search(ctx, searchRequest)
 	if err != nil {
