@@ -96,6 +96,7 @@ func (p *IndexProvider) HandleRequest(writer http.ResponseWriter, request *http.
 
 	if data.CSPEnabled {
 		data.CSPContent = middleware.ReplacePolicyVariables(p.data.CSPContent, p.data.AppSubUrl, data.Nonce)
+		writer.Header().Set("Content-Security-Policy", data.CSPContent)
 	}
 
 	// TODO: moved to request handler to prevent stale assets during dev,
