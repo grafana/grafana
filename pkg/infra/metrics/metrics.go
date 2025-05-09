@@ -580,7 +580,7 @@ func init() {
 		Namespace: ExporterName,
 	}, []string{"plugin_id", "target"})
 
-	// TODO: provisioned vs non-provisioned
+	// TODO: loading strategy?
 	grafanaPluginLoadInfoDesc = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "plugin_load_info",
 		Help:      "A metric with a constant '1' value labeled by pluginId, version, type and loading method",
