@@ -112,6 +112,7 @@ import { configureStore } from './store/configureStore';
 // import symlinked extensions
 const extensionsIndex = require.context('.', true, /extensions\/index.ts/);
 const extensionsExports = extensionsIndex.keys().map((key) => {
+  console.log('Importing extension', key);
   return extensionsIndex(key);
 });
 
