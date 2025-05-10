@@ -241,7 +241,7 @@ func (b *QueryAPIBuilder) handleQuerySingleDatasource(ctx context.Context, req d
 		return &backend.QueryDataResponse{}, nil
 	}
 
-	client, err := b.client.GetDataSourceClient(
+	client, err := b.clientSupplier.GetDataSourceClient(
 		ctx,
 		v0alpha1.DataSourceRef{
 			Type: req.PluginId,
