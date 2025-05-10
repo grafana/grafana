@@ -134,7 +134,13 @@ Next, we'll explain how to build and run the web server that serves these fronte
 
 ### Backend
 
-Build and run the backend by running `make run` in the root directory of the repository. This command compiles the Go source code and starts a web server.
+Build and run the backend by running
+
+```
+make run
+```
+
+in the root directory of the repository. This command compiles the Go source code and starts a web server.
 
 > **Troubleshooting:** Are you having problems with [too many open files](#troubleshooting)?
 
