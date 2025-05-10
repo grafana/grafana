@@ -113,6 +113,7 @@ export function createSpanLinkFactory({
             field: link.origin,
             type: shouldCreatePyroscopeLink ? SpanLinkType.Profiles : SpanLinkType.Unknown,
             target: link.target,
+            resourceAttributes: link.resourceAttributes,
           };
         });
 

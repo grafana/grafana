@@ -226,7 +226,6 @@ export function TraceView(props: Props) {
             detailToggle={toggleDetail}
             addHoverIndentGuideId={addHoverIndentGuideId}
             removeHoverIndentGuideId={removeHoverIndentGuideId}
-            linksGetter={() => []}
             createSpanLink={createSpanLink}
             scrollElement={scrollElement}
             focusedSpanId={focusedSpanId}

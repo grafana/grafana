@@ -16,16 +16,7 @@ import { css } from '@emotion/css';
 import { SpanStatusCode } from '@opentelemetry/api';
 import cx from 'classnames';
 
-import {
-  CoreApp,
-  DataFrame,
-  dateTimeFormat,
-  GrafanaTheme2,
-  LinkModel,
-  TimeRange,
-  TraceKeyValuePair,
-  TraceLog,
-} from '@grafana/data';
+import { CoreApp, DataFrame, dateTimeFormat, GrafanaTheme2, LinkModel, TimeRange, TraceLog } from '@grafana/data';
 import { TraceToProfilesOptions } from '@grafana/o11y-ds-frontend';
 import { TimeZone } from '@grafana/schema';
 import { Divider, Icon, TextArea, useStyles2 } from '@grafana/ui';
@@ -35,8 +26,8 @@ import { pyroscopeProfileIdTagKey } from '../../../createSpanLink';
 import { autoColor } from '../../Theme';
 import LabeledList from '../../common/LabeledList';
 import { KIND, LIBRARY_NAME, LIBRARY_VERSION, STATUS, STATUS_MESSAGE, TRACE_STATE } from '../../constants/span';
-import { SpanLinkFunc, TNil } from '../../types';
-import { TraceLink, TraceSpan, TraceSpanReference } from '../../types/trace';
+import { SpanLinkFunc } from '../../types';
+import { TraceSpan, TraceSpanReference } from '../../types/trace';
 import { formatDuration } from '../utils';
 
 import AccordianKeyValues from './AccordianKeyValues';
@@ -145,7 +136,6 @@ export type TraceFlameGraphs = {
 
 export type SpanDetailProps = {
   detailState: DetailState;
-  linksGetter: ((links: TraceKeyValuePair[], index: number) => TraceLink[]) | TNil;
   logItemToggle: (spanID: string, log: TraceLog) => void;
   logsToggle: (spanID: string) => void;
   processToggle: (spanID: string) => void;
@@ -174,7 +164,6 @@ export type SpanDetailProps = {
 export default function SpanDetail(props: SpanDetailProps) {
   const {
     detailState,
-    linksGetter,
     logItemToggle,
     logsToggle,
     processToggle,
@@ -292,9 +281,10 @@ export default function SpanDetail(props: SpanDetailProps) {
     });
   }
 
+  const spanLinks = createSpanLink?.(span) ?? [];
   const linksComponent = getSpanDetailLinkButtons({
     span,
-    createSpanLink,
+    spanLinks,
     datasourceType,
     traceToProfilesOptions,
     timeRange,
@@ -319,7 +309,6 @@ export default function SpanDetail(props: SpanDetailProps) {
           <AccordianKeyValues
             data={tags}
             label={t('explore.span-detail.label-span-attributes', 'Span attributes')}
-            linksGetter={linksGetter}
             isOpen={isTagsOpen}
             onToggle={() => tagsToggle(spanID)}
           />
@@ -328,15 +317,14 @@ export default function SpanDetail(props: SpanDetailProps) {
               className={styles.AccordianKeyValuesItem}
               data={process.tags}
               label={t('explore.span-detail.label-resource-attributes', 'Resource attributes')}
-              linksGetter={linksGetter}
               isOpen={isProcessOpen}
               onToggle={() => processToggle(spanID)}
+              links={spanLinks}
             />
           )}
         </div>
         {logs && logs.length > 0 && (
           <AccordianLogs
-            linksGetter={linksGetter}
             logs={logs}
             isOpen={logsState.isOpen}
             openedItems={logsState.openedItems}

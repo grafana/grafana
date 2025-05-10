@@ -30,10 +30,10 @@ describe('getSpanDetailLinkButtons', () => {
     jest.clearAllMocks();
   });
 
-  it('should return empty buttons when createSpanLink is not provided', () => {
+  it('should return empty buttons when spanLinks array is empty', () => {
     const result = getSpanDetailLinkButtons({
       span,
-      createSpanLink: undefined,
+      spanLinks: [],
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
@@ -46,9 +46,10 @@ describe('getSpanDetailLinkButtons', () => {
   it('should create log link button when logs link exists', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Logs, href: '/logs', title: 'Logs' }]);
 
+    const spanLinks = createSpanLink(span);
     const result = getSpanDetailLinkButtons({
       span,
-      createSpanLink,
+      spanLinks,
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
@@ -62,9 +63,10 @@ describe('getSpanDetailLinkButtons', () => {
   it('should create profile link button when profiles link exists', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Profiles, href: '/profiles', title: RelatedProfilesTitle }]);
 
+    const spanLinks = createSpanLink(span);
     const result = getSpanDetailLinkButtons({
       span,
-      createSpanLink,
+      spanLinks,
       datasourceType: 'test',
       traceToProfilesOptions: {
         datasourceUid: 'test-uid',
@@ -82,9 +84,10 @@ describe('getSpanDetailLinkButtons', () => {
   it('should create session link button when session link exists', () => {
     createSpanLink.mockReturnValue([{ type: SpanLinkType.Session, href: '/session', title: 'Session' }]);
 
+    const spanLinks = createSpanLink(span);
     const result = getSpanDetailLinkButtons({
       span,
-      createSpanLink,
+      spanLinks,
       datasourceType: 'test',
       traceToProfilesOptions: undefined,
       timeRange,
@@ -108,9 +111,10 @@ describe('getSpanDetailLinkButtons', () => {
       ],
     });
 
+    const spanLinks = createSpanLink(span);
     const result = getSpanDetailLinkButtons({
       span,
-      createSpanLink,
+      spanLinks,
       datasourceType: 'test',
       traceToProfilesOptions: {
         datasourceUid: 'test-uid',
@@ -139,9 +143,10 @@ describe('getSpanDetailLinkButtons', () => {
       ],
     });
 
+    const spanLinks = createSpanLink(span);
     const result = getSpanDetailLinkButtons({
       span,
-      createSpanLink,
+      spanLinks,
       datasourceType: 'test',
       traceToProfilesOptions: {
         datasourceUid: 'test-uid',

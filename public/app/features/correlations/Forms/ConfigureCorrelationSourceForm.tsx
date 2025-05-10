@@ -62,7 +62,7 @@ export const ConfigureCorrelationSourceForm = () => {
 
   const currentTargetQuery = getValues('config.target');
   const currentType = getValues('type');
-  const variables = getVariableUsageInfo(currentTargetQuery, {}).variables.map(
+  const variables = getVariableUsageInfo(currentTargetQuery, {}).uniqVariables.map(
     (variable) => variable.variableName + (variable.fieldPath ? `.${variable.fieldPath}` : '')
   );
   const dataSourceName = getDatasourceSrv().getInstanceSettings(getValues('targetUID'))?.name;
