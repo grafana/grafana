@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Kürzlich gelöscht"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Dieser Ordner ist leer"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Variablen-Editor öffnen",
         "open-editor-tooltip": "Öffnen Sie den Variablen-Editor für weitere Variablenoptionen",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Benutzerdefinierte Werte zulassen",
           "allow-custom-values-description": "Ermöglicht Nutzern die Eingabe von Werten",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Abfrageoptionen",
       "selection-options": "Auswahloptionen"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Sind Sie sicher, dass Sie das Dashboard auf die Version {{version}} zurücksetzen möchten? Alle nicht gespeicherten Änderungen gehen verloren.",
@@ -5362,9 +5374,6 @@
     "description": "Die von Ihnen vorgenommenen Änderungen werden möglicherweise nicht gespeichert.",
     "discard-button": "Nicht gespeicherte Änderungen verwerfen",
     "title": "Seite verlassen?"
-  },
-  "frontendtests": {
-    "test-key": "Test-Key nicht gefunden"
   },
   "gen-ai": {
     "apply-suggestion": "Anwenden",

@@ -2786,6 +2786,10 @@
     "actions": {
       "button-to-recently-deleted": "최근에 삭제됨"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "이 폴더는 비어 있습니다"
     },
@@ -3397,6 +3401,11 @@
         "name": "",
         "open-editor": "변수 편집기 열기",
         "open-editor-tooltip": "더 많은 변수 옵션을 보려면 변수 편집기를 여세요",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "사용자 지정 값 허용",
           "allow-custom-values-description": "사용자가 값을 입력할 수 있도록 활성화합니다",
@@ -4217,6 +4226,9 @@
       "label-data-source": "",
       "query-options": "쿼리 옵션",
       "selection-options": "선택 옵션"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "정말 대시보드를 {{version}} 버전으로 복원하시겠어요? 저장하지 않은 변경 사항은 모두 손실됩니다.",
@@ -5341,9 +5353,6 @@
     "description": "변경한 내용이 저장되지 않을 수 있습니다.",
     "discard-button": "저장되지 않은 변경 사항 삭제",
     "title": "페이지에서 나가시겠어요?"
-  },
-  "frontendtests": {
-    "test-key": "테스트-키를 찾을 수 없습니다"
   },
   "gen-ai": {
     "apply-suggestion": "적용",

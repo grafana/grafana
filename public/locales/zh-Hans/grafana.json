@@ -2786,6 +2786,10 @@
     "actions": {
       "button-to-recently-deleted": "最近删除"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "此文件夹为空"
     },
@@ -3397,6 +3401,11 @@
         "name": "",
         "open-editor": "打开变量编辑器",
         "open-editor-tooltip": "如需更多变量选项，请打开变量编辑器",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "允许自定义值",
           "allow-custom-values-description": "允许用户输入值",
@@ -4217,6 +4226,9 @@
       "label-data-source": "",
       "query-options": "查询选项",
       "selection-options": "选择内容选项"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
@@ -5341,9 +5353,6 @@
     "description": "您所做的更改可能无法保存。",
     "discard-button": "丢弃未保存的更改",
     "title": "离开页面？"
-  },
-  "frontendtests": {
-    "test-key": "未找到测试密钥"
   },
   "gen-ai": {
     "apply-suggestion": "应用",

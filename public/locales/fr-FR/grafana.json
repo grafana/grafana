@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Récemment supprimé"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Ce dossier est vide"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Ouvrir l’éditeur de variables",
         "open-editor-tooltip": "Pour plus d’options de variables, ouvrez l’éditeur de variables",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Permettra des valeurs personnalisées",
           "allow-custom-values-description": "Permet aux utilisateurs de saisir des valeurs",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Options de recherche",
       "selection-options": "Options de sélection"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
@@ -5362,9 +5374,6 @@
     "description": "Les modifications que vous avez apportées peuvent ne pas être enregistrées.",
     "discard-button": "Abandonner les modifications non enregistrées",
     "title": "Quitter la page ?"
-  },
-  "frontendtests": {
-    "test-key": "clé de test introuvable"
   },
   "gen-ai": {
     "apply-suggestion": "Appliquer",

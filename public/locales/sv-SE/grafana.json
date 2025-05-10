@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Nyligen raderat"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Denna mapp är tom"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Öppna variabelredigerare",
         "open-editor-tooltip": "För fler variabelalternativ öppna variabelredigeraren",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Tillåt anpassade värden",
           "allow-custom-values-description": "Gör det möjligt för användare att ange värden",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Frågealternativ",
       "selection-options": "Urvalsalternativ"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Är du säker på att du vill återställa instrumentpanelen till version {{version}}? Alla ändringar som inte sparats kommer att gå förlorade.",
@@ -5362,9 +5374,6 @@
     "description": "Ändringar du gjort sparades kanske inte.",
     "discard-button": "Ignorera osparade ändringar",
     "title": "Lämna sidan?"
-  },
-  "frontendtests": {
-    "test-key": "testnyckeln hittades inte"
   },
   "gen-ai": {
     "apply-suggestion": "Tillämpa",

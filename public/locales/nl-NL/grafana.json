@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Onlangs verwijderd"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Deze map is leeg"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Open variabelebewerker",
         "open-editor-tooltip": "Open de variabelebewerker voor meer opties voor variabelen",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Aangepaste waarden toestaan",
           "allow-custom-values-description": "Stelt gebruikers in staat om waarden in te voeren",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Opties voor query's",
       "selection-options": "Selectiemogelijkheden"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Weet je zeker dat je het dashboard naar versie {{version}} wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
@@ -5362,9 +5374,6 @@
     "description": "Wijzigingen die je hebt aangebracht, worden mogelijk niet opgeslagen.",
     "discard-button": "Niet-opgeslagen wijzigingen verwijderen",
     "title": "Pagina verlaten?"
-  },
-  "frontendtests": {
-    "test-key": "testsleutel niet gevonden"
   },
   "gen-ai": {
     "apply-suggestion": "Toepassen",

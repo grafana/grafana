@@ -2825,6 +2825,10 @@
     "actions": {
       "button-to-recently-deleted": "Последние удаленные"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Папка пуста"
     },
@@ -3451,6 +3455,11 @@
         "name": "",
         "open-editor": "Открыть редактор переменных",
         "open-editor-tooltip": "Для получения дополнительных параметров переменных откройте редактор переменных",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Разрешить пользовательские значения",
           "allow-custom-values-description": "Позволяет пользователям вводить значения.",
@@ -4277,6 +4286,9 @@
       "label-data-source": "",
       "query-options": "Параметры запросов",
       "selection-options": "Параметры выбора"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
@@ -5404,9 +5416,6 @@
     "description": "Внесенные вами изменения не могут быть сохранены.",
     "discard-button": "Отменить несохраненные изменения",
     "title": "Покинуть страницу?"
-  },
-  "frontendtests": {
-    "test-key": "проверочный ключ не найден"
   },
   "gen-ai": {
     "apply-suggestion": "Применить",

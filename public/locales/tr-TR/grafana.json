@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Son silinenler"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Klasör boş"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Değişken düzenleyicisini aç",
         "open-editor-tooltip": "Daha fazla değişken seçeneği için değişken düzenleyicisini açın",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Özel değer girişine izin ver",
           "allow-custom-values-description": "Kullanıcıların değer girmesine izin verir",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Sorgu seçenekleri",
       "selection-options": "Seçim ayarları"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Panoyu {{version}} sürümüne geri yüklemek istediğinize emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
@@ -5362,9 +5374,6 @@
     "description": "Yaptığınız değişiklikler kaydedilmemiş olabilir.",
     "discard-button": "Kaydedilmemiş değişiklikleri at",
     "title": "Sayfadan ayrılmak mı istiyorsunuz?"
-  },
-  "frontendtests": {
-    "test-key": "test-key bulunamadı"
   },
   "gen-ai": {
     "apply-suggestion": "Uygula",
