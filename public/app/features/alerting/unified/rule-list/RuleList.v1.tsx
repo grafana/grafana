@@ -187,7 +187,7 @@ export function CreateAlertButton() {
 }
 
 function ExportNewRuleButton() {
-  const returnTo = location.pathname + location.search;
+  const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(`/alerting/export-new-rule`, {
     returnTo,
   });

@@ -107,13 +107,13 @@ function OpenLinkButton(props: LinkButtonProps) {
   const { urlLink, label, urlLinkOnDone, labelOnDone, done } = props;
   const urlToGoWhenNotDone = urlLink?.url
     ? createRelativeUrl(urlLink.url, {
-        returnTo: location.pathname + location.search,
+        returnTo: window.location.pathname + window.location.search,
         ...urlLink.queryParams,
       })
     : '';
   const urlToGoWhenDone = urlLinkOnDone?.url
     ? createRelativeUrl(urlLinkOnDone.url, {
-        returnTo: location.pathname + location.search,
+        returnTo: window.location.pathname + window.location.search,
         ...urlLinkOnDone.queryParams,
       })
     : '';

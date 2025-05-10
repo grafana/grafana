@@ -12,7 +12,7 @@ import { trackAddNewDsClicked } from '../tracking';
 export function DataSourceAddButton(): JSX.Element | null {
   const canCreateDataSource = contextSrv.hasPermission(AccessControlAction.DataSourcesCreate);
   const handleClick = useCallback(() => {
-    trackAddNewDsClicked({ path: location.pathname });
+    trackAddNewDsClicked({ path: window.location.pathname });
   }, []);
 
   return canCreateDataSource ? (
