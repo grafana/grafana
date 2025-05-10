@@ -27,7 +27,6 @@ import (
 	"github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/log"
-	"github.com/grafana/grafana/pkg/infra/metrics"
 	"github.com/grafana/grafana/pkg/infra/serverlock"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -122,6 +121,7 @@ func ProvideService(
 	restConfigProvider RestConfigProvider,
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
+	reg prometheus.Registerer,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -137,7 +137,7 @@ func ProvideService(
 		authorizer:                        authorizer.NewGrafanaAuthorizer(cfg),
 		tracing:                           tracing,
 		db:                                db, // For Unified storage
-		metrics:                           metrics.ProvideRegisterer(),
+		metrics:                           reg,
 		kvStore:                           kvStore,
 		pluginClient:                      pluginClient,
 		datasources:                       datasources,
