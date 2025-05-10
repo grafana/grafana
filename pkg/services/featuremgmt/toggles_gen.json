@@ -385,7 +385,8 @@
       "metadata": {
         "name": "alertmanagerRemoteOnly",
         "resourceVersion": "1743693517832",
-        "creationTimestamp": "2023-10-30T16:27:08Z"
+        "creationTimestamp": "2023-10-30T16:27:08Z",
+        "deletionTimestamp": "2025-05-09T12:58:01Z"
       },
       "spec": {
         "description": "Disable the internal Alertmanager and only use the external one defined.",

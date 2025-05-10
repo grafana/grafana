@@ -9,7 +9,6 @@ import (
 const (
 	ModeRemoteSecondary = "remote_secondary"
 	ModeRemotePrimary   = "remote_primary"
-	ModeRemoteOnly      = "remote_only"
 )
 
 type RemoteAlertmanager struct {

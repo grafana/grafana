@@ -371,10 +371,6 @@ export interface FeatureToggles {
   */
   alertmanagerRemotePrimary?: boolean;
   /**
-  * Disable the internal Alertmanager and only use the external one defined.
-  */
-  alertmanagerRemoteOnly?: boolean;
-  /**
   * Change the way annotation permissions work by scoping them to folders and dashboards.
   * @default true
   */
