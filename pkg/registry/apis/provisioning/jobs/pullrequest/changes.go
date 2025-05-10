@@ -142,7 +142,9 @@ func (e *evaluator) evaluateFile(ctx context.Context, repo repository.Reader, ba
 
 		// Load this file directly
 		info.PreviewURL = baseURL + path.Join("admin/provisioning",
-			info.Parsed.Repo.Name, "dashboard/preview", info.Parsed.Info.Path)
+			info.Parsed.Repo.Name, "dashboard/preview",
+			strings.ReplaceAll(info.Parsed.Info.Path, " ", "+"), // Escape space
+		)
 
 		query := url.Values{}
 		query.Set("ref", info.Parsed.Info.Ref)
