@@ -178,6 +178,7 @@ export const calculateCoordinates = (
   let x2: number;
   let y2: number;
   const targetRect = target.div?.getBoundingClientRect();
+
   if (info.targetName && targetRect) {
     const targetHorizontalCenter = targetRect.left - parentRect.left + targetRect.width / 2;
     const targetVerticalCenter = targetRect.top - parentRect.top + targetRect.height / 2;
@@ -191,8 +192,9 @@ export const calculateCoordinates = (
     x2 = parentHorizontalCenter + (info.target.x * parentRect.width) / 2;
     y2 = parentVerticalCenter - (info.target.y * parentRect.height) / 2;
   }
-  x2 /= transformScale;
-  y2 /= transformScale;
+
+  // x2 /= transformScale;
+  // y2 /= transformScale;
 
   // TODO look into a better way to avoid division by zero
   if (x2 - x1 === 0) {
@@ -202,6 +204,59 @@ export const calculateCoordinates = (
     y2 += 1;
   }
   return { x1, y1, x2, y2 };
+};
+
+export const calculateCoordinates2 = (source: ElementState, target: ElementState, info: CanvasConnection) => {
+  const sourceDiv = source.div;
+  const { left, top, width, height } = getElementTransformAndDimensions(sourceDiv!);
+  const sourceHorizontalCenter = left + width / 2;
+  const sourceVerticalCenter = top + height / 2;
+  const x1 = sourceHorizontalCenter + (info.source.x * width) / 2;
+  const y1 = sourceVerticalCenter - (info.source.y * height) / 2;
+
+  let x2 = 0;
+  let y2 = 0;
+  const targetDiv = target.div;
+  if (info.targetName && targetDiv) {
+    // calculate closed connection x2, y2
+    const { left, top, width, height } = getElementTransformAndDimensions(targetDiv);
+    const targetHorizontalCenter = left + width / 2;
+    const targetVerticalCenter = top + height / 2;
+    x2 = targetHorizontalCenter + (info.target.x * width) / 2;
+    y2 = targetVerticalCenter - (info.target.y * height) / 2;
+  } else {
+    // calculate open connection x2, y2
+    x2 = info.target.x;
+    y2 = info.target.y;
+  }
+
+  return { x1, y1, x2, y2 };
+};
+
+export const getElementTransformAndDimensions = (element: HTMLElement) => {
+  const style = window.getComputedStyle(element);
+
+  const transform = style.transform;
+
+  // Initialize x and y
+  let x = 0;
+  let y = 0;
+
+  if (transform !== 'none') {
+    // Use DOMMatrix to parse the transform string
+    const matrix = new DOMMatrix(transform);
+
+    // Extract x and y values
+    x = matrix.m41;
+    y = matrix.m42;
+  }
+
+  // Get the width and height of the element
+  // TODO: there sould be a better way than parseFloat
+  const width = parseFloat(style.width);
+  const height = parseFloat(style.height);
+
+  return { left: x, top: y, width, height, x, y };
 };
 
 export const calculateMidpoint = (x1: number, y1: number, x2: number, y2: number) => {
@@ -273,25 +328,31 @@ const getLineStyle = (lineStyle?: LineStyle) => {
 
 export const getParentBoundingClientRect = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
-    const transformRef = scene.transformComponentRef?.current;
-    return transformRef?.instance.contentComponent?.getBoundingClientRect();
+    // const transformRef = scene.transformComponentRef?.current;
+    const transformRef = scene.viewportDiv;
+    // return transformRef?.instance.contentComponent?.getBoundingClientRect();
+    return transformRef?.getBoundingClientRect();
   }
 
-  return scene.div?.getBoundingClientRect();
+  // return scene.div?.getBoundingClientRect();
+  return scene.viewportDiv?.getBoundingClientRect();
 };
 
 export const getTransformInstance = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
-    return scene.transformComponentRef?.current?.instance;
+    // return scene.transformComponentRef?.current?.instance;
+    return scene.viewportDiv;
   }
   return undefined;
 };
 
 export const getParent = (scene: Scene) => {
   if (config.featureToggles.canvasPanelPanZoom) {
-    return scene.transformComponentRef?.current?.instance.contentComponent;
+    // return scene.transformComponentRef?.current?.instance.contentComponent;
+    return scene.viewportDiv;
   }
-  return scene.div;
+  // return scene.div;
+  return scene.viewportDiv;
 };
 
 export function getElementFields(frames: DataFrame[], opts: CanvasElementOptions) {
