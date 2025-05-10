@@ -15,13 +15,16 @@ export default function AutoCell({ value, field, justifyContent, rowIdx, cellOpt
 
   const displayValue = field.display!(value);
   const formattedValue = formattedValueToString(displayValue);
-  const hasLinks = Boolean(getCellLinks(field, rowIdx)?.length);
+  const cellLinks = getCellLinks(field, rowIdx);
+  const hasLinks = cellLinks?.some((link) => link.href || link.onClick != null);
   const clearButtonStyle = useStyles2(clearLinkButtonStyles);
 
   return (
     <div className={styles.cell}>
       {hasLinks ? (
-        <DataLinksContextMenu links={() => getCellLinks(field, rowIdx) || []}>
+        <DataLinksContextMenu
+          links={() => getCellLinks(field, rowIdx)?.filter((link) => link.href || link.onClick != null) || []}
+        >
           {(api) => {
             if (api.openMenu) {
               return (
