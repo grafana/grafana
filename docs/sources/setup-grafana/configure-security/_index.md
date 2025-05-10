@@ -45,6 +45,32 @@ Self-hosted reverse proxy options include but are not limited to:
 - [NGINX](https://docs.nginx.com/nginx/) using their [guide on restricting access with HTTP basic authentication](https://docs.nginx.com/nginx/admin-guide/security-controls/configuring-http-basic-authentication/)
 - [OAuth2 proxy](https://github.com/oauth2-proxy/oauth2-proxy)
 
+### Configure CORS
+
+You can use the `[server.custom_response_headers]` configuration option in your `grafana.ini` or `custom.ini` file to enable CORS in Grafana.
+
+{{< admonition type="warning" >}}
+If you enable CORS via the `grafana.ini` or `custom.ini` file, you enable CORS for the _entire_ Grafana instance.
+{{< /admonition >}}
+
+1. In the `grafana.ini` or `custom.ini` file, add your desired headers to `[server.custom_response_headers]`:
+
+   ```ini
+   [server.custom_response_headers]
+   Access-Control-Allow-Origin = https://<YOUR_URL>.com
+   Access-Control-Allow-Methods = GET, POST
+   ```
+
+   {{< admonition type="note" >}}
+   Grafana doesn't recommend using wildcard values (`*`) as header values and recommends using a URL instead.
+   {{< /admonition >}}
+
+1. Restart Grafana.
+
+You can't use the `[server.custom_response_headers]` configuration option to enable CORS for specific sub-paths or endpoints. For more granular control of CORS, run Grafana behind a reverse proxy and configure the CORS headers in the reverse proxy for specific endpoints, such as `/api/`.
+
+For more information, refer to [Run Grafana behind a reverse proxy](https://grafana.com/tutorials/run-grafana-behind-a-proxy/).
+
 ## Limit Viewer query permissions
 
 Users with the `Viewer role` can enter _any possible query_ in _any_ of the data sources available in the **organization**, not just the queries that are defined on the dashboards for which the user has Viewer permissions.
