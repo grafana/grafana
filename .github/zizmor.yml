@@ -29,3 +29,4 @@ rules:
       - pr-commands.yml
       - pr-patch-check-event.yml
       - run-dashboard-search-e2e.yml
+      - create-security-patch-from-security-mirror.yml
