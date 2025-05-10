@@ -70,9 +70,17 @@ func ProvideService(
 		features:        features,
 		updateChecker:   updateChecker,
 	}
+
+	if len(cfg.LegacyInstallPlugins) > 0 {
+		err := s.installPluginsWithTimeout(cfg.LegacyInstallPlugins)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	if !cfg.PreinstallPluginsAsync {
 		// Block initialization process until plugins are installed
-		err := s.installPluginsWithTimeout()
+		err := s.installPluginsWithTimeout(cfg.PreinstallPlugins)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +94,7 @@ func (s *Service) IsDisabled() bool {
 		!s.cfg.PreinstallPluginsAsync
 }
 
-func (s *Service) installPluginsWithTimeout() error {
+func (s *Service) installPluginsWithTimeout(pluginsToInstall []setting.InstallPlugin) error {
 	// Installation process does not timeout by default nor reuses the context
 	// passed to the request so we need to handle the timeout here.
 	// We could make this timeout configurable in the future.
@@ -94,7 +102,7 @@ func (s *Service) installPluginsWithTimeout() error {
 	defer cancel()
 	done := make(chan struct{ err error })
 	go func() {
-		done <- struct{ err error }{err: s.installPlugins(ctx)}
+		done <- struct{ err error }{err: s.installPlugins(ctx, pluginsToInstall)}
 	}()
 	select {
 	case <-ctx.Done():
@@ -114,8 +122,8 @@ func (s *Service) shouldUpdate(ctx context.Context, pluginID, currentVersion str
 	return s.updateChecker.CanUpdate(pluginID, currentVersion, info.Version, true)
 }
 
-func (s *Service) installPlugins(ctx context.Context) error {
-	for _, installPlugin := range s.cfg.PreinstallPlugins {
+func (s *Service) installPlugins(ctx context.Context, pluginsToInstall []setting.InstallPlugin) error {
+	for _, installPlugin := range pluginsToInstall {
 		// Check if the plugin is already installed
 		p, exists := s.pluginStore.Plugin(ctx, installPlugin.ID)
 		if exists {
@@ -165,7 +173,7 @@ func (s *Service) installPlugins(ctx context.Context) error {
 }
 
 func (s *Service) Run(ctx context.Context) error {
-	err := s.installPlugins(ctx)
+	err := s.installPlugins(ctx, s.cfg.PreinstallPlugins)
 	if err != nil {
 		// Unexpected error, asynchronous installation should not return errors
 		s.log.Error("Failed to install plugins", "error", err)
