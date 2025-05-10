@@ -95,7 +95,7 @@ function GrafanaModifyExportPage() {
     <AlertingPageWrapper
       navId="alert-list"
       pageNav={{
-        text: 'Modify export',
+        text: t('alerting.grafana-modify-export-page.text.modify-export', 'Modify export'),
         subTitle:
           'Modify the current alert rule and export the rule definition in the format of your choice. Any changes you make will not be saved.',
       }}

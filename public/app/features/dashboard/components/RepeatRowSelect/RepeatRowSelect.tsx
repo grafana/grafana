@@ -3,6 +3,7 @@ import { useCallback, useMemo } from 'react';
 import { SelectableValue } from '@grafana/data';
 import { SceneObject, sceneGraph } from '@grafana/scenes';
 import { Select } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { getLastKey, getVariablesByKey } from '../../../variables/state/selectors';
@@ -25,13 +26,16 @@ export const RepeatRowSelect = ({ repeat, onChange, id }: Props) => {
 
     if (options.length === 0) {
       options.unshift({
-        label: 'No template variables found',
+        label: t(
+          'dashboard.repeat-row-select.variable-options.label.no-template-variables-found',
+          'No template variables found'
+        ),
         value: null,
       });
     }
 
     options.unshift({
-      label: 'Disable repeating',
+      label: t('dashboard.repeat-row-select.variable-options.label.disable-repeating', 'Disable repeating'),
       value: null,
     });
 
@@ -62,13 +66,16 @@ export const RepeatRowSelect2 = ({ sceneContext, repeat, id, onChange }: Props2)
 
     if (options.length === 0) {
       options.unshift({
-        label: 'No template variables found',
+        label: t(
+          'dashboard.repeat-row-select2.variable-options.label.no-template-variables-found',
+          'No template variables found'
+        ),
         value: null,
       });
     }
 
     options.unshift({
-      label: 'Disable repeating',
+      label: t('dashboard.repeat-row-select2.variable-options.label.disable-repeating', 'Disable repeating'),
       value: null,
     });
 

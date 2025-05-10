@@ -252,7 +252,9 @@ export const SilencesEditor = ({
             invalid={!!formState.errors.comment}
           >
             <TextArea
-              {...register('comment', { required: { value: true, message: 'Required.' } })}
+              {...register('comment', {
+                required: { value: true, message: t('alerting.silences-editor.message.required', 'Required.') },
+              })}
               rows={5}
               placeholder={t(
                 'alerting.silences-editor.comment-placeholder-details-about-the-silence',
@@ -269,7 +271,9 @@ export const SilencesEditor = ({
               invalid={!!formState.errors.createdBy}
             >
               <Input
-                {...register('createdBy', { required: { value: true, message: 'Required.' } })}
+                {...register('createdBy', {
+                  required: { value: true, message: t('alerting.silences-editor.message.required', 'Required.') },
+                })}
                 placeholder={t(
                   'alerting.silences-editor.placeholder-whos-creating-the-silence',
                   "Who's creating the silence"
@@ -321,7 +325,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 function ExistingSilenceEditorPage() {
   const pageNav = {
     id: 'silence-edit',
-    text: 'Edit silence',
+    text: t('alerting.existing-silence-editor-page.page-nav.text.edit-silence', 'Edit silence'),
     subTitle: 'Recreate existing silence to stop notifications from a particular alert rule',
   };
   return (

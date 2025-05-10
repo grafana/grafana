@@ -5,7 +5,7 @@ import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/dat
 import { useStyles2 } from '@grafana/ui';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
-import { Trans } from '../../../../../core/internationalization';
+import { Trans, t } from '../../../../../core/internationalization';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
@@ -28,7 +28,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
     (): AlertGroupAlertsTableColumnProps[] => [
       {
         id: 'state',
-        label: 'Notification state',
+        label: t('alerting.alert-group-alerts-table.columns.label.notification-state', 'Notification state'),
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: alert }) => (
           <>
@@ -52,7 +52,7 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
       },
       {
         id: 'labels',
-        label: 'Instance labels',
+        label: t('alerting.alert-group-alerts-table.columns.label.instance-labels', 'Instance labels'),
         // eslint-disable-next-line react/display-name
         renderCell: ({ data: { labels } }) => <AlertLabels labels={labels} size="sm" />,
         size: 1,

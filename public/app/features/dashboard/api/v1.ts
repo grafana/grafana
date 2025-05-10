@@ -1,5 +1,6 @@
 import { locationUtil } from '@grafana/data';
 import { Dashboard } from '@grafana/schema';
+import { t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 import kbn from 'app/core/utils/kbn';
@@ -97,7 +98,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     return this.client.delete(uid, showSuccessAlert).then((v) => ({
       id: 0,
       message: v.message,
-      title: 'deleted',
+      title: t('dashboard.k8s-dashboard-api.title.deleted', 'deleted'),
     }));
   }
 

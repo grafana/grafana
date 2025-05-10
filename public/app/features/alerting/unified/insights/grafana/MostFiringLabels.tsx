@@ -11,6 +11,7 @@ import {
   sceneUtils,
 } from '@grafana/scenes';
 import { DataQuery, DataSourceRef } from '@grafana/schema';
+import { t } from 'app/core/internationalization';
 import { getTimeRange } from 'app/features/dashboard/utils/timeRange';
 
 import { PANEL_STYLES } from '../../home/Insights';
@@ -37,7 +38,11 @@ class LokiAPIDatasource extends RuntimeDataSource {
   }
 
   testDatasource(): Promise<TestDataSourceResponse> {
-    return Promise.resolve({ status: 'success', message: 'Data source is working', title: 'Success' });
+    return Promise.resolve({
+      status: 'success',
+      message: t('alerting.loki-apidatasource.message.data-source-is-working', 'Data source is working'),
+      title: t('alerting.loki-apidatasource.title.success', 'Success'),
+    });
   }
 }
 

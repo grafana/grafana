@@ -11,6 +11,7 @@ import { selectors } from '@grafana/e2e-selectors';
 import { DataSourcePickerProps, DataSourcePickerState, getDataSourceSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
 import { ActionMeta, MultiSelect, PluginSignatureBadge, Stack } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { isDataSourceManagingAlerts } from '../../utils/datasource';
 
@@ -121,8 +122,22 @@ export const MultipleDataSourcePicker = (props: MultipleDataSourcePickerProps) =
       }));
 
     const groupedOptions = [
-      { label: 'Data sources with configured alert rules', options: alertManagingDs, expanded: true },
-      { label: 'Other data sources', options: nonAlertManagingDs, expanded: true },
+      {
+        label: t(
+          'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.data-sources-with-configured-alert-rules',
+          'Data sources with configured alert rules'
+        ),
+        options: alertManagingDs,
+        expanded: true,
+      },
+      {
+        label: t(
+          'alerting.multiple-data-source-picker.get-data-source-options.grouped-options.label.other-data-sources',
+          'Other data sources'
+        ),
+        options: nonAlertManagingDs,
+        expanded: true,
+      },
     ];
 
     return groupedOptions;

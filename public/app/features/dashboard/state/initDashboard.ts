@@ -3,6 +3,7 @@ import { config, isFetchError, locationService } from '@grafana/runtime';
 import { notifyApp } from 'app/core/actions';
 import appEvents from 'app/core/app_events';
 import { createErrorNotification } from 'app/core/copy/appNotification';
+import { t } from 'app/core/internationalization';
 import { backendSrv } from 'app/core/services/backend_srv';
 import { KeybindingSrv } from 'app/core/services/keybindingSrv';
 import store from 'app/core/store';
@@ -137,7 +138,12 @@ async function fetchDashboard(
       return null;
     }
 
-    dispatch(dashboardInitFailed({ message: 'Failed to fetch dashboard', error: err }));
+    dispatch(
+      dashboardInitFailed({
+        message: t('dashboard.fetch-dashboard.message.failed-to-fetch-dashboard', 'Failed to fetch dashboard'),
+        error: err,
+      })
+    );
     console.error(err);
     return null;
   }
@@ -200,7 +206,12 @@ export function initDashboard(args: InitDashboardArgs): ThunkResult<void> {
     try {
       dashboard = new DashboardModel(dashDTO.dashboard, dashDTO.meta);
     } catch (err) {
-      dispatch(dashboardInitFailed({ message: 'Failed create dashboard model', error: err }));
+      dispatch(
+        dashboardInitFailed({
+          message: t('dashboard.init-dashboard.message.failed-create-dashboard-model', 'Failed create dashboard model'),
+          error: err,
+        })
+      );
       console.error(err);
       return;
     }

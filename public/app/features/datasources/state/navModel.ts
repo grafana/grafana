@@ -3,6 +3,7 @@ import { featureEnabled } from '@grafana/runtime';
 import { ProBadge } from 'app/core/components/Upgrade/ProBadge';
 import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types';
 
@@ -23,7 +24,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
         active: false,
         icon: 'sliders-v-alt',
         id: `datasource-settings-${dataSource.uid}`,
-        text: 'Settings',
+        text: t('datasources.build-nav-model.nav-model.text.settings', 'Settings'),
         url: `datasources/edit/${dataSource.uid}/`,
       },
     ],
@@ -46,7 +47,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       active: false,
       icon: 'apps',
       id: `datasource-dashboards-${dataSource.uid}`,
-      text: 'Dashboards',
+      text: t('datasources.build-nav-model.text.dashboards', 'Dashboards'),
       url: `datasources/edit/${dataSource.uid}/dashboards`,
     });
   }
@@ -58,7 +59,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     active: false,
     icon: 'lock',
     id: `datasource-permissions-${dataSource.uid}`,
-    text: 'Permissions',
+    text: t('datasources.build-nav-model.ds-permissions.text.permissions', 'Permissions'),
     url: `datasources/edit/${dataSource.uid}/permissions`,
   };
 
@@ -84,7 +85,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
       active: false,
       icon: 'info-circle',
       id: `datasource-insights-${dataSource.uid}`,
-      text: 'Insights',
+      text: t('datasources.build-nav-model.analytics.text.insights', 'Insights'),
       url: `datasources/edit/${dataSource.uid}/insights`,
     };
 
@@ -111,7 +112,7 @@ export function buildNavModel(dataSource: DataSourceSettings, plugin: GenericDat
     active: false,
     icon: 'database',
     id: `datasource-cache-${dataSource.uid}`,
-    text: 'Cache',
+    text: t('datasources.build-nav-model.caching.text.cache', 'Cache'),
     url: `datasources/edit/${dataSource.uid}/cache`,
     hideFromTabs: !pluginMeta.isBackend || !config.caching.enabled,
   };

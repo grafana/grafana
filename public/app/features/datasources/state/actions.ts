@@ -18,6 +18,7 @@ import {
 } from '@grafana/runtime';
 import { updateNavIndex } from 'app/core/actions';
 import { appEvents, contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { getBackendSrv } from 'app/core/services/backend_srv';
 import { DatasourceAPIVersions } from 'app/features/apiserver/client';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
@@ -290,7 +291,15 @@ export function updateDataSource(dataSource: DataSourceSettings) {
       const formattedError = parseHealthCheckError(err);
 
       dispatch(testDataSourceFailed(formattedError));
-      const errorInfo = isFetchError(err) ? err.data : { message: 'An unexpected error occurred.', traceID: '' };
+      const errorInfo = isFetchError(err)
+        ? err.data
+        : {
+            message: t(
+              'datasources.update-data-source.error-info.message.an-unexpected-error-occurred',
+              'An unexpected error occurred.'
+            ),
+            traceID: '',
+          };
       return Promise.reject(errorInfo);
     }
 

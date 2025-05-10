@@ -7,6 +7,7 @@ import { featureEnabled } from '@grafana/runtime';
 import { Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { contextSrv } from 'app/core/core';
+import { t } from 'app/core/internationalization';
 import { StoreState, UserDTO, UserOrg, UserSession, SyncInfo, UserAdminError, AccessControlAction } from 'app/types';
 
 import { UserLdapSyncInfo } from './UserLdapSyncInfo';
@@ -123,7 +124,10 @@ export const UserAdminPage = ({
   const pageNav: NavModelItem = {
     text: user?.login ?? '',
     icon: 'shield',
-    subTitle: 'Manage settings for an individual user.',
+    subTitle: t(
+      'admin.user-admin-page.page-nav.subTitle.manage-settings-for-an-individual-user',
+      'Manage settings for an individual user.'
+    ),
   };
 
   return (

@@ -149,7 +149,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     const columns: Array<DynamicTableColumnProps<MuteTiming>> = [
       {
         id: 'name',
-        label: 'Name',
+        label: t('alerting.use-columns.columns.label.name', 'Name'),
         renderCell: function renderName({ data }) {
           return (
             <div>
@@ -164,7 +164,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
       },
       {
         id: 'timeRange',
-        label: 'Time range',
+        label: t('alerting.use-columns.columns.label.time-range', 'Time range'),
         renderCell: ({ data }) => {
           return renderTimeIntervals(data);
         },
@@ -174,7 +174,7 @@ function useColumns(alertManagerSourceName: string, hideActions = false) {
     if (showActions) {
       columns.push({
         id: 'actions',
-        label: 'Actions',
+        label: t('alerting.use-columns.label.actions', 'Actions'),
         alignColumn: 'end',
         renderCell: ({ data }) => (
           <MuteTimingActionsButtons muteTiming={data} alertManagerSourceName={alertManagerSourceName} />

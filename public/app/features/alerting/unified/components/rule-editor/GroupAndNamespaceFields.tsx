@@ -72,7 +72,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           name="namespace"
           control={control}
           rules={{
-            required: { value: true, message: 'Required.' },
+            required: { value: true, message: t('alerting.group-and-namespace-fields.message.required', 'Required.') },
           }}
         />
       </Field>
@@ -104,7 +104,7 @@ export const GroupAndNamespaceFields = ({ rulesSourceName }: Props) => {
           name="group"
           control={control}
           rules={{
-            required: { value: true, message: 'Required.' },
+            required: { value: true, message: t('alerting.group-and-namespace-fields.message.required', 'Required.') },
           }}
         />
       </Field>

@@ -159,8 +159,20 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
   const [manualRouting] = watch(['manualRouting']);
 
   const routingOptions = [
-    { label: 'Select contact point', value: RoutingOptions.ContactPoint },
-    { label: 'Use notification policy', value: RoutingOptions.NotificationPolicy },
+    {
+      label: t(
+        'alerting.manual-and-automatic-routing.routing-options.label.select-contact-point',
+        'Select contact point'
+      ),
+      value: RoutingOptions.ContactPoint,
+    },
+    {
+      label: t(
+        'alerting.manual-and-automatic-routing.routing-options.label.use-notification-policy',
+        'Use notification policy'
+      ),
+      value: RoutingOptions.NotificationPolicy,
+    },
   ];
 
   const onRoutingOptionChange = (option: RoutingOptions) => {
