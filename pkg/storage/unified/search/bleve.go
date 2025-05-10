@@ -324,6 +324,9 @@ func (b *bleveIndex) BulkIndex(req *resource.BulkIndexRequest) error {
 	for _, item := range req.Items {
 		switch item.Action {
 		case resource.ActionIndex:
+			if item.Doc == nil {
+				return fmt.Errorf("missing document")
+			}
 			doc := item.Doc.UpdateCopyFields()
 			doc.References = nil // remove references (for now!)
 
