@@ -324,9 +324,10 @@ func TestIntegration_PatchLibraryElement(t *testing.T) {
 			resp := sc.service.createHandler(sc.reqContext)
 			var result = validateAndUnMarshalResponse(t, resp)
 			cmd := model.PatchLibraryElementCommand{
-				Name:    "Text - Library Panel",
-				Version: 1,
-				Kind:    int64(model.PanelElement),
+				Name:      "Text - Library Panel",
+				Version:   1,
+				Kind:      int64(model.PanelElement),
+				FolderUID: &sc.folder.UID,
 			}
 			sc.ctx.Req = web.SetURLParams(sc.ctx.Req, map[string]string{":uid": result.Result.UID})
 			sc.ctx.Req.Body = mockRequestBody(cmd)

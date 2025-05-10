@@ -2,14 +2,12 @@ package libraryelements
 
 import (
 	"context"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/dashboards"
-	"github.com/grafana/grafana/pkg/services/folder"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/libraryelements/model"
-	"github.com/grafana/grafana/pkg/services/org"
 )
 
 func isGeneralFolder(folderID int64) bool {
@@ -32,51 +30,12 @@ func (l *LibraryElementService) requireSupportedElementKind(kindAsInt int64) err
 	}
 }
 
-func (l *LibraryElementService) requireEditPermissionsOnFolderUID(ctx context.Context, user identity.Requester, folderUID string) error {
-	// TODO remove these special cases and handle General folder case in access control guardian
-	if isUIDGeneralFolder(folderUID) && user.HasRole(org.RoleEditor) {
-		return nil
-	}
-
-	if isUIDGeneralFolder(folderUID) && user.HasRole(org.RoleViewer) {
-		return dashboards.ErrFolderAccessDenied
-	}
-
-	g, err := guardian.NewByFolderUID(ctx, folderUID, user.GetOrgID(), user)
-	if err != nil {
-		return err
-	}
-
-	canEdit, err := g.CanEdit()
-	if err != nil {
-		return err
-	}
-	if !canEdit {
-		return dashboards.ErrFolderAccessDenied
-	}
-
-	return nil
-}
-
 func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
-	// TODO remove these special cases and handle General folder case in access control guardian
-	if isGeneralFolder(folderID) && user.HasRole(org.RoleEditor) {
-		return nil
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(folderID, 10)))
+	if isGeneralFolder(folderID) {
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersWrite, dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
 	}
-
-	if isGeneralFolder(folderID) && user.HasRole(org.RoleViewer) {
-		return dashboards.ErrFolderAccessDenied
-	}
-
-	g, err := guardian.NewByFolder(ctx, &folder.Folder{
-		ID:    folderID,
-		OrgID: user.GetOrgID(),
-	}, user.GetOrgID(), user)
-	if err != nil {
-		return err
-	}
-
-	canEdit, err := g.CanEdit()
+	canEdit, err := l.AccessControl.Evaluate(ctx, user, evaluator)
 	if err != nil {
 		return err
 	}
@@ -88,19 +47,11 @@ func (l *LibraryElementService) requireEditPermissionsOnFolder(ctx context.Conte
 }
 
 func (l *LibraryElementService) requireViewPermissionsOnFolder(ctx context.Context, user identity.Requester, folderID int64) error {
+	evaluator := accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScope(strconv.FormatInt(folderID, 10)))
 	if isGeneralFolder(folderID) {
-		return nil
+		evaluator = accesscontrol.EvalPermission(dashboards.ActionFoldersRead, dashboards.ScopeFoldersProvider.GetResourceScopeUID(accesscontrol.GeneralFolderUID))
 	}
-
-	g, err := guardian.NewByFolder(ctx, &folder.Folder{
-		ID:    folderID,
-		OrgID: user.GetOrgID(),
-	}, user.GetOrgID(), user)
-	if err != nil {
-		return err
-	}
-
-	canView, err := g.CanView()
+	canView, err := l.AccessControl.Evaluate(ctx, user, evaluator)
 	if err != nil {
 		return err
 	}
