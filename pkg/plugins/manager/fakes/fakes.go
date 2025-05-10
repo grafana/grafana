@@ -276,6 +276,10 @@ func (r *FakePluginRepo) PluginInfo(ctx context.Context, pluginID string, compat
 	return &repo.PluginInfo{}, nil
 }
 
+func (r *FakePluginRepo) GetPluginsInfo(ctx context.Context, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
+	return []repo.PluginInfo{}, nil
+}
+
 type fakeTracerProvider struct {
 	noop.TracerProvider
 }

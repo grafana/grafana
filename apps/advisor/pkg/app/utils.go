@@ -42,6 +42,10 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
+	err := check.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing check: %w", err)
+	}
 	items, err := check.Items(ctx)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -95,6 +99,10 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
+	err := check.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing check: %w", err)
+	}
 	item, err := check.Item(ctx, itemToRetry)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)

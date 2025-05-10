@@ -17,6 +17,9 @@ type Check interface {
 	Items(ctx context.Context) ([]any, error)
 	// Steps returns the list of steps that will be executed
 	Steps() []Step
+	// Init initializes the check. It's called before running the steps and should be idempotent.
+	// The result should not be cached, it should be initialized from scratch.
+	Init(ctx context.Context) error
 }
 
 // Step is a single step in a check, including its metadata

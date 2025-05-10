@@ -28,6 +28,10 @@ func (c *check) ID() string {
 	return CheckID
 }
 
+func (c *check) Init(ctx context.Context) error {
+	return nil
+}
+
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&listFormatValidation{},

@@ -2,7 +2,6 @@ package datasourcecheck
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	"github.com/grafana/grafana-app-sdk/logging"
@@ -26,6 +25,10 @@ func runChecks(check *check) ([]advisor.CheckReportFailure, error) {
 	}
 
 	failures := []advisor.CheckReportFailure{}
+	err = check.Init(ctx)
+	if err != nil {
+		return nil, err
+	}
 	for _, step := range check.Steps() {
 		for _, item := range items {
 			stepFailures, err := step.Run(ctx, logging.DefaultLogger, &advisor.CheckSpec{}, item)
@@ -51,7 +54,10 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+			{ID: 2, Slug: "mysql", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -75,7 +81,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -100,7 +108,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusError}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -124,7 +134,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{err: plugins.ErrMethodNotImplemented}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -147,7 +159,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{err: plugins.ErrPluginNotRegistered}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: true}
 
 		check := &check{
@@ -171,7 +185,9 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: true}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{
+			{ID: 1, Slug: "prometheus", Status: "active"},
+		}}
 		mockPluginStore := &MockPluginStore{exists: false}
 
 		check := &check{
@@ -196,7 +212,7 @@ func TestCheck_Run(t *testing.T) {
 		mockDatasourceSvc := &MockDatasourceSvc{dss: datasources}
 		mockPluginContextProvider := &MockPluginContextProvider{pCtx: backend.PluginContext{}}
 		mockPluginClient := &MockPluginClient{res: &backend.CheckHealthResult{Status: backend.HealthStatusOk}}
-		mockPluginRepo := &MockPluginRepo{exists: false}
+		mockPluginRepo := &MockPluginRepo{plugins: []repo.PluginInfo{}}
 		mockPluginStore := &MockPluginStore{exists: false}
 
 		check := &check{
@@ -257,12 +273,9 @@ func (m *MockPluginStore) Plugin(context.Context, string) (pluginstore.Plugin, b
 type MockPluginRepo struct {
 	repo.Service
 
-	exists bool
+	plugins []repo.PluginInfo
 }
 
-func (m *MockPluginRepo) PluginInfo(context.Context, string, repo.CompatOpts) (*repo.PluginInfo, error) {
-	if !m.exists {
-		return nil, errors.New("plugin not found")
-	}
-	return &repo.PluginInfo{}, nil
+func (m *MockPluginRepo) GetPluginsInfo(context.Context, repo.CompatOpts) ([]repo.PluginInfo, error) {
+	return m.plugins, nil
 }

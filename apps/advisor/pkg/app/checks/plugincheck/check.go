@@ -5,7 +5,6 @@ import (
 	"fmt"
 	sysruntime "runtime"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -39,6 +38,7 @@ type check struct {
 	PluginRepo     repo.Service
 	updateChecker  pluginchecker.PluginUpdateChecker
 	GrafanaVersion string
+	pluginIndex    map[string]repo.PluginInfo
 }
 
 func (c *check) ID() string {
@@ -62,25 +62,38 @@ func (c *check) Item(ctx context.Context, id string) (any, error) {
 	return p, nil
 }
 
+func (c *check) Init(ctx context.Context) error {
+	compatOpts := repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, compatOpts)
+	if err != nil {
+		return err
+	}
+	c.pluginIndex = make(map[string]repo.PluginInfo)
+	for _, p := range plugins {
+		c.pluginIndex[p.Slug] = p
+	}
+	return nil
+}
+
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
-			PluginRepo:     c.PluginRepo,
 			GrafanaVersion: c.GrafanaVersion,
 			updateChecker:  c.updateChecker,
+			pluginIndex:    c.pluginIndex,
 		},
 		&updateStep{
-			PluginRepo:     c.PluginRepo,
 			GrafanaVersion: c.GrafanaVersion,
 			updateChecker:  c.updateChecker,
+			pluginIndex:    c.pluginIndex,
 		},
 	}
 }
 
 type deprecationStep struct {
-	PluginRepo     repo.Service
 	GrafanaVersion string
 	updateChecker  pluginchecker.PluginUpdateChecker
+	pluginIndex    map[string]repo.PluginInfo
 }
 
 func (s *deprecationStep) Title() string {
@@ -111,9 +124,8 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 	}
 
 	// Check if plugin is deprecated
-	compatOpts := repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-	i, err := s.PluginRepo.PluginInfo(ctx, p.ID, compatOpts)
-	if err != nil {
+	i, ok := s.pluginIndex[p.ID]
+	if !ok {
 		// Unable to check deprecation status
 		return nil, nil
 	}
@@ -135,9 +147,9 @@ func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *adviso
 }
 
 type updateStep struct {
-	PluginRepo     repo.Service
 	GrafanaVersion string
 	updateChecker  pluginchecker.PluginUpdateChecker
+	pluginIndex    map[string]repo.PluginInfo
 }
 
 func (s *updateStep) Title() string {
@@ -167,13 +179,12 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 	}
 
 	// Check if plugin has a newer version available
-	compatOpts := repo.NewCompatOpts(s.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-	info, err := s.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
-	if err != nil {
+	info, ok := s.pluginIndex[p.ID]
+	if !ok {
 		// Unable to check updates
 		return nil, nil
 	}
-	if hasUpdate(p, info) {
+	if s.updateChecker.CanUpdate(p.ID, p.Info.Version, info.Version, false) {
 		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
@@ -189,15 +200,4 @@ func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.Che
 	}
 
 	return nil, nil
-}
-
-func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool {
-	// If both versions are semver-valid, compare them
-	v1, err1 := semver.NewVersion(current.Info.Version)
-	v2, err2 := semver.NewVersion(latest.Version)
-	if err1 == nil && err2 == nil {
-		return v1.LessThan(v2)
-	}
-	// In other case, assume that a different latest version will always be newer
-	return current.Info.Version != latest.Version
 }

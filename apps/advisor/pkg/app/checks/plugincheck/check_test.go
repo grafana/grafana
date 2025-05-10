@@ -19,8 +19,7 @@ func TestRun(t *testing.T) {
 	tests := []struct {
 		name               string
 		plugins            []pluginstore.Plugin
-		pluginInfo         map[string]*repo.PluginInfo
-		pluginArchives     map[string]*repo.PluginArchiveInfo
+		pluginInfo         []repo.PluginInfo
 		pluginPreinstalled []string
 		pluginManaged      []string
 		pluginProvisioned  []string
@@ -36,11 +35,8 @@ func TestRun(t *testing.T) {
 			plugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin1", Name: "Plugin 1", Info: plugins.Info{Version: "1.0.0"}}},
 			},
-			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin1": {Status: "deprecated"},
-			},
-			pluginArchives: map[string]*repo.PluginArchiveInfo{
-				"plugin1": {Version: "1.0.0"},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "deprecated", Slug: "plugin1", Version: "1.0.0"},
 			},
 			expectedFailures: []advisor.CheckReportFailure{
 				{
@@ -62,11 +58,8 @@ func TestRun(t *testing.T) {
 			plugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin2", Name: "Plugin 2", Info: plugins.Info{Version: "1.0.0"}}},
 			},
-			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin2": {Status: "active"},
-			},
-			pluginArchives: map[string]*repo.PluginArchiveInfo{
-				"plugin2": {Version: "1.1.0"},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "active", Slug: "plugin2", Version: "1.1.0"},
 			},
 			expectedFailures: []advisor.CheckReportFailure{
 				{
@@ -88,37 +81,18 @@ func TestRun(t *testing.T) {
 			plugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin2", Name: "Plugin 2", Info: plugins.Info{Version: "alpha"}}},
 			},
-			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin2": {Status: "active"},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "active", Slug: "plugin2", Version: "beta"},
 			},
-			pluginArchives: map[string]*repo.PluginArchiveInfo{
-				"plugin2": {Version: "beta"},
-			},
-			expectedFailures: []advisor.CheckReportFailure{
-				{
-					Severity: advisor.CheckReportFailureSeverityLow,
-					StepID:   "update",
-					Item:     "Plugin 2",
-					ItemID:   "plugin2",
-					Links: []advisor.CheckErrorLink{
-						{
-							Url:     "/plugins/plugin2?page=version-history",
-							Message: "Upgrade",
-						},
-					},
-				},
-			},
+			expectedFailures: []advisor.CheckReportFailure{}, // Cannot be compared because the version is not semver
 		},
 		{
 			name: "Plugin pinned",
 			plugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin3", Name: "Plugin 3", Info: plugins.Info{Version: "1.0.0"}}},
 			},
-			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin3": {Status: "deprecated"}, // This should be ignored
-			},
-			pluginArchives: map[string]*repo.PluginArchiveInfo{
-				"plugin3": {Version: "1.1.0"},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "deprecated", Slug: "plugin3"}, // This should be ignored
 			},
 			pluginPreinstalled: []string{"plugin3"},
 			expectedFailures:   []advisor.CheckReportFailure{},
@@ -128,11 +102,8 @@ func TestRun(t *testing.T) {
 			plugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin4", Name: "Plugin 4", Info: plugins.Info{Version: "1.0.0"}}},
 			},
-			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin4": {Status: "deprecated"}, // This should be ignored
-			},
-			pluginArchives: map[string]*repo.PluginArchiveInfo{
-				"plugin4": {Version: "1.1.0"},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "deprecated", Slug: "plugin4", Version: "1.1.0"}, // This should be ignored
 			},
 			pluginManaged:    []string{"plugin4"},
 			expectedFailures: []advisor.CheckReportFailure{},
@@ -142,11 +113,8 @@ func TestRun(t *testing.T) {
 			plugins: []pluginstore.Plugin{
 				{JSONData: plugins.JSONData{ID: "plugin5", Name: "Plugin 5", Info: plugins.Info{Version: "1.0.0"}}},
 			},
-			pluginInfo: map[string]*repo.PluginInfo{
-				"plugin5": {Status: "deprecated"}, // This should be ignored
-			},
-			pluginArchives: map[string]*repo.PluginArchiveInfo{
-				"plugin5": {Version: "1.1.0"},
+			pluginInfo: []repo.PluginInfo{
+				{Status: "deprecated", Slug: "plugin5", Version: "1.1.0"}, // This should be ignored
 			},
 			pluginProvisioned: []string{"plugin5"},
 			expectedFailures:  []advisor.CheckReportFailure{},
@@ -157,8 +125,7 @@ func TestRun(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			pluginStore := &mockPluginStore{plugins: tt.plugins}
 			pluginRepo := &mockPluginRepo{
-				pluginInfo:        tt.pluginInfo,
-				pluginArchiveInfo: tt.pluginArchives,
+				pluginInfo: tt.pluginInfo,
 			}
 			pluginPreinstall := &mockPluginPreinstall{pinned: tt.pluginPreinstalled}
 			managedPlugins := &mockManagedPlugins{managed: tt.pluginManaged}
@@ -169,6 +136,8 @@ func TestRun(t *testing.T) {
 			items, err := check.Items(context.Background())
 			assert.NoError(t, err)
 			failures := []advisor.CheckReportFailure{}
+			err = check.Init(context.Background())
+			assert.NoError(t, err)
 			for _, step := range check.Steps() {
 				for _, item := range items {
 					stepFailures, err := step.Run(context.Background(), logging.DefaultLogger, &advisor.CheckSpec{}, item)
@@ -196,16 +165,11 @@ func (m *mockPluginStore) Plugins(ctx context.Context, t ...plugins.Type) []plug
 
 type mockPluginRepo struct {
 	repo.Service
-	pluginInfo        map[string]*repo.PluginInfo
-	pluginArchiveInfo map[string]*repo.PluginArchiveInfo
+	pluginInfo []repo.PluginInfo
 }
 
-func (m *mockPluginRepo) PluginInfo(ctx context.Context, id string, compatOpts repo.CompatOpts) (*repo.PluginInfo, error) {
-	return m.pluginInfo[id], nil
-}
-
-func (m *mockPluginRepo) GetPluginArchiveInfo(ctx context.Context, id, version string, opts repo.CompatOpts) (*repo.PluginArchiveInfo, error) {
-	return m.pluginArchiveInfo[id], nil
+func (m *mockPluginRepo) GetPluginsInfo(ctx context.Context, compatOpts repo.CompatOpts) ([]repo.PluginInfo, error) {
+	return m.pluginInfo, nil
 }
 
 type mockPluginPreinstall struct {
