@@ -95,14 +95,18 @@ export const LogRow = ({
   const logLineRef = useRef<HTMLTableRowElement | null>(null);
   const theme = useTheme2();
 
-  const timestamp = useMemo(
-    () =>
+  const timestamp = useMemo(() => {
+    let microAndNanoSeconds = row.timeEpochNs.slice(-6);
+    if (parseInt(microAndNanoSeconds, 10) === 0) {
+      microAndNanoSeconds = '000000';
+    }
+    return (
       dateTimeFormat(row.timeEpochMs, {
         timeZone: timeZone,
         defaultWithMS: true,
-      }),
-    [row.timeEpochMs, timeZone]
-  );
+      }) + microAndNanoSeconds
+    );
+  }, [row.timeEpochMs, row.timeEpochNs, timeZone]);
   const levelStyles = useMemo(() => getLogLevelStyles(theme, row.logLevel), [row.logLevel, theme]);
   const processedRow = useMemo(
     () =>
