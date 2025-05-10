@@ -1,0 +1,26 @@
+import { Meta, ArgTypes } from '@storybook/blocks';
+import { EditableText } from './EditableText';
+
+<Meta title="MDX|EditableText" component={EditableText} />
+
+# EditableText
+
+This component is for inline editing a string and can be visualized as either an Input (when editing) or as a Text component.
+
+### Usage
+
+```jsx
+import { EditableText } from '@grafana/ui';
+
+<EditableText
+  text="something"
+  isEditing={false}
+  textChangeHandler={(text) => {
+    console.log('change:', text);
+  }}
+/>;
+```
+
+### Props
+
+<ArgTypes of={EditableText} />
