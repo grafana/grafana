@@ -2786,6 +2786,10 @@
     "actions": {
       "button-to-recently-deleted": "最近刪除"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "此資料夾為空"
     },
@@ -3397,6 +3401,11 @@
         "name": "",
         "open-editor": "開啟變數編輯器",
         "open-editor-tooltip": "如需更多變數選項，請開啟變數編輯器",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "允許自訂值",
           "allow-custom-values-description": "允許使用者輸入數值",
@@ -4217,6 +4226,9 @@
       "label-data-source": "",
       "query-options": "查詢選項",
       "selection-options": "選擇選項"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
@@ -5341,9 +5353,6 @@
     "description": "您所做的變更可能不會被儲存。",
     "discard-button": "放棄未儲存的變更",
     "title": "要離開頁面嗎？"
-  },
-  "frontendtests": {
-    "test-key": "找不到測試鍵"
   },
   "gen-ai": {
     "apply-suggestion": "套用",
