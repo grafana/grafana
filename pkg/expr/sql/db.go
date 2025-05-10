@@ -4,6 +4,7 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -54,23 +55,23 @@ func isFunctionNotFoundError(err error) bool {
 	return mysql.ErrFunctionNotFound.Is(err)
 }
 
-type QueryOption func(*QueryOptions) 
+type QueryOption func(*QueryOptions)
 
 type QueryOptions struct {
-    Timeout time.Duration
-    MaxOutputCells int64
+	Timeout        time.Duration
+	MaxOutputCells int64
 }
 
 func WithTimeout(d time.Duration) QueryOption {
-    return func(o *QueryOptions) {
-        o.Timeout = d
-    }
+	return func(o *QueryOptions) {
+		o.Timeout = d
+	}
 }
 
 func WithMaxOutputCells(n int64) QueryOption {
-    return func(o *QueryOptions) {
-        o.MaxOutputCells = n
-    }
+	return func(o *QueryOptions) {
+		o.MaxOutputCells = n
+	}
 }
 
 // QueryFrames runs the sql query query against a database created from frames, and returns the frame.
@@ -119,10 +120,10 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 	})
 
 	contextErr := func(err error) error {
-		switch err {
-		case context.DeadlineExceeded:
+		switch {
+		case errors.Is(err, context.DeadlineExceeded):
 			return fmt.Errorf("SQL expression for refId %v did not complete within the timeout of %v: %w", name, QueryOptions.Timeout, err)
-		case context.Canceled:
+		case errors.Is(err, context.Canceled):
 			return fmt.Errorf("SQL expression for refId %v was cancelled before it completed: %w", name, err)
 		default:
 			return fmt.Errorf("SQL expression for refId %v ended unexpectedly: %w", name, err)
