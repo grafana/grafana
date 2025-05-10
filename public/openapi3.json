@@ -12205,6 +12205,22 @@
         },
         "type": "object"
       },
+      "UpdateNamespaceRulesRequest": {
+        "properties": {
+          "is_paused": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateNamespaceRulesResponse": {
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "UpdateOrgAddressForm": {
         "properties": {
           "address1": {
@@ -12892,7 +12908,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -13220,7 +13235,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },
