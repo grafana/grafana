@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -27,7 +28,7 @@ var (
 
 // EncryptDatasourcePasswords migrates unencrypted secrets on datasources
 // to the secureJson Column.
-func EncryptDatasourcePasswords(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
+func EncryptDatasourcePasswords(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB, kvStore kvstore.KVStore) error {
 	return sqlStore.WithDbSession(context.Background(), func(session *db.Session) error {
 		passwordsUpdated, err := migrateColumn(cfg, session, "password")
 		if err != nil {

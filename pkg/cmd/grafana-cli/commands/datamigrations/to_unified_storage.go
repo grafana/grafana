@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 	"github.com/grafana/grafana/pkg/infra/db"
+	"github.com/grafana/grafana/pkg/infra/kvstore"
 	"github.com/grafana/grafana/pkg/infra/tracing"
 	"github.com/grafana/grafana/pkg/registry/apis/dashboard/legacy"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
@@ -29,7 +30,7 @@ import (
 )
 
 // ToUnifiedStorage converts dashboards+folders into unified storage
-func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) error {
+func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB, kv kvstore.KVStore) error {
 	namespace := "default" // TODO... from command line
 	ns, err := authlib.ParseNamespace(namespace)
 	if err != nil {
@@ -67,6 +68,11 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 	)
 
 	if c.Bool("non-interactive") {
+		err = kv.Set(ctx, ns.OrgID, "storage.migration", "status", "started")
+		if err != nil {
+			return err
+		}
+
 		client, err := newUnifiedClient(cfg, sqlStore)
 		if err != nil {
 			return err
@@ -83,6 +89,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			jj, _ := json.MarshalIndent(rsp, "", "  ")
 			fmt.Printf("%s\n", string(jj))
 		}
+
+		err = kv.Set(ctx, ns.OrgID, "storage.migration", "status", "finished")
+		if err != nil {
+			return err
+		}
+
 		return nil
 	}
 
@@ -171,6 +183,11 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			return err
 		}
 		if yes {
+			err = kv.Set(ctx, ns.OrgID, "storage.migration", "status", "started")
+			if err != nil {
+				return err
+			}
+
 			start = time.Now()
 			last = time.Now()
 			opts.Store = client
@@ -179,6 +196,12 @@ func ToUnifiedStorage(c utils.CommandLine, cfg *setting.Cfg, sqlStore db.DB) err
 			if err != nil {
 				return err
 			}
+
+			err = kv.Set(ctx, ns.OrgID, "storage.migration", "status", "finished")
+			if err != nil {
+				return err
+			}
+
 			fmt.Printf("Unified storage export: %s\n", time.Since(start))
 			if rsp != nil {
 				jj, _ := json.MarshalIndent(rsp, "", "  ")
