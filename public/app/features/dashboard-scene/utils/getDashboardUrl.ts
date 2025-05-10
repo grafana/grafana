@@ -77,7 +77,7 @@ export function getDashboardUrl(options: DashboardUrlOptions) {
   const relativeUrl = urlUtil.renderUrl(path, params);
 
   if (options.absolute) {
-    return config.appUrl + relativeUrl.slice(1);
+    return `${window.location.protocol}//${window.location.host}${config.appSubUrl}${relativeUrl}`;
   }
 
   return relativeUrl;
