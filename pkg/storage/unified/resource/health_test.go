@@ -39,6 +39,45 @@ func TestHealthCheck(t *testing.T) {
 	})
 }
 
+func TestHealthList(t *testing.T) {
+	t.Run("will return healthy status", func(t *testing.T) {
+		stub := &diag{healthResponse: HealthCheckResponse_SERVING}
+
+		svc, err := ProvideHealthService(stub)
+		require.NoError(t, err)
+
+		req := &grpc_health_v1.HealthListRequest{}
+		res, err := svc.List(context.Background(), req)
+		require.NoError(t, err)
+		assert.Equal(t, grpc_health_v1.HealthCheckResponse_SERVING, res.Statuses["resource.ResourceStore"].Status)
+	})
+
+	t.Run("will return not healthy status", func(t *testing.T) {
+		stub := &diag{healthResponse: HealthCheckResponse_NOT_SERVING}
+
+		svc, err := ProvideHealthService(stub)
+		require.NoError(t, err)
+
+		req := &grpc_health_v1.HealthListRequest{}
+		res, err := svc.List(context.Background(), req)
+		require.NoError(t, err)
+		assert.Equal(t, grpc_health_v1.HealthCheckResponse_NOT_SERVING, res.Statuses["resource.ResourceStore"].Status)
+	})
+
+	t.Run("will return error when IsHealthy fails", func(t *testing.T) {
+		stub := &diag{error: errors.New("some error")}
+
+		svc, err := ProvideHealthService(stub)
+		require.NoError(t, err)
+
+		req := &grpc_health_v1.HealthListRequest{}
+		res, err := svc.List(context.Background(), req)
+		require.Error(t, err)
+		assert.Nil(t, res)
+		assert.Equal(t, "some error", err.Error())
+	})
+}
+
 func TestHealthWatch(t *testing.T) {
 	t.Run("watch will return message when called", func(t *testing.T) {
 		stub := &diag{healthResponse: HealthCheckResponse_SERVING}

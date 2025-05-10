@@ -42,6 +42,21 @@ func (s *healthServer) Check(ctx context.Context, req *grpc_health_v1.HealthChec
 	}, nil
 }
 
+func (s *healthServer) List(ctx context.Context, req *grpc_health_v1.HealthListRequest) (*grpc_health_v1.HealthListResponse, error) {
+	r, err := s.srv.IsHealthy(ctx, &HealthCheckRequest{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &grpc_health_v1.HealthListResponse{
+		Statuses: map[string]*grpc_health_v1.HealthCheckResponse{
+			"resource.ResourceStore": &grpc_health_v1.HealthCheckResponse{
+				Status: grpc_health_v1.HealthCheckResponse_ServingStatus(r.Status.Number()),
+			},
+		},
+	}, nil
+}
+
 func (s *healthServer) Watch(req *grpc_health_v1.HealthCheckRequest, stream grpc_health_v1.Health_WatchServer) error {
 	h, err := s.srv.IsHealthy(stream.Context(), &HealthCheckRequest{})
 	if err != nil {
