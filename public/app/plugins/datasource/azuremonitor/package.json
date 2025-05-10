@@ -19,7 +19,7 @@
     "prismjs": "1.30.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "react-select": "5.10.0",
+    "react-select": "5.10.1",
     "react-use": "17.6.0",
     "rxjs": "7.8.1",
     "tslib": "2.8.1"
