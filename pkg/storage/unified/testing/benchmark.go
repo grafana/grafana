@@ -429,7 +429,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.R
 
 	title := ""
 	tags := []string{}
-	v := ""
+	val := ""
 
 	spec, ok, _ := unstructured.NestedMap(u.Object, "spec")
 	if ok {
@@ -447,7 +447,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.R
 			}
 		}
 		if v, ok := spec["value"]; ok {
-			v = v.(string)
+			val = v.(string)
 		}
 	}
 	return &resource.IndexableDocument{
@@ -460,7 +460,7 @@ func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.R
 		Title: title,
 		Tags:  tags,
 		Fields: map[string]interface{}{
-			"value": v,
+			"value": val,
 		},
 	}, nil
 }
