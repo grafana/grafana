@@ -17,11 +17,11 @@ labels:
 title: Queries and conditions
 weight: 104
 refs:
-  data-source-alerting:
+  alert-instance:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/#alert-instances
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/#supported-data-sources
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/#alert-instances
   state-and-health:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/state-and-health/
@@ -37,6 +37,16 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#math
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#math
+  resample-operation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#resample
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#resample
+  reduce-operation:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/panels-visualizations/query-transform-data/expression-queries/#reduce
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/visualizations/panels-visualizations/query-transform-data/expression-queries/#reduce
 ---
 
 # Queries and conditions
@@ -53,13 +63,18 @@ Alerting periodically runs the queries and expressions, evaluating the condition
 
 ## Data source queries
 
-Alerting queries are the same as the queries used in Grafana panels, but Grafana-managed alerts are limited to querying [data sources that have Alerting enabled](ref:data-source-alerting).
+Alerting queries are the same as the queries used in Grafana panels, but Grafana-managed alerts are limited to querying [data sources that have Alerting enabled](/grafana/plugins/data-source-plugins/?features=alerting).
 
-Queries in Grafana can be applied in various ways, depending on the data source and query language being used. Each data source’s query editor provides a customized user interface to help you write queries that take advantage of its unique capabilities.
+Queries in Grafana can be applied in various ways, depending on the data source and query language being used. Each data source’s query editor provides a customized user interface to help you write queries that take advantage of its unique capabilities. For details about query editors and syntax in Grafana, refer to [Query and transform data](ref:query-transform-data).
 
-For more details about queries in Grafana, refer to [Query and transform data](ref:query-transform-data).
+Alerting can work with two types of data:
 
-{{< figure src="/media/docs/alerting/alerting-query-conditions-default-options.png" max-width="750px" caption="Define alert query and alert condition" >}}
+1. **Time series data** — The query returns a collection of time series, where each series must be [reduced](#reduce) to a single numeric value for evaluating the alert condition.
+1. **Tabular data** — The query must return data in a table format with only one numeric column. Each row must have a value in that column, used to evaluate the alert condition. See a [tabular data example](#alert-example-on-tabular-data).
+
+Each time series or table row is evaluated as a separate [alert instance](ref:alert-instance).
+
+{{< figure src="/media/docs/alerting/alerting-query-conditions-default-options.png" max-width="750px" caption="Alert query using the Prometheus query editor and alert condition" >}}
 
 ## Alert condition
 
@@ -89,7 +104,7 @@ Aggregates time series values within the selected time range into a single numbe
 
 Reduce takes one or more time series and transform each series into a single number, which can then be compared in the alert condition.
 
-The following aggregations functions are included: `Min`, `Max`, `Mean`, `Mediam`, `Sum`, `Count`, and `Last`.
+The following aggregations functions are included: `Min`, `Max`, `Mean`, `Mediam`, `Sum`, `Count`, and `Last`. For more details, refer to the [Reduce documentation](ref:reduce-operation).
 
 ### Math
 
@@ -113,6 +128,8 @@ You can also use a Math expression to define the **alert condition**. For exampl
 ### Resample
 
 Realigns a time range to a new set of timestamps, this is useful when comparing time series data from different data sources where the timestamps would otherwise not align.
+
+For more details, refer to the [Resample documentation](ref:resample-operation).
 
 ### Threshold
 
@@ -193,24 +210,20 @@ The following aggregation functions are also available to further refine your qu
 
 {{< /collapse >}}
 
-## Alert on numeric data
+## Alert example on tabular data
 
-Among certain data sources numeric data that is not time series can be directly alerted on, or passed into Server Side Expressions (SSE). This allows for more processing and resulting efficiency within the data source, and it can also simplify alert rules.
-When alerting on numeric data instead of time series data, there is no need to [reduce](#reduce) each labeled time series into a single number. Instead labeled numbers are returned to Grafana instead.
+Grafana Alerting supports backend data sources that return data in table format, including:
 
-#### Tabular Data
+- SQL-based data sources, such as MySQL, PostgreSQL, MSSQL, and Oracle.
+- Data sources that expose structured data via query languages or APIs.
+- Formats like CSV or JSON, accessed through plugins such as the TestData or Infinity data source.
 
-This feature is supported with backend data sources that query tabular data:
+For Alerting to process tabular data, the data must be structured like:
 
-- SQL data sources such as MySQL, Postgres, MSSQL, and Oracle.
-- The Azure Kusto based services: Azure Monitor (Logs), Azure Monitor (Azure Resource Graph), and Azure Data Explorer.
+1. Rows must contain only one column with a single numeric values (e.g. int, double, float).
+1. Rows can also include additional columns with string values, which become labels.
 
-A query with Grafana managed alerts or SSE is considered numeric with these data sources, if:
-
-- The "Format AS" option is set to "Table" in the data source query.
-- The table response returned to Grafana from the query includes only one numeric (e.g. int, double, float) column, and optionally additional string columns.
-
-If there are string columns then those columns become labels. The name of column becomes the label name, and the value for each row becomes the value of the corresponding label. If multiple rows are returned, then each row should be uniquely identified their labels.
+   The name of the column becomes the label name, and the value in each row becomes the value of the corresponding label. If multiple rows are returned, each row should be uniquely identified by its labels.
 
 **Example**
 
@@ -222,19 +235,18 @@ For a MySQL table called "DiskSpace":
 | 2021-June-7 | web2 | /var | 4           |
 | 2021-June-7 | web3 | /var | 8           |
 
-You can query the data filtering on time, but without returning the time series to Grafana. For example, an alert that would trigger per Host, Disk when there is less than 5% free space:
+You can query the data by filtering on time, but without returning the time series to Grafana. For example, a query that calculate the free space per Host and Disk:
 
 ```sql
-SELECT Host, Disk, CASE WHEN PercentFree < 5.0 THEN PercentFree ELSE 0 END FROM (
-  SELECT
-      Host,
-      Disk,
-      Avg(PercentFree)
-  FROM DiskSpace
-  Group By
+SELECT
+    Host,
+    Disk,
+    AVG(PercentFree) AS PercentFree
+FROM DiskSpace
+WHERE __timeFilter(Time)
+GROUP BY
     Host,
     Disk
-  Where __timeFilter(Time)
 ```
 
 This query returns the following Table response to Grafana:
@@ -243,12 +255,20 @@ This query returns the following Table response to Grafana:
 | ---- | ---- | ----------- |
 | web1 | /etc | 3           |
 | web2 | /var | 4           |
-| web3 | /var | 0           |
+| web3 | /var | 8           |
 
-When this query is used as the **condition** in an alert rule, then the non-zero is alerting. As a result, three alert instances are produced:
+When Alerting evaluates the query response, the data is transformed into time series data, producing three alert instances as follows:
 
-| Labels                | Status   |
-| --------------------- | -------- |
-| {Host=web1,disk=/etc} | Alerting |
-| {Host=web2,disk=/var} | Alerting |
-| {Host=web3,disk=/var} | Normal   |
+| Alert instance        | Value |
+| --------------------- | ----- |
+| {Host=web1,disk=/etc} | 3     |
+| {Host=web2,disk=/var} | 4     |
+| {Host=web3,disk=/var} | 8     |
+
+Finally, an alert condition that checks for less than 5% of free space (`$A < 5`) results in two alert instances firing:
+
+| Alert instance        | State      |
+| --------------------- | ---------- |
+| {Host=web1,disk=/etc} | 1 `Firing` |
+| {Host=web2,disk=/var} | 1 `Firing` |
+| {Host=web3,disk=/var} | 0 `Normal` |
