@@ -1,6 +1,6 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { Icon, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { DashboardInteractions } from '../../../utils/interactions';
 import { ToolbarActionProps } from '../types';

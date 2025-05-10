@@ -2,12 +2,11 @@ import { useEffect } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Badge, Stack, Text } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { useDispatch, useSelector } from 'app/types';
-
-import { t } from '../../core/internationalization';
 
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { UIMap } from './constants';

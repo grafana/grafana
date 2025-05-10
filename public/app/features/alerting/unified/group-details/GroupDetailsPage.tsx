@@ -2,9 +2,10 @@ import { skipToken } from '@reduxjs/toolkit/query';
 import { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Badge, Button, LinkButton, Text, TextLink, withErrorBoundary } from '@grafana/ui';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { Trans, t } from 'app/core/internationalization';
 import { FolderDTO } from 'app/types';
 import { GrafanaRulesSourceSymbol, RuleGroup } from 'app/types/unified-alerting';
 import { PromRuleType, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';

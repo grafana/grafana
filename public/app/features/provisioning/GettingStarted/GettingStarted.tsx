@@ -2,9 +2,10 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Stack, useStyles2 } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, Repository } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 import { EnhancedFeatures } from './EnhancedFeatures';
 import { FeaturesList } from './FeaturesList';

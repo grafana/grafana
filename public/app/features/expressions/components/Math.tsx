@@ -3,8 +3,9 @@ import { ChangeEvent } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Icon, InlineField, InlineLabel, TextArea, Toggletip, useStyles2, Stack, TextLink } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { ExpressionQuery } from '../types';
 

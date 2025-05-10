@@ -1,8 +1,8 @@
 import { PageLayoutType } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Box } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
-import { t } from 'app/core/internationalization';
 import { getMessageFromError, getStatusFromError } from 'app/core/utils/errors';
 
 export function DashboardPageError({ error, type }: { error: unknown; type?: string }) {

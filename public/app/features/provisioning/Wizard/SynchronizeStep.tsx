@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Text, Stack, Alert, TextLink, Field, Checkbox } from '@grafana/ui';
 import { Job, useCreateRepositoryJobsMutation } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 import { JobStatus } from '../Job/JobStatus';
 

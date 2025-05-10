@@ -9,10 +9,10 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { JoinByFieldOptions, JoinMode } from '@grafana/data/internal';
+import { t } from '@grafana/i18n/internal';
 import { getTemplateSrv } from '@grafana/runtime';
 import { Select, InlineFieldRow, InlineField } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

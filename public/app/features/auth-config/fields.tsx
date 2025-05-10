@@ -1,11 +1,11 @@
 import { validate as uuidValidate } from 'uuid';
 
 import { SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-
-import { t, Trans } from '../../core/internationalization';
 
 import { ServerDiscoveryField } from './components/ServerDiscoveryField';
 import { FieldData, SSOProvider, SSOSettingsField } from './types';

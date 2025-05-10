@@ -3,11 +3,12 @@ import { isEqual } from 'lodash';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { AbsoluteTimeRange, GrafanaTheme2, LogsSortOrder } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Icon, Spinner, useTheme2 } from '@grafana/ui';
 import { getChromeHeaderLevelHeight } from 'app/core/components/AppChrome/TopBar/useChromeHeaderHeight';
-import { t, Trans } from 'app/core/internationalization';
 
 import { LogsNavigationPages } from './LogsNavigationPages';
 

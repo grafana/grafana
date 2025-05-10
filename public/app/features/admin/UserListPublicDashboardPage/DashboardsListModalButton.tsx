@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Button, LoadingPlaceholder, Modal, ModalsController, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   generatePublicDashboardConfigUrl,
   generatePublicDashboardUrl,

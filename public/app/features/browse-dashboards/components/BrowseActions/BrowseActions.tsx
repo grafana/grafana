@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, Stack, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t, Trans } from 'app/core/internationalization';
 import { useSearchStateManager } from 'app/features/search/state/SearchStateManager';
 import { useDispatch } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';

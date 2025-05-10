@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Field, Icon, IconButton, Input, Label, Select, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { FormDTO, getSupportedTransTypeDetails, getTransformOptions } from './types';
 type Props = {

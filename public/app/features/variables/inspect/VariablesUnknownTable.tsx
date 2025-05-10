@@ -3,9 +3,10 @@ import { ReactElement, useEffect, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { CollapsableSection, HorizontalGroup, Icon, Spinner, Tooltip, useStyles2, VerticalGroup } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DashboardModel } from '../../dashboard/state/DashboardModel';
 import { VariableModel } from '../types';

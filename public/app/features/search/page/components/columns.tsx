@@ -10,10 +10,11 @@ import {
   getDisplayProcessor,
   getFieldDisplayName,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, getDataSourceSrv } from '@grafana/runtime';
 import { Checkbox, Icon, IconName, TagList, Text, Tooltip } from '@grafana/ui';
 import appEvents from 'app/core/app_events';
-import { t, Trans } from 'app/core/internationalization';
 import { formatDate, formatDuration } from 'app/core/internationalization/dates';
 import { PluginIconName } from 'app/features/plugins/admin/types';
 import { ShowModalReactEvent } from 'app/types/events';

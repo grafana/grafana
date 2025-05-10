@@ -10,8 +10,8 @@ import {
   AnnotationEventFieldSource,
   getValueFormat,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { Select, Tooltip, Icon } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 import { annotationEventNames, AnnotationFieldInfo } from '../standardAnnotationSupport';
 import { AnnotationQueryResponse } from '../types';

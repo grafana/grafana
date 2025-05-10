@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { ConfirmModal, Space, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { trackFolderBulkActionsDeleteFail, trackFolderBulkActionsDeleteSuccess } from '../../Analytics';
 

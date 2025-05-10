@@ -3,11 +3,12 @@ import { useLocation } from 'react-router';
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, urlUtil } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, EmptyState, Spinner, Tab, TabContent, TabsBar, Text, TextLink } from '@grafana/ui';
 import { useGetFrontendSettingsQuery, useListRepositoryQuery } from 'app/api/clients/provisioning';
 import { Page } from 'app/core/components/Page/Page';
 import { useQueryParams } from 'app/core/hooks/useQueryParams';
-import { t, Trans } from 'app/core/internationalization';
 import { isNotFoundError } from 'app/features/alerting/unified/api/util';
 
 import { FilesView } from '../File/FilesView';

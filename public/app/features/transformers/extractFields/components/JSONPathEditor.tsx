@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import { useState } from 'react';
 import * as React from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, InlineField, InlineFieldRow, IconButton, Input } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { JSONPath } from '../types';
 

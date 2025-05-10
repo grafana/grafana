@@ -2,8 +2,9 @@ import { UseFormRegister } from 'react-hook-form';
 
 import { TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { FieldSet, Label, Switch, TimeRangeInput, Stack, VerticalGroup } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 
 import { ConfigPublicDashboardForm } from './ConfigPublicDashboard';

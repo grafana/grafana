@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { EmptySearchResult, FilterInput, Stack } from '@grafana/ui';
 import { Repository } from 'app/api/clients/provisioning';
-import { t, Trans } from 'app/core/internationalization';
 
 import { RepositoryCard } from '../Repository/RepositoryCard';
 import { checkSyncSettings } from '../utils/checkSyncSettings';

@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { IconButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { NetworkGraphModal } from './NetworkGraphModal';
 import { UsagesToNetwork } from './utils';

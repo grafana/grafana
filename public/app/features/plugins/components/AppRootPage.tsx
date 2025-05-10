@@ -14,6 +14,8 @@ import {
   PluginType,
   PluginContextProvider,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, locationSearchToObject } from '@grafana/runtime';
 import { Alert } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
@@ -21,7 +23,6 @@ import PageLoader from 'app/core/components/PageLoader/PageLoader';
 import { EntityNotFound } from 'app/core/components/PageNotFound/EntityNotFound';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { appEvents, contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { getNotFoundNav, getWarningNav, getExceptionNav } from 'app/core/navigation/errorModels';
 import { getMessageFromError } from 'app/core/utils/errors';
 

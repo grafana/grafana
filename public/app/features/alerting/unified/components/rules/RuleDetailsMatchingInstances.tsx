@@ -4,6 +4,7 @@ import * as React from 'react';
 import { useMemo, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { MatcherFilter } from 'app/features/alerting/unified/components/alert-groups/MatcherFilter';
 import {
@@ -16,7 +17,6 @@ import { SortOrder } from 'app/plugins/panel/alertlist/types';
 import { Alert, CombinedRule, PaginationProps } from 'app/types/unified-alerting';
 import { mapStateWithReasonToBaseState } from 'app/types/unified-alerting-dto';
 
-import { Trans } from '../../../../../core/internationalization';
 import { GRAFANA_RULES_SOURCE_NAME, isGrafanaRulesSource } from '../../utils/datasource';
 import { parsePromQLStyleMatcherLooseSafe } from '../../utils/matchers';
 import { prometheusRuleType } from '../../utils/rules';

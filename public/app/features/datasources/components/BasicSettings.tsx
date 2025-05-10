@@ -3,8 +3,8 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { InlineField, InlineSwitch, Input, Badge, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 export interface Props {
   dataSourceName: string;

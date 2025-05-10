@@ -9,10 +9,10 @@ import {
   OptionDefaults,
   useFieldOverrides,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { getTemplateSrv, PanelRendererProps } from '@grafana/runtime';
 import { ErrorBoundaryAlert, usePanelContext, useTheme2 } from '@grafana/ui';
 import { appEvents } from 'app/core/core';
-import { Trans } from 'app/core/internationalization';
 
 import { importPanelPlugin, syncGetPanelPlugin } from '../../plugins/importPanelPlugin';
 

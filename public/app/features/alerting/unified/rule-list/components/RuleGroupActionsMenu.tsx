@@ -1,8 +1,8 @@
 import { skipToken } from '@reduxjs/toolkit/query';
 
+import { t } from '@grafana/i18n/internal';
 import { isFetchError } from '@grafana/runtime';
 import { Dropdown, Icon, IconButton, LinkButton, Menu } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { DataSourceRuleGroupIdentifier, GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 
 import { alertRuleApi } from '../../api/alertRuleApi';

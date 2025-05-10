@@ -1,8 +1,9 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Drawer, Dropdown, Icon, LinkButton, Menu, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { RelativeUrl, createRelativeUrl } from 'app/features/alerting/unified/utils/url';
 
 import { SectionDto, SectionDtoStep, SectionsDto, StepButtonDto } from '../irmHooks';

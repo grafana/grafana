@@ -8,6 +8,8 @@ import {
   SelectableValue,
   TransformerCategory,
 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   InlineField,
   InlineFieldRow,
@@ -18,7 +20,6 @@ import {
   RadioButtonGroup,
 } from '@grafana/ui';
 import { useFieldDisplayNames, useSelectOptions } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

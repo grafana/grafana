@@ -1,6 +1,7 @@
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ButtonGroup, Dropdown, Menu } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 import { contextSrv } from 'app/core/services/context_srv';
 
 import { ToolbarActionProps } from '../types';

@@ -10,9 +10,9 @@ import {
   SpecialValue,
   TransformerCategory,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { getTemplateSrv } from '@grafana/runtime';
 import { InlineField, InlineFieldRow, Select } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 import { useAllFieldNamesFromDataFrames } from '../utils';

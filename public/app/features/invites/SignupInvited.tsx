@@ -4,12 +4,13 @@ import { useParams } from 'react-router-dom-v5-compat';
 import { useAsync } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getBackendSrv } from '@grafana/runtime';
 import { Button, Field, Input, useStyles2 } from '@grafana/ui';
 import { Form } from 'app/core/components/Form/Form';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
-import { t, Trans } from 'app/core/internationalization';
 
 import { w3cStandardEmailValidator } from '../admin/utils';
 

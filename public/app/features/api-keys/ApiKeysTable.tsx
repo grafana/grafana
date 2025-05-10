@@ -1,9 +1,10 @@
 import { css } from '@emotion/css';
 
 import { dateTimeFormat, GrafanaTheme2, TimeZone } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, DeleteButton, Icon, Stack, Tooltip, useTheme2 } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { Trans, t } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { ApiKey } from '../../types';

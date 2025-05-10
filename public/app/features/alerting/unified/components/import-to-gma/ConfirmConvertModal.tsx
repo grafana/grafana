@@ -4,10 +4,11 @@ import { ComponentProps, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useToggle } from 'react-use';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { locationService } from '@grafana/runtime';
 import { Alert, CodeEditor, Collapse, ConfirmModal, Modal, Stack, Text, useStyles2 } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { Trans, t } from 'app/core/internationalization';
 import { stringifyErrorLike } from 'app/features/alerting/unified/utils/misc';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 

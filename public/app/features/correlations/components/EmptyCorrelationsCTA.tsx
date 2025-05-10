@@ -1,5 +1,6 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Card, EmptyState } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   onClick?: () => void;

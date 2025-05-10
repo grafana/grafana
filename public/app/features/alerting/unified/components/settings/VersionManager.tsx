@@ -4,6 +4,8 @@ import moment from 'moment';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Alert,
   Badge,
@@ -16,7 +18,6 @@ import {
   Text,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { DiffViewer } from 'app/features/dashboard-scene/settings/version-history/DiffViewer';
 import { AlertManagerCortexConfig } from 'app/plugins/datasource/alertmanager/types';
 

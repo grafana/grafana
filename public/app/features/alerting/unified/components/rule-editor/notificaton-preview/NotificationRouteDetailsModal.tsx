@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 import { compact } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Modal, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
 import { AlertmanagerAction } from '../../../hooks/useAbilities';

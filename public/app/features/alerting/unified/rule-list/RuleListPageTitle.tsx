@@ -1,6 +1,6 @@
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Button, ButtonProps, Stack } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { shouldUseAlertingListViewV2 } from '../featureToggles';
 import { setPreviewToggle } from '../previewToggles';

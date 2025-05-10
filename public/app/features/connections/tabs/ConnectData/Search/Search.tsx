@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { useChromeHeaderHeight } from '@grafana/runtime';
 import { Icon, Input, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 const getStyles = (theme: GrafanaTheme2, headerHeight: number) => ({
   searchContainer: css({

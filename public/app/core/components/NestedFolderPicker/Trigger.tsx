@@ -3,9 +3,10 @@ import { forwardRef, ReactNode, ButtonHTMLAttributes } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Icon, getInputStyles, useTheme2, Text } from '@grafana/ui';
 import { getFocusStyles, getMouseFocusStyles } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 
 import { FolderPickerSkeleton } from './Skeleton';
 

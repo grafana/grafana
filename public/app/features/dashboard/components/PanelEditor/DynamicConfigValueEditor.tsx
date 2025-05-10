@@ -9,8 +9,8 @@ import {
   FieldOverrideContext,
   GrafanaTheme2,
 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Counter, Field, HorizontalGroup, IconButton, Label, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { OptionsPaneCategory } from './OptionsPaneCategory';
 

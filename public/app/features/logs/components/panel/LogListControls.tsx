@@ -4,9 +4,9 @@ import { MouseEvent, useCallback, useMemo } from 'react';
 
 import { CoreApp, EventBus, LogLevel, LogsDedupDescription, LogsDedupStrategy, LogsSortOrder } from '@grafana/data';
 import { GrafanaTheme2 } from '@grafana/data/';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Dropdown, IconButton, Menu, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { LogsVisualisationType } from '../../../explore/Logs/Logs';
 import { DownloadFormat } from '../../utils';

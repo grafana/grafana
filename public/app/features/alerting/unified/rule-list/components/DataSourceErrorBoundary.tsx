@@ -1,5 +1,6 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, ErrorBoundary, ErrorWithStack, Text } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RulesSourceIdentifier } from 'app/types/unified-alerting';
 
 import { DataSourceSection } from './DataSourceSection';

@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAsync, useDebounce } from 'react-use';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, FetchError, isFetchError } from '@grafana/runtime';
 import { LibraryPanel } from '@grafana/schema/dist/esm/index.gen';
 import { Button, Field, Input, Modal, Stack } from '@grafana/ui';
 import { FolderPicker } from 'app/core/components/Select/FolderPicker';
-import { t, Trans } from 'app/core/internationalization';
 
 import { PanelModel } from '../../../dashboard/state/PanelModel';
 import { getLibraryPanelByName } from '../../state/api';

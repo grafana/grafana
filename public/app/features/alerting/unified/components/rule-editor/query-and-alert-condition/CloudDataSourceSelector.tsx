@@ -2,9 +2,9 @@ import { css } from '@emotion/css';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Field, useStyles2 } from '@grafana/ui';
 
-import { t } from '../../../../../../core/internationalization';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
 

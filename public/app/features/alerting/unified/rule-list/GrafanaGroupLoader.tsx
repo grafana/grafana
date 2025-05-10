@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { Alert } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { GrafanaRuleGroupIdentifier } from 'app/types/unified-alerting';
 import { GrafanaPromRuleDTO, RulerGrafanaRuleDTO } from 'app/types/unified-alerting-dto';
 

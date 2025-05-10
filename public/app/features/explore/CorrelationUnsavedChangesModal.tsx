@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Modal } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 interface UnsavedChangesModalProps {
   message: string;

@@ -2,8 +2,9 @@ import { css } from '@emotion/css';
 import { debounce, isEqual } from 'lodash';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Field, Icon, Input, Label, Stack, Text, Tooltip, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { ContactPointSelector } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { AlertmanagerAction, useAlertmanagerAbility } from 'app/features/alerting/unified/hooks/useAbilities';
 import { ObjectMatcher, RouteWithID } from 'app/plugins/datasource/alertmanager/types';

@@ -2,9 +2,10 @@ import { css, cx } from '@emotion/css';
 import { PureComponent, useRef, useState } from 'react';
 import * as React from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ConfirmButton, ConfirmModal, Input, LegacyInputStatus, Stack } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction, UserDTO } from 'app/types';
 
 interface Props {

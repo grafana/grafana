@@ -3,8 +3,9 @@ import { capitalize, groupBy } from 'lodash';
 import { useEffect, useMemo } from 'react';
 
 import { DataFrame, DataFrameJSON, GrafanaTheme2, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Icon, Stack, Text, useStyles2, useTheme2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { trackUseCentralHistoryExpandRow } from '../../../Analytics';

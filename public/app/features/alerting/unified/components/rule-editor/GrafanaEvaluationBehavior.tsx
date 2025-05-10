@@ -5,6 +5,8 @@ import { Controller, FormProvider, RegisterOptions, useForm, useFormContext } fr
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Box,
   Button,
@@ -21,7 +23,6 @@ import {
   Tooltip,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { RulerRulesConfigDTO } from 'app/types/unified-alerting-dto';
 
 import { evaluateEveryValidationOptions } from '../../group-details/validation';

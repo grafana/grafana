@@ -2,10 +2,10 @@ import { debounce } from 'lodash';
 import { MouseEvent, ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CoreApp, DataFrame, dateTimeFormat, LogRowContextOptions, LogRowModel, LogsSortOrder } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { GetFieldLinksFn } from 'app/plugins/panel/logs/types';
 
 import { checkLogsError, checkLogsSampled, escapeUnescapedString } from '../utils';

@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
 import { EmptyState, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
 export interface Props {
   /**

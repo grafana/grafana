@@ -6,6 +6,8 @@ import { FC, Fragment, ReactNode, useState } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Badge,
   Button,
@@ -20,7 +22,6 @@ import {
   getTagColorsFromName,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import ConditionalWrap from 'app/features/alerting/unified/components/ConditionalWrap';
 import MoreButton from 'app/features/alerting/unified/components/MoreButton';
 import { PrimaryText } from 'app/features/alerting/unified/components/common/TextVariants';

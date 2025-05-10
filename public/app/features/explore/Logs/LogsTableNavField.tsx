@@ -2,8 +2,8 @@ import { css } from '@emotion/css';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Checkbox, Icon, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { FieldNameMeta } from './LogsTableWrap';
 

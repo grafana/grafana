@@ -1,8 +1,9 @@
 import { ReactElement } from 'react';
 import { useAsync } from 'react-use';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, Box, Spinner, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import { Diffs } from 'app/features/dashboard-scene/settings/version-history/utils';
 
 import { DiffGroup } from '../../../dashboard-scene/settings/version-history/DiffGroup';

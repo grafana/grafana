@@ -1,6 +1,5 @@
+import { t } from '@grafana/i18n/internal';
 import { useTheme2 } from '@grafana/ui';
-
-import { t } from '../../../core/internationalization';
 
 import { getLogsFieldsStyles } from './LogsTableActiveFields';
 import { LogsTableEmptyFields } from './LogsTableEmptyFields';

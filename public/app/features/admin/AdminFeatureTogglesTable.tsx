@@ -1,7 +1,8 @@
 import { useState, useRef } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Switch, InteractiveTable, Tooltip, type CellProps, Button, ConfirmModal, type SortByFn } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { FeatureToggle, getTogglesAPI } from './AdminFeatureTogglesAPI';
 

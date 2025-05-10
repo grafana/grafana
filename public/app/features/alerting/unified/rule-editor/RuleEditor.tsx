@@ -1,7 +1,8 @@
 import { useParams } from 'react-router-dom-v5-compat';
 
 import { NavModelItem } from '@grafana/data';
-import { Trans, t } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 
 import { AlertWarning } from '../AlertWarning';
 import { AlertingPageWrapper } from '../components/AlertingPageWrapper';

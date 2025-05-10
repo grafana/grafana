@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { ConnectedProps, connect } from 'react-redux';
 
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { DataQuery } from '@grafana/schema';
 import { Button, Dropdown, Menu, ToolbarButton } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 import { useSelector } from 'app/types';
 
 import { changeDatasource } from './state/datasource';

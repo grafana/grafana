@@ -3,9 +3,9 @@ import { usePrevious } from 'react-use';
 import { ListChildComponentProps, ListOnItemsRenderedProps } from 'react-window';
 
 import { AbsoluteTimeRange, LogsSortOrder, TimeRange } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Spinner, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { canScrollBottom, getVisibleRange, ScrollDirection, shouldLoadMore } from '../InfiniteScroll';
 

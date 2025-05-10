@@ -3,8 +3,8 @@ import { useCallback, useState } from 'react';
 import * as React from 'react';
 
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { TextArea, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getStyles } from '../../dashboard-scene/settings/variables/components/VariableTextAreaField';
 import { VariableQueryEditorProps } from '../types';

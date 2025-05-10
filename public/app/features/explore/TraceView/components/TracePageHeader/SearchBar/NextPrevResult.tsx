@@ -18,10 +18,11 @@ import { memo, Dispatch, SetStateAction, useEffect, useCallback } from 'react';
 import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, reportInteraction } from '@grafana/runtime';
 import { Icon, PopoverContent, Tooltip, useTheme2 } from '@grafana/ui';
 import { getButtonStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
 
 import { Trace } from '../../types';
 

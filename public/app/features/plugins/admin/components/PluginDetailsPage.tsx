@@ -4,10 +4,11 @@ import { useLocation } from 'react-router-dom-v5-compat';
 import { useMedia } from 'react-use';
 
 import { GrafanaTheme2, NavModelItem } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Alert, Box, Stack, TabContent, TextLink, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
-import { t, Trans } from 'app/core/internationalization';
 import { AppNotificationSeverity } from 'app/types';
 
 import { Loader } from '../components/Loader';

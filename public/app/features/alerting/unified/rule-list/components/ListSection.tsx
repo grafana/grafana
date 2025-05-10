@@ -4,8 +4,8 @@ import { PropsWithChildren, ReactNode } from 'react';
 import { useToggle } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { IconButton, Stack, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { Spacer } from '../../components/Spacer';
 

@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n/internal';
 import { Button } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { performInviteUserClick } from './utils';
 

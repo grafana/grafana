@@ -1,10 +1,11 @@
 import { useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, locationService, reportInteraction } from '@grafana/runtime';
 import { Button, Drawer, Dropdown, Icon, Menu, MenuItem } from '@grafana/ui';
 import { Permissions } from 'app/core/components/AccessControl';
 import { appEvents } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { ProvisionedResourceDeleteModal } from 'app/features/dashboard-scene/saving/provisioned/ProvisionedResourceDeleteModal';
 import { FolderDTO } from 'app/types';
 import { ShowModalReactEvent } from 'app/types/events';

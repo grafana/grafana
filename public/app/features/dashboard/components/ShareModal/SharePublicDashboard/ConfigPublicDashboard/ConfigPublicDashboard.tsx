@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 
 import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import {
   Button,
   ClipboardButton,
@@ -15,7 +17,6 @@ import {
   Switch,
   useStyles2,
 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
   usePauseOrResumePublicDashboardMutation,

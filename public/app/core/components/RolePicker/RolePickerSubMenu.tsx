@@ -1,8 +1,9 @@
 import { cx } from '@emotion/css';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ScrollContainer, Stack, useStyles2, useTheme2 } from '@grafana/ui';
 import { getSelectStyles } from '@grafana/ui/internal';
-import { t, Trans } from 'app/core/internationalization';
 import { Role } from 'app/types';
 
 import { RoleMenuOption } from './RoleMenuOption';

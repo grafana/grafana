@@ -2,11 +2,12 @@ import { css } from '@emotion/css';
 import { FormEvent } from 'react';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
 import { Button, Checkbox, Stack, RadioButtonGroup, useStyles2 } from '@grafana/ui';
 import { SortPicker } from 'app/core/components/Select/SortPicker';
 import { TagFilter, TermCount } from 'app/core/components/TagFilter/TagFilter';
-import { t, Trans } from 'app/core/internationalization';
 
 import { SearchLayout, SearchState } from '../../types';
 

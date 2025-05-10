@@ -2,8 +2,9 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, Dropdown, Menu, useStyles2 } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDefaultVizPanel } from '../../utils/utils';

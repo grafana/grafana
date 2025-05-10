@@ -1,9 +1,10 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, InfoBox, Portal, useStyles2, useTheme2 } from '@grafana/ui';
 import { getModalStyles } from '@grafana/ui/internal';
-import { Trans, t } from 'app/core/internationalization';
 
 interface Props {
   maxConcurrentSessions?: number;

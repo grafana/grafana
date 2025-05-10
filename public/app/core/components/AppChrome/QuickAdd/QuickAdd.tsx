@@ -1,11 +1,11 @@
 import { useMemo, useState } from 'react';
 
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { Menu, Dropdown, ToolbarButton } from '@grafana/ui';
 import { getExternalUserMngLinkUrl } from 'app/features/users/utils';
 import { useSelector } from 'app/types';
 
-import { t } from '../../../internationalization';
 import { performInviteUserClick, shouldRenderInviteUserButton } from '../../InviteUserButton/utils';
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 

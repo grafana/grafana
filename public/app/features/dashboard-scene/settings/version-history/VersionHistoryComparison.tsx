@@ -1,8 +1,9 @@
 import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Button, ModalsController, CollapsableSection, useStyles2, Stack, Icon, Box } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import { DecoratedRevisionModel } from '../VersionsEditView';
 

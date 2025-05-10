@@ -6,9 +6,9 @@ import {
   WindowOptions,
   WindowSizeMode,
 } from '@grafana/data/internal';
+import { t } from '@grafana/i18n/internal';
 import { InlineField, RadioButtonGroup, Select, StatsPicker } from '@grafana/ui';
 import { NumberInput } from 'app/core/components/OptionsUI/NumberInput';
-import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 

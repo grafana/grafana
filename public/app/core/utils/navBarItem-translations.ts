@@ -1,5 +1,5 @@
+import { t } from '@grafana/i18n/internal';
 import { config } from '@grafana/runtime';
-import { t } from 'app/core/internationalization';
 
 // Maps the ID of the nav item to a translated phrase to later pass to <Trans />
 // Because the navigation content is dynamic (defined in the backend), we can not use

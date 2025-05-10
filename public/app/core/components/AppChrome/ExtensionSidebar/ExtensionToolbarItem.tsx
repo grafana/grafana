@@ -2,8 +2,8 @@ import { css, cx } from '@emotion/css';
 import { useCallback } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { t } from '@grafana/i18n/internal';
 import { Dropdown, Menu, ToolbarButton, useTheme2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { NavToolbarSeparator } from '../NavToolbar/NavToolbarSeparator';
 

@@ -1,6 +1,7 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, ControlledCollapse, Spinner, Stack, Text } from '@grafana/ui';
 import { Job } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
 
 import { RepositoryLink } from '../Repository/RepositoryLink';
 import ProgressBar from '../Shared/ProgressBar';

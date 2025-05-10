@@ -1,10 +1,11 @@
 import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginType } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { config, featureEnabled } from '@grafana/runtime';
 import { HorizontalGroup, LinkButton, useStyles2, Alert, TextLink } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
-import { t, Trans } from 'app/core/internationalization';
 import { AccessControlAction } from 'app/types';
 
 import { getExternalManageLink } from '../../helpers';

@@ -2,8 +2,9 @@ import { bufferCountOrTime, tap } from 'ix/asynciterable/operators';
 import { useCallback, useMemo, useRef, useState, useTransition } from 'react';
 import { useUnmount } from 'react-use';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { EmptyState, Stack } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { withPerformanceLogging } from '../Analytics';
 import { isLoading, useAsync } from '../hooks/useAsync';

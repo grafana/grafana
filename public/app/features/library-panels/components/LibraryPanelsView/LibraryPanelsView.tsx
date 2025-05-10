@@ -3,8 +3,9 @@ import { useMemo, useReducer } from 'react';
 import { useDebounce } from 'react-use';
 
 import { GrafanaTheme2, LoadingState } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { EmptyState, Pagination, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { LibraryElementDTO } from '../../types';
 import { LibraryPanelCard } from '../LibraryPanelCard/LibraryPanelCard';

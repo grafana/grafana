@@ -2,10 +2,10 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2, PluginErrorCode, PluginSignatureStatus, PluginType } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, List, PluginSignatureBadge, Stack, TextLink, useStyles2 } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
 
-import { t } from '../../../core/internationalization';
 import { useGetErrors, useFetchStatus } from '../admin/state/hooks';
 
 type PluginsErrorInfoProps = {

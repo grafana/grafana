@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { CellProps, Column, FilterInput, InteractiveTable, LinkButton, Spinner, Stack } from '@grafana/ui';
 import { Repository, useGetRepositoryFilesQuery } from 'app/api/clients/provisioning';
-import { Trans, t } from 'app/core/internationalization';
 
 import { PROVISIONING_URL } from '../constants';
 import { FileDetails } from '../types';

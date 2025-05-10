@@ -1,6 +1,6 @@
+import { t } from '@grafana/i18n/internal';
 import { Menu } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
-import { t } from 'app/core/internationalization';
 
 import {
   trackFolderBulkActionsPauseFail,

@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
 
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { reportInteraction } from '@grafana/runtime';
 import { Box, Button, Text } from '@grafana/ui';
-import { t, Trans } from 'app/core/internationalization';
 
 import {
   useCreateCloudMigrationTokenMutation,

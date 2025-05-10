@@ -1,5 +1,6 @@
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { Alert, LinkButton } from '@grafana/ui';
-import { Trans, t } from 'app/core/internationalization';
 
 import { AlertmanagerAction } from '../../../hooks/useAbilities';
 import { isVanillaPrometheusAlertManagerDataSource } from '../../../utils/datasource';

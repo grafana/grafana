@@ -11,8 +11,8 @@ import {
 } from '@grafana/data';
 import { ReduceTransformerMode, ReduceTransformerOptions } from '@grafana/data/internal';
 import { selectors } from '@grafana/e2e-selectors';
+import { t } from '@grafana/i18n/internal';
 import { InlineField, Select, StatsPicker, InlineSwitch } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 

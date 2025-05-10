@@ -1,4 +1,5 @@
-import { t, Trans } from 'app/core/internationalization';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 
 import { InfoItem } from '../../shared/InfoItem';
 
