@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Eliminados recientemente"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Esta carpeta está vacía"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Abrir el editor de variables",
         "open-editor-tooltip": "Para obtener más opciones de variables, abre el editor de variables",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Permitir valores personalizados",
           "allow-custom-values-description": "Permite a los usuarios introducir valores",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Opciones de consulta",
       "selection-options": "Opciones de selección"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "¿Seguro que quieres restaurar el dashboard a la versión {{version}}? Todos los cambios no guardados se perderán.",
@@ -5362,9 +5374,6 @@
     "description": "Es posible que los cambios realizados no se guarden.",
     "discard-button": "Descartar cambios no guardados",
     "title": "¿Abandonar la página?"
-  },
-  "frontendtests": {
-    "test-key": "clave de prueba no encontrada"
   },
   "gen-ai": {
     "apply-suggestion": "Aplicar",
