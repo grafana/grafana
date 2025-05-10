@@ -2785,6 +2785,16 @@
       },
       "AlertRuleNotificationSettings": {
         "properties": {
+          "active_time_intervals": {
+            "description": "Override the times when notifications should not be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent\nat the time that matches any interval.",
+            "example": [
+              "maintenance"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "group_by": {
             "default": [
               "alertname",
@@ -2812,7 +2822,7 @@
             "type": "string"
           },
           "mute_time_intervals": {
-            "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+            "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
             "example": [
               "maintenance"
             ],
@@ -2839,6 +2849,12 @@
       },
       "AlertRuleNotificationSettingsExport": {
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "group_by": {
             "items": {
               "type": "string"
@@ -7566,6 +7582,12 @@
       },
       "NotificationPolicyExport": {
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -10148,6 +10170,12 @@
       "RouteExport": {
         "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
         "properties": {
+          "active_time_intervals": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "continue": {
             "type": "boolean"
           },
@@ -12892,7 +12920,6 @@
         "type": "object"
       },
       "alertGroups": {
-        "description": "AlertGroups alert groups",
         "items": {
           "$ref": "#/components/schemas/alertGroup"
         },
@@ -13220,7 +13247,6 @@
         "type": "object"
       },
       "gettableSilences": {
-        "description": "GettableSilences gettable silences",
         "items": {
           "$ref": "#/components/schemas/gettableSilence"
         },

@@ -142,7 +142,7 @@ func validateAlertingRuleFields(in *apimodels.PostableExtendedRuleNode, newRule 
 	}
 
 	if in.GrafanaManagedAlert.NotificationSettings != nil {
-		newRule.NotificationSettings, err = validateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
+		newRule.NotificationSettings, err = ValidateNotificationSettings(in.GrafanaManagedAlert.NotificationSettings)
 		if err != nil {
 			return ngmodels.AlertRule{}, err
 		}
@@ -391,7 +391,7 @@ func ValidateRuleGroup(
 	return result, nil
 }
 
-func validateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
+func ValidateNotificationSettings(n *apimodels.AlertRuleNotificationSettings) ([]ngmodels.NotificationSettings, error) {
 	s := ngmodels.NotificationSettings{
 		Receiver:            n.Receiver,
 		GroupBy:             n.GroupBy,
