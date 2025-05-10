@@ -18,6 +18,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/ngalert/metrics"
 	ngModels "github.com/grafana/grafana/pkg/services/ngalert/models"
 	history_model "github.com/grafana/grafana/pkg/services/ngalert/state/historian/model"
+	state_metric_model "github.com/grafana/grafana/pkg/services/ngalert/state/metricwriter/model"
 )
 
 var (
@@ -50,10 +51,11 @@ type Manager struct {
 	ResendDelay       time.Duration
 	ResolvedRetention time.Duration
 
-	instanceStore InstanceStore
-	images        ImageCapturer
-	historian     Historian
-	externalURL   *url.URL
+	instanceStore           InstanceStore
+	images                  ImageCapturer
+	historian               Historian
+	externalURL             *url.URL
+	alertStateMetricsWriter AlertStateMetricsWriter
 
 	rulesPerRuleGroupLimit int64
 
@@ -72,6 +74,8 @@ type ManagerCfg struct {
 	// StatePeriodicSaveBatchSize controls the size of the alert instance batch that is saved periodically when the
 	// alertingSaveStatePeriodic feature flag is enabled.
 	StatePeriodicSaveBatchSize int
+
+	AlertStateMetricsWriter AlertStateMetricsWriter
 
 	RulesPerRuleGroupLimit int64
 
@@ -93,19 +97,20 @@ func NewManager(cfg ManagerCfg, statePersister StatePersister) *Manager {
 	}
 
 	m := &Manager{
-		cache:                  c,
-		ResendDelay:            ResendDelay, // TODO: make this configurable
-		ResolvedRetention:      cfg.ResolvedRetention,
-		log:                    cfg.Log,
-		metrics:                cfg.Metrics,
-		instanceStore:          cfg.InstanceStore,
-		images:                 cfg.Images,
-		historian:              cfg.Historian,
-		clock:                  cfg.Clock,
-		externalURL:            cfg.ExternalURL,
-		rulesPerRuleGroupLimit: cfg.RulesPerRuleGroupLimit,
-		persister:              statePersister,
-		tracer:                 cfg.Tracer,
+		cache:                   c,
+		ResendDelay:             ResendDelay, // TODO: make this configurable
+		ResolvedRetention:       cfg.ResolvedRetention,
+		log:                     cfg.Log,
+		metrics:                 cfg.Metrics,
+		instanceStore:           cfg.InstanceStore,
+		images:                  cfg.Images,
+		historian:               cfg.Historian,
+		alertStateMetricsWriter: cfg.AlertStateMetricsWriter,
+		clock:                   cfg.Clock,
+		externalURL:             cfg.ExternalURL,
+		rulesPerRuleGroupLimit:  cfg.RulesPerRuleGroupLimit,
+		persister:               statePersister,
+		tracer:                  cfg.Tracer,
 	}
 
 	return m
@@ -287,19 +292,33 @@ func (st *Manager) ResetStateByRuleUID(ctx context.Context, rule *ngModels.Alert
 	ruleKey := rule.GetKeyWithGroup()
 	transitions := st.DeleteStateByRuleUID(ctx, ruleKey, reason)
 
-	if rule == nil || st.historian == nil || len(transitions) == 0 {
+	if rule == nil || len(transitions) == 0 {
 		return transitions
 	}
 
-	ruleMeta := history_model.NewRuleMeta(rule, st.log)
-	errCh := st.historian.Record(ctx, ruleMeta, transitions)
+	if st.historian != nil {
+		ruleMeta := history_model.NewRuleMeta(rule, st.log)
+		errCh := st.historian.Record(ctx, ruleMeta, transitions)
+		handleChannelError(ctx, st.log, errCh, "Error updating historian state reset transitions", append(ruleKey.LogContext(), "reason", reason)...)
+	}
+
+	if st.alertStateMetricsWriter != nil {
+		meta := state_metric_model.RuleMeta{
+			Title: rule.Title,
+		}
+		errCh := st.alertStateMetricsWriter.Write(ctx, meta, transitions)
+		handleChannelError(ctx, st.log, errCh, "Error writing alert state metrics", append(ruleKey.LogContext(), "reason", reason)...)
+	}
+
+	return transitions
+}
+
+func handleChannelError(ctx context.Context, logger log.Logger, errCh <-chan error, message string, args ...any) {
 	go func() {
-		err := <-errCh
-		if err != nil {
-			st.log.FromContext(ctx).Error("Error updating historian state reset transitions", append(ruleKey.LogContext(), "reason", reason, "error", err)...)
+		if err := <-errCh; err != nil {
+			logger.FromContext(ctx).Error(message, append(args, "error", err)...)
 		}
 	}()
-	return transitions
 }
 
 // ProcessEvalResults updates the current states that belong to a rule with the evaluation results.
@@ -368,7 +387,17 @@ func (st *Manager) ProcessEvalResults(
 
 	st.persister.Sync(ctx, span, alertRule.GetKeyWithGroup(), allChanges)
 	if st.historian != nil {
-		st.historian.Record(ctx, history_model.NewRuleMeta(alertRule, logger), allChanges)
+		ruleMeta := history_model.NewRuleMeta(alertRule, logger)
+		errCh := st.historian.Record(ctx, ruleMeta, allChanges)
+		handleChannelError(ctx, st.log, errCh, "Error recording rule history", alertRule.GetKeyWithGroup().LogContext()...)
+	}
+
+	if st.alertStateMetricsWriter != nil {
+		meta := state_metric_model.RuleMeta{
+			Title: alertRule.Title,
+		}
+		errCh := st.alertStateMetricsWriter.Write(ctx, meta, allChanges)
+		handleChannelError(ctx, st.log, errCh, "Error writing alert state metrics", alertRule.GetKeyWithGroup().LogContext()...)
 	}
 
 	// Optional callback intended for sending the states to an alertmanager.
