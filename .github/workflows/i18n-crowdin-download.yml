@@ -151,20 +151,21 @@ jobs:
         # - the PR does not modify files other than json files under the public/locales/ directory
         # - the PR does not modify the en-US locale
         run: |
-          filesChanged=$(gh pr diff --name-only ${{ steps.crowdin-download.outputs.pull_request_url }})
+          filesChanged="$(gh pr diff --name-only "$PR_URL")"
 
-          if [[ $(echo $filesChanged | grep -v 'public/locales/[a-zA-Z\-]*/grafana.json' | wc -l) -ne 0 ]]; then
+          if [[ $(echo "$filesChanged" | grep -cv 'public/locales/[a-zA-Z\-]*/grafana.json') -ne 0 ]]; then
             echo "Non-i18n changes detected, not approving"
             exit 1
           fi
 
-          if [[ $(echo $filesChanged | grep "public/locales/en-US" | wc -l) -ne 0 ]]; then
+          if [[ $(echo "$filesChanged" | grep -c "public/locales/en-US") -ne 0 ]]; then
             echo "public/locales/en-US changes detected, not approving"
             exit 1
           fi
 
           echo "Approving and enabling automerge"
-          gh pr review ${{ steps.crowdin-download.outputs.pull_request_url }} --approve
-          gh pr merge --auto --squash ${{ steps.crowdin-download.outputs.pull_request_url }}
+          gh pr review "$PR_URL" --approve
+          gh pr merge --auto --squash "$PR_URL"
         env:
           GITHUB_TOKEN: ${{ steps.generate_approver_token.outputs.token }}
+          PR_URL: ${{ steps.crowdin-download.outputs.pull_request_url }}
