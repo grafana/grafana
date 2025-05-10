@@ -20,6 +20,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -137,6 +138,33 @@ func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin,
 	}
 
 	return p, nil
+}
+
+type reportLoadingMetricsStep struct {
+	cfg          *config.PluginManagementCfg
+	pluginAssets *pluginassets.Service
+	// pluginsStore pluginStore.Store
+}
+
+func (s *reportLoadingMetricsStep) initialize(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
+	if p.IsCorePlugin() {
+		// No metrics for core plugins
+		return p, nil
+	}
+	var method string
+	switch p.Class {
+	case plugins.ClassCDN:
+		method = "cdn"
+	case plugins.ClassExternal:
+		method = "fs"
+	}
+	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, string(p.CloudProvisioningMethod), method)
+	return p, nil
+}
+
+func ReportLoadingMetricsStep(cfg *config.PluginManagementCfg) initialization.InitializeFunc {
+	step := &reportLoadingMetricsStep{cfg: cfg}
+	return step.initialize
 }
 
 // SignatureValidation implements a ValidateFunc for validating plugin signatures.
