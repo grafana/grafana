@@ -362,9 +362,22 @@ Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use [`sqlite3`](https://www.sqlite.org/index.html) which is an
 embedded database (included in the main Grafana binary).
 
+#### `url`
+
+Use either URL or the other fields below to configure the database
+Example: `type://user:password@host:port/name`
+
 #### `type`
 
 Either `mysql`, `postgres` or `sqlite3`, it's your choice.
+
+#### `user`
+
+The database user (not applicable for `sqlite3`).
+
+#### `password`
+
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. For example `"""#password;"""`
 
 #### `host`
 
@@ -375,19 +388,6 @@ For example, for MySQL running on the same host as Grafana: `host = 127.0.0.1:33
 
 The name of the Grafana database. Leave it set to `grafana` or some
 other name.
-
-#### `user`
-
-The database user (not applicable for `sqlite3`).
-
-#### `password`
-
-The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with triple quotes. For example `"""#password;"""`
-
-#### `url`
-
-Use either URL or the other fields below to configure the database
-Example: `mysql://user:secret@host:port/database`
 
 #### `max_idle_conn`
 
