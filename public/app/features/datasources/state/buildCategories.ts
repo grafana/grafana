@@ -269,6 +269,12 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       name: 'Aurora',
       imgUrl: 'public/img/plugins/aurora.svg',
     }),
+    getPhantomPlugin({
+      id: 'grafana-logicmonitor-datasource',
+      description: 'LogicMonitor datasource',
+      name: 'LogicMonitor',
+      imgUrl: 'public/img/plugins/logicmonitor.svg',
+    }),
   ];
 }
 
