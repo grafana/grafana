@@ -48,7 +48,8 @@ func TestSimpleServer(t *testing.T) {
 	require.NoError(t, err)
 
 	server, err := NewResourceServer(ResourceServerOptions{
-		Backend: store,
+		AccessClient: claims.FixedAccessClient(true),
+		Backend:      store,
 	})
 	require.NoError(t, err)
 
