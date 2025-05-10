@@ -271,5 +271,5 @@ const getImgUrl = (urlOrId: string) => {
     return urlOrId;
   }
 
-  return '/public/img/enterprise/highlights/' + urlOrId;
+  return '/public/build/img/enterprise/highlights/' + urlOrId;
 };
