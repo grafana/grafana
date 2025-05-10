@@ -1,6 +1,7 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
 	apimodels "github.com/grafana/grafana/pkg/services/ngalert/api/tooling/definitions"
+	"github.com/grafana/grafana/pkg/services/ngalert/api/validation"
 	"github.com/grafana/grafana/pkg/services/ngalert/models"
 	"github.com/grafana/grafana/pkg/services/ngalert/prom"
 	"github.com/grafana/grafana/pkg/services/ngalert/provisioning"
@@ -42,8 +44,9 @@ const (
 	recordingRulesPausedHeader = "X-Grafana-Alerting-Recording-Rules-Paused"
 	alertRulesPausedHeader     = "X-Grafana-Alerting-Alert-Rules-Paused"
 
-	// notificationReceiver is the header that specifies the notification receiver to be used for the rules.
-	notificationReceiver = "X-Grafana-Alerting-Notification-Receiver"
+	// notificationSettingsHeader is the header that specifies the notification settings to be used for the rules.
+	// The value should be a JSON-encoded AlertRuleNotificationSettings object.
+	notificationSettingsHeader = "X-Grafana-Alerting-Notification-Settings"
 )
 
 var (
@@ -52,7 +55,7 @@ var (
 		errutil.WithPublicMessage(fmt.Sprintf("Missing datasource UID header: %s", datasourceUIDHeader)),
 	).Errorf("missing datasource UID header")
 
-	errInvalidHeaderValueMsg  = "Invalid value for header {{.Public.Header}}: must be 'true' or 'false'"
+	errInvalidHeaderValueMsg  = "Invalid value for header {{.Public.Header}}: {{.Public.Error}}"
 	errInvalidHeaderValueBase = errutil.ValidationFailed("alerting.invalidHeaderValue").MustTemplate(errInvalidHeaderValueMsg, errutil.WithPublic(errInvalidHeaderValueMsg))
 
 	errRecordingRulesNotEnabled = errutil.ValidationFailed(
@@ -66,8 +69,8 @@ var (
 	).Errorf("recording rules target datasources configuration not enabled")
 )
 
-func errInvalidHeaderValue(header string) error {
-	return errInvalidHeaderValueBase.Build(errutil.TemplateData{Public: map[string]any{"Header": header}})
+func errInvalidHeaderValue(header string, err error) error {
+	return errInvalidHeaderValueBase.Build(errutil.TemplateData{Public: map[string]any{"Header": header, "Error": err}})
 }
 
 // ConvertPrometheusSrv converts Prometheus rules to Grafana rules
@@ -372,6 +375,12 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 	// to ensure we can return them in this API in Prometheus format.
 	keepOriginalRuleDefinition := provenance == models.ProvenanceConvertedPrometheus
 
+	notificationSettings, err := parseNotificationSettingsHeader(c)
+	if err != nil {
+		logger.Error("Failed to parse notification settings header", "error", err)
+		return errorToResponse(err)
+	}
+
 	// 2. Convert Prometheus Rules to GMA
 	grafanaGroups := make([]*models.AlertRuleGroup, 0, len(promNamespaces))
 	for ns, rgs := range promNamespaces {
@@ -397,7 +406,18 @@ func (srv *ConvertPrometheusSrv) RouteConvertPrometheusPostRuleGroups(c *context
 				}
 			}
 
-			grafanaGroup, err := srv.convertToGrafanaRuleGroup(c, ds, tds, namespace.UID, rg, pauseRecordingRules, pauseAlertRules, keepOriginalRuleDefinition, logger)
+			grafanaGroup, err := srv.convertToGrafanaRuleGroup(
+				c,
+				ds,
+				tds,
+				namespace.UID,
+				rg,
+				pauseRecordingRules,
+				pauseAlertRules,
+				keepOriginalRuleDefinition,
+				notificationSettings,
+				logger,
+			)
 			if err != nil {
 				logger.Error("Failed to convert Prometheus rules to Grafana rules", "error", err)
 				return errorToResponse(err)
@@ -445,6 +465,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 	pauseRecordingRules bool,
 	pauseAlertRules bool,
 	keepOriginalRuleDefinition bool,
+	notificationSettings []models.NotificationSettings,
 	logger log.Logger,
 ) (*models.AlertRuleGroup, error) {
 	logger.Info("Converting Prometheus rules to Grafana rules", "rules", len(promGroup.Rules), "folder_uid", namespaceUID, "datasource_uid", ds.UID, "datasource_type", ds.Type)
@@ -482,7 +503,7 @@ func (srv *ConvertPrometheusSrv) convertToGrafanaRuleGroup(
 			},
 			KeepOriginalRuleDefinition: util.Pointer(keepOriginalRuleDefinition),
 			EvaluationOffset:           &srv.cfg.PrometheusConversion.RuleQueryOffset,
-			NotificationReceiver:       c.Req.Header.Get(notificationReceiver),
+			NotificationSettings:       notificationSettings,
 		},
 	)
 	if err != nil {
@@ -507,7 +528,7 @@ func parseBooleanHeader(header string, headerName string) (bool, error) {
 	}
 	val, err := strconv.ParseBool(header)
 	if err != nil {
-		return false, errInvalidHeaderValue(headerName)
+		return false, errInvalidHeaderValue(headerName, errors.New("must be 'true' or 'false'"))
 	}
 	return val, nil
 }
@@ -600,4 +621,24 @@ func getProvenance(ctx *contextmodel.ReqContext) models.Provenance {
 		return models.ProvenanceNone
 	}
 	return models.ProvenanceConvertedPrometheus
+}
+
+func parseNotificationSettingsHeader(ctx *contextmodel.ReqContext) ([]models.NotificationSettings, error) {
+	var notificationSettings []models.NotificationSettings
+	notificationSettingsJSON := ctx.Req.Header.Get(notificationSettingsHeader)
+
+	if notificationSettingsJSON != "" {
+		var settings apimodels.AlertRuleNotificationSettings
+		var err error
+
+		if err := json.Unmarshal([]byte(notificationSettingsJSON), &settings); err != nil {
+			return nil, errInvalidHeaderValue(notificationSettingsHeader, errors.New("invalid JSON"))
+		}
+		notificationSettings, err = validation.ValidateNotificationSettings(&settings)
+		if err != nil {
+			return nil, errInvalidHeaderValue(notificationSettingsHeader, err)
+		}
+	}
+
+	return notificationSettings, nil
 }

@@ -58,7 +58,7 @@ type Config struct {
 	KeepOriginalRuleDefinition *bool
 	RecordingRules             RulesConfig
 	AlertRules                 RulesConfig
-	NotificationReceiver       string
+	NotificationSettings       []models.NotificationSettings
 }
 
 // RulesConfig contains configuration that applies to either recording or alerting rules.
@@ -267,12 +267,8 @@ func (p *Converter) convertRule(orgID int64, namespaceUID string, promGroup Prom
 		MissingSeriesEvalsToResolve: util.Pointer(1),
 	}
 
-	if !isRecordingRule && p.cfg.NotificationReceiver != "" {
-		result.NotificationSettings = []models.NotificationSettings{
-			{
-				Receiver: p.cfg.NotificationReceiver,
-			},
-		}
+	if !isRecordingRule {
+		result.NotificationSettings = p.cfg.NotificationSettings
 	}
 
 	if p.cfg.KeepOriginalRuleDefinition != nil && *p.cfg.KeepOriginalRuleDefinition {

@@ -811,7 +811,7 @@ func TestPrometheusRulesToGrafana_KeepOriginalRuleDefinition(t *testing.T) {
 	}
 }
 
-func TestPrometheusRulesToGrafana_NotificationReceiver(t *testing.T) {
+func TestPrometheusRulesToGrafana_NotificationSettings(t *testing.T) {
 	orgID := int64(1)
 	namespace := "namespace"
 
@@ -827,15 +827,20 @@ func TestPrometheusRulesToGrafana_NotificationReceiver(t *testing.T) {
 
 	testCases := []struct {
 		name                 string
-		notificationReceiver string
+		notificationSettings []models.NotificationSettings
 	}{
 		{
-			name:                 "with notification receiver specified",
-			notificationReceiver: "test-receiver",
+			name: "with notification settings specified",
+			notificationSettings: []models.NotificationSettings{
+				{
+					Receiver: "test-receiver",
+					GroupBy:  []string{"alertname", "instance"},
+				},
+			},
 		},
 		{
-			name:                 "without notification receiver",
-			notificationReceiver: "",
+			name:                 "without notification settings",
+			notificationSettings: nil,
 		},
 	}
 
@@ -845,7 +850,7 @@ func TestPrometheusRulesToGrafana_NotificationReceiver(t *testing.T) {
 				DatasourceUID:        "datasource-uid",
 				DatasourceType:       datasources.DS_PROMETHEUS,
 				DefaultInterval:      1 * time.Minute,
-				NotificationReceiver: tc.notificationReceiver,
+				NotificationSettings: tc.notificationSettings,
 			}
 
 			converter, err := NewConverter(cfg)
@@ -855,10 +860,10 @@ func TestPrometheusRulesToGrafana_NotificationReceiver(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, grafanaGroup.Rules, 1)
 
-			if tc.notificationReceiver != "" {
+			if tc.notificationSettings != nil {
 				require.NotNil(t, grafanaGroup.Rules[0].NotificationSettings)
-				require.Len(t, grafanaGroup.Rules[0].NotificationSettings, 1)
-				require.Equal(t, tc.notificationReceiver, grafanaGroup.Rules[0].NotificationSettings[0].Receiver)
+				require.Len(t, grafanaGroup.Rules[0].NotificationSettings, len(tc.notificationSettings))
+				require.Equal(t, tc.notificationSettings, grafanaGroup.Rules[0].NotificationSettings)
 			} else {
 				require.Nil(t, grafanaGroup.Rules[0].NotificationSettings)
 			}

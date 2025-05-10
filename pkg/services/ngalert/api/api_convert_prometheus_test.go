@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -426,12 +427,19 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Equal(t, targetDSUID, remaining[0].Record.TargetDatasourceUID)
 	})
 
-	t.Run("sets notification receiver for rules if specified", func(t *testing.T) {
+	t.Run("sets notification settings for rules if specified", func(t *testing.T) {
 		srv, _, ruleStore, _ := createConvertPrometheusSrv(t)
 		rc := createRequestCtx()
 
 		receiver := "test-receiver"
-		rc.Req.Header.Set(notificationReceiver, receiver)
+		groupBy := []string{"cluster", "pod"}
+		settings := apimodels.AlertRuleNotificationSettings{
+			Receiver: receiver,
+			GroupBy:  groupBy,
+		}
+		settingsJSON, err := json.Marshal(settings)
+		require.NoError(t, err)
+		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
 
 		simpleGroup := apimodels.PrometheusRuleGroup{
 			Name:     "Test Group",
@@ -458,6 +466,56 @@ func TestRouteConvertPrometheusPostRuleGroup(t *testing.T) {
 		require.Len(t, createdRules, 1)
 		require.Len(t, createdRules[0].NotificationSettings, 1)
 		require.Equal(t, receiver, createdRules[0].NotificationSettings[0].Receiver)
+		require.Equal(t, groupBy, createdRules[0].NotificationSettings[0].GroupBy)
+	})
+
+	t.Run("returns error when notification settings header contains invalid JSON", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		rc.Req.Header.Set(notificationSettingsHeader, "{invalid json")
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
+	})
+
+	t.Run("returns error when notification settings contain invalid values", func(t *testing.T) {
+		srv, _, _, _ := createConvertPrometheusSrv(t)
+		rc := createRequestCtx()
+
+		settings := apimodels.AlertRuleNotificationSettings{
+			Receiver: "", // empty receiver is invalid
+		}
+		settingsJSON, err := json.Marshal(settings)
+		require.NoError(t, err)
+		rc.Req.Header.Set(notificationSettingsHeader, string(settingsJSON))
+
+		simpleGroup := apimodels.PrometheusRuleGroup{
+			Name:     "Test Group",
+			Interval: prommodel.Duration(1 * time.Minute),
+			Rules: []apimodels.PrometheusRule{
+				{
+					Alert: "TestAlert",
+					Expr:  "up == 0",
+				},
+			},
+		}
+
+		response := srv.RouteConvertPrometheusPostRuleGroup(rc, "test", simpleGroup)
+		require.Equal(t, http.StatusBadRequest, response.Status())
+		require.Contains(t, string(response.Body()), "Invalid value for header X-Grafana-Alerting-Notification-Settings")
 	})
 }
 
