@@ -67,6 +67,7 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
   public getOptions(): Array<SelectableValue<ShowContent>> {
     const panel = this.state.panelRef.resolve();
     const dataProvider = panel.state.$data ?? panel.parent?.state.$data;
+    const dashboard = getDashboardSceneFor(panel);
 
     const options: Array<SelectableValue<ShowContent>> = [
       {
@@ -88,14 +89,16 @@ export class InspectJsonTab extends SceneObjectBase<InspectJsonTabState> {
         ),
         value: 'panel-data',
       });
-      options.push({
-        label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
-        description: t(
-          'dashboard.inspect-json.dataframe-description',
-          'Raw data without transformations and field config applied. '
-        ),
-        value: 'data-frames',
-      });
+      if (dashboard.state.meta.canEdit) {
+        options.push({
+          label: t('dashboard.inspect-json.dataframe-label', 'DataFrame JSON (from Query)'),
+          description: t(
+            'dashboard.inspect-json.dataframe-description',
+            'Raw data without transformations and field config applied. '
+          ),
+          value: 'data-frames',
+        });
+      }
     }
 
     return options;
