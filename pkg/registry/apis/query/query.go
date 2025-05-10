@@ -192,7 +192,7 @@ func (b *QueryAPIBuilder) execute(ctx context.Context, req parsedRequestInfo) (q
 		b.log.Debug("executing single query")
 		qdr, err = b.handleQuerySingleDatasource(ctx, req.Requests[0])
 		if err == nil && isSingleAlertQuery(req) {
-			b.log.Debug("handling alert query with single query")
+			b.log.Debug("handling alert query with single query", req.Requests[0], qdr)
 			qdr, err = b.convertQueryFromAlerting(ctx, req.Requests[0], qdr)
 		}
 	default:
