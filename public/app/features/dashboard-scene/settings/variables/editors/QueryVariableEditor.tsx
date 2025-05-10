@@ -101,7 +101,6 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard-scene.query-variable-form.label-editor', 'Query Editor'),
       render: () => <ModalEditor variable={variable} />,
     }),
   ];

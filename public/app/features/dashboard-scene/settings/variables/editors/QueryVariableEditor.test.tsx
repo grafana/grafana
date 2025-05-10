@@ -383,7 +383,6 @@ describe('QueryVariableEditor', () => {
 
     expect(result.length).toBe(1);
     const descriptor = result[0];
-    expect(descriptor.props.title).toBe('Query Editor');
 
     // Mock the parent property that OptionsPaneItem expects
     descriptor.parent = new OptionsPaneCategoryDescriptor({

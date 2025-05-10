@@ -12,7 +12,7 @@ import { OptionsPaneItemOverrides } from './OptionsPaneItemOverrides';
 import { OptionPaneItemOverrideInfo } from './types';
 
 export interface OptionsPaneItemInfo {
-  title: string;
+  title?: string;
   value?: any;
   description?: string;
   popularRank?: number;
@@ -82,6 +82,10 @@ function OptionsPaneItem({ itemDescriptor, searchQuery }: OptionsPaneItemProps) 
 
 function renderOptionLabel(itemDescriptor: OptionsPaneItemDescriptor, searchQuery?: string): ReactNode {
   const { title, description, overrides, addon } = itemDescriptor.props;
+
+  if (!title) {
+    return null;
+  }
 
   if (!searchQuery) {
     // Do not render label for categories with only one child
