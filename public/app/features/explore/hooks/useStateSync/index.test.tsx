@@ -259,7 +259,7 @@ describe('useStateSync', () => {
     });
   });
 
-  it("inits with a query's datasource if there are multiple datasources in queries, no root level datasource, and only one query has a valid datsource", async () => {
+  it("inits with a query's datasource if there are multiple datasources in queries, no root level datasource, and only one query has a valid datasource", async () => {
     const { location, store } = setup({
       queryParams: {
         panes: JSON.stringify({
