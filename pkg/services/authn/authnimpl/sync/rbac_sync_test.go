@@ -83,10 +83,8 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 			identity: &authn.Identity{
 				ID: "2", Type: claims.TypeUser, OrgID: 1,
 				ClientParams: authn.ClientParams{
-					SyncPermissions: true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{
-						Roles: []string{"fixed:teams:reader"},
-					},
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{},
 				},
 			},
 			expectedPermissions: map[string][]string{accesscontrol.ActionTeamsRead: {accesscontrol.ScopeTeamsAll}},
@@ -96,10 +94,8 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 			identity: &authn.Identity{
 				ID: "2", Type: claims.TypeUser, OrgID: 1,
 				ClientParams: authn.ClientParams{
-					SyncPermissions: true,
-					FetchPermissionsParams: authn.FetchPermissionsParams{
-						Roles: []string{"fixed:teams:reader", "fixed:unknown:role"},
-					},
+					SyncPermissions:        true,
+					FetchPermissionsParams: authn.FetchPermissionsParams{},
 				},
 			},
 			expectedPermissions: map[string][]string{accesscontrol.ActionTeamsRead: {accesscontrol.ScopeTeamsAll}},
@@ -152,7 +148,6 @@ func TestRBACSync_FetchPermissions(t *testing.T) {
 					FetchPermissionsParams: authn.FetchPermissionsParams{
 						RestrictedActions: []string{accesscontrol.ActionUsersWrite, accesscontrol.ActionTeamsWrite, "dashboards:read"},
 						AllowedActions:    []string{"dashboards:read"},
-						Roles:             []string{"fixed:teams:reader", "fixed:teams:writer"},
 					},
 				},
 			},
