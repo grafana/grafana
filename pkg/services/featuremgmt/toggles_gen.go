@@ -930,4 +930,8 @@ const (
 	// FlagExtensionsReadOnlyProxy
 	// Use proxy-based read-only objects for plugin extensions instead of deep cloning
 	FlagExtensionsReadOnlyProxy = "extensionsReadOnlyProxy"
+
+	// FlagNewDataSourceConfigPageDesign
+	// Enables new design for data source configuration pages
+	FlagNewDataSourceConfigPageDesign = "newDataSourceConfigPageDesign"
 )
