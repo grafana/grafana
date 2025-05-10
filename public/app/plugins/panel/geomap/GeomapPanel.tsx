@@ -5,15 +5,16 @@ import Attribution from 'ol/control/Attribution';
 import ScaleLine from 'ol/control/ScaleLine';
 import Zoom from 'ol/control/Zoom';
 import { Coordinate } from 'ol/coordinate';
+import { EventsKey } from 'ol/events';
 import { isEmpty } from 'ol/extent';
 import MouseWheelZoom from 'ol/interaction/MouseWheelZoom';
-import { fromLonLat } from 'ol/proj';
+import { fromLonLat, transformExtent } from 'ol/proj';
 import { Component, ReactNode } from 'react';
 import * as React from 'react';
 import { Subscription } from 'rxjs';
 
 import { DataHoverEvent, PanelData, PanelProps } from '@grafana/data';
-import { config } from '@grafana/runtime';
+import { config, locationService } from '@grafana/runtime';
 import { PanelContext, PanelContextRoot } from '@grafana/ui';
 import { appEvents } from 'app/core/app_events';
 import { VariablesChanged } from 'app/features/variables/types';
@@ -63,6 +64,8 @@ export class GeomapPanel extends Component<Props, State> {
   mapDiv?: HTMLDivElement;
   layers: MapLayerState[] = [];
   readonly byName = new Map<string, MapLayerState>();
+
+  mapViewData?: string;
 
   constructor(props: Props) {
     super(props);
@@ -116,6 +119,12 @@ export class GeomapPanel extends Component<Props, State> {
     // Check for resize
     if (this.props.height !== nextProps.height || this.props.width !== nextProps.width) {
       this.map.updateSize();
+      // update dashboard variable if enabled
+      const options = this.props.options;
+      if (options.view.dashboardVariable) {
+        const view = this.map.getView();
+        this.updateGeoVariables(view, options);
+      }
     }
 
     // External data changed
@@ -205,6 +214,28 @@ export class GeomapPanel extends Component<Props, State> {
     }
   }
 
+  // view listerner handler, used to unregister when view changes
+  private viewListernerKey: EventsKey | null = null;
+
+  // updateGeoVariables debounce timeout
+  private timeoutId: NodeJS.Timeout | null = null; // for debounce
+
+  // Updates the dashboard variable `mapViewData` with the view extent value.
+  // Use a debounce strategy to wait the user stop dragging or zooming the map.
+  updateGeoVariables = (view: View, options: Options) => {
+    const bounds = view.calculateExtent();
+    const bounds4326 = transformExtent(bounds, 'EPSG:3857', 'EPSG:4326');
+    if (this.timeoutId) {
+      clearTimeout(this.timeoutId);
+    }
+    this.timeoutId = setTimeout(() => {
+      if (options.controls.showDebug) {
+        console.log('GeomapPanel.updateGeoVariables', bounds4326);
+      }
+      locationService.partial({ 'var-mapViewData': `${bounds4326}` }, true);
+    }, 500);
+  };
+
   initMapRef = async (div: HTMLDivElement) => {
     if (!div) {
       // Do not initialize new map or dispose old map
@@ -241,7 +272,9 @@ export class GeomapPanel extends Component<Props, State> {
     }
     this.layers = layers;
     this.map = map; // redundant
-    this.initViewExtent(map.getView(), options.view);
+    const view = map.getView();
+    const viewConfig = options.view;
+    this.initViewExtent(view, viewConfig);
 
     this.mouseWheelZoom = new MouseWheelZoom();
     this.map?.addInteraction(this.mouseWheelZoom);
@@ -251,6 +284,20 @@ export class GeomapPanel extends Component<Props, State> {
     notifyPanelEditor(this, layers, layers.length - 1);
 
     this.setState({ legends: this.getLegends() });
+
+    // register view listener to update dashboard variable if enabled
+    if (viewConfig.dashboardVariable) {
+      if (options.controls.showDebug) {
+        console.log('Geomap.initMapRef: register view listener', view);
+      }
+      if (this.viewListernerKey != null) {
+        view.un('change', this.viewListernerKey.listener);
+      }
+      this.viewListernerKey = view.on('change', () => {
+        this.updateGeoVariables(view, options);
+      });
+      this.updateGeoVariables(view, options);
+    }
   };
 
   clearTooltip = () => {
