@@ -1,6 +1,6 @@
 import { isEqual, uniqWith } from 'lodash';
 
-import { SelectableValue } from '@grafana/data';
+import { ComboboxOption } from '@grafana/ui';
 import {
   AlertManagerCortexConfig,
   Matcher,
@@ -113,7 +113,7 @@ export function matchersToString(matchers: Matcher[]) {
   return `{ ${combinedMatchers} }`;
 }
 
-export const matcherFieldOptions: SelectableValue[] = [
+export const matcherFieldOptions: Array<ComboboxOption<string>> = [
   { label: MatcherOperator.equal, description: 'Equals', value: MatcherOperator.equal },
   { label: MatcherOperator.notEqual, description: 'Does not equal', value: MatcherOperator.notEqual },
   { label: MatcherOperator.regex, description: 'Matches regex', value: MatcherOperator.regex },
