@@ -205,6 +205,8 @@ function getStyles(theme: GrafanaTheme2) {
     wrapper: css({
       display: 'flex',
       flexDirection: 'column',
+      // Without this min height, the custom grid (SceneGridLayout) wont render
+      minHeight: `42px`,
     }),
     wrapperNotCollapsed: css({
       '> div:nth-child(2)': {
