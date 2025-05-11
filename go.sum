@@ -1571,8 +1571,8 @@ github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 h1:JeSE6pjso5T
 github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674/go.mod h1:r4w70xmWCQKmi1ONH4KIaBptdivuRPyosB9RmPlGEwA=
 github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35 h1:/FvrKg5ZtJ09oWOt91lIPpeWtWGcNqXv/9UOQaRDyQE=
 github.com/grafana/alerting v0.0.0-20250508220812-83b6de6b0a35/go.mod h1:pMfhRxL2LZ3Pm8iy7VcVsb9CLYuBtjFYbf1oxgx7yFA=
-github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a h1:irEH0Abl6mKbkPx/xtmB5Wai4ipzEB6hGPNsLya/p9Y=
-github.com/grafana/authlib v0.0.0-20250422131730-e8482efe6b8a/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
+github.com/grafana/authlib v0.0.0-20250430134519-13c42d09f9f5 h1:qu6+b9tY6E/CgKrLh8srjtvKOMCxdwk46jRqURjJ61s=
+github.com/grafana/authlib v0.0.0-20250430134519-13c42d09f9f5/go.mod h1:PBtQaXwkFu4BAt2aXsR7w8p8NVpdjV5aJYhqRDei9Us=
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d h1:34E6btDAhdDOiSEyrMaYaHwnJpM8w9QKzVQZIBzLNmM=
 github.com/grafana/authlib/types v0.0.0-20250325095148-d6da9c164a7d/go.mod h1:qeWYbnWzaYGl88JlL9+DsP1GT2Cudm58rLtx13fKZdw=
 github.com/grafana/dataplane/examples v0.0.1 h1:K9M5glueWyLoL4//H+EtTQq16lXuHLmOhb6DjSCahzA=
@@ -1625,6 +1625,8 @@ github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250506052906-7a2fc797fb4a h1
 github.com/grafana/grafana/pkg/apis/secret v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:L6lSC6q+tugol2mX0So7X1p4r8Z1+/j3yJd3dANpQiM=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250506052906-7a2fc797fb4a h1:HCOrXGvdPolbZ/Cw9AoT1p1de1PInZTB3ri0Y9K0E18=
 github.com/grafana/grafana/pkg/apiserver v0.0.0-20250506052906-7a2fc797fb4a/go.mod h1:Ex2YDQIZ4MQ2btNuCGs8c8aDb6CG3oJ3X0vLtejAfPM=
+github.com/grafana/grafana/pkg/build v0.0.0-20250511185031-d91e4b058265 h1:nX8enihe20gO8tbzoZerxBrzdT2blq4BO2r7VYqV/fM=
+github.com/grafana/grafana/pkg/build v0.0.0-20250511185031-d91e4b058265/go.mod h1:HSTzdLjy1s0jAfT/yY9/ohDPWYT1rM/MusOLbc3E9DM=
 github.com/grafana/grafana/pkg/promlib v0.0.8 h1:VUWsqttdf0wMI4j9OX9oNrykguQpZcruudDAFpJJVw0=
 github.com/grafana/grafana/pkg/promlib v0.0.8/go.mod h1:U1ezG/MGaEPoThqsr3lymMPN5yIPdVTJnDZ+wcXT+ao=
 github.com/grafana/grafana/pkg/semconv v0.0.0-20250422074709-7c8433fbb2c2 h1:uKOBkqzjMwimPJvTOjlo0bFrrR17w8U5l3HtDETPacQ=
