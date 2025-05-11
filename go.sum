@@ -983,8 +983,8 @@ github.com/cenkalti/backoff/v4 v4.3.0/go.mod h1:Y3VNntkOUPxTVeUxJ/G5vcM//AlwfmyY
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/census-instrumentation/opencensus-proto v0.3.0/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/census-instrumentation/opencensus-proto v0.4.1/go.mod h1:4T9NM4+4Vw91VeyqjLS6ao50K5bOcLKN6Q42XnYaRYw=
-github.com/centrifugal/centrifuge v0.34.4 h1:6jdwPB+FHGse7FgY5QVxe9/uaD+8nE2lOmIOlYoek7Y=
-github.com/centrifugal/centrifuge v0.34.4/go.mod h1:VliWwN01/Iom9tLFJyk4E5FdKcn3cbJhnlt0XTnlolo=
+github.com/centrifugal/centrifuge v0.35.0 h1:yBT/b30kaPJH6CoZp98EkVDXEBV7y/PFnpztokXPj+I=
+github.com/centrifugal/centrifuge v0.35.0/go.mod h1:15xLJ3Mi4tadn98tF6U7XOmyOYpxCt2SItozs+LBNrc=
 github.com/centrifugal/protocol v0.16.0 h1:bAQm4YvONSPqq6kR8UgBNyf5Yh63AHKnjSKj/g9anPk=
 github.com/centrifugal/protocol v0.16.0/go.mod h1:7V5vI30VcoxJe4UD87xi7bOsvI0bmEhvbQuMjrFM2L4=
 github.com/cespare/xxhash v1.1.0 h1:a6HrQnmkObjyL+Gs60czilIUGqrzKutQD6XZog3p+ko=
@@ -2247,8 +2247,8 @@ github.com/puzpuzpuz/xsync/v2 v2.5.1/go.mod h1:gD2H2krq/w52MfPLE+Uy64TzJDVY7lP2z
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/redis/go-redis/v9 v9.7.3 h1:YpPyAayJV+XErNsatSElgRZZVCwXX9QzkKYNvO7x0wM=
 github.com/redis/go-redis/v9 v9.7.3/go.mod h1:bGUrSggJ9X9GUmZpZNEOQKaANxSGgOEBRltRTZHSvrA=
-github.com/redis/rueidis v1.0.53 h1:r3eT4bp7Nyt+kSldT2po/EO9YeawHfZDY9TJBrHRLD4=
-github.com/redis/rueidis v1.0.53/go.mod h1:by+34b0cFXndxtYmPAHpoTHO5NkosDlBvhexoTURIxM=
+github.com/redis/rueidis v1.0.56 h1:DwPjFIgas1OMU/uCqBELOonu9TKMYt3MFPq6GtwEWNY=
+github.com/redis/rueidis v1.0.56/go.mod h1:g660/008FMYmAF46HG4lmcpcgFNj+jCjCAZUUM+wEbs=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec h1:W09IVJc94icq4NjY3clb7Lk8O1qJ8BdBEF8z0ibU0rE=
 github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
