@@ -488,7 +488,7 @@ require (
 	github.com/prometheus/sigv4 v0.1.0 // @grafana/alerting-backend
 	github.com/protocolbuffers/txtpbfmt v0.0.0-20241112170944-20d2c9ebc01d // indirect
 	github.com/puzpuzpuz/xsync/v2 v2.5.1 // indirect
-	github.com/redis/rueidis v1.0.53 // indirect
+	github.com/redis/rueidis v1.0.56 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
