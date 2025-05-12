@@ -92,6 +92,9 @@ func (hs *HTTPServer) registerRoutes() {
 			panic(err) // ???
 		}
 		r.Get("/mtfe", index.HandleRequest)
+
+		// Temporarily expose the full bootdata via API
+		r.Get("/bootdata", reqNoAuth, hs.GetBootdata)
 	}
 
 	// authed views

@@ -54,7 +54,7 @@ describe('DataSourceHttpSettings', () => {
 
   it('should not render SIGV4 label if SIGV4 is not enabled', () => {
     setup({ sigV4AuthToggleEnabled: false });
-    expect(screen.queryByText('SigV4 auth')).toBeNull();
+    expect(screen.queryByText('SigV4 auth')).not.toBeInTheDocument();
   });
 
   it('should render SIGV4 editor if provided and SIGV4 is enabled', () => {

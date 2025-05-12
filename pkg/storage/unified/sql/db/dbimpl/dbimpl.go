@@ -7,10 +7,10 @@ import (
 	"sync"
 
 	"github.com/dlmiddlecote/sqlstats"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.opentelemetry.io/otel/trace"
 	"go.opentelemetry.io/otel/trace/noop"
-	"xorm.io/xorm"
 
 	infraDB "github.com/grafana/grafana/pkg/infra/db"
 	"github.com/grafana/grafana/pkg/infra/log"

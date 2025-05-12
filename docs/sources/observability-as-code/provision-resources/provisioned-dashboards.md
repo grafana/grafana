@@ -19,15 +19,6 @@ weight: 300
 Git Sync and File path provisioning an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. Enable the `provisioning` and `kubernetesDashboards` feature toggles in Grafana. These features aren't available in Grafana Cloud.
 {{< /admonition >}}
 
-- [Provision resources and sync dashboards](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/)
-  - [Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/intro-git-sync/)
-  - [Set up Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/git-sync-setup/)
-  - [Set up file provisioning](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/file-path-setup/)
-  - [Work with provisioned dashboards](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/provisioned-dashboards/)
-  - [Manage provisioned repositories with Git Sync](/docs/grafana/<GRAFANA_VERSION>/observability-as-code/provision-resources/use-git-sync/)
-
-<hr />
-
 Using Provisioning, you can choose to store your dashboard JSON files in either GitHub repositories using Git Sync or a local file path.
 
 For more information, refer to the [Dashboards](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/dashboards/) documentation.
@@ -118,6 +109,12 @@ Saving changes requires opening a pull request in your GitHub repository.
 1. If you chose **Push to a new branch**, select **Open a pull request in GitHub** to open a new PR to your repository. GitHub opens with your dashboard’s code as the contents of the PR.
 
 1. Follow your usual GitHub workflow to save and merge the PR to your repository.
+
+### Remove dashboards
+
+You can remove a provisioned dashboard by deleting the dashboard from the repository.
+
+Grafana updates when the changes from the GitHub repository sync.
 
 ### Tips
 

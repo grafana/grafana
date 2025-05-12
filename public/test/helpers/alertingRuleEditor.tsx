@@ -39,7 +39,7 @@ export const ui = {
       byTestId(selectors.components.AlertRules.stepAdvancedModeSwitch(stepNo.toString())),
   },
   buttons: {
-    saveAndExit: byRole('button', { name: 'Save rule and exit' }),
+    save: byTestId('save-rule'),
     addAnnotation: byRole('button', { name: /Add info/ }),
     addLabel: byRole('button', { name: /Add label/ }),
     preview: byRole('button', { name: /^Preview$/ }),
