@@ -187,8 +187,8 @@ export function sceneVariablesSetToVariables(set: SceneVariables, keepQueryOptio
         datasource: variable.state.datasource,
         allowCustomValue: variable.state.allowCustomValue,
         // @ts-expect-error
-        baseFilters: adaptFilters(variable.state.baseFilters),
-        filters: adaptFilters(variable.state.filters),
+        baseFilters: validateFiltersOrigin(variable.state.baseFilters),
+        filters: validateFiltersOrigin(variable.state.filters),
         defaultKeys: variable.state.defaultKeys,
       });
     } else {
@@ -429,8 +429,8 @@ export function sceneVariablesSetToSchemaV2Variables(
           ...commonProperties,
           name: variable.state.name,
           datasource: variable.state.datasource || {}, //FIXME what is the default value?
-          baseFilters: adaptFilters(variable.state.baseFilters),
-          filters: adaptFilters(variable.state.filters),
+          baseFilters: validateFiltersOrigin(variable.state.baseFilters),
+          filters: validateFiltersOrigin(variable.state.filters),
           defaultKeys: variable.state.defaultKeys || [], //FIXME what is the default value?
         },
       };
@@ -443,7 +443,7 @@ export function sceneVariablesSetToSchemaV2Variables(
   return variables;
 }
 
-function adaptFilters(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
+function validateFiltersOrigin(filters?: SceneAdHocFilterWithLabels[]): AdHocFilterWithLabels[] {
   return (
     filters?.map((filter) => {
       const { origin: initialOrigin, ...restOfFilter } = filter;
