@@ -6,7 +6,6 @@ import kbn from 'app/core/utils/kbn';
 import { ScopedResourceClient } from 'app/features/apiserver/client';
 import {
   AnnoKeyFolder,
-  AnnoKeyFolderId,
   AnnoKeyFolderTitle,
   AnnoKeyFolderUrl,
   AnnoKeyMessage,
@@ -58,7 +57,6 @@ export class K8sDashboardV2API
           const folder = await backendSrv.getFolderByUid(dashboard.metadata.annotations[AnnoKeyFolder]);
           dashboard.metadata.annotations[AnnoKeyFolderTitle] = folder.title;
           dashboard.metadata.annotations[AnnoKeyFolderUrl] = folder.url;
-          dashboard.metadata.annotations[AnnoKeyFolderId] = folder.id;
         } catch (e) {
           throw new Error('Failed to load folder');
         }
@@ -121,7 +119,6 @@ export class K8sDashboardV2API
       // remove frontend folder annotations
       delete obj.metadata.annotations?.[AnnoKeyFolderTitle];
       delete obj.metadata.annotations?.[AnnoKeyFolderUrl];
-      delete obj.metadata.annotations?.[AnnoKeyFolderId];
 
       obj.metadata.annotations = {
         ...obj.metadata.annotations,
