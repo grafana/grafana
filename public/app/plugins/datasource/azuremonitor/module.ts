@@ -1,4 +1,5 @@
 import { DataSourcePlugin, DashboardLoadedEvent } from '@grafana/data';
+import { initPluginTranslations } from '@grafana/i18n';
 import { getAppEvents } from '@grafana/runtime';
 
 import { ConfigEditor } from './components/ConfigEditor/ConfigEditor';
@@ -11,6 +12,8 @@ import { AzureMonitorQuery, AzureMonitorDataSourceJsonData, AzureQueryType, Resu
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
   .setConfigEditor(ConfigEditor)
   .setQueryEditor(AzureMonitorQueryEditor);
+
+initPluginTranslations(pluginJson.id);
 
 interface Statistics {
   hidden: number;
