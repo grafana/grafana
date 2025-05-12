@@ -1,8 +1,9 @@
-import { PureComponent } from 'react';
+import { useState } from 'react';
 
 import { DataSourcePluginOptionsEditorProps, SelectableValue, updateDatasourcePluginOption } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ConfigSection, DataSourceDescription } from '@grafana/plugin-ui';
-import { getBackendSrv, getTemplateSrv, isFetchError, TemplateSrv, config } from '@grafana/runtime';
+import { getBackendSrv, isFetchError, config } from '@grafana/runtime';
 import { Alert, Divider, SecureSocksProxySettings } from '@grafana/ui';
 
 import ResponseParser from '../../azure_monitor/response_parser';
@@ -33,106 +34,91 @@ export interface State {
   error?: ErrorMessage;
 }
 
-export class ConfigEditor extends PureComponent<Props, State> {
-  templateSrv: TemplateSrv = getTemplateSrv();
-  baseURL: string;
+export const ConfigEditor = (props: Props) => {
+  const [unsaved, setUnsaved] = useState(false);
+  const [error, setError] = useState<ErrorMessage | undefined>(undefined);
+  const { t } = useTranslate();
+  const baseURL = `/api/datasources/${props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
 
-  constructor(props: Props) {
-    super(props);
-
-    this.state = {
-      unsaved: false,
-    };
-    this.baseURL = `/api/datasources/${this.props.options.id}/resources/${routeNames.azureMonitor}/subscriptions`;
-  }
-
-  private updateOptions = (
+  const updateOptions = (
     optionsFunc: (options: AzureMonitorDataSourceSettings) => AzureMonitorDataSourceSettings
   ): void => {
-    const updated = optionsFunc(this.props.options);
-    this.props.onOptionsChange(updated);
-
-    this.setState({ unsaved: true });
+    const updated = optionsFunc(props.options);
+    props.onOptionsChange(updated);
+    setUnsaved(true);
   };
 
-  private saveOptions = async (): Promise<void> => {
-    if (this.state.unsaved) {
+  const saveOptions = async () => {
+    if (unsaved) {
       await getBackendSrv()
-        .put(`/api/datasources/${this.props.options.id}`, this.props.options)
+        .put(`/api/datasources/${props.options.id}`, props.options)
         .then((result: { datasource: AzureMonitorDataSourceSettings }) => {
-          updateDatasourcePluginOption(this.props, 'version', result.datasource.version);
+          updateDatasourcePluginOption(props, 'version', result.datasource.version);
         });
 
-      this.setState({ unsaved: false });
+      setUnsaved(false);
     }
   };
 
-  private getSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
-    await this.saveOptions();
+  const getSubscriptions = async (): Promise<Array<SelectableValue<string>>> => {
+    await saveOptions();
 
     const query = `?api-version=2019-03-01`;
     try {
       const result = await getBackendSrv()
         .fetch<AzureAPIResponse<Subscription>>({
-          url: this.baseURL + query,
+          url: baseURL + query,
           method: 'GET',
         })
         .toPromise();
 
-      this.setState({ error: undefined });
+      setError(undefined);
       return ResponseParser.parseSubscriptionsForSelect(result);
     } catch (err) {
       if (isFetchError(err)) {
-        this.setState({
-          error: {
-            title: 'Error requesting subscriptions',
-            description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
-            details: err?.data?.message,
-          },
+        setError({
+          title: 'Error requesting subscriptions',
+          description: 'Could not request subscriptions from Azure. Check your credentials and try again.',
+          details: err?.data?.message,
         });
       }
       return Promise.resolve([]);
     }
   };
 
-  render() {
-    const { options, onOptionsChange } = this.props;
-    const { error } = this.state;
-
-    return (
-      <>
-        <DataSourceDescription
-          dataSourceName="Azure Monitor"
-          docsLink="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
-          hasRequiredFields
-        />
-        <Divider />
-        <MonitorConfig options={options} updateOptions={this.updateOptions} getSubscriptions={this.getSubscriptions} />
-        {error && (
-          <Alert severity="error" title={error.title}>
-            <p>{error.description}</p>
-            {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
-          </Alert>
-        )}
-        {config.secureSocksDSProxyEnabled && (
-          <>
-            <Divider />
-            <ConfigSection
-              title={t('components.config-editor.title-additional-settings', 'Additional settings')}
-              description={t(
-                'components.config-editor.description-additional-settings',
-                'Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy.'
-              )}
-              isCollapsible={true}
-              isInitiallyOpen={options.jsonData.enableSecureSocksProxy !== undefined}
-            >
-              <SecureSocksProxySettings options={options} onOptionsChange={onOptionsChange} />
-            </ConfigSection>
-          </>
-        )}
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <DataSourceDescription
+        dataSourceName="Azure Monitor"
+        docsLink="https://grafana.com/docs/grafana/latest/datasources/azure-monitor/"
+        hasRequiredFields
+      />
+      <Divider />
+      <MonitorConfig options={props.options} updateOptions={updateOptions} getSubscriptions={getSubscriptions} />
+      {error && (
+        <Alert severity="error" title={error.title}>
+          <p>{error.description}</p>
+          {error.details && <details style={{ whiteSpace: 'pre-wrap' }}>{error.details}</details>}
+        </Alert>
+      )}
+      {config.secureSocksDSProxyEnabled && (
+        <>
+          <Divider />
+          <ConfigSection
+            title={t('components.config-editor.title-additional-settings', 'Additional settings')}
+            description={t(
+              'components.config-editor.description-additional-settings',
+              'Additional settings are optional settings that can be configured for more control over your data source. This includes Secure Socks Proxy.'
+            )}
+            isCollapsible={true}
+            isInitiallyOpen={props.options.jsonData.enableSecureSocksProxy !== undefined}
+          >
+            <SecureSocksProxySettings options={props.options} onOptionsChange={props.onOptionsChange} />
+          </ConfigSection>
+        </>
+      )}
+    </>
+  );
+};
 
 export default ConfigEditor;
