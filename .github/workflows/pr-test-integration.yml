@@ -47,7 +47,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
-          readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e ./... | go run ./scripts/ci/shard-tests/ --shard "$SHARD" --test-names-start-with TestIntegration -)"
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -tags=sqlite -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   mysql:
     strategy:
@@ -96,7 +96,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
-          readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e ./... | go run ./scripts/ci/shard-tests/ --shard "$SHARD" --test-names-start-with TestIntegration -)"
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -p=1 -tags=mysql -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"
   postgres:
     strategy:
@@ -144,5 +144,5 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
-          readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e ./... | go run ./scripts/ci/shard-tests/ --shard "$SHARD" --test-names-start-with TestIntegration -)"
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/pkgs-with-tests-named.sh -b TestIntegration | ./scripts/ci/backend-tests/shard.sh -N"$SHARD" -d-)"
           go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' "${PACKAGES[@]}"

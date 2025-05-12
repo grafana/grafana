@@ -53,7 +53,7 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
-          readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e ./... | go run ./scripts/ci/shard-tests/ --shard "$SHARD" -)"
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           go test -short -timeout=30m "${PACKAGES[@]}"
 
   grafana-enterprise:
@@ -91,5 +91,5 @@ jobs:
         env:
           SHARD: ${{ matrix.shard }}
         run: |
-          readarray -t PACKAGES <<< "$(go list -f '{{.Dir}}' -e ./... | go run ./scripts/ci/shard-tests/ --shard "$SHARD" -)"
+          readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
           go test -short -timeout=30m "${PACKAGES[@]}"
