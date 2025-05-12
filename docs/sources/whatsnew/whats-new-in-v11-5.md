@@ -15,35 +15,35 @@ title: What's new in Grafana v11.5
 posts:
   - title: Cloud Migration Assistant
     items:
-      - whats-new/2025-01-10-grafana-cloud-migration-assistant-supports-all-plugins-and-grafana-alerting.md
+      - docs/grafana-cloud/whats-new/2025-01-10-grafana-cloud-migration-assistant-supports-all-plugins-and-grafana-alerting.md
   - title: Dashboards and visualizations
     items:
-      - whats-new/2024-10-16-redesigned-ad-hoc-filters-for-dashboards.md
-      - whats-new/2024-11-19-new-regular-expression-option-for-extract-fields-transformation.md
-      - whats-new/2024-09-04-sharing-drawer.md
-      - whats-new/2024-12-16-customizable-shareable-dashboard-panel-images.md
+      - docs/grafana-cloud/whats-new/2024-10-16-redesigned-ad-hoc-filters-for-dashboards.md
+      - docs/grafana-cloud/whats-new/2024-11-19-new-regular-expression-option-for-extract-fields-transformation.md
+      - docs/grafana-cloud/whats-new/2024-09-04-sharing-drawer.md
+      - docs/grafana-cloud/whats-new/2024-12-16-customizable-shareable-dashboard-panel-images.md
   - title: Reporting
     items:
-      - whats-new/2024-10-21-theme-options-for-reporting.md
-      - whats-new/2024-12-02-pdf-export-improvements-in-ga.md
+      - docs/grafana-cloud/whats-new/2024-10-21-theme-options-for-reporting.md
+      - docs/grafana-cloud/whats-new/2024-12-02-pdf-export-improvements-in-ga.md
   - title: Alerting
     items:
-      - whats-new/2025-01-22-rbac-for-alerting-notifications.md
-      - whats-new/2025-01-22-rbac-for-notification-policies.md
+      - docs/grafana-cloud/whats-new/2025-01-22-rbac-for-alerting-notifications.md
+      - docs/grafana-cloud/whats-new/2025-01-22-rbac-for-notification-policies.md
   - title: Data sources
     items:
-      - whats-new/2025-01-09-elasticsearch-cross-cluster-search-support.md
-      - whats-new/2024-11-12-open-search-datasource-now-supports-private-datasource-connect.md
-      - whats-new/2024-12-04-time-series-macro-support-in-visual-query-builder-for-sql-data-sources.md
+      - docs/grafana-cloud/whats-new/2025-01-09-elasticsearch-cross-cluster-search-support.md
+      - docs/grafana-cloud/whats-new/2024-11-12-open-search-datasource-now-supports-private-datasource-connect.md
+      - docs/grafana-cloud/whats-new/2024-12-04-time-series-macro-support-in-visual-query-builder-for-sql-data-sources.md
   - title: Authentication and authorization
     items:
-      - whats-new/2025-01-07-oauth-and-saml-session-handling-improvements.md
+      - docs/grafana-cloud/whats-new/2025-01-07-oauth-and-saml-session-handling-improvements.md
   - title: Plugins
     items:
-      - whats-new/2025-01-10-plugin-frontend-sandbox.md
+      - docs/grafana-cloud/whats-new/2025-01-10-plugin-frontend-sandbox.md
   - title: Public dashboards
     items:
-      - whats-new/2024-09-09-public-dashboards-are-now-shared-dashboards.md
+      - docs/grafana-cloud/whats-new/2024-09-09-public-dashboards-are-now-shared-dashboards.md
 whats_new_grafana_version: 11.5
 weight: -47
 ---
