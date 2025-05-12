@@ -145,7 +145,13 @@ Verify that the data sources you plan to query in the alert rule are [compatible
 
 Only users with **Edit** permissions for the folder storing the rules can edit or delete Grafana-managed alert rules. Only admins can restore deleted Grafana-managed alert rules.
 
-{{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+### Provisioning
+
+Note that if you delete an alert resource created in the UI, you can no longer retrieve it.
+
+To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
+
+[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ### Default vs Advanced options
 
@@ -287,7 +293,37 @@ Complete the following steps to set up notifications.
 
    1. Click **See details** to view alert routing details and an email preview.
 
-{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+## Configure notification message
+
+Use [annotations](ref:shared-annotations) to add information to alert messages that can help respond to the alert.
+
+Annotations are included by default in notification messages, and can use text or [templates](ref:shared-alert-rule-template) to display dynamic data from queries.
+
+Grafana provides several optional annotations.
+
+1. Optional: Add a summary.
+
+   Short summary of what happened and why.
+
+1. Optional: Add a description.
+
+   Description of what the alert rule does.
+
+1. Optional: Add a Runbook URL.
+
+   Webpage where you keep your runbook for the alert
+
+1. Optional: Add a custom annotation.
+
+   Add any additional information that could help address the alert.
+
+1. Optional: **Link dashboard and panel**.
+
+   [Link the alert rule to a panel](ref:shared-link-alert-rules-to-panels) to facilitate alert investigation.
+
+1. Click **Save rule**.
+
+[//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ## Permanently delete or restore deleted alert rules
 

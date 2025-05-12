@@ -121,7 +121,12 @@ const LokiStateHistory = ({ ruleUID }: Props) => {
             <Text variant="bodySmall">
               <Trans i18nKey="alerting.loki-state-history.common-labels">Common labels</Trans>
             </Text>
-            <Tooltip content="Common labels are the ones attached to all of the alert instances">
+            <Tooltip
+              content={t(
+                'alerting.loki-state-history.tooltip-common-labels',
+                'Common labels are the ones attached to all of the alert instances'
+              )}
+            >
               <Icon name="info-circle" size="sm" />
             </Tooltip>
           </Stack>

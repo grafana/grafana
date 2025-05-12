@@ -457,48 +457,124 @@ describe('calculateField transformer w/ timeseries', () => {
     });
   });
 
-  it('unary math', async () => {
-    const unarySeries = toDataFrame({
-      fields: [
-        { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
-        { name: 'A', type: FieldType.number, values: [1, -10, -200, 300] },
-      ],
+  describe('unary math', () => {
+    it('calculates absolute value accurately', async () => {
+      const unarySeries = toDataFrame({
+        fields: [
+          { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+          { name: 'A', type: FieldType.number, values: [1, -10, -200, 300] },
+        ],
+      });
+
+      const cfg = {
+        id: DataTransformerID.calculateField,
+        options: {
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            fieldName: 'A',
+            operator: UnaryOperationID.Abs,
+          },
+          replaceFields: true,
+        },
+      };
+
+      await expect(transformDataFrame([cfg], [unarySeries])).toEmitValuesWith((received) => {
+        const data = received[0];
+        const filtered = data[0];
+        const rows = new DataFrameView(filtered).toArray();
+        expect(rows).toEqual([
+          {
+            'abs(A)': 1,
+            TheTime: 1000,
+          },
+          {
+            'abs(A)': 10,
+            TheTime: 2000,
+          },
+          {
+            'abs(A)': 200,
+            TheTime: 3000,
+          },
+          {
+            'abs(A)': 300,
+            TheTime: 4000,
+          },
+        ]);
+      });
     });
 
-    const cfg = {
-      id: DataTransformerID.calculateField,
-      options: {
-        mode: CalculateFieldMode.UnaryOperation,
-        unary: {
-          fieldName: 'A',
-          operator: UnaryOperationID.Abs,
+    it('calculates percentage value accurately', async () => {
+      const testCases = [
+        {
+          values: [1, 2, 3, 4],
+          result: [0.1, 0.2, 0.3, 0.4],
         },
-        replaceFields: true,
-      },
-    };
+        {
+          values: [1, 0, 5, 4],
+          result: [0.1, 0, 0.5, 0.4],
+        },
+        {
+          values: [1, Infinity, 5, 4],
+          result: [0.1, Infinity, 0.5, 0.4],
+        },
+        {
+          values: [0, 0, 0, 0],
+          result: [0, 0, 0, 0],
+        },
+        {
+          values: ['a', 's', 2, 4],
+          result: [NaN, NaN, 0.3333333333333333, 0.6666666666666666],
+        },
+        {
+          values: [1e5, 1, 2, 4],
+          result: [0.999930004899657, 0.000009999300048996571, 0.000019998600097993142, 0.000039997200195986284],
+        },
+      ];
 
-    await expect(transformDataFrame([cfg], [unarySeries])).toEmitValuesWith((received) => {
-      const data = received[0];
-      const filtered = data[0];
-      const rows = new DataFrameView(filtered).toArray();
-      expect(rows).toEqual([
-        {
-          'abs(A)': 1,
-          TheTime: 1000,
+      const cfg = {
+        id: DataTransformerID.calculateField,
+        options: {
+          mode: CalculateFieldMode.UnaryOperation,
+          unary: {
+            fieldName: 'A',
+            operator: UnaryOperationID.Percent,
+          },
+          replaceFields: true,
         },
-        {
-          'abs(A)': 10,
-          TheTime: 2000,
-        },
-        {
-          'abs(A)': 200,
-          TheTime: 3000,
-        },
-        {
-          'abs(A)': 300,
-          TheTime: 4000,
-        },
-      ]);
+      };
+
+      testCases.forEach(async (testCase) => {
+        const unarySeries = toDataFrame({
+          fields: [
+            { name: 'TheTime', type: FieldType.time, values: [1000, 2000, 3000, 4000] },
+            { name: 'A', type: FieldType.number, values: testCase.values },
+          ],
+        });
+
+        await expect(transformDataFrame([cfg], [unarySeries])).toEmitValuesWith((received) => {
+          const data = received[0];
+          const filtered = data[0];
+          const rows = new DataFrameView(filtered).toArray();
+          expect(rows).toEqual([
+            {
+              'percent(A)': testCase.result[0],
+              TheTime: 1000,
+            },
+            {
+              'percent(A)': testCase.result[1],
+              TheTime: 2000,
+            },
+            {
+              'percent(A)': testCase.result[2],
+              TheTime: 3000,
+            },
+            {
+              'percent(A)': testCase.result[3],
+              TheTime: 4000,
+            },
+          ]);
+        });
+      });
     });
   });
 
@@ -642,6 +718,62 @@ describe('calculateField transformer w/ timeseries', () => {
               name: 'A + 1336',
               type: 'number',
               values: [1337, 1436],
+            },
+          ],
+          length: 2,
+        },
+      ]);
+    });
+  });
+
+  it('when alias exists sets displayName = alias to prevent downstream auto-naming', async () => {
+    const seriesA = toDataFrame({
+      fields: [
+        { name: 'time', type: FieldType.time, values: [1000, 2000] },
+        { name: 'A', type: FieldType.number, values: [1, 2] },
+      ],
+    });
+
+    const cfg = {
+      id: DataTransformerID.calculateField,
+      options: {
+        alias: 'Aye',
+        binary: {
+          left: 'A',
+          operator: '+',
+          reducer: 'sum',
+          right: '10',
+        },
+        mode: CalculateFieldMode.BinaryOperation,
+        reduce: {
+          reducer: 'sum',
+        },
+        replaceFields: true,
+      },
+    };
+
+    await expect(transformDataFrame([cfg], [seriesA])).toEmitValuesWith((received) => {
+      const data = received[0];
+      expect(data).toEqual([
+        {
+          fields: [
+            {
+              config: {},
+              name: 'time',
+              state: {
+                displayName: 'time',
+                multipleFrames: false,
+              },
+              type: 'time',
+              values: [1000, 2000],
+            },
+            {
+              config: {
+                displayName: 'Aye',
+              },
+              name: 'Aye',
+              type: 'number',
+              values: [11, 12],
             },
           ],
           length: 2,
