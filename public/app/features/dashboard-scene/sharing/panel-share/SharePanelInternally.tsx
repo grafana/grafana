@@ -78,7 +78,7 @@ function SharePanelInternallyRenderer({ model }: SceneComponentProps<SharePanelI
             bottomSpacing={0}
           >
             <Trans i18nKey="share-modal.link.render-instructions">
-              To render a panel image, you must install the{' '}
+              To render an image, you must install the{' '}
               <a
                 href="https://grafana.com/grafana/plugins/grafana-image-renderer"
                 target="_blank"

@@ -8354,7 +8354,7 @@
   },
   "share-dashboard": {
     "menu": {
-      "export-image-title": "Export as Image",
+      "export-image-title": "Export as image",
       "export-json-title": "Export as JSON",
       "share-externally-title": "Share externally",
       "share-internally-title": "Share internally",
@@ -8394,11 +8394,11 @@
       "cancel-button": "Cancel",
       "download-button": "Download image",
       "error-title": "Failed to generate image",
-      "format-label": "Format",
       "generate-button": "Generate image",
-      "info-text": "Save this dashboard as an image file. The image will be captured at high resolution.",
+      "info-text": "Save this dashboard as an image.",
       "preview": "Preview",
-      "preview-aria": "Generated dashboard image preview"
+      "preview-aria": "Generated dashboard image preview",
+      "title": "Export as image"
     },
     "library": {
       "info": "Create library panel."
@@ -8408,7 +8408,7 @@
       "info-text": "Create a direct link to this dashboard or panel, customized with the options below.",
       "link-url": "Link URL",
       "render-alert": "Image renderer plugin not installed",
-      "render-instructions": "To render a panel image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
+      "render-instructions": "To render an image, you must install the <2>Grafana image renderer plugin</2>. Please contact your Grafana administrator to install the plugin.",
       "rendered-image": "Direct link rendered image",
       "save-alert": "Dashboard is not saved",
       "save-dashboard": "To render a panel image, you must save the dashboard first.",
@@ -8441,7 +8441,6 @@
     "tab-title": {
       "embed": "Embed",
       "export": "Export",
-      "export-image": "Export image",
       "library-panel": "Library panel",
       "link": "Link",
       "panel-embed": "Embed",

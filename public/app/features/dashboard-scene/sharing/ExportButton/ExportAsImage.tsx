@@ -209,7 +209,7 @@ function RendererAlert() {
       </div>
       <div data-testid={selectors.components.ExportImage.rendererAlert.description}>
         <Trans i18nKey="share-modal.link.render-instructions">
-          To render a dashboard image, you must install the{' '}
+          To render an image, you must install the{' '}
           <a
             href="https://grafana.com/grafana/plugins/grafana-image-renderer"
             target="_blank"
