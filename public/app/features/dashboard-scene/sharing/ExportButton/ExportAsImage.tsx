@@ -6,14 +6,13 @@ import { useMeasure } from 'react-use';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
-import { SceneComponentProps } from '@grafana/scenes';
+import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
 import { Button, Field, LoadingBar, RadioButtonGroup, Alert, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
-import { shareDashboardType } from 'app/features/dashboard/components/ShareModal/utils';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 
-import { ShareExportTab } from '../ShareExportTab';
+import { ShareView } from '../types';
 
 import { generateDashboardImage, ImageGenerationError } from './utils';
 
@@ -28,88 +27,27 @@ type ErrorState = {
   code?: ImageGenerationError;
 } | null;
 
-export class ExportAsImage extends ShareExportTab {
-  public tabId = shareDashboardType.image;
+export interface ExportAsImageState extends SceneObjectState {
+  onDismiss: () => void;
+}
+
+export class ExportAsImage extends SceneObjectBase<ExportAsImageState> implements ShareView {
   static Component = ExportAsImageRenderer;
 
   public getTabLabel() {
-    return t('share-modal.tab-title.export-image', 'Export image');
+    return t('share-modal.image.title', 'Export as image');
   }
-}
-
-function ErrorAlert({ error }: { error: ErrorState }) {
-  if (!error) {
-    return null;
-  }
-
-  return (
-    <Alert severity="error" title={error.title} data-testid={selectors.components.ExportImage.preview.error.container}>
-      <div data-testid={selectors.components.ExportImage.preview.error.title}>{error.title}</div>
-      <div data-testid={selectors.components.ExportImage.preview.error.message}>{error.message}</div>
-    </Alert>
-  );
-}
-
-function ImagePreview({ imageBlob, isLoading }: { imageBlob: Blob | null; isLoading: boolean }) {
-  const styles = useStyles2(getStyles);
-
-  if (!imageBlob || isLoading) {
-    return null;
-  }
-
-  return (
-    <img
-      src={URL.createObjectURL(imageBlob)}
-      alt={t('share-modal.image.preview', 'Preview')}
-      className={styles.image}
-      data-testid={selectors.components.ExportImage.preview.image}
-      aria-label={t('share-modal.image.preview-aria', 'Generated dashboard image preview')}
-      role="img"
-    />
-  );
-}
-
-function RendererAlert() {
-  if (config.rendererAvailable) {
-    return null;
-  }
-
-  return (
-    <Alert
-      severity="info"
-      title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
-      data-testid={selectors.components.ExportImage.rendererAlert.container}
-    >
-      <div data-testid={selectors.components.ExportImage.rendererAlert.title}>
-        {t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
-      </div>
-      <div data-testid={selectors.components.ExportImage.rendererAlert.description}>
-        <Trans i18nKey="share-modal.link.render-instructions">
-          To render a dashboard image, you must install the{' '}
-          <a
-            href="https://grafana.com/grafana/plugins/grafana-image-renderer"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="external-link"
-          >
-            Grafana image renderer plugin
-          </a>
-          . Please contact your Grafana administrator to install the plugin.
-        </Trans>
-      </div>
-    </Alert>
-  );
 }
 
 function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
+  const { onDismiss } = model.useState();
+  const dashboard = getDashboardSceneFor(model);
   const [format, setFormat] = useState<ImageFormat>(ImageFormat.PNG);
   const [isLoading, setIsLoading] = useState(false);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<ErrorState>(null);
   const styles = useStyles2(getStyles);
   const [ref, { width: loadingBarWidth }] = useMeasure<HTMLDivElement>();
-
-  const dashboard = getDashboardSceneFor(model);
 
   // Clean up object URLs when component unmounts
   useEffect(() => {
@@ -234,7 +172,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
         )}
         <Button
           variant="secondary"
-          onClick={model.useState().onDismiss}
+          onClick={onDismiss}
           fill="outline"
           data-testid={selectors.components.ExportImage.buttons.cancel}
         >
@@ -255,6 +193,70 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
         <ImagePreview imageBlob={imageBlob} isLoading={isLoading} />
       </div>
     </>
+  );
+}
+
+function ErrorAlert({ error }: { error: ErrorState }) {
+  if (!error) {
+    return null;
+  }
+
+  return (
+    <Alert severity="error" title={error.title} data-testid={selectors.components.ExportImage.preview.error.container}>
+      <div data-testid={selectors.components.ExportImage.preview.error.title}>{error.title}</div>
+      <div data-testid={selectors.components.ExportImage.preview.error.message}>{error.message}</div>
+    </Alert>
+  );
+}
+
+function ImagePreview({ imageBlob, isLoading }: { imageBlob: Blob | null; isLoading: boolean }) {
+  const styles = useStyles2(getStyles);
+
+  if (!imageBlob || isLoading) {
+    return null;
+  }
+
+  return (
+    <img
+      src={URL.createObjectURL(imageBlob)}
+      alt={t('share-modal.image.preview', 'Preview')}
+      className={styles.image}
+      data-testid={selectors.components.ExportImage.preview.image}
+      aria-label={t('share-modal.image.preview-aria', 'Generated dashboard image preview')}
+      role="img"
+    />
+  );
+}
+
+function RendererAlert() {
+  if (config.rendererAvailable) {
+    return null;
+  }
+
+  return (
+    <Alert
+      severity="info"
+      title={t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
+      data-testid={selectors.components.ExportImage.rendererAlert.container}
+    >
+      <div data-testid={selectors.components.ExportImage.rendererAlert.title}>
+        {t('share-modal.link.render-alert', 'Image renderer plugin not installed')}
+      </div>
+      <div data-testid={selectors.components.ExportImage.rendererAlert.description}>
+        <Trans i18nKey="share-modal.link.render-instructions">
+          To render a dashboard image, you must install the{' '}
+          <a
+            href="https://grafana.com/grafana/plugins/grafana-image-renderer"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="external-link"
+          >
+            Grafana image renderer plugin
+          </a>
+          . Please contact your Grafana administrator to install the plugin.
+        </Trans>
+      </div>
+    </Alert>
   );
 }
 
