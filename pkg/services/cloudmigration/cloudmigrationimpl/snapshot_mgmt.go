@@ -2,7 +2,7 @@ package cloudmigrationimpl
 
 import (
 	"context"
-	cryptoRand "crypto/rand"
+	"crypto/ed25519"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"go.opentelemetry.io/otel/codes"
-	"golang.org/x/crypto/nacl/box"
 
 	snapshot "github.com/grafana/grafana-cloud-migration-snapshot/src"
 	"github.com/grafana/grafana-cloud-migration-snapshot/src/contracts"
@@ -553,7 +552,7 @@ func (s *Service) buildSnapshot(
 		s.log.Debug(fmt.Sprintf("buildSnapshot: method completed in %d ms", time.Since(start).Milliseconds()))
 	}()
 
-	publicKey, privateKey, err := box.GenerateKey(cryptoRand.Reader)
+	publicKey, privateKey, err := ed25519.GenerateKey(nil)
 	if err != nil {
 		return fmt.Errorf("nacl: generating public and private key: %w", err)
 	}

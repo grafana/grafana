@@ -2,13 +2,12 @@ package gmsclient
 
 import (
 	"context"
-	cryptoRand "crypto/rand"
+	"crypto/ed25519"
 	"encoding/json"
 	"fmt"
 	"sync"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/nacl/box"
 
 	"github.com/grafana/grafana/pkg/services/cloudmigration"
 )
@@ -31,7 +30,7 @@ func (c *memoryClientImpl) ValidateKey(ctx context.Context, cm cloudmigration.Cl
 }
 
 func (c *memoryClientImpl) StartSnapshot(_ context.Context, sess cloudmigration.CloudMigrationSession) (*cloudmigration.StartSnapshotResponse, error) {
-	publicKey, _, err := box.GenerateKey(cryptoRand.Reader)
+	publicKey, _, err := ed25519.GenerateKey(nil)
 	if err != nil {
 		return nil, fmt.Errorf("nacl: generating public and private key: %w", err)
 	}
