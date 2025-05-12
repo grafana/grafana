@@ -18,7 +18,7 @@ if (window.nonce) {
 // This is an indication to the window.onLoad failure check that the app bundle has loaded.
 window.__grafana_app_bundle_loaded = true;
 
-async function bootstrap() {
+async function bootstrapWindowData() {
   // Wait for window.grafanaBootData is ready. The new index.html loads it from
   // an API call, but the old one just sets an immediately resolving promise.
   await window.__grafana_boot_data_promise;
@@ -28,6 +28,7 @@ async function bootstrap() {
   await import(/* webpackMode: "eager" */ './initApp');
 }
 
-bootstrap().catch((error) => {
+bootstrapWindowData().catch((error) => {
   console.error('Error bootstrapping Grafana', error);
+  window.__grafana_load_failed();
 });
