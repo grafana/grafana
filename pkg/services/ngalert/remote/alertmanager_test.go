@@ -141,7 +141,7 @@ func TestApplyConfig(t *testing.T) {
 	okHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		require.Equal(t, tenantID, r.Header.Get(client.MimirTenantHeader))
 		require.Equal(t, "true", r.Header.Get(client.RemoteAlertmanagerHeader))
-		var res = map[string]any{"status": "success"}
+		res := map[string]any{"status": "success"}
 
 		if r.Method == http.MethodPost {
 			if strings.Contains(r.URL.Path, "/config") {
@@ -240,23 +240,22 @@ func TestApplyConfig(t *testing.T) {
 	require.Equal(t, 1, stateSyncs)
 
 	// After a restart, the Alertmanager shouldn't send the configuration if it has not changed.
-	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 2, configSyncs)
 
 	// Changing the "from" address should result in the configuration being updated.
 	cfg.SmtpFrom = "new-address@test.com"
-	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
+	am, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, NoopAutogenFn, m, tracing.InitializeTracerForTest())
 	require.NoError(t, err)
 	require.NoError(t, am.ApplyConfig(ctx, config))
 	require.Equal(t, 3, configSyncs)
 	require.Equal(t, am.smtpFrom, configSent.SmtpFrom)
 
 	// Failing to add the auto-generated routes should result in an error.
-	am, err = NewAlertmanager(cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
-	require.NoError(t, err)
-	require.ErrorIs(t, am.ApplyConfig(ctx, config), errTest)
+	_, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
+	require.ErrorIs(t, err, errTest)
 	require.Equal(t, 3, configSyncs)
 }
 
