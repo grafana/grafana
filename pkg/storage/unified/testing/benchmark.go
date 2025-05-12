@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -56,7 +57,7 @@ func initializeBackend(ctx context.Context, backend resource.StorageBackend, opt
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
-					WithValue([]byte("init")))
+					WithValue("init"))
 				if err != nil {
 					return fmt.Errorf("failed to initialize backend: %w", err)
 				}
@@ -107,7 +108,7 @@ func runStorageBackendBenchmark(ctx context.Context, backend resource.StorageBac
 					WithNamespace(namespace),
 					WithGroup(group),
 					WithResource(resourceType),
-					WithValue([]byte(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20)))) // ~1.21 KiB
+					WithValue(strings.Repeat("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789", 20))) // ~1.21 KiB
 
 				if err != nil {
 					errors <- err
@@ -336,12 +337,18 @@ func BenchmarkSearchBackend(tb testing.TB, backend resource.SearchBackend, opts 
 
 func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.StorageBackend, searchBackend resource.SearchBackend, opts *BenchmarkOptions) {
 	events := make(chan *resource.IndexEvent, opts.NumResources)
+	groupsResources := make(map[string]string)
+	for g := 0; g < opts.NumGroups; g++ {
+		for r := 0; r < opts.NumResourceTypes; r++ {
+			groupsResources[fmt.Sprintf("group-%d", g)] = fmt.Sprintf("resource-%d", r)
+		}
+	}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
 		Backend: backend,
 		Search: resource.SearchOptions{
 			Backend:         searchBackend,
 			IndexEventsChan: events,
-			Resources:       &testDocumentBuilderSupplier{opts: opts},
+			Resources:       &testDocumentBuilderSupplier{groupsResources: groupsResources},
 		},
 	})
 	require.NoError(tb, err)
@@ -414,37 +421,67 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 type testDocumentBuilder struct{}
 
 func (b *testDocumentBuilder) BuildDocument(ctx context.Context, key *resource.ResourceKey, rv int64, value []byte) (*resource.IndexableDocument, error) {
+	// convert value to unstructured.Unstructured
+	var u unstructured.Unstructured
+	if err := u.UnmarshalJSON(value); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal value: %w", err)
+	}
+
+	title := ""
+	tags := []string{}
+	val := ""
+
+	spec, ok, _ := unstructured.NestedMap(u.Object, "spec")
+	if ok {
+		if v, ok := spec["title"]; ok {
+			title = v.(string)
+		}
+		if v, ok := spec["tags"]; ok {
+			if tagSlice, ok := v.([]interface{}); ok {
+				tags = make([]string, len(tagSlice))
+				for i, tag := range tagSlice {
+					if strTag, ok := tag.(string); ok {
+						tags[i] = strTag
+					}
+				}
+			}
+		}
+		if v, ok := spec["value"]; ok {
+			val = v.(string)
+		}
+	}
 	return &resource.IndexableDocument{
-		Key:   key,
-		Title: fmt.Sprintf("Document %s", key.Name),
-		Tags:  []string{"test", "benchmark"},
+		Key: &resource.ResourceKey{
+			Namespace: key.Namespace,
+			Group:     key.Group,
+			Resource:  key.Resource,
+			Name:      u.GetName(),
+		},
+		Title: title,
+		Tags:  tags,
 		Fields: map[string]interface{}{
-			"value": string(value),
+			"value": val,
 		},
 	}, nil
 }
 
 // testDocumentBuilderSupplier implements DocumentBuilderSupplier for testing
 type testDocumentBuilderSupplier struct {
-	opts *BenchmarkOptions
+	groupsResources map[string]string
 }
 
 func (s *testDocumentBuilderSupplier) GetDocumentBuilders() ([]resource.DocumentBuilderInfo, error) {
-	builders := make([]resource.DocumentBuilderInfo, 0, s.opts.NumGroups*s.opts.NumResourceTypes)
+	builders := make([]resource.DocumentBuilderInfo, 0, len(s.groupsResources))
 
 	// Add builders for all possible group/resource combinations
-	for g := 0; g < s.opts.NumGroups; g++ {
-		group := fmt.Sprintf("group-%d", g)
-		for r := 0; r < s.opts.NumResourceTypes; r++ {
-			resourceType := fmt.Sprintf("resource-%d", r)
-			builders = append(builders, resource.DocumentBuilderInfo{
-				GroupResource: schema.GroupResource{
-					Group:    group,
-					Resource: resourceType,
-				},
-				Builder: &testDocumentBuilder{},
-			})
-		}
+	for group, resourceType := range s.groupsResources {
+		builders = append(builders, resource.DocumentBuilderInfo{
+			GroupResource: schema.GroupResource{
+				Group:    group,
+				Resource: resourceType,
+			},
+			Builder: &testDocumentBuilder{},
+		})
 	}
 
 	return builders, nil
