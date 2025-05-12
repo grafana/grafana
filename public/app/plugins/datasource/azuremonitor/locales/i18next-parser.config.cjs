@@ -7,8 +7,6 @@ module.exports = {
   resetDefaultValueLocale: 'en-US', // Updates extracted values when they change in code
 
   defaultNamespace: 'grafana-azure-monitor-datasource',
-  input: [
-    '../**/*.{tsx,ts}',
-  ],
+  input: ['../**/*.{tsx,ts}'],
   output: './public/app/plugins/datasource/azuremonitor/locales/$LOCALE/$NAMESPACE.json',
 };
