@@ -193,6 +193,7 @@ func (ng *AlertNG) init() error {
 			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
 			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
 			ExternalURL:       ng.Cfg.AppURL,
+			SmtpFrom:          ng.Cfg.Smtp.FromAddress,
 			StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
 		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
