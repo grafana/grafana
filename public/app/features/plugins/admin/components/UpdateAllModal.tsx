@@ -33,7 +33,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
   const pluginsSet = useMemo(() => new Set(plugins.map((plugin) => plugin.id)), [plugins]);
   const installsRemaining = plugins.length;
 
-  // Since the plugins comes from the store and changes every time we update a plugin,
+  // Since the plugins come from the store and changes every time we update a plugin,
   // we need to keep track of the initial plugins.
   useEffect(() => {
     if (initialPluginsRef.current.length === 0) {
@@ -88,7 +88,7 @@ export const UpdateAllModal = ({ isOpen, onDismiss, isLoading, plugins }: Props)
   const onConfirm = async () => {
     if (!inProgress) {
       reportInteraction(PLUGINS_UPDATE_ALL_INTERACTION_EVENT_NAME, {
-        path: location.pathname,
+        path: window.location.pathname,
         count: selectedPlugins?.size,
         creator_team: 'grafana_plugins_catalog',
         schema_version: '1.0.0',

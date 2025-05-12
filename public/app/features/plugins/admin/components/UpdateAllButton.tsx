@@ -14,7 +14,7 @@ const UpdateAllButton = ({ disabled, onUpdateAll, updatablePluginsLength }: Upda
         <Trans i18nKey="plugins.catalog.no-updates-available">No updates available</Trans>
       ) : (
         <Trans i18nKey="plugins.catalog.update-all.button" values={{ length: updatablePluginsLength }}>
-          Update all ({{ length }})
+          Update all ({'{{length}}'})
         </Trans>
       )}
     </Button>

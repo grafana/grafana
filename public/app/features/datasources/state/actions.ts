@@ -257,7 +257,7 @@ export function addDataSource(
       plugin_id: plugin.id,
       datasource_uid: result.datasource.uid,
       plugin_version: result.meta?.info?.version,
-      path: location.pathname,
+      path: window.location.pathname,
     });
 
     locationService.push(editLink);

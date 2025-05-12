@@ -394,7 +394,7 @@ describe('addDataSource', () => {
       plugin_version: '1.2.3',
       datasource_uid: 'azure23',
       grafana_version: '1.0',
-      path: location.pathname,
+      path: window.location.pathname,
     });
   });
 });

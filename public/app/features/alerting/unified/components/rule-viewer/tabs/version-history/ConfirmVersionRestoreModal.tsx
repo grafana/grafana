@@ -73,7 +73,7 @@ export const ConfirmVersionRestoreModal = ({
     const ruleFormUrl = urlUtil.renderUrl(`/alerting/${ruleIdentifier.uid}/edit`, {
       isManualRestore: true,
       defaults: JSON.stringify(payload),
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
 
     navigate(ruleFormUrl);

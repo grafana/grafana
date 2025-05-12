@@ -59,7 +59,7 @@ export const VersionInstallButton = ({
 
   const performInstallation = () => {
     const trackProps = {
-      path: location.pathname,
+      path: window.location.pathname,
       plugin_id: pluginId,
       version: version.version,
       is_latest: latestCompatibleVersion === version.version,

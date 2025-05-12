@@ -34,10 +34,10 @@ export function PromQueryCodeEditorAutocompleteInfo(props: Readonly<Props>) {
   );
 
   useEffect(() => {
-    addEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
+    window.addEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
 
     return () => {
-      removeEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
+      window.removeEventListener(CODE_MODE_SUGGESTIONS_INCOMPLETE_EVENT, handleSuggestionsIncompleteEvent);
     };
   }, [handleSuggestionsIncompleteEvent]);
 
