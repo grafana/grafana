@@ -206,6 +206,8 @@ type Cfg struct {
 	PluginsCDNURLTemplate    string
 	PluginLogBackendRequests bool
 
+	PluginUpdateStrategy string
+
 	// Panels
 	DisableSanitizeHtml bool
 
@@ -541,21 +543,26 @@ type Cfg struct {
 	ShortLinkExpiration int
 
 	// Unified Storage
-	UnifiedStorage              map[string]UnifiedStorageConfig
-	IndexPath                   string
-	IndexWorkers                int
-	IndexMaxBatchSize           int
-	IndexFileThreshold          int
-	IndexMinCount               int
-	EnableSharding              bool
-	MemberlistBindAddr          string
-	MemberlistAdvertiseAddr     string
-	MemberlistJoinMember        string
-	InstanceID                  string
-	SprinklesApiServer          string
-	SprinklesApiServerPageLimit int
-	CACertPath                  string
-	HttpsSkipVerify             bool
+	UnifiedStorage                             map[string]UnifiedStorageConfig
+	IndexPath                                  string
+	IndexWorkers                               int
+	IndexMaxBatchSize                          int
+	IndexFileThreshold                         int
+	IndexMinCount                              int
+	EnableSharding                             bool
+	MemberlistBindAddr                         string
+	MemberlistAdvertiseAddr                    string
+	MemberlistJoinMember                       string
+	MemberlistClusterLabel                     string
+	MemberlistClusterLabelVerificationDisabled bool
+	InstanceID                                 string
+	SprinklesApiServer                         string
+	SprinklesApiServerPageLimit                int
+	CACertPath                                 string
+	HttpsSkipVerify                            bool
+
+	// Secrets Management
+	SecretsManagement SecretsManagerSettings
 }
 
 type UnifiedStorageConfig struct {
@@ -628,6 +635,7 @@ func RedactedValue(key, value string) string {
 		"CLIENT_SECRET",
 		"ENTERPRISE_LICENSE",
 		"API_DB_PASS",
+		"^TOKEN$",
 		"ID_FORWARDING_TOKEN$",
 		"AUTHENTICATION_TOKEN$",
 		"AUTH_TOKEN$",
@@ -1365,6 +1373,7 @@ func (cfg *Cfg) parseINIFile(iniFile *ini.File) error {
 	cfg.readFeatureManagementConfig()
 	cfg.readPublicDashboardsSettings()
 	cfg.readCloudMigrationSettings()
+	cfg.readSecretsManagerSettings()
 
 	// read experimental scopes settings.
 	scopesSection := iniFile.Section("scopes")

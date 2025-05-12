@@ -70,7 +70,7 @@ interface EvaluationBehaviorSummaryProps {
 }
 
 const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => {
-  const every = rule.group.interval;
+  const interval = rule.group.interval;
   const lastEvaluation = rule.promRule?.lastEvaluation;
   const lastEvaluationDuration = rule.promRule?.evaluationTime;
   const metric = rulerRuleType.grafana.recordingRule(rule.rulerRule)
@@ -87,10 +87,10 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           {metric}
         </DetailsField>
       )}
-      {every && (
+      {interval && (
         <DetailsField label={t('alerting.evaluation-behavior-summary.label-evaluate', 'Evaluate')} horizontal={true}>
-          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ every }}>
-            Every {{ every }}
+          <Trans i18nKey="alerting.evaluation-behavior-summary.evaluate" values={{ interval }}>
+            Every {{ interval }}
           </Trans>
         </DetailsField>
       )}
@@ -116,6 +116,7 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
         >
           <Tooltip
             placement="top"
+            // eslint-disable-next-line @grafana/no-untranslated-strings
             content={`${dateTimeFormat(lastEvaluation, { format: 'YYYY-MM-DD HH:mm:ss' })}`}
             theme="info"
           >
@@ -133,7 +134,12 @@ const EvaluationBehaviorSummary = ({ rule }: EvaluationBehaviorSummaryProps) => 
           label={t('alerting.evaluation-behavior-summary.label-evaluation-time', 'Evaluation time')}
           horizontal={true}
         >
-          <Tooltip placement="top" content={`${lastEvaluationDuration}s`} theme="info">
+          <Tooltip
+            placement="top"
+            // eslint-disable-next-line @grafana/no-untranslated-strings
+            content={`${lastEvaluationDuration}s`}
+            theme="info"
+          >
             <span>{Time({ timeInMs: lastEvaluationDuration * 1000, humanize: true })}</span>
           </Tooltip>
         </DetailsField>

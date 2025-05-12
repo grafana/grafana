@@ -222,12 +222,16 @@ export const LogRow = ({
           }
         >
           {hasError && (
-            <Tooltip content={`Error: ${errorMessage}`} placement="right" theme="error">
+            <Tooltip
+              content={t('logs.log-row-message.tooltip-error', 'Error: {{errorMessage}}', { errorMessage })}
+              placement="right"
+              theme="error"
+            >
               <Icon className={styles.logIconError} name="exclamation-triangle" size="xs" />
             </Tooltip>
           )}
           {isSampled && (
-            <Tooltip content={`${sampleMessage}`} placement="right" theme="info">
+            <Tooltip content={sampleMessage} placement="right" theme="info">
               <Icon className={styles.logIconInfo} name="info-circle" size="xs" />
             </Tooltip>
           )}

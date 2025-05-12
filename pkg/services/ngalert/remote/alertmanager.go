@@ -60,6 +60,7 @@ type Alertmanager struct {
 	orgID             int64
 	ready             bool
 	sender            *sender.ExternalAlertmanager
+	smtpFrom          string
 	state             stateStore
 	tenantID          string
 	url               string
@@ -86,7 +87,8 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
-	// StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	SmtpFrom      string
 	StaticHeaders map[string]string
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
@@ -108,7 +110,7 @@ func (cfg *AlertmanagerConfig) Validate() error {
 	return nil
 }
 
-func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
+func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateStore, decryptFn DecryptFn, autogenFn AutogenFn, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
 	}
@@ -126,6 +128,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
+		SmtpFrom:      cfg.SmtpFrom,
 		StaticHeaders: cfg.StaticHeaders,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
@@ -171,6 +174,10 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		return nil, err
 	}
 
+	if err := autogenFn(ctx, logger, cfg.OrgID, &pCfg.AlertmanagerConfig, true); err != nil {
+		return nil, err
+	}
+
 	rawCfg, err := json.Marshal(pCfg)
 	if err != nil {
 		return nil, err
@@ -189,6 +196,7 @@ func NewAlertmanager(cfg AlertmanagerConfig, store stateStore, decryptFn Decrypt
 		metrics:           metrics,
 		mimirClient:       mc,
 		orgID:             cfg.OrgID,
+		smtpFrom:          cfg.SmtpFrom,
 		state:             store,
 		sender:            s,
 		syncInterval:      cfg.SyncInterval,
@@ -212,7 +220,7 @@ func (am *Alertmanager) ApplyConfig(ctx context.Context, config *models.AlertCon
 		}
 		am.log.Debug("Completed readiness check for remote Alertmanager, starting state upload", "url", am.url)
 
-		if err := am.CompareAndSendState(ctx); err != nil {
+		if err := am.SendState(ctx); err != nil {
 			return fmt.Errorf("unable to upload the state to the remote Alertmanager: %w", err)
 		}
 		am.log.Debug("Completed state upload to remote Alertmanager", "url", am.url)
@@ -265,21 +273,16 @@ func (am *Alertmanager) CompareAndSendConfiguration(ctx context.Context, config 
 		return nil
 	}
 
-	isDefault, err := am.isDefaultConfiguration(configHash)
-	if err != nil {
-		return err
-	}
-
 	decrypted, err := notifier.Load(rawDecrypted)
 	if err != nil {
 		return err
 	}
 
-	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, isDefault)
+	return am.sendConfiguration(ctx, decrypted, config.ConfigurationHash, config.CreatedAt, am.isDefaultConfiguration(configHash))
 }
 
-func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) (bool, error) {
-	return fmt.Sprintf("%x", configHash) == am.defaultConfigHash, nil
+func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
+	return fmt.Sprintf("%x", configHash) == am.defaultConfigHash
 }
 
 // decryptConfiguration decrypts the configuration in-place and returns the decrypted configuration alongside its hash.
@@ -328,22 +331,22 @@ func (am *Alertmanager) sendConfiguration(ctx context.Context, decrypted *apimod
 	return nil
 }
 
-// CompareAndSendState gets the Alertmanager's internal state and compares it with the remote Alertmanager's one.
-// If the states are different, it updates the remote Alertmanager's state with that of the internal Alertmanager.
-func (am *Alertmanager) CompareAndSendState(ctx context.Context) error {
+// SendState gets the Alertmanager's internal state and sends it to the remote Alertmanager.
+func (am *Alertmanager) SendState(ctx context.Context) error {
+	am.metrics.StateSyncsTotal.Inc()
+
 	state, err := am.getFullState(ctx)
 	if err != nil {
+		am.metrics.StateSyncErrorsTotal.Inc()
 		return err
 	}
 
-	if am.shouldSendState(ctx, state) {
-		am.metrics.StateSyncsTotal.Inc()
-		if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
-			am.metrics.StateSyncErrorsTotal.Inc()
-			return err
-		}
-		am.metrics.LastStateSync.SetToCurrentTime()
+	if err := am.mimirClient.CreateGrafanaAlertmanagerState(ctx, state); err != nil {
+		am.metrics.StateSyncErrorsTotal.Inc()
+		return err
 	}
+
+	am.metrics.LastStateSync.SetToCurrentTime()
 	return nil
 }
 
@@ -671,23 +674,15 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 		return true
 	}
 
+	if rc.SmtpFrom != am.smtpFrom {
+		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
+		return true
+	}
+
 	rawRemote, err := json.Marshal(rc.GrafanaAlertmanagerConfig)
 	if err != nil {
 		am.log.Error("Unable to marshal the remote Alertmanager configuration for comparison", "err", err)
 		return true
 	}
 	return md5.Sum(rawRemote) != hash
-}
-
-// shouldSendState compares the remote Alertmanager state with our local one.
-// It returns true if the states are different.
-func (am *Alertmanager) shouldSendState(ctx context.Context, state string) bool {
-	rs, err := am.mimirClient.GetGrafanaAlertmanagerState(ctx)
-	if err != nil {
-		// Log the error and return true so we try to upload our state anyway.
-		am.log.Warn("Unable to get the remote Alertmanager state for comparison, sending the state without comparing", "err", err)
-		return true
-	}
-
-	return rs.State != state
 }

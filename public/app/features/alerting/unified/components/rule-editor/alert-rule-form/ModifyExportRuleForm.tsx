@@ -6,7 +6,6 @@ import { Button, LinkButton, LoadingPlaceholder, Stack } from '@grafana/ui';
 import { useAppNotification } from 'app/core/copy/appNotification';
 import { Trans, t } from 'app/core/internationalization';
 
-import { AppChromeUpdate } from '../../../../../../core/components/AppChrome/AppChromeUpdate';
 import {
   PostableRulerRuleGroupDTO,
   RulerRuleDTO,
@@ -82,38 +81,38 @@ export function ModifyExportRuleForm({ ruleForm, alertUid }: ModifyExportRuleFor
     setExportData(undefined);
   }, [setExportData]);
 
-  const actionButtons = [
-    <LinkButton href={returnTo} key="cancel" size="sm" variant="secondary" onClick={() => submit(undefined)}>
-      <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
-    </LinkButton>,
-    <Button key="export-rule" size="sm" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
-      <Trans i18nKey="alerting.modify-export-rule-form.action-buttons.export">Export</Trans>
-    </Button>,
-  ];
-
   return (
     <FormProvider {...formAPI}>
-      <AppChromeUpdate actions={actionButtons} />
-      <form onSubmit={(e) => e.preventDefault()}>
-        <div>
-          <Stack direction="column" gap={3}>
-            {/* Step 1 */}
-            <AlertRuleNameAndMetric />
-            {/* Step 2 */}
-            <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} mode="draft" />
-            {/* Step 3-4-5 */}
-            <GrafanaFolderAndLabelsStep />
+      <Stack direction="column">
+        <form onSubmit={(e) => e.preventDefault()}>
+          <div>
+            <Stack direction="column" gap={3}>
+              {/* Step 1 */}
+              <AlertRuleNameAndMetric />
+              {/* Step 2 */}
+              <QueryAndExpressionsStep editingExistingRule={existing} onDataChange={checkAlertCondition} mode="draft" />
+              {/* Step 3-4-5 */}
+              <GrafanaFolderAndLabelsStep />
 
-            {/* Step 4 & 5 */}
-            <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={true} />
-            {/* Notifications step*/}
-            <NotificationsStep alertUid={alertUid} />
-            {/* Annotations only for cloud and Grafana */}
-            <AnnotationsStep />
-          </Stack>
-        </div>
-      </form>
-      {exportData && <GrafanaRuleDesignExporter exportValues={exportData} onClose={onClose} uid={alertUid} />}
+              {/* Step 4 & 5 */}
+              <GrafanaEvaluationBehaviorStep existing={Boolean(existing)} enableProvisionedGroups={true} />
+              {/* Notifications step*/}
+              <NotificationsStep alertUid={alertUid} />
+              {/* Annotations only for cloud and Grafana */}
+              <AnnotationsStep />
+            </Stack>
+          </div>
+        </form>
+        {exportData && <GrafanaRuleDesignExporter exportValues={exportData} onClose={onClose} uid={alertUid} />}
+        <Stack direction="row">
+          <Button key="export-rule" onClick={formAPI.handleSubmit((formValues) => submit(formValues), onInvalid)}>
+            <Trans i18nKey="alerting.modify-export-rule-form.action-buttons.export">Export</Trans>
+          </Button>
+          <LinkButton href={returnTo} key="cancel" variant="secondary" onClick={() => submit(undefined)}>
+            <Trans i18nKey="alerting.common.cancel">Cancel</Trans>
+          </LinkButton>
+        </Stack>
+      </Stack>
     </FormProvider>
   );
 }

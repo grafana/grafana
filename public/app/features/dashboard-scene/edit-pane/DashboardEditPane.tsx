@@ -3,8 +3,17 @@ import { Resizable } from 're-resizable';
 import { useLocalStorage } from 'react-use';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { SceneObjectState, SceneObjectBase, SceneObject, sceneGraph, useSceneObjectState } from '@grafana/scenes';
+import { selectors } from '@grafana/e2e-selectors';
 import {
+  SceneObjectState,
+  SceneObjectBase,
+  SceneObject,
+  sceneGraph,
+  useSceneObjectState,
+  VizPanel,
+} from '@grafana/scenes';
+import {
+  clearButtonStyles,
   ElementSelectionContextItem,
   ElementSelectionContextState,
   ElementSelectionOnSelectOptions,
@@ -17,8 +26,8 @@ import {
 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 
-import { containsCloneKey, getOriginalKey, isInCloneChain } from '../utils/clone';
-import { getDashboardSceneFor } from '../utils/utils';
+import { containsCloneKey, getLastKeyFromClone, isInCloneChain } from '../utils/clone';
+import { findEditPanel, getDashboardSceneFor } from '../utils/utils';
 
 import { DashboardOutline } from './DashboardOutline';
 import { ElementEditPane } from './ElementEditPane';
@@ -101,10 +110,14 @@ export class DashboardEditPane extends SceneObjectBase<DashboardEditPaneState> {
       return;
     }
 
-    const elementId = containsCloneKey(element.id) ? getOriginalKey(element.id) : element.id;
-
-    const obj = sceneGraph.findByKey(this, elementId);
+    let obj = sceneGraph.findByKey(this, element.id);
     if (obj) {
+      if (obj instanceof VizPanel && containsCloneKey(getLastKeyFromClone(element.id))) {
+        const sourceVizPanel = findEditPanel(this, element.id);
+        if (sourceVizPanel) {
+          obj = sourceVizPanel;
+        }
+      }
       this.selectObject(obj, element.id, options);
     }
   }
@@ -187,6 +200,7 @@ export interface Props {
 export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleCollapse, openOverlay }: Props) {
   const { selection } = useSceneObjectState(editPane, { shouldActivateOrKeepAlive: true });
   const styles = useStyles2(getStyles);
+  const clearButton = useStyles2(clearButtonStyles);
   const editableElement = useEditableElement(selection, editPane);
   const selectedObject = selection?.getFirstObject();
   const isNewElement = selection?.isNewElement() ?? false;
@@ -268,16 +282,17 @@ export function DashboardEditPaneRenderer({ editPane, isCollapsed, onToggleColla
           data-edit-pane-splitter={true}
         />
         <div {...splitter.secondaryProps} className={cx(splitter.primaryProps.className, styles.paneContent)}>
-          <div
-            role="button"
+          <button
+            type="button"
             onClick={() => setOutlineCollapsed(!outlineCollapsed)}
-            className={styles.outlineCollapseButton}
+            className={cx(clearButton, styles.outlineCollapseButton)}
+            data-testid={selectors.components.PanelEditor.Outline.section}
           >
             <Text weight="medium">
               <Trans i18nKey="dashboard-scene.dashboard-edit-pane-renderer.outline">Outline</Trans>
             </Text>
-            <Icon name="angle-up" />
-          </div>
+            <Icon name={outlineCollapsed ? 'angle-up' : 'angle-down'} />
+          </button>
           {!outlineCollapsed && (
             <div className={styles.outlineContainer}>
               <ScrollContainer showScrollIndicators={true}>
