@@ -190,9 +190,7 @@ low
 
 In this example, the value of the `severity` label is determined by the query value, and the possible options are `critical`, `high`, `medium`, or `low`. You can then use the `severity` label to change their notifications—for instance, sending `critical` alerts immediately or routing `low` alerts to a specific team for further review.
 
-{{% admonition type="note" %}}
-You should avoid displaying query values in labels, as this may create numerous unique alert instances—one for each distinct label value. Instead, use annotations for query values.
-{{% /admonition %}}
+{{< docs/shared lookup="alerts/note-dynamic-labels.md" source="grafana" version="<GRAFANA_VERSION>" >}}
 
 ### How to template a label
 
