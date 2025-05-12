@@ -80,9 +80,6 @@ The values that you enter for the `permitted_provisioning_paths` become the base
    [feature_toggles]
    provisioning = true
    kubernetesDashboards = true ; use k8s from browser
-
-   # If you want easy kubectl setup development mode
-   grafanaAPIServerEnsureKubectlAccess = true
    ```
 
 1. Locate or add a `[paths]` section. To add more than one location, use the pipe character (`|`) to separate the paths. The list should not include empty paths or trailing pipes. Add these values:

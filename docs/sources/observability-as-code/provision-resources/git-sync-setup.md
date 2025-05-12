@@ -72,9 +72,6 @@ To enable the required feature toggles, add them to your Grafana configuration f
    [feature_toggles]
    provisioning = true
    kubernetesDashboards = true ; use k8s from browser
-
-   # If you want easy kubectl setup development mode
-   grafanaAPIServerEnsureKubectlAccess = true
    ```
 
 1. Save the changes to the file and restart Grafana.
