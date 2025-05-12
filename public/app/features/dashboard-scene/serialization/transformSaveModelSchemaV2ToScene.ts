@@ -98,12 +98,12 @@ export function transformSaveModelSchemaV2ToScene(dto: DashboardWithAccessInfo<D
 
   const annotationLayers = dashboard.annotations.map((annotation) => {
     let annoQuerySpec = annotation.spec;
-    // some annotations will contain in the options properties that need to be
+    // some annotations will contain in the legacyOptions properties that need to be
     // added to the root level annotation spec
-    if (annoQuerySpec?.options) {
+    if (annoQuerySpec?.legacyOptions) {
       annoQuerySpec = {
         ...annoQuerySpec,
-        ...annoQuerySpec.options,
+        ...annoQuerySpec.legacyOptions,
       };
     }
     return new DashboardAnnotationsDataLayer({
@@ -396,9 +396,9 @@ function getDataQueryForVariable(variable: QueryVariableKind) {
   return LEGACY_STRING_VALUE_KEY in variable.spec.query.spec
     ? (variable.spec.query.spec[LEGACY_STRING_VALUE_KEY] ?? '')
     : {
-        ...variable.spec.query.spec,
-        refId: variable.spec.query.spec.refId ?? 'A',
-      };
+      ...variable.spec.query.spec,
+      refId: variable.spec.query.spec.refId ?? 'A',
+    };
 }
 
 export function getCurrentValueForOldIntervalModel(variable: IntervalVariableKind, intervals: string[]): string {

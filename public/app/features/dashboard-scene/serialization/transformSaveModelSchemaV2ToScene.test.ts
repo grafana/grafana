@@ -678,7 +678,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
   });
 
   describe('annotations', () => {
-    it('should transform annotation with options field', () => {
+    it('should transform annotation with legacyOptions field', () => {
       // Create a dashboard with an annotation that has options
       const dashboardWithAnnotationOptions: DashboardWithAccessInfo<DashboardV2Spec> = {
         kind: 'DashboardWithAccessInfo',
@@ -720,7 +720,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
             {
               kind: 'AnnotationQuery',
               spec: {
-                name: 'Annotation with options',
+                name: 'Annotation with legacy options',
                 builtIn: false,
                 enable: true,
                 hide: false,
@@ -729,7 +729,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
                   type: 'prometheus',
                   uid: 'abc123',
                 },
-                options: {
+                legacyOptions: {
                   expr: 'rate(http_requests_total[5m])',
                   queryType: 'range',
                   legendFormat: '{{method}} {{endpoint}}',
@@ -772,9 +772,9 @@ describe('transformSaveModelSchemaV2ToScene', () => {
 
       const annotationLayer = dataLayerSet.state.annotationLayers[1] as DashboardAnnotationsDataLayer;
 
-      // Verify that the options have been merged into the query object
+      // Verify that the legacyOptions have been merged into the query object
       expect(annotationLayer.state.query).toMatchObject({
-        name: 'Annotation with options',
+        name: 'Annotation with legacy options',
         expr: 'rate(http_requests_total[5m])',
         queryType: 'range',
         legendFormat: '{{method}} {{endpoint}}',
@@ -782,8 +782,8 @@ describe('transformSaveModelSchemaV2ToScene', () => {
         step: '1m',
       });
 
-      // Verify the original options object is also preserved
-      expect(annotationLayer.state.query.options).toMatchObject({
+      // Verify the original legacyOptions object is also preserved
+      expect(annotationLayer.state.query.legacyOptions).toMatchObject({
         expr: 'rate(http_requests_total[5m])',
         queryType: 'range',
         legendFormat: '{{method}} {{endpoint}}',
