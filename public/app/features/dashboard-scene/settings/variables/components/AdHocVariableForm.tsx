@@ -18,6 +18,7 @@ export interface AdHocVariableFormProps {
   defaultKeys?: MetricFindValue[];
   onDefaultKeysChange?: (keys?: MetricFindValue[]) => void;
   onAllowCustomValueChange?: (event: FormEvent<HTMLInputElement>) => void;
+  inline?: boolean;
 }
 
 export function AdHocVariableForm({
@@ -28,6 +29,7 @@ export function AdHocVariableForm({
   onDefaultKeysChange,
   onAllowCustomValueChange,
   defaultKeys,
+  inline,
 }: AdHocVariableFormProps) {
   const updateStaticKeys = useCallback(
     (csvContent: string) => {
@@ -44,9 +46,11 @@ export function AdHocVariableForm({
 
   return (
     <>
+      {!inline && (
       <VariableLegend>
         <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
       </VariableLegend>
+      )}
       <Field
         label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
         htmlFor="data-source-picker"
