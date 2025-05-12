@@ -55,7 +55,7 @@ func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanage
 		logger:          cfg.Logger,
 		url:             cfg.URL,
 		AlertmanagerAPI: amclient.New(r, nil),
-		httpClient:      tc,
+		httpClient:      trc,
 	}, nil
 }
 
