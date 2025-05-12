@@ -144,7 +144,7 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		})
 		require.Nil(t, resp.Error)
 		require.Equal(t, rv4, resp.ResourceVersion)
-		require.Equal(t, "item2 MODIFIED", string(resp.Value))
+		require.Contains(t, string(resp.Value), "item2 MODIFIED")
 		require.Equal(t, "folderuid", resp.Folder)
 	})
 
@@ -160,7 +160,7 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		})
 		require.Nil(t, resp.Error)
 		require.Equal(t, rv2, resp.ResourceVersion)
-		require.Equal(t, "item2 ADDED", string(resp.Value))
+		require.Contains(t, string(resp.Value), "item2 ADDED")
 	})
 
 	t.Run("List latest", func(t *testing.T) {
@@ -176,8 +176,8 @@ func runTestIntegrationBackendHappyPath(t *testing.T, backend resource.StorageBa
 		require.NoError(t, err)
 		require.Nil(t, resp.Error)
 		require.Len(t, resp.Items, 2)
-		require.Equal(t, "item2 MODIFIED", string(resp.Items[0].Value))
-		require.Equal(t, "item3 ADDED", string(resp.Items[1].Value))
+		require.Contains(t, string(resp.Items[0].Value), "item2 MODIFIED")
+		require.Contains(t, string(resp.Items[1].Value), "item3 ADDED")
 		require.GreaterOrEqual(t, resp.ResourceVersion, rv5) // rv5 is the latest resource version
 	})
 
@@ -373,11 +373,11 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 5)
 		// should be sorted by key ASC
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[3].Value))
-		require.Equal(t, "item6 ADDED", string(res.Items[4].Value))
+		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[3].Value), "item5 ADDED")
+		require.Contains(t, string(res.Items[4].Value), "item6 ADDED")
 
 		require.Empty(t, res.NextPageToken)
 	})
@@ -397,9 +397,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Len(t, res.Items, 3)
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
 		require.GreaterOrEqual(t, continueToken.ResourceVersion, rv8)
 	})
 
@@ -416,10 +416,10 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 4)
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 ADDED", string(res.Items[1].Value))
-		require.Equal(t, "item3 ADDED", string(res.Items[2].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[3].Value))
+		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 ADDED")
+		require.Contains(t, string(res.Items[2].Value), "item3 ADDED")
+		require.Contains(t, string(res.Items[3].Value), "item4 ADDED")
 		require.Empty(t, res.NextPageToken)
 	})
 
@@ -439,9 +439,9 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 3)
 		t.Log(res.Items)
-		require.Equal(t, "item1 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item2 MODIFIED", string(res.Items[1].Value))
-		require.Equal(t, "item4 ADDED", string(res.Items[2].Value))
+		require.Contains(t, string(res.Items[0].Value), "item1 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item2 MODIFIED")
+		require.Contains(t, string(res.Items[2].Value), "item4 ADDED")
 
 		continueToken, err := resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
@@ -468,8 +468,8 @@ func runTestIntegrationBackendList(t *testing.T, backend resource.StorageBackend
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
 		t.Log(res.Items)
-		require.Equal(t, "item4 ADDED", string(res.Items[0].Value))
-		require.Equal(t, "item5 ADDED", string(res.Items[1].Value))
+		require.Contains(t, string(res.Items[0].Value), "item4 ADDED")
+		require.Contains(t, string(res.Items[1].Value), "item5 ADDED")
 
 		continueToken, err = resource.GetContinueToken(res.NextPageToken)
 		require.NoError(t, err)
@@ -580,7 +580,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 				// Check versions and values match expectations
 				for i := 0; i < 3; i++ {
 					require.Equal(t, tc.expectedVersions[i], res.Items[i].ResourceVersion)
-					require.Equal(t, tc.expectedValues[i], string(res.Items[i].Value))
+					require.Contains(t, string(res.Items[i].Value), tc.expectedValues[i])
 				}
 
 				// Check resource version in response
@@ -628,7 +628,7 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 			expectedRVs := []int64{rvHistory3, rvHistory4, rvHistory5}
 			for i, expectedRV := range expectedRVs {
 				require.Equal(t, expectedRV, secondPageRes.Items[i].ResourceVersion)
-				require.Equal(t, "item1 MODIFIED", string(secondPageRes.Items[i].Value))
+				require.Contains(t, string(secondPageRes.Items[i].Value), "item1 MODIFIED")
 			}
 		})
 	})
@@ -656,9 +656,9 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
 		t.Log(res.Items)
-		require.Equal(t, "item1 MODIFIED", string(res.Items[0].Value))
+		require.Contains(t, string(res.Items[0].Value), "item1 MODIFIED")
 		require.Equal(t, rvHistory2, res.Items[0].ResourceVersion)
-		require.Equal(t, "item1 MODIFIED", string(res.Items[1].Value))
+		require.Contains(t, string(res.Items[1].Value), "item1 MODIFIED")
 		require.Equal(t, rvHistory1, res.Items[1].ResourceVersion)
 	})
 
@@ -770,11 +770,11 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 
 		// Verify the first item is the initial ADDED event
 		require.Equal(t, initialRV, allItems[0].ResourceVersion, "First item should be the initial ADDED event")
-		require.Equal(t, "paged-item ADDED", string(allItems[0].Value))
+		require.Contains(t, string(allItems[0].Value), "paged-item ADDED")
 
 		// Verify all other items are MODIFIED events and correspond to our recorded resource versions
 		for i := 1; i < len(allItems); i++ {
-			require.Equal(t, "paged-item MODIFIED", string(allItems[i].Value))
+			require.Contains(t, string(allItems[i].Value), "paged-item MODIFIED")
 			require.Equal(t, resourceVersions[i], allItems[i].ResourceVersion)
 		}
 	})
@@ -835,9 +835,9 @@ func runTestIntegrationBackendListHistory(t *testing.T, backend resource.Storage
 		require.NoError(t, err)
 		require.Nil(t, res.Error)
 		require.Len(t, res.Items, 2)
-		require.Equal(t, "deleted-item MODIFIED", string(res.Items[0].Value))
+		require.Contains(t, string(res.Items[0].Value), "deleted-item MODIFIED")
 		require.Equal(t, rv2, res.Items[0].ResourceVersion)
-		require.Equal(t, "deleted-item ADDED", string(res.Items[1].Value))
+		require.Contains(t, string(res.Items[1].Value), "deleted-item ADDED")
 		require.Equal(t, rv1, res.Items[1].ResourceVersion)
 	})
 }
@@ -933,11 +933,11 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		// Check that we can still access both values
 		found, err := store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b1.Uid}, true)
 		require.NoError(t, err)
-		require.Equal(t, []byte("hello 11111"), found.Value)
+		require.Contains(t, string(found.Value), "hello 11111")
 
 		found, err = store.GetResourceBlob(ctx, key, &utils.BlobInfo{UID: b2.Uid}, true)
 		require.NoError(t, err)
-		require.Equal(t, []byte("hello 22222"), found.Value)
+		require.Contains(t, string(found.Value), "hello 22222")
 
 		// Save a resource with annotation
 		obj := &unstructured.Unstructured{}
@@ -959,13 +959,13 @@ func runTestIntegrationBlobSupport(t *testing.T, backend resource.StorageBackend
 		res, err := server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key})
 		require.NoError(t, err)
 		require.Nil(t, out.Error)
-		require.Equal(t, "hello 22222", string(res.Value))
+		require.Contains(t, string(res.Value), "hello 22222")
 
 		// But we can still get an older version with an explicit UID
 		res, err = server.GetBlob(ctx, &resource.GetBlobRequest{Resource: key, Uid: b1.Uid})
 		require.NoError(t, err)
 		require.Nil(t, out.Error)
-		require.Equal(t, "hello 11111", string(res.Value))
+		require.Contains(t, string(res.Value), "hello 11111")
 	})
 }
 
@@ -1037,9 +1037,22 @@ func WithFolder(folder string) WriteEventOption {
 }
 
 // WithValue sets the value for the write event
-func WithValue(value []byte) WriteEventOption {
+func WithValue(value string) WriteEventOption {
 	return func(o *WriteEventOptions) {
-		o.Value = value
+		u := unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": o.Group + "/v1",
+				"kind":       o.Resource,
+				"metadata": map[string]any{
+					"name":      "name",
+					"namespace": "ns",
+				},
+				"spec": map[string]any{
+					"value": value,
+				},
+			},
+		}
+		o.Value, _ = u.MarshalJSON()
 	}
 }
 
@@ -1064,10 +1077,21 @@ func writeEvent(ctx context.Context, store resource.StorageBackend, name string,
 	for _, opt := range opts {
 		opt(&options)
 	}
-
-	// Set default value if not provided
 	if options.Value == nil {
-		options.Value = []byte(name + " " + resource.WatchEvent_Type_name[int32(action)])
+		u := unstructured.Unstructured{
+			Object: map[string]any{
+				"apiVersion": options.Group + "/v1",
+				"kind":       options.Resource,
+				"metadata": map[string]any{
+					"name":      name,
+					"namespace": options.Namespace,
+				},
+				"spec": map[string]any{
+					"value": name + " " + resource.WatchEvent_Type_name[int32(action)],
+				},
+			},
+		}
+		options.Value, _ = u.MarshalJSON()
 	}
 
 	res := &unstructured.Unstructured{

@@ -143,7 +143,7 @@ func (gr *SQLCommand) Execute(ctx context.Context, now time.Time, vars mathexp.V
 	logger.Debug("Executing query", "query", gr.query, "frames", len(allFrames))
 
 	db := sql.DB{}
-	frame, err := db.QueryFrames(ctx, gr.refID, gr.query, allFrames)
+	frame, err := db.QueryFrames(ctx, tracer, gr.refID, gr.query, allFrames)
 
 	rsp := mathexp.Results{}
 	if err != nil {

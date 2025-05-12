@@ -400,6 +400,13 @@ func schema_apis_query_v0alpha1_template_QueryTemplate(ref common.ReferenceCallb
 							Format:      "",
 						},
 					},
+					"isVisible": {
+						SchemaProps: spec.SchemaProps{
+							Description: "Toggle for visible/hidden queries",
+							Type:        []string{"boolean"},
+							Format:      "",
+						},
+					},
 					"vars": {
 						VendorExtensible: spec.VendorExtensible{
 							Extensions: spec.Extensions{

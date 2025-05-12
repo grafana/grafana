@@ -5,7 +5,7 @@ import { PropsWithChildren, useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { locationSearchToObject, locationService, useScopes } from '@grafana/runtime';
-import { getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, getDragStyles, LinkButton, useStyles2 } from '@grafana/ui';
 import { useGrafana } from 'app/core/context/GrafanaContext';
 import { useMediaQueryMinWidth } from 'app/core/hooks/useMediaQueryMinWidth';
 import { Trans } from 'app/core/internationalization';
@@ -122,7 +122,9 @@ export function AppChrome({ children }: Props) {
                 [styles.scopesDashboardsContainerDocked]: menuDockedAndOpen,
               })}
             >
-              <ScopesDashboards />
+              <ErrorBoundaryAlert>
+                <ScopesDashboards />
+              </ErrorBoundaryAlert>
             </div>
           )}
           <main
