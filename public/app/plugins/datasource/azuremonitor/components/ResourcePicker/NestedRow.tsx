@@ -1,6 +1,7 @@
 import { cx } from '@emotion/css';
 import { useEffect, useState } from 'react';
 
+import { useTranslate } from '@grafana/i18n';
 import { FadeTransition, LoadingPlaceholder, useStyles2 } from '@grafana/ui';
 
 import { NestedEntry } from './NestedEntry';
@@ -31,6 +32,7 @@ const NestedRow = ({
 }: NestedRowProps) => {
   const styles = useStyles2(getStyles);
   const [rowStatus, setRowStatus] = useState<'open' | 'closed' | 'loading'>('closed');
+  const { t } = useTranslate();
 
   const isSelected = !!selectedRows.find((v) => v.uri.toLowerCase() === row.uri.toLowerCase());
   const isDisabled = !isSelected && disableRow(row, selectedRows);

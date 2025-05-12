@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { AzureAuthType, AzureCredentials, getAzureClouds } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { ConfigSection } from '@grafana/plugin-ui';
 import { Select, Field } from '@grafana/ui';
 
@@ -39,6 +40,7 @@ export const AzureCredentialsForm = (props: Props) => {
     workloadIdentityEnabled,
     userIdentityEnabled,
   } = props;
+  const { t } = useTranslate();
 
   const authTypeOptions = useMemo(() => {
     let opts: Array<SelectableValue<AzureAuthType>> = [

@@ -2487,6 +2487,7 @@ __metadata:
     "@emotion/css": "npm:11.13.5"
     "@grafana/data": "npm:12.1.0-pre"
     "@grafana/e2e-selectors": "npm:12.1.0-pre"
+    "@grafana/i18n": "npm:12.1.0-pre"
     "@grafana/plugin-configs": "npm:12.1.0-pre"
     "@grafana/plugin-ui": "npm:0.10.5"
     "@grafana/runtime": "npm:12.1.0-pre"
@@ -3169,7 +3170,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
+"@grafana/i18n@npm:12.1.0-pre, @grafana/i18n@workspace:*, @grafana/i18n@workspace:packages/grafana-i18n":
   version: 0.0.0-use.local
   resolution: "@grafana/i18n@workspace:packages/grafana-i18n"
   dependencies:

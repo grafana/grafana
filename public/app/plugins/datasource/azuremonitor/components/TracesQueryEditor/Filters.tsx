@@ -2,6 +2,7 @@ import { uniq } from 'lodash';
 import { useEffect, useMemo, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { EditorList } from '@grafana/plugin-ui';
 import { Field } from '@grafana/ui';
 
@@ -14,6 +15,7 @@ import { setFilters } from './setQueryValue';
 const Filters = ({ query, datasource, onQueryChange, variableOptionGroup, range }: AzureQueryEditorFieldProps) => {
   const { azureTraces } = query;
   const queryTraceTypes = azureTraces?.traceTypes ? azureTraces.traceTypes : Object.keys(tablesSchema);
+  const { t } = useTranslate();
 
   const excludedProperties = new Set([
     'customDimensions',

@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { AadCurrentUserCredentials, AzureCredentials, instanceOfAzureCredential } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { ConfigSection } from '@grafana/plugin-ui';
 import { config } from '@grafana/runtime';
 import { Select, Field, RadioButtonGroup, Alert, Stack, TextLink } from '@grafana/ui';
@@ -29,6 +30,7 @@ export const CurrentUserFallbackCredentials = (props: Props) => {
     managedIdentityEnabled,
     workloadIdentityEnabled,
   } = props;
+  const { t } = useTranslate();
 
   type FallbackCredentialAuthTypeOptions = 'clientsecret' | 'msi' | 'workloadidentity';
   const authTypeOptions = useMemo(() => {

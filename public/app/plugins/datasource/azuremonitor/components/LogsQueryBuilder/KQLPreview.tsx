@@ -3,6 +3,7 @@ import Prism from 'prismjs';
 import React, { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorRow } from '@grafana/plugin-ui';
 import { Button, useStyles2 } from '@grafana/ui';
 
@@ -17,6 +18,7 @@ interface KQLPreviewProps {
 
 const KQLPreview: React.FC<KQLPreviewProps> = ({ query, hidden, setHidden }) => {
   const styles = useStyles2(getStyles);
+  const { t } = useTranslate();
 
   useEffect(() => {
     Prism.highlightAll();

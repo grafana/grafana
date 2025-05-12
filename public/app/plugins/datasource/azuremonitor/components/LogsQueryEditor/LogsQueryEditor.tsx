@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { PanelData, TimeRange } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
 import { EditorFieldGroup, EditorRow, EditorRows } from '@grafana/plugin-ui';
 import { config, getTemplateSrv } from '@grafana/runtime';
 import { Alert, LinkButton, Space, Text, TextLink } from '@grafana/ui';

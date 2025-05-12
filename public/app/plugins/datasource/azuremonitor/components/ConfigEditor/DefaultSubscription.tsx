@@ -2,6 +2,7 @@ import { useEffect, useReducer } from 'react';
 
 import { AzureCredentials, isCredentialsComplete } from '@grafana/azure-sdk';
 import { SelectableValue } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Select, Button, Field } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -29,6 +30,7 @@ export const DefaultSubscription = (props: Props) => {
   } = props;
   const hasRequiredFields = isCredentialsComplete(credentials);
   const [loadSubscriptionsClicked, onLoadSubscriptions] = useReducer((val) => val + 1, 0);
+  const { t } = useTranslate();
 
   useEffect(() => {
     if (!getSubscriptions || !hasRequiredFields) {

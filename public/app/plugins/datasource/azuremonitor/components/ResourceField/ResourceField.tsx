@@ -2,6 +2,7 @@ import { cx } from '@emotion/css';
 import { useCallback, useEffect, useState } from 'react';
 import * as React from 'react';
 
+import { Trans, useTranslate } from '@grafana/i18n';
 import { Button, Icon, Modal, useStyles2, IconName } from '@grafana/ui';
 
 import Datasource from '../../datasource';
@@ -42,6 +43,7 @@ const ResourceField = ({
 }: Props) => {
   const styles = useStyles2(getStyles);
   const [pickerIsOpen, setPickerIsOpen] = useState(false);
+  const { t } = useTranslate();
 
   const handleOpenPicker = useCallback(() => {
     setPickerIsOpen(true);

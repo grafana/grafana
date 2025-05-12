@@ -2,6 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Select } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -21,6 +22,7 @@ const FormatAsField = ({
   resultFormat,
 }: FormatAsFieldProps) => {
   const options = useMemo(() => [...formatOptions, variableOptionGroup], [variableOptionGroup, formatOptions]);
+  const { t } = useTranslate();
 
   const handleChange = useCallback(
     (change: SelectableValue<ResultFormat>) => {

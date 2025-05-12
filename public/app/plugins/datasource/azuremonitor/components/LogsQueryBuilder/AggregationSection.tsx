@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { EditorField, EditorFieldGroup, EditorList, EditorRow } from '@grafana/plugin-ui';
 
 import { BuilderQueryEditorReduceExpression } from '../../dataquery.gen';
@@ -21,6 +22,7 @@ export const AggregateSection: React.FC<AggregateSectionProps> = ({
   buildAndUpdateQuery,
   templateVariableOptions,
 }) => {
+  const { t } = useTranslate();
   const builderQuery = query.azureLogAnalytics?.builderQuery;
   const [aggregates, setAggregates] = useState<BuilderQueryEditorReduceExpression[]>(
     builderQuery?.reduce?.expressions || []

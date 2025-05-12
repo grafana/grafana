@@ -1,4 +1,5 @@
 import { CoreApp } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { Modal } from '@grafana/ui';
 
 import AzureLogAnalyticsDatasource from '../../azure_log_analytics/azure_log_analytics_datasource';
@@ -17,6 +18,7 @@ type Props = {
 
 export const AzureCheatSheetModal = (props: Props) => {
   const { isOpen, onClose, datasource, onChange } = props;
+  const { t } = useTranslate();
 
   return (
     <Modal

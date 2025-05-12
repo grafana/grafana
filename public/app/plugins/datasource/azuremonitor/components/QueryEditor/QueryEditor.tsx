@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { useEffectOnce } from 'react-use';
 
 import { CoreApp, QueryEditorProps } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { config } from '@grafana/runtime';
 import { Alert, CodeEditor, Space, TextLink } from '@grafana/ui';
 
@@ -44,6 +45,7 @@ const QueryEditor = ({
   const onRunQuery = useMemo(() => debounce(baseOnRunQuery, 500), [baseOnRunQuery]);
   const [azureLogsCheatSheetModalOpen, setAzureLogsCheatSheetModalOpen] = useState(false);
   const [defaultSubscriptionId, setDefaultSubscriptionId] = useState('');
+  const { t } = useTranslate();
 
   const onQueryChange = useCallback(
     (newQuery: AzureMonitorQuery) => {
@@ -155,6 +157,7 @@ const EditorForQueryType = ({
   onQueryChange,
   range,
 }: EditorForQueryTypeProps) => {
+  const { t } = useTranslate();
   switch (query.queryType) {
     case AzureQueryType.AzureMonitor:
       return (
@@ -235,6 +238,7 @@ const EditorForQueryType = ({
 };
 
 const UserAuthAlert = () => {
+  const { t } = useTranslate();
   return (
     <Alert
       title={t('components.user-auth-alert.title-unsupported-auth', 'Unsupported authentication provider')}
@@ -256,6 +260,7 @@ const UserAuthAlert = () => {
 };
 
 const UserAuthFallbackAlert = () => {
+  const { t } = useTranslate();
   return (
     <Alert
       title={t(

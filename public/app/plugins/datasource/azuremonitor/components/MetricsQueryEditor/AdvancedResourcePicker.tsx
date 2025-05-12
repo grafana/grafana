@@ -2,6 +2,7 @@ import { css } from '@emotion/css';
 import { useEffect } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
+import { Trans, useTranslate } from '@grafana/i18n';
 import { AccessoryButton } from '@grafana/plugin-ui';
 import { Input, Label, InlineField, Button, useStyles2 } from '@grafana/ui';
 
@@ -21,6 +22,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
 });
 
 const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<AzureMonitorResource>) => {
+  const { t } = useTranslate();
   const styles = useStyles2(getStyles);
 
   useEffect(() => {

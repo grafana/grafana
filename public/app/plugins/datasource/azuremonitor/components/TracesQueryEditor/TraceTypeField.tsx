@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import { SelectableValue } from '@grafana/data';
+import { useTranslate } from '@grafana/i18n';
 import { MultiSelect } from '@grafana/ui';
 
 import { selectors } from '../../e2e/selectors';
@@ -12,6 +13,7 @@ import { Tables } from './consts';
 import { setTraceTypes } from './setQueryValue';
 
 const TraceTypeField = ({ query, variableOptionGroup, onQueryChange }: AzureQueryEditorFieldProps) => {
+  const { t } = useTranslate();
   const tables: AzureMonitorOption[] = Object.entries(Tables).map(([key, value]) => ({
     label: value.label,
     description: value.description,
