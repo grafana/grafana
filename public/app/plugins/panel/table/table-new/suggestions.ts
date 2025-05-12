@@ -1,5 +1,6 @@
 import { VisualizationSuggestionsBuilder } from '@grafana/data';
 import { TableFieldOptions } from '@grafana/schema';
+import icnTablePanelSvg from 'app/plugins/panel/table/img/icn-table-panel.svg';
 import { SuggestionName } from 'app/types/suggestions';
 
 import { Options } from './panelcfg.gen';
@@ -27,7 +28,7 @@ export class TableSuggestionsSupplier {
     if (builder.dataSummary.fieldCount === 0) {
       list.append({
         cardOptions: {
-          imgSrc: 'public/app/plugins/panel/table/img/icn-table-panel.svg',
+          imgSrc: icnTablePanelSvg,
         },
       });
     } else {
