@@ -80,6 +80,9 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
+    strategy:
+      matrix:
+        shard: [0, 1, 2, 3]
     services:
       postgres:
         image: postgres:12.3-alpine
@@ -87,6 +90,8 @@ jobs:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: 4
         ports:
           - 5432:5432
     steps:
@@ -107,4 +112,8 @@ jobs:
           sudo apt-get update -yq && sudo apt-get install postgresql-client
           psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
           make gen-go
-          go test -p=1 -tags=postgres -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          ALL_TESTS=$(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          echo "Running tests in shard $SHARD_INDEX of $SHARD_COUNT"
+          SHARD_TESTS=$(echo "$ALL_TESTS" | awk -v shard="$SHARD_INDEX" -v count="$SHARD_COUNT" 'NR % count == shard')
+          echo "Running tests in shard $SHARD_INDEX of $SHARD_COUNT: $SHARD_TESTS"
+          go test -tags=postgres -p=1 -timeout=5m -run '^TestIntegration' $SHARD_TESTS
