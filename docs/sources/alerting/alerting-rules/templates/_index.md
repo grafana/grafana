@@ -176,7 +176,7 @@ Template labels when the labels returned by your queries are insufficient. For i
 
 Here’s an example of templating a `severity` label based on the query value.
 
-```
+```go
 {{ if (gt $values.A.Value 90.0) -}}
 critical
 {{ else if (gt $values.A.Value 80.0) -}}
