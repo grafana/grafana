@@ -340,6 +340,7 @@ func (s *service) start(ctx context.Context) error {
 	delegate := server
 
 	var runningServer *genericapiserver.GenericAPIServer
+	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
 		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
@@ -348,23 +349,26 @@ func (s *service) start(ctx context.Context) error {
 		}
 		delegate = runningServer
 	}
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		_, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
+
+	if isKubernetesAggregatorEnabled {
+		aggregatorServer, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
 		if err != nil {
 			return err
 		}
-	}
-
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
-		if err != nil {
-			s.log.Error("extra runner failed", "error", err)
-			return err
+		// we are running with KubernetesAggregator FT set to true but with enterprise unlinked, handle this gracefully
+		if aggregatorServer != nil {
+			runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
+			if err != nil {
+				s.log.Error("aggregator runner failed to run", "error", err)
+				return err
+			}
+		} else {
+			// even though the FT is set to true, enterprise isn't linked
+			isKubernetesAggregatorEnabled = false
 		}
 	}
 
-	if !s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) &&
-		!s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) && !isKubernetesAggregatorEnabled {
 		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
