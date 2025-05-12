@@ -1,6 +1,6 @@
 module golangci-lint
 
-go 1.24.1
+go 1.24.3
 
 tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 

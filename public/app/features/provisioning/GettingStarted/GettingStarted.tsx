@@ -144,7 +144,7 @@ export default function GettingStarted({ items }: Props) {
         </Alert>
       )}
       <Stack direction="column" gap={6} wrap="wrap">
-        <Stack gap={6} alignItems="center">
+        <Stack gap={10} alignItems="center">
           <FeaturesList
             repos={items}
             hasRequiredFeatures={hasRequiredFeatures}
@@ -154,7 +154,11 @@ export default function GettingStarted({ items }: Props) {
             }}
           />
           <div className={styles.imageContainer}>
-            <img src={'public/img/provisioning/provisioning.webp'} className={styles.image} />
+            <img
+              src={'public/img/provisioning/provisioning.svg'}
+              className={styles.image}
+              alt={'Grafana provisioning'}
+            />
           </div>
         </Stack>
         {(!hasPublicAccess || !hasImageRenderer) && hasItems && (
@@ -182,7 +186,7 @@ export default function GettingStarted({ items }: Props) {
 function getStyles(theme: GrafanaTheme2) {
   return {
     imageContainer: css({
-      height: 400,
+      height: 350,
       display: `flex`,
       alignItems: `center`,
       justifyContent: `center`,

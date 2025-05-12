@@ -1,6 +1,5 @@
 import { useState } from 'react';
 
-import { config } from '@grafana/runtime';
 import { Box, Stack, Tab, TabContent, TabsBar } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
@@ -13,7 +12,7 @@ import { getInsightsScenes, insightsIsAvailable } from './Insights';
 import { PluginIntegrations } from './PluginIntegrations';
 
 function Home() {
-  const insightsEnabled = (insightsIsAvailable() || isLocalDevEnv()) && Boolean(config.featureToggles.alertingInsights);
+  const insightsEnabled = insightsIsAvailable() || isLocalDevEnv();
 
   const [activeTab, setActiveTab] = useState<'insights' | 'overview'>(insightsEnabled ? 'insights' : 'overview');
   const insightsScene = getInsightsScenes();

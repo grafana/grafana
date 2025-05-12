@@ -75,7 +75,7 @@ describe('Toggletip', () => {
     const button = screen.getByTestId('myButton');
     await userEvent.click(button);
 
-    expect(await screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('toggletip-content')).not.toBeInTheDocument();
     expect(onOpen).toHaveBeenCalledTimes(1);
   });
 
