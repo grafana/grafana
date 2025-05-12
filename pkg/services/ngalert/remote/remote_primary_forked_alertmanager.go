@@ -3,7 +3,6 @@ package remote
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	alertingNotify "github.com/grafana/alerting/notify"
 
@@ -30,41 +29,38 @@ func NewRemotePrimaryForkedAlertmanager(log log.Logger, internal notifier.Alertm
 
 // ApplyConfig will send the configuration to the remote Alertmanager on startup.
 func (fam *RemotePrimaryForkedAlertmanager) ApplyConfig(ctx context.Context, config *models.AlertConfiguration) error {
-	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
-		return fmt.Errorf("failed to call ApplyConfig on the remote Alertmanager: %w", err)
+	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
+		return err
 	}
 
-	if err := fam.internal.ApplyConfig(ctx, config); err != nil {
-		// An error in the internal Alertmanager shouldn't make the whole operation fail.
-		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
-		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
+	if err := fam.remote.ApplyConfig(ctx, config); err != nil {
+		return err
 	}
+
 	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyConfig(ctx context.Context, config *apimodels.PostableUserConfig) error {
+	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
+		return err
+	}
+
 	if err := fam.remote.SaveAndApplyConfig(ctx, config); err != nil {
 		return err
 	}
 
-	if err := fam.internal.SaveAndApplyConfig(ctx, config); err != nil {
-		// An error in the internal Alertmanager shouldn't make the whole operation fail.
-		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
-		fam.log.Error("Error applying config to the internal Alertmanager", "err", err)
-	}
 	return nil
 }
 
 func (fam *RemotePrimaryForkedAlertmanager) SaveAndApplyDefaultConfig(ctx context.Context) error {
-	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
-		return fmt.Errorf("failed to send the default configuration to the remote Alertmanager: %w", err)
+	if err := fam.internal.SaveAndApplyDefaultConfig(ctx); err != nil {
+		return err
 	}
 
-	if err := fam.internal.SaveAndApplyDefaultConfig(ctx); err != nil {
-		// An error in the internal Alertmanager shouldn't make the whole operation fail.
-		// We're replicating writes in the internal Alertmanager just for comparing and in case we need to roll back.
-		fam.log.Error("Error applying the default configuration to the internal Alertmanager", "err", err)
+	if err := fam.remote.SaveAndApplyDefaultConfig(ctx); err != nil {
+		return err
 	}
+
 	return nil
 }
 
