@@ -65,6 +65,7 @@
     "plugin:build": "nx run-many -t build --projects='tag:scope:plugin'",
     "plugin:build:commit": "nx run-many -t build:commit --projects='tag:scope:plugin'",
     "plugin:build:dev": "nx run-many -t dev --projects='tag:scope:plugin' --maxParallel=100",
+    "plugin:i18n-extract": "nx run-many -t i18n-extract --projects='tag:scope:plugin'",
     "process-specs": "node --experimental-strip-types scripts/process-specs.ts",
     "generate-apis": "yarn process-specs && rtk-query-codegen-openapi ./scripts/generate-rtk-apis.ts",
     "generate:api-client": "NODE_OPTIONS='--experimental-strip-types' plop --plopfile public/app/api/generator/plopfile.ts"

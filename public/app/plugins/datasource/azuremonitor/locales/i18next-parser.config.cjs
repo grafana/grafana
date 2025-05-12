@@ -8,5 +8,5 @@ module.exports = {
 
   defaultNamespace: 'grafana-azure-monitor-datasource',
   input: ['../**/*.{tsx,ts}'],
-  output: './public/app/plugins/datasource/azuremonitor/locales/$LOCALE/$NAMESPACE.json',
+  output: './locales/$LOCALE/$NAMESPACE.json',
 };
