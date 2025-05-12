@@ -128,7 +128,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // @grafana/alerting-backend
 	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // @grafana/alerting-backend
 	github.com/mwitkow/go-conntrack v0.0.0-20190716064945-2f068394615f // @grafana/grafana-operator-experience-squad
-	github.com/oapi-codegen/oapi-codegen/v2 v2.3.0 // @grafana/grafana-as-code
+	github.com/oapi-codegen/oapi-codegen/v2 v2.4.1 // @grafana/grafana-as-code
 	github.com/olekukonko/tablewriter v0.0.5 // @grafana/grafana-backend-group
 	github.com/openfga/api/proto v0.0.0-20250127102726-f9709139a369 // @grafana/identity-access-team
 	github.com/openfga/language/pkg/go v0.2.0-beta.2.0.20250121233318-0eae96a39570 // @grafana/identity-access-team
@@ -462,7 +462,7 @@ require (
 )
 
 require (
-	github.com/getkin/kin-openapi v0.127.0 // @grafana/grafana-app-platform-squad
+	github.com/getkin/kin-openapi v0.132.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/playlist v0.0.0-20240917082838-e2bce38a7990 // @grafana/grafana-app-platform-squad
 )
 
