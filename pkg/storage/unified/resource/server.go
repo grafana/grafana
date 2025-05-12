@@ -273,46 +273,15 @@ func NewResourceServer(opts ResourceServerOptions) (ResourceServer, error) {
 		s.distributor = *opts.Distributor
 	}
 
-	// Set broadcaster
-	broadcaster, err := NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
-		events, err := s.backend.WatchWriteEvents(s.ctx)
-		if err != nil {
-			return err
-		}
-		go func() {
-			for v := range events {
-				if v == nil {
-					s.log.Error("received nil event")
-					continue
-				}
-				// Skip events during batch updates
-				if v.PreviousRV < 0 {
-					continue
-				}
-
-				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
-				s.mostRecentRV.Store(v.ResourceVersion)
-				out <- v
-			}
-		}()
-		return nil
-	})
-	if err != nil {
-		s.log.Error("resource server init failed", "error", err)
-		return nil, err
-	}
-	s.broadcaster = broadcaster
-
-	// Set search support
 	if opts.Search.Resources != nil {
 		var err error
-		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics, broadcaster)
+		s.search, err = newSearchSupport(opts.Search, s.backend, s.access, s.blob, opts.Tracer, opts.IndexMetrics)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	err = s.Init(ctx)
+	err := s.Init(ctx)
 	if err != nil {
 		s.log.Error("resource server init failed", "error", err)
 		return nil, err
@@ -387,8 +356,14 @@ func (s *server) Init(ctx context.Context) error {
 			}
 		}
 
+		// Start watching for changes
+		if s.initErr == nil {
+			s.initErr = s.initWatcher()
+		}
+
 		// Initialize the search index
 		if s.initErr == nil && s.search != nil {
+			s.search.broadcaster = s.broadcaster
 			s.initErr = s.search.init(ctx)
 		}
 
@@ -952,6 +927,34 @@ func (s *server) List(ctx context.Context, req *ListRequest) (*ListResponse, err
 	}
 	rsp.ResourceVersion = rv
 	return rsp, err
+}
+
+func (s *server) initWatcher() error {
+	var err error
+	s.broadcaster, err = NewBroadcaster(s.ctx, func(out chan<- *WrittenEvent) error {
+		events, err := s.backend.WatchWriteEvents(s.ctx)
+		if err != nil {
+			return err
+		}
+		go func() {
+			for v := range events {
+				if v == nil {
+					s.log.Error("received nil event")
+					continue
+				}
+				// Skip events during batch updates
+				if v.PreviousRV < 0 {
+					continue
+				}
+
+				s.log.Debug("Server. Streaming Event", "type", v.Type, "previousRV", v.PreviousRV, "group", v.Key.Group, "namespace", v.Key.Namespace, "resource", v.Key.Resource, "name", v.Key.Name)
+				s.mostRecentRV.Store(v.ResourceVersion)
+				out <- v
+			}
+		}()
+		return nil
+	})
+	return err
 }
 
 //nolint:gocyclo
