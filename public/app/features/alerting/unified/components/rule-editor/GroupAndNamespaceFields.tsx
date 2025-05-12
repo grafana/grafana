@@ -3,8 +3,8 @@ import { useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 
 import { GrafanaTheme2, SelectableValue } from '@grafana/data';
-import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 import { useTranslate } from '@grafana/i18n';
+import { Field, VirtualizedSelect, useStyles2 } from '@grafana/ui';
 
 import { RuleFormValues } from '../../types/rule-form';
 

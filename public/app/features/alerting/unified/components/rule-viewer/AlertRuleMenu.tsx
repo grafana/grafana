@@ -157,7 +157,7 @@ interface ExportMenuItemProps {
 
 const ExportMenuItem = ({ identifier }: ExportMenuItemProps) => {
   const { t } = useTranslate();
-  const returnTo = location.pathname + location.search;
+  const returnTo = window.location.pathname + window.location.search;
   const url = createRelativeUrl(
     `/alerting/${encodeURIComponent(ruleId.stringifyIdentifier(identifier))}/modify-export`,
     {

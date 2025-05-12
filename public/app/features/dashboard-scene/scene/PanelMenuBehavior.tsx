@@ -558,7 +558,7 @@ const onCreateAlert = async (panel: VizPanel) => {
     const formValues = await scenesPanelToRuleFormValues(panel);
     const ruleFormUrl = urlUtil.renderUrl('/alerting/new', {
       defaults: JSON.stringify(formValues),
-      returnTo: location.pathname + location.search,
+      returnTo: window.location.pathname + window.location.search,
     });
     locationService.push(ruleFormUrl);
   } catch (err) {

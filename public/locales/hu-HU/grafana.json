@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Nemrég törölt"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "A mappa üres"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Változószerkesztő megnyitása",
         "open-editor-tooltip": "További változólehetőségekért nyissa meg a változószerkesztőt",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Egyéni értékek engedélyezése",
           "allow-custom-values-description": "Lehetővé teszi a felhasználók számára, hogy értékeket adjanak meg",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Lekérdezési beállítások",
       "selection-options": "Kijelölés beállításai"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Biztosan visszaállítja az irányítópultot a(z) {{version}} verzióra? Az összes nem mentett módosítás elveszik.",
@@ -5362,9 +5374,6 @@
     "description": "Előfordulhat, hogy a végrehajtott módosítások nem menthetők.",
     "discard-button": "Nem mentett módosítások elvetése",
     "title": "Kilép az oldalról?"
-  },
-  "frontendtests": {
-    "test-key": "tesztkulcs nem található"
   },
   "gen-ai": {
     "apply-suggestion": "Alkalmaz",

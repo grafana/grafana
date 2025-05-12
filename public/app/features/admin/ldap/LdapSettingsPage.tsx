@@ -137,7 +137,6 @@ export const LdapSettingsPage = () => {
     }
     init();
   }, [reset]);
-
   const { t } = useTranslate();
 
   /**

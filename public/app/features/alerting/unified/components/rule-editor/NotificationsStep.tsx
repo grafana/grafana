@@ -47,13 +47,11 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
   const dataSourceName = watch('dataSourceName') ?? GRAFANA_RULES_SOURCE_NAME;
   const isGrafanaManaged = isGrafanaManagedRuleByType(type);
-  const simplifiedRoutingToggleEnabled = config.featureToggles.alertingSimplifiedRouting ?? false;
   const simplifiedModeInNotificationsStepEnabled = config.featureToggles.alertingNotificationsStepMode ?? false;
   const shouldRenderpreview = type === RuleFormType.grafana;
   const hasInternalAlertmanagerEnabled = useHasInternalAlertmanagerEnabled();
 
-  const shouldAllowSimplifiedRouting =
-    type === RuleFormType.grafana && simplifiedRoutingToggleEnabled && hasInternalAlertmanagerEnabled;
+  const shouldAllowSimplifiedRouting = type === RuleFormType.grafana && hasInternalAlertmanagerEnabled;
 
   function onCloseLabelsEditor(labelsToUpdate?: KBObjectArray) {
     if (labelsToUpdate) {
@@ -146,7 +144,6 @@ export const NotificationsStep = ({ alertUid }: NotificationsStepProps) => {
 
 /**
  * Preconditions:
- * - simplified routing is enabled
  * - the alert rule is a grafana rule
  *
  * This component will render the switch between the select contact point routing and the notification policy routing.
@@ -191,7 +188,6 @@ function ManualAndAutomaticRouting({ alertUid }: { alertUid?: string }) {
 
 /**
  * Preconditions:
- * - simplified routing is enabled
  * - simple mode for notifications step is enabled
  * - the alert rule is a grafana rule
  *

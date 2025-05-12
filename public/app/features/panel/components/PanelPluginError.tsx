@@ -6,6 +6,7 @@ import { PanelProps, PanelPlugin, PluginType, PanelPluginMeta } from '@grafana/d
 import { Trans, useTranslate } from '@grafana/i18n';
 import { Alert } from '@grafana/ui';
 import { AppNotificationSeverity } from 'app/types';
+import grafanaIconSvg from 'img/grafana_icon.svg';
 
 interface Props {
   title: string;
@@ -88,7 +89,7 @@ export function getPanelPluginNotFound(id: string, silent?: boolean): PanelPlugi
       links: [],
       logos: {
         large: '',
-        small: 'public/img/grafana_icon.svg',
+        small: grafanaIconSvg,
       },
       screenshots: [],
       updated: '',

@@ -1,4 +1,5 @@
 import { Trans } from '@grafana/i18n';
+import mimirLogoRecordingSvg from 'img/alerting/mimir_logo_recording.svg';
 
 import { RuleFormType } from '../../../types/rule-form';
 
@@ -19,7 +20,7 @@ const RecordingRuleType = ({ selected = false, disabled = false, onClick }: Shar
             </Trans>
           </span>
         }
-        image="public/img/alerting/mimir_logo_recording.svg"
+        image={mimirLogoRecordingSvg}
         selected={selected}
         disabled={disabled}
         value={RuleFormType.cloudRecording}

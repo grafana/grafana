@@ -7,6 +7,8 @@ import { selectors } from '@grafana/e2e-selectors';
 import { Trans } from '@grafana/i18n';
 import { t } from '@grafana/i18n/internal';
 import { Tooltip, Themeable2, withTheme2, clearButtonStyles, stylesFactory } from '@grafana/ui';
+import checkboxPng from 'img/checkbox.png';
+import checkboxWhitePng from 'img/checkbox_white.png';
 
 import { ALL_VARIABLE_VALUE } from '../../constants';
 
@@ -140,7 +142,7 @@ class VariableOptions extends PureComponent<Props> {
 }
 
 const getStyles = stylesFactory((theme: GrafanaTheme2) => {
-  const checkboxImageUrl = theme.isDark ? 'public/img/checkbox.png' : 'public/img/checkbox_white.png';
+  const checkboxImageUrl = theme.isDark ? checkboxPng : checkboxWhitePng;
 
   return {
     hideVariableOptionIcon: css({
