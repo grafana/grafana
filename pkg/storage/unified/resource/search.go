@@ -376,6 +376,8 @@ func (s *searchSupport) GetStats(ctx context.Context, req *ResourceStatsRequest)
 	return rsp, nil
 }
 
+var errInitSearchSupport = fmt.Errorf("broadcaster is required for search support")
+
 // init is called during startup.  any failure will block startup and continued execution
 func (s *searchSupport) init(ctx context.Context) error {
 	ctx, span := s.tracer.Start(ctx, tracingPrexfixSearch+"Init")
@@ -407,6 +409,10 @@ func (s *searchSupport) init(ctx context.Context) error {
 	span.AddEvent("namespaces indexed", trace.WithAttributes(attribute.Int("namespaced_indexed", totalBatchesIndexed)))
 
 	// Now start listening for new events
+	if s.broadcaster == nil {
+		return errInitSearchSupport
+	}
+
 	watchctx := context.Background() // new context?
 	events, err := s.broadcaster.Subscribe(watchctx)
 	if err != nil {

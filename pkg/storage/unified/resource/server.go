@@ -361,9 +361,13 @@ func (s *server) Init(ctx context.Context) error {
 			s.initErr = s.initWatcher()
 		}
 
+		// Set subscribers
+		if s.initErr == nil {
+			s.initErr = s.initBroadcasting()
+		}
+
 		// Initialize the search index
 		if s.initErr == nil && s.search != nil {
-			s.search.broadcaster = s.broadcaster
 			s.initErr = s.search.init(ctx)
 		}
 
@@ -1101,6 +1105,19 @@ func (s *server) Watch(req *WatchRequest, srv ResourceStore_WatchServer) error {
 			}
 		}
 	}
+}
+
+var errInitBroadcasting = fmt.Errorf("broadcaster is required to initialise subscribers")
+
+func (s *server) initBroadcasting() error {
+	if s.broadcaster == nil {
+		return errInitBroadcasting
+	}
+	// Set subscribers, just search support for now
+	if s.search != nil {
+		s.search.broadcaster = s.broadcaster
+	}
+	return nil
 }
 
 func (s *server) Search(ctx context.Context, req *ResourceSearchRequest) (*ResourceSearchResponse, error) {
