@@ -179,61 +179,34 @@ func (ng *AlertNG) init() error {
 	// is removed from Alertmanager.
 	compat.InitFromFlags(ng.Log, featurecontrol.NoopFlags{})
 
-	// If enabled, configure the remote Alertmanager.
-	// - If several toggles are enabled, the order of precedence is RemoteOnly, RemotePrimary, RemoteSecondary
-	// - If no toggles are enabled, we default to using only the internal Alertmanager
-	// We currently do not support remote primary mode, so we fall back to remote secondary.
+	// Configure the remote Alertmanager.
+	// If toggles for both modes are enabled, remote primary takes precedence.
 	var overrides []notifier.Option
 	moaLogger := log.New("ngalert.multiorg.alertmanager")
-	remoteOnly := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteOnly)
 	remotePrimary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemotePrimary)
 	remoteSecondary := ng.FeatureToggles.IsEnabled(initCtx, featuremgmt.FlagAlertmanagerRemoteSecondary)
-	if remoteOnly || remotePrimary || remoteSecondary {
+	if remotePrimary || remoteSecondary {
+		m := ng.Metrics.GetRemoteAlertmanagerMetrics()
+		cfg := remote.AlertmanagerConfig{
+			BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
+			DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
+			TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
+			URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
+			ExternalURL:       ng.Cfg.AppURL,
+			SmtpFrom:          ng.Cfg.Smtp.FromAddress,
+			StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
+		}
 		autogenFn := func(ctx context.Context, logger log.Logger, orgID int64, cfg *definitions.PostableApiAlertingConfig, skipInvalid bool) error {
 			return notifier.AddAutogenConfig(ctx, logger, ng.store, orgID, cfg, skipInvalid)
 		}
 
-		switch {
-		case remoteOnly:
-			ng.Log.Debug("Starting Grafana with remote only mode enabled")
-			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
-			m.Info.WithLabelValues(metrics.ModeRemoteOnly).Set(1)
-			ng.Cfg.UnifiedAlerting.SkipClustering = true
-
-			// This function will be used by the MOA to create new Alertmanagers.
-			override := notifier.WithAlertmanagerOverride(func(_ notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
-				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
-					// Create remote Alertmanager.
-					cfg := remote.AlertmanagerConfig{
-						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
-						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
-						OrgID:             orgID,
-						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-						PromoteConfig:     true,
-						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
-						ExternalURL:       ng.Cfg.AppURL,
-						SmtpFrom:          ng.Cfg.Smtp.FromAddress,
-						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
-					}
-					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
-					if err != nil {
-						moaLogger.Error("Failed to create remote Alertmanager", "err", err)
-						return nil, err
-					}
-					return remoteAM, nil
-				}
-			})
-
-			overrides = append(overrides, override)
-
-		case remotePrimary:
+		var override notifier.Option
+		if remotePrimary {
 			ng.Log.Debug("Starting Grafana with remote primary mode enabled")
-			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 			m.Info.WithLabelValues(metrics.ModeRemotePrimary).Set(1)
 			ng.Cfg.UnifiedAlerting.SkipClustering = true
 			// This function will be used by the MOA to create new Alertmanagers.
-			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 					// Create internal Alertmanager.
 					internalAM, err := factoryFn(ctx, orgID)
@@ -242,17 +215,8 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					cfg := remote.AlertmanagerConfig{
-						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
-						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
-						OrgID:             orgID,
-						PromoteConfig:     true,
-						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-						ExternalURL:       ng.Cfg.AppURL,
-						SmtpFrom:          ng.Cfg.Smtp.FromAddress,
-						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
-					}
+					cfg.OrgID = orgID
+					cfg.PromoteConfig = true
 					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
@@ -263,16 +227,12 @@ func (ng *AlertNG) init() error {
 					return remote.NewRemotePrimaryForkedAlertmanager(log.New("ngalert.forked-alertmanager.remote-primary"), internalAM, remoteAM), nil
 				}
 			})
-
-			overrides = append(overrides, override)
-
-		case remoteSecondary:
+		} else {
 			ng.Log.Debug("Starting Grafana with remote secondary mode enabled")
-			m := ng.Metrics.GetRemoteAlertmanagerMetrics()
 			m.Info.WithLabelValues(metrics.ModeRemoteSecondary).Set(1)
 
 			// This function will be used by the MOA to create new Alertmanagers.
-			override := notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
+			override = notifier.WithAlertmanagerOverride(func(factoryFn notifier.OrgAlertmanagerFactory) notifier.OrgAlertmanagerFactory {
 				return func(ctx context.Context, orgID int64) (notifier.Alertmanager, error) {
 					// Create internal Alertmanager.
 					internalAM, err := factoryFn(ctx, orgID)
@@ -281,17 +241,7 @@ func (ng *AlertNG) init() error {
 					}
 
 					// Create remote Alertmanager.
-					cfg := remote.AlertmanagerConfig{
-						BasicAuthPassword: ng.Cfg.UnifiedAlerting.RemoteAlertmanager.Password,
-						DefaultConfig:     ng.Cfg.UnifiedAlerting.DefaultConfiguration,
-						OrgID:             orgID,
-						TenantID:          ng.Cfg.UnifiedAlerting.RemoteAlertmanager.TenantID,
-						URL:               ng.Cfg.UnifiedAlerting.RemoteAlertmanager.URL,
-						SyncInterval:      ng.Cfg.UnifiedAlerting.RemoteAlertmanager.SyncInterval,
-						ExternalURL:       ng.Cfg.AppURL,
-						SmtpFrom:          ng.Cfg.Smtp.FromAddress,
-						StaticHeaders:     ng.Cfg.Smtp.StaticHeaders,
-					}
+					cfg.OrgID = orgID
 					remoteAM, err := createRemoteAlertmanager(ctx, cfg, ng.KVStore, ng.SecretsService.Decrypt, autogenFn, m, ng.tracer)
 					if err != nil {
 						moaLogger.Error("Failed to create remote Alertmanager, falling back to using only the internal one", "err", err)
@@ -308,12 +258,8 @@ func (ng *AlertNG) init() error {
 					return remote.NewRemoteSecondaryForkedAlertmanager(rsCfg, internalAM, remoteAM)
 				}
 			})
-
-			overrides = append(overrides, override)
-
-		default:
-			ng.Log.Error("A mode should be selected when enabling the remote Alertmanager, falling back to using only the internal Alertmanager")
 		}
+		overrides = append(overrides, override)
 	}
 
 	decryptFn := ng.SecretsService.GetDecryptedValue
