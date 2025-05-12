@@ -790,6 +790,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-commands.yml @tolzhabayev
 /.github/workflows/pr-patch-check-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
+/.github/workflows/reject-gh-secrets.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
