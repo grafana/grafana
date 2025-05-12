@@ -18,3 +18,5 @@ export {
   initTranslations,
   t,
 } from '../i18n';
+
+export { initRegionalFormat } from '../dates';

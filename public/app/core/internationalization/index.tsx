@@ -1,7 +1,12 @@
 import { ReactElement } from 'react';
 
 import { Trans as TransCore, TransProps } from '@grafana/i18n';
-import { changeLanguage as changeLanguageCore, initTranslations, t as tCore } from '@grafana/i18n/internal';
+import {
+  changeLanguage as changeLanguageCore,
+  initTranslations,
+  t as tCore,
+  initRegionalFormat,
+} from '@grafana/i18n/internal';
 
 import { NAMESPACES, VALID_LANGUAGES } from './constants';
 import { loadTranslations } from './loadTranslations';
@@ -10,7 +15,11 @@ import { loadTranslations } from './loadTranslations';
 // Starts with an underscore so it's sorted to the top of the file. Even though it is in a comment the following line is still extracted
 // t('_comment', 'The code is the source of truth for English phrases. They should be updated in the components directly, and additional plurals specified in this file.');
 
-export async function initializeI18n(language: string): Promise<{ language: string | undefined }> {
+export async function initializeI18n(
+  language: string,
+  regionalFormat: string
+): Promise<{ language: string | undefined }> {
+  initRegionalFormat(regionalFormat);
   return initTranslations({ language, ns: NAMESPACES, module: loadTranslations });
 }
 

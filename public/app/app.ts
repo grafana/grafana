@@ -123,8 +123,10 @@ export class GrafanaApp {
       await preInitTasks();
       // Let iframe container know grafana has started loading
       window.parent.postMessage('GrafanaAppInit', '*');
-
-      const initI18nPromise = initializeI18n(config.bootData.user.language);
+      const regionalFormat = config.featureToggles.localeFormatPreference
+        ? config.locale
+        : config.bootData.user.language;
+      const initI18nPromise = initializeI18n(config.bootData.user.language, regionalFormat);
       initI18nPromise.then(({ language }) => updateConfig({ language }));
 
       setBackendSrv(backendSrv);
