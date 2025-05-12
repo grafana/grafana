@@ -37,9 +37,14 @@ jobs:
     runs-on: ubuntu-latest-8-cores
     permissions:
       contents: read
+    strategy:
+      matrix:
+        shard: [0, 1, 2, 3]
     env:
       GRAFANA_TEST_DB: mysql
       MYSQL_HOST: 127.0.0.1
+      SHARD_INDEX: ${{ matrix.shard }}
+      SHARD_COUNT: 4
     services:
       mysql:
         image: mysql:8.0.32
@@ -65,7 +70,11 @@ jobs:
           sudo apt-get update -yq && sudo apt-get install mariadb-client
           cat devenv/docker/blocks/mysql_tests/setup.sql | mariadb -h 127.0.0.1 -P 3306 -u root -prootpass --disable-ssl-verify-server-cert
           make gen-go
-          go test -tags=mysql -p=1 -timeout=5m -run '^TestIntegration' $(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          ALL_TESTS=$(find ./pkg -type f -name '*_test.go' -exec grep -l '^func TestIntegration' '{}' '+' | grep -o '\(.*\)/' | sort -u)
+          echo "Running tests in shard $SHARD_INDEX of $SHARD_COUNT"
+          SHARD_TESTS=$(echo "$ALL_TESTS" | awk -v shard="$SHARD_INDEX" -v count="$SHARD_COUNT" 'NR % count == shard')
+          echo "Running tests in shard $SHARD_INDEX of $SHARD_COUNT: $SHARD_TESTS"
+          go test -tags=mysql -p=1 -timeout=5m -run '^TestIntegration' $SHARD_TESTS
   postgres:
     name: Postgres
     runs-on: ubuntu-latest-8-cores
