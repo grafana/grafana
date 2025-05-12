@@ -1126,7 +1126,7 @@ var (
 			Description:  "Allows access to the new react-data-grid based table component.",
 			Stage:        FeatureStagePublicPreview,
 			Owner:        grafanaDatavizSquad,
-			FrontendOnly: true
+			FrontendOnly: true,
 		},
 		{
 			Name:        "lokiSendDashboardPanelNames",
