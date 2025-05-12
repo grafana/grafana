@@ -2,18 +2,11 @@ import { of } from 'rxjs';
 
 import { config, getBackendSrv } from '@grafana/runtime';
 import { VizPanel } from '@grafana/scenes';
+import { getDashboardUrl } from 'app/features/dashboard-scene/utils/getDashboardUrl';
 
 import { DashboardScene } from '../../scene/DashboardScene';
-import { DashboardGridItem } from '../../scene/layout-default/DashboardGridItem';
 
-import {
-  generateDashboardImage,
-  GRID_CELL_HEIGHT,
-  GRID_CELL_MARGIN,
-  EXTRA_PADDING,
-  MIN_DASHBOARD_HEIGHT,
-  calculateDashboardDimensions,
-} from './utils';
+import { generateDashboardImage } from './utils';
 
 // Mock the dependencies
 jest.mock('@grafana/runtime', () => ({
@@ -30,18 +23,6 @@ jest.mock('@grafana/runtime', () => ({
     rendererDefaultImageScale: 1,
   } as typeof config,
   getBackendSrv: jest.fn(),
-}));
-
-jest.mock('../../scene/DashboardScene', () => ({
-  DashboardScene: class DashboardScene {
-    state: Record<string, unknown> = {};
-  },
-}));
-
-jest.mock('../../scene/layout-default/DashboardGridItem', () => ({
-  DashboardGridItem: class DashboardGridItem {
-    state: Record<string, unknown> = {};
-  },
 }));
 
 jest.mock('app/features/dashboard-scene/utils/getDashboardUrl', () => ({
@@ -72,137 +53,14 @@ describe('Dashboard Export Image Utils', () => {
   beforeEach(() => {
     consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     document.body.innerHTML = '';
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
     consoleWarnSpy.mockRestore();
   });
 
-  describe('calculateDashboardDimensions', () => {
-    beforeEach(() => {
-      // Mock window.innerWidth
-      Object.defineProperty(window, 'innerWidth', {
-        writable: true,
-        configurable: true,
-        value: 1104,
-      });
-    });
-
-    it('should return minimum dimensions when no panels exist', () => {
-      const mockDashboard = {
-        state: {
-          body: {
-            getVizPanels: () => [] as VizPanel[],
-          },
-        },
-      } as unknown as DashboardScene;
-
-      const dimensions = calculateDashboardDimensions(mockDashboard);
-      expect(dimensions.height).toBe(MIN_DASHBOARD_HEIGHT + EXTRA_PADDING);
-      expect(dimensions.width).toBe(window.innerWidth + EXTRA_PADDING);
-    });
-
-    it('should calculate correct dimensions based on panel grid positions', () => {
-      const mockPanels = [
-        {
-          parent: new DashboardGridItem({
-            x: 0,
-            y: 0,
-            width: 12,
-            height: 8,
-            body: {} as VizPanel,
-          }),
-        },
-        {
-          parent: new DashboardGridItem({
-            x: 12,
-            y: 0,
-            width: 12,
-            height: 8,
-            body: {} as VizPanel,
-          }),
-        },
-        {
-          parent: new DashboardGridItem({
-            x: 0,
-            y: 8,
-            width: 24,
-            height: 8,
-            body: {} as VizPanel,
-          }),
-        },
-      ] as unknown as VizPanel[];
-
-      const mockDashboard = {
-        state: {
-          body: {
-            getVizPanels: () => mockPanels,
-          },
-        },
-      } as unknown as DashboardScene;
-
-      const dimensions = calculateDashboardDimensions(mockDashboard);
-
-      // Calculate expected width based on the rightmost panel
-      // x=0 * (30px + 8px) + 24 cells * 30px + 23 margins * 8px + padding
-      const x = 0;
-      const width = 24;
-      const expectedWidth = Math.max(
-        x * (GRID_CELL_HEIGHT + GRID_CELL_MARGIN) +
-          width * GRID_CELL_HEIGHT +
-          (width - 1) * GRID_CELL_MARGIN +
-          EXTRA_PADDING,
-        window.innerWidth + EXTRA_PADDING
-      );
-
-      expect(dimensions.height).toBe(MIN_DASHBOARD_HEIGHT + EXTRA_PADDING);
-      expect(dimensions.width).toBe(expectedWidth);
-    });
-
-    it('should handle undefined grid positions gracefully', () => {
-      const mockPanels = [
-        {
-          parent: new DashboardGridItem({
-            // x and y are undefined
-            width: 12,
-            height: 8,
-            body: {} as VizPanel,
-          }),
-        },
-      ] as unknown as VizPanel[];
-
-      const mockDashboard = {
-        state: {
-          body: {
-            getVizPanels: () => mockPanels,
-          },
-        },
-      } as unknown as DashboardScene;
-
-      const dimensions = calculateDashboardDimensions(mockDashboard);
-
-      // Calculate expected width based on the panel width
-      // x=0 * (30px + 8px) + 12 cells * 30px + 11 margins * 8px + padding
-      const x = 0;
-      const width = 12;
-      const expectedWidth = Math.max(
-        x * (GRID_CELL_HEIGHT + GRID_CELL_MARGIN) +
-          width * GRID_CELL_HEIGHT +
-          (width - 1) * GRID_CELL_MARGIN +
-          EXTRA_PADDING,
-        window.innerWidth + EXTRA_PADDING
-      );
-
-      expect(dimensions.height).toBe(MIN_DASHBOARD_HEIGHT + EXTRA_PADDING);
-      expect(dimensions.width).toBe(expectedWidth);
-    });
-  });
-
   describe('generateDashboardImage', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
-
     it('should handle various error scenarios', async () => {
       const testCases = [
         {
@@ -281,6 +139,21 @@ describe('Dashboard Export Image Utils', () => {
           responseType: 'blob',
         })
       );
+      expect(getDashboardUrl).toHaveBeenCalledWith({
+        uid: 'test-uid',
+        currentQueryParams: '',
+        render: true,
+        absolute: true,
+        updateQuery: {
+          height: -1,
+          format: 'jpg',
+          scale: 2,
+          kiosk: true,
+          hideNav: true,
+          orgId: '1',
+          fullPageImage: true,
+        },
+      });
     });
   });
 });
