@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -16,7 +15,6 @@ import (
 	"k8s.io/apiserver/pkg/util/notfoundhandler"
 	clientrest "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	aggregatorapiserver "k8s.io/kube-aggregator/pkg/apiserver"
 
 	"github.com/grafana/dskit/services"
 	"github.com/grafana/grafana-plugin-sdk-go/backend"
@@ -35,7 +33,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/registry"
 	"github.com/grafana/grafana/pkg/registry/apis/datasource"
-	kubeaggregator "github.com/grafana/grafana/pkg/services/apiserver/aggregator"
+	"github.com/grafana/grafana/pkg/services/apiserver/aggregatorrunner"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authenticator"
 	"github.com/grafana/grafana/pkg/services/apiserver/auth/authorizer"
 	"github.com/grafana/grafana/pkg/services/apiserver/builder"
@@ -49,6 +47,7 @@ import (
 	"github.com/grafana/grafana/pkg/storage/legacysql/dualwrite"
 	"github.com/grafana/grafana/pkg/storage/unified/apistore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
@@ -102,11 +101,7 @@ type service struct {
 	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
-<<<<<<< HEAD
-=======
-
-	aggregatorRunner runner.AggregatorRunner
->>>>>>> e58fe39e43e (get rid of the slice implementation)
+	aggregatorRunner                  aggregatorrunner.AggregatorRunner
 }
 
 func ProvideService(
@@ -127,7 +122,7 @@ func ProvideService(
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
-	aggregatorRunner aggregatedrunner.AggregatorRunner,
+	aggregatorRunner aggregatorrunner.AggregatorRunner,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -241,7 +236,7 @@ func (s *service) start(ctx context.Context) error {
 	groupVersions := make([]schema.GroupVersion, 0, len(builders))
 
 	// Install schemas
-	for i, b := range builders {
+	for _, b := range builders {
 		gvs := builder.GetGroupVersions(b)
 		groupVersions = append(groupVersions, gvs...)
 		if len(gvs) == 0 {
@@ -252,12 +247,7 @@ func (s *service) start(ctx context.Context) error {
 		}
 		pvs := s.scheme.PrioritizedVersionsForGroup(gvs[0].Group)
 
-		for j, gv := range pvs {
-			if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-				// set the priority for the group+version
-				kubeaggregator.APIVersionPriorities[gv] = kubeaggregator.Priority{Group: int32(15000 + i), Version: int32(len(pvs) - j)}
-			}
-
+		for _, gv := range pvs {
 			if a, ok := b.(builder.APIGroupAuthorizer); ok {
 				auth := a.GetAuthorizer()
 				if auth != nil {
@@ -287,7 +277,7 @@ func (s *service) start(ctx context.Context) error {
 	serverConfig.TracerProvider = s.tracing.GetTracerProvider()
 
 	// setup loopback transport for the aggregator server
-	transport := &roundTripperFunc{ready: make(chan struct{})}
+	transport := &grafanaapiserveroptions.RoundTripperFunc{Ready: make(chan struct{})}
 	serverConfig.LoopbackClientConfig.Transport = transport
 	serverConfig.LoopbackClientConfig.TLSClientConfig = clientrest.TLSClientConfig{}
 	serverConfig.MaxRequestBodyBytes = MaxRequestBodyBytes
@@ -398,15 +388,15 @@ func (s *service) start(ctx context.Context) error {
 
 func (s *service) startCoreServer(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	server *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
 	// setup the loopback transport and signal that it's ready.
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(server.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(server.Handler)
+	close(transport.Ready)
 
 	prepared := server.PrepareRun()
 	go func() {
@@ -418,7 +408,7 @@ func (s *service) startCoreServer(
 
 func (s *service) startDataplaneAggregator(
 	ctx context.Context,
-	transport *roundTripperFunc,
+	transport *grafanaapiserveroptions.RoundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	delegate *genericapiserver.GenericAPIServer,
 ) (*genericapiserver.GenericAPIServer, error) {
@@ -449,8 +439,8 @@ func (s *service) startDataplaneAggregator(
 	// ignore the lint error because the response is passed directly to the client,
 	// so the client will be responsible for closing the response body.
 	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
+	transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
+	close(transport.Ready)
 
 	prepared, err := aggregatorServer.PrepareRun()
 	if err != nil {
@@ -466,8 +456,8 @@ func (s *service) startDataplaneAggregator(
 
 func (s *service) GetDirectRestConfig(c *contextmodel.ReqContext) *clientrest.Config {
 	return &clientrest.Config{
-		Transport: &roundTripperFunc{
-			fn: func(req *http.Request) (*http.Response, error) {
+		Transport: &grafanaapiserveroptions.RoundTripperFunc{
+			Fn: func(req *http.Request) (*http.Response, error) {
 				if err := s.AwaitRunning(req.Context()); err != nil {
 					return nil, err
 				}
@@ -503,18 +493,6 @@ func ensureKubeConfig(restConfig *clientrest.Config, dir string) error {
 		utils.FormatKubeConfig(restConfig),
 		path.Join(dir, "grafana.kubeconfig"),
 	)
-}
-
-type roundTripperFunc struct {
-	ready chan struct{}
-	fn    func(req *http.Request) (*http.Response, error)
-}
-
-func (f *roundTripperFunc) RoundTrip(req *http.Request) (*http.Response, error) {
-	if f.fn == nil {
-		<-f.ready
-	}
-	return f.fn(req)
 }
 
 type pluginContextProvider struct {
