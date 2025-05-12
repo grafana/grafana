@@ -3408,6 +3408,9 @@
         }
       },
       "variable": {
+        "adhoc-options": {
+          "modal-title": "Ad Hoc Variable"
+        },
         "custom-options": {
           "values": "Values separated by comma",
           "values-placeholder": "1, 10, mykey : myvalue, myvalue, escaped,value"
@@ -3416,6 +3419,9 @@
         "description-placeholder": "Descriptive text",
         "label": "Label",
         "label-description": "Optional display name",
+        "modal-options": {
+          "close": "Close"
+        },
         "name": "Name",
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
