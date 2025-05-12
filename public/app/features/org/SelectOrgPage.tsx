@@ -6,6 +6,8 @@ import { Button, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { StoreState, UserOrg } from 'app/types';
 
+import { Trans } from '../../core/internationalization';
+
 import { getUserOrganizations, setUserOrganization } from './state/actions';
 
 const navModel = {
@@ -49,8 +51,10 @@ export const SelectOrgPage = ({ setUserOrganization, getUserOrganizations, userO
       <Page.Contents>
         <div>
           <p>
-            You have been invited to another organization! Please select which organization that you want to use right
-            now. You can change this later at any time.
+            <Trans i18nKey="org.select-org-page.description">
+              You have been invited to another organization! Please select which organization that you want to use right
+              now. You can change this later at any time.
+            </Trans>
           </p>
           <Stack wrap="wrap">
             {userOrgs &&

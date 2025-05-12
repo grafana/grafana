@@ -7,6 +7,7 @@ import { publicDashboardPersisted } from 'app/features/dashboard/components/Shar
 import { ShareModalTabProps } from 'app/features/dashboard/components/ShareModal/types';
 import { useSelector } from 'app/types';
 
+import { Trans } from '../../../../../core/internationalization';
 import { HorizontalGroup } from '../../../../plugins/admin/components/HorizontalGroup';
 
 import { ConfigPublicDashboard } from './ConfigPublicDashboard/ConfigPublicDashboard';
@@ -21,7 +22,7 @@ export const Loader = () => {
   return (
     <HorizontalGroup className={styles.loadingContainer}>
       <>
-        Loading configuration
+        <Trans i18nKey="dashboard.share-public-dashboard-loader.loading-configuration">Loading configuration</Trans>
         <Spinner size="lg" className={styles.spinner} />
       </>
     </HorizontalGroup>

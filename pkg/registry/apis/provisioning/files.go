@@ -92,25 +92,28 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 
 	return withTimeout(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query()
-		ref := query.Get("ref")
-		message := query.Get("message")
-		logger := logger.With("url", r.URL.Path, "ref", ref, "message", message)
+		opts := resources.DualWriteOptions{
+			Ref:        query.Get("ref"),
+			Message:    query.Get("message"),
+			SkipDryRun: query.Get("skipDryRun") == "true",
+		}
+		logger := logger.With("url", r.URL.Path, "ref", opts.Ref, "message", opts.Message)
 		ctx := logging.Context(r.Context(), logger)
 
-		filePath, err := pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
+		opts.Path, err = pathAfterPrefix(r.URL.Path, fmt.Sprintf("/%s/files", name))
 		if err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
 
-		if err := resources.IsPathSupported(filePath); err != nil {
+		if err := resources.IsPathSupported(opts.Path); err != nil {
 			responder.Error(apierrors.NewBadRequest(err.Error()))
 			return
 		}
 
-		isDir := safepath.IsDir(filePath)
+		isDir := safepath.IsDir(opts.Path)
 		if r.Method == http.MethodGet && isDir {
-			files, err := c.listFolderFiles(ctx, filePath, ref, readWriter)
+			files, err := c.listFolderFiles(ctx, opts.Path, opts.Ref, readWriter)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -120,7 +123,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			return
 		}
 
-		if filePath == "" {
+		if opts.Path == "" {
 			responder.Error(apierrors.NewBadRequest("missing request path"))
 			return
 		}
@@ -135,7 +138,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 		code := http.StatusOK
 		switch r.Method {
 		case http.MethodGet:
-			resource, err := dualReadWriter.Read(ctx, filePath, ref)
+			resource, err := dualReadWriter.Read(ctx, opts.Path, opts.Ref)
 			if err != nil {
 				responder.Error(err)
 				return
@@ -143,15 +146,15 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			obj = resource.AsResourceWrapper()
 		case http.MethodPost:
 			if isDir {
-				obj, err = dualReadWriter.CreateFolder(ctx, filePath, ref, message)
+				obj, err = dualReadWriter.CreateFolder(ctx, opts)
 			} else {
-				data, err := readBody(r, filesMaxBodySize)
+				opts.Data, err = readBody(r, filesMaxBodySize)
 				if err != nil {
 					responder.Error(err)
 					return
 				}
 
-				resource, err := dualReadWriter.CreateResource(ctx, filePath, ref, message, data)
+				resource, err := dualReadWriter.CreateResource(ctx, opts)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -163,13 +166,13 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 			if isDir {
 				err = apierrors.NewMethodNotSupported(provisioning.RepositoryResourceInfo.GroupResource(), r.Method)
 			} else {
-				data, err := readBody(r, filesMaxBodySize)
+				opts.Data, err = readBody(r, filesMaxBodySize)
 				if err != nil {
 					responder.Error(err)
 					return
 				}
 
-				resource, err := dualReadWriter.UpdateResource(ctx, filePath, ref, message, data)
+				resource, err := dualReadWriter.UpdateResource(ctx, opts)
 				if err != nil {
 					responder.Error(err)
 					return
@@ -177,7 +180,7 @@ func (c *filesConnector) Connect(ctx context.Context, name string, opts runtime.
 				obj = resource.AsResourceWrapper()
 			}
 		case http.MethodDelete:
-			resource, err := dualReadWriter.Delete(ctx, filePath, ref, message)
+			resource, err := dualReadWriter.Delete(ctx, opts)
 			if err != nil {
 				responder.Error(err)
 				return

@@ -161,7 +161,7 @@ func buildCMDNode(rn *rawNode, toggles featuremgmt.FeatureToggles, sqlExpression
 	case TypeClassicConditions:
 		node.Command, err = classic.UnmarshalConditionsCmd(rn.Query, rn.RefID)
 	case TypeThreshold:
-		node.Command, err = UnmarshalThresholdCommand(rn, toggles)
+		node.Command, err = UnmarshalThresholdCommand(rn)
 	case TypeSQL:
 		node.Command, err = UnmarshalSQLCommand(rn, sqlExpressionCellLimit)
 	default:

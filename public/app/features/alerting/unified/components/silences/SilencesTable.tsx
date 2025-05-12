@@ -326,7 +326,14 @@ function useColumns(alertManagerSourceName: string) {
         id: 'alerts',
         label: 'Alerts silenced',
         renderCell: function renderSilencedAlerts({ data: { silencedAlerts } }) {
-          return <span data-testid="alerts">{Array.isArray(silencedAlerts) ? silencedAlerts.length : '-'}</span>;
+          return (
+            <span data-testid="alerts">
+              {Array.isArray(silencedAlerts)
+                ? silencedAlerts.length
+                : // eslint-disable-next-line @grafana/no-untranslated-strings
+                  '-'}
+            </span>
+          );
         },
         size: 2,
       },

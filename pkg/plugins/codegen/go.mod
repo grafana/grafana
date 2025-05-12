@@ -1,6 +1,6 @@
 module github.com/grafana/grafana/pkg/plugins/codegen
 
-go 1.24.2
+go 1.24.3
 
 replace github.com/grafana/grafana/pkg/codegen => ../../codegen
 
@@ -9,7 +9,7 @@ require (
 	github.com/grafana/codejen v0.0.4-0.20230321061741-77f656893a3d
 	github.com/grafana/cog v0.0.28
 	github.com/grafana/cuetsy v0.1.11
-	github.com/grafana/grafana/pkg/codegen v0.0.0-00010101000000-000000000000
+	github.com/grafana/grafana/pkg/codegen v0.0.0-20250422074709-7c8433fbb2c2
 )
 
 require (

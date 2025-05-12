@@ -2225,10 +2225,7 @@
       "type": "canvas"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -2857,10 +2854,7 @@
       "type": "canvas"
     },
     {
-      "datasource": {
-        "type": "testdata",
-        "uid": "PD8C576611E62080A"
-      },
+      "datasource": { "type": "testdata" },
       "fieldConfig": {
         "defaults": {
           "color": {

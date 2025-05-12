@@ -28,15 +28,17 @@ runs:
   steps:
     - name: Process Go coverage output
       shell: bash
+      env:
+        COVERAGE_FILE: ${{ inputs.coverage-file }}
       run: |
         # Ensure valid coverage file even if empty
-        if [ ! -s ${{ inputs.coverage-file }} ]; then
+        if [ ! -s "$COVERAGE_FILE" ]; then
           echo "Coverage file is empty, creating a minimal valid file"
-          echo "mode: set" > ${{ inputs.coverage-file }}
+          echo "mode: set" > "$COVERAGE_FILE"
         fi
 
     - name: Report coverage to CodeCov
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@ad3126e916f78f00edff4ed0317cf185271ccc2d # v5
       if: inputs.codecov-token != ''
       with:
         files: ${{ inputs.coverage-file }}

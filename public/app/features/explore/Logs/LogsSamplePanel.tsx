@@ -126,8 +126,10 @@ export function LogsSamplePanel(props: Props) {
     <Collapse
       label={
         <div>
-          Logs sample
-          <Tooltip content="Show log lines that contributed to visualized metrics">
+          <Trans i18nKey="explore.logs-sample-panel.label">Logs sample</Trans>
+          <Tooltip
+            content={t('explore.logs-sample-panel.tooltip', 'Show log lines that contributed to visualized metrics')}
+          >
             <Icon name="info-circle" className={styles.infoTooltip} />
           </Tooltip>
         </div>

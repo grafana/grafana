@@ -26,16 +26,15 @@ interface ShortLinkMenuItemData {
   absTime: boolean;
 }
 
-const defaultMode: ShortLinkMenuItemData = {
-  key: 'copy-link',
-  label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
-  icon: 'share-alt',
-  getUrl: () => undefined,
-  shorten: true,
-  absTime: false,
-};
-
 export function ShortLinkButtonMenu() {
+  const defaultMode: ShortLinkMenuItemData = {
+    key: 'copy-link',
+    label: t('explore.toolbar.copy-shortened-link', 'Copy shortened URL'),
+    icon: 'share-alt',
+    getUrl: () => undefined,
+    shorten: true,
+    absTime: false,
+  };
   const panes = useSelector(selectPanes);
   const [isOpen, setIsOpen] = useState(false);
   const [lastSelected, setLastSelected] = useState(defaultMode);

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 
 import { ConfirmModal } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { t, Trans } from 'app/core/internationalization';
 
 import { useDashboardRestore } from './useDashboardRestore';
 export interface RevertDashboardModalProps {
@@ -28,7 +28,11 @@ export const RevertDashboardModal = ({ hideModal, id, version }: RevertDashboard
       onDismiss={hideModal}
       onConfirm={onRestoreDashboard}
       body={
-        <p>Are you sure you want to restore the dashboard to version {version}? All unsaved changes will be lost.</p>
+        <p>
+          <Trans i18nKey="dashboard.revert-dashboard-modal.body-restore-version">
+            Are you sure you want to restore the dashboard to version {{ version }}? All unsaved changes will be lost.
+          </Trans>
+        </p>
       }
       confirmText={`Yes, restore to version ${version}`}
     />

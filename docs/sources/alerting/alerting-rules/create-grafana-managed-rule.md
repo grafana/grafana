@@ -29,6 +29,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/state-and-health/#alert-instance-state
+  recovery-threshold:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rules/queries-conditions/#recovery-threshold
   modify-the-no-data-or-error-state:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/state-and-health/#modify-the-no-data-or-error-state
@@ -140,7 +145,13 @@ Verify that the data sources you plan to query in the alert rule are [compatible
 
 Only users with **Edit** permissions for the folder storing the rules can edit or delete Grafana-managed alert rules. Only admins can restore deleted Grafana-managed alert rules.
 
-{{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+### Provisioning
+
+Note that if you delete an alert resource created in the UI, you can no longer retrieve it.
+
+To backup and manage alert rules, you can [provision alerting resources](ref:shared-provision-alerting-resources) using options such as configuration files, Terraform, or the Alerting API.
+
+[//]: <> ({{< docs/shared lookup="alerts/configure-provisioning-before-begin.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ### Default vs Advanced options
 
@@ -192,9 +203,9 @@ You can toggle between **Default** and **Advanced** options. If the [Default vs.
 
    b. Click **Preview** to verify that the expression is successful.
 
-1. To add a recovery threshold, turn the **Custom recovery threshold** toggle on and fill in a value for when your alert rule should stop firing.
+1. To add a [recovery threshold](ref:recovery-threshold), enable the **Custom recovery threshold** toggle and enter a value that defines when the alert should recover—transition to `Normal` state from the `Alerting` or `Pending` state.
 
-   You can only add one recovery threshold in a query and it must be the alert condition.
+   You can only add one recovery threshold, and it must be part of the alert condition.
 
 1. Click **Set as alert condition** on the query or expression you want to set as your [alert condition](ref:alert-condition).
    {{< /collapse >}}
@@ -282,7 +293,37 @@ Complete the following steps to set up notifications.
 
    1. Click **See details** to view alert routing details and an email preview.
 
-{{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}}
+## Configure notification message
+
+Use [annotations](ref:shared-annotations) to add information to alert messages that can help respond to the alert.
+
+Annotations are included by default in notification messages, and can use text or [templates](ref:shared-alert-rule-template) to display dynamic data from queries.
+
+Grafana provides several optional annotations.
+
+1. Optional: Add a summary.
+
+   Short summary of what happened and why.
+
+1. Optional: Add a description.
+
+   Description of what the alert rule does.
+
+1. Optional: Add a Runbook URL.
+
+   Webpage where you keep your runbook for the alert
+
+1. Optional: Add a custom annotation.
+
+   Add any additional information that could help address the alert.
+
+1. Optional: **Link dashboard and panel**.
+
+   [Link the alert rule to a panel](ref:shared-link-alert-rules-to-panels) to facilitate alert investigation.
+
+1. Click **Save rule**.
+
+[//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
 ## Permanently delete or restore deleted alert rules
 

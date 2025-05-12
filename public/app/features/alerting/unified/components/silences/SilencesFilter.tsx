@@ -52,10 +52,16 @@ export const SilencesFilter = () => {
               <Trans i18nKey="alerting.common.search-by-matchers">Search by matchers</Trans>
               <Tooltip
                 content={
-                  <div>
-                    Filter silences by using a comma separated list of matchers, e.g.:
+                  <>
+                    <div>
+                      <Trans i18nKey="alerting.silences-filter.search-by-matchers-tooltip">
+                        Filter silences by using a comma separated list of matchers, e.g.
+                      </Trans>
+                    </div>
+
+                    {/* eslint-disable-next-line @grafana/no-untranslated-strings */}
                     <pre>severity=critical, env=production</pre>
-                  </div>
+                  </>
                 }
               >
                 <Icon name="info-circle" size="sm" />

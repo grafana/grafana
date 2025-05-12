@@ -129,7 +129,7 @@ export class JsonModelEditView extends SceneObjectBase<JsonModelEditViewState> i
         variant={overwrite ? 'destructive' : 'primary'}
       >
         {overwrite ? (
-          'Save and overwrite'
+          <Trans i18nKey="dashboard-scene.json-model-edit-view.save-and-overwrite">'Save and overwrite'</Trans>
         ) : (
           <Trans i18nKey="dashboard-settings.json-editor.save-button">Save changes</Trans>
         )}

@@ -120,8 +120,10 @@ export function PluginDetailsBody({ plugin, queryParams, pageId, info, showDetai
     return (
       <>
         <Stack direction="row">
-          The {plugin.name} plugin needs a service account to be able to query Grafana. The following list contains the
-          permissions available to the service account:
+          <Trans i18nKey="plugins.plugin-details-body.needs-service-account" values={{ pluginName: plugin.name }}>
+            The {'{{pluginName}}'} plugin needs a service account to be able to query Grafana. The following list
+            contains the permissions available to the service account:
+          </Trans>
         </Stack>
         <InteractiveTable
           columns={columns}

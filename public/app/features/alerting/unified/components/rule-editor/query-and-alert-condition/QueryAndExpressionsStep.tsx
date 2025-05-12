@@ -11,9 +11,9 @@ import {
   Alert,
   Button,
   ConfirmModal,
+  Divider,
   Dropdown,
   Field,
-  Icon,
   Menu,
   MenuItem,
   Stack,
@@ -78,6 +78,7 @@ import {
 } from './reducer';
 import { useAdvancedMode } from './useAdvancedMode';
 import { useAlertQueryRunner } from './useAlertQueryRunner';
+import { onlyOneDSInQueries } from './utils';
 
 interface Props {
   editingExistingRule: boolean;
@@ -160,7 +161,7 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
     }
   }, [simplifiedQueryStep, expressionQueries, isGrafanaAlertingType, setSimpleCondition]);
 
-  const { rulesSourcesWithRuler } = useRulesSourcesWithRuler();
+  const { rulesSourcesWithRuler, isLoading: rulerSourcesIsLoading } = useRulesSourcesWithRuler();
 
   const runQueriesPreview = useCallback(
     (condition?: string) => {
@@ -474,6 +475,11 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
         }
       : undefined;
 
+  const canSelectDataSourceManaged =
+    onlyOneDSInQueries(queries) &&
+    Boolean(rulesSourcesWithRuler.length) &&
+    queries.some((query) => rulesSourcesWithRuler.some((source) => source.uid === query.datasourceUid));
+
   return (
     <>
       <RuleEditorSection
@@ -513,8 +519,14 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
           </Field>
         )}
 
+        {rulerSourcesIsLoading && (
+          <Text>
+            <Trans i18nKey="alerting.query-and-expressions-step.loading-data-sources">Loading data sources...</Trans>
+          </Text>
+        )}
+
         {/* This is the PromQL Editor for Cloud rules */}
-        {isCloudAlertRuleType && dataSourceName && (
+        {!rulerSourcesIsLoading && isCloudAlertRuleType && dataSourceName && (
           <Stack direction="column">
             <Field error={errors.expression?.message} invalid={!!errors.expression?.message}>
               <Controller
@@ -536,18 +548,21 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               />
             </Field>
             {mode === 'edit' && (
-              <SmartAlertTypeDetector
-                editingExistingRule={editingExistingRule}
-                queries={queries}
-                rulesSourcesWithRuler={rulesSourcesWithRuler}
-                onClickSwitch={onClickSwitch}
-              />
+              <>
+                <Divider />
+                <SmartAlertTypeDetector
+                  editingExistingRule={editingExistingRule}
+                  queries={queries}
+                  rulesSourcesWithRuler={rulesSourcesWithRuler}
+                  onClickSwitch={onClickSwitch}
+                />
+              </>
             )}
           </Stack>
         )}
 
         {/* This is the editor for Grafana managed rules and Grafana managed recording rules */}
-        {isGrafanaManagedRuleByType(type) && (
+        {!rulerSourcesIsLoading && isGrafanaManagedRuleByType(type) && (
           <Stack direction="column">
             {/* Data Queries */}
             <QueryEditor
@@ -561,7 +576,13 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               onSetCondition={handleSetCondition}
             />
             {!simplifiedQueryStep && (
-              <Tooltip content={'You appear to have no compatible data sources'} show={noCompatibleDataSources}>
+              <Tooltip
+                content={t(
+                  'alerting.query-and-expressions-step.no-compatible-sources',
+                  'You appear to have no compatible data sources'
+                )}
+                show={noCompatibleDataSources}
+              >
                 <Button
                   type="button"
                   onClick={() => {
@@ -577,17 +598,21 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
               </Tooltip>
             )}
             {/* We only show Switch for Grafana managed alerts */}
-            {isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
-              <SmartAlertTypeDetector
-                editingExistingRule={editingExistingRule}
-                rulesSourcesWithRuler={rulesSourcesWithRuler}
-                queries={queries}
-                onClickSwitch={onClickSwitch}
-              />
+            {canSelectDataSourceManaged && isGrafanaAlertingType && !simplifiedQueryStep && mode === 'edit' && (
+              <>
+                <Divider />
+                <SmartAlertTypeDetector
+                  editingExistingRule={editingExistingRule}
+                  rulesSourcesWithRuler={rulesSourcesWithRuler}
+                  queries={queries}
+                  onClickSwitch={onClickSwitch}
+                />
+              </>
             )}
             {/* Expression Queries */}
             {!simplifiedQueryStep && (
               <>
+                <Divider />
                 <Stack direction="column" gap={0}>
                   <Text element="h5">
                     <Trans i18nKey="alerting.query-and-expressions-step.expressions">Expressions</Trans>
@@ -661,7 +686,9 @@ export const QueryAndExpressionsStep = ({ editingExistingRule, onDataChange, mod
                 )}
                 severity="warning"
               >
-                Create at least one query or expression to be alerted on
+                <Trans i18nKey="alerting.query-and-expressions-step.body-queries-expressions-configured">
+                  Create at least one query or expression to be alerted on
+                </Trans>
               </Alert>
             )}
           </Stack>
@@ -715,9 +742,8 @@ function TypeSelectorButton({ onClickType }: { onClickType: (type: ExpressionQue
 
   return (
     <Dropdown overlay={newMenu}>
-      <Button variant="secondary" data-testid={'add-expression-button'}>
-        Add expression
-        <Icon name="angle-down" />
+      <Button variant="secondary" data-testid={'add-expression-button'} icon="angle-down">
+        <Trans i18nKey="alerting.type-selector-button.add-expression">Add expression</Trans>
       </Button>
     </Dropdown>
   );

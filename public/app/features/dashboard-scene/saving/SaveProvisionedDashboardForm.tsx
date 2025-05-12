@@ -3,7 +3,7 @@ import { saveAs } from 'file-saver';
 import { useCallback, useMemo } from 'react';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
-import { Button, ClipboardButton, Stack, CodeEditor, Box } from '@grafana/ui';
+import { Button, ClipboardButton, Stack, CodeEditor, Box, TextLink } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 import { DashboardScene } from '../scene/DashboardScene';
@@ -32,23 +32,27 @@ export function SaveProvisionedDashboardForm({ dashboard, drawer, changeInfo }: 
     <div className={styles.container}>
       <Stack direction="column" gap={2} grow={1}>
         <div>
-          This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
-          the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
+          <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.cannot-be-saved">
+            This dashboard cannot be saved from the Grafana UI because it has been provisioned from another source. Copy
+            the JSON or save it to a file below, then you can update your dashboard in the provisioning source.
+          </Trans>
           <br />
           <i>
-            See{' '}
-            <a
-              className="external-link"
-              href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards"
-              target="_blank"
-              rel="noreferrer"
-            >
-              documentation
-            </a>{' '}
-            for more information about provisioning.
+            <Trans i18nKey="dashboard-scene.save-provisioned-dashboard-form.see-docs">
+              See{' '}
+              <TextLink href="https://grafana.com/docs/grafana/latest/administration/provisioning/#dashboards" external>
+                documentation
+              </TextLink>{' '}
+              for more information about provisioning.
+            </Trans>
           </i>
           <br /> <br />
-          <strong>File path: </strong> {dashboard.state.meta.provisionedExternalId}
+          <Trans
+            i18nKey="dashboard-scene.save-provisioned-dashboard-form.file-path"
+            values={{ filePath: dashboard.state.meta.provisionedExternalId }}
+          >
+            <strong>File path:</strong> {'{{filePath}}'}
+          </Trans>
         </div>
 
         <SaveDashboardFormCommonOptions drawer={drawer} changeInfo={changeInfo} />

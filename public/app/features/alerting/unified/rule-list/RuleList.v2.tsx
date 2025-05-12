@@ -12,6 +12,7 @@ import { useURLSearchParams } from '../hooks/useURLSearchParams';
 
 import { FilterView } from './FilterView';
 import { GroupedView } from './GroupedView';
+import { RuleListPageTitle } from './RuleListPageTitle';
 
 function RuleList() {
   const [queryParams] = useURLSearchParams();
@@ -86,7 +87,12 @@ export function RuleListActions() {
 
 export default function RuleListPage() {
   return (
-    <AlertingPageWrapper navId="alert-list" isLoading={false} actions={<RuleListActions />}>
+    <AlertingPageWrapper
+      navId="alert-list"
+      renderTitle={(title) => <RuleListPageTitle title={title} />}
+      isLoading={false}
+      actions={<RuleListActions />}
+    >
       <RuleList />
     </AlertingPageWrapper>
   );

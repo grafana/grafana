@@ -3,6 +3,7 @@ import { css } from '@emotion/css';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, useStyles2 } from '@grafana/ui';
 
+import { Trans } from '../../../../core/internationalization';
 import { useAlertingHomePageExtensions } from '../plugins/useAlertingHomePageExtensions';
 
 export function PluginIntegrations() {
@@ -17,7 +18,9 @@ export function PluginIntegrations() {
   return (
     <Stack direction="column" gap={2}>
       <Text element="h3" variant="h4">
-        Speed up your alerts creation now by using one of our tailored apps
+        <Trans i18nKey="alerting.plugin-integrations.tailored-apps">
+          Speed up your alerts creation now by using one of our tailored apps
+        </Trans>
       </Text>
       <Stack gap={2} wrap="wrap" direction="row">
         {components.map((Component, i) => (

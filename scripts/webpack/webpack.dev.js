@@ -4,6 +4,7 @@ const browserslist = require('browserslist');
 const { resolveToEsbuildTarget } = require('esbuild-plugin-browserslist');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const fs = require('fs');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const path = require('path');
 const { DefinePlugin, EnvironmentPlugin } = require('webpack');
@@ -27,6 +28,21 @@ const esbuildOptions = {
 function getDecoupledPlugins() {
   const { packages } = getPackagesSync(process.cwd());
   return packages.filter((pkg) => pkg.dir.includes('plugins/datasource')).map((pkg) => `${pkg.dir}/**`);
+}
+
+// When linking scenes for development, resolve the path to the src directory for sourcemaps
+function scenesModule() {
+  const scenesPath = path.resolve('./node_modules/@grafana/scenes');
+  try {
+    const status = fs.lstatSync(scenesPath);
+    if (status.isSymbolicLink()) {
+      console.log(`scenes is linked to local scenes repo`);
+      return path.resolve(scenesPath + '/src');
+    }
+  } catch (error) {
+    console.error(`Error checking scenes path: ${error.message}`);
+  }
+  return scenesPath;
 }
 
 const envConfig = getEnvConfig();
@@ -55,6 +71,7 @@ module.exports = (env = {}) => {
         // This is required to correctly resolve react-router-dom when linking with
         //  local version of @grafana/scenes
         'react-router-dom': path.resolve('./node_modules/react-router-dom'),
+        '@grafana/scenes': scenesModule(),
       },
     },
 

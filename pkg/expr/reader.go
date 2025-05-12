@@ -158,7 +158,7 @@ func (h *ExpressionQueryReader) ReadQuery(
 			eq.Command = threshold
 			eq.Properties = q
 
-			if firstCondition.UnloadEvaluator != nil && h.features.IsEnabledGlobally(featuremgmt.FlagRecoveryThreshold) {
+			if firstCondition.UnloadEvaluator != nil {
 				unloading, err := NewThresholdCommand(common.RefID, referenceVar, firstCondition.UnloadEvaluator.Type, firstCondition.UnloadEvaluator.Params)
 				unloading.Invert = true
 				if err != nil {

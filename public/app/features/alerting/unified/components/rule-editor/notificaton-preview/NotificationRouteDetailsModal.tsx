@@ -2,7 +2,7 @@ import { css, cx } from '@emotion/css';
 import { compact } from 'lodash';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { Button, Icon, Modal, Stack, useStyles2 } from '@grafana/ui';
+import { Button, Modal, Stack, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
 import { Receiver } from '../../../../../../plugins/datasource/alertmanager/types';
@@ -14,6 +14,8 @@ import { createContactPointSearchLink } from '../../../utils/misc';
 import { Authorize } from '../../Authorize';
 import { Matchers } from '../../notification-policies/Matchers';
 
+import { ReceiverNameProps } from './NotificationRoute';
+import UnknownContactPointDetails from './UnknownContactPointDetails';
 import { RouteWithPath, hasEmptyMatchers, isDefaultPolicy } from './route';
 
 interface Props {
@@ -51,10 +53,10 @@ function PolicyPath({ route, routesByIdMap, matcherFormatter }: Props) {
   );
 }
 
-interface NotificationRouteDetailsModalProps {
+interface NotificationRouteDetailsModalProps extends ReceiverNameProps {
   onClose: () => void;
   route: RouteWithPath;
-  receiver: Receiver;
+  receiver?: Receiver;
   routesByIdMap: Map<string, RouteWithPath>;
   alertManagerSourceName: string;
 }
@@ -63,6 +65,7 @@ export function NotificationRouteDetailsModal({
   onClose,
   route,
   receiver,
+  receiverNameFromRoute,
   routesByIdMap,
   alertManagerSourceName,
 }: NotificationRouteDetailsModalProps) {
@@ -104,20 +107,20 @@ export function NotificationRouteDetailsModal({
           )}
           <div className={styles.separator(4)} />
           <div className={styles.contactPoint}>
-            <Stack gap={1} direction="row" alignItems="center">
-              Contact point:
-              <span className={styles.textMuted}>{receiver.name}</span>
+            <Stack gap={1} direction="column">
+              <Trans i18nKey="alerting.notification-route-details-modal.contact-point">Contact point</Trans>
+
+              <span className={styles.textMuted}>
+                {receiver ? receiver.name : <UnknownContactPointDetails receiverName={receiverNameFromRoute} />}
+              </span>
             </Stack>
             <Authorize actions={[AlertmanagerAction.UpdateContactPoint]}>
               <Stack gap={1} direction="row" alignItems="center">
-                <a
-                  href={createContactPointSearchLink(receiver.name, alertManagerSourceName)}
-                  className={styles.link}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  See details <Icon name="external-link-alt" />
-                </a>
+                {receiver ? (
+                  <TextLink href={createContactPointSearchLink(receiver.name, alertManagerSourceName)} external>
+                    <Trans i18nKey="alerting.notification-route-details-modal.see-details-link">See details</Trans>
+                  </TextLink>
+                ) : null}
               </Stack>
             </Authorize>
           </div>

@@ -18,7 +18,9 @@ weight: 300
 # DEPRECIATED Recorded queries
 
 {{% admonition type="warning" %}}
-Recorded queries are deprecated. Please use the new [Grafana Managed Recording Rules](/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules) instead.
+Recorded queries are deprecated. Please use the new [Grafana-managed recording rules](/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/create-grafana-managed-recording-rules) instead.
+
+To learn how to migrate your recorded queries to Grafana-managed recording rules, refer to the migration documentation [here.](/docs/grafana/latest/alerting/alerting-rules/create-recording-rules/migrate-recorded-queries)
 {{% /admonition %}}
 
 Recorded queries allow you to see trends over time by taking a snapshot of a data point on a set interval. This can give you insight into historic trends.

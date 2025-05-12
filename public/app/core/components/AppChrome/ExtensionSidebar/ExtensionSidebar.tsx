@@ -2,7 +2,7 @@ import { css } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { usePluginComponents } from '@grafana/runtime';
-import { useTheme2 } from '@grafana/ui';
+import { ErrorBoundaryAlert, useTheme2 } from '@grafana/ui';
 
 import {
   EXTENSION_SIDEBAR_EXTENSION_POINT_ID,
@@ -45,7 +45,9 @@ export function ExtensionSidebar() {
   return (
     <div className={styles.sidebarWrapper}>
       <div className={styles.content}>
-        <ExtensionComponent {...props} />
+        <ErrorBoundaryAlert>
+          <ExtensionComponent {...props} />
+        </ErrorBoundaryAlert>
       </div>
     </div>
   );

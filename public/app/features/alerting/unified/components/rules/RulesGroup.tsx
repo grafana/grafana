@@ -3,8 +3,9 @@ import React, { useEffect, useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
+import { config } from '@grafana/runtime';
 import { Badge, Icon, Spinner, Stack, Tooltip, useStyles2 } from '@grafana/ui';
-import { t } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 import { CombinedRuleGroup, CombinedRuleNamespace, RulesSource } from 'app/types/unified-alerting';
 
 import { useFolder } from '../../hooks/useFolder';
@@ -18,6 +19,7 @@ import { CollapseToggle } from '../CollapseToggle';
 import { RuleLocation } from '../RuleLocation';
 import { GrafanaRuleFolderExporter } from '../export/GrafanaRuleFolderExporter';
 import { decodeGrafanaNamespace } from '../expressions/util';
+import { FolderBulkActionsButton } from '../folder-bulk-actions/FolderBulkActionsButton';
 
 import { ActionIcon } from './ActionIcon';
 import { RuleGroupStats } from './RuleStats';
@@ -67,6 +69,8 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
 
   const canEditGroup = hasRuler && !isProvisioned && !isFederated && !isPluginProvided && canEditRules(rulesSourceName);
 
+  const isFolderBulkActionsEnabled = config.featureToggles.alertingBulkActionsInUI;
+
   // check what view mode we are in
   const isListView = viewMode === 'list';
   const isGroupView = viewMode === 'grouped';
@@ -78,7 +82,7 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
     actionIcons.push(
       <Stack key="is-deleting">
         <Spinner />
-        deleting
+        <Trans i18nKey="alerting.rules-group.deleting">Deleting</Trans>
       </Stack>
     );
   } else if (rulesSource === GRAFANA_RULES_SOURCE_NAME) {
@@ -145,6 +149,9 @@ export const RulesGroup = React.memo(({ group, namespace, expandAll, viewMode }:
               onClick={() => setIsExporting('folder')}
             />
           );
+          if (isFolderBulkActionsEnabled && folderUID && isListView) {
+            actionIcons.push(<FolderBulkActionsButton folderUID={folderUID} key="folder-bulk-actions" />);
+          }
         }
       }
     }
