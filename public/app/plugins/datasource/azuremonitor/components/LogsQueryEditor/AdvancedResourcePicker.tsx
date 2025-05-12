@@ -96,7 +96,7 @@ const AdvancedResourcePicker = ({ resources, onChange }: ResourcePickerProps<str
         onClick={addResource}
         type="button"
       >
-        <Trans i18nKey="components.advanced-resource-picker.button-add-resource">Add resource URI</Trans>
+        <Trans i18nKey="components.advanced-resource-picker.button-add-resource-uri">Add resource URI</Trans>
       </Button>
     </>
   );

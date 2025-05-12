@@ -49,13 +49,13 @@ const GrafanaTemplateVariableFnInput = ({
   return (
     <InlineField
       label={t(
-        'compoennts.grafana-template-variable-fn-input.label-grafana-template-variable',
+        'components.grafana-template-variable-fn-input.label-grafana-template-variable',
         'Grafana template variable function'
       )}
     >
       <Input
         placeholder={t(
-          'compoennts.grafana-template-variable-fn-input.placeholder-grafana-template-variable',
+          'components.grafana-template-variable-fn-input.placeholder-grafana-template-variable',
           'Type a grafana template variable function, e.g. {{example}}',
           { example: 'Subscriptions()' }
         )}
