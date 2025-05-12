@@ -8758,6 +8758,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/confusing-browser-globals@npm:^1":
+  version: 1.0.3
+  resolution: "@types/confusing-browser-globals@npm:1.0.3"
+  checksum: 10/596d9ea69fb2b6e5be9b37560e86593a0992e8554850de1a790aea66407c9453b78bc86909da5fd9f4fede99d7652c2b0dfeb9f89ef5d8eca35fadaca3271707
+  languageName: node
+  linkType: hard
+
 "@types/connect-history-api-fallback@npm:^1.5.4":
   version: 1.5.4
   resolution: "@types/connect-history-api-fallback@npm:1.5.4"
@@ -13100,6 +13107,13 @@ __metadata:
     readable-stream: "npm:^3.0.2"
     typedarray: "npm:^0.0.6"
   checksum: 10/250e576d0617e7c58e1c4b2dd6fe69560f316d2c962a409f9f3aac794018499ddb31948b1e4296f217008e124cd5d526432097745157fe504b5d9f3dc469eadb
+  languageName: node
+  linkType: hard
+
+"confusing-browser-globals@npm:^1.0.11":
+  version: 1.0.11
+  resolution: "confusing-browser-globals@npm:1.0.11"
+  checksum: 10/3afc635abd37e566477f610e7978b15753f0e84025c25d49236f1f14d480117185516bdd40d2a2167e6bed8048641a9854964b9c067e3dcdfa6b5d0ad3c3a5ef
   languageName: node
   linkType: hard
 
@@ -17735,6 +17749,7 @@ __metadata:
     "@types/babel__preset-env": "npm:^7"
     "@types/chance": "npm:^1.1.3"
     "@types/common-tags": "npm:^1.8.0"
+    "@types/confusing-browser-globals": "npm:^1"
     "@types/d3": "npm:7.4.3"
     "@types/d3-force": "npm:^3.0.0"
     "@types/d3-scale-chromatic": "npm:3.1.0"
@@ -17807,6 +17822,7 @@ __metadata:
     combokeys: "npm:^3.0.0"
     comlink: "npm:4.4.2"
     common-tags: "npm:1.8.2"
+    confusing-browser-globals: "npm:^1.0.11"
     copy-webpack-plugin: "npm:12.0.2"
     core-js: "npm:3.40.0"
     crashme: "npm:0.0.15"

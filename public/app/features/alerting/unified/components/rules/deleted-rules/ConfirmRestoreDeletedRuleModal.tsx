@@ -160,7 +160,7 @@ const redirectToRestoreForm = async (ruleToRecover: RulerGrafanaRuleDTO) => {
   const ruleFormUrl = createRelativeUrl(urlPath, {
     isManualRestore: 'true',
     defaults: JSON.stringify(formValues),
-    returnTo: location.pathname + location.search,
+    returnTo: window.location.pathname + window.location.search,
   });
 
   locationService.push(ruleFormUrl);
