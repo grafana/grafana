@@ -90,8 +90,6 @@ jobs:
           POSTGRES_USER: grafanatest
           POSTGRES_PASSWORD: grafanatest
           POSTGRES_DB: grafanatest
-          SHARD_INDEX: ${{ matrix.shard }}
-          SHARD_COUNT: 4
         ports:
           - 5432:5432
     steps:
@@ -108,6 +106,8 @@ jobs:
           GRAFANA_TEST_DB: postgres
           PGPASSWORD: grafanatest
           POSTGRES_HOST: 127.0.0.1
+          SHARD_INDEX: ${{ matrix.shard }}
+          SHARD_COUNT: 4
         run: |
           sudo apt-get update -yq && sudo apt-get install postgresql-client
           psql -p 5432 -h 127.0.0.1 -U grafanatest -d grafanatest -f devenv/docker/blocks/postgres_tests/setup.sql
