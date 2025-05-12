@@ -284,6 +284,7 @@ func TestSecureValueQueries(t *testing.T) {
 						Name:        "name",
 						Namespace:   "ns",
 						Phase:       "Succeeded",
+						Message:     "message-1",
 					},
 				},
 			},
