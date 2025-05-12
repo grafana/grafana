@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "Provádění auditu",
+      "title-custom-branding": "",
       "title-dashboard-presence-indicators": "Indikátory přítomnosti nástěnky",
       "title-dashboard-usage-stats-drawer": "Zásuvka se statistikami používání nástěnky",
       "title-data-source-permissions": "Oprávnění zdroje dat",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "Ověření SAML",
       "title-settings-updates-at-runtime": "Aktualizace nastavení po spuštění",
       "title-sort-dashboards-by-popularity-in-search": "Seřadit nástěnky podle oblíbenosti ve vyhledávání",
-      "title-team-sync": "Synchronizace týmu",
-      "title-white-labeling": "Bílá značka"
+      "title-team-sync": "Synchronizace týmu"
     },
     "feature-toggles": {
       "restart-pending": "Probíhá restartování vaší instance Grafana pro použití nejnovějších změn funkce přepínače",
@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "Přidat další"
     },
@@ -589,6 +592,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "Přidat modul pro porovnávání",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "Přidat časování ztlumení do zásady",
       "am-mute-timing-select-label-mute-timings": "Ztlumit časování",
       "aria-label-group-by": "Seřadit podle",
@@ -625,6 +630,17 @@
       },
       "link-dashboard-and-panel": "Propojit nástěnku a panel",
       "placeholder-value-input-default": "Zadejte obsah vlastní vysvětlivky…"
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1042,6 +1058,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "seznam filtrovaných pravidel"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "Vyberte složku, do které chcete uložit pravidlo."
@@ -1465,29 +1508,21 @@
       "aria-label": "Další",
       "button-text": "Další"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "Nelze načíst časování ztlumení. Zkuste to znovu později.",
-        "title": "Chyba při načítání časování ztlumení"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "Zakázáno",
       "title-delete-mute-timing": "Odstranit časování ztlumení"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "Vyberte časování ztlumení, abyste definovali, kdy nechcete odesílat oznámení pro toto pravidlo výstrahy",
       "am-mute-timing-select-label-mute-timings": "Ztlumit časování"
     },
     "mute-timing-form": {
-      "description-unique-timing": "Jedinečný název časování ztlumení",
-      "label-name": "",
-      "text-loading-mute-timing": "Načítání časování ztlumení",
-      "title-no-matching-mute-timing-found": "Nebylo nalezeno žádné odpovídající časování ztlumení"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "Přidat další časový interval",
-      "description": "Časový interval je definice pro okamžik v čase. Všechna pole jsou seznamy a musí být splněn alespoň jeden prvek seznamu, aby odpovídal poli. Pokud pole zůstane prázdné, jakýkoli okamžik času bude odpovídat poli. Aby se okamžik shodoval s celým časovým intervalem, musí se shodovat všechna pole. Časování ztlumení může obsahovat více časových intervalů.",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "Dny v měsíci, 1:31, v měsíci. Záporné hodnoty lze použít k reprezentaci dnů, které začínají na konci měsíce",
       "description-months": "Měsíce v roce v číselném nebo úplném kalendářním měsíci",
       "label-days-of-the-month": "Dny v měsíci",
@@ -1513,21 +1548,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "HH:mm",
       "title-remove": "",
       "tooltip-remove-time-range": "Odebrat časový rozsah"
-    },
-    "mute-timings": {
-      "add-mute-timing": "Přidat časování ztlumení",
-      "description": "Zadejte konkrétní časové intervaly, kdy nechcete odesílat oznámení nebo zmrazit oznámení pro opakující se časová období.",
-      "save": "Uložit časování ztlumení",
-      "saving": "Ukládání časování ztlumení"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "Ztlumit časování",
-      "placeholder-select-mute-timings": "Vyberte časování ztlumení…"
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "Dosud jste nevytvořili žádná časování ztlumení",
-      "text-loading-mute-timings": "Načítání časování ztlumení…",
-      "text-no-mute-timings-configured": "Není nakonfigurováno žádné časování ztlumení"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1569,8 +1589,8 @@
       "title-notification-policies-have-changed": "Zásady oznamování se změnily"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "Ztlumit časování",
-      "label-notification-policies": "Zásady oznamování"
+      "label-notification-policies": "Zásady oznamování",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2418,6 +2438,32 @@
       "input": "Vstup",
       "stop-alerting-when": ""
     },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
+    },
     "timeseries-row": {
       "time-series-data": "Data časových řad",
       "timestamp": "",
@@ -2608,16 +2654,109 @@
       "refer-documentation-configure-authentication": "Postup konfigurace ověřování naleznete v dokumentaci"
     },
     "fields": {
+      "allow-assign-grafana-admin-description": "",
+      "allow-assign-grafana-admin-label": "",
+      "allow-sign-up-description": "",
+      "allow-sign-up-label": "",
+      "allowed-domains-description": "",
+      "allowed-domains-label": "",
       "allowed-groups-description": "Seznam skupin oddělených čárkou nebo mezerou. Uživatel musí být členem alespoň jedné skupiny, aby se mohl přihlásit.",
       "allowed-groups-description-oauth": "",
+      "allowed-groups-label": "",
+      "allowed-groups-object-ids": "",
+      "allowed-organizations-description": "",
+      "allowed-organizations-label": "",
+      "allowed-organizations-placeholder": "",
       "api-url-description": "Koncový bod uživatelských informací vašeho poskytovatele OAuth2. Informace vrácené tímto koncovým bodem musí být kompatibilní s <2>OpenID UserInfo</2>.",
+      "api-url-required": "",
+      "auth-style-description": "",
+      "auth-style-label": "",
+      "auth-url-description": "",
+      "auth-url-required": "",
+      "auto-login-description": "",
+      "auto-login-label": "",
+      "client-authentication-description": "",
+      "client-authentication-label": "",
+      "client-authentication-none": "",
+      "client-id-description": "",
+      "client-secret-description": "",
+      "define-allowed-groups-label": "",
+      "define-allowed-teams-ids-label": "",
+      "display-name-description": "",
+      "display-name-label": "",
+      "email-attribute-name-description": "",
+      "email-attribute-name-label": "",
+      "email-attribute-path-description": "",
+      "email-attribute-path-label": "",
+      "federated-credential-audience-description": "",
+      "federated-credential-audience-label": "",
+      "force-use-graph-api-description": "",
+      "force-use-graph-api-label": "",
+      "groups-attribute-path-description": "",
+      "groups-attribute-path-label": "",
+      "hosted-domain-description": "",
+      "hosted-domain-label": "",
+      "id-token-attribute-name-description": "",
+      "id-token-attribute-name-label": "",
+      "login-attribute-path-description": "",
+      "login-attribute-path-label": "",
+      "managed-identity-client-id-description": "",
+      "managed-identity-client-id-label": "",
+      "name-attribute-path-description": "",
+      "name-attribute-path-label": "",
+      "org-mapping-description-azuread": "",
+      "org-mapping-description-generic": "",
+      "org-mapping-description-github": "",
+      "org-mapping-description-gitlab": "",
+      "org-mapping-description-google": "",
+      "organization-attribute-path-description": "",
+      "organization-attribute-path-label": "",
+      "organization-mapping-label": "",
+      "organization-mapping-placeholder": "",
+      "required": "",
+      "role-attribute-path-description": "",
+      "role-attribute-path-label": "",
+      "role-attribute-strict-description": "",
+      "role-attribute-strict-label": "",
+      "scopes-description": "",
+      "section-extra-security": "",
+      "section-general-settings": "",
+      "section-user-mapping": "",
+      "server-discovery-url-description": "",
+      "signout-redirect-url-description": "",
+      "signout-redirect-url-label": "",
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": "",
+      "team-ids-attribute-path-description": "",
+      "team-ids-attribute-path-label": "",
+      "team-ids-attribute-path-required": "",
       "team-ids-description": "Pokud je nastaveno, uživatel musí být členem jednoho z daných týmů, aby se mohl přihlásit.",
       "team-ids-description-oauth": "",
-      "team-ids-github": "Celočíselný seznam ID týmu.",
+      "team-ids-github": "",
+      "team-ids-label": "",
+      "team-ids-numbers": "",
       "team-ids-other": "Řetězcový seznam ID týmu.",
-      "teams-url-description": "Adresa URL použitá k dotazu na ID týmu. Pokud není nastavena, výchozí hodnota je /teams.",
+      "team-ids-placeholder": "",
+      "teams-url-description": "",
       "teams-url-description-oauth": "",
-      "use-pkce-description": "Pokud je povoleno, Grafana použije <2>ověřovací klíč pro výměnu kódů (PKCE)</2> s udělením autorizačního kódu OAuth2."
+      "teams-url-label": "",
+      "teams-url-required": "",
+      "tls-client-ca-description": "",
+      "tls-client-ca-label": "",
+      "tls-client-cert-description": "",
+      "tls-client-cert-label": "",
+      "tls-client-key-description": "",
+      "tls-client-key-label": "",
+      "tls-skip-verify-description": "",
+      "tls-skip-verify-label": "",
+      "token-url-description": "",
+      "token-url-required": "",
+      "use-pkce-description": "Pokud je povoleno, Grafana použije <2>ověřovací klíč pro výměnu kódů (PKCE)</2> s udělením autorizačního kódu OAuth2.",
+      "use-pkce-label": "",
+      "use-refresh-token-description": "",
+      "use-refresh-token-label": "",
+      "validate-hosted-domain-description": "",
+      "validate-hosted-domain-label": ""
     },
     "provider-card": {
       "text-badge-enabled": "",
@@ -2627,12 +2766,15 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "Obnovit výchozí hodnoty"
       },
+      "disable": "",
+      "disabling": "",
       "discard": "Zahodit",
       "enabled-label-enabled": "",
       "label-enabled": "Povoleno",
       "reset-configuration": "Opravdu chcete obnovit tuto konfiguraci?",
       "reset-configuration-description": "Po obnovení těchto nastavení Grafana použije konfiguraci poskytovatele ze systému (konfigurační soubor / proměnné prostředí), pokud existuje.",
       "save": "",
+      "save-and-enable": "",
       "saving": "",
       "title-more-actions": "Další akce",
       "title-reset": "Obnovit",
@@ -2682,6 +2824,10 @@
     },
     "actions": {
       "button-to-recently-deleted": "Nedávno odstraněné"
+    },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
     },
     "browse-view": {
       "this-folder-is-empty": "Tato složka je prázdná"
@@ -3309,6 +3455,11 @@
         "name": "",
         "open-editor": "Otevřít editor proměnných",
         "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Povolit vlastní hodnoty",
           "allow-custom-values-description": "Umožňuje uživatelům zadávat hodnoty",
@@ -4135,6 +4286,9 @@
       "label-data-source": "",
       "query-options": "Možnosti dotazu",
       "selection-options": "Možnosti výběru"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Opravdu chcete obnovit nástěnku na verzi {{version}}? Veškeré neuložené změny budou ztraceny.",
@@ -5263,9 +5417,6 @@
     "discard-button": "Zahodit neuložené změny",
     "title": "Opustit stránku?"
   },
-  "frontendtests": {
-    "test-key": "testovací klíč nebyl nalezen"
-  },
   "gen-ai": {
     "apply-suggestion": "Použít",
     "incomplete-request-error": "Je mi líto, ale vaši žádost se mi nepodařilo dokončit. Zkuste to znovu.",
@@ -6141,8 +6292,8 @@
       "escape-newlines": "Opravit nesprávně uniklé sekvence nového řádku a záložek v řádcích protokolu",
       "hide-timestamps": "Skrýt časová razítka",
       "hide-unique-labels": "Skrýt jedinečné štítky",
-      "newest-first": "Seřadit od nejnovějších protokolů",
-      "oldest-first": "Seřadit od nejstarších protokolů",
+      "newest-first": "",
+      "oldest-first": "",
       "prettify-json": "Rozbalit protokoly JSON",
       "remove-escaping": "Odebrat únik",
       "scroll-bottom": "",

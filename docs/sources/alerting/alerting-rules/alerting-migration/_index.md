@@ -9,11 +9,14 @@ title: Import data source-managed alert rules
 menuTitle: Import to Grafana-managed alert rules
 weight: 600
 refs:
+  import-ds-rules-api:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/migration-api/
 ---
 
 # Import data source-managed alert rules
 
-Grafana provides an internal tool in Alerting which allows you to import Prometheus and Loki alert rules into Grafana-managed alert rules.
+Grafana provides an internal tool in Alerting which allows you to import Mimir and Loki alert rules as Grafana-managed alert rules. To import Prometheus rules, use the [API](ref:import-ds-rules-api).
 
 ## Before you begin
 
@@ -43,6 +46,10 @@ When data source-managed alert rules are converted to Grafana-managed alert rule
 Plugin rules that have the label `__grafana_origin` are not included on alert rule imports.
 {{< /admonition >}}
 
+### Evaluation of imported rules
+
+The imported rules are evaluated sequentially within each rule group, mirroring Prometheus behavior. Sequential evaluation applies to rules only while they remain read‑only (displayed as "Provisioned"). If you import rules with the `X-Disable-Provenance: true` header or via the regular provisioning API, they behave like regular Grafana alert rules and are evaluated in parallel.
+
 ## Import alert rules
 
 To convert data source-managed alert rules to Grafana managed alerts:
@@ -53,11 +60,11 @@ To convert data source-managed alert rules to Grafana managed alerts:
 
    The import alert rules page opens.
 
-1. In the Data source dropdown, select the Loki or Prometheus data source of the alert rules.
+1. In the Data source dropdown, select the Loki or Mimir data source of the alert rules.
 
 1. In Additional settings, select a target folder or designate a new folder to import the rules into.
 
-   If you import the rules into an existing folder, don't chose a folder with existing alert rules, as they could get overwritten.
+   If you import the rules into an existing folder, don't choose a folder with existing alert rules, as they could get overwritten.
 
 1. (Optional) Select a Namespace and/or Group to determine which rules are imported.
 
