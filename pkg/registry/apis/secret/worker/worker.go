@@ -82,7 +82,6 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 		}
 
 		for _, message := range messages {
-			fmt.Printf("\n\naaaaaaa message.RequestID %+v\n\n", message.RequestID)
 			ctx := contracts.ContextWithRequestID(ctx, message.RequestID)
 			if err := w.processMessage(ctx, message); err != nil {
 				return fmt.Errorf("processing message: %+v %w", message, err)
@@ -125,14 +124,14 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 		// Setting the status to Succeeded must be the last action
 		// since it acts as a fence to clients.
 		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}); err != nil {
-			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
+			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v %w", message, err)
 		}
 
 	case contracts.UpdateSecretOutboxMessage:
 		// TODO: DECRYPT HERE
 		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
 
-		if err := keeper.Update(ctx, keeperCfg, message.Name, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
+		if err := keeper.Update(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
 			return fmt.Errorf("calling keeper to update secret: %w", err)
 		}
 

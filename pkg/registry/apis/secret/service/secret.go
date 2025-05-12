@@ -38,7 +38,6 @@ func (s *SecretService) Create(ctx context.Context, sv *secretv0alpha1.SecureVal
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		fmt.Printf("\n\naaaaaaa SecretService.Create inside tx callback %+v\n\n", ctx.Value("SimRequestContextKey"))
 		createdSecureValue, err := s.secureValueMetadataStorage.Create(ctx, sv, actorUID)
 		if err != nil {
 			return fmt.Errorf("failed to create securevalue: %w", err)
@@ -108,6 +107,8 @@ func (s *SecretService) List(ctx context.Context, namespace xkube.Namespace) (*s
 }
 
 func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, bool, error) {
+	// True when the effects of an update can be seen immediately.
+	// Never true in this case since updating a secure value is async.
 	const updateIsSync = false
 
 	// TODO: if updating requires communicating with external services, the secure value metadata status must be changed to Pending
@@ -124,11 +125,12 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 
 		if _, err := s.outboxQueue.Append(ctx, contracts.AppendOutboxMessage{
 			Type:      contracts.UpdateSecretOutboxMessage,
-			Name:      updatedSecureValue.Name,
-			Namespace: updatedSecureValue.Namespace,
+			Name:      newSecureValue.Name,
+			Namespace: newSecureValue.Namespace,
 			// TODO: encrypt
-			EncryptedSecret: updatedSecureValue.Spec.Value,
-			KeeperName:      updatedSecureValue.Spec.Keeper,
+			EncryptedSecret: newSecureValue.Spec.Value,
+			KeeperName:      newSecureValue.Spec.Keeper,
+			ExternalID:      &updatedSecureValue.Status.ExternalID,
 		}); err != nil {
 			return fmt.Errorf("failed to append message to update secure value to outbox queue: %w", err)
 		}
@@ -143,12 +145,10 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 
 func (s *SecretService) Delete(ctx context.Context, namespace xkube.Namespace, name string) error {
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
-		// TODO: ForUpdate should be true
-		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: false})
+		sv, err := s.secureValueMetadataStorage.Read(ctx, namespace, name, contracts.ReadOpts{ForUpdate: true})
 		if err != nil {
 			return fmt.Errorf("fetching secure value: %+w", err)
 		}
-		fmt.Printf("\n\naaaaaaa SecretService.Delete read sv.Status %+v\n\n", sv.Status)
 
 		if sv.Status.Phase == secretv0alpha1.SecureValuePhasePending {
 			return contracts.ErrSecureValueOperationInProgress

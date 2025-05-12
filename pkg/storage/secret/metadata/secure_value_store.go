@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -33,7 +34,7 @@ type secureValueMetadataStorage struct {
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
-	sv.Status.Message = ""
+	sv.Status.Message = "Creating secure value"
 
 	row, err := toCreateRow(sv, actorUID)
 	if err != nil {
@@ -80,6 +81,9 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 
 		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
+			if sql.IsRowAlreadyExistsError(err) {
+				return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
+			}
 			return fmt.Errorf("inserting row: %w", err)
 		}
 
@@ -310,6 +314,7 @@ func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xk
 		Namespace:   namespace.String(),
 		Name:        name,
 		Phase:       string(status.Phase),
+		Message:     status.Message,
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueUpdateStatus, req)
