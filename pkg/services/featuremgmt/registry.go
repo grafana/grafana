@@ -22,7 +22,7 @@ var (
 			Name:              "disableEnvelopeEncryption",
 			Description:       "Disable envelope encryption (emergency only)",
 			Stage:             FeatureStageGeneralAvailability,
-			Owner:             grafanaAsCodeSquad,
+			Owner:             grafanaOperatorExperienceSquad,
 			HideFromAdminPage: true,
 			AllowSelfServe:    false,
 			Expression:        "false",
@@ -60,7 +60,7 @@ var (
 			Name:           "featureHighlights",
 			Description:    "Highlight Grafana Enterprise features",
 			Stage:          FeatureStageGeneralAvailability,
-			Owner:          grafanaAsCodeSquad,
+			Owner:          grafanaOperatorExperienceSquad,
 			AllowSelfServe: true,
 			Expression:     "false",
 		},
@@ -90,7 +90,7 @@ var (
 			Name:        "logRequestsInstrumentedAsUnknown",
 			Description: "Logs the path for requests that are instrumented as unknown",
 			Stage:       FeatureStageExperimental,
-			Owner:       hostedGrafanaTeam,
+			Owner:       grafanaBackendGroup,
 		},
 		{
 			Name:              "grpcServer",
@@ -232,7 +232,7 @@ var (
 			Name:              "renderAuthJWT",
 			Description:       "Uses JWT-based auth for rendering instead of relying on remote cache",
 			Stage:             FeatureStagePublicPreview,
-			Owner:             grafanaAsCodeSquad,
+			Owner:             grafanaSharingSquad,
 			HideFromAdminPage: true,
 		},
 		{
@@ -380,7 +380,7 @@ var (
 			Name:        "permissionsFilterRemoveSubquery",
 			Description: "Alternative permission filter implementation that does not use subqueries for fetching the dashboard folder",
 			Stage:       FeatureStageExperimental,
-			Owner:       grafanaBackendGroup,
+			Owner:       grafanaSearchAndStorageSquad,
 		},
 		{
 			Name:            "configurableSchedulerTick",
@@ -442,13 +442,6 @@ var (
 			Stage:        FeatureStagePrivatePreview,
 			FrontendOnly: false,
 			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:         "wargamesTesting",
-			Description:  "Placeholder feature flag for internal testing",
-			Stage:        FeatureStageExperimental,
-			FrontendOnly: false,
-			Owner:        hostedGrafanaTeam,
 		},
 		{
 			Name:        "externalCorePlugins",
@@ -623,12 +616,6 @@ var (
 			Owner:       grafanaAlertingSquad,
 		},
 		{
-			Name:        "alertmanagerRemoteOnly",
-			Description: "Disable the internal Alertmanager and only use the external one defined.",
-			Stage:       FeatureStageExperimental,
-			Owner:       grafanaAlertingSquad,
-		},
-		{
 			Name:            "annotationPermissionUpdate",
 			Description:     "Change the way annotation permissions work by scoping them to folders and dashboards.",
 			Stage:           FeatureStageGeneralAvailability,
@@ -712,14 +699,6 @@ var (
 			Expression:   "true",
 			FrontendOnly: true,
 			Owner:        grafanaObservabilityLogsSquad,
-		},
-		{
-			Name:         "alertingSimplifiedRouting",
-			Description:  "Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule",
-			Stage:        FeatureStageGeneralAvailability,
-			FrontendOnly: false,
-			Owner:        grafanaAlertingSquad,
-			Expression:   "true", // enabled by default
 		},
 		{
 			Name:         "logRowsPopoverMenu",
@@ -1764,6 +1743,15 @@ var (
 			HideFromAdminPage: true,
 			HideFromDocs:      true,
 			Expression:        "true", // enabled by default
+		},
+		{
+			Name:              "extensionsReadOnlyProxy",
+			Description:       "Use proxy-based read-only objects for plugin extensions instead of deep cloning",
+			Stage:             FeatureStageExperimental,
+			Owner:             grafanaPluginsPlatformSquad,
+			HideFromAdminPage: true,
+			HideFromDocs:      true,
+			FrontendOnly:      true,
 		},
 	}
 )

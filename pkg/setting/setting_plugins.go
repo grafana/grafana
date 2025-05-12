@@ -8,6 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const (
+	PluginUpdateStrategyLatest = "latest"
+	PluginUpdateStrategyMinor  = "minor"
+)
+
 // PluginSettings maps plugin id to map of key/value settings.
 type PluginSettings map[string]map[string]string
 
@@ -96,6 +101,8 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	// Plugins CDN settings
 	cfg.PluginsCDNURLTemplate = strings.TrimRight(pluginsSection.Key("cdn_base_url").MustString(""), "/")
 	cfg.PluginLogBackendRequests = pluginsSection.Key("log_backend_requests").MustBool(false)
+
+	cfg.PluginUpdateStrategy = pluginsSection.Key("update_strategy").In(PluginUpdateStrategyLatest, []string{PluginUpdateStrategyLatest, PluginUpdateStrategyMinor})
 
 	return nil
 }
