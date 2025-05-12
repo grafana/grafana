@@ -1,5 +1,6 @@
 import { config } from '@grafana/runtime';
 
+import { AlertingAction, useAlertingAbility } from './hooks/useAbilities';
 import { getPreviewToggle } from './previewToggles';
 import { isAdmin } from './utils/misc';
 
@@ -16,8 +17,16 @@ export const shouldUseAlertingListViewV2 = () => {
   return config.featureToggles.alertingListViewV2;
 };
 
-export const useGrafanaManagedRecordingRulesSupport = () =>
-  config.unifiedAlerting.recordingRulesEnabled && config.featureToggles.grafanaManagedRecordingRules;
+export const useGrafanaManagedRecordingRulesSupport = () => {
+  const [createGrafanaRuleSupported, createGrafanaRuleAllowed] = useAlertingAbility(AlertingAction.CreateAlertRule);
+  const canCreateRecordingRules = createGrafanaRuleSupported && createGrafanaRuleAllowed;
+
+  return (
+    config.unifiedAlerting.recordingRulesEnabled &&
+    config.featureToggles.grafanaManagedRecordingRules &&
+    canCreateRecordingRules
+  );
+};
 
 export const shouldAllowRecoveringDeletedRules = () =>
   (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;

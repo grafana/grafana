@@ -465,7 +465,6 @@ export function useAlertmanagerAbilities(actions: AlertmanagerAction[]): Ability
   }, [abilities, actions]);
 }
 
-const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
 /**
  * We don't want to show the silence button if either
  * 1. the user has no permissions to create silences
@@ -507,6 +506,8 @@ function useCanSilenceInFolder(folderUID?: string) {
 }
 
 function useGrafanaRulesSilenceSupport() {
+  const { useGetGrafanaAlertingConfigurationStatusQuery } = alertmanagerApi;
+
   const { currentData: amConfigStatus, isLoading } = useGetGrafanaAlertingConfigurationStatusQuery(undefined);
 
   const interactsOnlyWithExternalAMs = amConfigStatus?.alertmanagersChoice === AlertmanagerChoice.External;
