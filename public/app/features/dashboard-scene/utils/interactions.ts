@@ -127,10 +127,10 @@ export const DashboardInteractions = {
 
   // Image export interactions
   generateDashboardImageClicked: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('sharing_link_generate_dashboard_image_clicked', properties);
+    reportDashboardInteraction('dashboard_image_generated', properties);
   },
   downloadDashboardImageClicked: (properties?: Record<string, unknown>) => {
-    reportDashboardInteraction('sharing_link_download_dashboard_image_clicked', properties);
+    reportDashboardInteraction('dashboard_image_downloaded', properties);
   },
 };
 
