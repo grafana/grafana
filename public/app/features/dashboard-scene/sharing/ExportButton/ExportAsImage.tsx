@@ -85,7 +85,7 @@ function RendererAlert() {
       </div>
       <div data-testid={selectors.components.ExportImage.rendererAlert.description}>
         <Trans i18nKey="share-modal.link.render-instructions">
-          To render a panel image, you must install the{' '}
+          To render a dashboard image, you must install the{' '}
           <a
             href="https://grafana.com/grafana/plugins/grafana-image-renderer"
             target="_blank"
@@ -180,6 +180,10 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     });
   };
 
+  if (!config.rendererAvailable) {
+    return <RendererAlert />;
+  }
+
   return (
     <>
       <p className={styles.info}>
@@ -207,14 +211,12 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
         </div>
       </Field>
 
-      <RendererAlert />
-
       <div className={styles.buttonRow}>
         {!imageBlob ? (
           <Button
             variant="primary"
             onClick={onExport}
-            disabled={isLoading || !config.rendererAvailable}
+            disabled={isLoading}
             icon="document-info"
             data-testid={selectors.components.ExportImage.buttons.generate}
           >
