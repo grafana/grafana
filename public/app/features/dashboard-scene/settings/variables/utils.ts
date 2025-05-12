@@ -30,8 +30,8 @@ import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
-import { QueryVariableEditor } from './editors/QueryVariableEditor';
-import { TextBoxVariableEditor } from './editors/TextBoxVariableEditor';
+import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
+import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
 interface EditableVariableConfig {
   name: string;
@@ -58,6 +58,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Query',
     description: 'Values are fetched from a data source query',
     editor: QueryVariableEditor,
+    getOptions: getQueryVariableOptions,
   },
   constant: {
     name: 'Constant',
@@ -89,6 +90,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Textbox',
     description: 'Users can enter any arbitrary strings in a textbox',
     editor: TextBoxVariableEditor,
+    getOptions: getTextBoxVariableOptions,
   },
 };
 

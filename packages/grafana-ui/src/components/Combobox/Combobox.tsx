@@ -339,7 +339,7 @@ export const Combobox = <T extends string | number>(props: ComboboxProps<T>) => 
 
   const inputSuffix = (
     <>
-      {value && value === selectedItem?.value && isClearable && (
+      {value !== undefined && value === selectedItem?.value && isClearable && (
         <Icon
           name="times"
           className={styles.clear}

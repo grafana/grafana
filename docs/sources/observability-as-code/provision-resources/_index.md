@@ -21,10 +21,6 @@ weight: 300
 Provisioning is an [experimental feature](https://grafana.com/docs/release-life-cycle/) introduced in Grafana v12 for open source and Enterprise editions. Engineering and on-call support is not available. Documentation is either limited or not provided outside of code comments. No SLA is provided. This feature isn't available in Grafana Cloud.
 {{< /admonition >}}
 
-{{< section depth="5" >}}
-
-<hr />
-
 Using Provisioning, you can configure how to store your dashboard JSON files in either GitHub repositories using Git Sync or a local path.
 
 Of the two experimental options, Git Sync is the recommended method for provisioning your dashboards. You can synchronize any new dashboards and changes to existing dashboards to your configured GitHub repository.
