@@ -44,7 +44,7 @@ func SelectSystemCompatibleVersion(log log.PrettyLogger, versions []Version, plu
 		}, nil
 	}
 	for _, v := range versions {
-		if v.Version == version {
+		if normalizeVersion(v.Version) == version {
 			ver = v
 			break
 		}

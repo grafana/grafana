@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -63,7 +64,7 @@ func TestProcessCheck(t *testing.T) {
 		items: []any{"item"},
 	}
 
-	err = processCheck(ctx, client, typesClient, obj, check)
+	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 }
@@ -91,7 +92,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 		items: items,
 	}
 
-	err = processCheck(ctx, client, typesClient, obj, check)
+	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 	r := client.lastValue.(advisorv0alpha1.CheckV0alpha1StatusReport)
@@ -107,7 +108,7 @@ func TestProcessCheck_AlreadyProcessed(t *testing.T) {
 	ctx := context.TODO()
 	check := &mockCheck{}
 
-	err := processCheck(ctx, client, typesClient, obj, check)
+	err := processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 }
 
@@ -128,7 +129,7 @@ func TestProcessCheck_RunError(t *testing.T) {
 		err:   errors.New("run error"),
 	}
 
-	err = processCheck(ctx, client, typesClient, obj, check)
+	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.Error(t, err)
 	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
 }
@@ -153,7 +154,7 @@ func TestProcessCheck_IgnoreSteps(t *testing.T) {
 	meta.SetCreatedBy("user:1")
 	client := &mockClient{}
 
-	err = processCheck(ctx, client, typesClient, obj, check)
+	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Equal(t, "mock", obj.GetAnnotations()[checks.IgnoreStepsAnnotation])
@@ -176,7 +177,7 @@ func TestProcessCheck_RunRecoversFromPanic(t *testing.T) {
 		runPanics: true,
 	}
 
-	err = processCheck(ctx, client, typesClient, obj, check)
+	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "panic recovered in step")
 	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
@@ -196,7 +197,7 @@ func TestProcessCheckRetry_NoRetry(t *testing.T) {
 
 	check := &mockCheck{}
 
-	err = processCheckRetry(ctx, client, typesClient, obj, check)
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 }
 
@@ -220,7 +221,7 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 		err:   errors.New("retry error"),
 	}
 
-	err = processCheckRetry(ctx, client, typesClient, obj, check)
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.Error(t, err)
 	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
 }
@@ -250,7 +251,7 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 		items: []any{"item"},
 	}
 
-	err = processCheckRetry(ctx, client, typesClient, obj, check)
+	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
 	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
@@ -297,6 +298,10 @@ func (m *mockCheck) Item(ctx context.Context, id string) (any, error) {
 	return m.items[0], nil
 }
 
+func (m *mockCheck) Init(ctx context.Context) error {
+	return nil
+}
+
 func (m *mockCheck) Steps() []checks.Step {
 	return []checks.Step{
 		&mockStep{err: m.err, panics: m.runPanics},
@@ -308,7 +313,7 @@ type mockStep struct {
 	panics bool
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportFailure, error) {
+func (m *mockStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, items any) ([]advisorv0alpha1.CheckReportFailure, error) {
 	if m.panics {
 		panic("panic")
 	}
@@ -316,7 +321,7 @@ func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item
 		return nil, m.err
 	}
 	if _, ok := items.(error); ok {
-		return &advisorv0alpha1.CheckReportFailure{}, nil
+		return []advisorv0alpha1.CheckReportFailure{{}}, nil
 	}
 	return nil, nil
 }

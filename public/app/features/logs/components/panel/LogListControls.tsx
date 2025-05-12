@@ -226,13 +226,14 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
             onClick={onSortOrderClick}
             tooltip={
               sortOrder === LogsSortOrder.Descending
-                ? t('logs.logs-controls.newest-first', 'Newest logs first')
-                : t('logs.logs-controls.oldest-first', 'Oldest logs first')
+                ? t('logs.logs-controls.newest-first', 'Sorted by newest logs first - Click to show oldest first')
+                : t('logs.logs-controls.oldest-first', 'Sorted by oldest logs first - Click to show newest first')
             }
             size="lg"
           />
           {visualisationType === 'logs' && (
             <>
+              <div className={styles.divider} />
               <Dropdown overlay={deduplicationMenu} placement="auto-end">
                 <IconButton
                   name={'filter'}
@@ -253,6 +254,7 @@ export const LogListControls = ({ eventBus, visualisationType = 'logs' }: Props)
                   size="lg"
                 />
               </Dropdown>
+              <div className={styles.divider} />
               <IconButton
                 name="clock-nine"
                 aria-pressed={showTime}
