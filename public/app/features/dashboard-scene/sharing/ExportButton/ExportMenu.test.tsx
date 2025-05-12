@@ -17,15 +17,15 @@ describe('ExportMenu', () => {
     expect(await screen.findByTestId(selector.exportAsJson)).toBeInTheDocument();
   });
 
-  describe('dashboardImageSharing feature toggle', () => {
+  describe('sharingDashboardImage feature toggle', () => {
     it('should render image export option when enabled', async () => {
-      config.featureToggles.dashboardImageSharing = true;
+      config.featureToggles.sharingDashboardImage = true;
       setup();
       expect(await screen.findByTestId(selector.exportAsImage)).toBeInTheDocument();
     });
 
     it('should not render image export option when disabled', async () => {
-      config.featureToggles.dashboardImageSharing = false;
+      config.featureToggles.sharingDashboardImage = false;
       setup();
       expect(screen.queryByTestId(selector.exportAsImage)).not.toBeInTheDocument();
     });

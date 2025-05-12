@@ -750,21 +750,6 @@
     },
     {
       "metadata": {
-        "name": "dashboardImageSharing",
-        "resourceVersion": "1745037596234",
-        "creationTimestamp": "2025-04-19T04:39:56Z",
-        "deletionTimestamp": "2025-05-12T22:55:55Z"
-      },
-      "spec": {
-        "description": "Enables image sharing functionality for dashboards and their panels",
-        "stage": "experimental",
-        "codeowner": "@grafana/sharing-squad",
-        "frontend": true,
-        "hideFromDocs": true
-      }
-    },
-    {
-      "metadata": {
         "name": "dashboardNewLayouts",
         "resourceVersion": "1743693517832",
         "creationTimestamp": "2024-10-23T08:55:45Z"
