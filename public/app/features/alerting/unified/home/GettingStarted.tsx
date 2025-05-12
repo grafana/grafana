@@ -5,10 +5,14 @@ import SVG from 'react-inlinesvg';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Stack, Text, TextLink, useStyles2, useTheme2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import atAGlanceDarkSvg from 'img/alerting/at_a_glance_dark.svg';
+import atAGlanceLightSvg from 'img/alerting/at_a_glance_light.svg';
 
 export default function GettingStarted() {
   const theme = useTheme2();
   const styles = useStyles2(getWelcomePageStyles);
+
+  const atAGlanceImage = theme.name === 'dark' ? atAGlanceDarkSvg : atAGlanceLightSvg;
 
   return (
     <div className={styles.grid}>
@@ -41,11 +45,7 @@ export default function GettingStarted() {
           </ul>
           <div className={styles.svgContainer}>
             <Stack justifyContent={'center'}>
-              <SVG
-                src={`public/img/alerting/at_a_glance_${theme.name.toLowerCase()}.svg`}
-                width={undefined}
-                height={undefined}
-              />
+              <SVG src={atAGlanceImage} width={undefined} height={undefined} />
             </Stack>
           </div>
         </Stack>

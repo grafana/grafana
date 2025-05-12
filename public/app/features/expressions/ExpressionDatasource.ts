@@ -10,6 +10,7 @@ import {
 } from '@grafana/data';
 import { DataSourceWithBackend, getDataSourceSrv, getTemplateSrv } from '@grafana/runtime';
 import { ExpressionDatasourceRef } from '@grafana/runtime/internal';
+import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { ExpressionQueryEditor } from './ExpressionQueryEditor';
 import { ExpressionDatasourceUID, ExpressionQuery, ExpressionQueryType } from './types';
@@ -77,8 +78,8 @@ export const instanceSettings: DataSourceInstanceSettings = {
         name: 'Grafana Labs',
       },
       logos: {
-        small: 'public/img/icn-datasource.svg',
-        large: 'public/img/icn-datasource.svg',
+        small: icnDatasourceSvg,
+        large: icnDatasourceSvg,
       },
       description: 'Adds expression support to Grafana',
       screenshots: [],
@@ -96,8 +97,8 @@ dataSource.meta = {
   id: ExpressionDatasourceRef.type,
   info: {
     logos: {
-      small: 'public/img/icn-datasource.svg',
-      large: 'public/img/icn-datasource.svg',
+      small: icnDatasourceSvg,
+      large: icnDatasourceSvg,
     },
   },
 } as DataSourcePluginMeta;

@@ -6,6 +6,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { useStyles2 } from '@grafana/ui';
 import { News } from 'app/plugins/panel/news/component/News';
 import { useNewsFeed } from 'app/plugins/panel/news/useNewsFeed';
+import grotNewsSvg from 'img/grot-news.svg';
 
 import { t } from '../../../internationalization';
 
@@ -50,7 +51,7 @@ export function NewsWrapper({ feedUrl }: NewsWrapperProps) {
           rel="noreferrer"
           title={t('news.link-title', 'Go to Grafana labs blog')}
         >
-          <img src="public/img/grot-news.svg" alt="Grot reading news" />
+          <img src={grotNewsSvg} alt="Grot reading news" />
         </a>
       </div>
     </div>

@@ -5,6 +5,7 @@ import config from 'app/core/config';
 import { contextSrv } from 'app/core/core';
 import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction } from 'app/types';
+import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import { GenericDataSourcePlugin } from '../types';
 
@@ -169,7 +170,7 @@ export function getDataSourceLoadingNav(pageName: string): NavModel {
       readOnly: false,
       type: loadingDSType,
       typeName: loadingDSType,
-      typeLogoUrl: 'public/img/icn-datasource.svg',
+      typeLogoUrl: icnDatasourceSvg,
       url: '',
       user: '',
       secureJsonFields: {},

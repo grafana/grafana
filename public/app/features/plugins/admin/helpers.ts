@@ -222,8 +222,8 @@ export function mapToCatalogPlugin(local?: LocalPlugin, remote?: RemotePlugin, e
   const keywords = remote?.keywords || local?.info.keywords || [];
 
   let logos = {
-    small: `/public/img/icn-${type}.svg`,
-    large: `/public/img/icn-${type}.svg`,
+    small: `/public/build/img/icn-${type}.svg`,
+    large: `/public/build/img/icn-${type}.svg`,
   };
 
   if (remote) {
