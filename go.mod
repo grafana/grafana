@@ -15,9 +15,6 @@ replace cuelang.org/go => github.com/grafana/cue v0.0.0-20230926092038-971951014
 // import that instead of v0.X even though v0.X is newer.
 replace github.com/prometheus/prometheus => github.com/prometheus/prometheus v0.49.0
 
-// The v0.120.0 is needed for now to be compatible with grafana/thema.
-replace github.com/getkin/kin-openapi => github.com/getkin/kin-openapi v0.120.0
-
 replace github.com/urfave/cli/v2 => github.com/urfave/cli/v2 v2.25.0
 
 require (
@@ -224,7 +221,6 @@ require (
 	github.com/blugelabs/bluge_segment_api v0.2.0 // @grafana/backend-platform
 	github.com/bufbuild/connect-go v1.10.0 // @grafana/observability-traces-and-profiling
 	github.com/dlmiddlecote/sqlstats v1.0.2 // @grafana/backend-platform
-	github.com/getkin/kin-openapi v0.120.0 // @grafana/grafana-operator-experience-squad
 	github.com/golang-migrate/migrate/v4 v4.7.0 // @grafana/backend-platform
 	github.com/grafana/codejen v0.0.3 // @grafana/dataviz-squad
 	github.com/grafana/dskit v0.0.0-20240104111617-ea101a3b86eb // @grafana/backend-platform
@@ -456,6 +452,7 @@ require (
 	cloud.google.com/go/longrunning v0.5.11 // indirect
 	github.com/bufbuild/protocompile v0.4.0 // indirect
 	github.com/docker/docker v28.0.1+incompatible // indirect
+	github.com/getkin/kin-openapi v0.120.0 // indirect
 	github.com/gobuffalo/pop/v6 v6.1.1 // indirect
 	github.com/grafana/sqlds/v3 v3.2.0 // indirect
 	github.com/jhump/protoreflect v1.15.1 // indirect
