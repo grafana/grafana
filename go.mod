@@ -446,7 +446,7 @@ require (
 )
 
 require (
-	github.com/getkin/kin-openapi v0.128.0 // @grafana/grafana-app-platform-squad
+	github.com/getkin/kin-openapi v0.132.0 // @grafana/grafana-app-platform-squad
 	github.com/grafana/grafana/apps/playlist v0.0.0-20241105090059-facca37f4d1f // @grafana/grafana-app-platform-squad
 	github.com/influxdata/influxql v1.4.0 // @grafana/partner-datasources
 )
