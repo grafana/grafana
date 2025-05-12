@@ -41,6 +41,26 @@ var (
 	}
 )
 
+func (cfg *Cfg) processPreinstallPlugins(rawInstallPlugins []string) map[string]InstallPlugin {
+	preinstallPlugins := make(map[string]InstallPlugin)
+	// Add the plugins defined in the configuration
+	for _, plugin := range rawInstallPlugins {
+		parts := strings.Split(plugin, "@")
+		id := parts[0]
+		version := ""
+		url := ""
+		if len(parts) > 1 {
+			version = parts[1]
+			if len(parts) > 2 {
+				url = parts[2]
+			}
+		}
+
+		preinstallPlugins[id] = InstallPlugin{id, version, url}
+	}
+	return preinstallPlugins
+}
+
 func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	pluginsSection := iniFile.Section("plugins")
 
@@ -56,36 +76,28 @@ func (cfg *Cfg) readPluginSettings(iniFile *ini.File) error {
 	cfg.ForwardHostEnvVars = util.SplitString(pluginsSection.Key("forward_host_env_vars").MustString(""))
 	disablePreinstall := pluginsSection.Key("preinstall_disabled").MustBool(false)
 	if !disablePreinstall {
-		rawInstallPlugins := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
-		preinstallPlugins := make(map[string]InstallPlugin)
-		// Add the default preinstalled plugins
+		rawInstallPluginsAsync := util.SplitString(pluginsSection.Key("preinstall").MustString(""))
+		preinstallPlugins := cfg.processPreinstallPlugins(rawInstallPluginsAsync)
+		// Add the default preinstalled plugins to pre install plugins async list
 		for _, plugin := range defaultPreinstallPlugins {
 			preinstallPlugins[plugin.ID] = plugin
 		}
 		if cfg.IsFeatureToggleEnabled("grafanaAdvisor") { // Use literal string to avoid circular dependency
 			preinstallPlugins["grafana-advisor-app"] = InstallPlugin{"grafana-advisor-app", "", ""}
 		}
-		// Add the plugins defined in the configuration
-		for _, plugin := range rawInstallPlugins {
-			parts := strings.Split(plugin, "@")
-			id := parts[0]
-			version := ""
-			url := ""
-			if len(parts) > 1 {
-				version = parts[1]
-				if len(parts) > 2 {
-					url = parts[2]
-				}
-			}
 
-			preinstallPlugins[id] = InstallPlugin{id, version, url}
-		}
+		rawInstallPluginsSync := util.SplitString(pluginsSection.Key("preinstall_sync").MustString(""))
+		preinstallPluginsSync := cfg.processPreinstallPlugins(rawInstallPluginsSync)
 		// Remove from the list the plugins that have been disabled
 		for _, disabledPlugin := range cfg.DisablePlugins {
 			delete(preinstallPlugins, disabledPlugin)
+			delete(preinstallPluginsSync, disabledPlugin)
 		}
 		for _, plugin := range preinstallPlugins {
 			cfg.PreinstallPlugins = append(cfg.PreinstallPlugins, plugin)
+		}
+		for _, plugin := range preinstallPluginsSync {
+			cfg.PreinstallPluginsSync = append(cfg.PreinstallPluginsSync, plugin)
 		}
 		cfg.PreinstallPluginsAsync = pluginsSection.Key("preinstall_async").MustBool(true)
 	}

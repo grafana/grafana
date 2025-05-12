@@ -97,6 +97,56 @@ func Test_readPluginSettings(t *testing.T) {
 		}
 	})
 
+	t.Run("when plugins.preinstall_sync is defined", func(t *testing.T) {
+		tests := []struct {
+			name              string
+			rawInput          string
+			expected          []InstallPlugin
+			disablePlugins    string
+			disablePreinstall bool
+		}{
+			{
+				name:     "should add the plugin to the sync list - not contain default plugins like async list",
+				rawInput: "plugin1",
+				expected: []InstallPlugin{
+					{ID: "plugin1", Version: "", URL: ""},
+				},
+			},
+			{
+				name:           "it should remove the disabled plugin",
+				rawInput:       "plugin1,plugin2",
+				disablePlugins: "plugin1",
+				expected:       []InstallPlugin{{ID: "plugin2"}},
+			},
+			{
+				name:              "should not process at all when preinstall is disabled",
+				rawInput:          "plugin1",
+				disablePreinstall: true,
+				expected:          nil,
+			},
+		}
+		for _, tc := range tests {
+			t.Run(tc.name, func(t *testing.T) {
+				cfg := NewCfg()
+				sec, err := cfg.Raw.NewSection("plugins")
+				require.NoError(t, err)
+				_, err = sec.NewKey("preinstall_sync", tc.rawInput)
+				require.NoError(t, err)
+				if tc.disablePreinstall {
+					_, err = sec.NewKey("preinstall_disabled", "true")
+					require.NoError(t, err)
+				}
+				if tc.disablePlugins != "" {
+					_, err = sec.NewKey("disable_plugins", tc.disablePlugins)
+					require.NoError(t, err)
+				}
+				err = cfg.readPluginSettings(cfg.Raw)
+				require.NoError(t, err)
+				assert.ElementsMatch(t, cfg.PreinstallPluginsSync, tc.expected)
+			})
+		}
+	})
+
 	t.Run("when plugins.preinstall is defined", func(t *testing.T) {
 		defaultPreinstallPluginsList := make([]InstallPlugin, 0, len(defaultPreinstallPlugins))
 		defaultPreinstallPluginsIDs := []string{}
