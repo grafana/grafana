@@ -135,7 +135,7 @@ export const ConvertFieldTypeTransformerEditor = ({
         // - Target field type is 'other' (Grafana 10) or 'string' (Grafana 11)
         // This ensures consistent UI across versions where arrays may be classified differently.
         const shouldRenderJoinWith =
-          c.joinWith?.length || targetField?.type === FieldType.other || targetField?.type === FieldType.string;
+          c.joinWith?.length || (targetField?.type && [FieldType.other, FieldType.string].includes(targetField.type));
 
         return (
           <div key={`${c.targetField}-${idx}`}>
