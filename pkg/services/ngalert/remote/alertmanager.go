@@ -60,6 +60,7 @@ type Alertmanager struct {
 	orgID             int64
 	ready             bool
 	sender            *sender.ExternalAlertmanager
+	smtpFrom          string
 	state             stateStore
 	tenantID          string
 	url               string
@@ -86,7 +87,8 @@ type AlertmanagerConfig struct {
 	// The same flag is used for promoting state.
 	PromoteConfig bool
 
-	// StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	// SmtpFrom and StaticHeaders are used in email notifications sent by the remote Alertmanager.
+	SmtpFrom      string
 	StaticHeaders map[string]string
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
@@ -126,6 +128,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		URL:           u,
 		PromoteConfig: cfg.PromoteConfig,
 		ExternalURL:   cfg.ExternalURL,
+		SmtpFrom:      cfg.SmtpFrom,
 		StaticHeaders: cfg.StaticHeaders,
 	}
 	mc, err := remoteClient.New(mcCfg, metrics, tracer)
@@ -193,6 +196,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		metrics:           metrics,
 		mimirClient:       mc,
 		orgID:             cfg.OrgID,
+		smtpFrom:          cfg.SmtpFrom,
 		state:             store,
 		sender:            s,
 		syncInterval:      cfg.SyncInterval,
@@ -667,6 +671,11 @@ func (am *Alertmanager) shouldSendConfig(ctx context.Context, hash [16]byte) boo
 	}
 
 	if rc.Promoted != am.mimirClient.ShouldPromoteConfig() {
+		return true
+	}
+
+	if rc.SmtpFrom != am.smtpFrom {
+		am.log.Debug("SMTP 'from' address is different, sending the configuration to the remote Alertmanager", "remote", rc.SmtpFrom, "local", am.smtpFrom)
 		return true
 	}
 
