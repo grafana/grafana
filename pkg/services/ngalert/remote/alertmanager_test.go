@@ -254,9 +254,8 @@ func TestApplyConfig(t *testing.T) {
 	require.Equal(t, am.smtpFrom, configSent.SmtpFrom)
 
 	// Failing to add the auto-generated routes should result in an error.
-	am, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
-	require.NoError(t, err)
-	require.ErrorIs(t, am.ApplyConfig(ctx, config), errTest)
+	_, err = NewAlertmanager(context.Background(), cfg, fstore, secretsService.Decrypt, errAutogenFn, m, tracing.InitializeTracerForTest())
+	require.ErrorIs(t, err, errTest)
 	require.Equal(t, 3, configSyncs)
 }
 
