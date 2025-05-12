@@ -16,7 +16,7 @@ export function regexMatcherEditor(
     const { validator } = config;
     const { value } = options;
     const [isInvalid, setInvalid] = useState(!validator(value));
-    const variableSuggestions = getVariableSuggestions().reduce<Array<VariableSuggestion>>((acc, v) => {
+    const variableSuggestions = getVariableSuggestions().reduce<VariableSuggestion[]>((acc, v) => {
       acc.push(v);
       acc.push({
         ...v,
