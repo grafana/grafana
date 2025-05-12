@@ -16,16 +16,10 @@ export enum ImageGenerationError {
 }
 
 /**
- * Supported image formats for export
- */
-export type ImageFormat = 'png' | 'jpg';
-
-/**
  * Options for generating a dashboard image
  */
 export interface ImageGenerationOptions {
   dashboard: DashboardScene;
-  format?: ImageFormat;
   scale?: number;
 }
 
@@ -45,7 +39,6 @@ export interface ImageGenerationResult {
  */
 export async function generateDashboardImage({
   dashboard,
-  format = 'png',
   scale = config.rendererDefaultImageScale || 1,
 }: ImageGenerationOptions): Promise<ImageGenerationResult> {
   if (!config.rendererAvailable) {
@@ -63,8 +56,7 @@ export async function generateDashboardImage({
       render: true,
       absolute: true,
       updateQuery: {
-        height: -1, // this will make the image renderer scroll through the dashboard and set the appropriate height
-        format,
+        height: -1, // image renderer will scroll through the dashboard and set the appropriate height
         scale,
         kiosk: true,
         hideNav: true,

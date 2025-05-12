@@ -114,9 +114,9 @@ describe('Dashboard Export Image Utils', () => {
       }
     });
 
-    it('should generate image successfully with custom options', async () => {
+    it('should generate image successfully with custom scale', async () => {
       (config as { rendererAvailable: boolean }).rendererAvailable = true;
-      const mockBlob = new Blob(['test'], { type: 'image/jpeg' });
+      const mockBlob = new Blob(['test'], { type: 'image/png' });
       const fetchMock = jest.fn().mockReturnValue(of({ ok: true, data: mockBlob }));
       (getBackendSrv as jest.Mock).mockReturnValue({ fetch: fetchMock });
 
@@ -129,13 +129,13 @@ describe('Dashboard Export Image Utils', () => {
         },
       } as unknown as DashboardScene;
 
-      const result = await generateDashboardImage({ dashboard, format: 'jpg', scale: 2 });
+      const result = await generateDashboardImage({ dashboard, scale: 2 });
 
       expect(result.error).toBeUndefined();
       expect(result.blob).toBe(mockBlob);
       expect(fetchMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: expect.stringMatching(/format=jpg.*scale=2.*kiosk=true.*hideNav=true.*fullPageImage=true/),
+          url: expect.stringMatching(/format=png.*scale=2.*kiosk=true.*hideNav=true.*fullPageImage=true/),
           responseType: 'blob',
         })
       );
@@ -146,7 +146,7 @@ describe('Dashboard Export Image Utils', () => {
         absolute: true,
         updateQuery: {
           height: -1,
-          format: 'jpg',
+          format: 'png',
           scale: 2,
           kiosk: true,
           hideNav: true,

@@ -7,7 +7,7 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { config } from '@grafana/runtime';
 import { SceneComponentProps, SceneObjectBase, SceneObjectState } from '@grafana/scenes';
-import { Button, Field, LoadingBar, RadioButtonGroup, Alert, useStyles2 } from '@grafana/ui';
+import { Button, LoadingBar, Alert, useStyles2 } from '@grafana/ui';
 import { t, Trans } from 'app/core/internationalization';
 import { DashboardInteractions } from 'app/features/dashboard-scene/utils/interactions';
 import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
@@ -15,11 +15,6 @@ import { getDashboardSceneFor } from 'app/features/dashboard-scene/utils/utils';
 import { ShareView } from '../types';
 
 import { generateDashboardImage, ImageGenerationError } from './utils';
-
-enum ImageFormat {
-  PNG = 'png',
-  JPG = 'jpg',
-}
 
 type ErrorState = {
   message: string;
@@ -42,7 +37,6 @@ export class ExportAsImage extends SceneObjectBase<ExportAsImageState> implement
 function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   const { onDismiss } = model.useState();
   const dashboard = getDashboardSceneFor(model);
-  const [format, setFormat] = useState<ImageFormat>(ImageFormat.PNG);
   const [isLoading, setIsLoading] = useState(false);
   const [imageBlob, setImageBlob] = useState<Blob | null>(null);
   const [error, setError] = useState<ErrorState>(null);
@@ -58,10 +52,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     };
   }, [imageBlob]);
 
-  const onFormatChange = (value: ImageFormat) => {
-    setFormat(value);
-  };
-
   const onExport = async () => {
     setIsLoading(true);
     setError(null);
@@ -69,7 +59,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     try {
       const result = await generateDashboardImage({
         dashboard,
-        format,
         scale: config.rendererDefaultImageScale || 1,
       });
 
@@ -79,7 +68,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
 
       setImageBlob(result.blob);
       DashboardInteractions.generateDashboardImageClicked({
-        format,
         scale: config.rendererDefaultImageScale || 1,
         shareResource: 'dashboard',
         success: true,
@@ -87,7 +75,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
     } catch (error) {
       console.error('Error exporting image:', error);
       DashboardInteractions.generateDashboardImageClicked({
-        format,
         scale: config.rendererDefaultImageScale || 1,
         shareResource: 'dashboard',
         success: false,
@@ -109,11 +96,10 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
 
     const time = new Date().getTime();
     const name = dashboard.state.title;
-    saveAs(imageBlob, `${name}-${time}.${format}`);
+    saveAs(imageBlob, `${name}-${time}.png`);
 
     DashboardInteractions.downloadDashboardImageClicked({
-      format,
-      fileName: `${name}-${time}.${format}`,
+      fileName: `${name}-${time}.png`,
       shareResource: 'dashboard',
     });
   };
@@ -127,27 +113,6 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
       <p className={styles.info}>
         <Trans i18nKey="share-modal.image.info-text">Save this dashboard as an image.</Trans>
       </p>
-
-      <Field label={t('share-modal.image.format-label', 'Format')}>
-        <div data-testid={selectors.components.ExportImage.formatOptions.container}>
-          <RadioButtonGroup
-            value={format}
-            onChange={onFormatChange}
-            options={[
-              {
-                label: 'PNG',
-                value: ImageFormat.PNG,
-                'data-testid': selectors.components.ExportImage.formatOptions.png,
-              },
-              {
-                label: 'JPG',
-                value: ImageFormat.JPG,
-                'data-testid': selectors.components.ExportImage.formatOptions.jpg,
-              },
-            ]}
-          />
-        </div>
-      </Field>
 
       <div className={styles.buttonRow}>
         {!imageBlob ? (
