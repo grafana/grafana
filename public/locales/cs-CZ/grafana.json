@@ -2825,6 +2825,10 @@
     "actions": {
       "button-to-recently-deleted": "Nedávno odstraněné"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Tato složka je prázdná"
     },
@@ -3451,6 +3455,11 @@
         "name": "",
         "open-editor": "Otevřít editor proměnných",
         "open-editor-tooltip": "Pro další možnosti proměnných otevřete editor proměnných",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Povolit vlastní hodnoty",
           "allow-custom-values-description": "Umožňuje uživatelům zadávat hodnoty",
@@ -4277,6 +4286,9 @@
       "label-data-source": "",
       "query-options": "Možnosti dotazu",
       "selection-options": "Možnosti výběru"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Opravdu chcete obnovit nástěnku na verzi {{version}}? Veškeré neuložené změny budou ztraceny.",
@@ -5404,9 +5416,6 @@
     "description": "Provedené změny nemusí být uloženy.",
     "discard-button": "Zahodit neuložené změny",
     "title": "Opustit stránku?"
-  },
-  "frontendtests": {
-    "test-key": "testovací klíč nebyl nalezen"
   },
   "gen-ai": {
     "apply-suggestion": "Použít",
