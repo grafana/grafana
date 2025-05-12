@@ -153,21 +153,10 @@ def secrets():
             "infra/data/ci/grafana-release-eng/rgm",
             "dagger_token",
         ),
-        # grafana-delivery-bot secrets
-        vault_secret(
-            "delivery-bot-app-id",
-            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
-            "app-id",
-        ),
-        vault_secret(
-            "delivery-bot-app-installation-id",
-            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
-            "app-installation-id",
-        ),
         vault_secret(
             "delivery-bot-app-private-key",
-            "infra/data/ci/grafana-release-eng/grafana-delivery-bot",
-            "app-private-key",
+            "ci/data/repo/grafana/grafana/delivery-bot-app",
+            "PRIVATE_KEY",
         ),
         vault_secret(
             "gcr_credentials",

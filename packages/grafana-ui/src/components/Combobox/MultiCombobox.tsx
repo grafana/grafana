@@ -23,9 +23,11 @@ import { MAX_SHOWN_ITEMS, useMeasureMulti } from './useMeasureMulti';
 import { useMultiInputAutoSize } from './useMultiInputAutoSize';
 import { useOptions } from './useOptions';
 
-interface MultiComboboxBaseProps<T extends string | number> extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange'> {
+interface MultiComboboxBaseProps<T extends string | number>
+  extends Omit<ComboboxBaseProps<T>, 'value' | 'onChange' | 'isClearable'> {
   value?: T[] | Array<ComboboxOption<T>>;
   onChange: (option: Array<ComboboxOption<T>>) => void;
+  isClearable?: boolean;
   enableAllOption?: boolean;
 }
 

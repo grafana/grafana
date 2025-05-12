@@ -16,8 +16,8 @@ import (
 	"cloud.google.com/go/spanner/admin/database/apiv1/databasepb"
 	"github.com/googleapis/gax-go/v2"
 	spannerdriver "github.com/googleapis/go-sql-spanner"
+	"github.com/grafana/grafana/pkg/util/xorm"
 	"google.golang.org/grpc/codes"
-	"xorm.io/xorm"
 
 	"github.com/grafana/dskit/concurrency"
 	utilspanner "github.com/grafana/grafana/pkg/util/spanner"

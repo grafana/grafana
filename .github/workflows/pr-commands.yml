@@ -5,6 +5,7 @@ on:
       - labeled
       - opened
       - synchronize
+permissions: {}
 concurrency:
   group: pr-commands-${{ github.event.number }}
 jobs:
@@ -26,6 +27,9 @@ jobs:
 
   main:
     needs: config
+    permissions:
+      contents: read
+      pull-requests: write
     if: needs.config.outputs.has-secrets
     runs-on: ubuntu-latest
     steps:
