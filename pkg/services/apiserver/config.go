@@ -24,7 +24,7 @@ func applyGrafanaConfig(cfg *setting.Cfg, features featuremgmt.FeatureToggles, o
 	}
 
 	if cfg.Env == setting.Dev {
-		port = 6441
+		port = 6443
 		ip = net.ParseIP("0.0.0.0")
 		apiURL = fmt.Sprintf("https://%s:%d", ip, port)
 	}

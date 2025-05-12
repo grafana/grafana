@@ -102,6 +102,11 @@ type service struct {
 	restConfigProvider RestConfigProvider
 
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders
+<<<<<<< HEAD
+=======
+
+	aggregatorRunner runner.AggregatorRunner
+>>>>>>> e58fe39e43e (get rid of the slice implementation)
 }
 
 func ProvideService(
@@ -122,6 +127,7 @@ func ProvideService(
 	buildHandlerChainFuncFromBuilders builder.BuildHandlerChainFuncFromBuilders,
 	eventualRestConfigProvider *eventualRestConfigProvider,
 	reg prometheus.Registerer,
+	aggregatorRunner aggregatedrunner.AggregatorRunner,
 ) (*service, error) {
 	scheme := builder.ProvideScheme()
 	codecs := builder.ProvideCodecFactory(scheme)
@@ -148,6 +154,7 @@ func ProvideService(
 		unified:                           unified,
 		restConfigProvider:                restConfigProvider,
 		buildHandlerChainFuncFromBuilders: buildHandlerChainFuncFromBuilders,
+		aggregatorRunner:                  aggregatorRunner,
 	}
 	// This will be used when running as a dskit service
 	service := services.NewBasicService(s.start, s.running, nil).WithName(modules.GrafanaAPIServer)
@@ -341,27 +348,33 @@ func (s *service) start(ctx context.Context) error {
 	s.options = o
 
 	delegate := server
-	var aggregatorServer *aggregatorapiserver.APIAggregator
-	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		aggregatorServer, err = s.createKubeAggregator(serverConfig, server, s.metrics)
-		if err != nil {
-			return err
-		}
-		delegate = aggregatorServer.GenericAPIServer
-	}
 
 	var runningServer *genericapiserver.GenericAPIServer
+
 	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
 		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
 		if err != nil {
 			return err
 		}
-	} else if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
-		runningServer, err = s.startKubeAggregator(ctx, transport, aggregatorServer)
+		delegate = runningServer
+	}
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		_, err := s.aggregatorRunner.Configure(s.options, serverConfig, delegate, s.scheme, builders)
 		if err != nil {
 			return err
 		}
-	} else {
+	}
+
+	if s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
+		runningServer, err = s.aggregatorRunner.Run(ctx, transport, s.stoppedCh)
+		if err != nil {
+			s.log.Error("extra runner failed", "error", err)
+			return err
+		}
+	}
+
+	if !s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) &&
+		!s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator) {
 		runningServer, err = s.startCoreServer(ctx, transport, server)
 		if err != nil {
 			return err
@@ -446,45 +459,6 @@ func (s *service) startDataplaneAggregator(
 
 	go func() {
 		s.stoppedCh <- prepared.RunWithContext(ctx)
-	}()
-
-	return aggregatorServer.GenericAPIServer, nil
-}
-
-func (s *service) createKubeAggregator(
-	serverConfig *genericapiserver.RecommendedConfig,
-	server *genericapiserver.GenericAPIServer,
-	reg prometheus.Registerer,
-) (*aggregatorapiserver.APIAggregator, error) {
-	namespaceMapper := request.GetNamespaceMapper(s.cfg)
-
-	aggregatorConfig, err := kubeaggregator.CreateAggregatorConfig(s.options, *serverConfig, namespaceMapper(1))
-	if err != nil {
-		return nil, err
-	}
-
-	return kubeaggregator.CreateAggregatorServer(aggregatorConfig, server, reg)
-}
-
-func (s *service) startKubeAggregator(
-	ctx context.Context,
-	transport *roundTripperFunc,
-	aggregatorServer *aggregatorapiserver.APIAggregator,
-) (*genericapiserver.GenericAPIServer, error) {
-	// setup the loopback transport for the aggregator server and signal that it's ready
-	// ignore the lint error because the response is passed directly to the client,
-	// so the client will be responsible for closing the response body.
-	// nolint:bodyclose
-	transport.fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.ready)
-
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return nil, err
-	}
-
-	go func() {
-		s.stoppedCh <- prepared.Run(ctx)
 	}()
 
 	return aggregatorServer.GenericAPIServer, nil

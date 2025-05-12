@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"golang.org/x/sync/singleflight"
-
 	"github.com/go-jose/go-jose/v3/jwt"
 	"github.com/prometheus/client_golang/prometheus"
+	"golang.org/x/sync/singleflight"
 
 	authnlib "github.com/grafana/authlib/authn"
 	claims "github.com/grafana/authlib/types"
@@ -116,12 +115,9 @@ func (s *Service) SignIdentity(ctx context.Context, id identity.Requester) (stri
 
 		token, err := s.signer.SignIDToken(ctx, idClaims)
 		if err != nil {
-			fmt.Println("Potat", err)
 			s.metrics.failedTokenSigningCounter.Inc()
 			return resultType{}, nil
 		}
-
-		fmt.Println("Potato", token)
 
 		extracted, err := s.extractTokenClaims(token)
 		if err != nil {

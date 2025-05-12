@@ -1,4 +1,4 @@
-package runner
+package aggregatorrunner
 
 import (
 	"context"
@@ -11,7 +11,7 @@ import (
 )
 
 // ExtraRunner is an interface for additional components that can be run alongside the API server.
-type ExtraRunner interface {
+type AggregatorRunner interface {
 	// Configure is called to configure the component and returns the delegate for further chaining.
 	Configure(opts *options.Options,
 		config *genericapiserver.RecommendedConfig,
@@ -21,9 +21,4 @@ type ExtraRunner interface {
 
 	// Run starts the component, expects it executes any logic inside a goroutine and doesn't block. Returns the running server.
 	Run(ctx context.Context, transport *options.RoundTripperFunc, stoppedCh chan error) (*genericapiserver.GenericAPIServer, error)
-}
-
-// ExtraRunnerConfigurator is an interface to fetch any extra runners that should be started.
-type ExtraRunnerConfigurator interface {
-	GetExtraRunners() []ExtraRunner
 }
