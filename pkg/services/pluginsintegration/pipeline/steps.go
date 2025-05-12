@@ -20,7 +20,6 @@ import (
 	"github.com/grafana/grafana/pkg/plugins/manager/registry"
 	"github.com/grafana/grafana/pkg/plugins/manager/signature"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginaccesscontrol"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginassets"
 )
 
 // ExternalServiceRegistration implements an InitializeFunc for registering external services.
@@ -141,9 +140,7 @@ func ReportTargetMetrics(_ context.Context, p *plugins.Plugin) (*plugins.Plugin,
 }
 
 type reportLoadingMetricsStep struct {
-	cfg          *config.PluginManagementCfg
-	pluginAssets *pluginassets.Service
-	// pluginsStore pluginStore.Store
+	cfg *config.PluginManagementCfg
 }
 
 func (s *reportLoadingMetricsStep) initialize(_ context.Context, p *plugins.Plugin) (*plugins.Plugin, error) {
@@ -157,6 +154,8 @@ func (s *reportLoadingMetricsStep) initialize(_ context.Context, p *plugins.Plug
 		method = "cdn"
 	case plugins.ClassExternal:
 		method = "fs"
+	case plugins.ClassCore:
+		method = "core"
 	}
 	metrics.SetPluginLoadInformation(p.ID, p.Info.Version, string(p.CloudProvisioningMethod), method)
 	return p, nil
