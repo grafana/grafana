@@ -923,6 +923,7 @@ export interface FeatureToggles {
   alertRuleRestore?: boolean;
   /**
   * Enables writing to data sources for Grafana-managed recording rules.
+  * @default false
   */
   grafanaManagedRecordingRulesDatasources?: boolean;
   /**
