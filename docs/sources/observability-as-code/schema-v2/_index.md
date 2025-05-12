@@ -27,7 +27,7 @@ Observability as Code works with all versions of the JSON model, and it's fully 
 ## Before you begin
 
 Schema v2 is automatically enabled with the Dynamic Dashboards feature toggle, `dashboardNewLayouts`.
-It also requires the new dashboards API feature toggle, `kubernetesDashboard`, to be enabled as well.
+It also requires the new dashboards API feature toggle, `kubernetesDashboards`, to be enabled as well.
 
 For more information on how dashboards behave depending on your feature flag configuration, refer to [Notes and limitations](#notes-and-limitations).
 
@@ -211,7 +211,7 @@ Upon saving, they’ll be updated to the new schema where you can take advantage
 
 ### Dashboard behavior with disabled feature flags
 
-If you disable the `dashboardNewLayouts` or `kubernetesDashboard` feature flags, you should be aware of how dashboards will behave.
+If you disable the `dashboardNewLayouts` or `kubernetesDashboards` feature flags, you should be aware of how dashboards will behave.
 
 #### Disable `dashboardNewLayouts`
 
@@ -222,7 +222,7 @@ If `dashboardNewLayouts` feature toggle is disabled, depending on how the dashbo
 - Dashboards built on the new schema by way of Terraform or the CLI - View and edit
 - Provisioned dashboards built on the new schema - View and edit, but the edit experience will be the old experience
 
-#### Disable `dashboardNewLayouts` and `kubernetesDashboard`
+#### Disable `dashboardNewLayouts` and `kubernetesDashboards`
 
 You’ll be unable to view or edit dashboards created or updated in the new schema.
 
