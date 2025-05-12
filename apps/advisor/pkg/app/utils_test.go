@@ -66,7 +66,7 @@ func TestProcessCheck(t *testing.T) {
 
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessMultipleCheckItems(t *testing.T) {
@@ -94,7 +94,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
 	r := client.lastValue.(advisorv0alpha1.CheckV0alpha1StatusReport)
 	assert.Equal(t, r.Count, int64(100))
 	assert.Len(t, r.Failures, 50)
@@ -102,7 +102,7 @@ func TestProcessMultipleCheckItems(t *testing.T) {
 
 func TestProcessCheck_AlreadyProcessed(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
-	obj.SetAnnotations(map[string]string{checks.StatusAnnotation: "processed"})
+	obj.SetAnnotations(map[string]string{checks.StatusAnnotation: checks.StatusAnnotationProcessed})
 	client := &mockClient{}
 	typesClient := &mockTypesClient{}
 	ctx := context.TODO()
@@ -131,12 +131,12 @@ func TestProcessCheck_RunError(t *testing.T) {
 
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.Error(t, err)
-	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, checks.StatusAnnotationError, obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessCheck_IgnoreSteps(t *testing.T) {
 	checkType := &advisorv0alpha1.CheckType{}
-	checkType.SetAnnotations(map[string]string{checks.IgnoreStepsAnnotation: "mock"})
+	checkType.SetAnnotations(map[string]string{checks.IgnoreStepsAnnotationList: "mock"})
 	typesClient := &mockTypesClient{
 		res: checkType,
 	}
@@ -156,8 +156,8 @@ func TestProcessCheck_IgnoreSteps(t *testing.T) {
 
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
-	assert.Equal(t, "mock", obj.GetAnnotations()[checks.IgnoreStepsAnnotation])
+	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, "mock", obj.GetAnnotations()[checks.IgnoreStepsAnnotationList])
 }
 
 func TestProcessCheck_RunRecoversFromPanic(t *testing.T) {
@@ -180,7 +180,7 @@ func TestProcessCheck_RunRecoversFromPanic(t *testing.T) {
 	err = processCheck(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "panic recovered in step")
-	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, checks.StatusAnnotationError, obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessCheckRetry_NoRetry(t *testing.T) {
@@ -205,7 +205,7 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{
 		checks.RetryAnnotation:  "item",
-		checks.StatusAnnotation: "processed",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
 	})
 	meta, err := utils.MetaAccessor(obj)
 	if err != nil {
@@ -223,14 +223,14 @@ func TestProcessCheckRetry_RetryError(t *testing.T) {
 
 	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.Error(t, err)
-	assert.Equal(t, "error", obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, checks.StatusAnnotationError, obj.GetAnnotations()[checks.StatusAnnotation])
 }
 
 func TestProcessCheckRetry_Success(t *testing.T) {
 	obj := &advisorv0alpha1.Check{}
 	obj.SetAnnotations(map[string]string{
 		checks.RetryAnnotation:  "item",
-		checks.StatusAnnotation: "processed",
+		checks.StatusAnnotation: checks.StatusAnnotationProcessed,
 	})
 	obj.CheckStatus.Report.Failures = []advisorv0alpha1.CheckReportFailure{
 		{
@@ -253,7 +253,7 @@ func TestProcessCheckRetry_Success(t *testing.T) {
 
 	err = processCheckRetry(ctx, logging.DefaultLogger, client, typesClient, obj, check)
 	assert.NoError(t, err)
-	assert.Equal(t, "processed", obj.GetAnnotations()[checks.StatusAnnotation])
+	assert.Equal(t, checks.StatusAnnotationProcessed, obj.GetAnnotations()[checks.StatusAnnotation])
 	assert.Empty(t, obj.GetAnnotations()[checks.RetryAnnotation])
 	assert.Empty(t, obj.CheckStatus.Report.Failures)
 }

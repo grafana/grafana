@@ -73,7 +73,7 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "check1",
 						Annotations: map[string]string{
-							checks.IgnoreStepsAnnotation: "step1",
+							checks.IgnoreStepsAnnotationList: "step1",
 						},
 					},
 				}, nil
@@ -82,8 +82,8 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 				return nil, k8sErrs.NewAlreadyExists(schema.GroupResource{}, obj.GetName())
 			},
 			updateFunc: func(ctx context.Context, id resource.Identifier, obj resource.Object, opts resource.UpdateOptions) (resource.Object, error) {
-				if obj.GetAnnotations()[checks.IgnoreStepsAnnotation] != "step1" {
-					return nil, fmt.Errorf("expected annotation %s, got %s", "step1", obj.GetAnnotations()[checks.IgnoreStepsAnnotation])
+				if obj.GetAnnotations()[checks.IgnoreStepsAnnotationList] != "step1" {
+					return nil, fmt.Errorf("expected annotation %s, got %s", "step1", obj.GetAnnotations()[checks.IgnoreStepsAnnotationList])
 				}
 				return obj, nil
 			},

@@ -84,8 +84,8 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 	}
 	// Set the status annotation to processed and annotate the steps ignored
 	annotations := checks.AddAnnotations(ctx, obj, map[string]string{
-		checks.StatusAnnotation:      checks.StatusAnnotationProcessed,
-		checks.IgnoreStepsAnnotation: checkType.GetAnnotations()[checks.IgnoreStepsAnnotation],
+		checks.StatusAnnotation:          checks.StatusAnnotationProcessed,
+		checks.IgnoreStepsAnnotationList: checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList],
 	})
 	return client.PatchInto(ctx, obj.GetStaticMetadata().Identifier(), resource.PatchRequest{
 		Operations: []resource.PatchOperation{
@@ -226,10 +226,10 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 }
 
 func filterSteps(checkType resource.Object, steps []checks.Step) ([]checks.Step, error) {
-	ignoreSteps := checkType.GetAnnotations()[checks.IgnoreStepsAnnotation]
-	if ignoreSteps != "" && ignoreSteps != "1" { // 1 is the default value for the annotation
+	ignoreStepsList := checkType.GetAnnotations()[checks.IgnoreStepsAnnotationList]
+	if ignoreStepsList != "" {
 		filteredSteps := []checks.Step{}
-		ignoreStepsList := strings.Split(ignoreSteps, ",")
+		ignoreStepsList := strings.Split(ignoreStepsList, ",")
 		for _, step := range steps {
 			if !slices.Contains(ignoreStepsList, step.ID()) {
 				filteredSteps = append(filteredSteps, step)
