@@ -1,4 +1,4 @@
-import { css } from '@emotion/css';
+import { css, cx } from '@emotion/css';
 import { DragDropContext, Droppable } from '@hello-pangea/dnd';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -68,12 +68,10 @@ export function TabsLayoutManagerRenderer({ model }: SceneComponentProps<TabsLay
       </TabsBar>
 
       {isEditing && (
-        <div className={conditionalRenderingClass}>
-          <TabContent className={styles.tabContentContainer}>
-            {currentTab && <layout.Component model={layout} />}
-          </TabContent>
+        <TabContent className={cx(styles.tabContentContainer, conditionalRenderingClass)}>
+          {currentTab && <layout.Component model={layout} />}
           {conditionalRenderingOverlay}
-        </div>
+        </TabContent>
       )}
 
       {!isEditing && (
@@ -115,6 +113,7 @@ const getStyles = (theme: GrafanaTheme2) => ({
   }),
   tabContentContainer: css({
     backgroundColor: 'transparent',
+    position: 'relative',
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
