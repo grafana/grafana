@@ -16,7 +16,6 @@ import {
 } from '../../edit-pane/shared';
 import { serializeRowsLayout } from '../../serialization/layoutSerializers/RowsLayoutSerializer';
 import { isClonedKey, joinCloneKeys } from '../../utils/clone';
-import { dashboardSceneGraph } from '../../utils/dashboardSceneGraph';
 import { getDashboardSceneFor } from '../../utils/utils';
 import { DashboardGridItem } from '../layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from '../layout-default/DefaultGridLayoutManager';
@@ -60,22 +59,7 @@ export class RowsLayoutManager extends SceneObjectBase<RowsLayoutManagerState> i
 
   public readonly descriptor = RowsLayoutManager.descriptor;
 
-  public addPanel(vizPanel: VizPanel) {
-    // Try to add new panels to the selected row
-    const selectedRows = dashboardSceneGraph.getAllSelectedObjects(this).filter((obj) => obj instanceof RowItem);
-    if (selectedRows.length > 0) {
-      return selectedRows.forEach((row) => row.onAddPanel(vizPanel));
-    }
-
-    // If we don't have selected row add it to the first row
-    if (this.state.rows.length > 0) {
-      return this.state.rows[0].onAddPanel(vizPanel);
-    }
-
-    // Otherwise fallback to adding a new row and a panel
-    this.addNewRow();
-    this.state.rows[this.state.rows.length - 1].onAddPanel(vizPanel);
-  }
+  public addPanel(vizPanel: VizPanel) {}
 
   public getVizPanels(): VizPanel[] {
     const panels: VizPanel[] = [];
