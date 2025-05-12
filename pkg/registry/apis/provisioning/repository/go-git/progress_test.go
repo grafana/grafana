@@ -55,5 +55,4 @@ func TestProgressParsing(t *testing.T) {
 			}, time.Millisecond*100, time.Microsecond*50)
 		})
 	}
-
 }
