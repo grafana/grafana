@@ -1,16 +1,16 @@
+import { noop } from 'lodash';
 import { FormEvent, useState } from 'react';
 import { useAsync } from 'react-use';
 
 import { DataSourceInstanceSettings, MetricFindValue, getDataSourceRef } from '@grafana/data';
+import { Trans } from '@grafana/i18n';
+import { t } from '@grafana/i18n/internal';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { AdHocFiltersVariable, SceneVariable } from '@grafana/scenes';
-
-import { AdHocVariableForm } from '../components/AdHocVariableForm';
 import { Box, Button, Modal } from '@grafana/ui';
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
-import { Trans } from 'react-i18next';
-import { t } from '@grafana/i18n/internal';
-import { noop } from 'lodash';
+
+import { AdHocVariableForm } from '../components/AdHocVariableForm';
 
 interface AdHocFiltersVariableEditorProps {
   variable: AdHocFiltersVariable;
@@ -99,7 +99,7 @@ export function ModalEditor({ variable }: { variable: AdHocFiltersVariable }) {
         isOpen={isOpen}
         onDismiss={() => setIsOpen(false)}
       >
-        <AdHocFiltersVariableEditor variable={variable} onRunQuery={noop} inline={true}/>
+        <AdHocFiltersVariableEditor variable={variable} onRunQuery={noop} inline={true} />
         <Modal.ButtonRow>
           <Button variant="secondary" fill="outline" onClick={() => setIsOpen(false)}>
             <Trans i18nKey="dashboard.edit-pane.variable.modal-options.close">Close</Trans>

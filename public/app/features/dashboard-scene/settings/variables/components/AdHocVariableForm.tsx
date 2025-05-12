@@ -47,9 +47,9 @@ export function AdHocVariableForm({
   return (
     <>
       {!inline && (
-      <VariableLegend>
-        <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
-      </VariableLegend>
+        <VariableLegend>
+          <Trans i18nKey="dashboard-scene.ad-hoc-variable-form.adhoc-options">Ad-hoc options</Trans>
+        </VariableLegend>
       )}
       <Field
         label={t('dashboard-scene.ad-hoc-variable-form.label-data-source', 'Data source')}
@@ -106,7 +106,7 @@ export function AdHocVariableForm({
         </>
       )}
 
-      {onAllowCustomValueChange && (
+      {!inline && onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue ?? true}
           name="Allow custom values"
