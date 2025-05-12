@@ -269,10 +269,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Placeholder feature flag for internal testing
-  */
-  wargamesTesting?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
@@ -375,10 +371,6 @@ export interface FeatureToggles {
   */
   alertmanagerRemotePrimary?: boolean;
   /**
-  * Disable the internal Alertmanager and only use the external one defined.
-  */
-  alertmanagerRemoteOnly?: boolean;
-  /**
   * Change the way annotation permissions work by scoping them to folders and dashboards.
   * @default true
   */
@@ -428,11 +420,6 @@ export interface FeatureToggles {
   * @default true
   */
   logsInfiniteScrolling?: boolean;
-  /**
-  * Enables users to easily configure alert notifications by specifying a contact point directly when editing or creating an alert rule
-  * @default true
-  */
-  alertingSimplifiedRouting?: boolean;
   /**
   * Enable filtering menu displayed when text of a log line is selected
   * @default true

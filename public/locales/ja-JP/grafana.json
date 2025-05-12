@@ -103,6 +103,7 @@
     },
     "feature-listing": {
       "title-auditing": "監査",
+      "title-custom-branding": "",
       "title-dashboard-presence-indicators": "ダッシュボードのプレゼンス表示",
       "title-dashboard-usage-stats-drawer": "ダッシュボード使用状況統計パネル",
       "title-data-source-permissions": "データソースの権限",
@@ -114,8 +115,7 @@
       "title-saml-authentication": "SAML認証",
       "title-settings-updates-at-runtime": "実行中の設定更新",
       "title-sort-dashboards-by-popularity-in-search": "検索時に人気度順にダッシュボードを並べ替え",
-      "title-team-sync": "チーム同期",
-      "title-white-labeling": "ホワイトラベリング"
+      "title-team-sync": "チーム同期"
     },
     "feature-toggles": {
       "restart-pending": "最新の機能切り替えの変更を適用するために、Grafanaインスタンスの再起動は保留中です",
@@ -320,6 +320,9 @@
     }
   },
   "alerting": {
+    "active-timing-fields": {
+      "am-active-timing-select-label-active-timings": ""
+    },
     "add-button": {
       "add-more": "さらに追加"
     },
@@ -577,6 +580,8 @@
     },
     "am-routes-expanded-form": {
       "add-matcher": "マッチャーを追加",
+      "am-active-timing-select-label-active-timings": "",
+      "am-mute-timing-select-description-add-active-timing-to-policy": "",
       "am-mute-timing-select-description-add-mute-timing-to-policy": "ポリシーにミュート期間を追加",
       "am-mute-timing-select-label-mute-timings": "ミュート期間",
       "aria-label-group-by": "グループ化",
@@ -613,6 +618,17 @@
       },
       "link-dashboard-and-panel": "ダッシュボードとパネルをリンク",
       "placeholder-value-input-default": "カスタム注釈内容を入力..."
+    },
+    "bulk-actions": {
+      "delete": {
+        "success": ""
+      },
+      "pause": {
+        "success": ""
+      },
+      "unpause": {
+        "success": ""
+      }
     },
     "central-alert-history": {
       "details": {
@@ -1024,6 +1040,33 @@
     },
     "filter-view-results": {
       "aria-label-filteredrulelist": "フィルター済みルールリスト"
+    },
+    "folder-bulk-actions": {
+      "delete": {
+        "button": {
+          "label": ""
+        }
+      },
+      "delete-modal-confirmation-text": "",
+      "delete-modal-delete-button": "",
+      "delete-modal-deleting": "",
+      "delete-modal-text": "",
+      "delete-modal-title": "",
+      "error": "",
+      "more-button": {
+        "title": "",
+        "tooltip": ""
+      },
+      "pause": {
+        "button": {
+          "label": ""
+        }
+      },
+      "unpause": {
+        "button": {
+          "label": ""
+        }
+      }
     },
     "folder-selector": {
       "description-select-folder": "ルールを保存するフォルダを選択します。"
@@ -1444,29 +1487,21 @@
       "aria-label": "その他",
       "button-text": "その他"
     },
-    "mute_timings": {
-      "error-loading": {
-        "description": "ミュートタイミングを読み込めませんでした。後でもう一度お試しください。",
-        "title": "ミュートタイミングの読み込み中にエラーが発生しました"
-      }
-    },
     "mute-timing-actions-buttons": {
       "text-disabled": "無効",
       "title-delete-mute-timing": "ミュート期間を削除"
     },
     "mute-timing-fields": {
+      "am-active-timing-select-description-active-timings": "",
       "am-mute-timing-select-description-mute-timings": "このアラートルールの通知を送信しない時間帯を定めるミュート期間を選択してください",
       "am-mute-timing-select-label-mute-timings": "ミュート期間"
     },
     "mute-timing-form": {
-      "description-unique-timing": "ミュート期間の一意の名前",
-      "label-name": "",
-      "text-loading-mute-timing": "ミュート期間を読み込み中",
-      "title-no-matching-mute-timing-found": "一致するミュート期間が見つかりません"
+      "label-name": ""
     },
     "mute-timing-time-interval": {
-      "add-another-time-interval": "別の時間間隔を追加",
-      "description": "時間間隔は、期間内のある時点を定義するものです。すべてのフィールドはリストであり、フィールドに一致するには少なくとも1つのリスト要素が合致する必要があります。フィールドが空白のままだと、そのフィールドにあらゆる時点が一致します。ある時点がすべての時間間隔と一致するには、すべてのフィールドが一致しなければなりません。ミュート期間には複数の時間間隔を含めることができます。",
+      "add-another-time-interval-item": "",
+      "description": "",
       "description-dats-of-the-month": "月の特定の日付（1:31）。負の値を使用すると、月末から数えた日を表すことができます",
       "description-months": "月（数字または月名で表記）",
       "label-days-of-the-month": "月の特定の日付",
@@ -1492,21 +1527,6 @@
       "mute-timing-starts-at-placeholder-hhmm": "時:分",
       "title-remove": "",
       "tooltip-remove-time-range": "時間範囲を削除"
-    },
-    "mute-timings": {
-      "add-mute-timing": "ミュートタイミングを追加",
-      "description": "通知を送信しない特定の時間間隔を入力するか、定期的に通知を停止します。",
-      "save": "ミュートタイミングを保存",
-      "saving": "ミュートタイミングを保存"
-    },
-    "mute-timings-selector": {
-      "aria-label-mute-timings": "ミュート期間",
-      "placeholder-select-mute-timings": "ミュート期間を選択..."
-    },
-    "mute-timings-table": {
-      "text-havent-created-timings": "まだミュート期間を作成していません",
-      "text-loading-mute-timings": "ミュート期間を読み込み中...",
-      "text-no-mute-timings-configured": "ミュート期間が設定されていません"
     },
     "namespace": {
       "title-alert-rules": ""
@@ -1548,8 +1568,8 @@
       "title-notification-policies-have-changed": "通知ポリシーが変更されました"
     },
     "notification-policies-tabs": {
-      "label-mute-timings": "ミュート期間",
-      "label-notification-policies": "通知ポリシー"
+      "label-notification-policies": "通知ポリシー",
+      "label-time-intervals": ""
     },
     "notification-policy-matchers": {
       "default-policy": "",
@@ -2379,6 +2399,32 @@
       "input": "入力",
       "stop-alerting-when": ""
     },
+    "time-interval": {
+      "add-time-interval": "",
+      "save": "",
+      "saving": ""
+    },
+    "time-interval-form": {
+      "description-unique-time-interval": "",
+      "text-loading-time-interval": "",
+      "title-no-matching-time-interval-found": ""
+    },
+    "time-intervals": {
+      "description": "",
+      "error-loading": {
+        "description": "",
+        "title": ""
+      }
+    },
+    "time-intervals-selector": {
+      "aria-label-time-intervals": "",
+      "placeholder-select-time-intervals": ""
+    },
+    "time-intervals-table": {
+      "text-havent-created-time-intervals": "",
+      "text-loading-time-intervals": "",
+      "text-no-time-intervals-configured": ""
+    },
     "timeseries-row": {
       "time-series-data": "時系列データ",
       "timestamp": "",
@@ -2569,16 +2615,109 @@
       "refer-documentation-configure-authentication": "認証の設定方法についてはドキュメントを参照してください"
     },
     "fields": {
+      "allow-assign-grafana-admin-description": "",
+      "allow-assign-grafana-admin-label": "",
+      "allow-sign-up-description": "",
+      "allow-sign-up-label": "",
+      "allowed-domains-description": "",
+      "allowed-domains-label": "",
       "allowed-groups-description": "カンマまたはスペースで区切られたグループのリスト。ユーザーがログインするには、少なくとも1つのグループに所属している必要があります。",
       "allowed-groups-description-oauth": "",
+      "allowed-groups-label": "",
+      "allowed-groups-object-ids": "",
+      "allowed-organizations-description": "",
+      "allowed-organizations-label": "",
+      "allowed-organizations-placeholder": "",
       "api-url-description": "OAuth2プロバイダーのユーザー情報エンドポイント。このエンドポイントから返される情報は<2>OpenID UserInfo</2>と互換性がある必要があります。",
+      "api-url-required": "",
+      "auth-style-description": "",
+      "auth-style-label": "",
+      "auth-url-description": "",
+      "auth-url-required": "",
+      "auto-login-description": "",
+      "auto-login-label": "",
+      "client-authentication-description": "",
+      "client-authentication-label": "",
+      "client-authentication-none": "",
+      "client-id-description": "",
+      "client-secret-description": "",
+      "define-allowed-groups-label": "",
+      "define-allowed-teams-ids-label": "",
+      "display-name-description": "",
+      "display-name-label": "",
+      "email-attribute-name-description": "",
+      "email-attribute-name-label": "",
+      "email-attribute-path-description": "",
+      "email-attribute-path-label": "",
+      "federated-credential-audience-description": "",
+      "federated-credential-audience-label": "",
+      "force-use-graph-api-description": "",
+      "force-use-graph-api-label": "",
+      "groups-attribute-path-description": "",
+      "groups-attribute-path-label": "",
+      "hosted-domain-description": "",
+      "hosted-domain-label": "",
+      "id-token-attribute-name-description": "",
+      "id-token-attribute-name-label": "",
+      "login-attribute-path-description": "",
+      "login-attribute-path-label": "",
+      "managed-identity-client-id-description": "",
+      "managed-identity-client-id-label": "",
+      "name-attribute-path-description": "",
+      "name-attribute-path-label": "",
+      "org-mapping-description-azuread": "",
+      "org-mapping-description-generic": "",
+      "org-mapping-description-github": "",
+      "org-mapping-description-gitlab": "",
+      "org-mapping-description-google": "",
+      "organization-attribute-path-description": "",
+      "organization-attribute-path-label": "",
+      "organization-mapping-label": "",
+      "organization-mapping-placeholder": "",
+      "required": "",
+      "role-attribute-path-description": "",
+      "role-attribute-path-label": "",
+      "role-attribute-strict-description": "",
+      "role-attribute-strict-label": "",
+      "scopes-description": "",
+      "section-extra-security": "",
+      "section-general-settings": "",
+      "section-user-mapping": "",
+      "server-discovery-url-description": "",
+      "signout-redirect-url-description": "",
+      "signout-redirect-url-label": "",
+      "skip-org-role-sync-description": "",
+      "skip-org-role-sync-label": "",
+      "team-ids-attribute-path-description": "",
+      "team-ids-attribute-path-label": "",
+      "team-ids-attribute-path-required": "",
       "team-ids-description": "設定されている場合、ユーザーはログインするには、指定されたチームのいずれかに所属している必要があります。",
       "team-ids-description-oauth": "",
-      "team-ids-github": "チームIDの整数リスト。",
+      "team-ids-github": "",
+      "team-ids-label": "",
+      "team-ids-numbers": "",
       "team-ids-other": "チームIDの文字列リスト。",
-      "teams-url-description": "チームIDを照会するために使用するURL。設定されていない場合、デフォルト値は/teamsです。",
+      "team-ids-placeholder": "",
+      "teams-url-description": "",
       "teams-url-description-oauth": "",
-      "use-pkce-description": "有効にすると、Grafanaは<2>OAuth2認証コード付与でコード交換用証明キー（PKCE）</2>を使用します。"
+      "teams-url-label": "",
+      "teams-url-required": "",
+      "tls-client-ca-description": "",
+      "tls-client-ca-label": "",
+      "tls-client-cert-description": "",
+      "tls-client-cert-label": "",
+      "tls-client-key-description": "",
+      "tls-client-key-label": "",
+      "tls-skip-verify-description": "",
+      "tls-skip-verify-label": "",
+      "token-url-description": "",
+      "token-url-required": "",
+      "use-pkce-description": "有効にすると、Grafanaは<2>OAuth2認証コード付与でコード交換用証明キー（PKCE）</2>を使用します。",
+      "use-pkce-label": "",
+      "use-refresh-token-description": "",
+      "use-refresh-token-label": "",
+      "validate-hosted-domain-description": "",
+      "validate-hosted-domain-label": ""
     },
     "provider-card": {
       "text-badge-enabled": "",
@@ -2588,12 +2727,15 @@
       "additional-actions-menu": {
         "label-reset-to-default-values": "デフォルト値にリセット"
       },
+      "disable": "",
+      "disabling": "",
       "discard": "破棄",
       "enabled-label-enabled": "",
       "label-enabled": "有効",
       "reset-configuration": "この設定をリセットしてもよろしいですか？",
       "reset-configuration-description": "これらの設定をリセットすると、Grafanaはシステム（設定ファイル/環境変数）からのプロバイダー設定（存在する場合）を使用します。",
       "save": "",
+      "save-and-enable": "",
       "saving": "",
       "title-more-actions": "その他の操作",
       "title-reset": "リセット",
@@ -2643,6 +2785,10 @@
     },
     "actions": {
       "button-to-recently-deleted": "最近削除された"
+    },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
     },
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
@@ -3255,6 +3401,11 @@
         "name": "",
         "open-editor": "変数エディタを開く",
         "open-editor-tooltip": "その他の変数オプションは変数エディタで設定できます",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "カスタム値を許可",
           "allow-custom-values-description": "ユーザーが値を入力できるようにします",
@@ -4075,6 +4226,9 @@
       "label-data-source": "",
       "query-options": "クエリオプション",
       "selection-options": "選択オプション"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
@@ -5200,9 +5354,6 @@
     "discard-button": "未保存の変更を破棄しますか？",
     "title": "このページを離れますか？"
   },
-  "frontendtests": {
-    "test-key": "テストキーが見つかりません"
-  },
   "gen-ai": {
     "apply-suggestion": "適用",
     "incomplete-request-error": "申し訳ありませんが、リクエストを完了できませんでした。もう一度やり直してください。",
@@ -6063,8 +6214,8 @@
       "escape-newlines": "ログ行で誤ってエスケープされた改行とタブシーケンスを修正",
       "hide-timestamps": "タイムスタンプを非表示",
       "hide-unique-labels": "一意のラベルを非表示",
-      "newest-first": "最新のログ順",
-      "oldest-first": "古いログ順",
+      "newest-first": "",
+      "oldest-first": "",
       "prettify-json": "JSONログを展開",
       "remove-escaping": "エスケープを削除",
       "scroll-bottom": "",

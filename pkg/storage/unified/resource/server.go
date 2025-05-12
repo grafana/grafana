@@ -158,6 +158,9 @@ type SearchOptions struct {
 
 	// Skip building index on startup for small indexes
 	InitMinCount int
+
+	// Channel to watch for index events (for testing)
+	IndexEventsChan chan *IndexEvent
 }
 
 type ResourceServerOptions struct {
