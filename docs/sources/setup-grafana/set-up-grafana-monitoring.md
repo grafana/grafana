@@ -24,13 +24,13 @@ Grafana can emit Jaeger or OpenTelemetry Protocol (OTLP) traces for its HTTP API
 All HTTP endpoints are logged evenly (annotations, dashboard, tags, and so on).
 When a trace ID is propagated, it is reported with operation 'HTTP /datasources/proxy/:id/\*'.
 
-Refer to [Configuration's OpenTelemetry section]({{< relref "./configure-grafana#tracingopentelemetry" >}}) for a reference of tracing options available in Grafana.
+Refer to [Configuration's OpenTelemetry section](../configure-grafana/#tracingopentelemetry) for a reference of tracing options available in Grafana.
 
 ## View Grafana internal metrics
 
 Grafana collects some metrics about itself internally. Grafana supports pushing metrics to Graphite or exposing them to be scraped by Prometheus.
 
-For more information about configuration options related to Grafana metrics, refer to [metrics]({{< relref "./configure-grafana#metrics" >}}) and [metrics.graphite]({{< relref "./configure-grafana#metricsgraphite" >}}) in [Configuration]({{< relref "./configure-grafana" >}}).
+For more information about configuration options related to Grafana metrics, refer to [metrics](../configure-grafana/#metrics) and [metrics.graphite](../configure-grafana/#metricsgraphite) in [Configuration](../configure-grafana/).
 
 ### Available metrics
 

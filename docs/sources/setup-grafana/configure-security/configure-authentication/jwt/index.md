@@ -31,7 +31,7 @@ Grafana does not currently support refresh tokens.
 
 To use JWT authentication:
 
-1. Enable JWT in the [main config file]({{< relref "../../../configure-grafana" >}}).
+1. Enable JWT in the [main config file](../../../configure-grafana/).
 1. Specify the header name that contains a token.
 
 ```ini
@@ -106,7 +106,7 @@ provided in the HTTP header and a reverse proxy should rewrite requests to the
 Grafana instance to include the JWT in the request's headers.
 
 {{% admonition type="note" %}}
-For embedding to work, you must enable `allow_embedding` in the [security section]({{< relref "../../../configure-grafana#allow_embedding" >}}). This setting is not available in Grafana Cloud.
+For embedding to work, you must enable `allow_embedding` in the [security section](../../../configure-grafana/#allow_embedding). This setting is not available in Grafana Cloud.
 {{% /admonition %}}
 
 In a scenario where it is not possible to rewrite the request headers you
@@ -200,7 +200,7 @@ expect_claims = {"iss": "https://your-token-issuer", "your-custom-claim": "foo"}
 Grafana checks for the presence of a role using the [JMESPath](http://jmespath.org/examples.html) specified via the `role_attribute_path` configuration option. The JMESPath is applied to JWT token claims. The result after evaluation of the `role_attribute_path` JMESPath expression should be a valid Grafana role, for example, `None`, `Viewer`, `Editor` or `Admin`.
 
 To assign the role to a specific organization include the `X-Grafana-Org-Id` header along with your JWT when making API requests to Grafana.
-To learn more about the header, please refer to the [documentation]({{< relref "../../../../developers/http_api#x-grafana-org-id-header" >}}).
+To learn more about the header, please refer to the [documentation](../../../../developers/http_api/#x-grafana-org-id-header).
 
 ### JMESPath examples
 

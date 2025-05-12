@@ -24,7 +24,7 @@ weight: 900
 This topic describes how to configure GitHub OAuth authentication.
 
 {{% admonition type="note" %}}
-If Users use the same email address in GitHub that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers]({{< relref "../../configure-authentication#using-the-same-email-address-to-login-with-different-identity-providers" >}}) documentation for more information.
+If Users use the same email address in GitHub that they use with other authentication providers (such as Grafana.com), you need to do additional configuration to ensure that the users are matched correctly. Please refer to the [Using the same email address to login with different identity providers](../#using-the-same-email-address-to-login-with-different-identity-providers) documentation for more information.
 {{% /admonition %}}
 
 ## Before you begin
@@ -57,7 +57,7 @@ If you need to reset changes you made in the UI back to the default values, clic
 If you run Grafana in high availability mode, configuration changes may not get applied to all Grafana instances immediately. You may need to wait a few minutes for the configuration to propagate to all Grafana instances.
 {{% /admonition %}}
 
-Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
+Refer to [configuration options](#configuration-options) for more information.
 
 ## Configure GitHub authentication client using the Terraform provider
 
@@ -87,7 +87,7 @@ Go to [Terraform Registry](https://registry.terraform.io/providers/grafana/grafa
 
 ## Configure GitHub authentication client using the Grafana configuration file
 
-Ensure that you have access to the [Grafana configuration file]({{< relref "../../../configure-grafana#configuration-file-location" >}}).
+Ensure that you have access to the [Grafana configuration file](../../../configure-grafana/#configuration-file-location).
 
 ### Configure GitHub authentication
 
@@ -107,10 +107,10 @@ To configure GitHub authentication with Grafana, follow these steps:
    | `client_id`, `client_secret` | These values must match the client ID and client secret from your GitHub OAuth app. |
    | `enabled`                    | Enables GitHub authentication. Set this value to `true`.                            |
 
-   Review the list of other GitHub [configuration options]({{< relref "#configuration-options" >}}) and complete them, as necessary.
+   Review the list of other GitHub [configuration options](#configuration-options) and complete them, as necessary.
 
-1. [Configure role mapping]({{< relref "#configure-role-mapping" >}}).
-1. Optional: [Configure group synchronization]({{< relref "#configure-group-synchronization" >}}).
+1. [Configure role mapping](#configure-role-mapping).
+1. Optional: [Configure group synchronization](#configure-group-synchronization).
 1. Restart Grafana.
 
    You should now see a GitHub login button on the login page and be able to log in or sign up with your GitHub accounts.
@@ -121,9 +121,9 @@ Unless `skip_org_role_sync` option is enabled, the user's role will be set to th
 
 The user's role is retrieved using a [JMESPath](http://jmespath.org/examples.html) expression from the `role_attribute_path` configuration option.
 To map the server administrator role, use the `allow_assign_grafana_admin` configuration option.
-Refer to [configuration options]({{< relref "#configuration-options" >}}) for more information.
+Refer to [configuration options](#configuration-options) for more information.
 
-If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option]({{< relref "../../../configure-grafana#auto_assign_org_role" >}}).
+If no valid role is found, the user is assigned the role specified by [the `auto_assign_org_role` option](../../../configure-grafana/#auto_assign_org_role).
 You can disable this default role assignment by setting `role_attribute_strict = true`. This setting denies user access if no role or an invalid role is returned after evaluating the `role_attribute_path` and the `org_mapping` expressions.
 
 You can use the `org_mapping` configuration options to assign the user to organizations and specify their role based on their GitHub team membership. For more information, refer to [Org roles mapping example](#org-roles-mapping-example). If both org role mapping (`org_mapping`) and the regular role mapping (`role_attribute_path`) are specified, then the user will get the highest of the two mapped roles.
@@ -236,7 +236,7 @@ To learn more about group synchronization, refer to [Configure team sync](https:
 
 ## Configuration options
 
-The table below describes all GitHub OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables]({{< relref "../../../configure-grafana#override-configuration-with-environment-variables" >}}).
+The table below describes all GitHub OAuth configuration options. You can apply these options as environment variables, similar to any other configuration within Grafana. For more information, refer to [Override configuration with environment variables](../../../configure-grafana/#override-configuration-with-environment-variables).
 
 {{< admonition type="note" >}}
 If the configuration option requires a JMESPath expression that includes a colon, enclose the entire expression in quotes to prevent parsing errors. For example `role_attribute_path: "role:view"`
@@ -259,7 +259,7 @@ If the configuration option requires a JMESPath expression that includes a colon
 | `role_attribute_strict`      | No       | Yes                | Set to `true` to deny user login if the Grafana org role cannot be extracted using `role_attribute_path` or `org_mapping`. For more information on user role mapping, refer to [Configure role mapping](#org-roles-mapping-example).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `false`                                       |
 | `org_mapping`                | No       | No                 | List of comma- or space-separated `<ExternalGitHubTeamName>:<OrgIdOrName>:<Role>` mappings. Value can be `*` meaning "All users". Role is optional and can have the following values: `None`, `Viewer`, `Editor` or `Admin`. For more information on external organization to role mapping, refer to [Org roles mapping example](#org-roles-mapping-example).                                                                                                                                                                                                                                                                                                                                                         |                                               |
 | `skip_org_role_sync`         | No       | Yes                | Set to `true` to stop automatically syncing user roles.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | `false`                                       |
-| `allow_assign_grafana_admin` | No       | No                 | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping]({{< relref "#configure-role-mapping" >}}).                                                                                                            | `false`                                       |
+| `allow_assign_grafana_admin` | No       | No                 | Set to `true` to enable automatic sync of the Grafana server administrator role. If this option is set to `true` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user the server administrator privileges and organization administrator role. If this option is set to `false` and the result of evaluating `role_attribute_path` for a user is `GrafanaAdmin`, Grafana grants the user only organization administrator role. For more information on user role mapping, refer to [Configure role mapping](#configure-role-mapping).                                                                                                                             | `false`                                       |
 | `allowed_organizations`      | No       | Yes                | List of comma- or space-separated organizations. User must be a member of at least one organization to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                                               |
 | `allowed_domains`            | No       | Yes                | List of comma- or space-separated domains. User must belong to at least one domain to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |                                               |
 | `team_ids`                   | No       | Yes                | Integer list of team IDs. If set, user has to be a member of one of the given teams to log in.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |                                               |

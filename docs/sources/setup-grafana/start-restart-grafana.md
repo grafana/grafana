@@ -210,5 +210,5 @@ To restart Grafana:
 
 After the Grafana server is up and running, consider taking the next steps:
 
-- Refer to [Get Started]({{< relref "../getting-started" >}}) to learn how to build your first dashboard.
-- Refer to [Configuration]({{< relref "./configure-grafana" >}}) to learn about how you can customize your environment.
+- Refer to [Get Started](../../getting-started/) to learn how to build your first dashboard.
+- Refer to [Configuration](../configure-grafana/) to learn about how you can customize your environment.

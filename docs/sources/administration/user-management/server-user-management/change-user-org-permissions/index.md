@@ -11,11 +11,11 @@ weight: 50
 
 # Change a user's organization permissions
 
-Update organization permissions when you want to enhance or restrict a user's access to organization resources. For more information about organization permissions, refer to [Organization roles]({{< relref "../../../roles-and-permissions/#organization-roles" >}}).
+Update organization permissions when you want to enhance or restrict a user's access to organization resources. For more information about organization permissions, refer to [Organization roles](../../../roles-and-permissions/#organization-roles).
 
 ## Before you begin
 
-- [Add a user to an organization]({{< relref "./add-remove-user-to-org/" >}})
+- [Add a user to an organization](../add-remove-user-to-org/)
 - Ensure you have Grafana server administrator privileges
 
 **To change a user's organization permissions**:
