@@ -16,8 +16,7 @@ Groups are mapped to [fixed](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/
 > **Note:** Available in [Grafana Enterprise](https://grafana.com/docs/grafana/<GRAFANA_VERSION>/introduction/grafana-enterprise) and [Grafana Cloud](/docs/grafana-cloud/).
 
 {{% admonition type="note" %}}
-This feature is behind the `groupAttributeSync` feature toggle.
-You can enable feature toggles through configuration file or environment variables. See configuration [docs](/docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#feature_toggles) for details.
+This feature is currently in [private preview](https://grafana.com/docs/release-life-cycle/#private-preview) and behind the `groupAttributeSync` feature toggle. Please contact support to have this feature enabled.
 {{% /admonition %}}
 
 When a user logs in, Grafana checks the user's external group memberships and the configured group to role mappings to assign the corresponding roles to the user.
