@@ -183,9 +183,7 @@ function ExportAsImageRenderer({ model }: SceneComponentProps<ExportAsImage>) {
   return (
     <>
       <p className={styles.info}>
-        <Trans i18nKey="share-modal.image.info-text">
-          Save this dashboard as an image file. The image will be captured at high resolution.
-        </Trans>
+        <Trans i18nKey="share-modal.image.info-text">Save this dashboard as an image.</Trans>
       </p>
 
       <Field label={t('share-modal.image.format-label', 'Format')}>
