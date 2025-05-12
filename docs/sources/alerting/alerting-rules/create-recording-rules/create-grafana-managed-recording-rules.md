@@ -78,6 +78,18 @@ basic_auth_password = my-pass
 X-My-Header = MyValue
 ```
 
+### Per-rule data source
+
+To choose the remote-write Prometheus data source individually for each recording rule, also enable the `grafanaManagedRecordingRulesDatasources` feature flag.
+
+When this flag is on, Grafana does not use the `url` defined in the configuration file, and the rule editor shows a dropdown to select the target data source. If a rule does not specify a target, for example it was created before the flag was enabled, Grafana writes to the data source identified by `default_datasource_uid` in the Grafana configuration:
+
+```
+[recording_rules]
+
+default_datasource_uid = my-uid
+```
+
 ## Add new recording rule
 
 To create a new Grafana-managed recording rule:
