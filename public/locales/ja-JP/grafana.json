@@ -2786,6 +2786,10 @@
     "actions": {
       "button-to-recently-deleted": "最近削除された"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "このフォルダは空です"
     },
@@ -3397,6 +3401,11 @@
         "name": "",
         "open-editor": "変数エディタを開く",
         "open-editor-tooltip": "その他の変数オプションは変数エディタで設定できます",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "カスタム値を許可",
           "allow-custom-values-description": "ユーザーが値を入力できるようにします",
@@ -4217,6 +4226,9 @@
       "label-data-source": "",
       "query-options": "クエリオプション",
       "selection-options": "選択オプション"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
@@ -5341,9 +5353,6 @@
     "description": "変更した内容が保存されない場合があります。",
     "discard-button": "未保存の変更を破棄しますか？",
     "title": "このページを離れますか？"
-  },
-  "frontendtests": {
-    "test-key": "テストキーが見つかりません"
   },
   "gen-ai": {
     "apply-suggestion": "適用",

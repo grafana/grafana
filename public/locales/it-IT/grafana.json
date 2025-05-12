@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Eliminati di recente"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Questa cartella è vuota"
     },
@@ -3415,6 +3419,11 @@
         "name": "",
         "open-editor": "Apri l'editor delle variabili",
         "open-editor-tooltip": "Per ulteriori opzioni sulle variabili, apri l'editor delle variabili",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Consenti valori personalizzati",
           "allow-custom-values-description": "Consente agli utenti di inserire valori",
@@ -4237,6 +4246,9 @@
       "label-data-source": "",
       "query-options": "Opzioni query",
       "selection-options": "Seleziona opzioni"
+    },
+    "query-variable-form": {
+      "label-editor": ""
     },
     "revert-dashboard-modal": {
       "body-restore-version": "Desideri davvero ripristinare la dashboard alla versione {{version}}? Tutte le modifiche non salvate andranno perse.",
@@ -5362,9 +5374,6 @@
     "description": "Le modifiche apportate potrebbero non essere salvate.",
     "discard-button": "Annulla le modifiche non salvate",
     "title": "Abbandonare la pagina?"
-  },
-  "frontendtests": {
-    "test-key": "chiave di prova non trovata"
   },
   "gen-ai": {
     "apply-suggestion": "Applica",
