@@ -886,46 +886,11 @@ function getPanelsV1(
   }
 
   for (const item of layout.spec.items) {
-    if (item.kind === 'GridLayoutItem') {
-      const panel = panels[item.spec.element.name];
-      const v1Panel = transformV2PanelToV1Panel(panel, item);
-      panelsV1.push(v1Panel);
-      if (v1Panel.id ?? 0 > maxPanelId) {
-        maxPanelId = v1Panel.id ?? 0;
-      }
-    } else if (item.kind === 'GridLayoutRow') {
-      const row: RowPanel = {
-        id: -1, // Temporarily set to -1, updated later to be unique
-        type: 'row',
-        title: item.spec.title,
-        collapsed: item.spec.collapsed,
-        repeat: item.spec.repeat ? item.spec.repeat.value : undefined,
-        gridPos: {
-          x: 0,
-          y: item.spec.y,
-          w: 24,
-          h: GRID_ROW_HEIGHT,
-        },
-        panels: [],
-      };
-
-      const rowPanels = [];
-      for (const panel of item.spec.elements) {
-        const panelElement = panels[panel.spec.element.name];
-        const v1Panel = transformV2PanelToV1Panel(panelElement, panel, item.spec.y + GRID_ROW_HEIGHT + panel.spec.y);
-        rowPanels.push(v1Panel);
-        if (v1Panel.id ?? 0 > maxPanelId) {
-          maxPanelId = v1Panel.id ?? 0;
-        }
-      }
-      if (item.spec.collapsed) {
-        // When a row is collapsed, panels inside it are stored in the panels property.
-        row.panels = rowPanels;
-        panelsV1.push(row);
-      } else {
-        panelsV1.push(row);
-        panelsV1.push(...rowPanels);
-      }
+    const panel = panels[item.spec.element.name];
+    const v1Panel = transformV2PanelToV1Panel(panel, item);
+    panelsV1.push(v1Panel);
+    if (v1Panel.id ?? 0 > maxPanelId) {
+      maxPanelId = v1Panel.id ?? 0;
     }
   }
 

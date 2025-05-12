@@ -292,30 +292,6 @@ export const handyTestingSchema: Spec = {
             y: 2,
           },
         },
-        {
-          kind: 'GridLayoutRow',
-          spec: {
-            y: 20,
-            collapsed: false,
-            title: 'Row 1',
-            repeat: { value: 'customVar', mode: 'variable' },
-            elements: [
-              {
-                kind: 'GridLayoutItem',
-                spec: {
-                  element: {
-                    kind: 'ElementReference',
-                    name: 'panel-3',
-                  },
-                  height: 10,
-                  width: 10,
-                  x: 0,
-                  y: 0,
-                },
-              },
-            ],
-          },
-        },
       ],
     },
   },

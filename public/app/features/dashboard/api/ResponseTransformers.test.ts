@@ -3,9 +3,7 @@ import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2
 import {
   Spec as DashboardV2Spec,
   GridLayoutItemKind,
-  GridLayoutItemSpec,
   GridLayoutKind,
-  GridLayoutRowSpec,
   PanelKind,
   VariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
@@ -584,48 +582,6 @@ describe('ResponseTransformers', () => {
           title: 'Just a shared table',
         },
       });
-
-      const rowSpec = layout.spec.items[2].spec as GridLayoutRowSpec;
-
-      expect(rowSpec.collapsed).toBe(false);
-      expect(rowSpec.title).toBe('Row test title');
-      expect(rowSpec.repeat).toBeUndefined();
-
-      const panelInRow = rowSpec.elements[0].spec as GridLayoutItemSpec;
-
-      expect(panelInRow).toEqual({
-        element: {
-          kind: 'ElementReference',
-          name: 'panel-4',
-        },
-        x: 0,
-        y: 0,
-        width: 16,
-        height: 8,
-      });
-
-      const collapsedRowSpec = layout.spec.items[3].spec as GridLayoutRowSpec;
-      expect(collapsedRowSpec.collapsed).toBe(true);
-      expect(collapsedRowSpec.title).toBe('Collapsed row title');
-      expect(collapsedRowSpec.repeat).toBeUndefined();
-
-      const panelInCollapsedRow = collapsedRowSpec.elements[0].spec as GridLayoutItemSpec;
-
-      expect(panelInCollapsedRow).toEqual({
-        element: {
-          kind: 'ElementReference',
-          name: 'panel-5',
-        },
-        x: 0,
-        y: 0,
-        width: 16,
-        height: 8,
-      });
-
-      const rowWithNoPanelProperty = layout.spec.items[4].spec as GridLayoutRowSpec;
-      expect(rowWithNoPanelProperty.collapsed).toBe(true);
-      expect(rowWithNoPanelProperty.title).toBe('Row with no panel property');
-      expect(rowWithNoPanelProperty.elements).toHaveLength(0);
 
       // Variables
       validateVariablesV1ToV2(spec.variables[0], dashboardV1.templating?.list?.[0]);
