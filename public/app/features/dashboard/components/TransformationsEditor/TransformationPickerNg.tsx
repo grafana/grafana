@@ -289,7 +289,7 @@ function getTransformationGridStyles(theme: GrafanaTheme2) {
 
 const getImagePath = (id: string, disabled: boolean) => {
   const folder = config.theme2.isDark ? 'dark' : 'light';
-  return `public/img/transformations/${folder}/${id}.svg`;
+  return `public/build/img/transformations/${folder}/${id}.svg`;
 };
 
 const TransformationDescriptionOverrides: { [key: string]: string } = {
