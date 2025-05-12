@@ -43,14 +43,13 @@ A contact point includes one or more contact point integrations for sending aler
 - Discord
 - Email
 - Google Chat
-- Grafana IRM
-- Jira
+- Grafana Oncall
 - Kafka REST Proxy
 - Line
 - Microsoft Teams
 - MQTT
 - Opsgenie
-- PagerDuty
+- Pagerduty
 - Pushover
 - Sensu Go
 - Slack
@@ -62,7 +61,7 @@ A contact point includes one or more contact point integrations for sending aler
 
 {{< /column-list >}}
 
-For example, a contact point could contain a PagerDuty integration; an email and Slack integration; or a PagerDuty integration, a Slack integration, and two email integrations. You can also configure a contact point with no integrations; in which case no notifications are sent.
+For example, a contact point could contain a Pagerduty integration; an email and Slack integration; or a Pagerduty integration, a Slack integration, and two email integrations. You can also configure a contact point with no integrations; in which case no notifications are sent.
 
 Each contact point integration can also define the notification message to be sent, which can use the predefined message, a custom message, or notification templates.
 

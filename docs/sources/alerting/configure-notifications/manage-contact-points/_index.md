@@ -26,11 +26,6 @@ labels:
 title: Configure contact points
 weight: 410
 refs:
-  alertmanager:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-alertmanager/
   sns:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-amazon-sns/
@@ -71,11 +66,11 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/pager-duty/
-  irm:
+  oncall:
     - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-irm/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
     - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-irm/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-oncall/
   slack:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-slack/
@@ -101,11 +96,6 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/template-notifications/manage-notification-templates/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/template-notifications/manage-notification-templates/
-  jira:
-    - pattern: /docs/grafana/
-      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/configure-notifications/manage-contact-points/integrations/configure-jira/
-    - pattern: /docs/grafana-cloud/
-      destination: /docs/grafana-cloud/alerting-and-irm/alerting/configure-notifications/manage-contact-points/integrations/configure-jira/
   configure-grafana-alerts:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/
@@ -120,7 +110,7 @@ refs:
 
 # Configure contact points
 
-Use contact points to specify where to receive alert notifications. Contact points contain the configuration for sending alert notifications, including destinations like email, Slack, IRM, webhooks, and their notification messages.
+Use contact points to specify where to receive alert notifications. Contact points contain the configuration for sending alert notifications, including destinations like email, Slack, OnCall, webhooks, and their notification messages.
 
 A contact point can have one or multiple destinations, known as [contact point integrations](#supported-contact-point-integrations). Alert notifications are sent to each integration within the chosen contact point.
 
@@ -143,16 +133,15 @@ Each contact point integration has its own configuration options and setup proce
 
 {{< column-list >}}
 
-- [Alertmanager](ref:alertmanager)
+- Alertmanager
 - [AWS SNS](ref:sns)
 - Cisco Webex Teams
 - DingDing
 - [Discord](ref:discord)
 - [Email](ref:email)
 - [Google Chat](ref:gchat)
-- [Grafana IRM](ref:irm)
+- [Grafana OnCall](ref:oncall)
 - Kafka REST Proxy
-- [Jira](ref:jira)
 - Line
 - [Microsoft Teams](ref:teams)
 - [MQTT](ref:mqtt)
