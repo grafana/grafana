@@ -58,7 +58,6 @@
       };
 
       window.__grafana_boot_data_promise = new Promise(async (resolve) => {
-        // window.__grafana_boot_data_promise_resolve = resolve;
         const bootData = await fetch("/bootdata");
 
         const rawBootData = await bootData.json();
