@@ -9,7 +9,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/session"
-	"xorm.io/xorm"
+	"github.com/grafana/grafana/pkg/util/xorm"
 )
 
 var (
@@ -27,8 +27,6 @@ type Dialect interface {
 	ShowCreateNull() bool
 	SQLType(col *Column) string
 	SupportEngine() bool
-	// Deprecated. This doesn't work correctly for all databases.
-	LikeStr() string
 	// LikeOperator returns SQL snippet and query parameter for case-insensitive LIKE operation, with optional wildcards (%) before/after the pattern.
 	LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string)
 	Default(col *Column) string
@@ -150,10 +148,6 @@ func (b *BaseDialect) ShowCreateNull() bool {
 
 func (b *BaseDialect) AndStr() string {
 	return "AND"
-}
-
-func (b *BaseDialect) LikeStr() string {
-	return "LIKE"
 }
 
 func (b *BaseDialect) LikeOperator(column string, wildcardBefore bool, pattern string, wildcardAfter bool) (string, string) {

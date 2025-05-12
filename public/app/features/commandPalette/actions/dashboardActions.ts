@@ -79,6 +79,11 @@ export async function getSearchResultActions(searchQuery: string): Promise<Comma
   return goToSearchResultActions;
 }
 
+/**
+ * Implements actual search logic for dashboards and folders.
+ * @param searchQuery
+ * @param isShowing
+ */
 export function useSearchResults(searchQuery: string, isShowing: boolean) {
   const [searchResults, setSearchResults] = useState<CommandPaletteAction[]>([]);
   const [isFetchingSearchResults, setIsFetchingSearchResults] = useState(false);
