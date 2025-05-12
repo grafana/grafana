@@ -98,7 +98,7 @@ export const Page = () => {
                   } else {
                     url.searchParams.delete('api');
                   }
-                  history.pushState(null, '', url);
+                  window.history.pushState(null, '', url);
                   setURL(v);
                 }}
                 value={url}
