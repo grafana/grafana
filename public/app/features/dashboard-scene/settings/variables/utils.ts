@@ -29,7 +29,7 @@ import { ConstantVariableEditor, getConstantVariableOptions } from './editors/Co
 import { CustomVariableEditor } from './editors/CustomVariableEditor';
 import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
-import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
+import { getIntervalVariableOptions, IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
 import { TextBoxVariableEditor, getTextBoxVariableOptions } from './editors/TextBoxVariableEditor';
 
@@ -70,6 +70,7 @@ export const EDITABLE_VARIABLES: Record<EditableVariableType, EditableVariableCo
     name: 'Interval',
     description: 'Values are timespans, ex 1m, 1h, 1d',
     editor: IntervalVariableEditor,
+    getOptions: getIntervalVariableOptions,
   },
   datasource: {
     name: 'Data source',
