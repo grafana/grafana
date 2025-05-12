@@ -211,6 +211,7 @@ type updateStatusSecureValue struct {
 	Namespace string
 	Name      string
 	Phase     string
+	Message   string
 }
 
 // Validate is only used if we use `dbutil` from `unifiedstorage`
