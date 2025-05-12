@@ -116,6 +116,15 @@ func (s *SecretService) Update(ctx context.Context, newSecureValue *secretv0alph
 	var out *secretv0alpha1.SecureValue
 
 	if err := s.database.Transaction(ctx, func(ctx context.Context) error {
+		sv, err := s.secureValueMetadataStorage.Read(ctx, xkube.Namespace(newSecureValue.Namespace), newSecureValue.Name, contracts.ReadOpts{ForUpdate: true})
+		if err != nil {
+			return fmt.Errorf("fetching secure value: %+w", err)
+		}
+
+		if sv.Status.Phase == secretv0alpha1.SecureValuePhasePending {
+			return contracts.ErrSecureValueOperationInProgress
+		}
+
 		// Current implementation replaces everything passed in the spec, so it is not a PATCH. Do we want/need to support that?
 		updatedSecureValue, err := s.secureValueMetadataStorage.Update(ctx, newSecureValue, actorUID)
 		if err != nil {
