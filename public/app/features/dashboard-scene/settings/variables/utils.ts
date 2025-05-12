@@ -25,8 +25,8 @@ import { getIntervalsQueryFromNewIntervalModel } from '../../utils/utils';
 
 import { AdHocFiltersVariableEditor } from './editors/AdHocFiltersVariableEditor';
 import { ConstantVariableEditor, getConstantVariableOptions } from './editors/ConstantVariableEditor';
-import { CustomVariableEditor } from './editors/CustomVariableEditor';
-import { DataSourceVariableEditor } from './editors/DataSourceVariableEditor';
+import { CustomVariableEditor, getCustomVariableOptions } from './editors/CustomVariableEditor';
+import { DataSourceVariableEditor, getDataSourceVariableOptions } from './editors/DataSourceVariableEditor';
 import { GroupByVariableEditor } from './editors/GroupByVariableEditor';
 import { IntervalVariableEditor } from './editors/IntervalVariableEditor';
 import { getQueryVariableOptions, QueryVariableEditor } from './editors/QueryVariableEditor';
