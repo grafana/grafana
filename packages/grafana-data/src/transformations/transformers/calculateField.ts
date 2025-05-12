@@ -652,8 +652,19 @@ function getUnaryCreator(options: UnaryOptions, allFrames: DataFrame[]): ValuesC
     }
 
     const arr = new Array(value.length);
+
+    let sum = 0;
+
+    if (options.operator === UnaryOperationID.Percent) {
+      for (let i = 0; i < value.length; i++) {
+        if (Number.isFinite(value[i])) {
+          sum += value[i];
+        }
+      }
+    }
+
     for (let i = 0; i < arr.length; i++) {
-      arr[i] = operator.operation(value[i]);
+      arr[i] = operator.operation(value[i], sum);
     }
 
     return arr;

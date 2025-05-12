@@ -222,6 +222,7 @@ const alertStateSortScore = {
   [PromAlertingRuleState.Inactive]: 2,
   [GrafanaAlertState.NoData]: 3,
   [GrafanaAlertState.Normal]: 4,
+  [PromAlertingRuleState.Unknown]: 5,
 };
 
 export function sortAlerts(sortOrder: SortOrder, alerts: Alert[]): Alert[] {

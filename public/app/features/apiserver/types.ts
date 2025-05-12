@@ -70,8 +70,6 @@ export const AnnoKeyDashboardGnetId = 'grafana.app/dashboard-gnet-id';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderTitle = 'grafana.app/folderTitle';
 /** @deprecated NOT A REAL annotation -- this is just a shim */
-export const AnnoKeyFolderId = 'grafana.app/folderId';
-/** @deprecated NOT A REAL annotation -- this is just a shim */
 export const AnnoKeyFolderUrl = 'grafana.app/folderUrl';
 
 // labels
@@ -98,8 +96,6 @@ type GrafanaClientAnnotations = {
   [AnnoKeySlug]?: string;
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
-  [AnnoKeyFolderId]?: number;
-  [AnnoKeyFolderId]?: number;
   [AnnoKeySavedFromUI]?: string;
   [AnnoKeyDashboardIsSnapshot]?: boolean;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
