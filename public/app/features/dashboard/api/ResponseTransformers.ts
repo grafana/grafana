@@ -321,6 +321,10 @@ function convertToRowsLayout(
           },
         };
 
+        // Since this row does not exist in V1, we simulate it being outside of the grid above the first panel
+        // The Y position does not matter for the rows layout, but it's used to calculate the position of the panels in the grid layout in the row.
+        legacyRowY = -1;
+
         currentRow = {
           kind: 'RowsLayoutRow',
           spec: {
@@ -334,6 +338,10 @@ function convertToRowsLayout(
     }
   }
 
+  if (currentRow) {
+    // Flush last row to layout
+    layout.spec.rows.push(currentRow);
+  }
   return [elements, layout];
 }
 
