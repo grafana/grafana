@@ -8,5 +8,11 @@
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",
-  "include": ["typings/jest", "../../public/app/types/*.d.ts", "../grafana-ui/src/types/*.d.ts", "src/**/*.ts*"]
+  "include": [
+    "../../public/test/setupTests.ts",
+    "typings/jest",
+    "../../public/app/types/*.d.ts",
+    "../grafana-ui/src/types/*.d.ts",
+    "src/**/*.ts*"
+  ]
 }
