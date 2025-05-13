@@ -209,8 +209,8 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 
 	errs := make(field.ErrorList, 0)
 
-	if keeper.Spec.Title == "" {
-		errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
+	if keeper.Spec.Description == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `description` is required"))
 	}
 
 	// Only one keeper type can be configured. Return early and don't validate the specific keeper fields.
@@ -218,28 +218,6 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 		errs = append(errs, err)
 
 		return errs
-	}
-
-	// TODO: Improve SQL keeper validation.
-	// SQL keeper is not allowed to use `secureValueName` in credentials fields to avoid depending on another keeper.
-	if keeper.IsSqlKeeper() {
-		if keeper.Spec.SQL.Encryption.AWS != nil {
-			if keeper.Spec.SQL.Encryption.AWS.AccessKeyID.SecureValueName != "" {
-				errs = append(errs, field.Forbidden(field.NewPath("spec", "aws", "accessKeyId"), "secureValueName cannot be used with SQL keeper"))
-			}
-
-			if keeper.Spec.SQL.Encryption.AWS.SecretAccessKey.SecureValueName != "" {
-				errs = append(errs, field.Forbidden(field.NewPath("spec", "aws", "secretAccessKey"), "secureValueName cannot be used with SQL keeper"))
-			}
-		}
-
-		if keeper.Spec.SQL.Encryption.Azure != nil && keeper.Spec.SQL.Encryption.Azure.ClientSecret.SecureValueName != "" {
-			errs = append(errs, field.Forbidden(field.NewPath("spec", "azure", "clientSecret"), "secureValueName cannot be used with SQL keeper"))
-		}
-
-		if keeper.Spec.SQL.Encryption.HashiCorp != nil && keeper.Spec.SQL.Encryption.HashiCorp.Token.SecureValueName != "" {
-			errs = append(errs, field.Forbidden(field.NewPath("spec", "hashicorp", "token"), "secureValueName cannot be used with SQL keeper"))
-		}
 	}
 
 	if keeper.Spec.AWS != nil {
@@ -295,7 +273,6 @@ func ValidateKeeper(keeper *secretv0alpha1.Keeper, operation admission.Operation
 
 func validateKeepers(keeper *secretv0alpha1.Keeper) *field.Error {
 	availableKeepers := map[string]bool{
-		"sql":       keeper.Spec.SQL != nil,
 		"aws":       keeper.Spec.AWS != nil,
 		"azure":     keeper.Spec.Azure != nil,
 		"gcp":       keeper.Spec.GCP != nil,

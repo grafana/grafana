@@ -218,19 +218,15 @@ func ValidateSecureValue(sv, oldSv *secretv0alpha1.SecureValue, operation admiss
 func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
-	if sv.Spec.Title == "" {
-		errs = append(errs, field.Required(field.NewPath("spec", "title"), "a `title` is required"))
+	if sv.Spec.Description == "" {
+		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `description` is required"))
 	}
 
-	if sv.Spec.Keeper == "" {
-		errs = append(errs, field.Required(field.NewPath("spec", "keeper"), "a `keeper` is required"))
-	}
-
-	if sv.Spec.Value == "" && sv.Spec.Ref == "" {
+	if sv.Spec.Value == "" && (sv.Spec.Ref == nil || (sv.Spec.Ref != nil && *sv.Spec.Ref == "")) {
 		errs = append(errs, field.Required(field.NewPath("spec"), "either a `value` or `ref` is required"))
 	}
 
-	if sv.Spec.Value != "" && sv.Spec.Ref != "" {
+	if sv.Spec.Value != "" && (sv.Spec.Ref != nil && *sv.Spec.Ref != "") {
 		errs = append(errs, field.Forbidden(field.NewPath("spec"), "only one of `value` or `ref` can be set"))
 	}
 
@@ -249,12 +245,12 @@ func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.Erro
 	}
 
 	// Only validate if one of the fields is being changed/set.
-	if sv.Spec.Value != "" || sv.Spec.Ref != "" {
-		if oldSv.Spec.Ref != "" && sv.Spec.Value != "" {
+	if sv.Spec.Value != "" || (sv.Spec.Ref != nil && *sv.Spec.Ref != "") {
+		if (oldSv.Spec.Ref != nil && *oldSv.Spec.Ref != "") && sv.Spec.Value != "" {
 			errs = append(errs, field.Forbidden(field.NewPath("spec"), "cannot set `value` when `ref` was already previously set"))
 		}
 
-		if oldSv.Spec.Ref == "" && sv.Spec.Ref != "" {
+		if (oldSv.Spec.Ref == nil || (oldSv.Spec.Ref != nil && *oldSv.Spec.Ref == "")) && (sv.Spec.Ref != nil && *sv.Spec.Ref != "") {
 			errs = append(errs, field.Forbidden(field.NewPath("spec"), "cannot set `ref` when `value` was already previously set"))
 		}
 	}
@@ -270,6 +266,17 @@ func validateSecureValueUpdate(sv, oldSv *secretv0alpha1.SecureValue) field.Erro
 // validateDecrypters validates that (if populated) the `decrypters` must match "actor_{name}" and must be unique.
 func validateDecrypters(decrypters []string, decryptersAllowList map[string]struct{}) field.ErrorList {
 	errs := make(field.ErrorList, 0)
+
+	// Limit the number of decrypters to 64 to not have it unbounded.
+	// The number was chosen arbitrarily and should be enough.
+	if len(decrypters) > 64 {
+		errs = append(
+			errs,
+			field.TooMany(field.NewPath("spec", "decrypters"), len(decrypters), 64),
+		)
+
+		return errs
+	}
 
 	decrypterNames := make(map[string]struct{}, 0)
 

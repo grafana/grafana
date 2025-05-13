@@ -16,26 +16,52 @@ type Keeper struct {
 	// This is the actual keeper schema.
 	// +patchStrategy=replace
 	// +patchMergeKey=name
-	Spec KeeperSpec `json:"spec,omitempty" patchStrategy:"replace" patchMergeKey:"name"`
+	Spec KeeperSpec `json:"spec" patchStrategy:"replace" patchMergeKey:"name"`
 }
 
-func (k *Keeper) IsSqlKeeper() bool {
-	return k.Spec.SQL != nil && k.Spec.SQL.Encryption != nil
+// KeeperType represents the type of a Keeper.
+type KeeperType string
+
+const (
+	AWSKeeperType       KeeperType = "aws"
+	AzureKeeperType     KeeperType = "azure"
+	GCPKeeperType       KeeperType = "gcp"
+	HashiCorpKeeperType KeeperType = "hashicorp"
+)
+
+func (kt KeeperType) String() string {
+	return string(kt)
 }
 
+// KeeperConfig is an interface that all keeper config types must implement.
 type KeeperConfig interface {
-	Type() string
+	Type() KeeperType
 }
 
 type KeeperSpec struct {
-	// Human friendly name for the keeper.
-	Title string `json:"title"`
+	// Short description for the Keeper.
+	// +k8s:validation:minLength=1
+	// +k8s:validation:maxLength=253
+	Description string `json:"description"`
 
-	// You can only chose one of the following.
-	SQL       *SQLKeeperConfig       `json:"sql,omitempty"`
-	AWS       *AWSKeeperConfig       `json:"aws,omitempty"`
-	Azure     *AzureKeeperConfig     `json:"azurekeyvault,omitempty"`
-	GCP       *GCPKeeperConfig       `json:"gcp,omitempty"`
+	// AWS Keeper Configuration.
+	// +structType=atomic
+	// +optional
+	AWS *AWSKeeperConfig `json:"aws,omitempty"`
+
+	// Azure Keeper Configuration.
+	// +structType=atomic
+	// +optional
+	Azure *AzureKeeperConfig `json:"azurekeyvault,omitempty"`
+
+	// GCP Keeper Configuration.
+	// +structType=atomic
+	// +optional
+	GCP *GCPKeeperConfig `json:"gcp,omitempty"`
+
+	// HashiCorp Vault Keeper Configuration.
+	// +structType=atomic
+	// +optional
 	HashiCorp *HashiCorpKeeperConfig `json:"hashivault,omitempty"`
 }
 
@@ -50,25 +76,6 @@ type KeeperList struct {
 
 	// Slice containing all keepers.
 	Items []Keeper `json:"items,omitempty"`
-}
-
-// The default SQL keeper.
-type SQLKeeperConfig struct {
-	Encryption *Encryption `json:"encryption,omitempty"`
-}
-
-func (s *SQLKeeperConfig) Type() string {
-	return "sql"
-}
-
-// Encryption of default SQL keeper.
-type Encryption struct {
-	Envelope *Envelope `json:"envelope,omitempty"` // TODO: what would this be
-
-	AWS       *AWSCredentials       `json:"aws,omitempty"`
-	Azure     *AzureCredentials     `json:"azure,omitempty"`
-	GCP       *GCPCredentials       `json:"gcp,omitempty"`
-	HashiCorp *HashiCorpCredentials `json:"hashicorp,omitempty"`
 }
 
 // Credentials of remote keepers.
@@ -99,15 +106,19 @@ type HashiCorpCredentials struct {
 type Envelope struct{}
 
 // Holds the way credentials are obtained.
+// +union
 type CredentialValue struct {
 	// The name of the secure value that holds the actual value.
+	// +optional
 	SecureValueName string `json:"secureValueName,omitempty"`
 
 	// The value is taken from the environment variable.
+	// +optional
 	ValueFromEnv string `json:"valueFromEnv,omitempty"`
 
 	// The value is taken from the Grafana config file.
 	// TODO: how do we explain that this is a path to the config file?
+	// +optional
 	ValueFromConfig string `json:"valueFromConfig,omitempty"`
 }
 
@@ -128,18 +139,18 @@ type HashiCorpKeeperConfig struct {
 	HashiCorpCredentials `json:",inline"`
 }
 
-func (s *AWSKeeperConfig) Type() string {
-	return "aws"
+func (s *AWSKeeperConfig) Type() KeeperType {
+	return AWSKeeperType
 }
 
-func (s *AzureKeeperConfig) Type() string {
-	return "azure"
+func (s *AzureKeeperConfig) Type() KeeperType {
+	return AzureKeeperType
 }
 
-func (s *GCPKeeperConfig) Type() string {
-	return "gcp"
+func (s *GCPKeeperConfig) Type() KeeperType {
+	return GCPKeeperType
 }
 
-func (s *HashiCorpKeeperConfig) Type() string {
-	return "hashicorp"
+func (s *HashiCorpKeeperConfig) Type() KeeperType {
+	return HashiCorpKeeperType
 }
