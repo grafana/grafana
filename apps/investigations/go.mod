@@ -3,7 +3,7 @@ module github.com/grafana/grafana/apps/investigations
 go 1.24.3
 
 require (
-	github.com/grafana/grafana-app-sdk v0.35.1
+	github.com/grafana/grafana-app-sdk v0.38.1
 	k8s.io/apimachinery v0.33.0
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/kube-openapi v0.0.0-20250318190949-c8a335a9a2ff
@@ -30,7 +30,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/grafana/grafana-app-sdk/logging v0.35.1 // indirect
+	github.com/grafana/grafana-app-sdk/logging v0.38.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

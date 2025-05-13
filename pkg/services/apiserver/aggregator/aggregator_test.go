@@ -9,10 +9,10 @@ import (
 	openapinamer "k8s.io/apiserver/pkg/endpoints/openapi"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
+	utilcompatibility "k8s.io/apiserver/pkg/util/compatibility"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes/fake"
 	clientrest "k8s.io/client-go/rest"
-	utilversion "k8s.io/component-base/version"
 	"k8s.io/kube-aggregator/pkg/apiserver"
 	aggregatorscheme "k8s.io/kube-aggregator/pkg/apiserver/scheme"
 	aggregatoropenapi "k8s.io/kube-aggregator/pkg/generated/openapi"
@@ -28,7 +28,7 @@ func TestAggregatorPostStartHooks(t *testing.T) {
 	}
 
 	cfg.GenericConfig.ExternalAddress = "127.0.0.1:6443"
-	cfg.GenericConfig.EffectiveVersion = utilversion.DefaultBuildEffectiveVersion()
+	cfg.GenericConfig.EffectiveVersion = utilcompatibility.DefaultBuildEffectiveVersion()
 	cfg.GenericConfig.LoopbackClientConfig = &clientrest.Config{}
 	cfg.GenericConfig.MergedResourceConfig = apiserver.DefaultAPIResourceConfigSource()
 
