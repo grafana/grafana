@@ -20,8 +20,9 @@ type DeleteModalHook = [
 ];
 type DeleteRuleInfo = { ruleIdentifier: EditableRuleIdentifier; groupIdentifier: RuleGroupIdentifierV2 } | undefined;
 
+const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+
 export const useDeleteModal = (redirectToListView = false): DeleteModalHook => {
-  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
   const [ruleToDelete, setRuleToDelete] = useState<DeleteRuleInfo>();
   const [deleteRuleFromGroup] = useDeleteRuleFromGroup();
   const { waitForRemoval } = usePrometheusConsistencyCheck();
