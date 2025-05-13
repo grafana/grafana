@@ -1412,15 +1412,17 @@
     {
       "metadata": {
         "name": "grafanaManagedRecordingRulesDatasources",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-07T13:30:40Z"
+        "resourceVersion": "1746998568254",
+        "creationTimestamp": "2025-03-07T13:30:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-11 21:22:48.254378 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables writing to data sources for Grafana-managed recording rules.",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "expression": "false"
       }
     },
     {
@@ -3033,13 +3035,17 @@
     {
       "metadata": {
         "name": "tableNextGen",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-26T03:57:57Z"
+        "resourceVersion": "1747058265248",
+        "creationTimestamp": "2025-03-26T03:57:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-12 13:57:45.248176 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad"
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
       }
     },
     {

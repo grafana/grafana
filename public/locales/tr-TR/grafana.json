@@ -4247,9 +4247,6 @@
       "query-options": "Sorgu seçenekleri",
       "selection-options": "Seçim ayarları"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Panoyu {{version}} sürümüne geri yüklemek istediğinize emin misiniz? Kaydedilmemiş tüm değişiklikler kaybolacaktır.",
       "title-restore-version": ""
