@@ -19,7 +19,8 @@ export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTree
   // For dashboards, the title is appended to the path. We need to diregard this
   const currentPath = isDashboard ? useLocation().pathname.split('/').slice(0, 3).join('/') : useLocation().pathname;
 
-  const isCurrent = to === currentPath;
+  // Ignore query params
+  const isCurrent = to.split('?')[0] === currentPath;
 
   return (
     <Link

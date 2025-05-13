@@ -86,4 +86,23 @@ describe('ScopesNavigationTreeLink', () => {
     expect(matchingLink).toHaveAttribute('aria-current', 'page');
     expect(otherLink).not.toHaveAttribute('aria-current');
   });
+
+  it('matches path correctly when current location has query parameters', () => {
+    mockUseLocation.mockReturnValue({
+      pathname: '/test-path',
+    });
+
+    renderWithRouter(
+      <>
+        <ScopesNavigationTreeLink to="/test-path?param1=value1&param2=value2" title="Matching Link" id="matching-id" />
+        <ScopesNavigationTreeLink to="/test-path-other" title="Other Link" id="other-id" />
+      </>
+    );
+
+    const matchingLink = screen.getByTestId('scopes-dashboards-matching-id');
+    const otherLink = screen.getByTestId('scopes-dashboards-other-id');
+
+    expect(matchingLink).toHaveAttribute('aria-current', 'page');
+    expect(otherLink).not.toHaveAttribute('aria-current');
+  });
 });
