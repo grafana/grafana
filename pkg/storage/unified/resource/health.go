@@ -33,7 +33,7 @@ func (s *healthServer) AuthFuncOverride(ctx context.Context, _ string) (context.
 
 func (s *healthServer) List(ctx context.Context, req *grpc_health_v1.HealthListRequest) (*grpc_health_v1.HealthListResponse, error) {
 	h, err := s.Check(ctx, &grpc_health_v1.HealthCheckRequest{
-		Service: "all", // not used!
+		Service: "all", // not used for anything
 	})
 	if err != nil {
 		return nil, err
