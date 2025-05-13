@@ -96,6 +96,7 @@ With a Grafana Enterprise license, you also get access to premium data sources, 
 - [Grafana Enterprise Traces](/grafana/plugins/grafana-enterprise-traces-app/)
 - [Honeycomb](/grafana/plugins/grafana-honeycomb-datasource)
 - [Jira](/grafana/plugins/grafana-jira-datasource)
+- [LogicMonitor Devices](/grafana/plugins/grafana-logicmonitor-datasource/)
 - [Looker](/grafana/plugins/grafana-looker-datasource/)
 - [MongoDB](/grafana/plugins/grafana-mongodb-datasource)
 - [Netlify](/grafana/plugins/grafana-netlify-datasource)
