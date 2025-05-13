@@ -430,7 +430,7 @@ func (resource StringOrArrayOfString) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.ArrayOfString)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrArrayOfString` from JSON.
@@ -482,7 +482,8 @@ func (resource QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Mar
 	if resource.QueryEditorFunctionExpression != nil {
 		return json.Marshal(resource.QueryEditorFunctionExpression)
 	}
-	return nil, fmt.Errorf("no value for disjunction of refs")
+
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `QueryEditorPropertyExpressionOrQueryEditorFunctionExpression` from JSON.
@@ -499,7 +500,7 @@ func (resource *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Un
 
 	discriminator, found := parsedAsMap["type"]
 	if !found {
-		return errors.New("discriminator field 'type' not found in payload")
+		return nil
 	}
 
 	switch discriminator {
@@ -521,7 +522,7 @@ func (resource *QueryEditorPropertyExpressionOrQueryEditorFunctionExpression) Un
 		return nil
 	}
 
-	return fmt.Errorf("could not unmarshal resource with `type = %v`", discriminator)
+	return nil
 }
 
 type ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression struct {
@@ -544,7 +545,7 @@ func (resource ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression) 
 		return json.Marshal(resource.ArrayOfQueryEditorArrayExpression)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `ArrayOfQueryEditorExpressionOrArrayOfQueryEditorArrayExpression` from JSON.
@@ -608,7 +609,7 @@ func (resource StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType) MarshalJSON(
 		return json.Marshal(resource.ArrayOfQueryEditorOperatorType)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64OrArrayOfQueryEditorOperatorType` from JSON.
@@ -687,7 +688,7 @@ func (resource StringOrBoolOrInt64) MarshalJSON() ([]byte, error) {
 		return json.Marshal(resource.Int64)
 	}
 
-	return nil, fmt.Errorf("no value for disjunction of scalars")
+	return []byte("null"), nil
 }
 
 // UnmarshalJSON implements a custom JSON unmarshalling logic to decode `StringOrBoolOrInt64` from JSON.
