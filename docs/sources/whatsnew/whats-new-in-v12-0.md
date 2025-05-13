@@ -15,53 +15,53 @@ title: What's new in Grafana v12.0
 posts:
   - title: Observability as Code
     items:
-      - docs/grafana-cloud/whats-new/2025-04-14-git-sync-for-grafana-dashboards.md
-      - docs/grafana-cloud/whats-new/2025-04-11-new-dashboards-schema.md
-      - docs/grafana-cloud/whats-new/2025-05-05-new-dashboard-apis-released-as-experimental.md
+      - whats-new/2025-04-14-git-sync-for-grafana-dashboards.md
+      - whats-new/2025-04-11-new-dashboards-schema.md
+      - whats-new/2025-05-05-new-dashboard-apis-released-as-experimental.md
   - title: Drilldown apps
     items:
-      - docs/grafana-cloud/whats-new/2025-04-28-metrics-drilldown-improvements.md
-      - docs/grafana-cloud/whats-new/2025-04-28-logs-drilldown-improvements.md
-      - docs/grafana-cloud/whats-new/2025-04-17-ga-release-of-grafana-traces-drilldown.md
-      - docs/grafana-cloud/whats-new/2025-04-28-introducing-investigations
-      - docs/grafana-cloud/whats-new/2025-05-07-json-table-viewer-for-logs-drilldown.md
+      - whats-new/2025-04-28-metrics-drilldown-improvements.md
+      - whats-new/2025-04-28-logs-drilldown-improvements.md
+      - whats-new/2025-04-17-ga-release-of-grafana-traces-drilldown.md
+      - whats-new/2025-04-28-introducing-investigations
+      - whats-new/2025-05-07-json-table-viewer-for-logs-drilldown.md
   - title: Cloud Migration Assistant
     items:
-      - docs/grafana-cloud/whats-new/2025-04-11-grafana-cloud-migration-assistant-now-generally-available.md
+      - whats-new/2025-04-11-grafana-cloud-migration-assistant-now-generally-available.md
   - title: Dashboards and visualizations
     items:
-      - docs/grafana-cloud/whats-new/2025-04-11-dynamic-dashboards.md
-      - docs/grafana-cloud/whats-new/2025-04-11-blazing-fast-table-panel.md
-      - docs/grafana-cloud/whats-new/2025-04-07-sql-expressions.md
+      - whats-new/2025-04-11-dynamic-dashboards.md
+      - whats-new/2025-04-11-blazing-fast-table-panel.md
+      - whats-new/2025-04-07-sql-expressions.md
   - title: Authentication and authorization
     items:
-      - docs/grafana-cloud/whats-new/2025-04-14-scim-user-and-team-provisioning.md
+      - whats-new/2025-04-14-scim-user-and-team-provisioning.md
   - title: Alerting
     items:
-      - docs/grafana-cloud/whats-new/2025-04-10-alert-rule-migration-tool.md
-      - docs/grafana-cloud/whats-new/2025-04-10-grafana-managed-alert-rule-recovering-state.md
-      - docs/grafana-cloud/whats-new/2025-04-11-grafana-managed-alert-rule-improvements.md
+      - whats-new/2025-04-10-alert-rule-migration-tool.md
+      - whats-new/2025-04-10-grafana-managed-alert-rule-recovering-state.md
+      - whats-new/2025-04-11-grafana-managed-alert-rule-improvements.md
   - title: Experimental themes
     items:
-      - docs/grafana-cloud/whats-new/2025-04-10-experimental-themes.md
+      - whats-new/2025-04-10-experimental-themes.md
   - title: Explore
     items:
-      - docs/grafana-cloud/whats-new/2025-04-15-new-controls-for-logs-in-explore.md
+      - whats-new/2025-04-15-new-controls-for-logs-in-explore.md
   - title: Traces
     items:
-      - docs/grafana-cloud/whats-new/2025-04-30-trace-correlations-instant-context-hops-from-any-trace.md
+      - whats-new/2025-04-30-trace-correlations-instant-context-hops-from-any-trace.md
   - title: Breaking Changes
     items:
-      - docs/grafana-cloud/whats-new/2025-04-28-removal-of-editors_can_admin-configuration.md
-      - docs/grafana-cloud/whats-new/2025-04-28-dashboard-v2-schema-and-next-gen-dashboards.md
-      - docs/grafana-cloud/whats-new/2025-04-29-deduplication-and-renaming-of-metric-cache_size.md
-      - docs/grafana-cloud/whats-new/2025-04-28-removal-of-optional-actions-property-from-datalinkscontextmenu-component.md
-      - docs/grafana-cloud/whats-new/2025-04-29-enforcing-stricter-data-source-uid-format.md
-      - docs/grafana-cloud/whats-new/2025-04-28-removal-of-angular.md
-      - docs/grafana-cloud/whats-new/2025-04-29-deprecated-apis-for-ui-extensions-will-be-removed.md
-      - docs/grafana-cloud/whats-new/2025-04-29-enforcing-stricter-version-compatibility-checks-in-plugin-cli-install-commands.md
-      - docs/grafana-cloud/whats-new/2025-04-28-removal-of-‘aggregate-by’-in-tempo.md
-      - docs/grafana-cloud/whats-new/2025-04-28-removing-the-feature-toggle-ui-from-grafana-cloud.md
+      - whats-new/2025-04-28-removal-of-editors_can_admin-configuration.md
+      - whats-new/2025-04-28-dashboard-v2-schema-and-next-gen-dashboards.md
+      - whats-new/2025-04-29-deduplication-and-renaming-of-metric-cache_size.md
+      - whats-new/2025-04-28-removal-of-optional-actions-property-from-datalinkscontextmenu-component.md
+      - whats-new/2025-04-29-enforcing-stricter-data-source-uid-format.md
+      - whats-new/2025-04-28-removal-of-angular.md
+      - whats-new/2025-04-29-deprecated-apis-for-ui-extensions-will-be-removed.md
+      - whats-new/2025-04-29-enforcing-stricter-version-compatibility-checks-in-plugin-cli-install-commands.md
+      - whats-new/2025-04-28-removal-of-‘aggregate-by’-in-tempo.md
+      - whats-new/2025-04-28-removing-the-feature-toggle-ui-from-grafana-cloud.md
 whats_new_grafana_version: 12.0
 weight: -49
 ---
