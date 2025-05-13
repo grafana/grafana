@@ -26001,7 +26001,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dropzone@npm:14.3.5, react-dropzone@npm:^14.2.3":
+"react-dropzone@npm:14.3.5":
   version: 14.3.5
   resolution: "react-dropzone@npm:14.3.5"
   dependencies:
@@ -26011,6 +26011,19 @@ __metadata:
   peerDependencies:
     react: ">= 16.8 || 18.0.0"
   checksum: 10/6124bacd2138002d721c86c2b507a5c1889cfde73344fe474855a4e2e81fecb2c318edb0ab3333a75fd502fb6da44a6f8e9cdee317ec916331fd520d454e6297
+  languageName: node
+  linkType: hard
+
+"react-dropzone@npm:^14.2.3":
+  version: 14.3.8
+  resolution: "react-dropzone@npm:14.3.8"
+  dependencies:
+    attr-accept: "npm:^2.2.4"
+    file-selector: "npm:^2.1.0"
+    prop-types: "npm:^15.8.1"
+  peerDependencies:
+    react: ">= 16.8 || 18.0.0"
+  checksum: 10/31d5089c2acb4528a279761473a00a1c148b78ae41a6ac49ed09ee94f1d44595437188308ec838debfa0d08082893b170dc072e680aca00469793a05d61b07f2
   languageName: node
   linkType: hard
 
