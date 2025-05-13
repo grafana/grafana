@@ -1,4 +1,4 @@
-import { render, act } from '@testing-library/react';
+import { render, act, waitFor, within, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as React from 'react';
 import { of } from 'rxjs';
@@ -15,9 +15,10 @@ import { selectors } from '@grafana/e2e-selectors';
 import { setRunRequest } from '@grafana/runtime';
 import { AdHocFiltersVariable } from '@grafana/scenes';
 import { mockDataSource } from 'app/features/alerting/unified/mocks';
+import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneCategoryDescriptor';
 import { LegacyVariableQueryEditor } from 'app/features/variables/editor/LegacyVariableQueryEditor';
 
-import { AdHocFiltersVariableEditor } from './AdHocFiltersVariableEditor';
+import { AdHocFiltersVariableEditor, getAdHocFilterOptions } from './AdHocFiltersVariableEditor';
 
 const defaultDatasource = mockDataSource({
   name: 'Default Test Data Source',
@@ -112,6 +113,54 @@ describe('AdHocFiltersVariableEditor', () => {
     );
 
     expect(variable.state.defaultKeys).toEqual(undefined);
+  });
+
+  it('should return an OptionsPaneItemDescriptor that renders ModalEditor', async () => {
+    const variable = new AdHocFiltersVariable({
+      name: 'test',
+      datasource: { uid: defaultDatasource.uid, type: defaultDatasource.type },
+    });
+
+    const result = getAdHocFilterOptions(variable);
+
+    expect(result.length).toBe(1);
+    const descriptor = result[0];
+
+    // Mock the parent property that OptionsPaneItem expects
+    descriptor.parent = new OptionsPaneCategoryDescriptor({
+      id: 'mock-parent-id',
+      title: 'Mock Parent',
+    });
+
+    const { queryByRole } = render(descriptor.render());
+    const user = userEvent.setup();
+
+    // Initial state: "Open variable editor" button is visible, Modal is not.
+    const openEditorButton = screen.getByRole('button', { name: 'Open variable editor' });
+    expect(openEditorButton).toBeInTheDocument();
+    expect(queryByRole('dialog')).not.toBeInTheDocument(); // Modal has role 'dialog'
+
+    // Opening Modal
+    await user.click(openEditorButton);
+    const modal = await screen.findByRole('dialog'); // wait for modal to appear
+    expect(modal).toBeInTheDocument();
+    expect(within(modal).getByText('Ad Hoc Variable')).toBeInTheDocument(); // Modal title
+
+    // Assert Editor's key elements are rendered
+    // DataSourcePicker's Field
+    expect(within(modal).getByLabelText('Data source')).toBeInTheDocument();
+
+    // Assert Close button is visible
+    // To distinguish from the header 'X' (aria-label="Close"), find the span with text "Close" and get its parent button.
+    const closeButtonTextSpan = within(modal).getByText(/^Close$/);
+    const closeButton = closeButtonTextSpan.closest('button')!;
+    expect(closeButton).toBeInTheDocument();
+
+    // Closing Modal
+    await user.click(closeButton);
+    await waitFor(() => {
+      expect(queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 });
 
