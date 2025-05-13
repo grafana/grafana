@@ -9,7 +9,7 @@ import pluginJson from './plugin.json';
 import { trackAzureMonitorDashboardLoaded } from './tracking';
 import { AzureMonitorQuery, AzureMonitorDataSourceJsonData, AzureQueryType, ResultFormat } from './types';
 
-await initPluginTranslations(pluginJson.id);
+initPluginTranslations(pluginJson.id);
 
 export const plugin = new DataSourcePlugin<Datasource, AzureMonitorQuery, AzureMonitorDataSourceJsonData>(Datasource)
   .setConfigEditor(ConfigEditor)
