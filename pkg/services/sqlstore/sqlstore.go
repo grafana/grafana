@@ -91,6 +91,22 @@ func NewSQLStoreWithoutSideEffects(cfg *setting.Cfg,
 	return newStore(cfg, nil, features, nil, bus, tracer, true)
 }
 
+// NewSQLStoreWithoutSideEffectsWithEngineOptions creates a new *SQLStore without side-effects such as
+// running database migrations and/or ensuring main org and admin user exists, and allows control over the xorm engine finalizer.
+func NewSQLStoreWithoutSideEffectsWithEngineOptions(cfg *setting.Cfg,
+	features featuremgmt.FeatureToggles,
+	bus bus.Bus, tracer tracing.Tracer, setFinalizer bool) (*SQLStore, error) {
+	dbCfg, err := NewDatabaseConfig(cfg, features)
+	if err != nil {
+		return nil, err
+	}
+	engine, err := xorm.NewEngineWithOptions(dbCfg.Type, dbCfg.ConnectionString, xorm.WithFinalizer(setFinalizer))
+	if err != nil {
+		return nil, err
+	}
+	return newStore(cfg, engine, features, nil, bus, tracer, true)
+}
+
 func newStore(cfg *setting.Cfg, engine *xorm.Engine, features featuremgmt.FeatureToggles,
 	migrations registry.DatabaseMigrator, bus bus.Bus, tracer tracing.Tracer,
 	skipEnsureDefaultOrgAndUser bool) (*SQLStore, error) {
