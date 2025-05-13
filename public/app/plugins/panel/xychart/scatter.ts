@@ -641,7 +641,8 @@ function fieldValueColors(f: Field, theme: GrafanaTheme2): FieldColorValues {
       let lasti = steps.length - 1;
 
       for (let i = lasti; i > 0; i--) {
-        conds += `v >= ${steps[i].value} ? ${i} : `;
+        let rhs = Number(steps[i].value);
+        conds += `v >= ${rhs} ? ${i} : `;
       }
 
       conds += '0';
