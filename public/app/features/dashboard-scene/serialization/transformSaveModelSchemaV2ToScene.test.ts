@@ -52,6 +52,7 @@ import {
   transformSaveModelSchemaV2ToScene,
 } from './transformSaveModelSchemaV2ToScene';
 import { transformCursorSynctoEnum } from './transformToV2TypesUtils';
+import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
 
 export const defaultDashboard: DashboardWithAccessInfo<DashboardV2Spec> = {
   kind: 'DashboardWithAccessInfo',
@@ -367,7 +368,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           ...defaultDashboard.metadata,
           annotations: {
             ...defaultDashboard.metadata.annotations,
-            'grafana.app/dashboard-is-snapshot': true,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
           },
         },
       };
