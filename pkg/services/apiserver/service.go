@@ -343,7 +343,7 @@ func (s *service) start(ctx context.Context) error {
 	isKubernetesAggregatorEnabled := s.features.IsEnabledGlobally(featuremgmt.FlagKubernetesAggregator)
 
 	if s.features.IsEnabledGlobally(featuremgmt.FlagDataplaneAggregator) {
-		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate)
+		runningServer, err = s.startDataplaneAggregator(ctx, transport, serverConfig, delegate, isKubernetesAggregatorEnabled)
 		if err != nil {
 			return err
 		}
@@ -415,6 +415,7 @@ func (s *service) startDataplaneAggregator(
 	transport *grafanaapiserveroptions.RoundTripperFunc,
 	serverConfig *genericapiserver.RecommendedConfig,
 	delegate *genericapiserver.GenericAPIServer,
+	isKubernetesAggregatorEnabled bool,
 ) (*genericapiserver.GenericAPIServer, error) {
 	config := &dataplaneaggregator.Config{
 		GenericConfig: serverConfig,
@@ -439,21 +440,23 @@ func (s *service) startDataplaneAggregator(
 		return nil, err
 	}
 
-	// setup the loopback transport for the aggregator server and signal that it's ready
-	// ignore the lint error because the response is passed directly to the client,
-	// so the client will be responsible for closing the response body.
-	// nolint:bodyclose
-	transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
-	close(transport.Ready)
+	if !isKubernetesAggregatorEnabled {
+		// setup the loopback transport for the aggregator server and signal that it's ready
+		// ignore the lint error because the response is passed directly to the client,
+		// so the client will be responsible for closing the response body.
+		// nolint:bodyclose
+		transport.Fn = grafanaresponsewriter.WrapHandler(aggregatorServer.GenericAPIServer.Handler)
+		close(transport.Ready)
 
-	prepared, err := aggregatorServer.PrepareRun()
-	if err != nil {
-		return nil, err
+		prepared, err := aggregatorServer.PrepareRun()
+		if err != nil {
+			return nil, err
+		}
+
+		go func() {
+			s.stoppedCh <- prepared.RunWithContext(ctx)
+		}()
 	}
-
-	go func() {
-		s.stoppedCh <- prepared.RunWithContext(ctx)
-	}()
 
 	return aggregatorServer.GenericAPIServer, nil
 }
