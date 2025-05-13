@@ -252,6 +252,10 @@ func (m *mockCheck) Item(ctx context.Context, id string) (any, error) {
 	return m.items[0], nil
 }
 
+func (m *mockCheck) Init(ctx context.Context) error {
+	return nil
+}
+
 func (m *mockCheck) Steps() []checks.Step {
 	return []checks.Step{
 		&mockStep{err: m.err, panics: m.runPanics},
@@ -263,7 +267,7 @@ type mockStep struct {
 	panics bool
 }
 
-func (m *mockStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, items any) (*advisorv0alpha1.CheckReportFailure, error) {
+func (m *mockStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, items any) ([]advisorv0alpha1.CheckReportFailure, error) {
 	if m.panics {
 		panic("panic")
 	}
@@ -271,7 +275,7 @@ func (m *mockStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0al
 		return nil, m.err
 	}
 	if _, ok := items.(error); ok {
-		return &advisorv0alpha1.CheckReportFailure{}, nil
+		return []advisorv0alpha1.CheckReportFailure{{}}, nil
 	}
 	return nil, nil
 }
