@@ -98,7 +98,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: |
           readarray -t PACKAGES <<< "$(./scripts/ci/backend-tests/shard.sh -N"$SHARD")"
-          go test -short -v -timeout=30m "${PACKAGES[@]}" | tee >(go-junit-report -set-exit-code > "$RESULTS_FILE)
+          go test -short -v -timeout=30m "${PACKAGES[@]}" | tee >(go-junit-report -set-exit-code > "$RESULTS_FILE")
       - name: Log in to GCS
         if: github.event_name == 'push' && github.repository == 'grafana/grafana' && (success() || failure())
         uses: grafana/shared-workflows/actions/login-to-gcs@login-to-gcs-v0.2.0
