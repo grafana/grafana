@@ -1412,15 +1412,17 @@
     {
       "metadata": {
         "name": "grafanaManagedRecordingRulesDatasources",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-07T13:30:40Z"
+        "resourceVersion": "1746998568254",
+        "creationTimestamp": "2025-03-07T13:30:40Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-11 21:22:48.254378 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Enables writing to data sources for Grafana-managed recording rules.",
-        "stage": "experimental",
+        "stage": "GA",
         "codeowner": "@grafana/alerting-squad",
-        "hideFromAdminPage": true,
-        "hideFromDocs": true
+        "expression": "false"
       }
     },
     {
