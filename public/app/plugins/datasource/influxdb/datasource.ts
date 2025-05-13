@@ -47,14 +47,7 @@ import { buildMetadataQuery } from './influxql_query_builder';
 import { prepareAnnotation } from './migrations';
 import { buildRawQuery, removeRegexWrapper } from './queryUtils';
 import ResponseParser from './response_parser';
-import {
-  DEFAULT_POLICY,
-  InfluxOptions,
-  InfluxQuery,
-  InfluxQueryTag,
-  InfluxVariableQuery,
-  InfluxVersion,
-} from './types';
+import { DEFAULT_POLICY, InfluxOptions, InfluxQuery, InfluxVariableQuery, InfluxVersion } from './types';
 import { InfluxVariableSupport } from './variables';
 
 export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery, InfluxOptions> {
@@ -206,12 +199,12 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     if (this.version === InfluxVersion.SQL || this.isMigrationToggleOnAndIsAccessProxy()) {
       query = this.applyVariables(query, variables, filters);
       if (query.adhocFilters?.length) {
-        const adhocFiltersToTags: InfluxQueryTag[] = (query.adhocFilters ?? []).map((af) => {
+        query.adhocFilters = (query.adhocFilters ?? []).map((af) => {
           const { condition, ...asTag } = af;
           asTag.value = this.templateSrv.replace(asTag.value ?? '', variables);
           return asTag;
         });
-        query.tags = [...(query.tags ?? []), ...adhocFiltersToTags];
+        query.tags = [...(query.tags ?? []), ...query.adhocFilters];
       }
     }
 
