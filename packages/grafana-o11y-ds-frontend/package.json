@@ -24,7 +24,7 @@
     "@grafana/runtime": "12.1.0-pre",
     "@grafana/schema": "12.1.0-pre",
     "@grafana/ui": "12.1.0-pre",
-    "react-select": "5.10.0",
+    "react-select": "5.10.1",
     "react-use": "17.6.0",
     "rxjs": "7.8.1",
     "tslib": "2.8.1"
