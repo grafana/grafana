@@ -3,14 +3,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { FieldType } from '@grafana/data';
 import { getTemplateSrv } from '@grafana/runtime';
 
-import { regexMatcherEditor } from './RegexMatcherEditor';
+import { basicMatcherEditor } from './BasicMatcherEditor';
 
 jest.mock('@grafana/runtime', () => ({
   getTemplateSrv: jest.fn(),
 }));
 
-describe('RegexMatcherEditor', () => {
-  it('adds :regex suffix to variable suggestions', async () => {
+describe('BasicMatcherEditor', () => {
+  it('shows variable suggestions', async () => {
     // Mock template service variables
     const mockVariables = [
       { name: 'var1', label: 'Variable 1', value: '$var1' },
@@ -30,7 +30,7 @@ describe('RegexMatcherEditor', () => {
       values: [],
     };
 
-    const Editor = regexMatcherEditor({ validator: () => true });
+    const Editor = basicMatcherEditor({ validator: () => true });
     render(<Editor options={options} onChange={onChangeMock} field={field} />);
 
     // Focus the input and press $ to trigger suggestions
@@ -41,15 +41,12 @@ describe('RegexMatcherEditor', () => {
     // Wait for suggestions to appear and verify
     await waitFor(() => {
       const suggestions = screen.getAllByRole('menuitem');
-      // Verify exact number of suggestions (each variable has both regular and regex versions)
-      expect(suggestions).toHaveLength(mockVariables.length * 2);
+      // Verify exact number of suggestions
+      expect(suggestions).toHaveLength(mockVariables.length);
 
       mockVariables.forEach((variable) => {
-        const regularSuggestion = suggestions.find((s) => s.textContent?.includes(variable.label));
-        const regexSuggestion = suggestions.find((s) => s.textContent?.includes(`${variable.label}:regex`));
-
-        expect(regularSuggestion).toBeInTheDocument();
-        expect(regexSuggestion).toBeInTheDocument();
+        const suggestion = suggestions.find((s) => s.textContent?.includes(variable.label));
+        expect(suggestion).toBeInTheDocument();
       });
     });
   });
