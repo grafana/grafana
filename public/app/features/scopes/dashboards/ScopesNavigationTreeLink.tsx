@@ -19,11 +19,12 @@ export function ScopesNavigationTreeLink({ to, title, id }: ScopesNavigationTree
   // For dashboards, the title is appended to the path. We need to diregard this
   const currentPath = isDashboard ? useLocation().pathname.split('/').slice(0, 3).join('/') : useLocation().pathname;
 
-  const isCurrent = to.startsWith(currentPath);
+  const isCurrent = to === currentPath;
 
   return (
     <Link
       to={to}
+      aria-current={isCurrent ? 'page' : undefined}
       className={cx(styles.container, isCurrent && styles.current)}
       data-testid={`scopes-dashboards-${id}`}
       role="treeitem"
