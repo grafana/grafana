@@ -45,8 +45,6 @@ interface Props {
   className?: string;
 }
 
-const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
-
 const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
 const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
@@ -62,6 +60,7 @@ export const RulesTable = ({
   const styles = useStyles2(getStyles);
   const wrapperClass = cx(styles.wrapper, className, { [styles.wrapperMargin]: showGuidelines });
 
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
   const { pageItems, page, numberOfPages, onPageChange } = usePagination(rules, 1, DEFAULT_PER_PAGE_PAGINATION);
 
   const { result: rulesWithRulerDefinitions, status: rulerRulesLoadingStatus } = useLazyLoadRulerRules(pageItems);

@@ -11,10 +11,10 @@ import { shouldUsePrometheusRulesPrimary } from '../../featureToggles';
 const { usePrometheusRuleNamespacesQuery, useLazyRulerRulesQuery, useRulerRulesQuery } = alertRuleApi;
 const { useDiscoverDsFeaturesQuery } = featureDiscoveryApi;
 
-const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
 const emptyRulerConfig: RulerRulesConfigDTO = {};
 
 export function useGetLabelsFromDataSourceName(rulesSourceName: string) {
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
   const { data: features, isLoading: isFeaturesLoading } = useDiscoverDsFeaturesQuery({ rulesSourceName });
 
   // emptyRulerConfig is used to prevent from triggering  labels' useMemo all the time

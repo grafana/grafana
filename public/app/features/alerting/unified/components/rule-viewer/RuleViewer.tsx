@@ -77,12 +77,10 @@ export enum ActiveTab {
   VersionHistory = 'version-history',
 }
 
-const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
-const alertingListViewV2 = shouldUseAlertingListViewV2();
-
-const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
-
 const RuleViewer = () => {
+  const prometheusRulesPrimary = shouldUsePrometheusRulesPrimary();
+  const alertingListViewV2 = shouldUseAlertingListViewV2();
+  const shouldUseConsistencyCheck = prometheusRulesPrimary || alertingListViewV2;
   const { rule, identifier } = useAlertRule();
   const { pageNav, activeTab } = usePageNav(rule);
 
