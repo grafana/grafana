@@ -1,5 +1,5 @@
 import { times } from 'lodash';
-import { render, userEvent } from 'test/test-utils';
+import { render, screen, userEvent, waitFor } from 'test/test-utils';
 import { byLabelText, byRole, byTestId } from 'testing-library-selector';
 
 import { CombinedRuleNamespace } from '../../../../../types/unified-alerting';
@@ -30,10 +30,11 @@ const ui = {
 
 describe('RuleDetailsMatchingInstances', () => {
   describe('Filtering', () => {
-    it('For Grafana Managed rules instances filter should contain six states', () => {
+    it('For Grafana Managed rules instances filter should contain six states', async () => {
       const rule = mockCombinedRule();
 
       render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
+      await waitFor(() => screen.queryAllByRole('progressbar').length === 0);
 
       const stateFilter = ui.stateFilter.get();
       expect(stateFilter).toBeInTheDocument();
@@ -80,12 +81,13 @@ describe('RuleDetailsMatchingInstances', () => {
       expect(ui.instanceRow.get()).toHaveTextContent(alertStateToReadable(state));
     });
 
-    it('For Cloud rules instances filter should contain two states', () => {
+    it('For Cloud rules instances filter should contain two states', async () => {
       const rule = mockCombinedRule({
         namespace: mockPromNamespace(),
       });
 
       render(<RuleDetailsMatchingInstances rule={rule} enableFiltering />);
+      await waitFor(() => screen.queryAllByRole('progressbar').length === 0);
 
       const stateFilter = ui.stateFilter.get();
       expect(stateFilter).toBeInTheDocument();

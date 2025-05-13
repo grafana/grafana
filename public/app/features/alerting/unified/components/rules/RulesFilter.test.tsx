@@ -5,22 +5,14 @@ import { locationService } from '@grafana/runtime';
 import { setupMswServer } from 'app/features/alerting/unified/mockApi';
 
 import * as analytics from '../../Analytics';
-import { setupPluginsExtensionsHook } from '../../testSetup/plugins';
+import { setupDataSources } from '../../testSetup/datasources';
 
 import RulesFilter from './Filter/RulesFilter';
 
 setupMswServer();
+setupDataSources();
+
 jest.spyOn(analytics, 'logInfo');
-
-jest.mock('./MultipleDataSourcePicker', () => {
-  const original = jest.requireActual('./MultipleDataSourcePicker');
-  return {
-    ...original,
-    MultipleDataSourcePicker: () => null,
-  };
-});
-
-setupPluginsExtensionsHook();
 
 const ui = {
   stateFilter: {
@@ -44,7 +36,7 @@ describe('RulesFilter', () => {
   it('Should apply state filter to the search input', async () => {
     const { user } = render(<RulesFilter />);
 
-    await user.click(ui.stateFilter.firing.get());
+    await user.click(await ui.stateFilter.firing.find());
 
     expect(ui.searchInput.get()).toHaveValue('state:firing');
   });
@@ -52,7 +44,7 @@ describe('RulesFilter', () => {
   it('Should apply multiple UI-based filters to the search input', async () => {
     const { user } = render(<RulesFilter />);
 
-    await user.click(ui.health.ok.get());
+    await user.click(await ui.health.ok.find());
     await user.click(ui.ruleType.alert.get());
     await user.click(ui.stateFilter.normal.get());
 
@@ -62,7 +54,7 @@ describe('RulesFilter', () => {
   it('Should combine UI filters and typed expressions', async () => {
     const { user } = render(<RulesFilter />);
 
-    await user.type(ui.searchInput.get(), 'cpu{Enter}');
+    await user.type(await ui.searchInput.find(), 'cpu{Enter}');
     await user.click(ui.health.ok.get());
     await user.type(ui.searchInput.get(), ' usage');
 
@@ -74,7 +66,7 @@ describe('Analytics', () => {
   it('Sends log info when clicking alert state filters', async () => {
     const { user } = render(<RulesFilter />);
 
-    const button = screen.getByText('Pending');
+    const button = await screen.findByText('Pending');
 
     await user.click(button);
 

@@ -31,22 +31,12 @@ import {
   setEmbeddedDashboard,
   setAppEvents,
   setReturnToPreviousHook,
-  setPluginComponentHook,
-  setPluginComponentsHook,
   setCurrentUser,
   setChromeHeaderHeightHook,
-  setPluginLinksHook,
   setFolderPicker,
   setCorrelationsService,
-  setPluginFunctionsHook,
 } from '@grafana/runtime';
-import {
-  setGetObservablePluginComponents,
-  setGetObservablePluginLinks,
-  setPanelDataErrorView,
-  setPanelRenderer,
-  setPluginPage,
-} from '@grafana/runtime/internal';
+import { setPanelDataErrorView, setPanelRenderer, setPluginPage } from '@grafana/runtime/internal';
 import config, { updateConfig } from 'app/core/config';
 import { getStandardTransformers } from 'app/features/transformers/standardTransformers';
 
@@ -81,17 +71,7 @@ import { initGrafanaLive } from './features/live';
 import { PanelDataErrorView } from './features/panel/components/PanelDataErrorView';
 import { PanelRenderer } from './features/panel/components/PanelRenderer';
 import { DatasourceSrv } from './features/plugins/datasource_srv';
-import {
-  getObservablePluginComponents,
-  getObservablePluginLinks,
-} from './features/plugins/extensions/getPluginExtensions';
-import { usePluginComponent } from './features/plugins/extensions/usePluginComponent';
-import { usePluginComponents } from './features/plugins/extensions/usePluginComponents';
-import { usePluginFunctions } from './features/plugins/extensions/usePluginFunctions';
-import { usePluginLinks } from './features/plugins/extensions/usePluginLinks';
-import { getAppPluginsToAwait, getAppPluginsToPreload } from './features/plugins/extensions/utils';
 import { importPanelPlugin, syncGetPanelPlugin } from './features/plugins/importPanelPlugin';
-import { preloadPlugins } from './features/plugins/pluginPreloader';
 import { QueryRunner } from './features/query/state/QueryRunner';
 import { runRequest } from './features/query/state/runRequest';
 import { initWindowRuntime } from './features/runtime/init';
@@ -107,6 +87,7 @@ import { setVariableQueryRunner, VariableQueryRunner } from './features/variable
 import { createQueryVariableAdapter } from './features/variables/query/adapter';
 import { createSystemVariableAdapter } from './features/variables/system/adapter';
 import { createTextBoxVariableAdapter } from './features/variables/textbox/adapter';
+import { initPlugins } from './setup';
 import { configureStore } from './store/configureStore';
 
 // import symlinked extensions
@@ -208,23 +189,7 @@ export class GrafanaApp {
       setDataSourceSrv(dataSourceSrv);
       initWindowRuntime();
 
-      // Do not pre-load apps if rendererDisableAppPluginsPreload is true and the request comes from the image renderer
-      const skipAppPluginsPreload =
-        config.featureToggles.rendererDisableAppPluginsPreload && contextSrv.user.authenticatedBy === 'render';
-      if (contextSrv.user.orgRole !== '' && !skipAppPluginsPreload) {
-        const appPluginsToAwait = getAppPluginsToAwait();
-        const appPluginsToPreload = getAppPluginsToPreload();
-
-        preloadPlugins(appPluginsToPreload);
-        await preloadPlugins(appPluginsToAwait);
-      }
-
-      setPluginLinksHook(usePluginLinks);
-      setPluginComponentHook(usePluginComponent);
-      setPluginComponentsHook(usePluginComponents);
-      setPluginFunctionsHook(usePluginFunctions);
-      setGetObservablePluginLinks(getObservablePluginLinks);
-      setGetObservablePluginComponents(getObservablePluginComponents);
+      await initPlugins();
 
       // initialize chrome service
       const queryParams = locationService.getSearchObject();

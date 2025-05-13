@@ -1,7 +1,6 @@
-import { render } from 'test/test-utils';
+import { render, screen, waitForElementToBeRemoved } from 'test/test-utils';
 import { byRole, byTestId } from 'testing-library-selector';
 
-import { setPluginComponentsHook, setPluginLinksHook } from '@grafana/runtime';
 import { AccessControlAction } from 'app/types';
 
 import { setupMswServer } from '../mockApi';
@@ -25,9 +24,6 @@ const ui = {
   groupedView: byTestId('grouped-view'),
 };
 
-setPluginLinksHook(() => ({ links: [], isLoading: false }));
-setPluginComponentsHook(() => ({ components: [], isLoading: false }));
-
 grantUserPermissions([AccessControlAction.AlertingRuleExternalRead]);
 
 setupMswServer();
@@ -36,33 +32,37 @@ alertingFactory.dataSource.build({ name: 'Mimir', uid: 'mimir' });
 alertingFactory.dataSource.build({ name: 'Prometheus', uid: 'prometheus' });
 
 describe('RuleList v2', () => {
-  it('should show grouped view by default', () => {
+  it('should show grouped view by default', async () => {
     render(<RuleList />);
+    await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show grouped view when invalid view parameter is provided', () => {
+  it('should show grouped view when invalid view parameter is provided', async () => {
     render(<RuleList />, {
       historyOptions: {
         initialEntries: ['/?view=invalid'],
       },
     });
+    await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
 
     expect(ui.groupedView.get()).toBeInTheDocument();
     expect(ui.filterView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when "view=list" URL parameter is present', () => {
+  it('should show list view when "view=list" URL parameter is present', async () => {
     render(<RuleList />, { historyOptions: { initialEntries: ['/?view=list'] } });
+    await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
   });
 
-  it('should show list view when a filter is applied', () => {
+  it('should show list view when a filter is applied', async () => {
     render(<RuleList />, { historyOptions: { initialEntries: ['/?search=rule:cpu-alert'] } });
+    await waitForElementToBeRemoved(() => screen.queryByText(/loading/i));
 
     expect(ui.filterView.get()).toBeInTheDocument();
     expect(ui.groupedView.query()).not.toBeInTheDocument();
