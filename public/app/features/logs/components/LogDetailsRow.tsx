@@ -24,6 +24,7 @@ import {
   Tooltip,
   withTheme2,
 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { logRowToSingleRowDataFrame } from '../logsModel';
 import { getLabelTypeFromRow } from '../utils';
@@ -244,7 +245,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
       <div className={`log-details-value-copy ${styles.copyButton}`}>
         <ClipboardButton
           getText={() => val}
-          title="Copy value to clipboard"
+          title={t('logs.un-themed-log-details-row.title-copy-value-to-clipboard', 'Copy value to clipboard')}
           fill="text"
           variant="secondary"
           icon="copy"
@@ -304,9 +305,21 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
 
     const toggleFieldButton =
       displayedFields && parsedKeys != null && displayedFields.includes(parsedKeys[0]) ? (
-        <IconButton variant="primary" tooltip="Hide this field" name="eye" onClick={this.hideField} />
+        <IconButton
+          variant="primary"
+          tooltip={t('logs.un-themed-log-details-row.toggle-field-button.tooltip-hide-this-field', 'Hide this field')}
+          name="eye"
+          onClick={this.hideField}
+        />
       ) : (
-        <IconButton tooltip="Show this field instead of the message" name="eye" onClick={this.showField} />
+        <IconButton
+          tooltip={t(
+            'logs.un-themed-log-details-row.toggle-field-button.tooltip-field-instead-message',
+            'Show this field instead of the message'
+          )}
+          name="eye"
+          onClick={this.showField}
+        />
       );
 
     return (
@@ -325,7 +338,13 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                   />
                   <IconButton
                     name="search-minus"
-                    tooltip={`Filter out value${refIdTooltip}`}
+                    tooltip={
+                      app === CoreApp.Explore && row.dataFrame?.refId
+                        ? t('logs.un-themed-log-details-row.filter-out-query', 'Filter out value in query {{query}}', {
+                            query: row.dataFrame?.refId,
+                          })
+                        : t('logs.un-themed-log-details-row.filter-out', 'Filter out value')
+                    }
                     onClick={this.filterOutLabel}
                   />
                 </>
@@ -335,7 +354,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
                 <IconButton
                   variant={showFieldsStats ? 'primary' : 'secondary'}
                   name="signal"
-                  tooltip="Ad-hoc statistics"
+                  tooltip={t('logs.un-themed-log-details-row.tooltip-adhoc-statistics', 'Ad-hoc statistics')}
                   className="stats-button"
                   disabled={!singleKey}
                   onClick={this.showStats}
@@ -388,7 +407,7 @@ class UnThemedLogDetailsRow extends PureComponent<Props, State> {
               <IconButton
                 variant={showFieldsStats ? 'primary' : 'secondary'}
                 name="signal"
-                tooltip="Hide ad-hoc statistics"
+                tooltip={t('logs.un-themed-log-details-row.tooltip-hide-adhoc-statistics', 'Hide ad-hoc statistics')}
                 onClick={this.showStats}
               />
             </td>

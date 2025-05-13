@@ -9,7 +9,8 @@ export const DEFAULT_ROW_HEIGHT = 250;
 export const MIN_PANEL_HEIGHT = GRID_CELL_HEIGHT * 3;
 
 export const LS_PANEL_COPY_KEY = 'panel-copy';
-
+export const LS_ROW_COPY_KEY = 'row-copy';
+export const LS_TAB_COPY_KEY = 'tab-copy';
 export const PANEL_BORDER = 2;
 
 export const EDIT_PANEL_ID = 23763571993;
@@ -17,3 +18,4 @@ export const EDIT_PANEL_ID = 23763571993;
 export const DEFAULT_PER_PAGE_PAGINATION = 40;
 
 export const LS_VISUALIZATION_SELECT_TAB_KEY = 'VisualizationSelectPane.ListMode';
+export const MEGA_MENU_TOGGLE_ID = 'mega-menu-toggle';

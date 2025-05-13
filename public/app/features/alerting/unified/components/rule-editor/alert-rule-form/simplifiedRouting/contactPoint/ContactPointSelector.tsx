@@ -3,6 +3,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 
 import { SelectableValue } from '@grafana/data';
 import { ActionMeta, Field, FieldValidationMessage, Stack, TextLink } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import { ContactPointSelector as ContactPointSelectorDropdown } from 'app/features/alerting/unified/components/notification-policies/ContactPointSelector';
 import { RuleFormValues } from 'app/features/alerting/unified/types/rule-form';
 import { createRelativeUrl } from 'app/features/alerting/unified/utils/url';
@@ -15,9 +16,19 @@ export interface ContactPointSelectorProps {
 }
 
 export function ContactPointSelector({ alertManager, onSelectContactPoint }: ContactPointSelectorProps) {
-  const { control, watch, trigger } = useFormContext<RuleFormValues>();
+  const { control, watch, trigger, setError } = useFormContext<RuleFormValues>();
 
   const contactPointInForm = watch(`contactPoints.${alertManager}.selectedContactPoint`);
+
+  // Wrap in useCallback to avoid infinite render loop
+  const handleError = useCallback(
+    (err: Error) => {
+      setError(`contactPoints.${alertManager}.selectedContactPoint`, {
+        message: err.message,
+      });
+    },
+    [alertManager, setError]
+  );
 
   // if we have a contact point selected, check if it still exists in the event that someone has deleted it
   const validateContactPoint = useCallback(() => {
@@ -34,7 +45,10 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
   return (
     <Stack direction="column">
       <Stack direction="row" alignItems="center">
-        <Field label="Contact point" data-testid="contact-point-picker">
+        <Field
+          label={t('alerting.contact-point-selector.contact-point-picker-label-contact-point', 'Contact point')}
+          data-testid="contact-point-picker"
+        >
           <Controller
             render={({ field: { onChange }, fieldState: { error } }) => (
               <>
@@ -49,6 +63,7 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
                     }}
                     showRefreshButton
                     selectedContactPointName={contactPointInForm}
+                    onError={handleError}
                   />
                   <LinkToContactPoints />
                 </Stack>
@@ -76,8 +91,17 @@ export function ContactPointSelector({ alertManager, onSelectContactPoint }: Con
 function LinkToContactPoints() {
   const hrefToContactPoints = '/alerting/notifications';
   return (
-    <TextLink external href={createRelativeUrl(hrefToContactPoints)} aria-label="View or create contact points">
-      View or create contact points
+    <TextLink
+      external
+      href={createRelativeUrl(hrefToContactPoints)}
+      aria-label={t(
+        'alerting.link-to-contact-points.aria-label-view-or-create-contact-points',
+        'View or create contact points'
+      )}
+    >
+      <Trans i18nKey="alerting.link-to-contact-points.view-or-create-contact-points">
+        View or create contact points
+      </Trans>
     </TextLink>
   );
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/actest"
 	"github.com/grafana/grafana/pkg/services/accesscontrol/mock"
+	"github.com/grafana/grafana/pkg/services/apiserver"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/folder"
@@ -234,6 +235,9 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
 	}
+	if db.IsTestDBSpanner() {
+		t.Skip("skipping integration test")
+	}
 
 	// the maximux nested folder hierarchy starting from parent down to subfolders
 	nestedFolders := make([]*folder.Folder, 0, folder.MaxNestedFolderDepth+1)
@@ -304,7 +308,7 @@ func TestIntegrationDashboardInheritedFolderRBAC(t *testing.T) {
 		folderStore := folderimpl.ProvideStore(sqlStore)
 		folderSvc := folderimpl.ProvideService(
 			folderStore, mock.New(), bus.ProvideBus(tracer), dashboardWriteStore, folderimpl.ProvideDashboardFolderStore(sqlStore),
-			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService())
+			nil, sqlStore, features, supportbundlestest.NewFakeBundleService(), nil, cfg, nil, tracing.InitializeTracerForTest(), nil, dualwrite.ProvideTestService(), sort.ProvideService(), apiserver.WithoutRestConfig)
 
 		parentUID := ""
 		for i := 0; ; i++ {

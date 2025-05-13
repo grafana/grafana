@@ -1,7 +1,6 @@
 package sql
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
@@ -11,90 +10,133 @@ import (
 
 func TestIsHighAvailabilityEnabled(t *testing.T) {
 	tests := []struct {
-		name          string
-		dbType        string
-		haConfigValue *bool
-		isHA          bool
+		name string
+		cfg  *setting.Cfg
+		isHA bool
 	}{
 		{
-			name:          "SQLite should never have HA enabled",
-			dbType:        migrator.SQLite,
-			haConfigValue: boolPtr(true),
-			isHA:          false,
+			name: "SQLite should never have HA enabled",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.SQLite)
+				dbSection.Key("high_availability").SetValue("true")
+				return cfg
+			}(),
+			isHA: false,
 		},
 		{
-			name:          "MySQL with HA enabled in config should default to true",
-			dbType:        migrator.MySQL,
-			haConfigValue: boolPtr(true),
-			isHA:          true,
+			name: "MySQL with HA enabled in config should default to true",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.MySQL)
+				dbSection.Key("high_availability").SetValue("true")
+				return cfg
+			}(),
+			isHA: true,
 		},
 		{
-			name:          "MySQL with HA disabled in config should default to false",
-			dbType:        migrator.MySQL,
-			haConfigValue: boolPtr(false),
-			isHA:          false,
+			name: "MySQL with HA disabled in config should default to false",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.MySQL)
+				dbSection.Key("high_availability").SetValue("false")
+				return cfg
+			}(),
+			isHA: false,
 		},
 		{
-			name:          "MySQL with no HA config should default to true",
-			dbType:        migrator.MySQL,
-			haConfigValue: nil,
-			isHA:          true,
+			name: "MySQL with no HA config should default to true",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.MySQL)
+				return cfg
+			}(),
+			isHA: true,
 		},
 		{
-			name:          "Postgres with HA enabled in config should default to true",
-			dbType:        migrator.Postgres,
-			haConfigValue: boolPtr(true),
-			isHA:          true,
+			name: "Postgres with HA enabled in config should default to true",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.Postgres)
+				dbSection.Key("high_availability").SetValue("true")
+				return cfg
+			}(),
+			isHA: true,
 		},
 		{
-			name:          "Postgres with HA disabled in config should default to false",
-			dbType:        migrator.Postgres,
-			haConfigValue: boolPtr(false),
-			isHA:          false,
+			name: "Postgres with HA disabled in config should default to false",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.Postgres)
+				dbSection.Key("high_availability").SetValue("false")
+				return cfg
+			}(),
+			isHA: false,
 		},
 		{
-			name:          "Postgres with no HA config should default to true",
-			dbType:        migrator.Postgres,
-			haConfigValue: nil,
-			isHA:          true,
+			name: "Postgres with no HA config should default to true",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.Postgres)
+				return cfg
+			}(),
+			isHA: true,
 		},
 		{
-			name:          "No database type set should default to true",
-			dbType:        "",
-			haConfigValue: nil,
-			isHA:          true,
+			name: "No database type set should default to true",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				_ = cfg.SectionWithEnvOverrides("database")
+				return cfg
+			}(),
+			isHA: true,
 		},
 		{
-			name:          "No database type set with HA enabled in config should default to true",
-			dbType:        "",
-			haConfigValue: boolPtr(true),
-			isHA:          true,
+			name: "No database type set with HA enabled in config should default to true",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("high_availability").SetValue("true")
+				return cfg
+			}(),
+			isHA: true,
 		},
 		{
-			name:          "No database type set with HA disabled in config should default to false",
-			dbType:        "",
-			haConfigValue: boolPtr(false),
-			isHA:          false,
+			name: "No database type set with HA disabled in config should default to false",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("high_availability").SetValue("false")
+				return cfg
+			}(),
+			isHA: false,
+		},
+		{
+			name: "Resource API with non-SQLite database type should default to true",
+			cfg: func() *setting.Cfg {
+				cfg := setting.NewCfg()
+				dbSection := cfg.SectionWithEnvOverrides("database")
+				dbSection.Key("type").SetValue(migrator.SQLite)
+				resourceAPISection := cfg.SectionWithEnvOverrides("resource_api")
+				resourceAPISection.Key("db_type").SetValue(migrator.Postgres)
+				return cfg
+			}(),
+			isHA: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := setting.NewCfg().SectionWithEnvOverrides("database")
-			if tt.dbType != "" {
-				cfg.Key("type").SetValue(tt.dbType)
-			}
-
-			if tt.haConfigValue != nil {
-				cfg.Key("high_availability").SetValue(strconv.FormatBool(*tt.haConfigValue))
-			}
-
-			result := isHighAvailabilityEnabled(cfg)
+			result := isHighAvailabilityEnabled(tt.cfg.SectionWithEnvOverrides("database"),
+				tt.cfg.SectionWithEnvOverrides("resource_api"))
 			require.Equal(t, tt.isHA, result)
 		})
 	}
-}
-
-func boolPtr(b bool) *bool {
-	return &b
 }

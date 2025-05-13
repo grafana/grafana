@@ -108,6 +108,7 @@ export function ExploreRunQueryButton({
                   runQuery(pane[0]);
                   onClick?.();
                 }}
+                // eslint-disable-next-line @grafana/no-untranslated-strings
                 label={`${paneLabel}: ${buttonText.translation}`}
                 disabled={isInvalid || pane[0] === undefined}
               />
@@ -118,7 +119,14 @@ export function ExploreRunQueryButton({
 
       return (
         <Dropdown onVisibleChange={(state) => setOpenRunQueryButton(state)} placement="bottom-start" overlay={menu}>
-          <ToolbarButton aria-label="run query options" variant="canvas" isOpen={openRunQueryButton}>
+          <ToolbarButton
+            aria-label={t(
+              'explore.explore-run-query-button.run-button.aria-label-run-query-options',
+              'Run query options'
+            )}
+            variant="canvas"
+            isOpen={openRunQueryButton}
+          >
             {t('explore.run-query.run-query-button', 'Run query')}
           </ToolbarButton>
         </Dropdown>

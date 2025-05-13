@@ -1,6 +1,7 @@
 import { first } from 'lodash';
 
 import { Dropdown, ToolbarButton } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { Trans } from '../../../../core/internationalization';
 import { ToolbarExtensionPointMenu } from '../ToolbarExtensionPointMenu';
@@ -29,7 +30,7 @@ export function QuerylessAppsExtensions(props: ExtensionDropdownProps) {
     <>
       <Dropdown onVisibleChange={setIsModalOpen} placement="bottom-start" overlay={menu}>
         <ToolbarButton
-          aria-label="Go Queryless"
+          aria-label={t('explore.queryless-apps-extensions.aria-label-go-queryless', 'Go queryless')}
           disabled={!Boolean(noQueriesInPane)}
           variant="canvas"
           isOpen={isModalOpen}

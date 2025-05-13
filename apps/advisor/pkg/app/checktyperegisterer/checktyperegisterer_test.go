@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana-app-sdk/resource"
 	advisorv0alpha1 "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
@@ -117,7 +118,10 @@ func TestCheckTypesRegisterer_Run(t *testing.T) {
 					createFunc: tt.createFunc,
 					updateFunc: tt.updateFunc,
 				},
-				namespace: "custom-namespace",
+				namespace:     "custom-namespace",
+				log:           logging.DefaultLogger,
+				retryAttempts: 1,
+				retryDelay:    0,
 			}
 			err := r.Run(context.Background())
 			if err != nil {
@@ -176,7 +180,7 @@ func (m *mockStep) Resolution() string {
 	return ""
 }
 
-func (m *mockStep) Run(ctx context.Context, obj *advisorv0alpha1.CheckSpec, item any) (*advisorv0alpha1.CheckReportFailure, error) {
+func (m *mockStep) Run(ctx context.Context, log logging.Logger, obj *advisorv0alpha1.CheckSpec, item any) ([]advisorv0alpha1.CheckReportFailure, error) {
 	return nil, nil
 }
 

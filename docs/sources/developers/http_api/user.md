@@ -36,6 +36,8 @@ To use these API endpoints you have to use Basic authentication and the Grafana 
 The `admin` user that Grafana is provisioned with by default has permissions to use these API endpoints.
 {{< /admonition >}}
 
+For Grafana Cloud customers, refer to [Organization HTTP API](/docs/grafana/latest/developers/http_api/org/) for finding users with the org Admin role.
+
 > If you are running Grafana Enterprise, for some endpoints you'll need to have specific permissions. Refer to [Role-based access control permissions](ref:role-based-access-control-permissions) for more information.
 
 ## Search Users

@@ -45,14 +45,22 @@ Cypress.on('uncaught:exception', (err) => {
 // });
 //
 
+// TODO: read from toggles_gen.csv?
+const featureToggles = ['kubernetesDashboards', 'dashboardNewLayouts', 'dashboardScene'];
+
 beforeEach(() => {
-  if (Cypress.env('DISABLE_SCENES')) {
-    cy.logToConsole('disabling dashboardScene feature toggle in localstorage');
-    cy.setLocalStorage('grafana.featureToggles', 'dashboardScene=false');
+  let toggles = [];
+
+  for (const toggle of featureToggles) {
+    const toggleValue = Cypress.env(toggle);
+    if (toggleValue !== undefined) {
+      cy.logToConsole(`setting ${toggle} to ${toggleValue} in localstorage`);
+      toggles.push(`${toggle}=${toggleValue}`);
+    }
   }
 
-  if (Cypress.env('useV2DashboardsAPI')) {
-    cy.logToConsole('enabling v2 dashboards API in localstorage');
-    cy.setLocalStorage('grafana.featureToggles', 'useV2DashboardsAPI=true');
+  if (toggles.length > 0) {
+    cy.logToConsole('setting feature toggles in localstorage');
+    cy.setLocalStorage('grafana.featureToggles', toggles.join(','));
   }
 });

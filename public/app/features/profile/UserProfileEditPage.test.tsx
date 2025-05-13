@@ -1,24 +1,17 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent, { PointerEventsCheckLevel } from '@testing-library/user-event';
+import { render } from 'test/test-utils';
 
-import { OrgRole, PluginExtensionComponent, PluginExtensionTypes } from '@grafana/data';
+import { type ComponentTypeWithExtensionMeta, OrgRole } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
-import { setPluginExtensionsHook, UsePluginExtensions } from '@grafana/runtime';
-import * as useQueryParams from 'app/core/hooks/useQueryParams';
+import { setPluginComponentsHook, usePluginComponents } from '@grafana/runtime';
 
-import { TestProvider } from '../../../test/helpers/TestProvider';
 import { backendSrv } from '../../core/services/backend_srv';
+import { createComponentWithMeta } from '../plugins/extensions/usePluginComponents';
 import { getMockTeam } from '../teams/__mocks__/teamMocks';
 
 import { Props, UserProfileEditPage } from './UserProfileEditPage';
 import { initialUserState } from './state/reducers';
-
-const mockUseQueryParams = useQueryParams as { useQueryParams: typeof useQueryParams.useQueryParams };
-
-jest.mock('app/core/hooks/useQueryParams', () => ({
-  __esModule: true,
-  useQueryParams: () => [{}],
-}));
 
 jest.mock('app/features/dashboard/api/dashboard_api', () => ({
   getDashboardAPI: () => ({
@@ -136,20 +129,23 @@ const _createTabName = (tab: ExtensionPointComponentTabs) => tab;
 const _createTabContent = (tabId: ExtensionPointComponentId) => `this is settings for component ${tabId}`;
 
 const generalTabName = 'General';
+const generalTestId = 'user-profile-edit-page';
 const tabOneName = _createTabName(ExtensionPointComponentTabs.One);
 const tabTwoName = _createTabName(ExtensionPointComponentTabs.Two);
 
 const _createPluginExtensionPointComponent = (
   id: ExtensionPointComponentId,
   tab: ExtensionPointComponentTabs
-): PluginExtensionComponent => ({
-  id,
-  type: PluginExtensionTypes.component,
-  title: _createTabName(tab),
-  description: '', // description isn't used here..
-  component: () => <p>{_createTabContent(id)}</p>,
-  pluginId: 'grafana-plugin',
-});
+): ComponentTypeWithExtensionMeta =>
+  createComponentWithMeta<{}>(
+    {
+      title: _createTabName(tab),
+      description: '', // description isn't used here..
+      component: () => <p>{_createTabContent(id)}</p>,
+      pluginId: 'grafana-plugin',
+    },
+    id
+  );
 
 const PluginExtensionPointComponent1 = _createPluginExtensionPointComponent(
   ExtensionPointComponentId.One,
@@ -164,8 +160,8 @@ const PluginExtensionPointComponent3 = _createPluginExtensionPointComponent(
   ExtensionPointComponentTabs.Two
 );
 
-async function getTestContext(overrides: Partial<Props & { extensions: PluginExtensionComponent[] }> = {}) {
-  const extensions = overrides.extensions || [];
+async function getTestContext(overrides: Partial<Props & { components: ComponentTypeWithExtensionMeta[] }> = {}) {
+  const components = overrides.components || [];
 
   jest.clearAllMocks();
   const putSpy = jest.spyOn(backendSrv, 'put');
@@ -174,18 +170,12 @@ async function getTestContext(overrides: Partial<Props & { extensions: PluginExt
     .mockResolvedValue({ timezone: 'UTC', homeDashboardUID: 'home-dashboard', theme: 'dark' });
   const searchSpy = jest.spyOn(backendSrv, 'search').mockResolvedValue([]);
 
-  const getter: UsePluginExtensions<PluginExtensionComponent> = jest
-    .fn()
-    .mockReturnValue({ extensions, isLoading: false });
+  const getter: typeof usePluginComponents = jest.fn().mockReturnValue({ components, isLoading: false });
 
-  setPluginExtensionsHook(getter);
+  setPluginComponentsHook(getter);
 
   const props = { ...defaultProps, ...overrides };
-  const { rerender } = render(
-    <TestProvider>
-      <UserProfileEditPage {...props} />
-    </TestProvider>
-  );
+  const { rerender } = render(<UserProfileEditPage {...props} />);
 
   await waitFor(() => expect(props.initUserProfilePage).toHaveBeenCalledTimes(1));
 
@@ -334,7 +324,7 @@ describe('UserProfileEditPage', () => {
     });
 
     describe('and a plugin registers a component against the user profile settings extension point', () => {
-      const extensions = [
+      const components = [
         PluginExtensionPointComponent1,
         PluginExtensionPointComponent2,
         PluginExtensionPointComponent3,
@@ -347,7 +337,7 @@ describe('UserProfileEditPage', () => {
       });
 
       it('should group registered components into tabs', async () => {
-        await getTestContext({ extensions });
+        await getTestContext({ components });
         const { extensionPointTabs, extensionPointTab } = getSelectors();
 
         const _assertTab = (tabId: string, isDefault = false) => {
@@ -363,10 +353,7 @@ describe('UserProfileEditPage', () => {
       });
 
       it('should change the active tab when a tab is clicked and update the "tab" query param', async () => {
-        const mockUpdateQueryParams = jest.fn();
-        mockUseQueryParams.useQueryParams = () => [{}, mockUpdateQueryParams];
-
-        await getTestContext({ extensions });
+        await getTestContext({ components });
         const { extensionPointTab } = getSelectors();
 
         /**
@@ -378,26 +365,24 @@ describe('UserProfileEditPage', () => {
         const tabTwoContent = _createTabContent(ExtensionPointComponentId.Three);
 
         // "General" should be the default content
+        expect(screen.queryByTestId(generalTestId)).toBeInTheDocument();
         expect(screen.queryByText(tabOneContent1)).toBeNull();
         expect(screen.queryByText(tabOneContent2)).toBeNull();
         expect(screen.queryByText(tabTwoContent)).toBeNull();
 
         await userEvent.click(extensionPointTab(tabOneName.toLowerCase()));
 
-        expect(mockUpdateQueryParams).toHaveBeenCalledTimes(1);
-        expect(mockUpdateQueryParams).toHaveBeenCalledWith({ tab: tabOneName.toLowerCase() });
-        expect(screen.queryByText(tabOneContent1)).not.toBeNull();
-        expect(screen.queryByText(tabOneContent2)).not.toBeNull();
+        expect(screen.queryByTestId(generalTestId)).toBeNull();
+        expect(screen.queryByText(tabOneContent1)).toBeInTheDocument();
+        expect(screen.queryByText(tabOneContent2)).toBeInTheDocument();
         expect(screen.queryByText(tabTwoContent)).toBeNull();
 
-        mockUpdateQueryParams.mockClear();
         await userEvent.click(extensionPointTab(tabTwoName.toLowerCase()));
 
-        expect(mockUpdateQueryParams).toHaveBeenCalledTimes(1);
-        expect(mockUpdateQueryParams).toHaveBeenCalledWith({ tab: tabTwoName.toLowerCase() });
+        expect(screen.queryByTestId(generalTestId)).toBeNull();
         expect(screen.queryByText(tabOneContent1)).toBeNull();
         expect(screen.queryByText(tabOneContent2)).toBeNull();
-        expect(screen.queryByText(tabTwoContent)).not.toBeNull();
+        expect(screen.queryByText(tabTwoContent)).toBeInTheDocument();
       });
     });
   });

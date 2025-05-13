@@ -1,19 +1,14 @@
-// Libraries
-import { map } from 'lodash';
 import { memo } from 'react';
 import * as React from 'react';
 
-// Types
 import { SelectableValue } from '@grafana/data';
 import { config } from '@grafana/runtime';
-import { InlineFormLabel, RadioButtonGroup, InlineField, Input, Select, Stack } from '@grafana/ui';
+import { InlineField, Input, Stack } from '@grafana/ui';
 
-import { getLokiQueryType } from '../queryUtils';
 import { LokiQuery, LokiQueryDirection, LokiQueryType } from '../types';
 
 export interface LokiOptionFieldsProps {
   lineLimitValue: string;
-  resolution: number;
   query: LokiQuery;
   onChange: (value: LokiQuery) => void;
   onRunQuery: () => void;
@@ -47,10 +42,6 @@ if (config.featureToggles.lokiShardSplitting) {
   });
 }
 
-export function getQueryDirectionLabel(direction: LokiQueryDirection) {
-  return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
-}
-
 if (config.featureToggles.lokiExperimentalStreaming) {
   queryTypeOptions.push({
     value: LokiQueryType.Stream,
@@ -59,31 +50,17 @@ if (config.featureToggles.lokiExperimentalStreaming) {
   });
 }
 
-export const DEFAULT_RESOLUTION: SelectableValue<number> = {
-  value: 1,
-  label: '1/1',
-};
-
-export const RESOLUTION_OPTIONS: Array<SelectableValue<number>> = [DEFAULT_RESOLUTION].concat(
-  map([2, 3, 4, 5, 10], (value: number) => ({
-    value,
-    label: '1/' + value,
-  }))
-);
+export function getQueryDirectionLabel(direction: LokiQueryDirection) {
+  return queryDirections.find((queryDirection) => queryDirection.value === direction)?.label ?? 'Unknown';
+}
 
 export function LokiOptionFields(props: LokiOptionFieldsProps) {
-  const { lineLimitValue, resolution, onRunQuery, runOnBlur, onChange } = props;
+  const { lineLimitValue, onRunQuery, runOnBlur, onChange } = props;
   const query = props.query ?? {};
-  const queryType = getLokiQueryType(query);
 
   function onChangeQueryLimit(value: string) {
     const nextQuery = { ...query, maxLines: preprocessMaxLines(value) };
     onChange(nextQuery);
-  }
-
-  function onQueryTypeChange(queryType: LokiQueryType) {
-    const { instant, range, ...rest } = query;
-    onChange({ ...rest, queryType });
   }
 
   function onMaxLinesChange(e: React.SyntheticEvent<HTMLInputElement>) {
@@ -98,28 +75,8 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
     }
   }
 
-  function onResolutionChange(option: SelectableValue<number>) {
-    const nextQuery = { ...query, resolution: option.value };
-    onChange(nextQuery);
-  }
-
   return (
     <Stack alignItems="flex-start" gap={0.5} aria-label="Loki extra field">
-      {/*Query type field*/}
-      <Stack wrap="nowrap" gap={0} data-testid="queryTypeField" aria-label="Query type field">
-        <InlineFormLabel width="auto">Query type</InlineFormLabel>
-
-        <RadioButtonGroup
-          options={queryTypeOptions}
-          value={queryType}
-          onChange={(type: LokiQueryType) => {
-            onQueryTypeChange(type);
-            if (runOnBlur) {
-              onRunQuery();
-            }
-          }}
-        />
-      </Stack>
       {/*Line limit field*/}
       <Stack wrap="nowrap" gap={0} data-testid="lineLimitField" aria-label="Line limit field">
         <InlineField label="Line limit" tooltip={'Upper limit for number of log lines returned by query.'}>
@@ -136,20 +93,6 @@ export function LokiOptionFields(props: LokiOptionFieldsProps) {
                 onRunQuery();
               }
             }}
-          />
-        </InlineField>
-        <InlineField
-          label="Resolution"
-          tooltip={
-            'Resolution 1/1 sets step parameter of Loki metrics range queries such that each pixel corresponds to one data point. For better performance, lower resolutions can be picked. 1/2 only retrieves a data point for every other pixel, and 1/10 retrieves one data point per 10 pixels.'
-          }
-        >
-          <Select
-            isSearchable={false}
-            onChange={onResolutionChange}
-            options={RESOLUTION_OPTIONS}
-            value={resolution}
-            aria-label="Select resolution"
           />
         </InlineField>
       </Stack>

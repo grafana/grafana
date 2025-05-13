@@ -42,6 +42,20 @@
       "format": "int64",
       "description": "created timestamp",
       "priority": 0
+    },
+    {
+      "name": "grafana.app/deprecatedInternalID",
+      "type": "number",
+      "format": "int64",
+      "description": "Deprecated legacy id of the resource",
+      "priority": 0
+    },
+    {
+      "name": "manager.kind",
+      "type": "string",
+      "format": "",
+      "description": "Type of manager, which is responsible for managing the resource",
+      "priority": 0
     }
   ],
   "rows": [
@@ -52,6 +66,8 @@
         null,
         null,
         null,
+        null,
+        321,
         null
       ],
       "object": {
@@ -71,7 +87,9 @@
         null,
         null,
         null,
-        null
+        null,
+        123,
+        "repo"
       ],
       "object": {
         "kind": "folders",

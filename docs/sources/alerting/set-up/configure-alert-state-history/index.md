@@ -47,9 +47,6 @@ The example below instructs Grafana to write alert state history to a local Loki
 enabled = true
 backend = "loki"
 loki_remote_url = "http://localhost:3100"
-
-[feature_toggles]
-enable = alertStateHistoryLokiSecondary, alertStateHistoryLokiPrimary, alertStateHistoryLokiOnly
 ```
 
 <!-- TODO can we add some more info here about the feature flags and the various different supported setups with Loki as Primary / Secondary, etc? -->

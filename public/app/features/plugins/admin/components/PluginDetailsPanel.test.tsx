@@ -54,13 +54,34 @@ const mockPlugin: CatalogPlugin = {
         name: 'Website',
         url: 'https://test-plugin.com',
       },
+      {
+        name: 'Repository',
+        url: 'https://github.com/grafana/test-plugin',
+      },
+      {
+        name: 'License',
+        url: 'https://github.com/grafana/test-plugin/blob/main/LICENSE',
+      },
+      {
+        name: 'Documentation',
+        url: 'https://test-plugin.com/docs',
+      },
+      {
+        name: 'Raise issue',
+        url: 'https://github.com/grafana/test-plugin/issues/new',
+      },
     ],
+    raiseAnIssueUrl: 'https://github.com/grafana/test-plugin/issues/new',
+    documentationUrl: 'https://test-plugin.com/docs',
+    licenseUrl: 'https://github.com/grafana/test-plugin/blob/main/LICENSE',
+    sponsorshipUrl: 'https://github.com/sponsors/grafana',
     grafanaDependency: '>=9.0.0',
     statusContext: 'stable',
   },
   angularDetected: false,
   isFullyInstalled: true,
   accessControl: {},
+  url: 'https://github.com/grafana/test-plugin',
 };
 
 const mockInfo = [
@@ -117,5 +138,50 @@ describe('PluginDetailsPanel', () => {
     render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} width="300px" />);
     const panel = screen.getByTestId('plugin-details-panel');
     expect(panel).toHaveStyle({ width: '300px' });
+  });
+
+  it('should render license, documentation, repository, raise issue, sponsorship links', () => {
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
+    const repositoryLink = screen.getByTestId('plugin-details-repository-link');
+    const licenseLink = screen.getByTestId('plugin-details-license-link');
+    const documentationLink = screen.getByTestId('plugin-details-documentation-link');
+    const raiseIssueLink = screen.getByTestId('plugin-details-raise-issue-link');
+    const sponsorshipLink = screen.getByTestId('plugin-details-sponsorship-link');
+
+    expect(repositoryLink).toBeInTheDocument();
+    expect(repositoryLink).toHaveAttribute('href', 'https://github.com/grafana/test-plugin');
+    expect(licenseLink).toBeInTheDocument();
+    expect(licenseLink).toHaveAttribute('href', 'https://github.com/grafana/test-plugin/blob/main/LICENSE');
+    expect(documentationLink).toBeInTheDocument();
+    expect(documentationLink).toHaveAttribute('href', 'https://test-plugin.com/docs');
+    expect(raiseIssueLink).toBeInTheDocument();
+    expect(raiseIssueLink).toHaveAttribute('href', 'https://github.com/grafana/test-plugin/issues/new');
+    expect(sponsorshipLink).toBeInTheDocument();
+    expect(sponsorshipLink).toHaveAttribute('href', 'https://github.com/sponsors/grafana');
+  });
+
+  it('should not render license, documentation, repository, raise issue links in custom links', () => {
+    render(<PluginDetailsPanel plugin={mockPlugin} pluginExtentionsInfo={mockInfo} />);
+    const repositoryLink = screen.getByTestId('plugin-details-repository-link');
+    const licenseLink = screen.getByTestId('plugin-details-license-link');
+    const documentationLink = screen.getByTestId('plugin-details-documentation-link');
+    const raiseIssueLink = screen.getByTestId('plugin-details-raise-issue-link');
+    const websiteLink = screen.getByText('Website');
+
+    const customLinks = screen.getByTestId('plugin-details-custom-links');
+
+    expect(customLinks).not.toContainElement(repositoryLink);
+    expect(customLinks).not.toContainElement(licenseLink);
+    expect(customLinks).not.toContainElement(documentationLink);
+    expect(customLinks).not.toContainElement(raiseIssueLink);
+    expect(customLinks).toContainElement(websiteLink);
+
+    const regularLinks = screen.getByTestId('plugin-details-regular-links');
+
+    expect(regularLinks).toContainElement(repositoryLink);
+    expect(regularLinks).toContainElement(licenseLink);
+    expect(regularLinks).toContainElement(documentationLink);
+    expect(regularLinks).toContainElement(raiseIssueLink);
+    expect(regularLinks).not.toContainElement(websiteLink);
   });
 });

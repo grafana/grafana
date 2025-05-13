@@ -26,7 +26,7 @@ type mockService struct {
 }
 
 // NewStorage implements Service.
-func (m *mockService) NewStorage(gr schema.GroupResource, legacy rest.LegacyStorage, storage rest.Storage) (rest.Storage, error) {
+func (m *mockService) NewStorage(gr schema.GroupResource, legacy rest.Storage, storage rest.Storage) (rest.Storage, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 

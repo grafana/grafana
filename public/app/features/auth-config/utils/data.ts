@@ -1,6 +1,6 @@
 import { SelectableValue } from '@grafana/data';
 
-import { fieldMap, sectionFields } from '../fields';
+import { fieldMap, getSectionFields } from '../fields';
 import { FieldData, SSOProvider, SSOProviderDTO } from '../types';
 
 import { isSelectableValue } from './guards';
@@ -86,7 +86,7 @@ const valuesToString = (values: Array<SelectableValue<string>>) => {
 };
 
 const getFieldsForProvider = (provider: string) => {
-  const sections = sectionFields[provider];
+  const sections = getSectionFields()[provider];
 
   // include the enabled field because it is not part of the fields defined for providers
   const fields = ['enabled'];
@@ -133,5 +133,5 @@ export function dtoToData(dto: SSOProviderDTO, provider: string) {
 export function getArrayFields(obj: Record<string, FieldData>, providerFields: string[]): Array<keyof SSOProviderDTO> {
   return Object.entries(obj)
     .filter(([key, value]) => providerFields.includes(key) && value.type === 'select')
-    .map(([key]) => key as keyof SSOProviderDTO);
+    .map(([key]) => key as keyof SSOProviderDTO); // TODO: replace this with a type guard
 }

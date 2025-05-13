@@ -5,9 +5,10 @@ import config from 'app/core/config';
 import { contextSrv } from 'app/core/services/context_srv';
 import { highlightTrial } from 'app/features/admin/utils';
 import { AccessControlAction, Team, TeamPermissionLevel } from 'app/types';
+import userProfilePng from 'img/user_profile.png';
 
 const loadingTeam = {
-  avatarUrl: 'public/img/user_profile.png',
+  avatarUrl: userProfilePng,
   id: 1,
   uid: '',
   name: 'Loading',
@@ -17,6 +18,7 @@ const loadingTeam = {
   accessControl: { isEditor: false },
   orgId: 0,
   updated: '',
+  isProvisioned: false,
 };
 
 export function buildNavModel(team: Team): NavModelItem {

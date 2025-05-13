@@ -5,6 +5,7 @@ import { GrafanaTheme2, intervalToAbbreviatedDurationString } from '@grafana/dat
 import { useStyles2 } from '@grafana/ui';
 import { AlertmanagerAlert } from 'app/plugins/datasource/alertmanager/types';
 
+import { Trans } from '../../../../../core/internationalization';
 import { AlertLabels } from '../AlertLabels';
 import { DynamicTableColumnProps, DynamicTableItemProps } from '../DynamicTable';
 import { DynamicTableWithGuidelines } from '../DynamicTableWithGuidelines';
@@ -33,11 +34,17 @@ export const AlertGroupAlertsTable = ({ alerts, alertManagerSourceName }: Props)
           <>
             <AmAlertStateTag state={alert.status.state} />
             <span className={styles.duration}>
-              for{' '}
-              {intervalToAbbreviatedDurationString({
-                start: new Date(alert.startsAt),
-                end: new Date(alert.endsAt),
-              })}
+              <Trans
+                i18nKey="alerting.alert-group-alerts-table.duration"
+                values={{
+                  time: intervalToAbbreviatedDurationString({
+                    start: new Date(alert.startsAt),
+                    end: new Date(alert.endsAt),
+                  }),
+                }}
+              >
+                for {'{{time}}'}
+              </Trans>
             </span>
           </>
         ),

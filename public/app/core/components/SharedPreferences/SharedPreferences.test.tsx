@@ -188,9 +188,9 @@ describe('SharedPreferences', () => {
     await selectComboboxOptionInTest(await screen.findByRole('combobox', { name: 'Interface theme' }), 'Default');
 
     // there's no default option in this dropdown - there's a clear selection button
-    // get the parent container, and find the "select-clear-value" button
+    // get the parent container, and find the "Clear value" button
     const dashboardSelect = screen.getByTestId('User preferences home dashboard drop down');
-    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'select-clear-value' }));
+    await userEvent.click(within(dashboardSelect).getByRole('button', { name: 'Clear value' }));
 
     await selectOptionInTest(screen.getByLabelText('Timezone'), 'Default');
 

@@ -67,7 +67,10 @@ export function StoredNotifications() {
     <div className={styles.wrapper}>
       <Alert
         severity="info"
-        title="This page displays past errors and warnings. Once dismissed, they cannot be retrieved."
+        title={t(
+          'notifications.stored-notifications.title-alert',
+          'This page displays past errors and warnings. Once dismissed, they cannot be retrieved.'
+        )}
       />
       <div className={styles.topRow}>
         <Checkbox
@@ -75,7 +78,7 @@ export function StoredNotifications() {
           onChange={(event: React.ChangeEvent<HTMLInputElement>) => handleAllCheckboxToggle(event.target.checked)}
         />
         <Button disabled={selectedNotificationIds.length === 0} onClick={clearSelectedNotifications}>
-          Dismiss notifications
+          <Trans i18nKey="notifications.stored-notifications.dismiss-notifications">Dismiss notifications</Trans>
         </Button>
       </div>
       <ul className={styles.list}>

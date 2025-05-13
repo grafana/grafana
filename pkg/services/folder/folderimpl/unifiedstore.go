@@ -16,7 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 
-	"github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
+	folderv1 "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/infra/log"
 	internalfolders "github.com/grafana/grafana/pkg/registry/apis/folders"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
@@ -50,7 +50,8 @@ func (ss *FolderUnifiedStoreImpl) Create(ctx context.Context, cmd folder.CreateF
 	if err != nil {
 		return nil, err
 	}
-	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID)
+	out, err := ss.k8sclient.Create(ctx, obj, cmd.OrgID, v1.CreateOptions{
+		FieldValidation: v1.FieldValidationIgnore})
 	if err != nil {
 		return nil, err
 	}
@@ -77,6 +78,10 @@ func (ss *FolderUnifiedStoreImpl) Delete(ctx context.Context, UIDs []string, org
 func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateFolderCommand) (*folder.Folder, error) {
 	obj, err := ss.k8sclient.Get(ctx, cmd.UID, cmd.OrgID, v1.GetOptions{})
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrFolderNotFound
+		}
+
 		return nil, err
 	}
 	updated := obj.DeepCopy()
@@ -99,9 +104,16 @@ func (ss *FolderUnifiedStoreImpl) Update(ctx context.Context, cmd folder.UpdateF
 			return nil, err
 		}
 		meta.SetFolder(*cmd.NewParentUID)
+	} else {
+		// only compare versions if not moving the folder
+		if !cmd.Overwrite && (cmd.Version != int(obj.GetGeneration())) {
+			return nil, dashboards.ErrDashboardVersionMismatch
+		}
 	}
 
-	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID)
+	out, err := ss.k8sclient.Update(ctx, updated, cmd.OrgID, v1.UpdateOptions{
+		FieldValidation: v1.FieldValidationIgnore,
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +156,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	parentUid := q.UID
 
 	for parentUid != "" {
-		out, err := ss.k8sclient.Get(ctx, parentUid, q.OrgID, v1.GetOptions{})
+		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUid, OrgID: q.OrgID})
 		if err != nil {
 			var statusError *apierrors.StatusError
 			if errors.As(err, &statusError) && statusError.ErrStatus.Code == http.StatusForbidden {
@@ -152,11 +164,6 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 				// to it, nor its parents. So we can stop looping
 				break
 			}
-			return nil, err
-		}
-
-		folder, err := ss.UnstructuredToLegacyFolder(ctx, out)
-		if err != nil {
 			return nil, err
 		}
 
@@ -171,7 +178,7 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 	return hits, nil
 }
 
-func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.Folder, error) {
+func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
 	// the general folder is saved as an empty string in the database
 	if q.UID == folder.GeneralFolderUID {
 		q.UID = ""
@@ -181,6 +188,15 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 	if q.Page == 0 {
 		q.Page = 1
+	}
+
+	if q.UID != "" {
+		// the original get children query fails if the parent folder does not exist
+		// check that the parent exists first
+		_, err := ss.Get(ctx, folder.GetFolderQuery{UID: &q.UID, OrgID: q.OrgID})
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	req := &resource.ResourceSearchRequest{
@@ -221,22 +237,22 @@ func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetC
 	}
 
 	allowK6Folder := (q.SignedInUser != nil && q.SignedInUser.IsIdentityType(claims.TypeServiceAccount))
-	hits := make([]*folder.Folder, 0)
+	hits := make([]*folder.FolderReference, 0)
 	for _, item := range res.Hits {
 		// filter out k6 folders if request is not from a service account
 		if item.Name == accesscontrol.K6FolderUID && !allowK6Folder {
 			continue
 		}
 
-		// search only returns a subset of info, get all info of the folder
-		item, err := ss.k8sclient.Get(ctx, item.Name, q.OrgID, v1.GetOptions{})
-		if err != nil {
-			return nil, err
+		f := &folder.FolderReference{
+			ID:        item.Field.GetNestedInt64(resource.SEARCH_FIELD_LEGACY_ID),
+			UID:       item.Name,
+			Title:     item.Title,
+			ParentUID: item.Folder,
 		}
 
-		f, err := ss.UnstructuredToLegacyFolder(ctx, item)
-		if err != nil {
-			return nil, err
+		if item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND) != "" {
+			f.ManagedBy = utils.ParseManagerKindString(item.Field.GetNestedString(resource.SEARCH_FIELD_MANAGER_KIND))
 		}
 
 		hits = append(hits, f)
@@ -305,19 +321,28 @@ func (ss *FolderUnifiedStoreImpl) GetHeight(ctx context.Context, foldrUID string
 // The full path UIDs of B is "uid1/uid2".
 // The full path UIDs of A is "uid1".
 func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFoldersFromStoreQuery) ([]*folder.Folder, error) {
-	out, err := ss.k8sclient.List(ctx, q.OrgID, v1.ListOptions{})
+	opts := v1.ListOptions{
+		Limit: folderSearchLimit,
+	}
+	if q.WithFullpath || q.WithFullpathUIDs {
+		// only supported in modes 0-2, to keep the alerting queries from causing tons of get folder requests
+		// to retrieve the parent for all folders in grafana
+		opts.LabelSelector = utils.LabelGetFullpath + "=true"
+	}
+
+	out, err := ss.k8sclient.List(ctx, q.OrgID, opts)
+	if err != nil {
+		return nil, err
+	}
+	// convert item to legacy folder format
+	folders, err := ss.UnstructuredToLegacyFolderList(ctx, out)
 	if err != nil {
 		return nil, err
 	}
 
 	m := map[string]*folder.Folder{}
-	for _, item := range out.Items {
-		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
-		if f == nil {
-			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
-		}
-		if q.WithFullpath || q.WithFullpathUIDs {
+	for _, f := range folders {
+		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
 			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
 			if err != nil {
 				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
@@ -364,14 +389,14 @@ func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int6
 		return nil, err
 	}
 
-	nodes := map[string]*folder.Folder{}
-	for _, item := range out.Items {
-		// convert item to legacy folder format
-		f, err := ss.UnstructuredToLegacyFolder(ctx, &item)
-		if f == nil {
-			return nil, fmt.Errorf("unable to convert unstructured item to legacy folder %w", err)
-		}
+	// convert item to legacy folder format
+	folders, err := ss.UnstructuredToLegacyFolderList(ctx, out)
+	if err != nil {
+		return nil, err
+	}
 
+	nodes := map[string]*folder.Folder{}
+	for _, f := range folders {
 		nodes[f.UID] = f
 	}
 
@@ -411,6 +436,10 @@ func getDescendants(nodes map[string]*folder.Folder, tree map[string]map[string]
 func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID int64, ancestor_uid string) (folder.DescendantCounts, error) {
 	counts, err := ss.k8sclient.Get(ctx, ancestor_uid, orgID, v1.GetOptions{}, "counts")
 	if err != nil {
+		if apierrors.IsNotFound(err) {
+			return nil, dashboards.ErrFolderNotFound
+		}
+
 		return nil, err
 	}
 
@@ -418,8 +447,21 @@ func (ss *FolderUnifiedStoreImpl) CountFolderContent(ctx context.Context, orgID 
 	return *res, err
 }
 
+func (ss *FolderUnifiedStoreImpl) CountInOrg(ctx context.Context, orgID int64) (int64, error) {
+	resp, err := ss.k8sclient.GetStats(ctx, orgID)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(resp.Stats) != 1 {
+		return 0, fmt.Errorf("expected 1 stat, got %d", len(resp.Stats))
+	}
+
+	return resp.Stats[0].Count, nil
+}
+
 func toFolderLegacyCounts(u *unstructured.Unstructured) (*folder.DescendantCounts, error) {
-	ds, err := v0alpha1.UnstructuredToDescendantCounts(u)
+	ds, err := folderv1.UnstructuredToDescendantCounts(u)
 	if err != nil {
 		return nil, err
 	}

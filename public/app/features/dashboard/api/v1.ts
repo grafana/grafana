@@ -9,6 +9,7 @@ import {
   ResourceForCreate,
   AnnoKeyMessage,
   AnnoKeyFolder,
+  AnnoKeyGrantPermissions,
   Resource,
   DeprecatedInternalId,
 } from 'app/features/apiserver/types';
@@ -18,17 +19,19 @@ import { DashboardDataDTO, DashboardDTO, SaveDashboardResponseDTO } from 'app/ty
 
 import { SaveDashboardCommand } from '../components/SaveDashboard/types';
 
-import { DashboardAPI, DashboardWithAccessInfo } from './types';
+import { DashboardAPI, DashboardVersionError, DashboardWithAccessInfo } from './types';
+
+export const K8S_V1_DASHBOARD_API_CONFIG = {
+  group: 'dashboard.grafana.app',
+  version: 'v1beta1',
+  resource: 'dashboards',
+};
 
 export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
   private client: ResourceClient<DashboardDataDTO>;
 
   constructor() {
-    this.client = new ScopedResourceClient<DashboardDataDTO>({
-      group: 'dashboard.grafana.app',
-      version: 'v1alpha1',
-      resource: 'dashboards',
-    });
+    this.client = new ScopedResourceClient<DashboardDataDTO>(K8S_V1_DASHBOARD_API_CONFIG);
   }
 
   saveDashboard(options: SaveDashboardCommand<Dashboard>): Promise<SaveDashboardResponseDTO> {
@@ -58,11 +61,17 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       };
     }
 
+    // for v1 in g12, we will ignore the schema version validation from all default clients,
+    // as we implement the necessary backend conversions, we will drop this query param
     if (dashboard.uid) {
       obj.metadata.name = dashboard.uid;
-      return this.client.update(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+      return this.client.update(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
     }
-    return this.client.create(obj).then((v) => this.asSaveDashboardResponseDTO(v));
+    obj.metadata.annotations = {
+      ...obj.metadata.annotations,
+      [AnnoKeyGrantPermissions]: 'default',
+    };
+    return this.client.create(obj, { fieldValidation: 'Ignore' }).then((v) => this.asSaveDashboardResponseDTO(v));
   }
 
   asSaveDashboardResponseDTO(v: Resource<DashboardDataDTO>): SaveDashboardResponseDTO {
@@ -70,7 +79,7 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
       getDashboardUrl({
         uid: v.metadata.name,
         currentQueryParams: '',
-        slug: kbn.slugifyForUrl(v.spec.title),
+        slug: kbn.slugifyForUrl(v.spec.title.trim()),
       })
     );
 
@@ -96,6 +105,11 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
     try {
       const dash = await this.client.subresource<DashboardWithAccessInfo<DashboardDataDTO>>(uid, 'dto');
 
+      // This could come as conversion error from v0 or v2 to V1.
+      if (dash.status?.conversion?.failed && dash.status.conversion.storedVersion === 'v2alpha1') {
+        throw new DashboardVersionError(dash.status.conversion.storedVersion, dash.status.conversion.error);
+      }
+
       const result: DashboardDTO = {
         meta: {
           ...dash.access,
@@ -103,9 +117,13 @@ export class K8sDashboardAPI implements DashboardAPI<DashboardDTO, Dashboard> {
           isFolder: false,
           uid: dash.metadata.name,
           k8s: dash.metadata,
-          version: parseInt(dash.metadata.resourceVersion, 10),
+          version: dash.metadata.generation,
         },
-        dashboard: dash.spec,
+        dashboard: {
+          ...dash.spec,
+          version: dash.metadata.generation,
+          uid: dash.metadata.name,
+        },
       };
 
       if (dash.metadata.labels?.[DeprecatedInternalId]) {

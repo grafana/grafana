@@ -1,7 +1,7 @@
 import { css } from '@emotion/css';
 import { useForm } from 'react-hook-form';
 
-import { GrafanaTheme2, TimeRange } from '@grafana/data/src';
+import { GrafanaTheme2, TimeRange } from '@grafana/data';
 import { selectors as e2eSelectors } from '@grafana/e2e-selectors/src';
 import {
   Button,
@@ -9,12 +9,12 @@ import {
   Field,
   HorizontalGroup,
   Input,
+  Stack,
   Label,
   ModalsController,
   Switch,
   useStyles2,
-} from '@grafana/ui/src';
-import { Layout } from '@grafana/ui/src/components/Layout/Layout';
+} from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 import {
   useDeletePublicDashboardMutation,
@@ -167,7 +167,7 @@ export function ConfigPublicDashboardBase({
       </Field>
 
       <Field className={styles.fieldSpace}>
-        <Layout>
+        <Stack>
           <Switch
             {...register('isPaused')}
             disabled={disableInputs}
@@ -186,7 +186,7 @@ export function ConfigPublicDashboardBase({
           >
             <Trans i18nKey="public-dashboard.config.pause-sharing-dashboard-label">Pause sharing dashboard</Trans>
           </Label>
-        </Layout>
+        </Stack>
       </Field>
 
       <Field className={styles.fieldSpace}>
@@ -207,10 +207,10 @@ export function ConfigPublicDashboardBase({
         </SettingsBar>
       </Field>
 
-      <Layout
-        orientation={isDesktop ? 0 : 1}
-        justify={isDesktop ? 'flex-end' : 'flex-start'}
-        align={isDesktop ? 'center' : 'normal'}
+      <Stack
+        direction={isDesktop ? 'row' : 'column'}
+        justifyContent={isDesktop ? 'flex-end' : 'flex-start'}
+        alignItems={isDesktop ? 'center' : 'stretch'}
       >
         <HorizontalGroup justify="flex-end">
           <Button
@@ -225,7 +225,7 @@ export function ConfigPublicDashboardBase({
             <Trans i18nKey="public-dashboard.config.revoke-public-URL-button">Revoke public URL</Trans>
           </Button>
         </HorizontalGroup>
-      </Layout>
+      </Stack>
     </div>
   );
 }

@@ -1,22 +1,25 @@
 import { css } from '@emotion/css';
+import { skipToken } from '@reduxjs/toolkit/query';
 import { memo, useEffect, useMemo } from 'react';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import AutoSizer from 'react-virtualized-auto-sizer';
 
 import { GrafanaTheme2 } from '@grafana/data';
-import { config, reportInteraction } from '@grafana/runtime';
-import { LinkButton, FilterInput, useStyles2 } from '@grafana/ui';
+import { reportInteraction } from '@grafana/runtime';
+import { LinkButton, FilterInput, useStyles2, Text, Stack } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { getConfig } from 'app/core/config';
 import { Trans } from 'app/core/internationalization';
 import { useDispatch } from 'app/types';
 
+import { FolderRepo } from '../../core/components/NestedFolderPicker/FolderRepo';
 import { contextSrv } from '../../core/services/context_srv';
+import { ManagerKind } from '../apiserver/types';
 import { buildNavModel, getDashboardsTabID } from '../folders/state/navModel';
 import { useSearchStateManager } from '../search/state/SearchStateManager';
 import { getSearchPlaceholder } from '../search/tempI18nPhrases';
 
-import { skipToken, useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
+import { useGetFolderQuery, useSaveFolderMutation } from './api/browseDashboardsAPI';
 import { BrowseActions } from './components/BrowseActions/BrowseActions';
 import { BrowseFilters } from './components/BrowseFilters';
 import { BrowseView } from './components/BrowseView';
@@ -90,9 +93,9 @@ const BrowseDashboardsPage = memo(() => {
 
   const { canEditFolders, canEditDashboards, canCreateDashboards, canCreateFolders } = getFolderPermissions(folder);
   const hasAdminRights = contextSrv.hasRole('Admin') || contextSrv.isGrafanaAdmin;
-
-  const showEditTitle = canEditFolders && folderUID;
-  const canSelect = canEditFolders || canEditDashboards;
+  const isProvisionedFolder = folder?.managedBy === ManagerKind.Repo;
+  const showEditTitle = canEditFolders && folderUID && !isProvisionedFolder;
+  const canSelect = (canEditFolders || canEditDashboards) && !isProvisionedFolder;
   const onEditTitle = async (newValue: string) => {
     if (folderDTO) {
       const result = await saveFolder({
@@ -117,22 +120,33 @@ const BrowseDashboardsPage = memo(() => {
       origin: window.location.pathname === getConfig().appSubUrl + '/dashboards' ? 'Dashboards' : 'Folder view',
     });
   };
+
+  const renderTitle = (title: string) => {
+    return (
+      <Stack alignItems={'center'} gap={2}>
+        <Text element={'h1'}>{title}</Text> <FolderRepo folder={folder} />
+      </Stack>
+    );
+  };
+
   return (
     <Page
       navId="dashboards/browse"
       pageNav={navModel}
       onEditTitle={showEditTitle ? onEditTitle : undefined}
+      renderTitle={renderTitle}
       actions={
         <>
-          {config.featureToggles.dashboardRestore && hasAdminRights && (
-            <LinkButton
-              variant="secondary"
-              href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
-              onClick={handleButtonClickToRecentlyDeleted}
-            >
-              <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
-            </LinkButton>
-          )}
+          {false &&
+            hasAdminRights && ( // TODO: change this to a feature flag when dashboard restore is reworked
+              <LinkButton
+                variant="secondary"
+                href={getConfig().appSubUrl + '/dashboard/recently-deleted'}
+                onClick={handleButtonClickToRecentlyDeleted}
+              >
+                <Trans i18nKey="browse-dashboards.actions.button-to-recently-deleted">Recently deleted</Trans>
+              </LinkButton>
+            )}
           {folderDTO && <FolderActionsButton folder={folderDTO} />}
           {(canCreateDashboards || canCreateFolders) && (
             <CreateNewButton

@@ -18,7 +18,7 @@ import {
 } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Button, InlineField, Alert, useStyles2, SeriesVisibilityChangeMode } from '@grafana/ui';
-import { Trans } from 'app/core/internationalization';
+import { Trans, t } from 'app/core/internationalization';
 
 import { mergeLogsVolumeDataFrames, isLogsVolumeLimited, getLogsVolumeMaximumRange } from '../../logs/utils';
 import { SupplementaryResultError } from '../SupplementaryResultError';
@@ -97,11 +97,15 @@ export const LogsVolumePanelList = ({
   const visibleRange: TimeRange = { from, to, raw: { from, to } };
 
   if (logsVolumeData?.state === LoadingState.Loading) {
-    return <span>Loading...</span>;
+    return (
+      <span>
+        <Trans i18nKey="explore.logs-volume-panel-list.loading">Loading...</Trans>
+      </span>
+    );
   } else if (timeoutError && !canShowPartialData) {
     return (
       <SupplementaryResultError
-        title="Unable to show log volume"
+        title={t('explore.logs-volume-panel-list.title-unable-to-show-log-volume', 'Unable to show log volume')}
         // Using info to avoid users thinking that the actual query has failed.
         message={
           <>
@@ -131,14 +135,27 @@ export const LogsVolumePanelList = ({
       />
     );
   } else if (logsVolumeData?.error !== undefined && !canShowPartialData) {
-    return <SupplementaryResultError error={logsVolumeData.error} title="Failed to load log volume for this query" />;
+    return (
+      <SupplementaryResultError
+        error={logsVolumeData.error}
+        title={t(
+          'explore.logs-volume-panel-list.title-failed-volume-query',
+          'Failed to load log volume for this query'
+        )}
+      />
+    );
   }
 
   if (numberOfLogVolumes === 0 && logsVolumeData?.state !== LoadingState.Streaming) {
     return (
       <div className={styles.alertContainer}>
-        <Alert severity="info" title="No logs volume available">
-          No volume information available for the current queries and time range.
+        <Alert
+          severity="info"
+          title={t('explore.logs-volume-panel-list.title-no-logs-volume-available', 'No logs volume available')}
+        >
+          <Trans i18nKey="explore.logs-volumne-panel-list.body-no-logs-volume-available">
+            No volume information available for the current queries and time range.
+          </Trans>
         </Alert>
       </div>
     );
@@ -148,7 +165,7 @@ export const LogsVolumePanelList = ({
     <div className={styles.listContainer}>
       {timeoutError && canShowPartialData && (
         <SupplementaryResultError
-          title="Showing partial data"
+          title={t('explore.logs-volume-panel-list.title-showing-partial-data', 'Showing partial data')}
           message="The query is trying to access too much data and some sharded requests could not be completed. Try decreasing the time range or adding more labels to your query."
           severity="info"
           dismissable
@@ -176,7 +193,10 @@ export const LogsVolumePanelList = ({
       })}
       {containsZoomed && (
         <div className={styles.extraInfoContainer}>
-          <InlineField label="Reload log volume" transparent>
+          <InlineField
+            label={t('explore.logs-volume-panel-list.label-reload-log-volume', 'Reload log volume')}
+            transparent
+          >
             <Button size="xs" icon="sync" variant="secondary" onClick={onLoadLogsVolume} id="reload-volume" />
           </InlineField>
         </div>

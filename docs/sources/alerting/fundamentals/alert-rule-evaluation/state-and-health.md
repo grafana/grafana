@@ -19,6 +19,12 @@ labels:
 title: State and health of alerts
 weight: 109
 refs:
+  evaluation_timeout:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#evaluation_timeout
+  max_attempts:
+    - pattern: /docs/
+      destination: /docs/grafana/<GRAFANA_VERSION>/setup-grafana/configure-grafana/#max_attempts
   pending-period:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#pending-period
@@ -29,11 +35,31 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/create-grafana-managed-rule/#configure-no-data-and-error-handling
+  keep-firing:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/alert-rule-evaluation/#keep-firing-for
   notifications:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/
+  notification-policies:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/fundamentals/notifications/notification-policies/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/fundamentals/notifications/notification-policies/
+  guide-connectivity-errors:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/connectivity-errors/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/connectivity-errors/
+  guide-missing-data:
+    - pattern: /docs/grafana/
+      destination: /docs/grafana/<GRAFANA_VERSION>/alerting/learn/missing-data/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/learn/missing-data/
 ---
 
 # State and health of alerts
@@ -44,13 +70,18 @@ There are three key components that help you understand how your alerts behave d
 
 An alert instance can be in either of the following states:
 
-| State                    | Description                                                                                                                                                                                                                                                                       |
-| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Normal**               | The state of an alert when the condition (threshold) is not met.                                                                                                                                                                                                                  |
-| **Pending**              | The state of an alert that has breached the threshold but for less than the [pending period](ref:pending-period).                                                                                                                                                                 |
-| **Alerting**             | The state of an alert that has breached the threshold for longer than the [pending period](ref:pending-period).                                                                                                                                                                   |
-| **No Data<sup>\*</sup>** | The state of an alert whose query returns no data or all values are null. <br/> An alert in this state generates a new [DatasourceNoData alert](#no-data-and-error-alerts). You can [modify the default behavior of the no data state](#modify-the-no-data-or-error-state).       |
-| **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurred evaluating the alert rule. <br/> An alert in this state generates a new [DatasourceError alert](#no-data-and-error-alerts). You can [modify the default behavior of the error state](#modify-the-no-data-or-error-state). |
+| State                    | Description                                                                                                                                                                                              |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Normal**               | The state of an alert when the condition (threshold) is not met.                                                                                                                                         |
+| **Pending**              | The state of an alert that has breached the threshold but for less than the [pending period](ref:pending-period).                                                                                        |
+| **Alerting**             | The state of an alert that has breached the threshold for longer than the [pending period](ref:pending-period).                                                                                          |
+| **Recovering**           | The state of an alert that has been configured to keep [firing for a duration after it is triggered](ref:keep-firing).                                                                                   |
+| **Error<sup>\*</sup>**   | The state of an alert when an error or timeout occurred evaluating the alert rule. <br/> You can customize the behavior of the [Error state](#error-state), which by default triggers a different alert. |
+| **No Data<sup>\*</sup>** | The state of an alert whose query returns no data or all values are null. <br/> You can customize the behavior of the [No Data state](#no-data-state), which by default triggers a different alert.      |
+
+If an alert rule changes (except for updates to annotations, the evaluation interval, or other internal fields), its alert instances reset to the `Normal` state. The alert instance state then updates accordingly during the next evaluation.
+
+{{< figure src="/media/docs/alerting/alert-state-diagram2.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
 
 {{< admonition type="note" >}}
 
@@ -58,34 +89,71 @@ An alert instance can be in either of the following states:
 
 {{< /admonition >}}
 
-{{< figure src="/media/docs/alerting/alert-instance-states-v3.png" caption="Alert instance state diagram" alt="A diagram of the distinct alert instance states and transitions." max-width="750px" >}}
-
 ### Notification routing
 
 Alert instances will be routed for [notifications](ref:notifications) when they are in the `Alerting` state or have been `Resolved`, transitioning from `Alerting` to `Normal` state.
 
 {{< figure src="/media/docs/alerting/alert-rule-evaluation-overview-statediagram-v2.png" alt="A diagram of the alert instance states and when to route their notifications." max-width="750px" >}}
 
+### `Error` state
+
+The **Error** state is triggered when the alert rule fails to evaluate its query or queries successfully.
+
+This can occur due to evaluation timeouts (default: `30s`) or three repeated failures when querying the data source. The [`evaluation_timeout`](ref:evaluation_timeout) and [`max_attempts`](ref:max_attempts) options control these settings.
+
+When an alert instance enters the **Error** state, Grafana, by default, triggers a new [`DatasourceError` alert](#no-data-and-error-alerts). You can control this behavior based on the desired outcome of your alert rule in [Modify the `No Data` or `Error` state](#modify-the-no-data-or-error-state).
+
+### `No Data` state
+
+The **No Data** state occurs when the alert rule query runs successfully but returns no data points at all.
+
+When an alert instance enters the **No Data** state, Grafana, by default, triggers a new [`DatasourceNoData` alert](#no-data-and-error-alerts). You can control this behavior based on the desired outcome of your alert rule in [Modify the `No Data` or `Error` state](#modify-the-no-data-or-error-state).
+
+### Stale alert instances (MissingSeries)
+
+An alert instance is considered **stale** if the query returns data but its dimension (or series) has disappeared for two evaluation intervals.
+
+In this case, the alert instance transitions to the **Normal (MissingSeries)** state as resolved, and is then evicted. The process for handling stale alert instances is as follows:
+
+1. The alert rule runs and returns data for some label sets.
+
+1. An alert instance that previously existed is now missing.
+
+1. Grafana keeps the previous state of the alert instance for two evaluation intervals.
+
+1. If it remains missing after two intervals, it transitions to the **Normal** state and sets **MissingSeries** in the `grafana_state_reason` annotation.
+
+1. Stale alert instances in the **Alerting**, **No Data**, or **Error** states transition to the **Normal** state as **Resolved**, and are routed for notifications like other resolved alerts.
+
+1. The alert instance is removed from the UI.
+
+{{< admonition type="tip" >}}
+
+For common examples and practical guidance on handling **Error**, **No Data**, and **stale** alert scenarios, see the following related guides:
+
+- [Handling connectivity errors](ref:guide-connectivity-errors)
+- [Handling missing data](ref:guide-missing-data)
+  {{< /admonition  >}}
+
 ### `No Data` and `Error` alerts
 
-When evaluation of an alert rule produces state `No Data` or `Error`, Grafana Alerting generates a new alert instance that have the following additional labels:
+When an alert rule evaluation results in a `No Data` or `Error` state, Grafana Alerting immediately creates a new alert instance —skipping the pending period—with the following additional labels:
 
 - `alertname`: Either `DatasourceNoData` or `DatasourceError` depending on the state.
 - `datasource_uid`: The UID of the data source that caused the state.
+- `rulename`: The name of the alert rule that originated the alert.
+
+Note that `DatasourceNoData` and `DatasourceError` alert instances are independent from the original alert instance. They have different labels, which means existing silences, mute timings, and notification policies applied to the original alert may not apply to them.
 
 You can manage these alerts like regular ones by using their labels to apply actions such as adding a silence, routing via notification policies, and more.
 
-### Lifecycle of stale alert instances
-
-An alert instance is considered stale if its dimension or series has disappeared from the query results entirely for two evaluation intervals.
-
-Stale alert instances that are in the **Alerting**, **No Data**, or **Error** states transition to the **Normal** state as **Resolved**. Once transitioned, these resolved alert instances are routed for notifications like other resolved alerts.
+If the alert rule is configured to send notifications directly to a selected contact point (instead of using notification policies), the `DatasourceNoData` and `DatasourceError` alerts are also sent to that contact point. Any additional notification settings defined in the alert rule, such as muting or grouping, are preserved.
 
 ## Modify the `No Data` or `Error` state
 
-In [Configure no data and error handling](ref:no-data-and-error-handling), you can change the default behaviour when the evaluation returns no data or an error. You can set the alert instance state to `Alerting`, `Normal`, or keep the last state.
+These states are supported only for Grafana-managed alert rules.
 
-Note that `No Data` and `Error` states are supported only for Grafana-managed alert rules.
+In [Configure no data and error handling](ref:no-data-and-error-handling), you can change the default behavior when the evaluation returns no data or an error. You can set the alert instance state to `Alerting`, `Normal`, `Error`, or `Keep Last State`.
 
 {{< figure src="/media/docs/alerting/alert-rule-configure-no-data-and-error-v2.png" alt="A screenshot of the `Configure no data and error handling` option in Grafana Alerting." max-width="500px" >}}
 
@@ -102,7 +170,9 @@ To minimize the number of **No Data** or **Error** state alerts received, try th
 
    To minimize timeouts resulting in the **Error** state, reduce the time range to request less data every evaluation cycle.
 
-1. Change the default [evaluation time out](https://grafana.com/docs/grafana/latest/setup-grafana/configure-grafana/#evaluation_timeout). The default is set at 30 seconds. To increase the default evaluation timeout, open a support ticket from the [Cloud Portal](https://grafana.com/docs/grafana-cloud/account-management/support/#grafana-cloud-support-options). Note that this should be a last resort, because it may affect the performance of all alert rules and cause missed evaluations if the timeout is too long.
+1. Change the default [evaluation time out](ref:evaluation_timeout). The default is set at 30 seconds. To increase the default evaluation timeout, open a support ticket from the [Cloud Portal](https://grafana.com/docs/grafana-cloud/account-management/support/#grafana-cloud-support-options). Note that this should be a last resort, because it may affect the performance of all alert rules and cause missed evaluations if the timeout is too long.
+
+1. To reduce multiple notifications from **Error** alerts, define a [notification policy](ref:notification-policies) to handle all related alerts with `alertname=DatasourceError`, and filter and group errors from the same data source using the `datasource_uid` label.
 
 ### Keep last state
 
@@ -114,7 +184,7 @@ However, in situations where strict monitoring is critical, relying solely on th
 
 Occasionally, an alert instance may be in a state that isn't immediately clear to everyone. For example:
 
-- Stale alert instances in the `Alerting` state transition to the `Normal` state when the series disappear.
+- [Stale alert instances](#stale-alert-instances-missingseries) in the `Alerting` state transition to the `Normal` state when the series disappear.
 - If "no data" handling is configured to transition to a state other than `No Data`.
 - If "error" handling is configured to transition to a state other than `Error`.
 - If the alert rule is deleted, paused, or updated in some cases, the alert instance also transitions to the `Normal` state.
@@ -123,7 +193,7 @@ In these situations, the evaluation state may differ from the alert state, and i
 
 The `grafana_state_reason` annotation is included in these situations, providing the reason that explains why the alert instance transitioned to its current state. For example:
 
-- Stale alert instances in the `Normal` state include the `grafana_state_reason` annotation with the value **MissingSeries**.
+- [Stale alert instances](#stale-alert-instances-missingseries) in the `Normal` state include the `grafana_state_reason` annotation with the value **MissingSeries**.
 - If "no data" or "error" handling transitions to the `Normal` state, the `grafana_state_reason` annotation is included with the value **No Data** or **Error**, respectively.
 - If the alert rule is deleted or paused, the `grafana_state_reason` is set to **Paused** or **RuleDeleted**. For some updates, it is set to **Updated**.
 

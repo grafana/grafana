@@ -67,7 +67,10 @@ export const Reduce = ({ labelWidth = 'auto', onChange, app, refIds, query }: Pr
       return;
     }
     return (
-      <InlineField label="Replace With" labelWidth={labelWidth}>
+      <InlineField
+        label={t('expressions.reduce.replace-with-number.label-replace-with', 'Replace with')}
+        labelWidth={labelWidth}
+      >
         <Input type="number" width={10} onChange={onReplaceWithChanged} value={query.settings?.replaceWithValue ?? 0} />
       </InlineField>
     );
@@ -97,15 +100,15 @@ export const Reduce = ({ labelWidth = 'auto', onChange, app, refIds, query }: Pr
     <>
       {strictModeNotification()}
       <InlineFieldRow>
-        <InlineField label="Input" labelWidth={labelWidth}>
+        <InlineField label={t('expressions.reduce.label-input', 'Input')} labelWidth={labelWidth}>
           <Select onChange={onRefIdChange} options={refIds} value={query.expression} width={'auto'} />
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Function" labelWidth={labelWidth}>
+        <InlineField label={t('expressions.reduce.label-function', 'Function')} labelWidth={labelWidth}>
           <Select options={reducerTypes} value={reducer} onChange={onSelectReducer} width={20} />
         </InlineField>
-        <InlineField label="Mode" labelWidth={labelWidth}>
+        <InlineField label={t('expressions.reduce.label-mode', 'Mode')} labelWidth={labelWidth}>
           <Select onChange={onModeChanged} options={reducerModes} value={mode} width={25} />
         </InlineField>
         {replaceWithNumber()}

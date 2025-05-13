@@ -651,13 +651,13 @@ func (s *SocialGenericOAuth) SupportBundleContent(bf *bytes.Buffer) error {
 
 	bf.WriteString("## GenericOAuth specific configuration\n\n")
 	bf.WriteString("```ini\n")
-	bf.WriteString(fmt.Sprintf("name_attribute_path = %s\n", s.nameAttributePath))
-	bf.WriteString(fmt.Sprintf("login_attribute_path = %s\n", s.loginAttributePath))
-	bf.WriteString(fmt.Sprintf("id_token_attribute_name = %s\n", s.idTokenAttributeName))
-	bf.WriteString(fmt.Sprintf("team_ids_attribute_path = %s\n", s.teamIdsAttributePath))
-	bf.WriteString(fmt.Sprintf("team_ids = %v\n", s.teamIds))
-	bf.WriteString(fmt.Sprintf("allowed_organizations = %v\n", s.allowedOrganizations))
+	fmt.Fprintf(bf, "name_attribute_path = %s\n", s.nameAttributePath)
+	fmt.Fprintf(bf, "login_attribute_path = %s\n", s.loginAttributePath)
+	fmt.Fprintf(bf, "id_token_attribute_name = %s\n", s.idTokenAttributeName)
+	fmt.Fprintf(bf, "team_ids_attribute_path = %s\n", s.teamIdsAttributePath)
+	fmt.Fprintf(bf, "team_ids = %v\n", s.teamIds)
+	fmt.Fprintf(bf, "allowed_organizations = %v\n", s.allowedOrganizations)
 	bf.WriteString("```\n\n")
 
-	return s.SocialBase.getBaseSupportBundleContent(bf)
+	return s.getBaseSupportBundleContent(bf)
 }

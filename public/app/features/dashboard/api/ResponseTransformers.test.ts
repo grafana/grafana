@@ -1,14 +1,14 @@
 import { AnnotationQuery, DataQuery, VariableModel, VariableRefresh, Panel } from '@grafana/schema';
+import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
 import {
-  DashboardV2Spec,
+  Spec as DashboardV2Spec,
   GridLayoutItemKind,
   GridLayoutItemSpec,
   GridLayoutKind,
   GridLayoutRowSpec,
   PanelKind,
   VariableKind,
-} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0';
-import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha0/examples';
+} from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
 import {
   AnnoKeyCreatedBy,
   AnnoKeyDashboardGnetId,
@@ -305,6 +305,15 @@ describe('ResponseTransformers', () => {
               ],
               current: { value: ['1'], text: ['1'] },
             },
+            // Query variable with minimal props and without current
+            {
+              datasource: { type: 'prometheus', uid: 'abc' },
+              name: 'org_id',
+              label: 'Org ID',
+              hide: 2,
+              type: 'query',
+              query: { refId: 'A', query: 'label_values(grafanacloud_org_info{org_slug="$org_slug"}, org_id)' },
+            },
           ],
         },
         panels: [
@@ -406,6 +415,13 @@ describe('ResponseTransformers', () => {
             ],
             collapsed: true,
           },
+          {
+            id: 6,
+            type: 'row',
+            title: 'Row with no panel property',
+            gridPos: { x: 0, y: 25, w: 12, h: 1 },
+            collapsed: true,
+          },
         ],
       };
 
@@ -483,7 +499,7 @@ describe('ResponseTransformers', () => {
       // Panel
       expect(spec.layout.kind).toBe('GridLayout');
       const layout = spec.layout as GridLayoutKind;
-      expect(layout.spec.items).toHaveLength(4);
+      expect(layout.spec.items).toHaveLength(5);
       expect(layout.spec.items[0].spec).toEqual({
         element: {
           kind: 'ElementReference',
@@ -606,6 +622,11 @@ describe('ResponseTransformers', () => {
         height: 8,
       });
 
+      const rowWithNoPanelProperty = layout.spec.items[4].spec as GridLayoutRowSpec;
+      expect(rowWithNoPanelProperty.collapsed).toBe(true);
+      expect(rowWithNoPanelProperty.title).toBe('Row with no panel property');
+      expect(rowWithNoPanelProperty.elements).toHaveLength(0);
+
       // Variables
       validateVariablesV1ToV2(spec.variables[0], dashboardV1.templating?.list?.[0]);
       validateVariablesV1ToV2(spec.variables[1], dashboardV1.templating?.list?.[1]);
@@ -615,6 +636,7 @@ describe('ResponseTransformers', () => {
       validateVariablesV1ToV2(spec.variables[5], dashboardV1.templating?.list?.[5]);
       validateVariablesV1ToV2(spec.variables[6], dashboardV1.templating?.list?.[6]);
       validateVariablesV1ToV2(spec.variables[7], dashboardV1.templating?.list?.[7]);
+      validateVariablesV1ToV2(spec.variables[8], dashboardV1.templating?.list?.[8]);
     });
   });
 
@@ -926,8 +948,9 @@ describe('ResponseTransformers', () => {
       label: v1.label,
       description: v1.description,
       hide: transformVariableHideToEnum(v1.hide),
-      skipUrlSync: v1.skipUrlSync,
+      skipUrlSync: Boolean(v1.skipUrlSync),
     };
+
     const v2Common = {
       name: v2.spec.name,
       label: v2.spec.label,

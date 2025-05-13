@@ -1,7 +1,8 @@
 import { css } from '@emotion/css';
 
-import { GrafanaTheme2 } from '@grafana/data/src';
-import { Alert, useStyles2 } from '@grafana/ui/src';
+import { GrafanaTheme2 } from '@grafana/data';
+import { Alert, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { AlertmanagerChoice } from '../../../../plugins/datasource/alertmanager/types';
 import { alertmanagerApi } from '../api/alertmanagerApi';
@@ -40,12 +41,21 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
 
   if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.External) {
     return (
-      <Alert title="Grafana alerts are not delivered to Grafana Alertmanager">
-        Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager configuration
-        will not affect delivery of your alerts.
+      <Alert
+        title={t(
+          'alerting.grafana-alertmanager-delivery-warning.title-grafana-alerts-delivered-alertmanager',
+          'Grafana alerts are not delivered to Grafana Alertmanager'
+        )}
+      >
+        <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.configuration-changes-external">
+          Grafana is configured to send alerts to external Alertmanagers only. Changing Grafana Alertmanager
+          configuration will not affect delivery of your alerts.
+        </Trans>
         <div className={styles.adminHint}>
-          To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
-          Administrator.
+          <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.admin-hint-external">
+            To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
+            Administrator.
+          </Trans>
         </div>
       </Alert>
     );
@@ -53,12 +63,22 @@ export function GrafanaAlertmanagerDeliveryWarning({ currentAlertmanager }: Graf
 
   if (amChoiceStatus.alertmanagersChoice === AlertmanagerChoice.All && hasActiveExternalAMs) {
     return (
-      <Alert title="You have additional Alertmanagers to configure" severity="warning">
-        Ensure you make configuration changes in the correct Alertmanagers; both internal and external. Changing one
-        will not affect the others.
+      <Alert
+        title={t(
+          'alerting.grafana-alertmanager-delivery-warning.title-you-have-additional-alertmanagers-to-configure',
+          'You have additional Alertmanagers to configure'
+        )}
+        severity="warning"
+      >
+        <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.configuration-changes-all">
+          Ensure you make configuration changes in the correct Alertmanagers; both internal and external. Changing one
+          will not affect the others.
+        </Trans>
         <div className={styles.adminHint}>
-          To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
-          Administrator.
+          <Trans i18nKey="alerting.grafana-alertmanager-delivery-warning.admin-hint-all">
+            To change your Alertmanager setup, go to the Alerting Admin page. If you do not have access, contact your
+            Administrator.
+          </Trans>
         </div>
       </Alert>
     );

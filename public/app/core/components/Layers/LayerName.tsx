@@ -5,6 +5,8 @@ import * as React from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { Icon, Input, FieldValidationMessage, useStyles2 } from '@grafana/ui';
 
+import { t } from '../../internationalization';
+
 export interface LayerNameProps {
   name: string;
   onChange: (v: string) => void;
@@ -73,7 +75,7 @@ export const LayerName = ({ name, onChange, verifyLayerNameUniqueness, overrideS
         {!isEditing && (
           <button
             className={styles.layerNameWrapper}
-            title="Edit layer name"
+            title={t('layers.layer-name.edit-layer-title', 'Edit layer name')}
             onClick={onEditLayer}
             data-testid="layer-name-div"
           >

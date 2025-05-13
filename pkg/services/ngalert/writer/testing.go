@@ -20,6 +20,8 @@ type TestRemoteWriteTarget struct {
 	mtx             sync.Mutex
 	RequestsCount   int
 	LastRequestBody string
+
+	ExpectedPath string
 }
 
 func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
@@ -28,10 +30,11 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 	target := &TestRemoteWriteTarget{
 		RequestsCount:   0,
 		LastRequestBody: "",
+		ExpectedPath:    RemoteWriteEndpoint,
 	}
 
 	handler := func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != RemoteWriteEndpoint {
+		if r.URL.Path != target.ExpectedPath {
 			require.Fail(t, "Received unexpected request for endpoint %s", r.URL.Path)
 		}
 
@@ -57,6 +60,10 @@ func NewTestRemoteWriteTarget(t *testing.T) *TestRemoteWriteTarget {
 
 func (s *TestRemoteWriteTarget) Close() {
 	s.srv.Close()
+}
+
+func (s *TestRemoteWriteTarget) DatasourceURL() string {
+	return s.srv.URL
 }
 
 func (s *TestRemoteWriteTarget) ClientSettings() setting.RecordingRuleSettings {

@@ -2,14 +2,13 @@ import { HttpResponse, http } from 'msw';
 import { SetupServer, setupServer } from 'msw/node';
 
 import { setBackendSrv } from '@grafana/runtime';
-import { AlertGroupUpdated } from 'app/features/alerting/unified/api/alertRuleApi';
 import allHandlers from 'app/features/alerting/unified/mocks/server/all-handlers';
 import {
   setupAlertmanagerConfigMapDefaultState,
   setupAlertmanagerStatusMapDefaultState,
 } from 'app/features/alerting/unified/mocks/server/entities/alertmanagers';
 import { resetRoutingTreeMap } from 'app/features/alerting/unified/mocks/server/entities/k8s/routingtrees';
-import { DashboardDTO, FolderDTO, OrgUser } from 'app/types';
+import { DashboardDTO, FolderDTO } from 'app/types';
 import {
   PromRulesResponse,
   RulerGrafanaRuleDTO,
@@ -28,6 +27,8 @@ import {
   Route,
 } from '../../../plugins/datasource/alertmanager/types';
 import { DashboardSearchItem } from '../../search/types';
+
+import { RulerGroupUpdatedResponse } from './api/alertRuleModel';
 
 type Configurator<T> = (builder: T) => T;
 
@@ -173,7 +174,7 @@ export function mockAlertRuleApi(server: SetupServer) {
     rulerRules: (dsName: string, response: RulerRulesConfigDTO) => {
       server.use(http.get(`/api/ruler/${dsName}/api/v1/rules`, () => HttpResponse.json(response)));
     },
-    updateRule: (dsName: string, response: AlertGroupUpdated) => {
+    updateRule: (dsName: string, response: RulerGroupUpdatedResponse) => {
       server.use(http.post(`/api/ruler/${dsName}/api/v1/rules/:namespaceUid`, () => HttpResponse.json(response)));
     },
     rulerRuleGroup: (dsName: string, namespace: string, group: string, response: RulerRuleGroupDTO) => {
@@ -223,22 +224,6 @@ export function mockFolderApi(server: SetupServer) {
   return {
     folder: (folderUid: string, response: FolderDTO) => {
       server.use(http.get(`/api/folders/${folderUid}`, () => HttpResponse.json(response)));
-    },
-  };
-}
-
-export function mockSearchApi(server: SetupServer) {
-  return {
-    search: (results: DashboardSearchItem[]) => {
-      server.use(http.get(`/api/search`, () => HttpResponse.json(results)));
-    },
-  };
-}
-
-export function mockUserApi(server: SetupServer) {
-  return {
-    user: (user: OrgUser) => {
-      server.use(http.get(`/api/user`, () => HttpResponse.json(user)));
     },
   };
 }

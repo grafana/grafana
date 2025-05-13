@@ -71,12 +71,18 @@ export function UserProfile({
     });
   };
 
-  const authSource = user.authLabels?.length && user.authLabels[0];
+  let authSource = user.authLabels?.length && user.authLabels[0];
+  if (user.isProvisioned) {
+    authSource = 'SCIM';
+  }
   const lockMessage = authSource ? `Synced via ${authSource}` : '';
 
-  const editLocked = user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
+  const editLocked =
+    user.isExternal || user.isProvisioned || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersWrite, user);
   const passwordChangeLocked =
-    user.isExternal || !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
+    user.isExternal ||
+    user.isProvisioned ||
+    !contextSrv.hasPermissionInMetadata(AccessControlAction.UsersPasswordUpdate, user);
   const canDelete = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDelete, user);
   const canDisable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersDisable, user);
   const canEnable = contextSrv.hasPermissionInMetadata(AccessControlAction.UsersEnable, user);
@@ -90,30 +96,34 @@ export function UserProfile({
         <div>
           <table className="filter-table form-inline">
             <tbody>
-              <UserProfileRow label="Numerical identifier" value={user.id.toString()} locked={true} />
               <UserProfileRow
-                label="Name"
+                label={t('admin.user-profile.label-numerical-identifier', 'Numerical identifier')}
+                value={user.id.toString()}
+                locked={true}
+              />
+              <UserProfileRow
+                label={t('admin.user-profile.label-name', 'Name')}
                 value={user.name}
                 locked={editLocked}
                 lockMessage={lockMessage}
                 onChange={onUserNameChange}
               />
               <UserProfileRow
-                label="Email"
+                label={t('admin.user-profile.label-email', 'Email')}
                 value={user.email}
                 locked={editLocked}
                 lockMessage={lockMessage}
                 onChange={onUserEmailChange}
               />
               <UserProfileRow
-                label="Username"
+                label={t('admin.user-profile.label-username', 'Username')}
                 value={user.login}
                 locked={editLocked}
                 lockMessage={lockMessage}
                 onChange={onUserLoginChange}
               />
               <UserProfileRow
-                label="Password"
+                label={t('admin.user-profile.label-password', 'Password')}
                 value="********"
                 inputType="password"
                 locked={passwordChangeLocked}
@@ -131,7 +141,7 @@ export function UserProfile({
               </Button>
               <ConfirmModal
                 isOpen={showDeleteModal}
-                title="Delete user"
+                title={t('admin.user-profile.title-delete-user', 'Delete user')}
                 body="Are you sure you want to delete this user?"
                 confirmText="Delete user"
                 onConfirm={handleUserDelete}
@@ -151,7 +161,7 @@ export function UserProfile({
               </Button>
               <ConfirmModal
                 isOpen={showDisableModal}
-                title="Disable user"
+                title={t('admin.user-profile.title-disable-user', 'Disable user')}
                 body="Are you sure you want to disable this user?"
                 confirmText="Disable user"
                 onConfirm={handleUserDisable}

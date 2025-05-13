@@ -1,8 +1,9 @@
 import { useCallback } from 'react';
 
 import { Field, SelectableValue, valueMatchers } from '@grafana/data';
-import { FilterByValueFilter } from '@grafana/data/src/transformations/transformers/filterByValue';
+import { FilterByValueFilter } from '@grafana/data/internal';
 import { Button, Select, InlineField, InlineFieldRow, Box } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { valueMatchersUI } from './ValueMatchers/valueMatchersUI';
 
@@ -76,25 +77,25 @@ export const FilterByValueFilterEditor = (props: Props) => {
 
   return (
     <InlineFieldRow>
-      <InlineField label="Field" labelWidth={14}>
+      <InlineField label={t('transformers.filter-by-value-filter-editor.label-field', 'Field')} labelWidth={14}>
         <Select
           className="min-width-15 max-width-24"
-          placeholder="Field Name"
+          placeholder={t('transformers.filter-by-value-filter-editor.placeholder-field-name', 'Field name')}
           options={fieldsAsOptions}
           value={filter.fieldName}
           onChange={onChangeField}
         />
       </InlineField>
-      <InlineField label="Match">
+      <InlineField label={t('transformers.filter-by-value-filter-editor.label-match', 'Match')}>
         <Select
           className="width-12"
-          placeholder="Select test"
+          placeholder={t('transformers.filter-by-value-filter-editor.placeholder-select-test', 'Select test')}
           options={matcherOptions}
           value={matcherId}
           onChange={onChangeMatcher}
         />
       </InlineField>
-      <InlineField label="Value" grow>
+      <InlineField label={t('transformers.filter-by-value-filter-editor.label-value', 'Value')} grow>
         <editor.component field={field} options={filter.config.options ?? {}} onChange={onChangeMatcherOptions} />
       </InlineField>
       <Box marginBottom={0.5}>

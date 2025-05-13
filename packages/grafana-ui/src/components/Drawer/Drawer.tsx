@@ -292,7 +292,6 @@ const getStyles = (theme: GrafanaTheme2) => {
 
       '&:before': {
         backgroundColor: `${theme.components.overlay.background} !important`,
-        backdropFilter: 'blur(1px)',
         bottom: 0,
         content: '""',
         left: 0,
@@ -335,7 +334,7 @@ const getStyles = (theme: GrafanaTheme2) => {
       paddingTop: theme.spacing(1),
     }),
     content: css({
-      padding: theme.spacing(2),
+      padding: theme.spacing(theme.components.drawer?.padding ?? 2),
       height: '100%',
       flexGrow: 1,
       minHeight: 0,

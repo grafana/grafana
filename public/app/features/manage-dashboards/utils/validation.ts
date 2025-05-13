@@ -1,5 +1,7 @@
 import { t } from 'app/core/internationalization';
+import { AnnoKeyFolderTitle } from 'app/features/apiserver/types';
 import { getDashboardAPI } from 'app/features/dashboard/api/dashboard_api';
+import { isDashboardV2Resource } from 'app/features/dashboard/api/utils';
 
 import { validationSrv } from '../services/ValidationSrv';
 
@@ -49,7 +51,12 @@ export const validateUid = (value: string) => {
   return getDashboardAPI()
     .getDashboardDTO(value)
     .then((existingDashboard) => {
-      return `Dashboard named '${existingDashboard?.dashboard.title}' in folder '${existingDashboard?.meta.folderTitle}' has the same UID`;
+      const isV2 = isDashboardV2Resource(existingDashboard);
+      const dashboard = isV2 ? existingDashboard.spec : existingDashboard.dashboard;
+      const folderTitle = isV2
+        ? existingDashboard.metadata.annotations?.[AnnoKeyFolderTitle]
+        : existingDashboard.meta.folderTitle;
+      return `Dashboard named '${dashboard.title}' in folder '${folderTitle}' has the same UID`;
     })
     .catch((error) => {
       error.isHandled = true;

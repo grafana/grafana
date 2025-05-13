@@ -17,6 +17,7 @@ import {
   mockDataSource,
   mockPluginLinkExtension,
   mockPromAlertingRule,
+  mockRulerGrafanaRecordingRule,
 } from '../../mocks';
 import { grafanaRulerRule } from '../../mocks/grafanaRulerApi';
 import { grantPermissionsHelper } from '../../test/test-utils';
@@ -184,6 +185,30 @@ describe('RuleViewer', () => {
       }
     });
 
+    it('shows paused state correctly for recording rules', async () => {
+      const recordingRule = getGrafanaRule({
+        name: 'Test recording rule',
+        rulerRule: mockRulerGrafanaRecordingRule(
+          {},
+          {
+            is_paused: true,
+            title: 'Test recording',
+            record: {
+              metric: 'test_recording',
+              from: 'A',
+            },
+          }
+        ),
+      });
+
+      const recordingRuleIdentifier = ruleId.fromCombinedRule('grafana', recordingRule);
+      await renderRuleViewer(recordingRule, recordingRuleIdentifier, ActiveTab.Details);
+
+      expect(await screen.findByText('Test recording rule')).toBeInTheDocument();
+      expect(await screen.findByRole('status', { name: 'Alert evaluation currently paused' })).toBeInTheDocument();
+      expect(screen.queryByText(/last evaluation duration/i)).not.toBeInTheDocument();
+    });
+
     it('renders silencing form correctly and shows alert rule name', async () => {
       await renderRuleViewer(mockRule, mockRuleIdentifier);
       await openSilenceDrawer();
@@ -343,21 +368,30 @@ describe('RuleViewer', () => {
     const mockRule = getVanillaPromRule({
       name: 'prom test alert',
       namespace: mockCombinedCloudRuleNamespace({ name: 'prometheus' }, prometheus.name),
-      annotations: { [Annotation.summary]: 'prom summary', [Annotation.runbookURL]: 'https://runbook.example.com' },
+      annotations: {
+        [Annotation.summary]: 'prom summary',
+        [Annotation.runbookURL]: 'https://runbook.example.com',
+      },
       promRule: {
-        ...mockPromAlertingRule(),
+        ...mockPromAlertingRule({
+          annotations: {
+            [Annotation.summary]: 'prom summary',
+            [Annotation.runbookURL]: 'https://runbook.example.com',
+          },
+        }),
         duration: 900, // 15 minutes
       },
     });
 
     const mockRuleIdentifier = ruleId.fromCombinedRule(prometheus.name, mockRule);
 
-    it('should render pending period for vanilla Prometheus alert rule', async () => {
+    it('should render metadata for vanilla Prometheus alert rule', async () => {
       renderRuleViewer(mockRule, mockRuleIdentifier, ActiveTab.Details);
 
       expect(screen.getByText('prom test alert')).toBeInTheDocument();
 
-      // One summary is rendered by the Title component, and the other by the DetailsTab component
+      // Both summary and runbook are rendered by the Title component, and the DetailsTab component
+      expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.runbookURL]).getAll()).toHaveLength(2);
       expect(ELEMENTS.metadata.summary(mockRule.annotations[Annotation.summary]).getAll()).toHaveLength(2);
 
       expect(ELEMENTS.details.pendingPeriod.get()).toHaveTextContent(/15m/i);

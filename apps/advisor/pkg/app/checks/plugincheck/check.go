@@ -5,39 +5,44 @@ import (
 	"fmt"
 	sysruntime "runtime"
 
-	"github.com/Masterminds/semver/v3"
+	"github.com/grafana/grafana-app-sdk/logging"
 	advisor "github.com/grafana/grafana/apps/advisor/pkg/apis/advisor/v0alpha1"
 	"github.com/grafana/grafana/apps/advisor/pkg/app/checks"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/plugins/repo"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/managedplugins"
-	"github.com/grafana/grafana/pkg/services/pluginsintegration/plugininstaller"
+	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginchecker"
 	"github.com/grafana/grafana/pkg/services/pluginsintegration/pluginstore"
+)
+
+const (
+	CheckID           = "plugin"
+	DeprecationStepID = "deprecation"
+	UpdateStepID      = "update"
 )
 
 func New(
 	pluginStore pluginstore.Store,
 	pluginRepo repo.Service,
-	pluginPreinstall plugininstaller.Preinstall,
-	managedPlugins managedplugins.Manager,
+	updateChecker pluginchecker.PluginUpdateChecker,
+	grafanaVersion string,
 ) checks.Check {
 	return &check{
-		PluginStore:      pluginStore,
-		PluginRepo:       pluginRepo,
-		PluginPreinstall: pluginPreinstall,
-		ManagedPlugins:   managedPlugins,
+		PluginStore:    pluginStore,
+		PluginRepo:     pluginRepo,
+		GrafanaVersion: grafanaVersion,
+		updateChecker:  updateChecker,
 	}
 }
 
 type check struct {
-	PluginStore      pluginstore.Store
-	PluginRepo       repo.Service
-	PluginPreinstall plugininstaller.Preinstall
-	ManagedPlugins   managedplugins.Manager
+	PluginStore    pluginstore.Store
+	PluginRepo     repo.Service
+	updateChecker  pluginchecker.PluginUpdateChecker
+	GrafanaVersion string
+	pluginIndex    map[string]repo.PluginInfo
 }
 
 func (c *check) ID() string {
-	return "plugin"
+	return CheckID
 }
 
 func (c *check) Items(ctx context.Context) ([]any, error) {
@@ -49,21 +54,46 @@ func (c *check) Items(ctx context.Context) ([]any, error) {
 	return res, nil
 }
 
+func (c *check) Item(ctx context.Context, id string) (any, error) {
+	p, exists := c.PluginStore.Plugin(ctx, id)
+	if !exists {
+		return nil, fmt.Errorf("plugin %s not found", id)
+	}
+	return p, nil
+}
+
+func (c *check) Init(ctx context.Context) error {
+	compatOpts := repo.NewCompatOpts(c.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
+	plugins, err := c.PluginRepo.GetPluginsInfo(ctx, compatOpts)
+	if err != nil {
+		return err
+	}
+	c.pluginIndex = make(map[string]repo.PluginInfo)
+	for _, p := range plugins {
+		c.pluginIndex[p.Slug] = p
+	}
+	return nil
+}
+
 func (c *check) Steps() []checks.Step {
 	return []checks.Step{
 		&deprecationStep{
-			PluginRepo: c.PluginRepo,
+			GrafanaVersion: c.GrafanaVersion,
+			updateChecker:  c.updateChecker,
+			pluginIndex:    c.pluginIndex,
 		},
 		&updateStep{
-			PluginRepo:       c.PluginRepo,
-			PluginPreinstall: c.PluginPreinstall,
-			ManagedPlugins:   c.ManagedPlugins,
+			GrafanaVersion: c.GrafanaVersion,
+			updateChecker:  c.updateChecker,
+			pluginIndex:    c.pluginIndex,
 		},
 	}
 }
 
 type deprecationStep struct {
-	PluginRepo repo.Service
+	GrafanaVersion string
+	updateChecker  pluginchecker.PluginUpdateChecker
+	pluginIndex    map[string]repo.PluginInfo
 }
 
 func (s *deprecationStep) Title() string {
@@ -80,30 +110,30 @@ func (s *deprecationStep) Resolution() string {
 }
 
 func (s *deprecationStep) ID() string {
-	return "deprecation"
+	return DeprecationStepID
 }
 
-func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any) (*advisor.CheckReportFailure, error) {
+func (s *deprecationStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, it any) ([]advisor.CheckReportFailure, error) {
 	p, ok := it.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", it)
 	}
 
-	// Skip if it's a core plugin
-	if p.IsCorePlugin() {
+	if !s.updateChecker.IsUpdatable(ctx, p) {
 		return nil, nil
 	}
 
 	// Check if plugin is deprecated
-	i, err := s.PluginRepo.PluginInfo(ctx, p.ID)
-	if err != nil {
+	i, ok := s.pluginIndex[p.ID]
+	if !ok {
 		// Unable to check deprecation status
 		return nil, nil
 	}
 	if i.Status == "deprecated" {
-		return checks.NewCheckReportFailure(
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityHigh,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
@@ -111,15 +141,15 @@ func (s *deprecationStep) Run(ctx context.Context, _ *advisor.CheckSpec, it any)
 					Url:     fmt.Sprintf("/plugins/%s", p.ID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 	return nil, nil
 }
 
 type updateStep struct {
-	PluginRepo       repo.Service
-	PluginPreinstall plugininstaller.Preinstall
-	ManagedPlugins   managedplugins.Manager
+	GrafanaVersion string
+	updateChecker  pluginchecker.PluginUpdateChecker
+	pluginIndex    map[string]repo.PluginInfo
 }
 
 func (s *updateStep) Title() string {
@@ -135,36 +165,30 @@ func (s *updateStep) Resolution() string {
 }
 
 func (s *updateStep) ID() string {
-	return "update"
+	return UpdateStepID
 }
 
-func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*advisor.CheckReportFailure, error) {
+func (s *updateStep) Run(ctx context.Context, log logging.Logger, _ *advisor.CheckSpec, i any) ([]advisor.CheckReportFailure, error) {
 	p, ok := i.(pluginstore.Plugin)
 	if !ok {
 		return nil, fmt.Errorf("invalid item type %T", i)
 	}
 
-	// Skip if it's a core plugin
-	if p.IsCorePlugin() {
-		return nil, nil
-	}
-
-	// Skip if it's managed or pinned
-	if s.isManaged(ctx, p.ID) || s.PluginPreinstall.IsPinned(p.ID) {
+	if !s.updateChecker.IsUpdatable(ctx, p) {
 		return nil, nil
 	}
 
 	// Check if plugin has a newer version available
-	compatOpts := repo.NewCompatOpts(services.GrafanaVersion, sysruntime.GOOS, sysruntime.GOARCH)
-	info, err := s.PluginRepo.GetPluginArchiveInfo(ctx, p.ID, "", compatOpts)
-	if err != nil {
+	info, ok := s.pluginIndex[p.ID]
+	if !ok {
 		// Unable to check updates
 		return nil, nil
 	}
-	if hasUpdate(p, info) {
-		return checks.NewCheckReportFailure(
+	if s.updateChecker.CanUpdate(p.ID, p.Info.Version, info.Version, false) {
+		return []advisor.CheckReportFailure{checks.NewCheckReportFailure(
 			advisor.CheckReportFailureSeverityLow,
 			s.ID(),
+			p.Name,
 			p.ID,
 			[]advisor.CheckErrorLink{
 				{
@@ -172,28 +196,8 @@ func (s *updateStep) Run(ctx context.Context, _ *advisor.CheckSpec, i any) (*adv
 					Url:     fmt.Sprintf("/plugins/%s?page=version-history", p.ID),
 				},
 			},
-		), nil
+		)}, nil
 	}
 
 	return nil, nil
-}
-
-func hasUpdate(current pluginstore.Plugin, latest *repo.PluginArchiveInfo) bool {
-	// If both versions are semver-valid, compare them
-	v1, err1 := semver.NewVersion(current.Info.Version)
-	v2, err2 := semver.NewVersion(latest.Version)
-	if err1 == nil && err2 == nil {
-		return v1.LessThan(v2)
-	}
-	// In other case, assume that a different latest version will always be newer
-	return current.Info.Version != latest.Version
-}
-
-func (s *updateStep) isManaged(ctx context.Context, pluginID string) bool {
-	for _, managedPlugin := range s.ManagedPlugins.ManagedPlugins(ctx) {
-		if managedPlugin == pluginID {
-			return true
-		}
-	}
-	return false
 }

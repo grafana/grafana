@@ -2,6 +2,7 @@ import { css, cx } from '@emotion/css';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { IconButton, useStyles2 } from '@grafana/ui';
+import { t, Trans } from 'app/core/internationalization';
 
 export interface MinimalisticPaginationProps {
   currentPage: number;
@@ -29,15 +30,17 @@ export const MinimalisticPagination = ({
       <IconButton
         name="angle-left"
         size="md"
-        tooltip="Previous"
+        tooltip={t('dashboard.minimalistic-pagination.tooltip-previous', 'Previous')}
         onClick={() => onNavigate(currentPage - 1)}
         disabled={currentPage === 1}
       />
-      {currentPage} of {numberOfPages}
+      <Trans i18nKey="dashboard.minimalistic-pagination.page-count">
+        {{ currentPage }} of {{ numberOfPages }}
+      </Trans>
       <IconButton
         name="angle-right"
         size="md"
-        tooltip="Next"
+        tooltip={t('dashboard.minimalistic-pagination.tooltip-next', 'Next')}
         onClick={() => onNavigate(currentPage + 1)}
         disabled={currentPage === numberOfPages}
       />

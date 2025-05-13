@@ -7,19 +7,20 @@ import (
 	"strconv"
 	"strings"
 
+	"google.golang.org/grpc"
+	"k8s.io/apimachinery/pkg/selection"
+
 	claims "github.com/grafana/authlib/types"
+	dashboard "github.com/grafana/grafana/apps/dashboard/pkg/apis/dashboard/v1beta1"
+	folders "github.com/grafana/grafana/apps/folder/pkg/apis/folder/v1beta1"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
-	"github.com/grafana/grafana/pkg/apis/dashboard"
-	folderv0alpha1 "github.com/grafana/grafana/pkg/apis/folder/v0alpha1"
 	"github.com/grafana/grafana/pkg/services/dashboards"
 	"github.com/grafana/grafana/pkg/services/dashboards/dashboardaccess"
 	"github.com/grafana/grafana/pkg/services/search/sort"
 	"github.com/grafana/grafana/pkg/services/sqlstore/searchstore"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	unisearch "github.com/grafana/grafana/pkg/storage/unified/search"
-	"google.golang.org/grpc"
-	"k8s.io/apimachinery/pkg/selection"
 )
 
 type DashboardSearchClient struct {
@@ -33,11 +34,33 @@ func NewDashboardSearchClient(dashboardStore dashboards.Store, sorter sort.Servi
 }
 
 var sortByMapping = map[string]string{
-	unisearch.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently-",
-	unisearch.DASHBOARD_VIEWS_TOTAL:         "viewed-",
-	unisearch.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently-",
-	unisearch.DASHBOARD_ERRORS_TOTAL:        "errors-",
-	"title":                                 "alpha-",
+	unisearch.DASHBOARD_VIEWS_LAST_30_DAYS:  "viewed-recently",
+	unisearch.DASHBOARD_VIEWS_TOTAL:         "viewed",
+	unisearch.DASHBOARD_ERRORS_LAST_30_DAYS: "errors-recently",
+	unisearch.DASHBOARD_ERRORS_TOTAL:        "errors",
+	"title":                                 "alpha",
+}
+
+func ParseSortName(sortName string) (string, bool, error) {
+	if sortName == "" {
+		return "", false, nil
+	}
+
+	isDesc := strings.HasSuffix(sortName, "-desc")
+	isAsc := strings.HasSuffix(sortName, "-asc")
+	// default to desc if no suffix is provided
+	if !isDesc && !isAsc {
+		isDesc = true
+	}
+
+	prefix := strings.TrimSuffix(strings.TrimSuffix(sortName, "-desc"), "-asc")
+	for key, mappedPrefix := range sortByMapping {
+		if prefix == mappedPrefix {
+			return key, isDesc, nil
+		}
+	}
+
+	return "", false, fmt.Errorf("no matching sort field found for: %s", sortName)
 }
 
 // nolint:gocyclo
@@ -66,11 +89,12 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 	}
 
 	var queryType string
-	if req.Options.Key.Resource == dashboard.DASHBOARD_RESOURCE {
+	switch req.Options.Key.Resource {
+	case dashboard.DASHBOARD_RESOURCE:
 		queryType = searchstore.TypeDashboard
-	} else if req.Options.Key.Resource == folderv0alpha1.RESOURCE {
+	case folders.RESOURCE:
 		queryType = searchstore.TypeFolder
-	} else {
+	default:
 		return nil, fmt.Errorf("bad type request")
 	}
 
@@ -80,7 +104,7 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 
 	if len(req.Federated) == 1 &&
 		((req.Federated[0].Resource == dashboard.DASHBOARD_RESOURCE && queryType == searchstore.TypeFolder) ||
-			(req.Federated[0].Resource == folderv0alpha1.RESOURCE && queryType == searchstore.TypeDashboard)) {
+			(req.Federated[0].Resource == folders.RESOURCE && queryType == searchstore.TypeDashboard)) {
 		queryType = "" // makes the legacy store search across both
 	}
 
@@ -98,9 +122,9 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 		sorterName := sortByMapping[sortByField]
 
 		if sort.Desc {
-			sorterName += "desc"
+			sorterName += "-desc"
 		} else {
-			sorterName += "asc"
+			sorterName += "-asc"
 		}
 
 		if sorter, ok := c.sorter.GetSortOption(sorterName); ok {
@@ -179,18 +203,22 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			}
 
 			query.FolderUIDs = folders
-		case resource.SEARCH_FIELD_REPOSITORY_PATH:
+		case resource.SEARCH_FIELD_SOURCE_PATH:
 			// only one value is supported in legacy search
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one repo path query is supported")
 			}
-			query.ProvisionedPath = vals[0]
-		case resource.SEARCH_FIELD_REPOSITORY_NAME:
+			query.SourcePath = vals[0]
+
+		case resource.SEARCH_FIELD_MANAGER_KIND:
+			if len(vals) != 1 {
+				return nil, fmt.Errorf("only one manager kind supported")
+			}
+			query.ManagedBy = utils.ManagerKind(vals[0])
+
+		case resource.SEARCH_FIELD_MANAGER_ID:
 			if field.Operator == string(selection.NotIn) {
-				for _, val := range vals {
-					name, _ := dashboard.GetProvisionedFileNameFromMeta(val)
-					query.ProvisionedReposNotIn = append(query.ProvisionedReposNotIn, name)
-				}
+				query.ManagerIdentityNotIn = vals
 				continue
 			}
 
@@ -198,51 +226,73 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			if len(vals) != 1 {
 				return nil, fmt.Errorf("only one repo name is supported")
 			}
-
-			query.ProvisionedRepo, _ = dashboard.GetProvisionedFileNameFromMeta(vals[0])
+			query.ManagerIdentity = vals[0]
 		}
 	}
 	searchFields := resource.StandardSearchFields()
+	columns := []*resource.ResourceTableColumnDefinition{
+		searchFields.Field(resource.SEARCH_FIELD_TITLE),
+		searchFields.Field(resource.SEARCH_FIELD_FOLDER),
+		searchFields.Field(resource.SEARCH_FIELD_TAGS),
+		searchFields.Field(resource.SEARCH_FIELD_LEGACY_ID),
+	}
+
+	if sortByField != "" {
+		columns = append(columns, &resource.ResourceTableColumnDefinition{
+			Name: sortByField,
+			Type: resource.ResourceTableColumnDefinition_INT64,
+		})
+	}
+
 	list := &resource.ResourceSearchResponse{
 		Results: &resource.ResourceTable{
-			Columns: []*resource.ResourceTableColumnDefinition{
-				searchFields.Field(resource.SEARCH_FIELD_TITLE),
-				searchFields.Field(resource.SEARCH_FIELD_FOLDER),
-				searchFields.Field(resource.SEARCH_FIELD_TAGS),
-				{
-					Name: sortByField,
-					Type: resource.ResourceTableColumnDefinition_INT64,
-				},
-			},
+			Columns: columns,
 		},
 	}
 
 	// if we are querying for provisioning information, we need to use a different
 	// legacy sql query, since legacy search does not support this
-	if query.ProvisionedRepo != "" || len(query.ProvisionedReposNotIn) > 0 {
+	if query.ManagerIdentity != "" || len(query.ManagerIdentityNotIn) > 0 {
+		if query.ManagedBy == utils.ManagerKindUnknown {
+			return nil, fmt.Errorf("query by manager identity also requires manager.kind parameter")
+		}
+
 		var dashes []*dashboards.Dashboard
-		if query.ProvisionedRepo == dashboard.PluginIDRepoName {
+		if query.ManagedBy == utils.ManagerKindPlugin {
 			dashes, err = c.dashboardStore.GetDashboardsByPluginID(ctx, &dashboards.GetDashboardsByPluginIDQuery{
-				PluginID: query.ProvisionedPath,
+				PluginID: query.ManagerIdentity,
 				OrgID:    user.GetOrgID(),
 			})
-		} else if query.ProvisionedRepo != "" {
-			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ProvisionedRepo)
-		} else if len(query.ProvisionedReposNotIn) > 0 {
-			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ProvisionedReposNotIn)
+		} else if query.ManagerIdentity != "" {
+			dashes, err = c.dashboardStore.GetProvisionedDashboardsByName(ctx, query.ManagerIdentity, user.GetOrgID())
+		} else if len(query.ManagerIdentityNotIn) > 0 {
+			dashes, err = c.dashboardStore.GetOrphanedProvisionedDashboards(ctx, query.ManagerIdentityNotIn, user.GetOrgID())
 		}
 		if err != nil {
 			return nil, err
 		}
 
 		for _, dashboard := range dashes {
+			cells := [][]byte{
+				[]byte(dashboard.Title),
+				[]byte(dashboard.FolderUID),
+				[]byte("[]"), // no tags retrieved for provisioned dashboards
+				[]byte(strconv.FormatInt(dashboard.ID, 10)),
+			}
+
+			if sortByField != "" {
+				cells = append(cells, []byte("0"))
+			}
+
 			list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
 				Key: getResourceKey(&dashboards.DashboardSearchProjection{
 					UID: dashboard.UID,
 				}, req.Options.Key.Namespace),
-				Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), {}, {}},
+				Cells: cells,
 			})
 		}
+
+		list.TotalHits = int64(len(list.Results.Rows))
 
 		return list, nil
 	}
@@ -260,9 +310,20 @@ func (c *DashboardSearchClient) Search(ctx context.Context, req *resource.Resour
 			return nil, err
 		}
 
+		cells := [][]byte{
+			[]byte(dashboard.Title),
+			[]byte(dashboard.FolderUID),
+			tags,
+			[]byte(strconv.FormatInt(dashboard.ID, 10)),
+		}
+
+		if sortByField != "" {
+			cells = append(cells, []byte(strconv.FormatInt(dashboard.SortMeta, 10)))
+		}
+
 		list.Results.Rows = append(list.Results.Rows, &resource.ResourceTableRow{
 			Key:   getResourceKey(dashboard, req.Options.Key.Namespace),
-			Cells: [][]byte{[]byte(dashboard.Title), []byte(dashboard.FolderUID), tags, []byte(strconv.FormatInt(dashboard.SortMeta, 10))},
+			Cells: cells,
 		})
 	}
 
@@ -275,8 +336,8 @@ func getResourceKey(item *dashboards.DashboardSearchProjection, namespace string
 	if item.IsFolder {
 		return &resource.ResourceKey{
 			Namespace: namespace,
-			Group:     folderv0alpha1.GROUP,
-			Resource:  folderv0alpha1.RESOURCE,
+			Group:     folders.GROUP,
+			Resource:  folders.RESOURCE,
 			Name:      item.UID,
 		}
 	}
@@ -298,6 +359,7 @@ func formatQueryResult(res []dashboards.DashboardSearchProjection) []*dashboards
 		hit, exists := hits[key]
 		if !exists {
 			hit = &dashboards.DashboardSearchProjection{
+				ID:        item.ID,
 				UID:       item.UID,
 				Title:     item.Title,
 				FolderUID: item.FolderUID,
@@ -335,7 +397,15 @@ func (c *DashboardSearchClient) GetStats(ctx context.Context, req *resource.Reso
 		return nil, fmt.Errorf("invalid kind")
 	}
 
-	count, err := c.dashboardStore.CountInOrg(ctx, info.OrgID)
+	var count int64
+	switch parts[0] {
+	case dashboard.GROUP:
+		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, false)
+	case folders.GROUP:
+		count, err = c.dashboardStore.CountInOrg(ctx, info.OrgID, true)
+	default:
+		return nil, fmt.Errorf("invalid group")
+	}
 	if err != nil {
 		return nil, err
 	}

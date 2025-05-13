@@ -147,7 +147,7 @@ describe('SearchField', () => {
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, tag: 'tag1', value: [] });
 
       // Remove the tag
-      const tagRemove = await screen.findByLabelText('select-clear-value');
+      const tagRemove = await screen.findByLabelText('Clear value');
       await user.click(tagRemove);
       expect(updateFilter).toHaveBeenCalledWith({ ...filter, value: [] });
     }

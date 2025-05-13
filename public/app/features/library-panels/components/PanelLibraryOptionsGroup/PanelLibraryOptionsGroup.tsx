@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { PanelPluginMeta } from '@grafana/data';
 import { Button, VerticalGroup } from '@grafana/ui';
+import { Trans } from 'app/core/internationalization';
 import { getDashboardSrv } from 'app/features/dashboard/services/DashboardSrv';
 import { PanelModel } from 'app/features/dashboard/state/PanelModel';
 import { changeToLibraryPanel } from 'app/features/panel/state/actions';
@@ -48,7 +49,9 @@ export const PanelLibraryOptionsGroup = ({ panel, searchQuery }: Props) => {
       {!panel.libraryPanel && (
         <VerticalGroup align="center">
           <Button icon="plus" onClick={onAddToPanelLibrary} variant="secondary" fullWidth>
-            Create new library panel
+            <Trans i18nKey="library-panels.panel-library-options-group.create-new-library-panel">
+              Create new library panel
+            </Trans>
           </Button>
         </VerticalGroup>
       )}

@@ -10,6 +10,7 @@ import {
   TransformerCategory,
 } from '@grafana/data';
 import { InlineField, InlineFieldRow, Select, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { getTransformationContent } from '../docs/getTransformationContent';
 
@@ -21,10 +22,20 @@ const wideInfo = {
   description: 'Creates a single frame joined by time',
   info: (
     <ul>
-      <li>Single frame</li>
-      <li>1st field is shared time field</li>
-      <li>Time in ascending order</li>
-      <li>Multiple value fields of any type</li>
+      <li>
+        <Trans i18nKey="transformers.wide-info.single-frame">Single frame</Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.wide-info.st-field-is-shared-time">1st field is shared time field</Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.wide-info.time-in-ascending-order">Time in ascending order</Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.wide-info.multiple-value-fields-of-any-type">
+          Multiple value fields of any type
+        </Trans>
+      </li>
     </ul>
   ),
 };
@@ -35,11 +46,25 @@ const multiInfo = {
   description: 'Creates a new frame for each time/number pair',
   info: (
     <ul>
-      <li>Multiple frames</li>
-      <li>Each frame has two fields: time, value</li>
-      <li>Time in ascending order</li>
-      <li>String values are represented as labels</li>
-      <li>All values are numeric</li>
+      <li>
+        <Trans i18nKey="transformers.multi-info.multiple-frames">Multiple frames</Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.multi-info.frame-fields-value" values={{ field1: 'time', field2: 'value' }}>
+          Each frame has two fields: {'{{field1}}'}, {'{{field2}}'}
+        </Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.multi-info.time-in-ascending-order">Time in ascending order</Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.multi-info.string-values-are-represented-as-labels">
+          String values are represented as labels
+        </Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.multi-info.all-values-are-numeric">All values are numeric</Trans>
+      </li>
     </ul>
   ),
 };
@@ -50,11 +75,25 @@ const longInfo = {
   description: 'Convert each frame to long format',
   info: (
     <ul>
-      <li>Single frame</li>
-      <li>1st field is time field</li>
-      <li>Time in ascending order, but may have duplicates</li>
-      <li>String values are represented as separate fields rather than as labels</li>
-      <li>Multiple value fields may exist</li>
+      <li>
+        <Trans i18nKey="transformers.long-info.single-frame">Single frame</Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.long-info.st-field-is-time">1st field is time field</Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.long-info.ascending-order-duplicates">
+          Time in ascending order, but may have duplicates
+        </Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.long-info.string-values-separate">
+          String values are represented as separate fields rather than as labels
+        </Trans>
+      </li>
+      <li>
+        <Trans i18nKey="transformers.long-info.multiple-value-fields-may-exist">Multiple value fields may exist</Trans>
+      </li>
     </ul>
   ),
 };
@@ -78,7 +117,7 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
   return (
     <>
       <InlineFieldRow>
-        <InlineField label="Format" labelWidth={12}>
+        <InlineField label={t('transformers.prepare-time-series-editor.label-format', 'Format')} labelWidth={12}>
           <Select
             width={35}
             options={formats}
@@ -101,7 +140,7 @@ export function PrepareTimeSeriesEditor(props: TransformerUIProps<PrepareTimeSer
         </InlineField>
       </InlineFieldRow>
       <InlineFieldRow>
-        <InlineField label="Info" labelWidth={12}>
+        <InlineField label={t('transformers.prepare-time-series-editor.label-info', 'Info')} labelWidth={12}>
           <div className={styles.info}>{(formats.find((v) => v.value === options.format) || formats[0]).info}</div>
         </InlineField>
       </InlineFieldRow>

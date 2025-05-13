@@ -4,23 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"testing"
-	"time"
 
-	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	authlib "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
-	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
-	"github.com/grafana/grafana/pkg/services/user"
-
 	"github.com/grafana/grafana/pkg/apimachinery/utils"
 	"github.com/grafana/grafana/pkg/infra/tracing"
+	authzextv1 "github.com/grafana/grafana/pkg/services/authz/proto/v1"
+	"github.com/grafana/grafana/pkg/services/featuremgmt"
 	"github.com/grafana/grafana/pkg/services/store/kind/dashboard"
+	"github.com/grafana/grafana/pkg/services/user"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 )
 
@@ -41,11 +40,8 @@ func TestBleveBackend(t *testing.T) {
 	backend, err := NewBleveBackend(BleveOptions{
 		Root:          tmpdir,
 		FileThreshold: 5, // with more than 5 items we create a file on disk
-	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering))
+	}, tracing.NewNoopTracerService(), featuremgmt.WithFeatures(featuremgmt.FlagUnifiedStorageSearchPermissionFiltering), nil)
 	require.NoError(t, err)
-
-	// AVOID NPE in test
-	resource.NewIndexMetrics(backend.opts.Root, backend)
 
 	rv := int64(10)
 	ctx := identity.WithRequester(context.Background(), &user.SignedInUser{Namespace: "ns"})
@@ -69,85 +65,107 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, info.Fields, func(index resource.ResourceIndex) (int64, error) {
-			_ = index.Write(&resource.IndexableDocument{
-				RV:   1,
-				Name: "aaa",
-				Key: &resource.ResourceKey{
-					Name:      "aaa",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Title:       "aaa (dash)",
-				TitlePhrase: "aaa (dash)",
-				Folder:      "xxx",
-				Fields: map[string]any{
-					DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
-					DASHBOARD_ERRORS_TODAY:      25,
-					DASHBOARD_VIEWS_LAST_1_DAYS: 50,
-				},
-				Labels: map[string]string{
-					utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
-				},
-				Tags: []string{"aa", "bb"},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/aaa.json",
-					Hash:      "xyz",
-					Timestamp: asTimePointer(1609462800000), // 2021
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV:   1,
+							Name: "aaa",
+							Key: &resource.ResourceKey{
+								Name:      "aaa",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Title:  "aaa (dash)",
+							Folder: "xxx",
+							Fields: map[string]any{
+								DASHBOARD_PANEL_TYPES:       []string{"timeseries", "table"},
+								DASHBOARD_ERRORS_TODAY:      25,
+								DASHBOARD_VIEWS_LAST_1_DAYS: 50,
+							},
+							Labels: map[string]string{
+								utils.LabelKeyDeprecatedInternalID: "10", // nolint:staticcheck
+							},
+							Tags: []string{"aa", "bb"},
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/aaa.json",
+								Checksum:        "xyz",
+								TimestampMillis: 1609462800000, // 2021
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV:   2,
+							Name: "bbb",
+							Key: &resource.ResourceKey{
+								Name:      "bbb",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Title:  "bbb (dash)",
+							Folder: "xxx",
+							Fields: map[string]any{
+								DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
+								DASHBOARD_ERRORS_TODAY:      40,
+								DASHBOARD_VIEWS_LAST_1_DAYS: 100,
+							},
+							Tags: []string{"aa"},
+							Labels: map[string]string{
+								"region":                           "east",
+								utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
+							},
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/bbb.json",
+								Checksum:        "hijk",
+								TimestampMillis: 1640998800000, // 2022
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 3,
+							Key: &resource.ResourceKey{
+								Name:      "ccc",
+								Namespace: "ns",
+								Group:     "dashboard.grafana.app",
+								Resource:  "dashboards",
+							},
+							Name:   "ccc",
+							Title:  "ccc (dash)",
+							Folder: "zzz",
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo2",
+							},
+							Source: &utils.SourceProperties{
+								Path: "path/in/repo2.yaml",
+							},
+							Fields: map[string]any{},
+							Tags:   []string{"aa"},
+							Labels: map[string]string{
+								"region": "west",
+							},
+						},
+					},
 				},
 			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV:   2,
-				Name: "bbb",
-				Key: &resource.ResourceKey{
-					Name:      "bbb",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Title:       "bbb (dash)",
-				TitlePhrase: "bbb (dash)",
-				Folder:      "xxx",
-				Fields: map[string]any{
-					DASHBOARD_PANEL_TYPES:       []string{"timeseries"},
-					DASHBOARD_ERRORS_TODAY:      40,
-					DASHBOARD_VIEWS_LAST_1_DAYS: 100,
-				},
-				Tags: []string{"aa"},
-				Labels: map[string]string{
-					"region":                           "east",
-					utils.LabelKeyDeprecatedInternalID: "11", // nolint:staticcheck
-				},
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/bbb.json",
-					Hash:      "hijk",
-					Timestamp: asTimePointer(1640998800000), // 2022
-				},
-			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 3,
-				Key: &resource.ResourceKey{
-					Name:      "ccc",
-					Namespace: "ns",
-					Group:     "dashboard.grafana.app",
-					Resource:  "dashboards",
-				},
-				Name:        "ccc",
-				Title:       "ccc (dash)",
-				TitlePhrase: "ccc (dash)",
-				Folder:      "zzz",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name: "repo2",
-					Path: "path/in/repo2.yaml",
-				},
-				Fields: map[string]any{},
-				Tags:   []string{"aa"},
-				Labels: map[string]string{
-					"region": "west",
-				},
-			})
+			if err != nil {
+				return 0, err
+			}
 			return rv, nil
 		})
 		require.NoError(t, err)
@@ -256,13 +274,15 @@ func TestBleveBackend(t *testing.T) {
 		require.Equal(t, 0, len(rsp.Results.Rows))
 
 		// Now look for repositories
-		found, err := index.ListRepositoryObjects(ctx, &resource.ListRepositoryObjectsRequest{
-			Name: "repo-1",
+		found, err := index.ListManagedObjects(ctx, &resource.ListManagedObjectsRequest{
+			Kind: "repo",
+			Id:   "repo-1",
 		})
 		require.NoError(t, err)
 		jj, err := json.MarshalIndent(found, "", "  ")
 		require.NoError(t, err)
 		fmt.Printf("%s\n", string(jj))
+		// NOTE "hash" -> "checksum" requires changing the protobuf
 		require.JSONEq(t, `{
 			"items": [
 				{
@@ -294,20 +314,22 @@ func TestBleveBackend(t *testing.T) {
 			]
 		}`, string(jj))
 
-		counts, err := index.CountRepositoryObjects(ctx)
+		counts, err := index.CountManagedObjects(ctx)
 		require.NoError(t, err)
 		jj, err = json.MarshalIndent(counts, "", "  ")
 		require.NoError(t, err)
 		fmt.Printf("%s\n", string(jj))
 		require.JSONEq(t, `[
 			{
-				"repository": "repo-1",
+				"kind": "repo",
+				"id": "repo-1",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"count": 2
 			},
 			{
-				"repository": "repo2",
+				"kind": "repo",
+				"id": "repo2",
 				"group": "dashboard.grafana.app",
 				"resource": "dashboards",
 				"count": 1
@@ -324,37 +346,55 @@ func TestBleveBackend(t *testing.T) {
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}, 2, rv, fields, func(index resource.ResourceIndex) (int64, error) {
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 1,
-				Key: &resource.ResourceKey{
-					Name:      "zzz",
-					Namespace: "ns",
-					Group:     "folder.grafana.app",
-					Resource:  "folders",
-				},
-				Title:       "zzz (folder)",
-				TitlePhrase: "zzz (folder)",
-				RepoInfo: &utils.ResourceRepositoryInfo{
-					Name:      "repo-1",
-					Path:      "path/to/folder.json",
-					Hash:      "xxxx",
-					Timestamp: asTimePointer(300),
+			err := index.BulkIndex(&resource.BulkIndexRequest{
+				Items: []*resource.BulkIndexItem{
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 1,
+							Key: &resource.ResourceKey{
+								Name:      "zzz",
+								Namespace: "ns",
+								Group:     "folder.grafana.app",
+								Resource:  "folders",
+							},
+							Title: "zzz (folder)",
+							Manager: &utils.ManagerProperties{
+								Kind:     utils.ManagerKindRepo,
+								Identity: "repo-1",
+							},
+							Source: &utils.SourceProperties{
+								Path:            "path/to/folder.json",
+								Checksum:        "xxxx",
+								TimestampMillis: 300,
+							},
+							Labels: map[string]string{
+								utils.LabelKeyDeprecatedInternalID: "123",
+							},
+						},
+					},
+					{
+						Action: resource.ActionIndex,
+						Doc: &resource.IndexableDocument{
+							RV: 2,
+							Key: &resource.ResourceKey{
+								Name:      "yyy",
+								Namespace: "ns",
+								Group:     "folder.grafana.app",
+								Resource:  "folders",
+							},
+							Title: "yyy (folder)",
+							Labels: map[string]string{
+								"region":                           "west",
+								utils.LabelKeyDeprecatedInternalID: "321",
+							},
+						},
+					},
 				},
 			})
-			_ = index.Write(&resource.IndexableDocument{
-				RV: 2,
-				Key: &resource.ResourceKey{
-					Name:      "yyy",
-					Namespace: "ns",
-					Group:     "folder.grafana.app",
-					Resource:  "folders",
-				},
-				Title:       "yyy (folder)",
-				TitlePhrase: "yyy (folder)",
-				Labels: map[string]string{
-					"region": "west",
-				},
-			})
+			if err != nil {
+				return 0, err
+			}
 			return rv, nil
 		})
 		require.NoError(t, err)
@@ -559,14 +599,6 @@ func TestGetSortFields(t *testing.T) {
 	})
 }
 
-func asTimePointer(milli int64) *time.Time {
-	if milli > 0 {
-		t := time.UnixMilli(milli)
-		return &t
-	}
-	return nil
-}
-
 var _ authlib.AccessClient = (*StubAccessClient)(nil)
 
 func NewStubAccessClient(permissions map[string]bool) *StubAccessClient {
@@ -597,4 +629,105 @@ func (nc StubAccessClient) Write(ctx context.Context, req *authzextv1.WriteReque
 
 func (nc StubAccessClient) BatchCheck(ctx context.Context, req *authzextv1.BatchCheckRequest) (*authzextv1.BatchCheckResponse, error) {
 	return nil, nil
+}
+
+func TestSafeInt64ToInt(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   int64
+		want    int
+		wantErr bool
+	}{
+		{
+			name:  "Valid int64 within int range",
+			input: 42,
+			want:  42,
+		},
+		{
+			name:    "Overflow int64 value",
+			input:   math.MaxInt64,
+			want:    0,
+			wantErr: true,
+		},
+		{
+			name:    "Underflow int64 value",
+			input:   math.MinInt64,
+			want:    0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := safeInt64ToInt(tt.input)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func Test_isValidPath(t *testing.T) {
+	tests := []struct {
+		name    string
+		dir     string
+		safeDir string
+		want    bool
+	}{
+		{
+			name:    "valid path",
+			dir:     "/path/to/my-file/",
+			safeDir: "/path/to/",
+			want:    true,
+		},
+		{
+			name:    "valid path without trailing slash",
+			dir:     "/path/to/my-file",
+			safeDir: "/path/to",
+			want:    true,
+		},
+		{
+			name:    "path with double slashes",
+			dir:     "/path//to//my-file/",
+			safeDir: "/path/to/",
+			want:    true,
+		},
+		{
+			name:    "invalid path: ..",
+			dir:     "/path/../above/",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: \\",
+			dir:     "\\path/to",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: not under safe dir",
+			dir:     "/path/to.txt",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: empty paths",
+			dir:     "",
+			safeDir: "/path/to/",
+		},
+		{
+			name:    "invalid path: different path",
+			dir:     "/other/path/to/my-file/",
+			safeDir: "/Some/other/path",
+		},
+		{
+			name:    "invalid path: empty safe path",
+			dir:     "/path/to/",
+			safeDir: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			require.Equal(t, tt.want, isValidPath(tt.dir, tt.safeDir))
+		})
+	}
 }

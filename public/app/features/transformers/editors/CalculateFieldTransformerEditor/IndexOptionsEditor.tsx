@@ -1,7 +1,8 @@
 import * as React from 'react';
 
-import { CalculateFieldTransformerOptions } from '@grafana/data/src/transformations/transformers/calculateField';
+import { CalculateFieldTransformerOptions } from '@grafana/data/internal';
 import { InlineField, InlineSwitch } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { LABEL_WIDTH } from './constants';
 
@@ -22,7 +23,14 @@ export const IndexOptionsEditor = (props: {
   };
   return (
     <>
-      <InlineField labelWidth={LABEL_WIDTH} label="As percentile" tooltip="Transform the row index as a percentile.">
+      <InlineField
+        labelWidth={LABEL_WIDTH}
+        label={t('transformers.index-options-editor.label-as-percentile', 'As percentile')}
+        tooltip={t(
+          'transformers.index-options-editor.tooltip-transform-index-percentile',
+          'Transform the row index as a percentile.'
+        )}
+      >
         <InlineSwitch value={!!index?.asPercentile} onChange={onToggleRowIndexAsPercentile} />
       </InlineField>
     </>

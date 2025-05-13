@@ -4,6 +4,7 @@ import { Controller, useFormContext } from 'react-hook-form';
 import { DataSourceInstanceSettings, GrafanaTheme2 } from '@grafana/data';
 import { Field, useStyles2 } from '@grafana/ui';
 
+import { t } from '../../../../../../core/internationalization';
 import { RuleFormType, RuleFormValues } from '../../../types/rule-form';
 import { CloudRulesSourcePicker } from '../CloudRulesSourcePicker';
 
@@ -23,38 +24,40 @@ export const CloudDataSourceSelector = ({ disabled, onChangeCloudDatasource }: C
   const ruleFormType = watch('type');
 
   return (
-    <>
-      <div className={styles.flexRow}>
-        {(ruleFormType === RuleFormType.cloudAlerting || ruleFormType === RuleFormType.cloudRecording) && (
-          <Field
-            className={styles.formInput}
-            label={disabled ? 'Data source' : 'Select data source'}
-            error={errors.dataSourceName?.message}
-            invalid={!!errors.dataSourceName?.message}
-          >
-            <Controller
-              render={({ field: { onChange, ref, ...field } }) => (
-                <CloudRulesSourcePicker
-                  {...field}
-                  disabled={disabled}
-                  onChange={(ds: DataSourceInstanceSettings) => {
-                    // reset expression as they don't need to persist after changing datasources
-                    setValue('expression', '');
-                    onChange(ds?.name ?? null);
-                    onChangeCloudDatasource(ds?.uid ?? null);
-                  }}
-                />
-              )}
-              name="dataSourceName"
-              control={control}
-              rules={{
-                required: { value: true, message: 'Please select a data source' },
-              }}
-            />
-          </Field>
-        )}
-      </div>
-    </>
+    <div className={styles.flexRow}>
+      {(ruleFormType === RuleFormType.cloudAlerting || ruleFormType === RuleFormType.cloudRecording) && (
+        <Field
+          className={styles.formInput}
+          label={
+            disabled
+              ? t('alerting.cloud-data-source-selector.label-disabled', 'Data source')
+              : t('alerting.cloud-data-source-selector.label', 'Select data source')
+          }
+          error={errors.dataSourceName?.message}
+          invalid={!!errors.dataSourceName?.message}
+        >
+          <Controller
+            render={({ field: { onChange, ref, ...field } }) => (
+              <CloudRulesSourcePicker
+                {...field}
+                disabled={disabled}
+                onChange={(ds: DataSourceInstanceSettings) => {
+                  // reset expression as they don't need to persist after changing datasources
+                  setValue('expression', '');
+                  onChange(ds?.name ?? null);
+                  onChangeCloudDatasource(ds?.uid ?? null);
+                }}
+              />
+            )}
+            name="dataSourceName"
+            control={control}
+            rules={{
+              required: { value: true, message: 'Please select a data source' },
+            }}
+          />
+        </Field>
+      )}
+    </div>
   );
 };
 

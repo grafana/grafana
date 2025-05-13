@@ -179,8 +179,8 @@ func TestFinder_Find(t *testing.T) {
 							Dependencies: plugins.Dependencies{
 								GrafanaVersion: "3.x.x",
 								Plugins: []plugins.Dependency{
-									{ID: "graphite", Type: "datasource", Name: "Graphite", Version: "1.0.0"},
-									{ID: "graph", Type: "panel", Name: "Graph", Version: "1.0.0"},
+									{ID: "graphite", Type: "datasource", Name: "Graphite"},
+									{ID: "graph", Type: "panel", Name: "Graph"},
 								},
 								Extensions: plugins.ExtensionsDependencies{
 									ExposedComponents: []string{},

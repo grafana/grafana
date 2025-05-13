@@ -208,11 +208,18 @@
     "isPaused": {
      "type": "boolean"
     },
+    "keepFiringFor": {
+     "$ref": "#/definitions/Duration"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
      },
      "type": "object"
+    },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
     },
     "noDataState": {
      "enum": [
@@ -307,6 +314,16 @@
   },
   "AlertRuleNotificationSettings": {
    "properties": {
+    "active_time_intervals": {
+     "description": "Override the times when notifications should not be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. All notifications will be suppressed unless they are sent\nat the time that matches any interval.",
+     "example": [
+      "maintenance"
+     ],
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "group_by": {
      "default": [
       "alertname",
@@ -334,7 +351,7 @@
      "type": "string"
     },
     "mute_time_intervals": {
-     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration mute_time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
+     "description": "Override the times when notifications should be muted. These must match the name of a mute time interval defined\nin the alertmanager configuration time_intervals section. When muted it will not send any notifications, but\notherwise acts normally.",
      "example": [
       "maintenance"
      ],
@@ -361,6 +378,12 @@
   },
   "AlertRuleNotificationSettingsExport": {
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "group_by": {
      "items": {
       "type": "string"
@@ -395,6 +418,9 @@
      "type": "string"
     },
     "metric": {
+     "type": "string"
+    },
+    "targetDatasourceUid": {
      "type": "string"
     }
    },
@@ -465,6 +491,13 @@
     "health": {
      "type": "string"
     },
+    "isPaused": {
+     "type": "boolean"
+    },
+    "keepFiringFor": {
+     "format": "double",
+     "type": "number"
+    },
     "labels": {
      "$ref": "#/definitions/Labels"
     },
@@ -477,6 +510,15 @@
     },
     "name": {
      "type": "string"
+    },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
+    "queriedDatasourceUIDs": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
     },
     "query": {
      "type": "string"
@@ -507,9 +549,7 @@
     }
    },
    "required": [
-    "uid",
     "name",
-    "folderUid",
     "query",
     "health",
     "type",
@@ -1440,6 +1480,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -1607,6 +1653,9 @@
      ],
      "type": "string"
     },
+    "guid": {
+     "type": "string"
+    },
     "intervalSeconds": {
      "format": "int64",
      "type": "integer"
@@ -1616,6 +1665,10 @@
     },
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
+    },
+    "missing_series_evals_to_resolve": {
+     "format": "int64",
+     "type": "integer"
     },
     "namespace_uid": {
      "type": "string"
@@ -1768,26 +1821,6 @@
    ],
    "type": "object"
   },
-  "GettableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "provenance": {
-     "$ref": "#/definitions/Provenance"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "GettableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -1813,6 +1846,9 @@
    "properties": {
     "http_config": {
      "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "jira_api_url": {
+     "$ref": "#/definitions/URL"
     },
     "opsgenie_api_key": {
      "$ref": "#/definitions/Secret"
@@ -1861,6 +1897,9 @@
     },
     "smtp_smarthost": {
      "$ref": "#/definitions/HostPort"
+    },
+    "smtp_tls_config": {
+     "$ref": "#/definitions/TLSConfig"
     },
     "telegram_api_url": {
      "$ref": "#/definitions/URL"
@@ -2048,6 +2087,57 @@
       "$ref": "#/definitions/LinkTransformationConfig"
      },
      "type": "array"
+    }
+   },
+   "type": "object"
+  },
+  "JiraConfig": {
+   "properties": {
+    "api_url": {
+     "$ref": "#/definitions/URL"
+    },
+    "custom_fields": {
+     "additionalProperties": {},
+     "type": "object"
+    },
+    "description": {
+     "type": "string"
+    },
+    "http_config": {
+     "$ref": "#/definitions/HTTPClientConfig"
+    },
+    "issue_type": {
+     "type": "string"
+    },
+    "labels": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
+    "priority": {
+     "type": "string"
+    },
+    "project": {
+     "type": "string"
+    },
+    "reopen_duration": {
+     "$ref": "#/definitions/Duration"
+    },
+    "reopen_transition": {
+     "type": "string"
+    },
+    "resolve_transition": {
+     "type": "string"
+    },
+    "send_resolved": {
+     "type": "boolean"
+    },
+    "summary": {
+     "type": "string"
+    },
+    "wont_fix_resolution": {
+     "type": "string"
     }
    },
    "type": "object"
@@ -2251,6 +2341,12 @@
   },
   "NotificationPolicyExport": {
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -2658,6 +2754,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -2851,6 +2953,12 @@
     "metadata": {
      "$ref": "#/definitions/AlertRuleMetadata"
     },
+    "missing_series_evals_to_resolve": {
+     "description": "Number of consecutive evaluation intervals with no data for a dimension must pass\nbefore the alert state is considered stale and automatically resolved.\nIf set to 0, the value is reset to the default.",
+     "example": 3,
+     "format": "int64",
+     "type": "integer"
+    },
     "no_data_state": {
      "enum": [
       "Alerting",
@@ -2923,23 +3031,6 @@
    },
    "type": "object"
   },
-  "PostableTimeIntervals": {
-   "properties": {
-    "name": {
-     "type": "string"
-    },
-    "time_intervals": {
-     "items": {
-      "$ref": "#/definitions/TimeIntervalItem"
-     },
-     "type": "array"
-    },
-    "version": {
-     "type": "string"
-    }
-   },
-   "type": "object"
-  },
   "PostableUserConfig": {
    "properties": {
     "alertmanager_config": {
@@ -3006,7 +3097,20 @@
     "Interval": {
      "$ref": "#/definitions/Duration"
     },
+    "Labels": {
+     "additionalProperties": {
+      "type": "string"
+     },
+     "type": "object"
+    },
+    "Limit": {
+     "format": "int64",
+     "type": "integer"
+    },
     "Name": {
+     "type": "string"
+    },
+    "QueryOffset": {
      "type": "string"
     },
     "Rules": {
@@ -3111,6 +3215,10 @@
      "example": false,
      "type": "boolean"
     },
+    "keep_firing_for": {
+     "format": "duration",
+     "type": "string"
+    },
     "labels": {
      "additionalProperties": {
       "type": "string"
@@ -3119,6 +3227,11 @@
       "team": "sre-team-1"
      },
      "type": "object"
+    },
+    "missingSeriesEvalsToResolve": {
+     "example": 2,
+     "format": "int64",
+     "type": "integer"
     },
     "noDataState": {
      "enum": [
@@ -3389,6 +3502,12 @@
      },
      "type": "array"
     },
+    "jira_configs": {
+     "items": {
+      "$ref": "#/definitions/JiraConfig"
+     },
+     "type": "array"
+    },
     "msteams_configs": {
      "items": {
       "$ref": "#/definitions/MSTeamsConfig"
@@ -3491,6 +3610,11 @@
     "metric": {
      "description": "Name of the recorded metric.",
      "example": "grafana_alerts_ratio",
+     "type": "string"
+    },
+    "target_datasource_uid": {
+     "description": "Which data source should be used to write the output of the recording rule, specified by UID.",
+     "example": "my-prom",
      "type": "string"
     }
    },
@@ -3608,6 +3732,12 @@
   "RouteExport": {
    "description": "RouteExport is the provisioned file export of definitions.Route. This is needed to hide fields that aren't useable in\nprovisioning file format. An alternative would be to define a custom MarshalJSON and MarshalYAML that excludes them.",
    "properties": {
+    "active_time_intervals": {
+     "items": {
+      "type": "string"
+     },
+     "type": "array"
+    },
     "continue": {
      "type": "boolean"
     },
@@ -3673,6 +3803,9 @@
     "health": {
      "type": "string"
     },
+    "isPaused": {
+     "type": "boolean"
+    },
     "labels": {
      "$ref": "#/definitions/Labels"
     },
@@ -3686,6 +3819,9 @@
     "name": {
      "type": "string"
     },
+    "notificationSettings": {
+     "$ref": "#/definitions/AlertRuleNotificationSettings"
+    },
     "query": {
      "type": "string"
     },
@@ -3697,9 +3833,7 @@
     }
    },
    "required": [
-    "uid",
     "name",
-    "folderUid",
     "query",
     "health",
     "type"
@@ -4355,6 +4489,15 @@
      "description": "Name of the associated template definition for this result.",
      "type": "string"
     },
+    "scope": {
+     "description": "Scope that was successfully used to interpolate the template. If the root scope \".\" fails, more specific\nscopes will be tried, such as \".Alerts', or \".Alert\".",
+     "enum": [
+      ".",
+      ".Alerts",
+      ".Alert"
+     ],
+     "type": "string"
+    },
     "text": {
      "description": "Interpolated value of the template.",
      "type": "string"
@@ -4679,6 +4822,9 @@
     },
     "send_resolved": {
      "type": "boolean"
+    },
+    "timeout": {
+     "$ref": "#/definitions/Duration"
     },
     "url": {
      "$ref": "#/definitions/SecretURL"
@@ -6497,36 +6643,6 @@
   "application/json"
  ],
  "responses": {
-  "GetAllIntervalsResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableTimeIntervals"
-    },
-    "type": "array"
-   }
-  },
-  "GetIntervalsByNameResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableTimeIntervals"
-   }
-  },
-  "GetReceiverResponse": {
-   "description": "",
-   "schema": {
-    "$ref": "#/definitions/GettableApiReceiver"
-   }
-  },
-  "GetReceiversResponse": {
-   "description": "",
-   "schema": {
-    "items": {
-     "$ref": "#/definitions/GettableApiReceiver"
-    },
-    "type": "array"
-   }
-  },
   "GettableHistoricUserConfigs": {
    "description": "",
    "schema": {

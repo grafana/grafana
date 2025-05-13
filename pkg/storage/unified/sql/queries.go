@@ -29,22 +29,23 @@ func mustTemplate(filename string) *template.Template {
 
 // Templates.
 var (
-	sqlResourceDelete            = mustTemplate("resource_delete.sql")
-	sqlResourceInsert            = mustTemplate("resource_insert.sql")
-	sqlResourceUpdate            = mustTemplate("resource_update.sql")
-	sqlResourceRead              = mustTemplate("resource_read.sql")
-	sqlResourceStats             = mustTemplate("resource_stats.sql")
-	sqlResourceList              = mustTemplate("resource_list.sql")
-	sqlResourceHistoryList       = mustTemplate("resource_history_list.sql")
-	sqlResourceUpdateRV          = mustTemplate("resource_update_rv.sql")
-	sqlResourceHistoryRead       = mustTemplate("resource_history_read.sql")
-	sqlResourceHistoryUpdateRV   = mustTemplate("resource_history_update_rv.sql")
-	sqlResoureceHistoryUpdateUid = mustTemplate("resource_history_update_uid.sql")
-	sqlResourceHistoryInsert     = mustTemplate("resource_history_insert.sql")
-	sqlResourceHistoryPoll       = mustTemplate("resource_history_poll.sql")
-	sqlResourceHistoryGet        = mustTemplate("resource_history_get.sql")
-	sqlResourceHistoryDelete     = mustTemplate("resource_history_delete.sql")
-	sqlResourceInsertFromHistory = mustTemplate("resource_insert_from_history.sql")
+	sqlResourceDelete              = mustTemplate("resource_delete.sql")
+	sqlResourceInsert              = mustTemplate("resource_insert.sql")
+	sqlResourceUpdate              = mustTemplate("resource_update.sql")
+	sqlResourceRead                = mustTemplate("resource_read.sql")
+	sqlResourceStats               = mustTemplate("resource_stats.sql")
+	sqlResourceList                = mustTemplate("resource_list.sql")
+	sqlResourceHistoryList         = mustTemplate("resource_history_list.sql")
+	sqlResourceUpdateRV            = mustTemplate("resource_update_rv.sql")
+	sqlResourceHistoryRead         = mustTemplate("resource_history_read.sql")
+	sqlResourceHistoryReadLatestRV = mustTemplate("resource_history_read_latest_rv.sql")
+	sqlResourceHistoryUpdateRV     = mustTemplate("resource_history_update_rv.sql")
+	sqlResourceHistoryInsert       = mustTemplate("resource_history_insert.sql")
+	sqlResourceHistoryPoll         = mustTemplate("resource_history_poll.sql")
+	sqlResourceHistoryGet          = mustTemplate("resource_history_get.sql")
+	sqlResourceHistoryDelete       = mustTemplate("resource_history_delete.sql")
+	sqlResourceHistoryPrune        = mustTemplate("resource_history_prune.sql")
+	sqlResourceInsertFromHistory   = mustTemplate("resource_insert_from_history.sql")
 
 	// sqlResourceLabelsInsert = mustTemplate("resource_labels_insert.sql")
 	sqlResourceVersionGet    = mustTemplate("resource_version_get.sql")
@@ -74,6 +75,7 @@ type sqlResourceRequest struct {
 	sqltemplate.SQLTemplate
 	GUID       string
 	WriteEvent resource.WriteEvent
+	Generation int64
 	Folder     string
 
 	// Useful when batch writing
@@ -114,6 +116,7 @@ func (r sqlStatsRequest) Validate() error {
 
 type historyPollResponse struct {
 	Key             resource.ResourceKey
+	GUID            string
 	ResourceVersion int64
 	PreviousRV      *int64
 	Value           []byte
@@ -190,6 +193,52 @@ func (r sqlResourceListRequest) Validate() error {
 	return nil // TODO
 }
 
+type historyReadRequest struct {
+	Key             *resource.ResourceKey
+	ResourceVersion int64
+}
+
+type sqlResourceHistoryReadRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadRequest
+	Response *resource.BackendReadResponse
+}
+
+func (r sqlResourceHistoryReadRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadRequest) Results() (*resource.BackendReadResponse, error) {
+	return r.Response, nil
+}
+
+type historyReadLatestRVRequest struct {
+	Key       *resource.ResourceKey
+	EventType resource.WatchEvent_Type
+}
+
+type sqlResourceHistoryReadLatestRVRequest struct {
+	sqltemplate.SQLTemplate
+	Request  *historyReadLatestRVRequest
+	Response *resourceHistoryReadLatestRVResponse
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Validate() error {
+	return nil // TODO
+}
+
+func (r sqlResourceHistoryReadLatestRVRequest) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r.Response, nil
+}
+
+type resourceHistoryReadLatestRVResponse struct {
+	ResourceVersion int64
+}
+
+func (r *resourceHistoryReadLatestRVResponse) Results() (*resourceHistoryReadLatestRVResponse, error) {
+	return r, nil
+}
+
 type historyListRequest struct {
 	ResourceVersion, Limit, Offset int64
 	Folder                         string
@@ -243,26 +292,43 @@ func (r *sqlResourceHistoryDeleteRequest) Validate() error {
 
 type sqlGetHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	Key     *resource.ResourceKey
-	Trash   bool  // only deleted items
-	StartRV int64 // from NextPageToken
+	Key           *resource.ResourceKey
+	Trash         bool  // only deleted items
+	StartRV       int64 // from NextPageToken
+	MinRV         int64 // minimum resource version for NotOlderThan
+	ExactRV       int64 // exact resource version for Exact
+	SortAscending bool  // if true, sort by resource_version ASC, otherwise DESC
 }
 
 func (r sqlGetHistoryRequest) Validate() error {
 	return nil // TODO
 }
 
-// update resource history
-
-type sqlResourceHistoryUpdateRequest struct {
+// prune resource history
+type sqlPruneHistoryRequest struct {
 	sqltemplate.SQLTemplate
-	WriteEvent resource.WriteEvent
-	OldUID     string
-	NewUID     string
+	Key                   *resource.ResourceKey
+	PartitionByGeneration bool // include generation in the partition
+	HistoryLimit          int64
 }
 
-func (r sqlResourceHistoryUpdateRequest) Validate() error {
-	return nil // TODO
+func (r *sqlPruneHistoryRequest) Validate() error {
+	if r.HistoryLimit <= 0 {
+		return fmt.Errorf("history limit must be greater than zero")
+	}
+	if r.Key == nil {
+		return fmt.Errorf("missing key")
+	}
+	if r.Key.Namespace == "" {
+		return fmt.Errorf("missing namespace")
+	}
+	if r.Key.Group == "" {
+		return fmt.Errorf("missing group")
+	}
+	if r.Key.Resource == "" {
+		return fmt.Errorf("missing resource")
+	}
+	return nil
 }
 
 type sqlResourceBlobInsertRequest struct {
@@ -295,8 +361,7 @@ func (r sqlResourceBlobQueryRequest) Validate() error {
 
 type sqlResourceUpdateRVRequest struct {
 	sqltemplate.SQLTemplate
-	GUID            string
-	ResourceVersion int64
+	GUIDToRV map[string]int64
 }
 
 func (r sqlResourceUpdateRVRequest) Validate() error {

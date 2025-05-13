@@ -3,6 +3,7 @@ import { memo, useCallback, useMemo, useState } from 'react';
 
 import { GrafanaTheme2, MappingType, StandardEditorProps, ValueMapping } from '@grafana/data';
 import { useStyles2, VerticalGroup, Icon, ColorPicker, Button, Modal } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { MediaType, ResourceFolderName, ResourcePickerSize } from '../../types';
 import { ResourcePicker } from '../ResourcePicker';
@@ -51,7 +52,7 @@ export const ValueMappingsEditor = memo((props: Props) => {
                 {row.type === MappingType.ValueToText && row.key}
                 {row.type === MappingType.RangeToText && (
                   <span>
-                    [{row.from} - {row.to}]
+                    [{row.from ?? '-∞'} - {row.to ?? '∞'}]
                   </span>
                 )}
                 {row.type === MappingType.RegexToText && row.pattern}
@@ -88,12 +89,20 @@ export const ValueMappingsEditor = memo((props: Props) => {
       </table>
 
       <Button variant="secondary" size="sm" fullWidth onClick={() => setIsEditorOpen(true)}>
-        {rows.length > 0 && <span>Edit value mappings</span>}
-        {rows.length === 0 && <span>Add value mappings</span>}
+        {rows.length > 0 && (
+          <span>
+            <Trans i18nKey="dimensions.value-mappings-editor.edit-value-mappings">Edit value mappings</Trans>
+          </span>
+        )}
+        {rows.length === 0 && (
+          <span>
+            <Trans i18nKey="dimensions.value-mappings-editor.add-value-mappings">Add value mappings</Trans>
+          </span>
+        )}
       </Button>
       <Modal
         isOpen={isEditorOpen}
-        title="Value mappings"
+        title={t('dimensions.value-mappings-editor.title-value-mappings', 'Value mappings')}
         onDismiss={onCloseEditor}
         className={styles.modal}
         closeOnBackdropClick={false}

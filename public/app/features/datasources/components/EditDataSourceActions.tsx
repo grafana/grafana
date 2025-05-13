@@ -1,6 +1,7 @@
 import { config } from '@grafana/runtime';
 import { LinkButton } from '@grafana/ui';
 import { contextSrv } from 'app/core/core';
+import { Trans } from 'app/core/internationalization';
 
 import { useDataSource } from '../state';
 import { trackCreateDashboardClicked, trackDsConfigClicked, trackExploreClicked } from '../tracking';
@@ -27,11 +28,11 @@ export function EditDataSourceActions({ uid }: Props) {
               grafana_version: config.buildInfo.version,
               datasource_uid: dataSource.uid,
               plugin_name: dataSource.typeName,
-              path: location.pathname,
+              path: window.location.pathname,
             });
           }}
         >
-          Explore data
+          <Trans i18nKey="datasources.edit-data-source-actions.explore-data">Explore data</Trans>
         </LinkButton>
       )}
       <LinkButton
@@ -44,11 +45,11 @@ export function EditDataSourceActions({ uid }: Props) {
             grafana_version: config.buildInfo.version,
             datasource_uid: dataSource.uid,
             plugin_name: dataSource.typeName,
-            path: location.pathname,
+            path: window.location.pathname,
           });
         }}
       >
-        Build a dashboard
+        <Trans i18nKey="datasources.edit-data-source-actions.build-a-dashboard">Build a dashboard</Trans>
       </LinkButton>
     </>
   );

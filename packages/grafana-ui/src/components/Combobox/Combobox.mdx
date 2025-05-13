@@ -35,6 +35,10 @@ Options can be an array of objects with seperate label and values, or an array o
 
 While Combobox can handle large sets of options, you should consider both the user experience of searching through many options, and the performance of loading many options from an API.
 
+### Grouping
+
+Each option object may also have a `group` string property. Options with matching group names will be sorted together, as will options with undefined groups. Combobox will order these based on the first occurence of each `group` (or absence of `group`) in the `options` prop.
+
 ### Async behaviour
 
 When using Combobox with options from a remote source as the user types, you can supply the `options` prop as an function that is called on each keypress with the current input value and returns a promise resolving to an array of options matching the input.
@@ -116,7 +120,6 @@ Some differences to note:
 - `isLoading: boolean` has been renamed to `loading: boolean`
 - `allowCustomValue` has been renamed to `createCustomValue`.
 - When specifying `width="auto"`, `minWidth` is also required.
-- Groups are not supported at this time.
 - Many props used to control subtle behaviour have been removed to simplify the API and improve performance.
   - Custom render props, or label as ReactNode is not supported at this time. Reach out if you have a hard requirement for this and we can discuss.
 

@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { GrafanaTheme2, MappingType, SelectableValue, SpecialValueMatch, ValueMapping } from '@grafana/data';
 import { useStyles2, Modal, ValuePicker, Button } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 
 import { ValueMappingEditRow, ValueMappingEditRowModel } from './ValueMappingEditRow';
 
@@ -91,11 +92,19 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
             <tr>
               <th style={{ width: '1%' }}></th>
               <th style={{ width: '40%', textAlign: 'left' }} colSpan={2}>
-                Condition
+                <Trans i18nKey="dimensions.value-mappings-editor-modal.condition">Condition</Trans>
               </th>
-              <th style={{ textAlign: 'left' }}>Display text</th>
-              <th style={{ width: '10%' }}>Color</th>
-              {showIconPicker && <th style={{ width: '10%' }}>Icon</th>}
+              <th style={{ textAlign: 'left' }}>
+                <Trans i18nKey="dimensions.value-mappings-editor-modal.display-text">Display text</Trans>
+              </th>
+              <th style={{ width: '10%' }}>
+                <Trans i18nKey="dimensions.value-mappings-editor-modal.color">Color</Trans>
+              </th>
+              {showIconPicker && (
+                <th style={{ width: '10%' }}>
+                  <Trans i18nKey="dimensions.value-mappings-editor-modal.icon">Icon</Trans>
+                </th>
+              )}
               <th style={{ width: '1%' }}></th>
             </tr>
           </thead>
@@ -125,7 +134,7 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
       <Modal.ButtonRow
         leftItems={
           <ValuePicker
-            label="Add a new mapping"
+            label={t('dimensions.value-mappings-editor-modal.label-add-a-new-mapping', 'Add a new mapping')}
             variant="secondary"
             size="md"
             icon="plus"
@@ -137,10 +146,10 @@ export function ValueMappingsEditorModal({ value, onChange, onClose, showIconPic
         }
       >
         <Button variant="secondary" fill="outline" onClick={onClose}>
-          Cancel
+          <Trans i18nKey="dimensions.value-mappings-editor-modal.cancel">Cancel</Trans>
         </Button>
         <Button variant="primary" onClick={onUpdate}>
-          Update
+          <Trans i18nKey="dimensions.value-mappings-editor-modal.update">Update</Trans>
         </Button>
       </Modal.ButtonRow>
     </>
@@ -218,12 +227,12 @@ export function editModelToSaveModel(rows: ValueMappingEditRowModel[]) {
         }
         break;
       case MappingType.RangeToText:
-        if (item.from != null && item.to != null) {
+        if (item.from != null || item.to != null) {
           mappings.push({
             type: item.type,
             options: {
-              from: item.from,
-              to: item.to,
+              from: item.from ?? null,
+              to: item.to ?? null,
               result,
             },
           });
@@ -279,8 +288,8 @@ export function buildEditRowModels(value: ValueMapping[]) {
             createRow({
               type: mapping.type,
               result: mapping.options.result,
-              from: mapping.options.from ?? 0,
-              to: mapping.options.to ?? 0,
+              from: mapping.options.from,
+              to: mapping.options.to,
             })
           );
           break;

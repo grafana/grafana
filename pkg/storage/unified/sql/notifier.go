@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/grafana/grafana/pkg/infra/log"
+	"github.com/grafana/grafana-app-sdk/logging"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/db"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/dbutil"
@@ -29,8 +29,9 @@ func newNotifier(b *backend) (eventNotifier, error) {
 			watchBufferSize: b.watchBufferSize,
 			log:             b.log,
 			tracer:          b.tracer,
-			batchLock:       b.batchLock,
+			bulkLock:        b.bulkLock,
 			listLatestRVs:   b.listLatestRVs,
+			storageMetrics:  b.storageMetrics,
 			historyPoll: func(ctx context.Context, grp string, res string, since int64) ([]*historyPollResponse, error) {
 				var records []*historyPollResponse
 				err := b.db.WithTx(ctx, ReadCommittedRO, func(ctx context.Context, tx db.Tx) error {
@@ -60,14 +61,14 @@ func newNotifier(b *backend) (eventNotifier, error) {
 }
 
 type channelNotifier struct {
-	log        log.Logger
+	log        logging.Logger
 	bufferSize int
 
 	mu          sync.RWMutex
 	subscribers map[chan *resource.WrittenEvent]bool
 }
 
-func newChannelNotifier(bufferSize int, log log.Logger) *channelNotifier {
+func newChannelNotifier(bufferSize int, log logging.Logger) *channelNotifier {
 	return &channelNotifier{
 		subscribers: make(map[chan *resource.WrittenEvent]bool),
 		log:         log,

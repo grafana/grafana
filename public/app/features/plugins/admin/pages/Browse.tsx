@@ -4,9 +4,11 @@ import { useLocation } from 'react-router-dom-v5-compat';
 
 import { SelectableValue, GrafanaTheme2, PluginType } from '@grafana/data';
 import { locationSearchToObject } from '@grafana/runtime';
-import { Select, RadioButtonGroup, useStyles2, Tooltip, Field } from '@grafana/ui';
+import { Select, RadioButtonGroup, useStyles2, Tooltip, Field, TextLink } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
+import { t, Trans } from 'app/core/internationalization';
 import { getNavModel } from 'app/core/selectors/navModel';
+import { AdvisorRedirectNotice } from 'app/features/connections/components/AdvisorRedirectNotice/AdvisorRedirectNotice';
 import { ROUTES as CONNECTIONS_ROUTES } from 'app/features/connections/constants';
 import { useSelector } from 'app/types';
 
@@ -51,10 +53,6 @@ export default function Browse() {
   const [showUpdateModal, setShowUpdateModal] = useState(false);
   const disableUpdateAllButton = updatablePlugins.length <= 0 || areUpdatesLoading;
 
-  const onSortByChange = (value: SelectableValue<string>) => {
-    history.push({ query: { sortBy: value.value } });
-  };
-
   const onFilterByChange = (value: string) => {
     history.push({ query: { filterBy: value } });
   };
@@ -79,11 +77,10 @@ export default function Browse() {
 
   const subTitle = (
     <div>
-      Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
-      <a className="external-link" href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>
-        Connections
-      </a>
-      .
+      <Trans i18nKey="plugins.browse.subtitle">
+        Extend the Grafana experience with panel plugins and apps. To find more data sources go to{' '}
+        <TextLink href={`${CONNECTIONS_ROUTES.AddNewConnection}?cat=data-source`}>Connections</TextLink>.
+      </Trans>
     </div>
   );
 
@@ -98,15 +95,16 @@ export default function Browse() {
   return (
     <Page navModel={navModel} actions={updateAllButton} subTitle={subTitle}>
       <Page.Contents>
+        <AdvisorRedirectNotice />
         <HorizontalGroup wrap>
-          <Field label="Search">
+          <Field label={t('plugins.browse.label-search', 'Search')}>
             <SearchField value={keyword} onSearch={onSearch} />
           </Field>
           <HorizontalGroup wrap className={styles.actionBar}>
             {/* Filter by type */}
-            <Field label="Type">
+            <Field label={t('plugins.browse.label-type', 'Type')}>
               <Select
-                aria-label="Plugin type filter"
+                aria-label={t('plugins.browse.aria-label-plugin-type-filter', 'Plugin type filter')}
                 value={filterByType}
                 onChange={onFilterByTypeChange}
                 width={18}
@@ -121,16 +119,19 @@ export default function Browse() {
 
             {/* Filter by installed / all */}
             {remotePluginsAvailable ? (
-              <Field label="State">
+              <Field label={t('plugins.browse.label-state', 'State')}>
                 <RadioButtonGroup value={filterBy} onChange={onFilterByChange} options={filterByOptions} />
               </Field>
             ) : (
               <Tooltip
-                content="This filter has been disabled because the Grafana server cannot access grafana.com"
+                content={t(
+                  'plugins.browse.tooltip-filter-disabled',
+                  'This filter has been disabled because the Grafana server cannot access grafana.com'
+                )}
                 placement="top"
               >
                 <div>
-                  <Field label="State">
+                  <Field label={t('plugins.browse.label-state', 'State')}>
                     <RadioButtonGroup
                       disabled={true}
                       value={filterBy}
@@ -141,23 +142,6 @@ export default function Browse() {
                 </div>
               </Tooltip>
             )}
-
-            {/* Sorting */}
-            <Field label="Sort">
-              <Select
-                aria-label="Sort Plugins List"
-                width={24}
-                value={sortBy}
-                onChange={onSortByChange}
-                options={[
-                  { value: 'nameAsc', label: 'By name (A-Z)' },
-                  { value: 'nameDesc', label: 'By name (Z-A)' },
-                  { value: 'updated', label: 'By updated date' },
-                  { value: 'published', label: 'By published date' },
-                  { value: 'downloads', label: 'By downloads' },
-                ]}
-              />
-            </Field>
           </HorizontalGroup>
         </HorizontalGroup>
         <div className={styles.listWrap}>

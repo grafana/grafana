@@ -7,6 +7,8 @@ import { Page } from 'app/core/components/Page/Page';
 import { PageNotFound } from 'app/core/components/PageNotFound/PageNotFound';
 import { useDispatch, useSelector } from 'app/types';
 
+import { t } from '../../core/internationalization';
+
 import { ProviderConfigForm } from './ProviderConfigForm';
 import { UIMap } from './constants';
 import { loadProviders } from './state/actions';
@@ -59,7 +61,11 @@ export const ProviderConfigPage = () => {
         <Stack gap={2} alignItems="center">
           <Text variant={'h1'}>{title}</Text>
           <Badge
-            text={config.settings.enabled ? 'Enabled' : 'Not enabled'}
+            text={
+              config.settings.enabled
+                ? t('auth-config.provider-config-page.text-badge-enabled', 'Enabled')
+                : t('auth-config.provider-config-page.text-badge-not-enabled', 'Not enabled')
+            }
             color={config.settings.enabled ? 'green' : 'blue'}
             icon={config.settings.enabled ? 'check' : undefined}
           />

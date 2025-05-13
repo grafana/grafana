@@ -9,6 +9,8 @@ import { useQueryParams } from 'app/core/hooks/useQueryParams';
 import { removePluginFromNavTree } from 'app/core/reducers/navBarTree';
 import { useDispatch } from 'app/types';
 
+import { t } from '../../../../../core/internationalization';
+import { isDisabledAngularPlugin } from '../../helpers';
 import {
   useInstallStatus,
   useUninstallStatus,
@@ -112,13 +114,16 @@ export function InstallControlsButton({
   const onUpdate = async () => {
     reportInteraction(PLUGIN_UPDATE_INTERACTION_EVENT_NAME, trackingProps);
 
-    await install(plugin.id, latestCompatibleVersion?.version, true);
+    await install(plugin.id, latestCompatibleVersion?.version, PluginStatus.UPDATE);
     if (!errorInstalling) {
       appEvents.emit(AppEvents.alertSuccess, [`Updated ${plugin.name}`]);
     }
   };
 
-  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin);
+  let disableUninstall = shouldDisableUninstall(isUninstalling, plugin) ?? false;
+  const uninstallTooltip = isDisabledAngularPlugin(plugin)
+    ? 'To uninstall this plugin, upgrade to a compatible version first, then uninstall it.'
+    : '';
 
   let uninstallTitle = '';
   if (plugin.isPreinstalled.found) {
@@ -126,24 +131,36 @@ export function InstallControlsButton({
     uninstallTitle = 'Preinstalled plugin. Remove from Grafana config before uninstalling.';
   }
 
+  const uninstallControls = (
+    <>
+      <ConfirmModal
+        isOpen={isConfirmModalVisible}
+        title={t('plugins.install-controls-button.title-uninstall-modal', 'Uninstall {{plugin}}', {
+          plugin: plugin.name,
+        })}
+        body="Are you sure you want to uninstall this plugin?"
+        confirmText="Confirm"
+        icon="exclamation-triangle"
+        onConfirm={onUninstall}
+        onDismiss={hideConfirmModal}
+      />
+      <Button
+        variant="destructive"
+        disabled={disableUninstall}
+        onClick={showConfirmModal}
+        title={uninstallTitle}
+        tooltip={uninstallTooltip}
+      >
+        {uninstallBtnText}
+      </Button>
+    </>
+  );
+
   if (pluginStatus === PluginStatus.UNINSTALL) {
     return (
-      <>
-        <ConfirmModal
-          isOpen={isConfirmModalVisible}
-          title={`Uninstall ${plugin.name}`}
-          body="Are you sure you want to uninstall this plugin?"
-          confirmText="Confirm"
-          icon="exclamation-triangle"
-          onConfirm={onUninstall}
-          onDismiss={hideConfirmModal}
-        />
-        <Stack alignItems="flex-start" width="auto" height="auto">
-          <Button variant="destructive" disabled={disableUninstall} onClick={showConfirmModal} title={uninstallTitle}>
-            {uninstallBtnText}
-          </Button>
-        </Stack>
-      </>
+      <Stack alignItems="flex-start" width="auto" height="auto">
+        {uninstallControls}
+      </Stack>
     );
   }
 
@@ -159,24 +176,32 @@ export function InstallControlsButton({
       <Stack alignItems="flex-start" width="auto" height="auto">
         {!plugin.isManaged && !plugin.isPreinstalled.withVersion && (
           <Button disabled={disableUpdate} onClick={onUpdate}>
-            {isInstalling ? 'Updating' : 'Update'}
+            {isInstalling
+              ? t('plugins.install-controls.updating', 'Updating')
+              : t('plugins.install-controls.update', 'Update')}
           </Button>
         )}
-        <Button variant="destructive" disabled={disableUninstall} onClick={onUninstall} title={uninstallTitle}>
-          {uninstallBtnText}
-        </Button>
+        {uninstallControls}
       </Stack>
     );
   }
-  const shouldDisable = isInstalling || errorInstalling || (!config.angularSupportEnabled && plugin.angularDetected);
+
+  const shouldDisable = isInstalling || errorInstalling || plugin.angularDetected;
+
   return (
     <Button disabled={shouldDisable} onClick={onInstall}>
-      {isInstalling ? 'Installing' : 'Install'}
+      {isInstalling
+        ? t('plugins.install-controls.installing', 'Installing')
+        : t('plugins.install-controls.install', 'Install')}
     </Button>
   );
 }
 
 function shouldDisableUninstall(isUninstalling: boolean, plugin: CatalogPlugin) {
+  if (isDisabledAngularPlugin(plugin)) {
+    return true;
+  }
+
   if (config.pluginAdminExternalManageEnabled) {
     return plugin.isUninstallingFromInstance || !plugin.isFullyInstalled || plugin.isUpdatingFromInstance;
   }

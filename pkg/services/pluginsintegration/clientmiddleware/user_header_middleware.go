@@ -32,8 +32,8 @@ func (m *UserHeaderMiddleware) applyUserHeader(ctx context.Context, h backend.Fo
 	}
 
 	h.DeleteHTTPHeader(proxyutil.UserHeaderName)
-	if !reqCtx.SignedInUser.IsIdentityType(claims.TypeAnonymous) {
-		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.SignedInUser.GetLogin())
+	if !reqCtx.IsIdentityType(claims.TypeAnonymous) {
+		h.SetHTTPHeader(proxyutil.UserHeaderName, reqCtx.GetLogin())
 	}
 }
 
@@ -65,4 +65,34 @@ func (m *UserHeaderMiddleware) CheckHealth(ctx context.Context, req *backend.Che
 	m.applyUserHeader(ctx, req)
 
 	return m.BaseHandler.CheckHealth(ctx, req)
+}
+
+func (m *UserHeaderMiddleware) SubscribeStream(ctx context.Context, req *backend.SubscribeStreamRequest) (*backend.SubscribeStreamResponse, error) {
+	if req == nil {
+		return m.BaseHandler.SubscribeStream(ctx, req)
+	}
+
+	m.applyUserHeader(ctx, req)
+
+	return m.BaseHandler.SubscribeStream(ctx, req)
+}
+
+func (m *UserHeaderMiddleware) PublishStream(ctx context.Context, req *backend.PublishStreamRequest) (*backend.PublishStreamResponse, error) {
+	if req == nil {
+		return m.BaseHandler.PublishStream(ctx, req)
+	}
+
+	m.applyUserHeader(ctx, req)
+
+	return m.BaseHandler.PublishStream(ctx, req)
+}
+
+func (m *UserHeaderMiddleware) RunStream(ctx context.Context, req *backend.RunStreamRequest, sender *backend.StreamSender) error {
+	if req == nil {
+		return m.BaseHandler.RunStream(ctx, req, sender)
+	}
+
+	m.applyUserHeader(ctx, req)
+
+	return m.BaseHandler.RunStream(ctx, req, sender)
 }

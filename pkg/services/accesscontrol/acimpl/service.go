@@ -166,10 +166,8 @@ func (s *Service) getUserPermissions(ctx context.Context, user identity.Requeste
 	if err != nil {
 		return nil, err
 	}
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
-	}
 
+	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	return append(permissions, dbPermissions...), nil
 }
 
@@ -188,10 +186,8 @@ func (s *Service) getBasicRolePermissions(ctx context.Context, role string, orgI
 		OrgID:        orgID,
 		RolePrefixes: OSSRolesPrefixes,
 	})
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
-	}
 
+	dbPermissions = s.actionResolver.ExpandActionSets(dbPermissions)
 	return append(permissions, dbPermissions...), err
 }
 
@@ -205,10 +201,8 @@ func (s *Service) getTeamsPermissions(ctx context.Context, teamIDs []int64, orgI
 		RolePrefixes: OSSRolesPrefixes,
 	})
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		for teamID, permissions := range teamPermissions {
-			teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
-		}
+	for teamID, permissions := range teamPermissions {
+		teamPermissions[teamID] = s.actionResolver.ExpandActionSets(permissions)
 	}
 
 	return teamPermissions, err
@@ -237,9 +231,7 @@ func (s *Service) getUserDirectPermissions(ctx context.Context, user identity.Re
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		permissions = s.actionResolver.ExpandActionSets(permissions)
-	}
+	permissions = s.actionResolver.ExpandActionSets(permissions)
 	if s.features.IsEnabled(ctx, featuremgmt.FlagNestedFolders) {
 		permissions = append(permissions, SharedWithMeFolderPermission)
 	}
@@ -545,11 +537,9 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		return nil, err
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		options.ActionSets = s.actionResolver.ResolveAction(options.Action)
-		options.ActionSets = append(options.ActionSets,
-			s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
-	}
+	options.ActionSets = s.actionResolver.ResolveAction(options.Action)
+	options.ActionSets = append(options.ActionSets,
+		s.actionResolver.ResolveActionPrefix(options.ActionPrefix)...)
 
 	// Get managed permissions (DB)
 	usersPermissions, err := s.store.SearchUsersPermissions(ctx, usr.GetOrgID(), options)
@@ -610,7 +600,7 @@ func (s *Service) SearchUsersPermissions(ctx context.Context, usr identity.Reque
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(options.ActionSets) > 0 {
+	if len(options.ActionSets) > 0 {
 		for id, perms := range res {
 			res[id] = s.actionResolver.ExpandActionSetsWithFilter(perms, GetActionFilter(options))
 		}
@@ -661,11 +651,9 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 		}
 	}
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) {
-		searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
-		searchOptions.ActionSets = append(searchOptions.ActionSets,
-			s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
-	}
+	searchOptions.ActionSets = s.actionResolver.ResolveAction(searchOptions.Action)
+	searchOptions.ActionSets = append(searchOptions.ActionSets,
+		s.actionResolver.ResolveActionPrefix(searchOptions.ActionPrefix)...)
 
 	// Get permissions from the DB
 	dbPermissions, err := s.store.SearchUsersPermissions(ctx, orgID, searchOptions)
@@ -674,7 +662,7 @@ func (s *Service) searchUserPermissions(ctx context.Context, orgID int64, search
 	}
 	permissions = append(permissions, dbPermissions[searchOptions.UserID]...)
 
-	if s.features.IsEnabled(ctx, featuremgmt.FlagAccessActionSets) && len(searchOptions.ActionSets) != 0 {
+	if len(searchOptions.ActionSets) != 0 {
 		permissions = s.actionResolver.ExpandActionSetsWithFilter(permissions, GetActionFilter(searchOptions))
 	}
 

@@ -1,5 +1,5 @@
 import { DataSourcePluginMeta } from '@grafana/data';
-import { getMockPlugin } from '@grafana/data/test/__mocks__/pluginMocks';
+import { getMockPlugin } from '@grafana/data/test';
 
 import { buildCategories } from './buildCategories';
 

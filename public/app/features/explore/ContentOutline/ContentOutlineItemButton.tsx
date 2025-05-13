@@ -4,7 +4,8 @@ import * as React from 'react';
 
 import { IconName, isIconName, GrafanaTheme2 } from '@grafana/data';
 import { Button, Icon, Tooltip, useTheme2 } from '@grafana/ui';
-import { TooltipPlacement } from '@grafana/ui/src/components/Tooltip';
+import { TooltipPlacement } from '@grafana/ui/internal';
+import { t } from 'app/core/internationalization';
 
 type CommonProps = {
   contentOutlineExpanded?: boolean;
@@ -64,7 +65,10 @@ export function ContentOutlineItemButton({
         <button
           className={styles.collapseButton}
           onClick={toggleCollapsed}
-          aria-label="Content outline item collapse button"
+          aria-label={t(
+            'explore.content-outline-item-button.body.aria-label-content-outline-item-collapse-button',
+            'Content outline item collapse button'
+          )}
           aria-expanded={!collapsed}
           aria-controls={sectionId}
         >

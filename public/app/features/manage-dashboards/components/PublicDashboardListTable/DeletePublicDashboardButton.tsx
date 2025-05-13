@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 import { config } from '@grafana/runtime';
-import { Button, ModalsController, ButtonProps } from '@grafana/ui/src';
+import { Button, ModalsController, ButtonProps } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 import { useDeletePublicDashboardMutation } from 'app/features/dashboard/api/publicDashboardApi';
 import { DashboardModel } from 'app/features/dashboard/state/DashboardModel';

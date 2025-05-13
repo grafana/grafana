@@ -11,5 +11,23 @@ export default [
     plugins,
     output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-data')],
   },
+  {
+    input: 'src/unstable.ts',
+    plugins,
+    output: [cjsOutput(pkg), esmOutput(pkg, 'grafana-data')],
+  },
   tsDeclarationOutput(pkg),
+  tsDeclarationOutput(pkg, {
+    input: './compiled/unstable.d.ts',
+    output: [
+      {
+        file: './dist/cjs/unstable.d.cts',
+        format: 'cjs',
+      },
+      {
+        file: './dist/esm/unstable.d.mts',
+        format: 'es',
+      },
+    ],
+  }),
 ];

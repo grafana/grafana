@@ -1,30 +1,28 @@
 import { css } from '@emotion/css';
 import { formatDistanceToNowStrict } from 'date-fns';
+import { isUndefined } from 'lodash';
 
 import { GrafanaTheme2, dateTimeFormat, dateTimeFormatTimeAgo } from '@grafana/data';
-import { Icon, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
+import { config } from '@grafana/runtime';
+import { Icon, Link, Stack, Text, TextLink, useStyles2 } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
+import { useDatasource } from 'app/features/datasources/hooks';
 import { CombinedRule } from 'app/types/unified-alerting';
 
 import { usePendingPeriod } from '../../../hooks/rules/usePendingPeriod';
-import {
-  getAnnotations,
-  isGrafanaAlertingRule,
-  isGrafanaRecordingRule,
-  isGrafanaRulerRule,
-  isRecordingRulerRule,
-} from '../../../utils/rules';
+import { getAnnotations, isPausedRule, prometheusRuleType, rulerRuleType } from '../../../utils/rules';
 import { isNullDate } from '../../../utils/time';
 import { Tokenize } from '../../Tokenize';
 import { DetailText } from '../../common/DetailText';
 
-import { UpdatedByUser } from './components/UpdatedBy';
+import { UpdatedByUser } from './version-history/UpdatedBy';
 
 enum RuleType {
   GrafanaManagedAlertRule = 'Grafana-managed alert rule',
   GrafanaManagedRecordingRule = 'Grafana-managed recording rule',
   CloudAlertRule = 'Cloud alert rule',
   CloudRecordingRule = 'Cloud recording rule',
+  Unknown = 'Unknown',
 }
 
 const DetailGroup = ({ title, children }: { title: string; children: React.ReactNode }) => {
@@ -45,30 +43,47 @@ interface DetailsProps {
 export const Details = ({ rule }: DetailsProps) => {
   const styles = useStyles2(getStyles);
 
-  let ruleType: RuleType;
-
   const pendingPeriod = usePendingPeriod(rule);
+  const keepFiringFor = rulerRuleType.grafana.alertingRule(rule.rulerRule) ? rule.rulerRule.keep_firing_for : undefined;
 
-  if (isGrafanaRulerRule(rule.rulerRule)) {
-    ruleType = isGrafanaRecordingRule(rule.rulerRule)
-      ? RuleType.GrafanaManagedRecordingRule
-      : RuleType.GrafanaManagedAlertRule;
-  } else if (isRecordingRulerRule(rule.rulerRule)) {
-    ruleType = RuleType.CloudRecordingRule;
-  } else {
-    // probably not the greatest assumption
-    ruleType = RuleType.CloudAlertRule;
+  let determinedRuleType: RuleType = RuleType.Unknown;
+  if (rulerRuleType.grafana.alertingRule(rule.rulerRule)) {
+    determinedRuleType = RuleType.GrafanaManagedAlertRule;
+  } else if (rulerRuleType.grafana.recordingRule(rule.rulerRule)) {
+    determinedRuleType = RuleType.GrafanaManagedRecordingRule;
+  } else if (rulerRuleType.dataSource.alertingRule(rule.rulerRule)) {
+    determinedRuleType = RuleType.CloudAlertRule;
+  } else if (rulerRuleType.dataSource.recordingRule(rule.rulerRule)) {
+    determinedRuleType = RuleType.CloudRecordingRule;
   }
+
+  const targetDatasourceUid = rulerRuleType.grafana.recordingRule(rule.rulerRule)
+    ? rule.rulerRule.grafana_alert.record?.target_datasource_uid
+    : null;
+
+  const datasource = useDatasource(targetDatasourceUid);
+
+  const showTargetDatasource =
+    config.featureToggles.grafanaManagedRecordingRulesDatasources &&
+    targetDatasourceUid &&
+    targetDatasourceUid !== 'grafana';
 
   const evaluationDuration = rule.promRule?.evaluationTime;
   const evaluationTimestamp = rule.promRule?.lastEvaluation;
 
-  const annotations = getAnnotations(rule);
+  const annotations = prometheusRuleType.alertingRule(rule.promRule) ? getAnnotations(rule.promRule) : undefined;
 
   const hasEvaluationDuration = Number.isFinite(evaluationDuration);
 
-  const updated = isGrafanaRulerRule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
-  const isPaused = isGrafanaAlertingRule(rule.rulerRule) && rule.rulerRule.grafana_alert.is_paused;
+  const updated = rulerRuleType.grafana.rule(rule.rulerRule) ? rule.rulerRule.grafana_alert.updated : undefined;
+  const isPaused = rulerRuleType.grafana.rule(rule.rulerRule) && isPausedRule(rule.rulerRule);
+
+  const missingSeriesEvalsToResolve =
+    rulerRuleType.grafana.rule(rule.rulerRule) &&
+    !isUndefined(rule.rulerRule.grafana_alert.missing_series_evals_to_resolve)
+      ? String(rule.rulerRule.grafana_alert.missing_series_evals_to_resolve)
+      : undefined;
+
   const pausedIcon = (
     <Stack>
       <Text color="warning">
@@ -82,8 +97,8 @@ export const Details = ({ rule }: DetailsProps) => {
   return (
     <div className={styles.metadata}>
       <DetailGroup title={t('alerting.alert.rule', 'Rule')}>
-        <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={ruleType} />
-        {isGrafanaRulerRule(rule.rulerRule) && (
+        <DetailText id="rule-type" label={t('alerting.alert.rule-type', 'Rule type')} value={determinedRuleType} />
+        {rulerRuleType.grafana.rule(rule.rulerRule) && (
           <>
             <DetailText
               id="rule-type"
@@ -106,6 +121,20 @@ export const Details = ({ rule }: DetailsProps) => {
               />
             )}
           </>
+        )}
+        {showTargetDatasource && (
+          <DetailText
+            id="target-datasource-uid"
+            label={t('alerting.alert.target-datasource-uid', 'Target data source')}
+            value={
+              <Link href={`/connections/datasources/edit/${datasource?.uid}`}>
+                <Stack direction="row" gap={1}>
+                  <img style={{ width: '16px' }} src={datasource?.meta.info.logos.small} alt="datasource logo" />
+                  {datasource?.name}
+                </Stack>
+              </Link>
+            }
+          />
         )}
       </DetailGroup>
 
@@ -130,7 +159,18 @@ export const Details = ({ rule }: DetailsProps) => {
               <DetailText
                 id="last-evaluation-duration"
                 label={t('alerting.alert.last-evaluation-duration', 'Last evaluation duration')}
-                value={isPaused ? pausedIcon : `${evaluationDuration} ms`}
+                value={`${evaluationDuration} ms`}
+              />
+            )}
+            {missingSeriesEvalsToResolve && (
+              <DetailText
+                id="missing-series-resolve"
+                label={t('alerting.alert.missing-series-resolve', 'Missing series evaluations to resolve')}
+                value={missingSeriesEvalsToResolve}
+                tooltipValue={t(
+                  'alerting.alert.description-missing-series-evaluations',
+                  'How many consecutive evaluation intervals with no data for a dimension must pass before the alert state is considered stale and automatically resolved. If no value is provided, the value will default to 2.'
+                )}
               />
             )}
           </>
@@ -143,9 +183,16 @@ export const Details = ({ rule }: DetailsProps) => {
             value={pendingPeriod}
           />
         )}
+        {keepFiringFor && (
+          <DetailText
+            id="keep-firing-for"
+            label={t('alerting.alert.keep-firing-for', 'Keep firing for')}
+            value={keepFiringFor}
+          />
+        )}
       </DetailGroup>
 
-      {isGrafanaRulerRule(rule.rulerRule) &&
+      {rulerRuleType.grafana.rule(rule.rulerRule) &&
         // grafana recording rules don't have these fields
         rule.rulerRule.grafana_alert.no_data_state &&
         rule.rulerRule.grafana_alert.exec_err_state && (

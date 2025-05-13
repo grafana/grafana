@@ -18,7 +18,7 @@ import (
 )
 
 var (
-	_ resource.BatchResourceWriter = (*parquetWriter)(nil)
+	_ resource.BulkResourceWriter = (*parquetWriter)(nil)
 )
 
 // Write resources into a parquet file
@@ -28,8 +28,8 @@ func NewParquetWriter(f io.Writer) (*parquetWriter, error) {
 		schema:  newSchema(nil),
 		buffer:  1024 * 10 * 100 * 10, // 10MB
 		logger:  logging.DefaultLogger.With("logger", "parquet.writer"),
-		rsp:     &resource.BatchResponse{},
-		summary: make(map[string]*resource.BatchResponse_Summary),
+		rsp:     &resource.BulkResponse{},
+		summary: make(map[string]*resource.BulkResponse_Summary),
 	}
 
 	props := parquet.NewWriterProperties(
@@ -43,8 +43,8 @@ func NewParquetWriter(f io.Writer) (*parquetWriter, error) {
 	return w, w.init()
 }
 
-// ProcessBatch implements resource.BatchProcessingBackend.
-func (w *parquetWriter) ProcessBatch(ctx context.Context, setting resource.BatchSettings, iter resource.BatchRequestIterator) *resource.BatchResponse {
+// ProcessBulk implements resource.BulkProcessingBackend.
+func (w *parquetWriter) ProcessBulk(ctx context.Context, setting resource.BulkSettings, iter resource.BulkRequestIterator) *resource.BulkResponse {
 	defer func() { _ = w.Close() }()
 
 	var err error
@@ -66,7 +66,7 @@ func (w *parquetWriter) ProcessBatch(ctx context.Context, setting resource.Batch
 		w.logger.Warn("error closing parquet file", "err", err)
 	}
 	if rsp == nil {
-		rsp = &resource.BatchResponse{}
+		rsp = &resource.BulkResponse{}
 	}
 	if err != nil {
 		rsp.Error = resource.AsErrorResult(err)
@@ -92,11 +92,11 @@ type parquetWriter struct {
 	action    *array.Int8Builder
 	value     *array.StringBuilder
 
-	rsp     *resource.BatchResponse
-	summary map[string]*resource.BatchResponse_Summary
+	rsp     *resource.BulkResponse
+	summary map[string]*resource.BulkResponse_Summary
 }
 
-func (w *parquetWriter) CloseWithResults() (*resource.BatchResponse, error) {
+func (w *parquetWriter) CloseWithResults() (*resource.BulkResponse, error) {
 	err := w.Close()
 	return w.rsp, err
 }
@@ -181,14 +181,14 @@ func (w *parquetWriter) Write(ctx context.Context, key *resource.ResourceKey, va
 		return w.flush()
 	}
 
-	summary := w.summary[key.BatchID()]
+	summary := w.summary[key.NSGR()]
 	if summary == nil {
-		summary = &resource.BatchResponse_Summary{
+		summary = &resource.BulkResponse_Summary{
 			Namespace: key.Namespace,
 			Group:     key.Group,
 			Resource:  key.Resource,
 		}
-		w.summary[key.BatchID()] = summary
+		w.summary[key.NSGR()] = summary
 		w.rsp.Summary = append(w.rsp.Summary, summary)
 	}
 	summary.Count++

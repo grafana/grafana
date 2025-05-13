@@ -304,13 +304,14 @@ function filterRules(props: PanelProps<UnifiedAlertListOptions>, rules: Combined
     return (
       (options.stateFilter.firing && alertingRule.state === PromAlertingRuleState.Firing) ||
       (options.stateFilter.pending && alertingRule.state === PromAlertingRuleState.Pending) ||
-      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive)
+      (options.stateFilter.normal && alertingRule.state === PromAlertingRuleState.Inactive) ||
+      (options.stateFilter.recovering && alertingRule.state === PromAlertingRuleState.Recovering)
     );
   });
 
-  if (options.folder) {
+  if (options.folder && options.folder.uid) {
     filteredRules = filteredRules.filter((rule) => {
-      return rule.namespaceName === options.folder.title;
+      return rule.namespace.uid === options.folder.uid;
     });
   }
   if (options.datasource) {

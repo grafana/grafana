@@ -3,6 +3,7 @@ import * as React from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, useTheme2 } from '@grafana/ui';
+import { t } from 'app/core/internationalization';
 
 import { FieldNameMeta } from './LogsTableWrap';
 
@@ -69,8 +70,8 @@ export function LogsTableNavField(props: {
         </div>
         {props.draggable && (
           <Icon
-            aria-label="Drag and drop icon"
-            title="Drag and drop to reorder"
+            aria-label={t('explore.logs-table-nav-field.aria-label-drag-and-drop-icon', 'Drag and drop icon')}
+            title={t('explore.logs-table-nav-field.title-drag-and-drop-to-reorder', 'Drag and drop to reorder')}
             name="draggabledots"
             size="lg"
             className={styles.dragIcon}

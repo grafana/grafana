@@ -13,6 +13,7 @@ import {
 import { reportInteraction } from '@grafana/runtime';
 import { DataQuery, TimeZone } from '@grafana/schema';
 import { Button, Collapse, Icon, Tooltip, useStyles2 } from '@grafana/ui';
+import { Trans, t } from 'app/core/internationalization';
 import store from 'app/core/store';
 
 import { LogRows } from '../../logs/components/LogRows';
@@ -69,7 +70,9 @@ export function LogsSamplePanel(props: Props) {
 
     return (
       <Button size="sm" className={styles.logSamplesButton} onClick={onSplitOpen}>
-        Open logs in split view
+        <Trans i18nKey="explore.logs-sample-panel.open-in-split-view-button.open-logs-in-split-view">
+          Open logs in split view
+        </Trans>
       </Button>
     );
   };
@@ -80,12 +83,23 @@ export function LogsSamplePanel(props: Props) {
     LogsSamplePanelContent = null;
   } else if (queryResponse.error !== undefined) {
     LogsSamplePanelContent = (
-      <SupplementaryResultError error={queryResponse.error} title="Failed to load logs sample for this query" />
+      <SupplementaryResultError
+        error={queryResponse.error}
+        title={t('explore.logs-sample-panel.title-failed-sample-query', 'Failed to load logs sample for this query')}
+      />
     );
   } else if (queryResponse.state === LoadingState.Loading) {
-    LogsSamplePanelContent = <span>Logs sample is loading...</span>;
+    LogsSamplePanelContent = (
+      <span>
+        <Trans i18nKey="explore.logs-sample-panel.logs-sample-is-loading">Logs sample is loading...</Trans>
+      </span>
+    );
   } else if (queryResponse.data.length === 0 || queryResponse.data.every((frame) => frame.length === 0)) {
-    LogsSamplePanelContent = <span>No logs sample data.</span>;
+    LogsSamplePanelContent = (
+      <span>
+        <Trans i18nKey="explore.logs-sample-panel.no-logs-sample-data">No logs sample data.</Trans>
+      </span>
+    );
   } else {
     const logs = dataFrameToLogsModel(queryResponse.data);
     LogsSamplePanelContent = (
@@ -112,8 +126,10 @@ export function LogsSamplePanel(props: Props) {
     <Collapse
       label={
         <div>
-          Logs sample
-          <Tooltip content="Show log lines that contributed to visualized metrics">
+          <Trans i18nKey="explore.logs-sample-panel.label">Logs sample</Trans>
+          <Tooltip
+            content={t('explore.logs-sample-panel.tooltip', 'Show log lines that contributed to visualized metrics')}
+          >
             <Icon name="info-circle" className={styles.infoTooltip} />
           </Tooltip>
         </div>

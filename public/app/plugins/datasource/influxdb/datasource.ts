@@ -1,4 +1,4 @@
-import { cloneDeep, extend, has, isString, map as _map, omit, pick, reduce } from 'lodash';
+import { map as _map, cloneDeep, extend, has, isString, omit, pick, reduce } from 'lodash';
 import { lastValueFrom, merge, Observable, of, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
@@ -353,13 +353,15 @@ export default class InfluxDatasource extends DataSourceWithBackend<InfluxQuery,
     // we escape it. Otherwise, we return it directly.
     // The regex below searches for regexes within the query string
     const regexMatcher = new RegExp(
-      /\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
+      /(\s*(=|!)~\s*)\/((?![*+?])(?:[^\r\n\[/\\]|\\.|\[(?:[^\r\n\]\\]|\\.)*\])+)\/((?:g(?:im?|mi?)?|i(?:gm?|mg?)?|m(?:gi?|ig?)?)?)/,
       'gm'
     );
     // If matches are found this regex is evaluated to check if the variable is contained in the regex /^...$/ (^ and $ is optional)
     // i.e. /^$myVar$/ or /$myVar/ or /^($myVar)$/
     const regex = new RegExp(`\\/(?:\\^)?(.*)(\\$${variable.name})(.*)(?:\\$)?\\/`, 'gm');
-    if (!query) {
+
+    // We need to validate the type of the query as some legacy cases can pass a query value with a different type
+    if (!query || typeof query !== 'string') {
       return value;
     }
 

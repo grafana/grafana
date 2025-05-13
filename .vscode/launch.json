@@ -12,6 +12,11 @@
       "args": ["server", "--homepath", "${workspaceFolder}", "--packaging", "dev", "cfg:app_mode=development"]
     },
     {
+      "name": "Attach to Go Process",
+      "type": "go",
+      "request": "attach"
+    },
+    {
       "name": "Attach to Test Process",
       "type": "go",
       "request": "attach",
@@ -75,6 +80,16 @@
       "program": "${workspaceFolder}/pkg/cmd/grafana/",
       "env": { "GF_DEFAULT_TARGET": "zanzana-server", "GF_SERVER_HTTP_PORT": "3001" },
       "cwd": "${workspaceFolder}",
+      "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
+    },
+    {
+      "name": "Run Frontend Server",
+      "type": "go",
+      "request": "launch",
+      "mode": "auto",
+      "program": "${workspaceFolder}/pkg/cmd/grafana/",
+      "cwd": "${workspaceFolder}",
+      "env": { "GF_DEFAULT_TARGET": "frontend-server", "GF_SERVER_HTTP_PORT": "3003" },
       "args": ["server", "target", "--homepath", "${workspaceFolder}", "--packaging", "dev"]
     },
     {

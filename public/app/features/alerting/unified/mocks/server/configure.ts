@@ -1,6 +1,5 @@
-import { HttpResponse, http } from 'msw';
+import { HttpResponse, HttpResponseResolver, PathParams, http } from 'msw';
 
-import { DataSourceInstanceSettings } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import server from 'app/features/alerting/unified/mockApi';
 import { mockDataSource, mockFolder } from 'app/features/alerting/unified/mocks';
@@ -15,13 +14,17 @@ import {
   getDisabledPluginHandler,
   getPluginMissingHandler,
 } from 'app/features/alerting/unified/mocks/server/handlers/plugins';
-import { ALERTING_API_SERVER_BASE_URL, paginatedHandlerFor } from 'app/features/alerting/unified/mocks/server/utils';
+import {
+  ALERTING_API_SERVER_BASE_URL,
+  getK8sResponse,
+  paginatedHandlerFor,
+} from 'app/features/alerting/unified/mocks/server/utils';
 import { SupportedPlugin } from 'app/features/alerting/unified/types/pluginBridges';
 import { clearPluginSettingsCache } from 'app/features/plugins/pluginSettings';
 import { AlertmanagerChoice } from 'app/plugins/datasource/alertmanager/types';
 import { FolderDTO } from 'app/types';
 import { RulerDataSourceConfig } from 'app/types/unified-alerting';
-import { PromRuleGroupDTO } from 'app/types/unified-alerting-dto';
+import { GrafanaPromRuleGroupDTO, PromRuleGroupDTO, RulerRuleGroupDTO } from 'app/types/unified-alerting-dto';
 
 import { setupDataSources } from '../../testSetup/datasources';
 import { DataSourceType } from '../../utils/datasource';
@@ -62,6 +65,39 @@ export const setFolderResponse = (response: Partial<FolderDTO>) => {
   server.use(handler);
 };
 
+export const setUpdateGrafanaRulerRuleNamespaceResolver = (
+  resolver: HttpResponseResolver<{ folderUid: string }, RulerRuleGroupDTO, undefined>
+) => {
+  server.use(
+    http.post<{ folderUid: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/grafana/api/v1/rules/:folderUid`,
+      resolver
+    )
+  );
+};
+
+export const setUpdateRulerRuleNamespaceResolver = (
+  resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>
+) => {
+  server.use(
+    http.post<{ dataSourceUid: string; namespace: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/:dataSourceUid/api/v1/rules/:namespace`,
+      resolver
+    )
+  );
+};
+
+export const setDeleteRulerRuleNamespaceResolver = (
+  resolver: HttpResponseResolver<{ dataSourceUid: string; namespace: string; groupName: string }, undefined, undefined>
+) => {
+  server.use(
+    http.delete<{ dataSourceUid: string; namespace: string; groupName: string }, undefined, undefined>(
+      `/api/ruler/:dataSourceUid/api/v1/rules/:namespace/:groupName`,
+      resolver
+    )
+  );
+};
+
 /**
  * Makes the mock server respond with different responses for updating a ruler namespace
  */
@@ -70,6 +106,32 @@ export const setUpdateRulerRuleNamespaceHandler = (options?: HandlerOptions) => 
   server.use(handler);
 
   return handler;
+};
+
+export const setGrafanaRulerRuleGroupResolver = (
+  resolver: HttpResponseResolver<{ folderUid: string; groupName: string }, RulerRuleGroupDTO, undefined>
+) => {
+  server.use(
+    http.get<{ folderUid: string; groupName: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/grafana/api/v1/rules/:folderUid/:groupName`,
+      resolver
+    )
+  );
+};
+
+export const setRulerRuleGroupResolver = (
+  resolver: HttpResponseResolver<
+    { dataSourceUid: string; namespace: string; groupName: string },
+    RulerRuleGroupDTO,
+    undefined
+  >
+) => {
+  server.use(
+    http.get<{ dataSourceUid: string; namespace: string; groupName: string }, RulerRuleGroupDTO, undefined>(
+      `/api/ruler/:dataSourceUid/api/v1/rules/:namespace/:groupName`,
+      resolver
+    )
+  );
 };
 
 /**
@@ -82,6 +144,11 @@ export const setRulerRuleGroupHandler = (options?: HandlerOptions) => {
   return handler;
 };
 
+export const setGrafanaRuleGroupExportResolver = (
+  resolver: HttpResponseResolver<PathParams<never>, string, undefined>
+) => {
+  server.use(http.get('/api/ruler/grafana/api/v1/export/rules', resolver));
+};
 /**
  * Makes the mock server respond with an error when fetching list of mute timings
  */
@@ -89,6 +156,19 @@ export const setMuteTimingsListError = () => {
   const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
   const handler = http.get(listMuteTimingsPath, () => {
     return HttpResponse.json({}, { status: 401 });
+  });
+
+  server.use(handler);
+  return handler;
+};
+
+/**
+ * Makes the mock server respond with no time intervals
+ */
+export const setTimeIntervalsListEmpty = () => {
+  const listMuteTimingsPath = listNamespacedTimeIntervalHandler().info.path;
+  const handler = http.get(listMuteTimingsPath, () => {
+    return HttpResponse.json(getK8sResponse('TimeIntervalList', []));
   });
 
   server.use(handler);
@@ -120,8 +200,16 @@ export function mimirDataSource() {
   return { dataSource, rulerConfig };
 }
 
-export function setPrometheusRules(ds: DataSourceInstanceSettings, groups: PromRuleGroupDTO[]) {
+interface DataSourceLike {
+  uid: string;
+}
+
+export function setPrometheusRules(ds: DataSourceLike, groups: PromRuleGroupDTO[]) {
   server.use(http.get(`/api/prometheus/${ds.uid}/api/v1/rules`, paginatedHandlerFor(groups)));
+}
+
+export function setGrafanaPromRules(groups: GrafanaPromRuleGroupDTO[]) {
+  server.use(http.get(`/api/prometheus/grafana/api/v1/rules`, paginatedHandlerFor(groups)));
 }
 
 /** Make a given plugin ID respond with a 404, as if it isn't installed at all */
@@ -167,6 +255,30 @@ export const makeAllK8sGetEndpointsFail = (
 ) => {
   server.use(
     http.get(ALERTING_API_SERVER_BASE_URL + '/*', () => {
+      const errorResponse: ApiMachineryError = {
+        kind: 'Status',
+        apiVersion: 'v1',
+        metadata: {},
+        status: 'Failure',
+        details: {
+          uid,
+        },
+        message,
+        code: status,
+        reason: '',
+      };
+      return HttpResponse.json<ApiMachineryError>(errorResponse, { status });
+    })
+  );
+};
+
+export const makeAllK8sEndpointsFail = (
+  uid: string,
+  message = 'could not find an Alertmanager configuration',
+  status = 500
+) => {
+  server.use(
+    http.all(ALERTING_API_SERVER_BASE_URL + '/*', () => {
       const errorResponse: ApiMachineryError = {
         kind: 'Status',
         apiVersion: 'v1',

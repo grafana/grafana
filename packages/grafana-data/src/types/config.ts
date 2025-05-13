@@ -72,6 +72,7 @@ export interface UnifiedAlertingConfig {
   alertStateHistoryBackend?: string;
   // will be undefined if implementation is not "multiple"
   alertStateHistoryPrimary?: string;
+  recordingRulesEnabled?: boolean;
 }
 
 /** Supported OAuth services
@@ -165,7 +166,6 @@ export interface GrafanaConfig {
   appSubUrl: string;
   windowTitlePrefix: string;
   buildInfo: BuildInfo;
-  newPanelTitle: string;
   bootData: BootData;
   externalUserMngLinkUrl: string;
   externalUserMngLinkName: string;
@@ -195,11 +195,11 @@ export interface GrafanaConfig {
   passwordHint: string;
   loginError?: string;
   viewersCanEdit: boolean;
-  editorsCanAdmin: boolean;
   disableSanitizeHtml: boolean;
   trustedTypesDefaultPolicyEnabled: boolean;
   cspReportOnlyEnabled: boolean;
   liveEnabled: boolean;
+  liveMessageSizeLimit: number;
   /** @deprecated Use `theme2` instead. */
   theme: GrafanaTheme;
   theme2: GrafanaTheme2;
@@ -214,9 +214,7 @@ export interface GrafanaConfig {
   geomapDisableCustomBaseLayer?: boolean;
   unifiedAlertingEnabled: boolean;
   unifiedAlerting: UnifiedAlertingConfig;
-  angularSupportEnabled: boolean;
   feedbackLinksEnabled: boolean;
-  secretsManagerPluginEnabled: boolean;
   supportBundlesEnabled: boolean;
   secureSocksDSProxyEnabled: boolean;
   googleAnalyticsId: string | undefined;
@@ -229,6 +227,7 @@ export interface GrafanaConfig {
   rudderstackIntegrationsUrl: string | undefined;
   analyticsConsoleReporting: boolean;
   dashboardPerformanceMetrics: string[];
+  panelSeriesLimit: number;
   sqlConnectionLimits: SqlConnectionLimits;
   sharedWithMeFolderUID?: string;
   rootFolderUID?: string;
@@ -248,6 +247,7 @@ export interface GrafanaConfig {
    * Grafana's supported language.
    */
   language: string | undefined;
+  locale: string;
 }
 
 export interface SqlConnectionLimits {
@@ -284,4 +284,5 @@ export interface AuthSettings {
   disableLogin?: boolean;
   passwordlessEnabled?: boolean;
   basicAuthStrongPasswordPolicy?: boolean;
+  disableSignoutMenu?: boolean;
 }

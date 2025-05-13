@@ -58,11 +58,11 @@ func newInternalIdentity(name string, namespace string, orgID int64) Requester {
 // This is useful for background tasks that has to communicate with unfied storage. It also returns a Requester with
 // static permissions so it can be used in legacy code paths.
 func WithServiceIdentity(ctx context.Context, orgID int64) (context.Context, Requester) {
-	r := newInternalIdentity(serviceName, "", orgID)
+	r := newInternalIdentity(serviceName, "*", orgID)
 	return WithRequester(ctx, r), r
 }
 
-func WithProvisioningIdentitiy(ctx context.Context, namespace string) (context.Context, Requester, error) {
+func WithProvisioningIdentity(ctx context.Context, namespace string) (context.Context, Requester, error) {
 	ns, err := types.ParseNamespace(namespace)
 	if err != nil {
 		return nil, nil, err
@@ -124,6 +124,7 @@ var serviceIdentityTokenPermissions = getTokenPermissions(
 	"folder.grafana.app",
 	"dashboard.grafana.app",
 	"secret.grafana.app",
+	"query.grafana.app",
 )
 
 var ServiceIdentityClaims = &authn.Claims[authn.AccessTokenClaims]{

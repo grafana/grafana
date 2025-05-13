@@ -1,6 +1,5 @@
 import { css } from '@emotion/css';
 import { chain } from 'lodash';
-import pluralize from 'pluralize';
 import { useState } from 'react';
 
 import { GrafanaTheme2 } from '@grafana/data';
@@ -33,7 +32,7 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props)
   const tooltip = t('alert-labels.button.show.tooltip', 'Show common labels');
 
   return (
-    <div className={styles.wrapper} role="list" aria-label="Labels">
+    <div className={styles.wrapper} role="list" aria-label={t('alerting.alert-labels.aria-label-labels', 'Labels')}>
       {labelsToShow.map(([label, value]) => {
         return (
           <Label
@@ -56,7 +55,9 @@ export const AlertLabels = ({ labels, commonLabels = {}, size, onClick }: Props)
           tooltipPlacement="top"
           size="sm"
         >
-          +{commonLabelsCount} common {pluralize('label', commonLabelsCount)}
+          <Trans i18nKey="alerting.alert-labels.common-labels-count" count={commonLabelsCount}>
+            +{'{{count}}'} common labels
+          </Trans>
         </Button>
       )}
       {showCommonLabels && hasCommonLabels && (
