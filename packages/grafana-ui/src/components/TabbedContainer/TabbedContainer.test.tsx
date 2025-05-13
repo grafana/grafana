@@ -1,6 +1,7 @@
-import { IconName } from '@grafana/data';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+
+import { IconName } from '@grafana/data';
 
 import { TabbedContainer } from './TabbedContainer';
 
