@@ -62,6 +62,7 @@ import { PluginPage } from './core/components/Page/PluginPage';
 import { GrafanaContextType, useReturnToPreviousInternal } from './core/context/GrafanaContext';
 import { initializeCrashDetection } from './core/crash';
 import { initializeI18n } from './core/internationalization';
+import { postInitTasks, preInitTasks } from './core/lifecycle-hooks';
 import { setMonacoEnv } from './core/monacoEnv';
 import { interceptLinkClicks } from './core/navigation/patch/interceptLinkClicks';
 import { CorrelationsService } from './core/services/CorrelationsService';
@@ -72,7 +73,6 @@ import { Echo } from './core/services/echo/Echo';
 import { reportPerformance } from './core/services/echo/EchoSrv';
 import { KeybindingSrv } from './core/services/keybindingSrv';
 import { startMeasure, stopMeasure } from './core/utils/metrics';
-import { initDevFeatures } from './dev';
 import { initAlerting } from './features/alerting/unified/initAlerting';
 import { initAuthConfig } from './features/auth-config';
 import { getTimeSrv } from './features/dashboard/services/TimeSrv';
@@ -115,15 +115,12 @@ const extensionsExports = extensionsIndex.keys().map((key) => {
   return extensionsIndex(key);
 });
 
-if (process.env.NODE_ENV === 'development') {
-  initDevFeatures();
-}
-
 export class GrafanaApp {
   context!: GrafanaContextType;
 
   async init() {
     try {
+      await preInitTasks();
       // Let iframe container know grafana has started loading
       parent.postMessage('GrafanaAppInit', '*');
 
@@ -268,6 +265,8 @@ export class GrafanaApp {
           app: this,
         })
       );
+
+      await postInitTasks();
     } catch (error) {
       console.error('Failed to start Grafana', error);
       window.__grafana_load_failed();

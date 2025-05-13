@@ -48,17 +48,17 @@ func (_m *FakeDashboardService) BuildSaveDashboardCommand(ctx context.Context, d
 	return r0, r1
 }
 
-// CleanUpDashboard provides a mock function with given fields: ctx, dashboardUID, orgId
-func (_m *FakeDashboardService) CleanUpDashboard(ctx context.Context, dashboardUID string, orgId int64) error {
-	ret := _m.Called(ctx, dashboardUID, orgId)
+// CleanUpDashboard provides a mock function with given fields: ctx, dashboardUID, dashboardId, orgId
+func (_m *FakeDashboardService) CleanUpDashboard(ctx context.Context, dashboardUID string, dashboardId int64, orgId int64) error {
+	ret := _m.Called(ctx, dashboardUID, dashboardId, orgId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CleanUpDashboard")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, int64) error); ok {
-		r0 = rf(ctx, dashboardUID, orgId)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int64, int64) error); ok {
+		r0 = rf(ctx, dashboardUID, dashboardId, orgId)
 	} else {
 		r0 = ret.Error(0)
 	}
