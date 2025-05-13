@@ -44,19 +44,23 @@ jobs:
     steps:
     - if: ${{ github.event.pull_request.merged == true && startsWith(github.head_ref, 'release/') }}
       run: |
-        echo "VERSION=$(echo ${HEAD_REF} | sed -e 's/release\/.*\//v/g')" >> $GITHUB_ENV
-        echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}" >> $GITHUB_ENV
-        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}" >> $GITHUB_ENV
+        {
+        echo "VERSION=$(echo "${HEAD_REF}" | sed -e 's/release\/.*\//v/g')"
+        echo "DRY_RUN=${{ contains(github.event.pull_request.labels.*.name, 'release/dry-run') }}"
+        echo "LATEST=${{ contains(github.event.pull_request.labels.*.name, 'release/latest') && '1' || '0' }}"
+        } >> "$GITHUB_ENV"
     - id: output
       run: |
         echo "dry_run: $DRY_RUN"
         echo "latest: $LATEST"
         echo "version: $VERSION"
 
-        echo "release_branch=$(echo $VERSION | sed -s 's/^v/release-/g')" >> "$GITHUB_OUTPUT"
-        echo "dry_run=$DRY_RUN" >> "$GITHUB_OUTPUT"
-        echo "latest=$LATEST" >> "$GITHUB_OUTPUT"
-        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        {
+          echo "release_branch=$(echo "$VERSION" | sed -s 's/^v/release-/g')"
+          echo "dry_run=$DRY_RUN"
+          echo "latest=$LATEST"
+          echo "version=$VERSION"
+        } >> "$GITHUB_OUTPUT"
   create_next_release_branch_grafana:
     name: Create next release branch (Grafana)
     needs: setup
@@ -113,5 +117,5 @@ jobs:
       VERSION: ${{ needs.setup.outputs.version }}
     steps:
     - run: |
-        echo announce on slack that $VERSION has been released
-        echo dry run: $DRY_RUN
+        echo announce on slack that "$VERSION" has been released
+        echo dry run: "$DRY_RUN"

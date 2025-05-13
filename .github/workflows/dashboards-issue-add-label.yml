@@ -41,6 +41,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           TARGET_PROJECT: ${{ env.TARGET_PROJECT }}
         run: |
+          # shellcheck disable=SC2016 # we don't want the $s to be expanded
           gh api graphql -f query='
             query($org: String!, $repo: String!) {
               repository(name: $repo, owner: $org) {
@@ -55,15 +56,18 @@ jobs:
                   }
                 }
               }
-            }' -f org=$ORGANIZATION -f repo=$REPO > projects_data.json
+            }' -f org="$ORGANIZATION" -f repo="$REPO" > projects_data.json
 
-            echo 'IN_TARGET_PROJ='$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number=='"$TARGET_PROJECT"') | .project != null' projects_data.json) >> $GITHUB_ENV
-            echo 'ITEM_ID='$(jq '.data.repository.issue.id' projects_data.json) >> $GITHUB_ENV
+            {
+              echo "IN_TARGET_PROJ=$(jq '.data.repository.issue.projectItems.nodes[] | select(.project.number=='"$TARGET_PROJECT"') | .project != null' projects_data.json)"
+              echo "ITEM_ID=$(jq '.data.repository.issue.id' projects_data.json)"
+            } >> "$GITHUB_ENV"
       - name: Set up label array
         if: env.IN_TARGET_PROJ
         env:
           LABEL_IDS: ${{ env.LABEL_IDS }}
         run: |
+          # shellcheck disable=SC2153 # we define the variable on the line above in 'read'
           IFS=',' read -ra LABEL_IDs <<< "$LABEL_IDS"
           for item in "${LABEL_IDs[@]}"; do
             echo "Item: $item"
@@ -74,6 +78,7 @@ jobs:
           GH_TOKEN: ${{ steps.generate_token.outputs.token }}
           LABEL_IDS: ${{ env.LABEL_IDS }}
         run: |
+          # shellcheck disable=SC2016 # we don't want the $s to be expanded
           gh api graphql -f query='
             mutation ($labelableId: ID!, $labelIds: [ID!]!) {
               addLabelsToLabelable(
@@ -81,4 +86,4 @@ jobs:
               ) {
                   clientMutationId
               }
-            }' -f labelableId=$ITEM_ID -f labelIds=$LABEL_IDS
+            }' -f labelableId="$ITEM_ID" -f labelIds="$LABEL_IDS"
