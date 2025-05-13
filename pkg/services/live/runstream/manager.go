@@ -244,6 +244,8 @@ func getDelay(numErrors int) time.Duration {
 
 // run stream until context canceled or stream finished without an error.
 func (s *Manager) runStream(ctx context.Context, cancelFn func(), sr streamRequest) {
+	ctx = identity.WithRequester(ctx, sr.user)
+
 	defer func() { s.stopStream(sr, cancelFn) }()
 	var numFastErrors int
 	var delay time.Duration
