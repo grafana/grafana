@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	claims "github.com/grafana/authlib/types"
+
 	"github.com/grafana/grafana/pkg/apimachinery/identity"
 	"github.com/grafana/grafana/pkg/services/accesscontrol"
 	"github.com/grafana/grafana/pkg/services/apiserver/client"
@@ -13,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/services/folder"
 	"github.com/grafana/grafana/pkg/services/user/usertest"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
+	"github.com/grafana/grafana/pkg/storage/unified/resourcepb"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -198,9 +201,9 @@ func TestGetChildren(t *testing.T) {
 	orgID := int64(2)
 
 	t.Run("should be able to find children folders, and set defaults for pages", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -211,18 +214,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
 			Offset: 0,                 // should be set as limit * (page - 1)
 			Page:   1,                 // should be set to 1 by default
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 					{
-						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -257,9 +260,9 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("should return an error if the folder is not found", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -270,18 +273,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
 			Offset: 0,                 // should be set as limit * (page - 1)
 			Page:   1,                 // should be set to 1 by default
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 					{
-						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -298,9 +301,9 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("pages should be able to be set, general folder should be turned to empty string, and folder uids should be passed in", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -316,14 +319,14 @@ func TestGetChildren(t *testing.T) {
 			Limit:  10,
 			Offset: 20, // should be set as limit * (page - 1)
 			Page:   3,
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -349,14 +352,14 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("k6 folder should only be returned to service accounts", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, mock.Anything).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		mockCli.On("Search", mock.Anything, orgID, mock.Anything).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: accesscontrol.K6FolderUID, Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
@@ -391,9 +394,9 @@ func TestGetChildren(t *testing.T) {
 	})
 
 	t.Run("should not do get requests for the children if RefOnly is true", func(t *testing.T) {
-		mockCli.On("Search", mock.Anything, orgID, &resource.ResourceSearchRequest{
-			Options: &resource.ListOptions{
-				Fields: []*resource.Requirement{
+		mockCli.On("Search", mock.Anything, orgID, &resourcepb.ResourceSearchRequest{
+			Options: &resourcepb.ListOptions{
+				Fields: []*resourcepb.Requirement{
 					{
 						Key:      resource.SEARCH_FIELD_FOLDER,
 						Operator: string(selection.In),
@@ -404,18 +407,18 @@ func TestGetChildren(t *testing.T) {
 			Limit:  folderSearchLimit, // should default to folderSearchLimit
 			Offset: 0,                 // should be set as limit * (page - 1)
 			Page:   1,                 // should be set to 1 by default
-		}).Return(&resource.ResourceSearchResponse{
-			Results: &resource.ResourceTable{
-				Columns: []*resource.ResourceTableColumnDefinition{
-					{Name: "folder", Type: resource.ResourceTableColumnDefinition_STRING},
+		}).Return(&resourcepb.ResourceSearchResponse{
+			Results: &resourcepb.ResourceTable{
+				Columns: []*resourcepb.ResourceTableColumnDefinition{
+					{Name: "folder", Type: resourcepb.ResourceTableColumnDefinition_STRING},
 				},
-				Rows: []*resource.ResourceTableRow{
+				Rows: []*resourcepb.ResourceTableRow{
 					{
-						Key:   &resource.ResourceKey{Name: "folder2", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder2", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 					{
-						Key:   &resource.ResourceKey{Name: "folder3", Resource: "folder"},
+						Key:   &resourcepb.ResourceKey{Name: "folder3", Resource: "folder"},
 						Cells: [][]byte{[]byte("folder1")},
 					},
 				},
