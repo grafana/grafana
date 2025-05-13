@@ -3035,13 +3035,17 @@
     {
       "metadata": {
         "name": "tableNextGen",
-        "resourceVersion": "1743693517832",
-        "creationTimestamp": "2025-03-26T03:57:57Z"
+        "resourceVersion": "1747058265248",
+        "creationTimestamp": "2025-03-26T03:57:57Z",
+        "annotations": {
+          "grafana.app/updatedTimestamp": "2025-05-12 13:57:45.248176 +0000 UTC"
+        }
       },
       "spec": {
         "description": "Allows access to the new react-data-grid based table component.",
-        "stage": "experimental",
-        "codeowner": "@grafana/dataviz-squad"
+        "stage": "preview",
+        "codeowner": "@grafana/dataviz-squad",
+        "frontend": true
       }
     },
     {
