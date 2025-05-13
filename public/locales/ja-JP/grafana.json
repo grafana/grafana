@@ -4227,9 +4227,6 @@
       "query-options": "クエリオプション",
       "selection-options": "選択オプション"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "ダッシュボードをバージョン{{version}}に復元してもよろしいですか？未保存の変更はすべて失われます。",
       "title-restore-version": ""
