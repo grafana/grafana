@@ -31,7 +31,6 @@ require (
 	gocloud.dev v0.40.0
 	golang.org/x/sync v0.14.0
 	google.golang.org/grpc v1.72.0
-	google.golang.org/protobuf v1.36.6
 	k8s.io/apimachinery v0.32.3
 )
 
@@ -232,6 +231,7 @@ require (
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20250428153025-10db94c68c34 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250428153025-10db94c68c34 // indirect
+	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/fsnotify/fsnotify.v1 v1.4.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
