@@ -93,6 +93,7 @@ export const DataLinksActionsTooltip = ({ links, actions, value, coords, onToolt
             {...getFloatingProps()}
             style={floatingStyles}
             className={styles.tooltipWrapper}
+            data-testid={selectors.components.DataLinksActionsTooltip.tooltipWrapper}
           >
             <VizTooltipWrapper>
               <VizTooltipFooter dataLinks={links} actions={actions} />
