@@ -335,10 +335,6 @@ const (
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
 
-	// FlagAlertmanagerRemoteOnly
-	// Disable the internal Alertmanager and only use the external one defined.
-	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
-
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.
 	FlagAnnotationPermissionUpdate = "annotationPermissionUpdate"
