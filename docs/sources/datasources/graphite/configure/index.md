@@ -46,6 +46,17 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
+  private-data-source-connect:
+    - pattern: /docs/grafana/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+    - pattern: /docs/grafana-cloud/
+      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+  configure-pdc:
+    - pattern: /docs/grafana/
+      destination:  /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+
 ---
 
 # Configure the Graphite the data source
@@ -147,7 +158,7 @@ When your queries include functions, Graphite extracts the associated metrics an
 | `alias(servers.*.{001,002}.*,1,2)`                       | `{server=~"(001,002)"}`          |
 | `interpolate(seriesByTag('foo=bar', 'server=002'), inf)` | `{foo="bar", server="002"}`      |
 
-- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](https://grafana.com/docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc) for steps on setting up a PDC connection.
+- **Private data source connect** - _Only for Grafana Cloud users._ Private data source connect, or PDC, allows you to establish a private, secured connection between a Grafana Cloud instance, or stack, and data sources secured within a private network. Click the drop-down to locate the URL for PDC. For more information regarding Grafana PDC refer to [Private data source connect (PDC)](ref:private-data-source-connect) and [Configure Grafana private data source connect (PDC)](ref:configure-pdc) for steps on setting up a PDC connection.
 
 Click **Manage private data source connect**to open your PDC connection page and view your configuration details.
 
@@ -156,29 +167,6 @@ After configuring your Graphite data source options, click **Save & test** at th
 You should see a confirmation dialog box that says:
 
 **\*\***insert a success message**\*\*\*\***
-
-<!-- 1. Set the data source's basic configuration options:
-
-
-   | Name                    | Description                                                                                                             |
-   | ----------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-   | **Name**                | Sets the name you use to refer to the data source in panels and queries.                                                |
-   | **Default**             | Sets whether the data source is pre-selected for new panels. You can set only one default data source per organization. |
-   | **URL**                 | Sets the HTTP protocol, IP, and port of your graphite-web or graphite-api installation.                                 |
-   | **Auth**                | For details, refer to [Configure Authentication](ref:configure-authentication).                                         |
-   | **Basic Auth**          | Enables basic authentication to the data source.                                                                        |
-   | **User**                | Sets the user name for basic authentication.                                                                            |
-   | **Password**            | Sets the password for basic authentication.                                                                             |
-   | **Custom HTTP Headers** | Click **Add header** to add a custom HTTP header.                                                                       |
-   | **Header**              | Defines the custom header name.                                                                                         |
-   | **Value**               | Defines the custom header value.                                                                                        |
-
-You can also configure settings specific to the Graphite data source:
-
-| Name        | Description                                                                                              |
-| ----------- | -------------------------------------------------------------------------------------------------------- |
-| **Version** | Select your version of Graphite. If you are using Grafana Cloud Graphite, this should be set to `1.1.x`. |
-| **Type**    | Select your type of Graphite. If you are using Grafana Cloud Graphite, this should be set to `Default`.  | -->
 
 ## Provision the data source
 
