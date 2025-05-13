@@ -93,6 +93,9 @@ type AlertmanagerConfig struct {
 
 	// SyncInterval determines how often we should attempt to synchronize configuration.
 	SyncInterval time.Duration
+
+	// Timeout for the HTTP client.
+	Timeout time.Duration
 }
 
 func (cfg *AlertmanagerConfig) Validate() error {
@@ -141,6 +144,7 @@ func NewAlertmanager(ctx context.Context, cfg AlertmanagerConfig, store stateSto
 		TenantID: cfg.TenantID,
 		Password: cfg.BasicAuthPassword,
 		Logger:   logger,
+		Timeout:  cfg.Timeout,
 	}
 	amc, err := remoteClient.NewAlertmanager(amcCfg, metrics, tracer)
 	if err != nil {
