@@ -17,3 +17,8 @@ API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceWrapper,URLs
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,SyncStatus,JobID
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,WebhookResponse,Message
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,FileList,Items
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,HistoryList,Items
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,JobList,Items
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,RepositoryList,Items
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1,ResourceList,Items

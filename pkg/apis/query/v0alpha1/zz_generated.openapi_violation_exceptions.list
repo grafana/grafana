@@ -3,3 +3,5 @@ API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alph
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,replacement,Position
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,replacement,TemplateVariable
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/query/v0alpha1/template,replacement,format
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/query/v0alpha1,DataSourceApiServerList,Items
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/query/v0alpha1,QueryTypeDefinitionList,Items

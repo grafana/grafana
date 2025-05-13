@@ -1,3 +1,5 @@
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1,DashboardCreateResponse,DeleteURL
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1,SnapshotInfo,ExternalURL
 API rule violation: names_match,github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1,SnapshotSharingOptions,SnapshotsEnabled
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1,DashboardSnapshotList,Items
+API rule violation: streaming_list_type_json_tags,github.com/grafana/grafana/pkg/apis/dashboardsnapshot/v0alpha1,SharingOptionsList,Items
