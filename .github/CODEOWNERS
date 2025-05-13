@@ -66,6 +66,7 @@
 /build.go @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
+/scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /hack/ @grafana/grafana-app-platform-squad
 
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
@@ -605,6 +606,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
+/public/app/initApp.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
@@ -788,6 +790,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
+/.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
 /.github/workflows/reject-gh-secrets.yml @grafana/grafana-operator-experience-squad
