@@ -136,7 +136,7 @@ export const LdapSettingsPage = () => {
       setIsLoading(false);
     }
     init();
-  }, [reset]);
+  }, [reset]); // eslint-disable-line react-hooks/exhaustive-deps
   const { t } = useTranslate();
 
   /**

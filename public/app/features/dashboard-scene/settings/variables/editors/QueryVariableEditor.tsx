@@ -4,7 +4,6 @@ import { useAsync } from 'react-use';
 import { SelectableValue, DataSourceInstanceSettings, getDataSourceRef } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { Trans, useTranslate } from '@grafana/i18n';
-import { t } from '@grafana/i18n/internal';
 import { getDataSourceSrv } from '@grafana/runtime';
 import { QueryVariable, sceneGraph, SceneVariable } from '@grafana/scenes';
 import { VariableRefresh, VariableSort } from '@grafana/schema';
@@ -102,7 +101,6 @@ export function getQueryVariableOptions(variable: SceneVariable): OptionsPaneIte
 
   return [
     new OptionsPaneItemDescriptor({
-      title: t('dashboard-scene.query-variable-form.label-editor', 'Query Editor'),
       render: () => <ModalEditor variable={variable} />,
     }),
   ];

@@ -151,6 +151,7 @@ const ImportFromDSRules = () => {
                         render={({ field: { onChange, ref, ...field } }) => (
                           <Stack width={42}>
                             <NestedFolderPicker
+                              permission="view"
                               showRootFolder={false}
                               invalid={!!errors.targetFolder?.message}
                               {...field}
