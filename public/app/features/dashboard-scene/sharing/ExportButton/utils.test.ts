@@ -135,7 +135,7 @@ describe('Dashboard Export Image Utils', () => {
       expect(result.blob).toBe(mockBlob);
       expect(fetchMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: expect.stringMatching(/format=png.*scale=2.*kiosk=true.*hideNav=true.*fullPageImage=true/),
+          url: expect.stringMatching(/height=-1.*scale=2.*kiosk=true.*hideNav=true.*fullPageImage=true/),
           responseType: 'blob',
         })
       );
@@ -146,7 +146,6 @@ describe('Dashboard Export Image Utils', () => {
         absolute: true,
         updateQuery: {
           height: -1,
-          format: 'png',
           scale: 2,
           kiosk: true,
           hideNav: true,
