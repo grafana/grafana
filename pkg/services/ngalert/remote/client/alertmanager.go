@@ -24,6 +24,7 @@ type AlertmanagerConfig struct {
 	Password string
 	URL      *url.URL
 	Logger   log.Logger
+	Timeout  time.Duration
 }
 
 type Alertmanager struct {
@@ -34,12 +35,15 @@ type Alertmanager struct {
 }
 
 func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
-	// First, add the authentication middleware.
-	c := &http.Client{Transport: &MimirAuthRoundTripper{
-		TenantID: cfg.TenantID,
-		Password: cfg.Password,
-		Next:     httpclient.NewHTTPTransport(),
-	}}
+	// First, set up the http client.
+	c := &http.Client{
+		Transport: &MimirAuthRoundTripper{
+			TenantID: cfg.TenantID,
+			Password: cfg.Password,
+			Next:     httpclient.NewHTTPTransport(),
+		},
+		Timeout: cfg.Timeout,
+	}
 
 	tc := client.NewTimedClient(c, metrics.RequestLatency)
 	trc := client.NewTracedClient(tc, tracer, "remote.alertmanager.client")
