@@ -271,8 +271,8 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
     }),
     getPhantomPlugin({
       id: 'grafana-logicmonitor-datasource',
-      description: 'LogicMonitor datasource',
-      name: 'LogicMonitor',
+      description: 'LogicMonitor Devices datasource',
+      name: 'LogicMonitor Devices',
       imgUrl: 'public/img/plugins/logicmonitor.svg',
     }),
   ];
