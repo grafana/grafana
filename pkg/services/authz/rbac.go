@@ -131,7 +131,7 @@ func ProvideStandaloneAuthZClient(
 	cfg *setting.Cfg, features featuremgmt.FeatureToggles, tracer trace.Tracer,
 ) (authlib.AccessClient, error) {
 	if !features.IsEnabledGlobally(featuremgmt.FlagAuthZGRPCServer) {
-		return nil, nil
+		return authlib.FixedAccessClient(false), nil
 	}
 
 	authCfg, err := readAuthzClientSettings(cfg)
