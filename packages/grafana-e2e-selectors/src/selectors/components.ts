@@ -27,6 +27,12 @@ export const versionedComponents = {
     addPanel: {
       '12.1.0': 'data-testid CanvasGridAddActions add-panel',
     },
+    groupPanels: {
+      '12.1.0': 'data-testid CanvasGridAddActions group-panels',
+    },
+    ungroup: {
+      '12.1.0': 'data-testid CanvasGridAddActions ungroup',
+    },
   },
   DashboardEditPaneSplitter: {
     primaryBody: {
