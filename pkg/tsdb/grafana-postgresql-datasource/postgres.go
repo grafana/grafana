@@ -166,9 +166,7 @@ func newPostgresPGX(ctx context.Context, userFacingDefaultError string, rowLimit
 	queryResultTransformer := postgresQueryResultTransformer{}
 	pgxConf.MaxConnLifetime = time.Duration(config.DSInfo.JsonData.ConnMaxLifetime) * time.Second
 	pgxConf.MaxConns = int32(config.DSInfo.JsonData.MaxOpenConns)
-	// There is no MaxIdleConns in pgxpool.Config, so we set MinConns instead
-	// It is recommended in https://github.com/jackc/pgx/issues/1376
-	pgxConf.MinConns = int32(config.DSInfo.JsonData.MaxIdleConns)
+
 	p, err := pgxpool.NewWithConfig(ctx, pgxConf)
 	if err != nil {
 		logger.Error("Failed connecting to Postgres", "err", err)
