@@ -4247,9 +4247,6 @@
       "query-options": "Lekérdezési beállítások",
       "selection-options": "Kijelölés beállításai"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Biztosan visszaállítja az irányítópultot a(z) {{version}} verzióra? Az összes nem mentett módosítás elveszik.",
       "title-restore-version": ""

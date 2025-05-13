@@ -4227,9 +4227,6 @@
       "query-options": "查询选项",
       "selection-options": "选择内容选项"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "您确定要将数据面板还原到版本吗 {{version}}？所有未保存的更改都将丢失。",
       "title-restore-version": ""

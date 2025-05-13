@@ -4227,9 +4227,6 @@
       "query-options": "查詢選項",
       "selection-options": "選擇選項"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "確定要將儀表板還原到版本{{version}}嗎？所有未儲存變更將會遺失。",
       "title-restore-version": ""

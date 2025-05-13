@@ -4247,9 +4247,6 @@
       "query-options": "Options de recherche",
       "selection-options": "Options de sélection"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Voulez-vous vraiment restaurer le tableau de bord dans sa version {{version}} ? Toutes les modifications non enregistrées seront perdues.",
       "title-restore-version": ""

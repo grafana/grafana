@@ -4287,9 +4287,6 @@
       "query-options": "Opcje zapytania",
       "selection-options": "Opcje wyboru"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Czy na pewno chcesz przywrócić pulpit w wersji {{version}}? Wszystkie niezapisane zmiany zostaną utracone.",
       "title-restore-version": ""

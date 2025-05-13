@@ -4247,9 +4247,6 @@
       "query-options": "Opties voor query's",
       "selection-options": "Selectiemogelijkheden"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Weet je zeker dat je het dashboard naar versie {{version}} wilt herstellen? Alle niet opgeslagen wijzigingen zullen verloren gaan.",
       "title-restore-version": ""

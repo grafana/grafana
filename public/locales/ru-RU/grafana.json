@@ -4287,9 +4287,6 @@
       "query-options": "Параметры запросов",
       "selection-options": "Параметры выбора"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Действительно восстановить дашборд до версии {{version}}? Все несохраненные изменения будут потеряны.",
       "title-restore-version": ""

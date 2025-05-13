@@ -4247,9 +4247,6 @@
       "query-options": "Opciones de consulta",
       "selection-options": "Opciones de selección"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "¿Seguro que quieres restaurar el dashboard a la versión {{version}}? Todos los cambios no guardados se perderán.",
       "title-restore-version": ""

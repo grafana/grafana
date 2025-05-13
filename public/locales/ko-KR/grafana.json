@@ -4227,9 +4227,6 @@
       "query-options": "쿼리 옵션",
       "selection-options": "선택 옵션"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "정말 대시보드를 {{version}} 버전으로 복원하시겠어요? 저장하지 않은 변경 사항은 모두 손실됩니다.",
       "title-restore-version": ""

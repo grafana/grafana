@@ -4247,9 +4247,6 @@
       "query-options": "Frågealternativ",
       "selection-options": "Urvalsalternativ"
     },
-    "query-variable-form": {
-      "label-editor": ""
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Är du säker på att du vill återställa instrumentpanelen till version {{version}}? Alla ändringar som inte sparats kommer att gå förlorade.",
       "title-restore-version": ""
