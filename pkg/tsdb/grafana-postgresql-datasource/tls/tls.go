@@ -3,7 +3,6 @@ package tls
 import (
 	"crypto/tls"
 	"crypto/x509"
-	"errors"
 
 	"github.com/grafana/grafana/pkg/tsdb/grafana-postgresql-datasource/sqleng"
 )
@@ -120,16 +119,11 @@ func GetTLSConfig(dsInfo sqleng.DataSourceInfo, readFile ReadFileFunc, serverNam
 
 	switch mode {
 	// `disable` already handled
-	case "":
-		// for backward-compatibility reasons this is the same as `require`
-		return getTLSConfigRequire(certs, serverName)
-	case "require":
-		return getTLSConfigRequire(certs, serverName)
 	case "verify-ca":
 		return getTLSConfigVerifyCA(certs, serverName)
 	case "verify-full":
 		return getTLSConfigVerifyFull(certs, serverName)
 	default:
-		return nil, errors.New("tls: invalid mode " + mode)
+		return getTLSConfigRequire(certs, serverName)
 	}
 }

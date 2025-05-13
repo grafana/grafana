@@ -54,7 +54,7 @@ func TestTLSRequire(t *testing.T) {
 }
 
 func TestTLSRequireWithRootCert(t *testing.T) {
-	rootCertBytes, err := CreateRandomRootCertBytes()
+	rootCertBytes, err := CreateRandomRootCertBytes(t)
 	require.NoError(t, err)
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -75,7 +75,7 @@ func TestTLSRequireWithRootCert(t *testing.T) {
 }
 
 func TestTLSVerifyCA(t *testing.T) {
-	rootCertBytes, err := CreateRandomRootCertBytes()
+	rootCertBytes, err := CreateRandomRootCertBytes(t)
 	require.NoError(t, err)
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -109,7 +109,7 @@ func TestTLSVerifyCANoRootCertProvided(t *testing.T) {
 }
 
 func TestTLSClientCert(t *testing.T) {
-	clientKey, clientCert, err := CreateRandomClientCert()
+	clientKey, clientCert, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -129,7 +129,7 @@ func TestTLSClientCert(t *testing.T) {
 }
 
 func TestTLSMethodFileContentClientCertMissingKey(t *testing.T) {
-	_, clientCert, err := CreateRandomClientCert()
+	_, clientCert, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -146,7 +146,7 @@ func TestTLSMethodFileContentClientCertMissingKey(t *testing.T) {
 }
 
 func TestTLSMethodFileContentClientCertMissingCert(t *testing.T) {
-	clientKey, _, err := CreateRandomClientCert()
+	clientKey, _, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -163,10 +163,10 @@ func TestTLSMethodFileContentClientCertMissingCert(t *testing.T) {
 }
 
 func TestTLSMethodFilePathClientCertMissingKey(t *testing.T) {
-	clientKey, _, err := CreateRandomClientCert()
+	clientKey, _, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
-	readFile := newMockReadFile(map[string]([]byte){
+	readFile := newMockReadFile(t, map[string]([]byte){
 		"path1": clientKey,
 	})
 
@@ -182,10 +182,10 @@ func TestTLSMethodFilePathClientCertMissingKey(t *testing.T) {
 }
 
 func TestTLSMethodFilePathClientCertMissingCert(t *testing.T) {
-	_, clientCert, err := CreateRandomClientCert()
+	_, clientCert, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
-	readFile := newMockReadFile(map[string]([]byte){
+	readFile := newMockReadFile(t, map[string]([]byte){
 		"path1": clientCert,
 	})
 
@@ -201,7 +201,7 @@ func TestTLSMethodFilePathClientCertMissingCert(t *testing.T) {
 }
 
 func TestTLSVerifyFull(t *testing.T) {
-	rootCertBytes, err := CreateRandomRootCertBytes()
+	rootCertBytes, err := CreateRandomRootCertBytes(t)
 	require.NoError(t, err)
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -222,10 +222,10 @@ func TestTLSVerifyFull(t *testing.T) {
 }
 
 func TestTLSMethodFileContent(t *testing.T) {
-	rootCertBytes, err := CreateRandomRootCertBytes()
+	rootCertBytes, err := CreateRandomRootCertBytes(t)
 	require.NoError(t, err)
 
-	clientKey, clientCert, err := CreateRandomClientCert()
+	clientKey, clientCert, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
 	dsInfo := sqleng.DataSourceInfo{
@@ -247,13 +247,13 @@ func TestTLSMethodFileContent(t *testing.T) {
 }
 
 func TestTLSMethodFilePath(t *testing.T) {
-	rootCertBytes, err := CreateRandomRootCertBytes()
+	rootCertBytes, err := CreateRandomRootCertBytes(t)
 	require.NoError(t, err)
 
-	clientKey, clientCert, err := CreateRandomClientCert()
+	clientKey, clientCert, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
-	readFile := newMockReadFile(map[string]([]byte){
+	readFile := newMockReadFile(t, map[string]([]byte){
 		"root-cert-path":   rootCertBytes,
 		"client-key-path":  clientKey,
 		"client-cert-path": clientCert,
@@ -276,7 +276,7 @@ func TestTLSMethodFilePath(t *testing.T) {
 }
 
 func TestTLSMethodFilePathRootCertDoesNotExist(t *testing.T) {
-	readFile := newMockReadFile(map[string]([]byte){})
+	readFile := newMockReadFile(t, map[string]([]byte){})
 
 	dsInfo := sqleng.DataSourceInfo{
 		JsonData: sqleng.JsonData{
@@ -290,10 +290,10 @@ func TestTLSMethodFilePathRootCertDoesNotExist(t *testing.T) {
 }
 
 func TestTLSMethodFilePathClientCertKeyDoesNotExist(t *testing.T) {
-	_, clientCert, err := CreateRandomClientCert()
+	_, clientCert, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
-	readFile := newMockReadFile(map[string]([]byte){
+	readFile := newMockReadFile(t, map[string]([]byte){
 		"cert-path": clientCert,
 	})
 
@@ -310,10 +310,10 @@ func TestTLSMethodFilePathClientCertKeyDoesNotExist(t *testing.T) {
 }
 
 func TestTLSMethodFilePathClientCertCertDoesNotExist(t *testing.T) {
-	clientKey, _, err := CreateRandomClientCert()
+	clientKey, _, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
-	readFile := newMockReadFile(map[string]([]byte){
+	readFile := newMockReadFile(t, map[string]([]byte){
 		"key-path": clientKey,
 	})
 
@@ -331,13 +331,13 @@ func TestTLSMethodFilePathClientCertCertDoesNotExist(t *testing.T) {
 
 // method="" equals to method="file-path"
 func TestTLSMethodEmpty(t *testing.T) {
-	rootCertBytes, err := CreateRandomRootCertBytes()
+	rootCertBytes, err := CreateRandomRootCertBytes(t)
 	require.NoError(t, err)
 
-	clientKey, clientCert, err := CreateRandomClientCert()
+	clientKey, clientCert, err := CreateRandomClientCert(t)
 	require.NoError(t, err)
 
-	readFile := newMockReadFile(map[string]([]byte){
+	readFile := newMockReadFile(t, map[string]([]byte){
 		"root-cert-path":   rootCertBytes,
 		"client-key-path":  clientKey,
 		"client-cert-path": clientCert,
@@ -370,17 +370,6 @@ func TestTLSVerifyFullNoRootCertProvided(t *testing.T) {
 	}
 	_, err := GetTLSConfig(dsInfo, noReadFile, "localhost")
 	require.NoError(t, err)
-}
-
-func TestTLSInvalidMode(t *testing.T) {
-	dsInfo := sqleng.DataSourceInfo{
-		JsonData: sqleng.JsonData{
-			Mode: "not-a-valid-mode",
-		},
-	}
-
-	_, err := GetTLSConfig(dsInfo, noReadFile, "localhost")
-	require.Error(t, err)
 }
 
 func TestTLSServerNameSetInEveryMode(t *testing.T) {

@@ -8,10 +8,12 @@ import (
 	"encoding/pem"
 	"math/big"
 	"os"
+	"testing"
 	"time"
 )
 
-func CreateRandomRootCertBytes() ([]byte, error) {
+func CreateRandomRootCertBytes(t *testing.T) ([]byte, error) {
+	t.Helper()
 	cert := x509.Certificate{
 		SerialNumber: big.NewInt(42),
 		Subject: pkix.Name{
@@ -41,7 +43,8 @@ func CreateRandomRootCertBytes() ([]byte, error) {
 	}), nil
 }
 
-func CreateRandomClientCert() ([]byte, []byte, error) {
+func CreateRandomClientCert(t *testing.T) ([]byte, []byte, error) {
+	t.Helper()
 	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return nil, nil, err
@@ -94,7 +97,8 @@ func CreateRandomClientCert() ([]byte, []byte, error) {
 	return keyBytes, certBytes, nil
 }
 
-func newMockReadFile(data map[string]([]byte)) ReadFileFunc {
+func newMockReadFile(t *testing.T, data map[string]([]byte)) ReadFileFunc {
+	t.Helper()
 	return func(path string) ([]byte, error) {
 		bytes, ok := data[path]
 		if !ok {
