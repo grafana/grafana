@@ -336,9 +336,20 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 		return nil, err
 	}
 
-	m := map[string]*folder.Folder{}
+	filterUIDs := map[string]struct{}{}
+	if len(q.UIDs) > 0 {
+		for _, uid := range q.UIDs {
+			filterUIDs[uid] = struct{}{}
+		}
+	}
+
+	hits := []*folder.Folder{}
 	cache := map[string][]*folder.Folder{}
 	for _, f := range folders {
+		if _, ok := filterUIDs[f.UID]; !ok {
+			continue
+		}
+
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
 			parents, err := ss.getParentsWithCache(ctx, f, cache)
 			if err != nil {
@@ -348,47 +359,18 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 			f.Fullpath, f.FullpathUIDs = computeFullPath(parentsWithSelf)
 		}
 
-		m[f.UID] = f
-	}
-
-	hits := []*folder.Folder{}
-
-	if len(q.UIDs) > 0 {
-		//return only the specified q.UIDs
-		for _, uid := range q.UIDs {
-			f, ok := m[uid]
-			if ok {
-				hits = append(hits, f)
-			}
-		}
-
-		return hits, nil
-	}
-
-	/*
-		if len(q.AncestorUIDs) > 0 {
-			// TODO
-			//return all nodes under those ancestors, requires building a tree
-		}
-	*/
-
-	//return everything
-	for _, f := range m {
 		hits = append(hits, f)
 	}
+
+	// TODO: return all nodes under those ancestors, requires building a tree
+	// if len(q.AncestorUIDs) > 0 {
+	// }
 
 	return hits, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) getParentsWithCache(ctx context.Context, f *folder.Folder, cache map[string][]*folder.Folder) ([]*folder.Folder, error) {
-	parent, err := ss.Get(ctx, folder.GetFolderQuery{UID: &f.ParentUID, OrgID: f.OrgID})
-	if err != nil {
-		if apierrors.IsForbidden(err) {
-		}
-		return nil, err
-	}
-
-	if result, ok := cache[parent.UID]; ok {
+	if result, ok := cache[f.ParentUID]; ok {
 		return result, nil
 	}
 
@@ -397,7 +379,7 @@ func (ss *FolderUnifiedStoreImpl) getParentsWithCache(ctx context.Context, f *fo
 		return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
 	}
 
-	cache[parent.UID] = parents
+	cache[f.ParentUID] = parents
 
 	return parents, nil
 }
