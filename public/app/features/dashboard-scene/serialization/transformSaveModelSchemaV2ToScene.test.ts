@@ -44,7 +44,6 @@ import { DashboardLayoutManager } from '../scene/types/DashboardLayoutManager';
 import { dashboardSceneGraph } from '../utils/dashboardSceneGraph';
 import { getQueryRunnerFor } from '../utils/utils';
 import { validateVariable, validateVizPanel } from '../v2schema/test-helpers';
-
 import { SnapshotVariable } from './custom-variables/SnapshotVariable';
 import {
   getLibraryPanelElement,
