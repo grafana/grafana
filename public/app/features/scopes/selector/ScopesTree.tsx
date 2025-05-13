@@ -5,11 +5,11 @@ import { GrafanaTheme2 } from '@grafana/data/';
 import { ScrollContainer, useStyles2 } from '@grafana/ui';
 
 import { RecentScopes } from './RecentScopes';
-import { isNodeSelectable } from './ScopesSelectorService';
 import { ScopesTreeHeadline } from './ScopesTreeHeadline';
 import { ScopesTreeItem } from './ScopesTreeItem';
 import { ScopesTreeSearch } from './ScopesTreeSearch';
 import { NodesMap, SelectedScope, TreeNode } from './types';
+import { isNodeSelectable } from './scopesTreeUtils';
 
 export interface ScopesTreeProps {
   tree: TreeNode;

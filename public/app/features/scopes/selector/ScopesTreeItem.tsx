@@ -4,8 +4,8 @@ import { GrafanaTheme2 } from '@grafana/data';
 import { Checkbox, Icon, RadioButtonDot, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
 
-import { isNodeExpandable, isNodeSelectable } from './ScopesSelectorService';
 import { ScopesTree } from './ScopesTree';
+import { isNodeExpandable, isNodeSelectable } from './scopesTreeUtils';
 import { NodesMap, SelectedScope, TreeNode } from './types';
 
 export interface ScopesTreeItemProps {
@@ -19,7 +19,7 @@ export interface ScopesTreeItemProps {
 
   onNodeUpdate: (pathOrNodeScopeId: string[] | string, expanded: boolean, query: string) => void;
   selectScope: (pathOrNodeScopeId: string[] | string) => void;
-  deselectScope: (pathOrNodeScopeId: string[] | string) => void;
+  deselectScope: (pathOrScopeId: string[] | string) => void;
 }
 
 export function ScopesTreeItem({

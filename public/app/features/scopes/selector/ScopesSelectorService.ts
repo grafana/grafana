@@ -1,15 +1,25 @@
-import { ScopeNode } from '@grafana/data';
-
 import { ScopesApiClient } from '../ScopesApiClient';
 import { ScopesServiceBase } from '../ScopesServiceBase';
 import { ScopesDashboardsService } from '../dashboards/ScopesDashboardsService';
 
+import {
+  closeNodes,
+  expandNodes,
+  getPathOfNode,
+  isNodeExpandable,
+  isNodeSelectable,
+  modifyTreeNodeAtPath,
+  treeNodeAtPath,
+} from './scopesTreeUtils';
 import { NodesMap, ScopesMap, SelectedScope, TreeNode } from './types';
 
 const RECENT_SCOPES_KEY = 'grafana.scopes.recent';
 
 export interface ScopesSelectorServiceState {
+  // Used to indicate loading of the scopes themselves for example when applying them.
   loading: boolean;
+
+  // Indicates loading children of a specific scope node.
   loadingNodeName: string | undefined;
 
   // Whether the scopes selector drawer is opened
@@ -52,41 +62,22 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
     });
   }
 
-  private treeNodeAtPath(pathOrScopeNodeId: string[] | string) {
-    let path: string[];
-    if (Array.isArray(pathOrScopeNodeId)) {
-      path = pathOrScopeNodeId;
-    } else {
-      path = this.getPathOfNode(this.state.nodes[pathOrScopeNodeId]);
-    }
+  private expandOrFilterNode = async (pathOrScopeNodeId: string[] | string, query?: string) => {
+    const path = Array.isArray(pathOrScopeNodeId)
+      ? pathOrScopeNodeId
+      : getPathOfNode(pathOrScopeNodeId, this.state.nodes);
 
-    if (!this.state.tree || path.length < 1) {
-      return undefined;
-    }
+    const nodeToExpand = treeNodeAtPath(this.state.tree!, path);
 
-    let treeNode: TreeNode | undefined = this.state.tree;
-
-    if (path.length === 1 && path[0] === '') {
-      return treeNode;
-    }
-
-    for (const section of path.slice(1)) {
-      treeNode = treeNode.children?.[section];
-      if (!treeNode) {
-        return undefined;
-      }
-    }
-
-    return treeNode;
-  }
-
-  private expandNode = async (pathOrScopeNodeId: string[] | string) => {
-    const nodeToExpand = this.treeNodeAtPath(pathOrScopeNodeId);
     if (nodeToExpand) {
       if (nodeToExpand.scopeNodeId === '' || isNodeExpandable(this.state.nodes[nodeToExpand.scopeNodeId])) {
-        nodeToExpand.expanded = true;
-        if (!nodeToExpand.children) {
-          await this.loadNodeChildren(nodeToExpand);
+        if (!nodeToExpand.expanded || nodeToExpand.query !== query) {
+          const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+            treeNode.expanded = true;
+            treeNode.query = query || '';
+          });
+          this.updateState({ tree: newTree });
+          await this.loadNodeChildren(path, nodeToExpand, query);
         }
       } else {
         throw new Error(`Trying to expand node at path or id ${pathOrScopeNodeId} that is not expandable`);
@@ -97,59 +88,65 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   };
 
   private collapseNode = async (pathOrScopeNodeId: string[] | string) => {
-    const nodeToCollapse = this.treeNodeAtPath(pathOrScopeNodeId);
+    const path = Array.isArray(pathOrScopeNodeId)
+      ? pathOrScopeNodeId
+      : getPathOfNode(pathOrScopeNodeId, this.state.nodes);
+
+    const nodeToCollapse = treeNodeAtPath(this.state.tree!, path);
     if (nodeToCollapse) {
-      nodeToCollapse.expanded = true;
+      const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+        treeNode.expanded = false;
+        treeNode.query = '';
+      });
+      this.updateState({ tree: newTree });
     } else {
       throw new Error(`Trying to collapse node at path or id ${pathOrScopeNodeId} not found`);
     }
   };
 
-  private filterNodes = async (pathOrScopeNodeId: string[] | string, query: string) => {
-    const nodeToFilter = this.treeNodeAtPath(pathOrScopeNodeId);
-    if (nodeToFilter) {
-      await this.loadNodeChildren(nodeToFilter, query);
-    } else {
-      throw new Error(`Trying to filter node children at path or id ${pathOrScopeNodeId} not found`);
-    }
-  };
-
-  private loadNodeChildren = async (treeNode: TreeNode, query?: string) => {
-    this.updateState({ tree: this.state.tree, loadingNodeName: treeNode.scopeNodeId });
+  private loadNodeChildren = async (path: string[], treeNode: TreeNode, query?: string) => {
+    this.updateState({ loadingNodeName: treeNode.scopeNodeId });
 
     // We are expanding node that wasn't yet expanded so we don't have any query to filter by yet.
     const childNodes = await this.apiClient.fetchNode({ parent: treeNode.scopeNodeId, query });
 
     const newNodes = { ...this.state.nodes };
-    treeNode.children = {};
+
     for (const node of childNodes) {
-      treeNode.children[node.metadata.name] = {
-        expanded: false,
-        scopeNodeId: node.metadata.name,
-        query: '',
-        children: undefined,
-      };
       newNodes[node.metadata.name] = node;
     }
 
-    this.updateState({ nodes: newNodes, loadingNodeName: undefined });
+    const newTree = modifyTreeNodeAtPath(this.state.tree!, path, (treeNode) => {
+      treeNode.children = {};
+      for (const node of childNodes) {
+        treeNode.children[node.metadata.name] = {
+          expanded: false,
+          scopeNodeId: node.metadata.name,
+          query: '',
+          children: undefined,
+        };
+      }
+    });
+
+    console.log('update tree', this.state.tree);
+    this.updateState({ tree: newTree, nodes: newNodes, loadingNodeName: undefined });
   };
 
   public selectScope = async (pathOrNodeScopeId: string[] | string) => {
     let scopeNode;
     if (Array.isArray(pathOrNodeScopeId)) {
-      const nodeToSelect = this.treeNodeAtPath(pathOrNodeScopeId);
+      const nodeToSelect = treeNodeAtPath(this.state.tree!, pathOrNodeScopeId);
       if (!nodeToSelect) {
         throw new Error(`Trying to select node at path ${pathOrNodeScopeId} not found`);
-      }
-
-      if (!isNodeSelectable(this.state.nodes[nodeToSelect.scopeNodeId])) {
-        throw new Error(`Trying to select node at path ${pathOrNodeScopeId} that is not selectable`);
       }
 
       scopeNode = this.state.nodes[nodeToSelect.scopeNodeId];
     } else {
       scopeNode = this.state.nodes[pathOrNodeScopeId];
+    }
+
+    if (!isNodeSelectable(scopeNode)) {
+      throw new Error(`Trying to select node at path ${pathOrNodeScopeId} that is not selectable`);
     }
 
     if (!scopeNode.spec.linkId) {
@@ -158,10 +155,12 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       );
     }
 
+    // We prefetch the scope metadata to make sure we have it cached before we apply the scope.
+    // TODO we can just cache it here in the service
     this.apiClient.fetchScope(scopeNode.spec.linkId);
 
     const parentNode = this.state.nodes[scopeNode.spec.parentName!];
-    const selectedNode = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };
+    const selectedScope = { scopeId: scopeNode.spec.linkId, scopeNodeId: scopeNode.metadata.name };
 
     if (
       // Parent says we can only select one scope at a time.
@@ -172,16 +171,22 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       // cannot select in multiple categories we only need to check the first selected node.
       this.state.nodes[this.state.selectedScopes[0].scopeNodeId!].spec.parentName !== scopeNode.spec.parentName
     ) {
-      this.updateState({ selectedScopes: [selectedNode] });
+      this.updateState({ selectedScopes: [selectedScope] });
     } else {
-      this.updateState({ selectedScopes: [...this.state.selectedScopes, selectedNode] });
+      this.updateState({ selectedScopes: [...this.state.selectedScopes, selectedScope] });
     }
   };
 
-  public deselectScope = async (pathOrScopeId: string[] | string) => {
-    if (Array.isArray(pathOrScopeId)) {
-      const path = pathOrScopeId;
-      const nodeToDeselect = this.treeNodeAtPath(path);
+  /**
+   * Deselect a selected scope.
+   * @param pathOrId This can be either a path or a scopeId or a scopeNodeId. Reason is there are cases where we want
+   *   to deselect a scope that is applied for which we don't have a scopeNodeId, while in the tree scope selector we
+   *   use scopeNodeIds.
+   */
+  public deselectScope = async (pathOrId: string[] | string) => {
+    if (Array.isArray(pathOrId)) {
+      const path = pathOrId;
+      const nodeToDeselect = treeNodeAtPath(this.state.tree!, path);
       if (!nodeToDeselect) {
         throw new Error(`Trying to deselect node at path ${path} not found`);
       }
@@ -192,16 +197,16 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
       return;
     }
 
-    const newSelectedScopes = this.state.selectedScopes.filter((s) => s.scopeId !== pathOrScopeId);
+    // This is the case we just have some id so we directly remove it from selected scopes.
+    let newSelectedScopes = this.state.selectedScopes.filter(
+      (s) => s.scopeNodeId !== pathOrId && s.scopeId !== pathOrId
+    );
     this.updateState({ selectedScopes: newSelectedScopes });
   };
 
   public updateNode = async (pathOrScopeNodeId: string[] | string, expanded: boolean, query: string) => {
     if (expanded) {
-      if (query) {
-        return this.filterNodes(pathOrScopeNodeId, query);
-      }
-      return this.expandNode(pathOrScopeNodeId);
+      return this.expandOrFilterNode(pathOrScopeNodeId, query);
     }
     return this.collapseNode(pathOrScopeNodeId);
   };
@@ -213,23 +218,21 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   /**
    * Apply the selected scopes. Apart from setting the scopes it also fetches the scope metadata and also loads the
    * related dashboards.
-   * @param treeScopes The scopes to be applied. If not provided the treeScopes state is used which was populated
-   *   before for example by toggling the scopes in the scoped tree UI.
    */
   private applyScopes = async (scopes: SelectedScope[]) => {
+    // Skip if we are trying to apply the same scopes as are already applied.
     if (
-      this.state.selectedScopes.length === scopes.length &&
-      this.state.selectedScopes.every((selectedScope) => scopes.find((s) => selectedScope.scopeId === s.scopeId))
+      this.state.appliedScopes.length === scopes.length &&
+      this.state.appliedScopes.every((selectedScope) => scopes.find((s) => selectedScope.scopeId === s.scopeId))
     ) {
       return;
     }
 
     // Apply the scopes right away even though we don't have the metadata yet.
-    this.updateState({ appliedScopes: scopes, loading: true });
-    this.addRecentScopes(scopes);
+    this.updateState({ appliedScopes: scopes, loading: scopes.length > 0 });
 
     if (scopes.length > 0) {
-      this.updateState({ loading: true });
+      this.addRecentScopes(scopes);
       // Fetches both dashboards and scope navigations
       this.dashboardsService.fetchDashboards(scopes.map((s) => s.scopeId));
 
@@ -274,15 +277,16 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
    */
   public open = async () => {
     if (!this.state.tree?.children || Object.keys(this.state.tree?.children).length === 0) {
-      await this.expandNode(['']);
+      await this.expandOrFilterNode(['']);
     }
 
     // First close all nodes
     let newTree = closeNodes(this.state.tree!);
 
     if (this.state.selectedScopes.length && this.state.selectedScopes[0].scopeNodeId) {
-      const node = this.state.nodes[this.state.selectedScopes[0].scopeNodeId];
-      const path = this.getPathOfNode(node);
+      let path = getPathOfNode(this.state.selectedScopes[0].scopeNodeId, this.state.nodes);
+      // we want to expand the nodes parent not the node itself
+      path = path.slice(0, path.length - 1);
 
       // Expand the nodes to the selected scope
       newTree = expandNodes(newTree, path);
@@ -311,65 +315,4 @@ export class ScopesSelectorService extends ScopesServiceBase<ScopesSelectorServi
   public searchAllNodes = (query: string, limit: number) => {
     return this.apiClient.fetchNode({ query, limit });
   };
-
-  private getPathOfNode = (node: ScopeNode): string[] => {
-    return getPathOfNode(node, this.state.nodes);
-  };
-}
-
-/**
- * Creates a deep copy of the node tree with expanded prop set to false.
- */
-function closeNodes(tree: TreeNode): TreeNode {
-  const node = { ...tree };
-  node.expanded = false;
-  if (node.children) {
-    node.children = { ...node.children };
-    for (const key of Object.keys(node.children)) {
-      node.children[key] = closeNodes(node.children[key]);
-    }
-  }
-  return node;
-}
-
-function expandNodes(tree: TreeNode, path: string[]): TreeNode {
-  let newTree = { ...tree };
-  let currentTree = newTree;
-  newTree.expanded = true;
-  // Remove the root segment
-  const newPath = path.slice(1);
-
-  for (const segment of newPath) {
-    const node = currentTree.children?.[segment];
-    if (!node) {
-      throw new Error(`Node ${segment} not found in tree`);
-    }
-
-    const newNode = { ...node };
-    newTree.children = { ...newTree.children };
-    newTree.children[segment] = newNode;
-    newNode.expanded = true;
-    currentTree = newNode;
-  }
-
-  return newTree;
-}
-
-export function isNodeExpandable(node: ScopeNode) {
-  return node.spec.nodeType === 'container';
-}
-
-export function isNodeSelectable(node: ScopeNode) {
-  return node.spec.linkType === 'scope';
-}
-
-export function getPathOfNode(node: ScopeNode, nodes: NodesMap): string[] {
-  const path = [node.metadata.name];
-  let parent = node.spec.parentName;
-  while (parent) {
-    path.unshift(parent);
-    parent = nodes[parent].spec.parentName;
-  }
-  path.unshift('');
-  return path;
 }

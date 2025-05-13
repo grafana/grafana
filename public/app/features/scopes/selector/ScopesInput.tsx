@@ -40,7 +40,14 @@ export function ScopesInput({
     appliedScopes.length > 0 ? <ScopesTooltip nodes={nodes} scopes={scopes} appliedScopes={appliedScopes} /> : <></>;
 
   const scopesTitles = useMemo(
-    () => appliedScopes.map((s) => scopes[s.scopeId].spec.title).join(', '),
+    () =>
+      appliedScopes
+        .map(
+          (s) =>
+            // If we are still loading the scope data just show the id
+            scopes[s.scopeId]?.spec.title || s.scopeId
+        )
+        .join(', '),
     [appliedScopes, scopes]
   );
 
