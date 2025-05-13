@@ -202,60 +202,6 @@ export const handyTestingSchema: Spec = {
         },
       },
     },
-    'panel-3': {
-      kind: 'Panel',
-      spec: {
-        data: {
-          kind: 'QueryGroup',
-          spec: {
-            queries: [
-              {
-                kind: 'PanelQuery',
-                spec: {
-                  refId: 'A',
-                  datasource: {
-                    type: 'prometheus',
-                    uid: 'datasource1',
-                  },
-                  query: {
-                    kind: 'prometheus',
-                    spec: {
-                      expr: 'test-query',
-                    },
-                  },
-                  hidden: false,
-                },
-              },
-            ],
-            queryOptions: {
-              timeFrom: '1h',
-              maxDataPoints: 100,
-              timeShift: '1h',
-              queryCachingTTL: 60,
-              interval: '1m',
-              cacheTimeout: '1m',
-              hideTimeOverride: false,
-            },
-            transformations: [],
-          },
-        },
-        description: 'Test Description',
-        links: [],
-        title: 'Test Panel 3',
-        id: 3,
-        vizConfig: {
-          kind: 'timeseries',
-          spec: {
-            fieldConfig: {
-              defaults: {},
-              overrides: [],
-            },
-            options: {},
-            pluginVersion: '7.0.0',
-          },
-        },
-      },
-    },
   },
   layout: {
     kind: 'GridLayout',
