@@ -15,7 +15,6 @@ import (
 func TestValidateSecureValue(t *testing.T) {
 	t.Run("when creating a new securevalue", func(t *testing.T) {
 		keeper := "keeper"
-
 		validSecureValue := &secretv0alpha1.SecureValue{
 			Spec: secretv0alpha1.SecureValueSpec{
 				Description: "description",
@@ -151,7 +150,6 @@ func TestValidateSecureValue(t *testing.T) {
 		t.Run("when trying to change the `keeper`, it returns an error", func(t *testing.T) {
 			keeperA := "a-keeper"
 			keeperAnother := "another-keeper"
-
 			oldSv := &secretv0alpha1.SecureValue{
 				Spec: secretv0alpha1.SecureValueSpec{
 					Keeper: &keeperA,
