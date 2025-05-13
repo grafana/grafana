@@ -8,25 +8,17 @@ on:
       - '**/*.cue'
   workflow_dispatch:
 
-jobs:
-  config:
-    runs-on: "ubuntu-latest"
-    if: github.repository == 'grafana/grafana'
-    outputs:
-      has-secrets: ${{ steps.check.outputs.has-secrets }}
-    steps:
-      - name: "Check for secrets"
-        id: check
-        shell: bash
-        run: |
-          if [ -n "${{ (secrets.GRAFANA_DELIVERY_BOT_APP_ID != '' &&secrets.GRAFANA_DELIVERY_BOT_APP_PEM != '') || '' }}" ]; then
-            echo "has-secrets=1" >> "$GITHUB_OUTPUT"
-          fi
+permissions: {}
 
+jobs:
   main:
-    needs: config
-    if: github.repository == 'grafana/grafana' && needs.config.outputs.has-secrets
+    if: github.repository == 'grafana/grafana'
     runs-on: "ubuntu-latest"
+    permissions:
+      contents: read # cloning repo
+      actions: read # reading .github/workflows/ dir
+      id-token: write # reading vault secrets
+
     steps:
       - name: "Checkout Grafana repo"
         uses: "actions/checkout@v4"
@@ -42,12 +34,20 @@ jobs:
       - name: "Verify kinds"
         run: go run .github/workflows/scripts/kinds/verify-kinds.go
 
+      - name: "Get vault secrets"
+        id: vault-secrets
+        uses: grafana/shared-workflows/actions/get-vault-secrets@main
+        with:
+          # Secrets placed in the ci/data/repo/grafana/grafana/delivery-bot-app path in Vault
+          repo_secrets: |
+            GRAFANA_DELIVERY_BOT_APP_PEM=delivery-bot-app:PRIVATE_KEY
       - name: "Generate token"
         id: generate_token
-        uses: tibdex/github-app-token@b62528385c34dbc9f38e5f4225ac829252d1ea92
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a
         with:
-          app_id: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_ID }}
-          private_key: ${{ secrets.GRAFANA_DELIVERY_BOT_APP_PEM }}
+          # App needs Actions: Read/Write for the grafana/security-patch-actions repo
+          app_id: ${{ vars.DELIVERY_BOT_APP_ID }}
+          private_key: ${{ env.GRAFANA_DELIVERY_BOT_APP_PEM }}
 
       - name: "Clone website-sync Action"
         run: "git clone --single-branch --no-tags --depth 1 -b master https://grafana-delivery-bot:${{ steps.generate_token.outputs.token }}@github.com/grafana/website-sync ./.github/actions/website-sync"
