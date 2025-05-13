@@ -3,6 +3,7 @@
   "license": "Apache-2.0",
   "name": "@grafana/test-utils",
   "version": "12.0.0-pre",
+  "private": true,
   "description": "Grafana test utils & Mock API",
   "keywords": [
     "grafana",
@@ -20,7 +21,6 @@
   "types": "src/index.ts",
   "module": "src/index.ts",
   "exports": {
-    "./package.json": "./package.json",
     ".": {
       "import": "./src/index.ts",
       "require": "./src/index.ts"
