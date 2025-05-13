@@ -285,7 +285,7 @@ func (am *Alertmanager) isDefaultConfiguration(configHash [16]byte) bool {
 	return fmt.Sprintf("%x", configHash) == am.defaultConfigHash
 }
 
-// decryptConfiguration decrypts the configuration in-place and returns the decrypted configuration alongside its hash.
+// decryptConfiguration creates a copy of the configuration, decrypts it, and returns the decrypted configuration alongside its hash.
 // Should not be used outside of this package and the specific use case of decrypting the configuration before sending
 // it to the remote Alertmanager.
 func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels.PostableUserConfig) ([]byte, [16]byte, error) {
@@ -293,10 +293,18 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 		return am.decrypt(ctx, payload)
 	}
 
-	// Iterate through receivers and decrypt secure settings.
-	// It's not necessary to be careful about not modifying the original, as it's used only in a specific context where
-	// the config is read from json and then immediately sent to the remote Alertmanager.
-	for _, rcv := range cfg.AlertmanagerConfig.Receivers {
+	// Create a copy of the configuration to avoid modifying the original
+	cfgCopy := &apimodels.PostableUserConfig{}
+	rawCfg, err := json.Marshal(cfg)
+	if err != nil {
+		return nil, [16]byte{}, fmt.Errorf("unable to marshal original configuration: %w", err)
+	}
+	if err := json.Unmarshal(rawCfg, cfgCopy); err != nil {
+		return nil, [16]byte{}, fmt.Errorf("unable to unmarshal original configuration: %w", err)
+	}
+
+	// Iterate through receivers and decrypt secure settings on the copy
+	for _, rcv := range cfgCopy.AlertmanagerConfig.Receivers {
 		for _, gmr := range rcv.GrafanaManagedReceivers {
 			decrypted, err := gmr.DecryptSecureSettings(fn)
 			if err != nil {
@@ -306,7 +314,7 @@ func (am *Alertmanager) decryptConfiguration(ctx context.Context, cfg *apimodels
 		}
 	}
 
-	rawDecrypted, err := json.Marshal(cfg)
+	rawDecrypted, err := json.Marshal(cfgCopy)
 	if err != nil {
 		return nil, [16]byte{}, fmt.Errorf("unable to marshal decrypted configuration: %w", err)
 	}
