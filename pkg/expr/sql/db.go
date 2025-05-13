@@ -4,7 +4,9 @@ package sql
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	sqle "github.com/dolthub/go-mysql-server"
 	mysql "github.com/dolthub/go-mysql-server/sql"
@@ -53,11 +55,30 @@ func isFunctionNotFoundError(err error) bool {
 	return mysql.ErrFunctionNotFound.Is(err)
 }
 
+type QueryOption func(*QueryOptions)
+
+type QueryOptions struct {
+	Timeout        time.Duration
+	MaxOutputCells int64
+}
+
+func WithTimeout(d time.Duration) QueryOption {
+	return func(o *QueryOptions) {
+		o.Timeout = d
+	}
+}
+
+func WithMaxOutputCells(n int64) QueryOption {
+	return func(o *QueryOptions) {
+		o.MaxOutputCells = n
+	}
+}
+
 // QueryFrames runs the sql query query against a database created from frames, and returns the frame.
 // The RefID of each frame becomes a table in the database.
 // It is expected that there is only one frame per RefID.
 // The name becomes the name and RefID of the returned frame.
-func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name string, query string, frames []*data.Frame) (*data.Frame, error) {
+func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name string, query string, frames []*data.Frame, opts ...QueryOption) (*data.Frame, error) {
 	// We are parsing twice due to TablesList, but don't care fow now. We can save the parsed query and reuse it later if we want.
 	if allow, err := AllowQuery(query); err != nil || !allow {
 		if err != nil {
@@ -66,6 +87,16 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		return nil, err
 	}
 
+	QueryOptions := &QueryOptions{}
+	for _, opt := range opts {
+		opt(QueryOptions)
+	}
+
+	if QueryOptions.Timeout != 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, QueryOptions.Timeout)
+		defer cancel()
+	}
 	_, span := tracer.Start(ctx, "SSE.ExecuteGMSQuery")
 	defer span.End()
 
@@ -88,15 +119,35 @@ func (db *DB) QueryFrames(ctx context.Context, tracer tracing.Tracer, name strin
 		IsReadOnly: true,
 	})
 
+	contextErr := func(err error) error {
+		switch {
+		case errors.Is(err, context.DeadlineExceeded):
+			return fmt.Errorf("SQL expression for refId %v did not complete within the timeout of %v: %w", name, QueryOptions.Timeout, err)
+		case errors.Is(err, context.Canceled):
+			return fmt.Errorf("SQL expression for refId %v was cancelled before it completed: %w", name, err)
+		default:
+			return fmt.Errorf("SQL expression for refId %v ended unexpectedly: %w", name, err)
+		}
+	}
+
+	// Execute the query (planning + iterator construction)
 	schema, iter, _, err := engine.Query(mCtx, query)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, contextErr(ctx.Err())
+		}
 		return nil, WrapGoMySQLServerError(err)
 	}
 
-	f, err := convertToDataFrame(mCtx, iter, schema)
+	// Convert the iterator into a Grafana data.Frame
+	f, err := convertToDataFrame(mCtx, iter, schema, QueryOptions.MaxOutputCells)
 	if err != nil {
+		if ctx.Err() != nil {
+			return nil, contextErr(ctx.Err())
+		}
 		return nil, err
 	}
+
 	f.Name = name
 	f.RefID = name
 
