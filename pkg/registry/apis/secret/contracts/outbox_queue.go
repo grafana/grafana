@@ -21,7 +21,7 @@ func GetRequestId(ctx context.Context) string {
 }
 
 func ContextWithRequestID(ctx context.Context, requestId string) context.Context {
-	return context.WithValue(ctx, contextRequestIdKey, requestId)
+	return context.WithValue(ctx, contextRequestIdKey{}, requestId)
 }
 
 const (
