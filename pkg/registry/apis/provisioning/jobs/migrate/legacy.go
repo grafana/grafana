@@ -1,17 +1,16 @@
 package migrate
 
 import (
-	"bufio"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
 	provisioning "github.com/grafana/grafana/pkg/apis/provisioning/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/jobs"
 	"github.com/grafana/grafana/pkg/registry/apis/provisioning/repository"
+	gogit "github.com/grafana/grafana/pkg/registry/apis/provisioning/repository/go-git"
 )
 
 type LegacyMigrator struct {
@@ -38,14 +37,9 @@ func NewLegacyMigrator(
 func (m *LegacyMigrator) Migrate(ctx context.Context, rw repository.ReaderWriter, options provisioning.MigrateJobOptions, progress jobs.JobProgressRecorder) error {
 	namespace := rw.Config().Namespace
 
-	reader, writer := io.Pipe()
-	go func() {
-		scanner := bufio.NewScanner(reader)
-		for scanner.Scan() {
-			progress.SetMessage(ctx, scanner.Text())
-		}
-	}()
-
+	writer := gogit.Progress(func(line string) {
+		progress.SetMessage(ctx, line)
+	}, "finished")
 	cloneOptions := repository.CloneOptions{
 		PushOnWrites: options.History,
 		// TODO: make this configurable
