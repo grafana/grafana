@@ -590,6 +590,61 @@ func TestGetFolders(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "should return all folders from k8s",
+			args: args{
+				ctx: context.Background(),
+				q: folder.GetFoldersFromStoreQuery{
+					GetFoldersQuery: folder.GetFoldersQuery{
+						OrgID: orgID,
+					},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:    100000,
+					TypeMeta: metav1.TypeMeta{},
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder1",
+									"uid":  "folder1",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "folder2",
+									"uid":  "folder2",
+								},
+								"spec": map[string]interface{}{
+									"title": "folder2",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+			},
+			want: []*folder.Folder{
+				{
+					UID:   "folder1",
+					Title: "folder1",
+					OrgID: orgID,
+				},
+				{
+					UID:   "folder2",
+					Title: "folder2",
+					OrgID: orgID,
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "should return folders from k8s by uid",
 			args: args{
 				ctx: context.Background(),

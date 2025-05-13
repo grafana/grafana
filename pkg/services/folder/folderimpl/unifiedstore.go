@@ -346,7 +346,7 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	hits := []*folder.Folder{}
 	cache := map[string][]*folder.Folder{}
 	for _, f := range folders {
-		if _, ok := filterUIDs[f.UID]; !ok {
+		if shouldSkipFolder(f, filterUIDs) {
 			continue
 		}
 
@@ -490,4 +490,12 @@ func computeFullPath(parents []*folder.Folder) (string, string) {
 		fullpathUIDs[i] = p.UID
 	}
 	return strings.Join(fullpath, "/"), strings.Join(fullpathUIDs, "/")
+}
+
+func shouldSkipFolder(f *folder.Folder, filterUIDs map[string]struct{}) bool {
+	if len(filterUIDs) == 0 {
+		return false
+	}
+	_, exists := filterUIDs[f.UID]
+	return !exists
 }
