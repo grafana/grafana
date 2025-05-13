@@ -712,6 +712,78 @@ func TestGetFolders(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "should return all folders from k8s with fullpath enabled",
+			args: args{
+				ctx: context.Background(),
+				q: folder.GetFoldersFromStoreQuery{
+					GetFoldersQuery: folder.GetFoldersQuery{
+						OrgID:        orgID,
+						WithFullpath: true,
+					},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
+					Limit:         100000,
+					TypeMeta:      metav1.TypeMeta{},
+					LabelSelector: "grafana.app/fullpath=true",
+				}).Return(&unstructured.UnstructuredList{
+					Items: []unstructured.Unstructured{
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "root1",
+									"uid":  "root1",
+								},
+								"spec": map[string]interface{}{
+									"title": "root1",
+								},
+							},
+						},
+						{
+							Object: map[string]interface{}{
+								"metadata": map[string]interface{}{
+									"name": "root2",
+									"uid":  "root2",
+								},
+								"spec": map[string]interface{}{
+									"title": "root2",
+								},
+							},
+						},
+					},
+				}, nil).Once()
+				mockCli.On("Get", mock.Anything, "root1", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name": "root1",
+							"uid":  "root1",
+						},
+						"spec": map[string]interface{}{
+							"title": "root1",
+						},
+					},
+				}, nil).Once()
+			},
+			want: []*folder.Folder{
+				{
+					UID:          "root1",
+					Title:        "root1",
+					OrgID:        orgID,
+					Fullpath:     "root1",
+					FullpathUIDs: "root1",
+				},
+				{
+					UID:          "root2",
+					Title:        "root2",
+					OrgID:        orgID,
+					Fullpath:     "root2",
+					FullpathUIDs: "root2",
+				},
+			},
+			wantErr: false,
+		},
+		{
 			name: "should return folders from k8s by uid with fullpath enabled",
 			args: args{
 				ctx: context.Background(),
