@@ -13,7 +13,6 @@ import {
   GroupByVariable,
   AdHocFiltersVariable,
   SceneDataTransformer,
-  SceneGridRow,
   SceneGridItem,
 } from '@grafana/scenes';
 import { handyTestingSchema } from '@grafana/schema/dist/esm/schema/dashboard/v2_examples';
