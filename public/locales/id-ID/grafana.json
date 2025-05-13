@@ -2786,6 +2786,10 @@
     "actions": {
       "button-to-recently-deleted": "Baru dihapus"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "",
+      "title-ruler-namespace-error": ""
+    },
     "browse-view": {
       "this-folder-is-empty": "Folder ini kosong"
     },
@@ -3397,6 +3401,11 @@
         "name": "",
         "open-editor": "Buka editor variabel",
         "open-editor-tooltip": "Untuk opsi variabel lainnya, buka editor variabel",
+        "query-options": {
+          "close": "",
+          "modal-title": "",
+          "preview": ""
+        },
         "selection-options": {
           "allow-custom-values": "Izinkan nilai kustom",
           "allow-custom-values-description": "Memungkinkan pengguna untuk memasukkan nilai",
@@ -5341,9 +5350,6 @@
     "description": "Perubahan yang Anda buat tidak akan disimpan.",
     "discard-button": "Buang perubahan yang belum disimpan",
     "title": "Keluar dari halaman?"
-  },
-  "frontendtests": {
-    "test-key": "test-key tidak ditemukan"
   },
   "gen-ai": {
     "apply-suggestion": "Terapkan",

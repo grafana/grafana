@@ -6,6 +6,11 @@ import { GrafanaTheme2, NavModel } from '@grafana/data';
 import { LinkButton, useStyles2 } from '@grafana/ui';
 import { Page } from 'app/core/components/Page/Page';
 import { Trans, t } from 'app/core/internationalization';
+import checkmarkSvg from 'img/licensing/checkmark.svg';
+import customerSupportSvg from 'img/licensing/customer_support.svg';
+import handinhandSupportSvg from 'img/licensing/handinhand_support.svg';
+import pluginEnterpriseSvg from 'img/licensing/plugin_enterprise.svg';
+import slaSvg from 'img/licensing/sla.svg';
 
 import { getNavModel } from '../../core/selectors/navModel';
 import { StoreState } from '../../types';
@@ -112,15 +117,12 @@ const ServiceInfo = () => {
       <List>
         <Item
           title={t('admin.service-info.title-enterprise-plugins', 'Enterprise Plugins')}
-          image="public/img/licensing/plugin_enterprise.svg"
+          image={pluginEnterpriseSvg}
         />
-        <Item
-          title={t('admin.service-info.title-critical-sla-hours', 'Critical SLA: 2 hours')}
-          image="public/img/licensing/sla.svg"
-        />
+        <Item title={t('admin.service-info.title-critical-sla-hours', 'Critical SLA: 2 hours')} image={slaSvg} />
         <Item
           title={t('admin.service-info.title-unlimited-expert-support', 'Unlimited Expert Support')}
-          image="public/img/licensing/customer_support.svg"
+          image={customerSupportSvg}
         >
           <Trans i18nKey="admin.service-info.year-round-support">24 × 7 × 365 support via</Trans>
           <List nested={true}>
@@ -134,7 +136,7 @@ const ServiceInfo = () => {
             'admin.service-info.title-handinhand-support-in-the-upgrade-process',
             'Hand-in-hand support in the upgrade process'
           )}
-          image="public/img/licensing/handinhand_support.svg"
+          image={handinhandSupportSvg}
         />
       </List>
 
@@ -241,7 +243,7 @@ interface ItemProps {
 }
 
 const Item = ({ children, title, image }: React.PropsWithChildren<ItemProps>) => {
-  const imageUrl = image ? image : 'public/img/licensing/checkmark.svg';
+  const imageUrl = image ? image : checkmarkSvg;
   const itemStyle = css({
     display: 'flex',
 

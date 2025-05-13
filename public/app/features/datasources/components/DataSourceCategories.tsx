@@ -26,7 +26,7 @@ export function DataSourceCategories({ categories, onClickDataSourceType }: Prop
   const handleClick = useCallback(() => {
     reportInteraction('connections_add_datasource_find_more_ds_plugins_clicked', {
       targetPath: moreDataSourcesLink,
-      path: location.pathname,
+      path: window.location.pathname,
       creator_team: 'grafana_plugins_catalog',
       schema_version: '1.0.0',
     });
