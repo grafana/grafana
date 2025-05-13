@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/tests/apis"
 	"github.com/grafana/grafana/pkg/tests/testinfra"
 	"github.com/grafana/grafana/pkg/tests/testsuite"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -143,23 +142,20 @@ func mustGenerateSecureValue(t *testing.T, helper *apis.K8sTestHelper, user apis
 	require.NotNil(t, raw)
 
 	// Before returning, we need to wait for the outbox to process it, and the status.phase to be Succeeded.
-	require.EventuallyWithT(t, func(collect *assert.CollectT) {
-		result, err := secureValueClient.Resource.Get(ctx, raw.GetName(), metav1.GetOptions{})
-		require.NoError(t, err)
-		require.NotNil(t, result)
-
-		status, ok := result.Object["status"].(map[string]any)
-		require.True(t, ok)
-		require.NotNil(t, status)
-
-		statusPhase, ok := status["phase"].(string)
-		require.True(t, ok)
-		require.Equal(t, "Succeeded", statusPhase)
-	}, 10*time.Second, 250*time.Millisecond, "expected status to be Succeeded")
+	requireThatEventuallyTheSecureValueIsProcessed(t, ctx, secureValueClient, raw.GetName())
 
 	t.Cleanup(func() {
+		// Before cleaning up, wait otherwise we get an error of only 1 operation at a time.
+		// This makes the tests slower, maybe we don't need to clean up?
+		requireThatEventuallyTheSecureValueIsProcessed(t, ctx, secureValueClient, raw.GetName())
+
 		require.NoError(t, secureValueClient.Resource.Delete(ctx, raw.GetName(), metav1.DeleteOptions{}))
 	})
+
+	// Call one last time to get the up-to-date data.
+	raw, err = secureValueClient.Resource.Get(ctx, raw.GetName(), metav1.GetOptions{})
+	require.NoError(t, err)
+	require.NotNil(t, raw)
 
 	return raw
 }
@@ -191,4 +187,29 @@ func mustGenerateKeeper(t *testing.T, helper *apis.K8sTestHelper, user apis.User
 	})
 
 	return raw
+}
+
+func requireThatEventuallyTheSecureValueIsProcessed(t *testing.T, ctx context.Context, secureValueClient *apis.K8sResourceClient, name string) {
+	t.Helper()
+
+	require.Eventually(
+		t,
+		func() bool {
+			result, err := secureValueClient.Resource.Get(ctx, name, metav1.GetOptions{})
+			require.NoError(t, err)
+			require.NotNil(t, result)
+
+			status, ok := result.Object["status"].(map[string]any)
+			require.True(t, ok)
+			require.NotNil(t, status)
+
+			statusPhase, ok := status["phase"].(string)
+			require.True(t, ok)
+
+			return statusPhase == "Succeeded"
+		},
+		10*time.Second,
+		250*time.Millisecond,
+		"expected status.phase to be Succeeded",
+	)
 }
