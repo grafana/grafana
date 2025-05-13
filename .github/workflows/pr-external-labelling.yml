@@ -2,7 +2,7 @@ name: External PR labelling
 
 on:
   # We need "write" permissions on the PR to be able to add a label.
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] We need this to have labelling permissions. There are no user inputs here, so we should be fine.
     types:
       - opened
 
