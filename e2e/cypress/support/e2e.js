@@ -1,4 +1,5 @@
 require('./commands');
+require('./assertions');
 
 Cypress.Screenshot.defaults({
   screenshotOnRunFailure: false,
