@@ -325,6 +325,10 @@ Grafana provides several optional annotations.
 
 [//]: <> ({{< docs/shared lookup="alerts/configure-notification-message.md" source="grafana" version="<GRAFANA_VERSION>" >}})
 
+## Bulk delete all alert rules within a folder
+
+Admin users can delete all of the alert rules within a folder. To delete all the alert rules in a folder, click the menu icon and select **Delete**. Then type "Delete" into the field and click **Delete** to confirm the bulk deletion.
+
 ## Permanently delete or restore deleted alert rules
 
 Only users with an Admin role can restore deleted Grafana-managed alert rules. After an alert rule is restored, it is restored with a new, different UID from the one it had before.
