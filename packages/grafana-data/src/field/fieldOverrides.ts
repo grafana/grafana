@@ -485,7 +485,10 @@ export const getLinksSupplier =
       if (href) {
         href = locationUtil.assureBaseUrl(href.replace(/\n/g, ''));
         href = replaceVariables(href, dataLinkScopedVars, VariableFormatID.UriEncode);
-        href = locationUtil.processUrl(href);
+
+        if (href?.length > 0) {
+          href = locationUtil.processUrl(href);
+        }
       }
 
       if (link.onClick) {
