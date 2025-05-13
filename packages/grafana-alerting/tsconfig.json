@@ -4,15 +4,7 @@
     "declarationDir": "./compiled",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
-    "rootDirs": ["."],
-    "moduleResolution": "bundler",
-    "types": ["node", "jest", "@testing-library/jest-dom"]
-  },
-  "ts-node": {
-    "compilerOptions": {
-      "module": "ESNext",
-      "moduleResolution": "Node"
-    }
+    "rootDirs": ["."]
   },
   "exclude": ["dist/**/*"],
   "extends": "@grafana/tsconfig",

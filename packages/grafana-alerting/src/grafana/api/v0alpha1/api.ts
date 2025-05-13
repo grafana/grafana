@@ -11,9 +11,7 @@ const reducerPath = getAPIReducerPath(GROUP, VERSION);
 export const api = createApi({
   reducerPath,
   baseQuery: fetchBaseQuery({
-    // Set URL correctly so MSW can intercept requests
-    // https://mswjs.io/docs/runbook#rtk-query-requests-are-not-intercepted
-    baseUrl: new URL(baseUrl, window.location.origin).href,
+    baseUrl,
   }),
   endpoints: () => ({}),
 });
