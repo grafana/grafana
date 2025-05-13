@@ -38,6 +38,8 @@ jobs:
         uses: cypress-io/github-action@108b8684ae52e735ff7891524cbffbcd4be5b19f
         with:
           runTests: false
+      - name: Copy custom.ini file to enable backend feature toggles
+        run: cp -rf ${{ github.workspace }}/e2e/dashboard-new-layouts/kubernetes-dashboards-custom.ini ${{ github.workspace }}/scripts/grafana-server/custom.ini
       - name: Run dashboardNewLayouts e2e
         run: yarn e2e:dashboard-new-layouts
       - name: Post PR comment on fail

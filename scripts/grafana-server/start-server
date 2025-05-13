@@ -34,7 +34,12 @@ mkdir $PROV_DIR/dashboards
 mkdir $PROV_DIR/alerting
 mkdir $PROV_DIR/plugins
 
-cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
+if [ "$ENABLE_KUBERNETES_DASHBOARDS" = "true" ]; then
+  cp ./e2e/dashboard-new-layouts/kubernetes-dashboards-custom.ini $RUNDIR/conf/custom.ini
+else
+  cp ./scripts/grafana-server/custom.ini $RUNDIR/conf/custom.ini
+fi
+
 cp ./conf/defaults.ini $RUNDIR/conf/defaults.ini
 
 echo -e "Copying custom plugins from e2e tests"
