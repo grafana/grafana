@@ -31,9 +31,18 @@ func (s *healthServer) AuthFuncOverride(ctx context.Context, _ string) (context.
 	return ctx, nil
 }
 
-// List implements HealthService.
-func (s *healthServer) List(context.Context, *grpc_health_v1.HealthListRequest) (*grpc_health_v1.HealthListResponse, error) {
-	panic("unimplemented")
+func (s *healthServer) List(ctx context.Context, req *grpc_health_v1.HealthListRequest) (*grpc_health_v1.HealthListResponse, error) {
+	h, err := s.Check(ctx, &grpc_health_v1.HealthCheckRequest{
+		Service: "all", // not used!
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &grpc_health_v1.HealthListResponse{
+		Statuses: map[string]*grpc_health_v1.HealthCheckResponse{
+			"all": h,
+		},
+	}, nil
 }
 
 func (s *healthServer) Check(ctx context.Context, req *grpc_health_v1.HealthCheckRequest) (*grpc_health_v1.HealthCheckResponse, error) {
