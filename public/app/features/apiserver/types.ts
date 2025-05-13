@@ -97,7 +97,7 @@ type GrafanaClientAnnotations = {
   [AnnoKeyFolderTitle]?: string;
   [AnnoKeyFolderUrl]?: string;
   [AnnoKeySavedFromUI]?: string;
-  [AnnoKeyDashboardIsSnapshot]?: boolean;
+  [AnnoKeyDashboardIsSnapshot]?: string;
   [AnnoKeyDashboardSnapshotOriginalUrl]?: string;
   [AnnoKeyGrantPermissions]?: string;
   // TODO: This should be provided by the API

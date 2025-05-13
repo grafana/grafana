@@ -30,6 +30,7 @@ import {
   QueryVariableKind,
   TextVariableKind,
 } from '@grafana/schema/dist/esm/schema/dashboard/v2alpha1/types.spec.gen';
+import { AnnoKeyDashboardIsSnapshot } from 'app/features/apiserver/types';
 import { DashboardWithAccessInfo } from 'app/features/dashboard/api/types';
 import { MIXED_DATASOURCE_NAME } from 'app/plugins/datasource/mixed/MixedDataSource';
 
@@ -367,7 +368,7 @@ describe('transformSaveModelSchemaV2ToScene', () => {
           ...defaultDashboard.metadata,
           annotations: {
             ...defaultDashboard.metadata.annotations,
-            'grafana.app/dashboard-is-snapshot': true,
+            [AnnoKeyDashboardIsSnapshot]: 'true',
           },
         },
       };

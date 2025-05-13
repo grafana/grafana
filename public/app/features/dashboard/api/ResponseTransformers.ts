@@ -131,9 +131,15 @@ export function ensureV2Response(
       [AnnoKeyUpdatedTimestamp]: dto.meta.updated,
       [AnnoKeyFolder]: dto.meta.folderUid,
       [AnnoKeySlug]: dto.meta.slug,
-      [AnnoKeyDashboardGnetId]: dashboard.gnetId ?? undefined,
-      [AnnoKeyDashboardIsSnapshot]: dto.meta.isSnapshot,
     };
+    if (dashboard.gnetId) {
+      annotationsMeta[AnnoKeyDashboardGnetId] = dashboard.gnetId;
+    }
+    if (dto.meta.isSnapshot) {
+      // FIXME -- lets not put non-annotation data in annotations!
+      annotationsMeta[AnnoKeyDashboardIsSnapshot] = 'true';
+    }
+
     creationTimestamp = dto.meta.created;
     labelsMeta = {
       [DeprecatedInternalId]: dashboard.id?.toString() ?? undefined,
