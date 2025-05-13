@@ -188,8 +188,6 @@ export class DashboardScene extends SceneObjectBase<DashboardSceneState> impleme
     DashboardJson | DashboardV2Spec
   >;
 
-  private _layoutRestorer = new LayoutRestorer();
-
   public constructor(state: Partial<DashboardSceneState>, serializerVersion: 'v1' | 'v2' = 'v1') {
     super({
       title: 'Dashboard',
