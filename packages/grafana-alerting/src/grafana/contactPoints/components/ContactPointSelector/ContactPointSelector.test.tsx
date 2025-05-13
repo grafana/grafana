@@ -1,4 +1,4 @@
-import { screen, render } from '../../../../../tests/test-utils';
+import { screen, render, findByText, within } from '../../../../../tests/test-utils';
 import { getContactPointDescription } from '../../utils';
 
 import { ContactPointSelector } from './ContactPointSelector';
@@ -42,8 +42,12 @@ describe('listing contact points', () => {
     // @TODO technically we could be matching descriptions of other options by we can't seem to use the "option"
     // semantic roles here when we also have a description
     for (let item of simpleContactPointsList.items) {
-      expect(await screen.findByText(item.spec.title)).toBeInTheDocument();
-      expect(await screen.findByText(getContactPointDescription(item))).toBeInTheDocument();
+      const option = await screen.findByText(item.spec.title);
+      expect(option).toBeInTheDocument();
+      expect(
+        // @ts-expect-error
+        within(optionText.closest('[role=option]')).getByText(getContactPointDescription(item))
+      ).toBeInTheDocument();
     }
 
     // test interaction with combobox and handler contract
