@@ -4,7 +4,7 @@ import { MouseEvent, useCallback, useEffect, useState } from 'react';
 import { GrafanaTheme2 } from '@grafana/data';
 import { selectors } from '@grafana/e2e-selectors';
 import { VariableValueOption } from '@grafana/scenes';
-import { Button, InlineFieldRow, InlineLabel, useStyles2 } from '@grafana/ui';
+import { Button, InlineFieldRow, InlineLabel, useStyles2, Text } from '@grafana/ui';
 import { Trans } from 'app/core/internationalization';
 
 export interface VariableValuesPreviewProps {
@@ -30,9 +30,9 @@ export const VariableValuesPreview = ({ options }: VariableValuesPreviewProps) =
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', marginTop: '16px' }}>
-      <h5>
+      <Text variant="bodySmall" weight="medium">
         <Trans i18nKey="dashboard-scene.variable-values-preview.preview-of-values">Preview of values</Trans>
-      </h5>
+      </Text>
       <InlineFieldRow>
         {previewOptions.map((o, index) => (
           <InlineFieldRow key={`${o.value}-${index}`} className={styles.optionContainer}>

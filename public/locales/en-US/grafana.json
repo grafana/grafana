@@ -2799,6 +2799,10 @@
     "actions": {
       "button-to-recently-deleted": "Recently deleted"
     },
+    "browse-folder-alerting-page": {
+      "title-folder-not-found": "Folder not found",
+      "title-ruler-namespace-error": "Cannot load rules"
+    },
     "browse-view": {
       "this-folder-is-empty": "This folder is empty"
     },
@@ -3415,6 +3419,11 @@
         "name": "Name",
         "open-editor": "Open variable editor",
         "open-editor-tooltip": "For more variable options open variable editor",
+        "query-options": {
+          "close": "Close",
+          "modal-title": "Query Variable",
+          "preview": "Preview"
+        },
         "selection-options": {
           "allow-custom-values": "Allow custom values",
           "allow-custom-values-description": "Enables users to enter values",

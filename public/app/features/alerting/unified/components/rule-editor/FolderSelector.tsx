@@ -50,6 +50,7 @@ export function FolderSelector() {
               render={({ field: { ref, ...field } }) => (
                 <div style={{ width: 420 }}>
                   <NestedFolderPicker
+                    permission="view"
                     showRootFolder={false}
                     invalid={!!errors.folder?.message}
                     {...field}
