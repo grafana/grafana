@@ -80,7 +80,6 @@ import { setupKeyboardShortcuts } from './keyboardShortcuts';
 import { AutoGridItem } from './layout-auto-grid/AutoGridItem';
 import { DashboardGridItem } from './layout-default/DashboardGridItem';
 import { DefaultGridLayoutManager } from './layout-default/DefaultGridLayoutManager';
-import { LayoutRestorer } from './layouts-shared/LayoutRestorer';
 import { addNewRowTo, addNewTabTo } from './layouts-shared/addNew';
 import { clearClipboard } from './layouts-shared/paste';
 import { DashboardLayoutManager } from './types/DashboardLayoutManager';

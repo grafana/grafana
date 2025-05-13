@@ -9,7 +9,7 @@ import { OptionsPaneCategoryDescriptor } from 'app/features/dashboard/components
 import { OptionsPaneItemDescriptor } from 'app/features/dashboard/components/PanelEditor/OptionsPaneItemDescriptor';
 import { getPanelLinksVariableSuggestions } from 'app/features/panel/panellinks/link_srv';
 
-import { DashboardEditActionEvent, publishEditAction } from '../edit-pane/shared';
+import { publishEditAction } from '../edit-pane/shared';
 import { VizPanelLinks } from '../scene/PanelLinks';
 import { PanelTimeRange } from '../scene/PanelTimeRange';
 import { useEditPaneInputAutoFocus } from '../scene/layouts-shared/utils';

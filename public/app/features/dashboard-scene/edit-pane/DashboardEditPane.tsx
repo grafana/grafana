@@ -16,6 +16,7 @@ import {
   ObjectRemovedFromCanvasEvent,
   ObjectsReorderedOnCanvasEvent,
 } from './shared';
+import { isDashboardLayoutItem } from '../scene/types/DashboardLayoutItem';
 
 export interface DashboardEditPaneState extends SceneObjectState {
   selection?: ElementSelection;
