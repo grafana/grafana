@@ -219,7 +219,7 @@ func validateSecureValueCreate(sv *secretv0alpha1.SecureValue) field.ErrorList {
 	errs := make(field.ErrorList, 0)
 
 	if sv.Spec.Description == "" {
-		errs = append(errs, field.Required(field.NewPath("spec", "Description"), "a `Description` is required"))
+		errs = append(errs, field.Required(field.NewPath("spec", "description"), "a `Description` is required"))
 	}
 
 	if sv.Spec.Value == "" && (sv.Spec.Ref == nil || (sv.Spec.Ref != nil && *sv.Spec.Ref == "")) {
