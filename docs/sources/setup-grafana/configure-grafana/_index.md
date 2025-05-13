@@ -2787,6 +2787,7 @@ Set the maximum number of cells that can be passed to a SQL expression. Default 
 Set the maximum number of cells that can be returned from a SQL expression. Default is `100000`.
 
 #### `sql_expression_timeout`
+
 The duration a SQL expression will run before being cancelled. The default is `10s`.
 
 ### `[geomap]`
