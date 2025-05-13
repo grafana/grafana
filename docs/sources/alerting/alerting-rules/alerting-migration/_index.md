@@ -12,6 +12,8 @@ refs:
   import-ds-rules-api:
     - pattern: /docs/grafana/
       destination: /docs/grafana/<GRAFANA_VERSION>/alerting/alerting-rules/alerting-migration/migration-api/
+    - pattern: /docs/grafana-cloud/
+      destination: /docs/grafana-cloud/alerting-and-irm/alerting/alerting-rules/alerting-migration/migration-api/
 ---
 
 # Import data source-managed alert rules
