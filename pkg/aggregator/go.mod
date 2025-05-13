@@ -4,7 +4,7 @@ go 1.24.3
 
 require (
 	github.com/emicklei/go-restful/v3 v3.11.0
-	github.com/grafana/grafana-plugin-sdk-go v0.275.0
+	github.com/grafana/grafana-plugin-sdk-go v0.277.0
 	github.com/grafana/grafana/pkg/apimachinery v0.0.0-20240808213237-f4d2e064f435
 	github.com/grafana/grafana/pkg/semconv v0.0.0-20240808213237-f4d2e064f435
 	github.com/mattbaird/jsonpatch v0.0.0-20240118010651-0ba75a80ca38
@@ -43,7 +43,7 @@ require (
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
 	github.com/fxamacker/cbor/v2 v2.7.0 // indirect
-	github.com/getkin/kin-openapi v0.131.0 // indirect
+	github.com/getkin/kin-openapi v0.132.0 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
