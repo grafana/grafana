@@ -11,7 +11,7 @@ type contextRequestIdKey struct{}
 type OutboxMessageType string
 
 func GetRequestId(ctx context.Context) string {
-	v := ctx.Value(contextRequestIdKey)
+	v := ctx.Value(contextRequestIdKey{})
 	requestId, ok := v.(string)
 	if !ok {
 		return ""
