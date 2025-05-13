@@ -452,7 +452,7 @@ devenv-mysql:
 .PHONY: protobuf
 protobuf: ## Compile protobuf definitions
 	bash scripts/protobuf-check.sh
-	go install google.golang.org/protobuf/cmd/protoc-gen-go
+	go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.5
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.4.0
 	buf generate pkg/plugins/backendplugin/pluginextensionv2 --template pkg/plugins/backendplugin/pluginextensionv2/buf.gen.yaml
 	buf generate pkg/apis/secret/v0alpha1/decrypt --template pkg/apis/secret/v0alpha1/decrypt/buf.gen.yaml
