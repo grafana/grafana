@@ -67,7 +67,7 @@ describe.skip('Prometheus query editor', () => {
     e2e.components.DataSource.Prometheus.queryEditor.format().scrollIntoView().should('exist');
     cy.get(`[data-test-id="prometheus-step"]`).scrollIntoView().should('exist');
     e2e.components.DataSource.Prometheus.queryEditor.type().scrollIntoView().should('exist');
-    cy.get(`[data-test-id="prometheus-exemplars"]`).scrollIntoView().should('exist');
+    cy.get(`[data-testid="prometheus-exemplars"]`).scrollIntoView().should('exist');
   });
 
   describe('Code editor', () => {
