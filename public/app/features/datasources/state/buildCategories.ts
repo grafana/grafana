@@ -1,6 +1,7 @@
 import { DataSourcePluginMeta, PluginType } from '@grafana/data';
 import { featureEnabled } from '@grafana/runtime';
 import { DataSourcePluginCategory } from 'app/types';
+import logicMonitorImg from 'public/img/plugins/logicmonitor.svg';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
@@ -273,7 +274,7 @@ function getEnterprisePhantomPlugins(): DataSourcePluginMeta[] {
       id: 'grafana-logicmonitor-datasource',
       description: 'LogicMonitor Devices datasource',
       name: 'LogicMonitor Devices',
-      imgUrl: 'public/img/plugins/logicmonitor.svg',
+      imgUrl: logicMonitorImg,
     }),
   ];
 }
