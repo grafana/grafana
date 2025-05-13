@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - km/upload-go-unit-test-reports
       - release-*.*.*
     paths-ignore:
       - 'docs/**'
