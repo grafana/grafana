@@ -9,7 +9,7 @@ describe('Grouping panels', () => {
     e2e.flows.revertAllChanges();
   });
 
-  it.only('can group new panels into row', () => {
+  it('can group and ungroup new panels into row', () => {
     e2e.flows.addDashboard({ title: 'Group new panels into row' });
     cy.contains('Group new panels into row').should('be.visible');
 
@@ -51,9 +51,10 @@ describe('Grouping panels', () => {
 
     // Verify Row title is gone
     e2e.components.DashboardRow.title('New row').should('not.exist');
+    e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
   });
 
-  it('can group new panels into tab', () => {
+  it('can group and ungroup new panels into tab', () => {
     e2e.flows.addDashboard({ title: 'Group new panels into tab' });
     cy.contains('Group new panels into tab').should('be.visible');
 
@@ -72,15 +73,15 @@ describe('Grouping panels', () => {
     e2e.components.Tab.title('New tab').should('be.visible');
     e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
 
-    //Save dashboards and reload
-    // e2e.flows.scenes.saveDashboard();
-    // cy.reload();
+    // Save dashboards and reload
+    e2e.flows.scenes.saveDashboard();
+    cy.reload();
 
     // Verify row and panel titles after reload
-    // e2e.components.DashboardRow.title('New row').should('be.visible');
-    // e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
+    e2e.components.Tab.title('New tab').should('be.visible');
+    e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
 
-    // e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
+    e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
 
     // Ungroup
     e2e.flows.scenes.ungroupPanels();
@@ -89,15 +90,16 @@ describe('Grouping panels', () => {
     e2e.components.Tab.title('New tab').should('not.exist');
     e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
 
-    // //Save dashboards and reload
-    // e2e.flows.scenes.saveDashboard();
-    // cy.reload();
+    // Save dashboards and reload
+    e2e.flows.scenes.saveDashboard();
+    cy.reload();
 
-    // // Verify Row title is gone
-    // e2e.components.DashboardRow.title('New row').should('not.exist');
+    // Verify Row title is gone
+    e2e.components.Tab.title('New tab').should('not.exist');
+    e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
   });
 
-  it('can group new panels into tab with row', () => {
+  it('can group and ungroup new panels into tab with row', () => {
     e2e.flows.addDashboard({ title: 'Group new panels into tab with row' });
     cy.contains('Group new panels into tab with row').should('be.visible');
 
@@ -118,30 +120,33 @@ describe('Grouping panels', () => {
     e2e.components.DashboardRow.title('New row').should('be.visible');
     e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
 
-    //Save dashboards and reload
-    // e2e.flows.scenes.saveDashboard();
-    // cy.reload();
+    // Save dashboards and reload
+    e2e.flows.scenes.saveDashboard();
+    cy.reload();
 
-    // Verify row and panel titles after reload
-    // e2e.components.DashboardRow.title('New row').should('be.visible');
-    // e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
+    // Verify tab, row and panel titles after reload
+    e2e.components.Tab.title('New tab').should('be.visible');
+    e2e.components.DashboardRow.title('New row').should('be.visible');
+    e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
 
-    // e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
+    e2e.components.NavToolbar.editDashboard.editButton().should('be.visible').click();
 
     // Ungroup
-    e2e.flows.scenes.ungroupPanels();
-    e2e.flows.scenes.ungroupPanels();
+    e2e.flows.scenes.ungroupPanels(); // ungroup rows
+    e2e.flows.scenes.ungroupPanels(); // ungroup tabs
+
+    // Verify tab and row titles is gone
+    e2e.components.Tab.title('New tab').should('not.exist');
+    e2e.components.DashboardRow.title('New row').should('not.exist');
+    e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
+
+    // Save dashboards and reload
+    e2e.flows.scenes.saveDashboard();
+    cy.reload();
 
     // Verify Row title is gone
     e2e.components.Tab.title('New tab').should('not.exist');
     e2e.components.DashboardRow.title('New row').should('not.exist');
     e2e.components.Panels.Panel.title('New panel').should('have.length', 3);
-
-    // //Save dashboards and reload
-    // e2e.flows.scenes.saveDashboard();
-    // cy.reload();
-
-    // // Verify Row title is gone
-    // e2e.components.DashboardRow.title('New row').should('not.exist');
   });
 });
