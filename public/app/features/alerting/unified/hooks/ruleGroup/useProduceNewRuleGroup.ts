@@ -12,9 +12,6 @@ import { getDatasourceAPIUid } from '../../utils/datasource';
 
 const PREFER_CACHE_VALUE = true;
 
-const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
-const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
-
 export const RulerNotSupportedError = (name: string) =>
   new Error(`DataSource ${name} does not support ruler API or does not have the ruler API enabled.`);
 
@@ -29,6 +26,8 @@ export const RulerNotSupportedError = (name: string) =>
  * @throws
  */
 export function useProduceNewRuleGroup() {
+  const { useLazyGetRuleGroupForNamespaceQuery } = alertRuleApi;
+  const { useLazyDiscoverDsFeaturesQuery } = featureDiscoveryApi;
   const [fetchRuleGroup, requestState] = useLazyGetRuleGroupForNamespaceQuery();
   const [discoverDataSourceFeatures] = useLazyDiscoverDsFeaturesQuery();
 
