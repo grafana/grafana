@@ -43,7 +43,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	testPasswordBase64   = base64.StdEncoding.EncodeToString([]byte(testPassword))
+	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
+	errTest              = errors.New("test")
+
+	// Valid Grafana Alertmanager configuration with secret in base64.
+	testGrafanaConfigWithEncryptedSecret = fmt.Sprintf(`{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"%s"}}]}]}}`, testPasswordBase64)
+)
+
 const (
+	testPassword = "test"
+
 	// Valid Grafana Alertmanager configurations.
 	testGrafanaConfig                               = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"","name":"some other name","type":"email","disableResolveMessage":false,"settings":{"addresses":"\u003cexample@email.com\u003e"}}]}]}}`
 	testGrafanaConfigWithSecret                     = `{"template_files":{},"alertmanager_config":{"time_intervals":[{"name":"weekends","time_intervals":[{"weekdays":["saturday","sunday"],"location":"Africa/Accra"}]}],"route":{"receiver":"grafana-default-email","group_by":["grafana_folder","alertname"]},"receivers":[{"name":"grafana-default-email","grafana_managed_receiver_configs":[{"uid":"dde6ntuob69dtf","name":"WH","type":"webhook","disableResolveMessage":false,"settings":{"url":"http://localhost:8080","username":"test"},"secureSettings":{"password":"test"}}]}]}}`
@@ -54,11 +65,6 @@ const (
 	testSilence2 = "lwEKhgEKATISFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsDlwEKhgEKATESFxIJYWxlcnRuYW1lGgp0ZXN0X2FsZXJ0EiMSDmdyYWZhbmFfZm9sZGVyGhF0ZXN0X2FsZXJ0X2ZvbGRlchoMCN2CkbAGEJbKrMsDIgwI7Z6RsAYQlsqsywMqCwiAkrjDmP7///8BQgxHcmFmYW5hIFRlc3RKDFRlc3QgU2lsZW5jZRIMCO2ekbAGEJbKrMsD"
 	testNflog1   = "OgoqCgZncm91cDESEgoJcmVjZWl2ZXIxEgV0ZXN0MyoMCIzm1bAGEPqx5uEBEgwInILWsAYQ+rHm4QE="
 	testNflog2   = "OgoqCgZncm91cDISEgoJcmVjZWl2ZXIyEgV0ZXN0MyoMCLSDkbAGEMvaofYCEgwIxJ+RsAYQy9qh9gI6CioKBmdyb3VwMRISCglyZWNlaXZlcjESBXRlc3QzKgwItIORsAYQy9qh9gISDAjEn5GwBhDL2qH2Ag=="
-)
-
-var (
-	defaultGrafanaConfig = setting.GetAlertmanagerDefaultConfiguration()
-	errTest              = errors.New("test")
 )
 
 func TestMain(m *testing.M) {
@@ -503,6 +509,44 @@ func Test_isDefaultConfiguration(t *testing.T) {
 			require.Equal(tt, test.expected, am.isDefaultConfiguration(md5.Sum(raw)))
 		})
 	}
+}
+
+func TestDecryptConfiguration(t *testing.T) {
+	t.Run("should not modify the original config", func(t *testing.T) {
+		var inputCfg apimodels.PostableUserConfig
+		require.NoError(t, json.Unmarshal([]byte(testGrafanaConfigWithEncryptedSecret), &inputCfg))
+
+		decryptFn := func(_ context.Context, payload []byte) ([]byte, error) {
+			if string(payload) == testPassword {
+				return []byte(testPassword), nil
+			}
+			return nil, fmt.Errorf("incorrect payload")
+		}
+
+		am := &Alertmanager{
+			decrypt: decryptFn,
+		}
+
+		rawDecrypted, _, err := am.decryptConfiguration(context.Background(), &inputCfg)
+		require.NoError(t, err)
+
+		currentJSON, err := json.Marshal(inputCfg)
+		require.NoError(t, err)
+		require.JSONEq(t, testGrafanaConfigWithEncryptedSecret, string(currentJSON), "Original configuration should not be modified")
+
+		var decryptedCfg apimodels.PostableUserConfig
+		require.NoError(t, json.Unmarshal(rawDecrypted, &decryptedCfg))
+
+		found := false
+		for _, rcv := range decryptedCfg.AlertmanagerConfig.Receivers {
+			for _, gmr := range rcv.GrafanaManagedReceivers {
+				if gmr.Type == "webhook" && gmr.SecureSettings["password"] == testPassword {
+					found = true
+				}
+			}
+		}
+		require.True(t, found, "Decrypted configuration should contain decrypted password")
+	})
 }
 
 func TestIntegrationRemoteAlertmanagerConfiguration(t *testing.T) {
