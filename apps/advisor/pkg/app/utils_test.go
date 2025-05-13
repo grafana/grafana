@@ -252,6 +252,10 @@ func (m *mockCheck) Item(ctx context.Context, id string) (any, error) {
 	return m.items[0], nil
 }
 
+func (m *mockCheck) Init(ctx context.Context) error {
+	return nil
+}
+
 func (m *mockCheck) Steps() []checks.Step {
 	return []checks.Step{
 		&mockStep{err: m.err, panics: m.runPanics},

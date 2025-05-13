@@ -269,10 +269,6 @@ export interface FeatureToggles {
   */
   lokiRunQueriesInParallel?: boolean;
   /**
-  * Placeholder feature flag for internal testing
-  */
-  wargamesTesting?: boolean;
-  /**
   * Allow core plugins to be loaded as external
   * @default true
   */
@@ -374,10 +370,6 @@ export interface FeatureToggles {
   * Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
   */
   alertmanagerRemotePrimary?: boolean;
-  /**
-  * Disable the internal Alertmanager and only use the external one defined.
-  */
-  alertmanagerRemoteOnly?: boolean;
   /**
   * Change the way annotation permissions work by scoping them to folders and dashboards.
   * @default true
@@ -927,6 +919,7 @@ export interface FeatureToggles {
   alertRuleRestore?: boolean;
   /**
   * Enables writing to data sources for Grafana-managed recording rules.
+  * @default false
   */
   grafanaManagedRecordingRulesDatasources?: boolean;
   /**

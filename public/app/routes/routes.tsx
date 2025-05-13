@@ -527,6 +527,11 @@ export function getAppRoutes(): RouteDescriptor[] {
         () => import(/* webpackChunkName: "BookmarksPage"*/ 'app/features/bookmarks/BookmarksPage')
       ),
     },
+    {
+      // Redirect the /femt dev page to the root
+      path: '/femt',
+      component: () => <Navigate replace to="/" />,
+    },
     ...getPluginCatalogRoutes(),
     ...getSupportBundleRoutes(),
     ...getAlertingRoutes(),
