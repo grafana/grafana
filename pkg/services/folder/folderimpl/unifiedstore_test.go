@@ -17,7 +17,6 @@ import (
 	"github.com/stretchr/testify/require"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/selection"
@@ -602,9 +601,9 @@ func TestGetFolders(t *testing.T) {
 				},
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("List", mock.Anything, orgID, v1.ListOptions{
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
 					Limit:    100000,
-					TypeMeta: v1.TypeMeta{},
+					TypeMeta: metav1.TypeMeta{},
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
 						{
@@ -670,9 +669,9 @@ func TestGetFolders(t *testing.T) {
 				},
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("List", mock.Anything, orgID, v1.ListOptions{
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
 					Limit:         100000,
-					TypeMeta:      v1.TypeMeta{},
+					TypeMeta:      metav1.TypeMeta{},
 					LabelSelector: "grafana.app/fullpath=true",
 				}).Return(&unstructured.UnstructuredList{
 					Items: []unstructured.Unstructured{
@@ -767,9 +766,9 @@ func TestGetFolders(t *testing.T) {
 				},
 			},
 			mock: func(mockCli *client.MockK8sHandler) {
-				mockCli.On("List", mock.Anything, orgID, v1.ListOptions{
+				mockCli.On("List", mock.Anything, orgID, metav1.ListOptions{
 					Limit:    100000,
-					TypeMeta: v1.TypeMeta{},
+					TypeMeta: metav1.TypeMeta{},
 				}).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "folder1")).Once()
 			},
 			want:    nil,
