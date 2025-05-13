@@ -728,6 +728,8 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 	err = json.Unmarshal(raw, all)
 	require.NoError(c.t, err)
 
+	fmt.Printf("%s", string(raw))
+
 	for _, item := range all.Items {
 		if item.Metadata.Name == group {
 			v, err := json.MarshalIndent(item.Versions, "", "  ")
@@ -736,7 +738,7 @@ func (c *K8sTestHelper) GetGroupVersionInfoJSON(group string) string {
 		}
 	}
 
-	require.Fail(c.t, "could not find discovery info for: ", group)
+	require.Fail(c.t, "could not find discovery info for: %s", group)
 	return ""
 }
 
