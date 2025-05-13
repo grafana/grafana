@@ -95,7 +95,8 @@ func RunTestSearchAndStorage(t *testing.T, ctx context.Context, backend resource
 		// Create a resource server with both backends
 		var err error
 		server, err = resource.NewResourceServer(resource.ResourceServerOptions{
-			Backend: backend,
+			Backend:      backend,
+			AccessClient: claims.FixedAccessClient(true),
 			Search: resource.SearchOptions{
 				Backend: searchBackend,
 				Resources: &testDocumentBuilderSupplier{

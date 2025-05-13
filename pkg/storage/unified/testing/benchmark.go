@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	claims "github.com/grafana/authlib/types"
 	"github.com/grafana/grafana/pkg/storage/unified/resource"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -344,7 +345,8 @@ func BenchmarkIndexServer(tb testing.TB, ctx context.Context, backend resource.S
 		}
 	}
 	server, err := resource.NewResourceServer(resource.ResourceServerOptions{
-		Backend: backend,
+		Backend:      backend,
+		AccessClient: claims.FixedAccessClient(true),
 		Search: resource.SearchOptions{
 			Backend:         searchBackend,
 			IndexEventsChan: events,
