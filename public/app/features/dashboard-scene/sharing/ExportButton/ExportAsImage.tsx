@@ -188,7 +188,6 @@ function ImagePreview({ imageBlob, isLoading }: { imageBlob: Blob | null; isLoad
       className={styles.image}
       data-testid={selectors.components.ExportImage.preview.image}
       aria-label={t('share-modal.image.preview-aria', 'Generated dashboard image preview')}
-      role="img"
     />
   );
 }
