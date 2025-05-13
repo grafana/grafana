@@ -14,6 +14,7 @@ package dataquery
 import (
 	json "encoding/json"
 	errors "errors"
+	fmt "fmt"
 )
 
 type TempoQuery struct {
