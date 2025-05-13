@@ -337,10 +337,8 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	}
 
 	filterUIDs := map[string]struct{}{}
-	if len(q.UIDs) > 0 {
-		for _, uid := range q.UIDs {
-			filterUIDs[uid] = struct{}{}
-		}
+	for _, uid := range q.UIDs {
+		filterUIDs[uid] = struct{}{}
 	}
 
 	hits := []*folder.Folder{}
