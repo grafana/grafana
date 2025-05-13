@@ -6,7 +6,7 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
-var contextRequestIdKey = "sv_contextRequestIdKey"
+var contextRequestIdKey = &struct{}{}
 
 type OutboxMessageType string
 
