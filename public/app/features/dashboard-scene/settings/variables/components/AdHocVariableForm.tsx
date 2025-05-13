@@ -106,7 +106,7 @@ export function AdHocVariableForm({
         </>
       )}
 
-      {!inline && onAllowCustomValueChange && (
+      {onAllowCustomValueChange && (
         <VariableCheckboxField
           value={allowCustomValue ?? true}
           name="Allow custom values"
