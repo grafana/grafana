@@ -404,5 +404,6 @@ describe('interpolateQueryExpr', () => {
     const adhocFilter: AdHocVariableFilter[] = [{ key: 'bar', value: templateVarName, operator: '=' }];
     const result = ds.applyTemplateVariables(mockInfluxQueryRequest() as unknown as InfluxQuery, {}, adhocFilter);
     expect(result.tags![0].value).toBe(templateVarValue);
+    expect(result.adhocFilters![0].value).toBe(templateVarValue);
   });
 });
