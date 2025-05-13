@@ -35,7 +35,7 @@ type Alertmanager struct {
 }
 
 func NewAlertmanager(cfg *AlertmanagerConfig, metrics *metrics.RemoteAlertmanager, tracer tracing.Tracer) (*Alertmanager, error) {
-	// First, add the authentication middleware.
+	// First, set up the http client.
 	c := &http.Client{
 		Transport: &MimirAuthRoundTripper{
 			TenantID: cfg.TenantID,
