@@ -4247,9 +4247,6 @@
       "query-options": "Query options",
       "selection-options": "Selection options"
     },
-    "query-variable-form": {
-      "label-editor": "Query Editor"
-    },
     "revert-dashboard-modal": {
       "body-restore-version": "Are you sure you want to restore the dashboard to version {{version}}? All unsaved changes will be lost.",
       "title-restore-version": "Restore version"
