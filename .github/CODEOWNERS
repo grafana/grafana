@@ -66,6 +66,7 @@
 /build.go @grafana/grafana-backend-services-squad
 /scripts/modowners/ @grafana/grafana-backend-services-squad
 /scripts/go-workspace @grafana/grafana-app-platform-squad
+/scripts/ci/backend-tests @grafana/grafana-operator-experience-squad
 /hack/ @grafana/grafana-app-platform-squad
 
 /pkg/apis/provisioning @grafana/grafana-git-ui-sync-team
@@ -166,7 +167,7 @@
 /pkg/services/tag/ @grafana/grafana-search-and-storage
 /pkg/services/team/ @grafana/access-squad
 /pkg/services/temp_user/ @grafana/grafana-backend-group
-/pkg/services/updatechecker/ @grafana/grafana-backend-group
+/pkg/services/updatemanager/ @grafana/grafana-backend-group
 /pkg/services/user/ @grafana/access-squad
 /pkg/services/validations/ @grafana/grafana-backend-group
 /pkg/setting/ @grafana/grafana-backend-services-squad
@@ -189,7 +190,7 @@
 
 # Logs code, developers environment
 /devenv/docker/blocks/loki* @grafana/observability-logs
-/devenv/docker/blocks/elastic* @grafana/aws-datasources
+/devenv/docker/blocks/elastic* @grafana/partner-datasources
 /devenv/docker/blocks/self-instrumentation* @grafana/oss-big-tent
 
 /devenv/bulk-dashboards/ @grafana/dashboards-squad
@@ -226,7 +227,7 @@
 /devenv/dev-dashboards/dashboards.go @grafana/dataviz-squad
 /devenv/dev-dashboards/home.json @grafana/dataviz-squad
 
-/devenv/dev-dashboards/datasource-elasticsearch/ @grafana/aws-datasources
+/devenv/dev-dashboards/datasource-elasticsearch/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-opentsdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-influxdb/ @grafana/partner-datasources
 /devenv/dev-dashboards/datasource-mssql/ @grafana/partner-datasources
@@ -330,7 +331,7 @@
 
 # Observability backend code
 /pkg/tsdb/prometheus/ @grafana/oss-big-tent
-/pkg/tsdb/elasticsearch/ @grafana/aws-datasources
+/pkg/tsdb/elasticsearch/ @grafana/partner-datasources
 /pkg/tsdb/loki/ @grafana/observability-logs
 /pkg/tsdb/tempo/ @grafana/observability-traces-and-profiling
 /pkg/tsdb/grafana-pyroscope-datasource/ @grafana/observability-traces-and-profiling
@@ -480,7 +481,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/core/components/TimelineChart/ @grafana/dataviz-squad
 /public/app/core/components/Form/ @grafana/grafana-frontend-platform
 /public/app/core/components/OptionsUI/ @grafana/dashboards-squad @grafana/dataviz-squad
-
+/public/app/mock-api-utils.ts @grafana/grafana-frontend-platform
 
 /public/app/core/history/ @grafana/observability-traces-and-profiling
 /public/app/features/admin/ @grafana/identity-access-team
@@ -605,6 +606,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 /public/app/dev.ts @grafana/frontend-ops
 /public/app/core/utils/metrics.ts @grafana/plugins-platform-frontend
 /public/app/index.ts @grafana/frontend-ops
+/public/app/initApp.ts @grafana/frontend-ops
 /public/app/AppWrapper.tsx @grafana/frontend-ops
 /public/app/partials/ @grafana/grafana-frontend-platform
 
@@ -652,7 +654,7 @@ playwright.config.ts @grafana/plugins-platform-frontend
 # Core datasources
 /public/app/plugins/datasource/dashboard/ @grafana/dashboards-squad
 /public/app/plugins/datasource/cloudwatch/ @grafana/aws-datasources
-/public/app/plugins/datasource/elasticsearch/ @grafana/aws-datasources
+/public/app/plugins/datasource/elasticsearch/ @grafana/partner-datasources
 /public/app/plugins/datasource/grafana/ @grafana/grafana-frontend-platform
 /public/app/plugins/datasource/grafana-testdata-datasource/ @grafana/plugins-platform-frontend
 /public/app/plugins/datasource/azuremonitor/ @grafana/partner-datasources
@@ -753,13 +755,13 @@ embed.go @grafana/grafana-as-code
 /.github/commands.json @torkelo
 /.github/dependabot.yml @grafana/frontend-ops
 /.github/issue-opened.json @grafana/grafana-community-support
-/.github/metrics-collector.json @torkelo
 /.github/pr-checks.json @tolzhabayev
 /.github/pr-commands.json @tolzhabayev
 /.github/renovate.json5 @grafana/frontend-ops
 /.github/actions/setup-enterprise/action.yml @grafana/grafana-backend-group
-/.github/actions/test-coverage-processor/action.yml @grafana/grafana-backend-group
 /.github/actions/setup-grafana-bench/ @Proximyst
+/.github/workflows/actionlint-format.txt @Proximyst
+/.github/workflows/actionlint.yml @Proximyst
 /.github/workflows/add-to-whats-new.yml @grafana/docs-tooling
 /.github/workflows/auto-triager/ @grafana/plugins-platform-frontend
 /.github/workflows/alerting-swagger-gen.yml @grafana/alerting-backend
@@ -784,14 +786,14 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/github-release.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/issue-opened.yml @grafana/grafana-community-support
 /.github/workflows/lint-build-docs.yml @grafana/docs-tooling
-/.github/workflows/metrics-collector.yml @torkelo
 /.github/workflows/pr-checks.yml @tolzhabayev
 /.github/workflows/pr-codeql-analysis-javascript.yml @DanCech
 /.github/workflows/pr-codeql-analysis-python.yml @DanCech
 /.github/workflows/pr-commands.yml @tolzhabayev
+/.github/workflows/pr-external-labelling.yml @Proximyst
 /.github/workflows/pr-patch-check-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/pr-test-integration.yml @grafana/grafana-backend-group
-/.github/workflows/pr-backend-coverage.yml @grafana/grafana-backend-group
+/.github/workflows/reject-gh-secrets.yml @grafana/grafana-operator-experience-squad
 /.github/workflows/sync-mirror-event.yml @grafana/grafana-developer-enablement-squad
 /.github/workflows/publish-technical-documentation-next.yml @grafana/docs-tooling
 /.github/workflows/publish-technical-documentation-release.yml @grafana/docs-tooling
@@ -805,6 +807,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/verify-kinds.yml @grafana/platform-monitoring
 /.github/workflows/dashboards-issue-add-label.yml @grafana/dashboards-squad
 /.github/workflows/run-schema-v2-e2e.yml  @grafana/dashboards-squad
+/.github/workflows/e2e-dashboard-new-layouts.yml  @grafana/dashboards-squad
 /.github/workflows/run-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/trigger-dashboard-search-e2e.yml  @grafana/grafana-search-and-storage
 /.github/workflows/ephemeral-instances-pr-comment.yml @grafana/grafana-backend-services-squad
@@ -814,6 +817,7 @@ embed.go @grafana/grafana-as-code
 /.github/workflows/i18n-crowdin-download.yml @grafana/grafana-frontend-platform
 /.github/workflows/i18n-crowdin-create-tasks.yml @grafana/grafana-frontend-platform
 /.github/workflows/scripts/crowdin/create-tasks.ts @grafana/grafana-frontend-platform
+/.github/workflows/scripts/crowdin/cleanup-tasks.ts @grafana/grafana-frontend-platform
 /.github/workflows/pr-go-workspace-check.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-dependabot-update-go-workspace.yml @grafana/grafana-app-platform-squad
 /.github/workflows/pr-k8s-codegen-check.yml @grafana/grafana-app-platform-squad

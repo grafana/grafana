@@ -42,6 +42,10 @@ func processCheck(ctx context.Context, log logging.Logger, client resource.Clien
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
+	err := check.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing check: %w", err)
+	}
 	items, err := check.Items(ctx)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -95,6 +99,10 @@ func processCheckRetry(ctx context.Context, log logging.Logger, client resource.
 		return fmt.Errorf("invalid object type")
 	}
 	// Get the items to check
+	err := check.Init(ctx)
+	if err != nil {
+		return fmt.Errorf("error initializing check: %w", err)
+	}
 	item, err := check.Item(ctx, itemToRetry)
 	if err != nil {
 		setErr := checks.SetStatusAnnotation(ctx, client, obj, checks.StatusAnnotationError)
@@ -159,7 +167,7 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 			go func(step checks.Step, item any) {
 				defer wg.Done()
 				defer func() { <-limit }()
-				var stepErr *advisorv0alpha1.CheckReportFailure
+				var stepErr []advisorv0alpha1.CheckReportFailure
 				var err error
 				func() {
 					defer func() {
@@ -176,8 +184,8 @@ func runStepsInParallel(ctx context.Context, log logging.Logger, spec *advisorv0
 					internalErr = fmt.Errorf("error running step %s: %w", step.ID(), err)
 					return
 				}
-				if stepErr != nil {
-					reportFailures = append(reportFailures, *stepErr)
+				if len(stepErr) > 0 {
+					reportFailures = append(reportFailures, stepErr...)
 				}
 			}(step, item)
 		}
