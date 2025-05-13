@@ -17,7 +17,7 @@ jest.mock('../BackupInventory/BackupInventory.service');
 jest.mock('./AddBackupPage.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
 
-const scheduledInitialEntry = '?scheduled'
+const scheduledInitialEntry = '?scheduled';
 
 const AddBackupPageWrapper: FC<PropsWithChildren> = ({ children }) =>
   wrapWithGrafanaContextMock(
