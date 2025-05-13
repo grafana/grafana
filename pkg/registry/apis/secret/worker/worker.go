@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana-app-sdk/logging"
+	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
-
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 )
 
@@ -82,6 +82,7 @@ func (w *Worker) receiveAndProcessMessages(ctx context.Context) {
 		}
 
 		for _, message := range messages {
+			ctx := contracts.ContextWithRequestID(ctx, message.RequestID)
 			if err := w.processMessage(ctx, message); err != nil {
 				return fmt.Errorf("processing message: %+v %w", message, err)
 			}
@@ -122,21 +123,21 @@ func (w *Worker) processMessage(ctx context.Context, message contracts.OutboxMes
 
 		// Setting the status to Succeeded must be the last action
 		// since it acts as a fence to clients.
-		if err := w.secureValueMetadataStorage.SetStatusSucceeded(ctx, xkube.Namespace(message.Namespace), message.Name); err != nil {
-			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
+		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}); err != nil {
+			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v %w", message, err)
 		}
 
 	case contracts.UpdateSecretOutboxMessage:
 		// TODO: DECRYPT HERE
 		rawSecret := message.EncryptedSecret.DangerouslyExposeAndConsumeValue()
 
-		if err := keeper.Update(ctx, keeperCfg, message.Name, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
+		if err := keeper.Update(ctx, keeperCfg, message.Namespace, contracts.ExternalID(*message.ExternalID), rawSecret); err != nil {
 			return fmt.Errorf("calling keeper to update secret: %w", err)
 		}
 
 		// Setting the status to Succeeded must be the last action
 		// since it acts as a fence to clients.
-		if err := w.secureValueMetadataStorage.SetStatusSucceeded(ctx, xkube.Namespace(message.Namespace), message.Name); err != nil {
+		if err := w.secureValueMetadataStorage.SetStatus(ctx, xkube.Namespace(message.Namespace), message.Name, secretv0alpha1.SecureValueStatus{Phase: secretv0alpha1.SecureValuePhaseSucceeded}); err != nil {
 			return fmt.Errorf("setting secret metadata status to Succeeded: message=%+v", message)
 		}
 

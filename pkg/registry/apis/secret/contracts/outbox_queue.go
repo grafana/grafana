@@ -6,7 +6,23 @@ import (
 	secretv0alpha1 "github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 )
 
+type contextRequestIdKey struct{}
+
 type OutboxMessageType string
+
+func GetRequestId(ctx context.Context) string {
+	v := ctx.Value(contextRequestIdKey{})
+	requestId, ok := v.(string)
+	if !ok {
+		return ""
+	}
+
+	return requestId
+}
+
+func ContextWithRequestID(ctx context.Context, requestId string) context.Context {
+	return context.WithValue(ctx, contextRequestIdKey{}, requestId)
+}
 
 const (
 	CreateSecretOutboxMessage OutboxMessageType = "create"
@@ -15,6 +31,7 @@ const (
 )
 
 type AppendOutboxMessage struct {
+	RequestID       string
 	Type            OutboxMessageType
 	Name            string
 	Namespace       string
@@ -24,6 +41,7 @@ type AppendOutboxMessage struct {
 }
 
 type OutboxMessage struct {
+	RequestID       string
 	Type            OutboxMessageType
 	MessageID       string
 	Name            string

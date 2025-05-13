@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	unifiedsql "github.com/grafana/grafana/pkg/storage/unified/sql"
+
 	"github.com/google/uuid"
 	"github.com/grafana/grafana/pkg/apis/secret/v0alpha1"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/assert"
@@ -82,6 +84,9 @@ func (s *outboxStore) Append(ctx context.Context, input contracts.AppendOutboxMe
 
 	query, err := sqltemplate.Execute(sqlSecureValueOutboxAppend, req)
 	if err != nil {
+		if unifiedsql.IsRowAlreadyExistsError(err) {
+			return "", contracts.ErrSecureValueOperationInProgress
+		}
 		return "", fmt.Errorf("execute template %q: %w", sqlSecureValueOutboxAppend.Name(), err)
 	}
 

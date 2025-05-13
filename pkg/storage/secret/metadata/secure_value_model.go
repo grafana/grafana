@@ -88,6 +88,7 @@ func (sv *secureValueDB) toKubernetes() (*secretv0alpha1.SecureValue, error) {
 	if sv.Message.Valid {
 		resource.Status.Message = sv.Message.String
 	}
+	resource.Status.Phase = secretv0alpha1.SecureValuePhase(sv.Phase)
 	resource.Status.ExternalID = sv.ExternalID
 
 	// Set all meta fields here for consistency.

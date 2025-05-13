@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/registry/apis/secret/contracts"
 	"github.com/grafana/grafana/pkg/registry/apis/secret/xkube"
 	"github.com/grafana/grafana/pkg/services/featuremgmt"
+	"github.com/grafana/grafana/pkg/storage/unified/sql"
 	"github.com/grafana/grafana/pkg/storage/unified/sql/sqltemplate"
 )
 
@@ -33,7 +34,7 @@ type secureValueMetadataStorage struct {
 
 func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alpha1.SecureValue, actorUID string) (*secretv0alpha1.SecureValue, error) {
 	sv.Status.Phase = secretv0alpha1.SecureValuePhasePending
-	sv.Status.Message = ""
+	sv.Status.Message = "Creating secure value"
 
 	row, err := toCreateRow(sv, actorUID)
 	if err != nil {
@@ -80,6 +81,9 @@ func (s *secureValueMetadataStorage) Create(ctx context.Context, sv *secretv0alp
 
 		res, err := s.db.ExecContext(ctx, query, req.GetArgs()...)
 		if err != nil {
+			if sql.IsRowAlreadyExistsError(err) {
+				return fmt.Errorf("namespace=%+v name=%+v %w", sv.Namespace, sv.Name, contracts.ErrSecureValueAlreadyExists)
+			}
 			return fmt.Errorf("inserting row: %w", err)
 		}
 
@@ -127,14 +131,6 @@ func (s *secureValueMetadataStorage) Update(ctx context.Context, newSecureValue 
 		if err != nil {
 			return fmt.Errorf("reading secure value: %w", err)
 		}
-
-		// From this point on, we should not have a need to read value.
-		newSecureValue.Spec.Value = ""
-
-		// TODO: Remove once the outbox is implemented, as the status will be set to `Succeeded` by a separate process.
-		// Temporarily mark succeeded here since the value is already stored in the keeper.
-		newSecureValue.Status.Phase = secretv0alpha1.SecureValuePhaseSucceeded
-		newSecureValue.Status.Message = ""
 
 		// TODO: Confirm the ExternalID should come from the read model.
 		var updateErr error
@@ -312,12 +308,13 @@ func (s *secureValueMetadataStorage) SetExternalID(ctx context.Context, namespac
 	return nil
 }
 
-func (s *secureValueMetadataStorage) SetStatusSucceeded(ctx context.Context, namespace xkube.Namespace, name string) error {
+func (s *secureValueMetadataStorage) SetStatus(ctx context.Context, namespace xkube.Namespace, name string, status secretv0alpha1.SecureValueStatus) error {
 	req := updateStatusSecureValue{
 		SQLTemplate: sqltemplate.New(s.dialect),
 		Namespace:   namespace.String(),
 		Name:        name,
-		Phase:       string(secretv0alpha1.SecureValuePhaseSucceeded),
+		Phase:       string(status.Phase),
+		Message:     status.Message,
 	}
 
 	q, err := sqltemplate.Execute(sqlSecureValueUpdateStatus, req)
