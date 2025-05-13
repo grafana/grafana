@@ -67,7 +67,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleStats, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleStats, 30*time.Second),
 			},
 			{
 				Path: "settings",
@@ -115,7 +115,7 @@ func (b *APIBuilder) GetAPIRoutes(gv schema.GroupVersion) *builder.APIRoutes {
 						},
 					},
 				},
-				Handler: withTimeoutFunc(b.handleSettings, 30*time.Second),
+				Handler: WithTimeoutFunc(b.handleSettings, 30*time.Second),
 			},
 		},
 	}

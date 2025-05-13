@@ -13,7 +13,7 @@ import (
 )
 
 //go:generate mockery --name RepositoryPatchFn --structname MockRepositoryPatchFn --inpackage --filename repository_patch_fn_mock.go --with-expecter
-type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, ops []map[string]interface{}) error
+type RepositoryPatchFn func(ctx context.Context, repo *provisioning.Repository, patchOperations ...map[string]interface{}) error
 
 // SyncWorker synchronizes the external repo with grafana database
 // this function updates the status for both the job and the referenced repository
@@ -82,7 +82,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	progress.SetMessage(ctx, "update sync status at start")
-	if err := r.patchStatus(ctx, cfg, patchOperations); err != nil {
+	if err := r.patchStatus(ctx, cfg, patchOperations...); err != nil {
 		return fmt.Errorf("update repo with job status at start: %w", err)
 	}
 
@@ -136,7 +136,7 @@ func (r *SyncWorker) Process(ctx context.Context, repo repository.Repository, jo
 	}
 
 	// Only patch the specific fields we want to update, not the entire status
-	if err := r.patchStatus(ctx, cfg, patchOperations); err != nil {
+	if err := r.patchStatus(ctx, cfg, patchOperations...); err != nil {
 		return fmt.Errorf("update repo with job final status: %w", err)
 	}
 
