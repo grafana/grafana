@@ -8,7 +8,6 @@ import (
 	apimachineryversion "k8s.io/apimachinery/pkg/version"
 	utilcompatibility "k8s.io/apiserver/pkg/util/compatibility"
 	"k8s.io/component-base/compatibility"
-	baseversion "k8s.io/component-base/version"
 )
 
 // wrapper that will include grafana version in the /version response
@@ -26,24 +25,17 @@ func getEffectiveVersion(
 	v := utilcompatibility.DefaultBuildEffectiveVersion()
 	patchver := 0 // required for semver
 
-	base := baseversion.Get()
-	info := v.BinaryVersion().Info()
+	info := v.Info()
 	info.BuildDate = time.Unix(buildTimestamp, 0).UTC().Format(time.RFC3339)
 	info.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info.Major, info.Minor, patchver, buildVersion)
 	info.GitCommit = fmt.Sprintf("%s@%s", buildBranch, buildCommit)
 	info.GitTreeState = fmt.Sprintf("grafana v%s", buildVersion)
-	info.GoVersion = base.GoVersion
-	info.Compiler = base.Compiler
-	info.Platform = base.Platform
 
 	info2 := v.EmulationVersion().Info()
 	info2.BuildDate = info.BuildDate
 	info2.GitVersion = fmt.Sprintf("%s.%s.%d+grafana-v%s", info2.Major, info2.Minor, patchver, buildVersion)
 	info2.GitCommit = info.GitCommit
 	info2.GitTreeState = info.GitTreeState
-	info2.GoVersion = base.GoVersion
-	info2.Compiler = base.Compiler
-	info2.Platform = base.Platform
 
 	return &grafanaVersion{
 		wrap: v,
