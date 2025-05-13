@@ -1,1 +1,1 @@
-export { fixtures } from './fixtures';
+export {};

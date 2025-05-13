@@ -1,8 +1,5 @@
-import alertingHandlers from './alerting';
+import { HttpHandler } from 'msw';
 
-const allHandlers = [
-  // Alerting
-  ...alertingHandlers,
-];
+const allHandlers: HttpHandler[] = [];
 
 export default allHandlers;

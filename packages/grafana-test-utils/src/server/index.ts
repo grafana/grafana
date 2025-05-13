@@ -1,9 +1,8 @@
 import { setupServer } from 'msw/node';
 
-import alertingHandlers from '../handlers/alerting';
 import allHandlers from '../handlers/all-handlers';
 
-const server = setupServer(...allHandlers, ...alertingHandlers);
+const server = setupServer(...allHandlers);
 
 /**
  * Sets up `afterEach`, `beforeAll` and `afterAll` hooks for mock Grafana API server
