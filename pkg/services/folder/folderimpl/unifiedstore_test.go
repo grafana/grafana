@@ -174,6 +174,7 @@ func TestGetParents(t *testing.T) {
 		require.Len(t, result, 1)
 		require.Equal(t, "parenttwo", result[0].UID)
 	})
+
 	t.Run("should stop if parent folder is not found", func(t *testing.T) {
 		mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "parentone")).Once()
 
@@ -438,4 +439,156 @@ func TestGetChildren(t *testing.T) {
 		require.Equal(t, "folder2", result[0].UID)
 		require.Equal(t, "folder3", result[1].UID)
 	})
+}
+
+func TestGetParentsWithCache(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		f     *folder.Folder
+		cache map[string][]*folder.Folder
+	}
+	tests := []struct {
+		name    string
+		args    args
+		mock    func(mockCli *client.MockK8sHandler)
+		want    []*folder.Folder
+		wantErr bool
+	}{
+		{
+			name: "should return parents from cache",
+			args: args{
+				ctx: context.Background(),
+				f: &folder.Folder{
+					UID:       "self",
+					OrgID:     orgID,
+					ParentUID: "parentone",
+				},
+				cache: map[string][]*folder.Folder{
+					"parentone": {
+						{
+							UID:   "parenttwo",
+							OrgID: orgID,
+						},
+						{
+							UID:   "parentone",
+							OrgID: orgID,
+						},
+					},
+				},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":        "parentone",
+							"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
+						},
+					},
+				}, nil).Once()
+			},
+			want: []*folder.Folder{
+				{
+					UID:   "parenttwo",
+					OrgID: orgID,
+				},
+				{
+					UID:   "parentone",
+					OrgID: orgID,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return parents from k8s if not in cache",
+			args: args{
+				ctx: context.Background(),
+				f: &folder.Folder{
+					UID:       "self",
+					OrgID:     orgID,
+					ParentUID: "parentone",
+				},
+				cache: map[string][]*folder.Folder{},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":        "parentone",
+							"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
+						},
+					},
+				}, nil).Once()
+				mockCli.On("Get", mock.Anything, "self", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":        "self",
+							"annotations": map[string]interface{}{"grafana.app/folder": "parentone"},
+						},
+					},
+				}, nil).Once()
+				mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name":        "parentone",
+							"annotations": map[string]interface{}{"grafana.app/folder": "parenttwo"},
+						},
+					},
+				}, nil).Once()
+				mockCli.On("Get", mock.Anything, "parenttwo", orgID, mock.Anything, mock.Anything).Return(&unstructured.Unstructured{
+					Object: map[string]interface{}{
+						"metadata": map[string]interface{}{
+							"name": "parenttwo",
+						},
+					},
+				}, nil).Once()
+			},
+			want: []*folder.Folder{
+				{
+					UID:   "parenttwo",
+					OrgID: 1,
+				},
+				{
+					UID:   "parentone",
+					OrgID: 1,
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "should return error if k8s returns error",
+			args: args{
+				ctx: context.Background(),
+				f: &folder.Folder{
+					UID:       "self",
+					OrgID:     orgID,
+					ParentUID: "parentone",
+				},
+				cache: map[string][]*folder.Folder{},
+			},
+			mock: func(mockCli *client.MockK8sHandler) {
+				mockCli.On("Get", mock.Anything, "parentone", orgID, mock.Anything, mock.Anything).Return(nil, apierrors.NewNotFound(schema.GroupResource{Group: "folders.folder.grafana.app", Resource: "folder"}, "parentone")).Once()
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockCLI := new(client.MockK8sHandler)
+			tt.mock(mockCLI)
+			ss := &FolderUnifiedStoreImpl{
+				k8sclient:   mockCLI,
+				userService: usertest.NewUserServiceFake(),
+			}
+			got, err := ss.getParentsWithCache(tt.args.ctx, tt.args.f, tt.args.cache)
+			require.Equal(t, tt.wantErr, err != nil, "getParentsWithCache() error = %v, wantErr %v", err, tt.wantErr)
+			if !tt.wantErr {
+				require.Len(t, got, len(tt.want), "getParentsWithCache() = %v, want %v", got, tt.want)
+				for i, parent := range got {
+					require.Equal(t, tt.want[i].UID, parent.UID, "getParentsWithCache() = %v, want %v", got, tt.want)
+					require.Equal(t, tt.want[i].OrgID, parent.OrgID, "getParentsWithCache() = %v, want %v", got, tt.want)
+				}
+			}
+		})
+	}
 }

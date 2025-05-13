@@ -2,9 +2,7 @@ package folderimpl
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -153,13 +151,11 @@ func (ss *FolderUnifiedStoreImpl) Get(ctx context.Context, q folder.GetFolderQue
 func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetParentsQuery) ([]*folder.Folder, error) {
 	hits := []*folder.Folder{}
 
-	parentUid := q.UID
-
-	for parentUid != "" {
-		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUid, OrgID: q.OrgID})
+	parentUID := q.UID
+	for parentUID != "" {
+		folder, err := ss.Get(ctx, folder.GetFolderQuery{UID: &parentUID, OrgID: q.OrgID})
 		if err != nil {
-			var statusError *apierrors.StatusError
-			if errors.As(err, &statusError) && statusError.ErrStatus.Code == http.StatusForbidden {
+			if apierrors.IsForbidden(err) {
 				// If we get a Forbidden error when requesting the parent folder, it means the user does not have access
 				// to it, nor its parents. So we can stop looping
 				break
@@ -167,15 +163,15 @@ func (ss *FolderUnifiedStoreImpl) GetParents(ctx context.Context, q folder.GetPa
 			return nil, err
 		}
 
-		parentUid = folder.ParentUID
+		parentUID = folder.ParentUID
 		hits = append(hits, folder)
 	}
 
-	if len(hits) > 0 {
-		return util.Reverse(hits[1:]), nil
+	if len(hits) == 0 {
+		return hits, nil
 	}
 
-	return hits, nil
+	return util.Reverse(hits[1:]), nil
 }
 
 func (ss *FolderUnifiedStoreImpl) GetChildren(ctx context.Context, q folder.GetChildrenQuery) ([]*folder.FolderReference, error) {
@@ -341,14 +337,15 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	}
 
 	m := map[string]*folder.Folder{}
+	cache := map[string][]*folder.Folder{}
 	for _, f := range folders {
 		if (q.WithFullpath || q.WithFullpathUIDs) && f.Fullpath == "" {
-			parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: q.OrgID})
+			parents, err := ss.getParentsWithCache(ctx, f, cache)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
+				return nil, fmt.Errorf("failed to get parents for folder with cache %s: %w", f.UID, err)
 			}
-			// If we don't have a parent, we just return the current folder as the full path
-			f.Fullpath, f.FullpathUIDs = computeFullPath(append(parents, f))
+			parentsWithSelf := append(parents, f)
+			f.Fullpath, f.FullpathUIDs = computeFullPath(parentsWithSelf)
 		}
 
 		m[f.UID] = f
@@ -381,6 +378,28 @@ func (ss *FolderUnifiedStoreImpl) GetFolders(ctx context.Context, q folder.GetFo
 	}
 
 	return hits, nil
+}
+
+func (ss *FolderUnifiedStoreImpl) getParentsWithCache(ctx context.Context, f *folder.Folder, cache map[string][]*folder.Folder) ([]*folder.Folder, error) {
+	parent, err := ss.Get(ctx, folder.GetFolderQuery{UID: &f.ParentUID, OrgID: f.OrgID})
+	if err != nil {
+		if apierrors.IsForbidden(err) {
+		}
+		return nil, err
+	}
+
+	if result, ok := cache[parent.UID]; ok {
+		return result, nil
+	}
+
+	parents, err := ss.GetParents(ctx, folder.GetParentsQuery{UID: f.UID, OrgID: f.OrgID})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get parents for folder %s: %w", f.UID, err)
+	}
+
+	cache[parent.UID] = parents
+
+	return parents, nil
 }
 
 func (ss *FolderUnifiedStoreImpl) GetDescendants(ctx context.Context, orgID int64, ancestor_uid string) ([]*folder.Folder, error) {
