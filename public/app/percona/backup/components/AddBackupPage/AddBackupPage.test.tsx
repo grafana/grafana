@@ -7,7 +7,6 @@ import { wrapWithGrafanaContextMock } from 'app/percona/shared/helpers/testUtils
 import { configureStore } from 'app/store/configureStore';
 import { StoreState } from 'app/types';
 
-import { BackupType } from '../../Backup.types';
 import { LocationType } from '../StorageLocations/StorageLocations.types';
 
 import AddBackupPage from './AddBackupPage';
@@ -17,6 +16,8 @@ jest.mock('../ScheduledBackups/ScheduledBackups.service');
 jest.mock('../BackupInventory/BackupInventory.service');
 jest.mock('./AddBackupPage.service');
 jest.mock('app/percona/backup/components/StorageLocations/StorageLocations.service');
+
+const scheduledInitialEntry = '?scheduled'
 
 const AddBackupPageWrapper: FC<PropsWithChildren> = ({ children }) =>
   wrapWithGrafanaContextMock(
@@ -72,7 +73,7 @@ describe('AddBackupPage', () => {
   it('should render advanced fields when in schedule mode', async () => {
     render(
       <AddBackupPageWrapper>
-        <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
+        <MemoryRouter initialEntries={[scheduledInitialEntry]}>
           <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
@@ -87,7 +88,7 @@ describe('AddBackupPage', () => {
   it('should render backup mode selector when in schedule mode', async () => {
     render(
       <AddBackupPageWrapper>
-        <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
+        <MemoryRouter initialEntries={[scheduledInitialEntry]}>
           <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
@@ -113,7 +114,7 @@ describe('AddBackupPage', () => {
   it('should render schedule page backup with schedule params', async () => {
     render(
       <AddBackupPageWrapper>
-        <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
+        <MemoryRouter initialEntries={[scheduledInitialEntry]}>
           <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>
@@ -142,7 +143,7 @@ describe('AddBackupPage', () => {
   it('should switch back to demand backup page when click on demand backup button', async () => {
     render(
       <AddBackupPageWrapper>
-        <MemoryRouter initialEntries={[`?type=${BackupType.SCHEDULED}`]}>
+        <MemoryRouter initialEntries={[scheduledInitialEntry]}>
           <AddBackupPage />
         </MemoryRouter>
       </AddBackupPageWrapper>

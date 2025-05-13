@@ -2,6 +2,7 @@
 import { cx } from '@emotion/css';
 import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { Field, withTypes } from 'react-final-form';
+import { useParams } from 'react-router-dom-v5-compat';
 
 import { AppEvents, PageLayoutType, SelectableValue } from '@grafana/data';
 import { locationService } from '@grafana/runtime';
@@ -55,7 +56,6 @@ import {
 } from './AddBackupPage.utils';
 import { RetryModeSelector } from './RetryModeSelector';
 import { ScheduleSection } from './ScheduleSection/ScheduleSection';
-import { useParams } from 'react-router-dom-v5-compat';
 
 const AddBackupPage: FC = () => {
   const [queryParams, setQueryParams] = useQueryParams();
