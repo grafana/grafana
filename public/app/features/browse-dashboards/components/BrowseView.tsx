@@ -28,10 +28,12 @@ interface BrowseViewProps {
   canSelect: boolean;
 }
 
+const uidsToExclude = new Set(['ebpf'])
+
 export function BrowseView({ folderUID, width, height, canSelect }: BrowseViewProps) {
   const status = useBrowseLoadingStatus(folderUID);
   const dispatch = useDispatch();
-  const flatTree = useFlatTreeState(folderUID);
+  const flatTree = useFlatTreeState(folderUID).filter((item => !uidsToExclude.has(item.item.uid)));
   const selectedItems = useCheckboxSelectionState();
   const childrenByParentUID = useChildrenByParentUIDState();
 
