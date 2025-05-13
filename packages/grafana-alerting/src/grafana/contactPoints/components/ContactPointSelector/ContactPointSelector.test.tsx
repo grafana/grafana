@@ -1,4 +1,4 @@
-import { screen, render, findByText, within } from '../../../../../tests/test-utils';
+import { screen, render, within } from '../../../../../tests/test-utils';
 import { getContactPointDescription } from '../../utils';
 
 import { ContactPointSelector } from './ContactPointSelector';
