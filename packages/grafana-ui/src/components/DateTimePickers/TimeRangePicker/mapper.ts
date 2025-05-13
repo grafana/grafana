@@ -1,7 +1,7 @@
 import { TimeOption, TimeRange, TimeZone, rangeUtil, dateTimeFormat } from '@grafana/data';
 import { formatDate } from '@grafana/i18n';
-import { getFeatureToggle } from 'src/utils/featureToggle';
 
+import { getFeatureToggle } from '../../../utils/featureToggle';
 export const mapOptionToTimeRange = (option: TimeOption, timeZone?: TimeZone): TimeRange => {
   return rangeUtil.convertRawToRange({ from: option.from, to: option.to }, timeZone);
 };
