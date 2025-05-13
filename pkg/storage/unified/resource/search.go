@@ -546,17 +546,15 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 
 	s.log.Debug("Building index", "resource", nsr.Resource, "size", size, "rv", rv)
 
-	key := &ResourceKey{
-		Group:     nsr.Group,
-		Resource:  nsr.Resource,
-		Namespace: nsr.Namespace,
-	}
-
 	index, err := s.search.BuildIndex(ctx, nsr, size, rv, fields, func(index ResourceIndex) (int64, error) {
 		rv, err = s.storage.ListIterator(ctx, &ListRequest{
 			Limit: 1000000000000, // big number
 			Options: &ListOptions{
-				Key: key,
+				Key: &ResourceKey{
+					Group:     nsr.Group,
+					Resource:  nsr.Resource,
+					Namespace: nsr.Namespace,
+				},
 			},
 		}, func(iter ListIterator) error {
 			// Collect all documents in a single bulk request
@@ -568,7 +566,12 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 				}
 
 				// Update the key name
-				key.Name = iter.Name()
+				key := &ResourceKey{
+					Group:     nsr.Group,
+					Resource:  nsr.Resource,
+					Namespace: nsr.Namespace,
+					Name:      iter.Name(),
+				}
 
 				// Convert it to an indexable document
 				doc, err := builder.BuildDocument(ctx, key, iter.ResourceVersion(), iter.Value())
@@ -607,7 +610,7 @@ func (s *searchSupport) build(ctx context.Context, nsr NamespacedResource, size 
 		s.log.Warn("error getting doc count", "error", err)
 	}
 	if s.indexMetrics != nil {
-		s.indexMetrics.IndexedKinds.WithLabelValues(key.Resource).Add(float64(docCount))
+		s.indexMetrics.IndexedKinds.WithLabelValues(nsr.Resource).Add(float64(docCount))
 	}
 
 	// rv is the last RV we read.  when watching, we must add all events since that time

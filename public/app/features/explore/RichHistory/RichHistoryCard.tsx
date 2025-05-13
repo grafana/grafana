@@ -19,6 +19,7 @@ import { setQueries } from 'app/features/explore/state/query';
 import { dispatch } from 'app/store/store';
 import { ShowConfirmModalEvent } from 'app/types/events';
 import { RichHistoryQuery } from 'app/types/explore';
+import icnDatasourceSvg from 'img/icn-datasource.svg';
 
 import ExploreRunQueryButton from '../ExploreRunQueryButton';
 
@@ -419,7 +420,7 @@ function DatasourceInfo({ dsApi, size }: { dsApi?: DataSourceApi; size: 'sm' | '
   return (
     <div className={styles}>
       <img
-        src={dsApi?.meta.info.logos.small || 'public/img/icn-datasource.svg'}
+        src={dsApi?.meta.info.logos.small || icnDatasourceSvg}
         alt={dsApi?.type || t('explore.rich-history-card.datasource-not-exist', 'Data source does not exist anymore')}
         aria-label={t('explore.rich-history-card.datasource-icon-label', 'Data source icon')}
       />

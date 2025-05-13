@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// withTimeout adds a timeout context to the request
-func withTimeout(h http.Handler, timeout time.Duration) http.Handler {
+// WithTimeout adds a timeout context to the request
+func WithTimeout(h http.Handler, timeout time.Duration) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
@@ -15,7 +15,7 @@ func withTimeout(h http.Handler, timeout time.Duration) http.Handler {
 	})
 }
 
-// withTimeoutFunc adds a timeout context to the request
-func withTimeoutFunc(f func(w http.ResponseWriter, r *http.Request), timeout time.Duration) func(w http.ResponseWriter, r *http.Request) {
-	return withTimeout(http.HandlerFunc(f), timeout).ServeHTTP
+// WithTimeoutFunc adds a timeout context to the request
+func WithTimeoutFunc(f func(w http.ResponseWriter, r *http.Request), timeout time.Duration) func(w http.ResponseWriter, r *http.Request) {
+	return WithTimeout(http.HandlerFunc(f), timeout).ServeHTTP
 }

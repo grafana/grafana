@@ -239,10 +239,6 @@ const (
 	// Enables running Loki queries in parallel
 	FlagLokiRunQueriesInParallel = "lokiRunQueriesInParallel"
 
-	// FlagWargamesTesting
-	// Placeholder feature flag for internal testing
-	FlagWargamesTesting = "wargamesTesting"
-
 	// FlagExternalCorePlugins
 	// Allow core plugins to be loaded as external
 	FlagExternalCorePlugins = "externalCorePlugins"
@@ -338,10 +334,6 @@ const (
 	// FlagAlertmanagerRemotePrimary
 	// Enable Grafana to have a remote Alertmanager instance as the primary Alertmanager.
 	FlagAlertmanagerRemotePrimary = "alertmanagerRemotePrimary"
-
-	// FlagAlertmanagerRemoteOnly
-	// Disable the internal Alertmanager and only use the external one defined.
-	FlagAlertmanagerRemoteOnly = "alertmanagerRemoteOnly"
 
 	// FlagAnnotationPermissionUpdate
 	// Change the way annotation permissions work by scoping them to folders and dashboards.

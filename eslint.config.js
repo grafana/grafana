@@ -1,5 +1,6 @@
 // @ts-check
 const emotionPlugin = require('@emotion/eslint-plugin');
+const restrictedGlobals = require('confusing-browser-globals');
 const importPlugin = require('eslint-plugin-import');
 const jestPlugin = require('eslint-plugin-jest');
 const jestDomPlugin = require('eslint-plugin-jest-dom');
@@ -91,6 +92,7 @@ module.exports = [
       'no-duplicate-case': 'error',
       '@grafana/no-border-radius-literal': 'error',
       '@grafana/no-unreduced-motion': 'error',
+      '@grafana/no-restricted-img-srcs': 'error',
       'react/prop-types': 'off',
       // need to ignore emotion's `css` prop, see https://github.com/jsx-eslint/eslint-plugin-react/blob/master/docs/rules/no-unknown-property.md#rule-options
       'react/no-unknown-property': ['error', { ignore: ['css'] }],
@@ -135,6 +137,7 @@ module.exports = [
           ],
         },
       ],
+      'no-restricted-globals': ['error'].concat(restrictedGlobals),
 
       // Use typescript's no-redeclare for compatibility with overrides
       'no-redeclare': 'off',
