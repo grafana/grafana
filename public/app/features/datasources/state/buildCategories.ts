@@ -17,6 +17,7 @@ import dynatracePng from 'img/plugins/dynatrace.png';
 import gitlabSvg from 'img/plugins/gitlab.svg';
 import honeycombPng from 'img/plugins/honeycomb.png';
 import jiraLogoPng from 'img/plugins/jira_logo.png';
+import logicMonitorSvg from 'img/plugins/logicmonitor.svg';
 import mongodbSvg from 'img/plugins/mongodb.svg';
 import netlifySvg from 'img/plugins/netlify.svg';
 import newrelicSvg from 'img/plugins/newrelic.svg';
@@ -31,7 +32,6 @@ import splunkLogo128Png from 'img/plugins/splunk_logo_128.png';
 import sumoSvg from 'img/plugins/sumo.svg';
 import wavefrontSvg from 'img/plugins/wavefront.svg';
 import zendeskSvg from 'img/plugins/zendesk.svg';
-import logicMonitorSvg from 'public/img/plugins/logicmonitor.svg';
 
 export function buildCategories(plugins: DataSourcePluginMeta[]): DataSourcePluginCategory[] {
   const categories: DataSourcePluginCategory[] = [
