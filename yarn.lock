@@ -2922,6 +2922,7 @@ __metadata:
   resolution: "@grafana/alerting@workspace:packages/grafana-alerting"
   dependencies:
     "@faker-js/faker": "npm:^9.7.0"
+    "@grafana/test-utils": "workspace:*"
     "@grafana/tsconfig": "npm:^2.0.0"
     "@reduxjs/toolkit": "npm:^2.8.0"
     "@rtk-query/codegen-openapi": "npm:^2.0.0"

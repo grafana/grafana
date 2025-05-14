@@ -1,5 +1,3 @@
-import { setupServer } from 'msw/node';
-
 import {
   ListReceiverApiResponseFactory,
   ContactPointFactory,
@@ -32,12 +30,5 @@ export const simpleContactPointsList = ListReceiverApiResponseFactory.build({
 // export the simple contact points list as a separate list of handlers (scenario) so we can load it in the front-end
 export const simpleContactPointsListScenario = [listReceiverHandler(simpleContactPointsList)];
 
-export const setupMockServer = () => {
-  const server = setupServer();
-
-  beforeAll(() => server.listen());
-  afterEach(() => server.resetHandlers());
-  afterAll(() => server.close());
-
-  return server;
-};
+// the default export will allow us to load this scenario on the front-end using the MSW web worker
+export default simpleContactPointsListScenario;

@@ -1,15 +1,14 @@
+import server, { setupMockServer } from '@grafana/test-utils/server';
+
 import { screen, render, within } from '../../../../../tests/test-utils';
 import { getContactPointDescription } from '../../utils';
 
 import { ContactPointSelector } from './ContactPointSelector';
-import {
-  setupMockServer,
-  simpleContactPointsList,
-  simpleContactPointsListScenario,
-} from './ContactPointSelector.test.scenario';
+import { simpleContactPointsList, simpleContactPointsListScenario } from './ContactPointSelector.test.scenario';
 
-const server = setupMockServer();
-beforeAll(() => {
+setupMockServer();
+
+beforeEach(() => {
   server.use(...simpleContactPointsListScenario);
 });
 

@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.7.0",
+    "@grafana/test-utils": "workspace:*",
     "@grafana/tsconfig": "^2.0.0",
     "@rtk-query/codegen-openapi": "^2.0.0",
     "@types/lodash": "^4",
