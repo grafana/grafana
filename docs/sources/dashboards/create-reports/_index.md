@@ -82,7 +82,7 @@ refs:
 You can configure several elements of these reports and generate PDFs, CSV files, and embedded images.
 Any changes you make to a dashboard used in a report are reflected the next time the report is sent.
 
-{{< figure src="screenshot-report-config.png" max-width="600px" alt="The report configuration screen" >}}
+{{< figure src="screenshot-report-config.png" max-width="600px" alt="The report configuration screen" >}} <!-- need to update this screenshot to match updated UI -->
 
 ## Requirements
 
