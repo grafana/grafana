@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../data-sources/graphite/query-editor/
-description: Guide for using the Graphite data source's query editor
+description: Guide for using the Graphite data source query editor.
 keywords:
   - grafana
   - microsoft
@@ -16,7 +16,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Query editor
+menuTitle: Graphite query editor
 title: Graphite query editor
 weight: 300
 refs:

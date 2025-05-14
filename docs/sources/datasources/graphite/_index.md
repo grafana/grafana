@@ -2,7 +2,7 @@
 aliases:
   - ../data-sources/graphite/
   - ../features/datasources/graphite/
-description: Guide for using Graphite in Grafana
+description: Introduction to the Graphite data source in Grafana.
 keywords:
   - grafana
   - graphite
@@ -95,7 +95,7 @@ For detailed instructions, refer to [Internal Grafana metrics](ref:internal-graf
 ## Get Grafana metrics into Graphite
 
 Grafana exposes metrics for Graphite on the `/metrics` endpoint.
-Refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring) for more information. 
+Refer to [Internal Grafana metrics](ref:set-up-grafana-monitoring) for more information.
 
 ## Graphite and Loki integration
 

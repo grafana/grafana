@@ -1,7 +1,7 @@
 ---
 aliases:
   - ../../data-sources/graphite/template-variables/
-description: Guide for using template variables when querying the Graphite data source
+description: Guide for using template variables when querying the Graphite data source.
 keywords:
   - grafana
   - graphite
@@ -13,7 +13,7 @@ labels:
     - cloud
     - enterprise
     - oss
-menuTitle: Template variables
+menuTitle: Graphite template variables
 title: Graphite template variables
 weight: 300
 refs:
@@ -46,15 +46,15 @@ To view an example templated dashboard, refer to [Graphite Templated Nested dash
 
 ## Use query variables
 
-With Graphite, the most commonly supported variables are query variables. 
+With Graphite, the most commonly supported variables are query variables.
 
 Grafana supports three query types specifically for Graphite-based template variables:
 
-| Query type            | Description                                                                                                                                                     | Example usage                                     |
-|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------|
-| **Default query**     | Allows you to dynamically list metrics, nodes, or tag values using Graphite functions such as `tags()`, `tag_values(<metric>, <tag>)`, `expand(<metric>)`, etc.  | `tag_values(apps.*.requests.count, app)`         |
-| **Value query**       | Returns the unique values for a specific tag key within a given metric series, often used to populate drop-downs with tag values.                                | `tag_values(apps.*.status.*, status)`            |
-| **Metric name query** | Returns all metric series that match a specified pattern or wildcard. Useful for listing available metrics or filtering series names.                            | `apps.*.requests.count`                          |
+| Query type            | Description                                                                                                                                                     | Example usage                            |
+| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| **Default query**     | Allows you to dynamically list metrics, nodes, or tag values using Graphite functions such as `tags()`, `tag_values(<metric>, <tag>)`, `expand(<metric>)`, etc. | `tag_values(apps.*.requests.count, app)` |
+| **Value query**       | Returns the unique values for a specific tag key within a given metric series, often used to populate drop-downs with tag values.                               | `tag_values(apps.*.status.*, status)`    |
+| **Metric name query** | Returns all metric series that match a specified pattern or wildcard. Useful for listing available metrics or filtering series names.                           | `apps.*.requests.count`                  |
 
 ### Choose a variable syntax
 
@@ -64,10 +64,10 @@ The Graphite data source supports two variable syntaxes for use in the **Query**
 
 Grafana allows two ways to reference variables in a query:
 
-| **Syntax**     | **Example**                                |
-|----------------|--------------------------------------------|
-| `$varname`     | `apps.frontend.$server.requests.count`     |
-| `${varname}`   | `apps.frontend.${server}.requests.count`   |
+| **Syntax**   | **Example**                              |
+| ------------ | ---------------------------------------- |
+| `$varname`   | `apps.frontend.$server.requests.count`   |
+| `${varname}` | `apps.frontend.${server}.requests.count` |
 
 - **Shorthand syntax (`$varname`)** is convenient for simple paths but doesn't work when the variable is adjacent to characters (e.g., `cpu$coreLoad`).
 - **Full syntax (`${varname}`)** is more flexible and works in any part of the string, including embedded within words.
@@ -78,12 +78,12 @@ Choose the format that best fits the structure of your Graphite metric path.
 
 Grafana supports tag-based variables for Graphite, allowing you to dynamically populate drop-downs based on tag keys and values in your metric series. To do this, use the Graphite functions `tags()` and `tag_values()` in your variable queries.
 
-| Query                                       | Description                                                                                          |
-|--------------------------------------------|------------------------------------------------------------------------------------------------------|
-| `tags()`                                   | Returns a list of all tag keys in the Graphite database.                                             |
-| `tags(server=~backend\*)`                  | Returns tag keys only from series that match the provided filter expression.                         |
-| `tag_values(server)`                       | Returns all values for the specified tag key.                                                        |
-| `tag_values(server, server=~backend\*)`    | Returns tag values for a given key, filtered to only those that appear in matching series.           |
+| Query                                   | Description                                                                                |
+| --------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `tags()`                                | Returns a list of all tag keys in the Graphite database.                                   |
+| `tags(server=~backend\*)`               | Returns tag keys only from series that match the provided filter expression.               |
+| `tag_values(server)`                    | Returns all values for the specified tag key.                                              |
+| `tag_values(server, server=~backend\*)` | Returns tag values for a given key, filtered to only those that appear in matching series. |
 
 You can use multiple filter expressions, and those expressions can include other Grafana variables. For example:
 
@@ -91,7 +91,7 @@ You can use multiple filter expressions, and those expressions can include other
 tag_values(server, server=~backend\*, app=~${apps:regex})
 ```
 
-This query returns all server tag values from series where the `server` tag matches backend* and the `app` tag matches the regex-filtered values from another variable ${apps}.
+This query returns all server tag values from series where the `server` tag matches backend\* and the `app` tag matches the regex-filtered values from another variable ${apps}.
 
 For details, refer to the [Graphite docs on the autocomplete API for tags](http://graphite.readthedocs.io/en/latest/tags.html#auto-complete-support).
 
@@ -123,11 +123,11 @@ Non-tag queries use the default `glob` formatting for multi-value variables.
 
 When writing queries, use the **metric find** query type to retrieve dynamic values.
 
-For example, the query `prod.servers.*` populates the variable with all values that exist at the wildcard position (*).
+For example, the query `prod.servers.*` populates the variable with all values that exist at the wildcard position (\*).
 
 Note that the results include only the values found at the last level of the query path.
 
-To return full metric paths that match your query, use the expand() function: 
+To return full metric paths that match your query, use the expand() function:
 
 ```
 expand(*.servers.*).
@@ -150,14 +150,14 @@ Suppose your Graphite database contains the following metrics:
 
 The following table illustrates the difference between expanded and non-expanded queries:
 
-| **Non-expanded query** | **Results**          | **Expanded query**            | **Expanded results**                                                        |
-|------------------------|----------------------|-------------------------------|----------------------------------------------------------------------------|
-| `*`                    | `prod`, `test`       | `expand(*)`                   | `prod`, `test`                                                             |
-| `*.servers`            | `servers`            | `expand(*.servers)`           | `prod.servers`, `test.servers`                                             |
-| `test.servers`         | `servers`            | `expand(test.servers)`        | `test.servers`                                                             |
-| `*.servers.*`          | `001`, `002`         | `expand(*.servers.*)`         | `prod.servers.001`, `prod.servers.002`, `test.servers.001`                |
-| `test.servers.*`       | `001`                | `expand(test.servers.*)`      | `test.servers.001`                                                         |
-| `*.servers.*.cpu`      | `cpu`                | `expand(*.servers.*.cpu)`     | `prod.servers.001.cpu`, `prod.servers.002.cpu`, `test.servers.001.cpu`    |
+| **Non-expanded query** | **Results**    | **Expanded query**        | **Expanded results**                                                   |
+| ---------------------- | -------------- | ------------------------- | ---------------------------------------------------------------------- |
+| `*`                    | `prod`, `test` | `expand(*)`               | `prod`, `test`                                                         |
+| `*.servers`            | `servers`      | `expand(*.servers)`       | `prod.servers`, `test.servers`                                         |
+| `test.servers`         | `servers`      | `expand(test.servers)`    | `test.servers`                                                         |
+| `*.servers.*`          | `001`, `002`   | `expand(*.servers.*)`     | `prod.servers.001`, `prod.servers.002`, `test.servers.001`             |
+| `test.servers.*`       | `001`          | `expand(test.servers.*)`  | `test.servers.001`                                                     |
+| `*.servers.*.cpu`      | `cpu`          | `expand(*.servers.*.cpu)` | `prod.servers.001.cpu`, `prod.servers.002.cpu`, `test.servers.001.cpu` |
 
 {{% admonition type="note" %}}
 A non-expanded query behaves similarly to an expanded query, but only returns the final segment of each matched metric.
@@ -191,4 +191,3 @@ TagValues:
 ```
 tag_values(server, server=~${__searchFilter:regex})
 ```
-

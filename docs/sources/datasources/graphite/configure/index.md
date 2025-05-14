@@ -3,7 +3,7 @@ aliases:
   - ../data-sources/graphite/
   - ../datasources/graphite/
   - ../features/datasources/graphite/
-description: Guide for using Graphite in Grafana
+description: This document provides instructions for configuring the Graphite data source.
 keywords:
   - grafana
   - graphite
@@ -49,15 +49,14 @@ refs:
       destination: /docs/grafana/<GRAFANA_VERSION>/administration/data-source-management/
   private-data-source-connect:
     - pattern: /docs/grafana/
-      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
     - pattern: /docs/grafana-cloud/
-      destination:  docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
+      destination: docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/
   configure-pdc:
     - pattern: /docs/grafana/
-      destination:  /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
+      destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
     - pattern: /docs/grafana-cloud/
       destination: /docs/grafana-cloud/connect-externally-hosted/private-data-source-connect/configure-pdc/#configure-grafana-private-data-source-connect-pdc
-
 ---
 
 # Configure the Graphite data source
