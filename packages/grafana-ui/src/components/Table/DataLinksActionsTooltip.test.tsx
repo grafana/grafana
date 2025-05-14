@@ -48,13 +48,9 @@ describe('DataLinksActionsTooltip', () => {
 
     render(<DataLinksActionsTooltip links={mockLinks} coords={mockCoords} />);
 
-    mockLinks.forEach(async (link) => {
-      expect(screen.getByText(link.title)).toBeInTheDocument();
-
-      const mockLink = screen.getByText(link.title);
-      await userEvent.click(mockLink);
-      expect(mockLink.onclick).toHaveBeenCalledTimes(1);
-    });
+    const link = screen.getByText('Data Link1');
+    await userEvent.click(link);
+    expect(mockLink.onClick).toHaveBeenCalledTimes(1);
   });
 
   it('should render when there is only one action', () => {
