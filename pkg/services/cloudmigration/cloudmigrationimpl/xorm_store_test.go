@@ -3,6 +3,7 @@ package cloudmigrationimpl
 import (
 	"context"
 	"encoding/base64"
+	"fmt"
 	"strconv"
 	"testing"
 
@@ -357,6 +358,59 @@ func Test_SnapshotResources(t *testing.T) {
 			assert.Equal(t, "2", results[0].UID)
 		})
 	})
+
+	t.Run("test creating and updating a large number of resources", func(t *testing.T) {
+		// Generate 45,001 test resources in order to test both update conditions (reached the batch limit or reached the end)
+		const numResources = 45001
+		resources := make([]cloudmigration.CloudMigrationResource, numResources)
+
+		t.Run("create the resources", func(t *testing.T) {
+			for i := 0; i < numResources; i++ {
+				resources[i] = cloudmigration.CloudMigrationResource{
+					Name:   fmt.Sprintf("Resource %d", i),
+					Type:   cloudmigration.DashboardDataType,
+					Status: cloudmigration.ItemStatusPending,
+				}
+			}
+
+			// Attempt to create all resources at once -- it should batch under the hood
+			err := s.CreateSnapshotResources(ctx, "abc123", resources)
+			require.NoError(t, err)
+
+			// Get the resources and ensure they're all there
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, results, numResources)
+		})
+
+		t.Run("update resources", func(t *testing.T) {
+			// Update the resources to test the update condition
+			for i := 0; i < numResources; i++ {
+				resources[i].Status = cloudmigration.ItemStatusOK
+			}
+
+			err := s.UpdateSnapshotResources(ctx, "abc123", resources)
+			require.NoError(t, err)
+
+			results, err := s.getSnapshotResources(ctx, "abc123", cloudmigration.SnapshotResultQueryParams{
+				ResultPage:  1,
+				ResultLimit: numResources,
+				SortColumn:  cloudmigration.SortColumnID,
+				SortOrder:   cloudmigration.SortOrderAsc,
+			})
+			require.NoError(t, err)
+			assert.Len(t, results, numResources)
+			for _, r := range results {
+				assert.Equal(t, cloudmigration.ItemStatusOK, r.Status)
+			}
+		})
+	})
+
 }
 
 func Test_SnapshotResourceCaseInsensitiveSorting(t *testing.T) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"math"
 	"strings"
 	"time"
 
@@ -29,6 +30,8 @@ const (
 	secretType                   = "cloudmigration-snapshot-encryption-key"
 	GetAllSnapshots              = -1
 	GetSnapshotListSortingLatest = "latest"
+
+	maxInsertBatchSize = 1000
 )
 
 func (ss *sqlStore) GetMigrationSessionByUID(ctx context.Context, orgID int64, uid string) (*cloudmigration.CloudMigrationSession, error) {
@@ -327,22 +330,29 @@ func (ss *sqlStore) GetSnapshotList(ctx context.Context, query cloudmigration.Li
 }
 
 // CreateSnapshotResources initializes the local state of a resources belonging to a snapshot
+// Inserting large enough datasets causes SQL errors, so we batch the inserts
 func (ss *sqlStore) CreateSnapshotResources(ctx context.Context, snapshotUid string, resources []cloudmigration.CloudMigrationResource) error {
 	for i := 0; i < len(resources); i++ {
+		// massage the data first
 		resources[i].UID = util.GenerateShortUID()
-		// ensure snapshot_uids are consistent so that we can use in conjunction with refID for lookup later
 		resources[i].SnapshotUID = snapshotUid
-	}
 
-	err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
-		_, err := sess.Insert(resources)
-		if err != nil {
-			return err
+		var endIndex int
+		if i == len(resources)-1 { // we've hit the last resource -- insert the remaining resources
+			endIndex = len(resources)
+		} else if i > 0 && i%maxInsertBatchSize == 0 { // we've hit the max batch size -- insert the the previous n resources
+			endIndex = i
+		} else {
+			continue // proceed to the next resource
 		}
-		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("creating resources: %w", err)
+
+		err := ss.db.WithDbSession(ctx, func(sess *sqlstore.DBSession) error {
+			_, err := sess.Insert(resources[int(math.Max(float64(i-maxInsertBatchSize), 0)):endIndex])
+			return err
+		})
+		if err != nil {
+			return fmt.Errorf("creating resources: %w", err)
+		}
 	}
 
 	return nil
