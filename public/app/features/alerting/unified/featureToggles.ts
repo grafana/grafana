@@ -16,9 +16,6 @@ export const shouldUseAlertingListViewV2 = () => {
   return config.featureToggles.alertingListViewV2;
 };
 
-export const useGrafanaManagedRecordingRulesSupport = () =>
-  config.unifiedAlerting.recordingRulesEnabled && config.featureToggles.grafanaManagedRecordingRules;
-
 export const shouldAllowRecoveringDeletedRules = () =>
   (isAdmin() && config.featureToggles.alertingRuleRecoverDeleted && config.featureToggles.alertRuleRestore) ?? false;
 
