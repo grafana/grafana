@@ -171,12 +171,6 @@ type ProvisioningServiceImpl struct {
 }
 
 func (ps *ProvisioningServiceImpl) RunInitProvisioners(ctx context.Context) error {
-	err := ps.ProvisionDatasources(ctx)
-	if err != nil {
-		ps.log.Error("Failed to provision data sources", "error", err)
-		return err
-	}
-
 	return nil
 }
 
@@ -185,8 +179,14 @@ func (ps *ProvisioningServiceImpl) Run(ctx context.Context) error {
 
 	// Run Plugins and Alerting Provisioning only once.
 	// It can't be initialized at RunInitProvisioners because it
-	// depends on the /apis endpoints to be already running and listening
+	// depends on the /apis endpoints to be already running and listeningq
 	ps.onceInitProvisioners.Do(func() {
+		err = ps.ProvisionDatasources(ctx)
+		if err != nil {
+			ps.log.Error("Failed to provision data sources", "error", err)
+			return
+		}
+
 		err = ps.ProvisionPlugins(ctx)
 		if err != nil {
 			ps.log.Error("Failed to provision plugins", "error", err)
