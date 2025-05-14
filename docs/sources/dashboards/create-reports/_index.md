@@ -136,7 +136,7 @@ To create a report, follow these steps:
     By default, the report name is the name of the dashboard.
 
 1. Expand and complete each section of the report, as needed:
-   - [Dashboard](#1-dashboard)
+   - [Dashboards](#1-dashboards)
    - [Schedule](#2-schedule)
    - [Email settings](#3-email-settings)
    - [Recipients](#4-recipients)
@@ -163,7 +163,7 @@ To create a report, follow these steps:
 
 1. Enter a name for the report.
 1. Expand and complete each section of the report, as needed:
-   - [Dashboard](#1-dashboard)
+   - [Dashboards](#1-dashboards)
    - [Schedule](#2-schedule)
    - [Email settings](#3-email-settings)
    - [Recipients](#4-recipients)
@@ -183,7 +183,7 @@ To create a report, follow these steps:
 {{< /tab-content >}}
 {{< /tabs >}}
 
-### 1. Dashboard
+### 1. Dashboards
 
 At this step, select the dashboard or dashboards on which the report is based, as well as the variables and time ranges for those dashboards.
 The options are:
