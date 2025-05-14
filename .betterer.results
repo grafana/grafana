@@ -443,6 +443,9 @@ exports[`better eslint`] = {
     "packages/grafana-prometheus/src/language_utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-prometheus/src/querybuilder/QueryPattern.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
     "packages/grafana-prometheus/src/querybuilder/components/LabelFilterItem.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Do not use any type assertions.", "1"],
@@ -552,18 +555,78 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "5"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "6"]
     ],
+    "packages/grafana-sql/src/components/configuration/ConnectionLimits.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
+    ],
+    "packages/grafana-sql/src/components/configuration/TLSSecretsConfig.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"]
+    ],
     "packages/grafana-sql/src/components/query-editor-raw/QueryToolbox.tsx:5381": [
       [0, 0, 0, "\'HorizontalGroup\' import from \'@grafana/ui\' is restricted from being used by a pattern. Use Stack component instead.", "0"]
+    ],
+    "packages/grafana-sql/src/components/visual-query-builder/Preview.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/AutoSaveField/AutoSaveField.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Button/Button.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Card/Card.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "7"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "9"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "10"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "11"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "12"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "13"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "14"],
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "15"]
+    ],
+    "packages/grafana-ui/src/components/ClipboardButton/ClipboardButton.internal.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "packages/grafana-ui/src/components/ColorPicker/ColorPicker.tsx:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Combobox/Combobox.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
+    ],
+    "packages/grafana-ui/src/components/Combobox/MultiCombobox.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
     "packages/grafana-ui/src/components/Combobox/MultiCombobox.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "packages/grafana-ui/src/components/Combobox/useOptions.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "packages/grafana-ui/src/components/ConfirmModal/ConfirmContent.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/DataLinks/DataLinkEditor.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
     ],
     "packages/grafana-ui/src/components/DataLinks/DataLinkInput.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -572,9 +635,51 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
     ],
+    "packages/grafana-ui/src/components/DataSourceSettings/DataSourceHttpSettings.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
+    ],
     "packages/grafana-ui/src/components/DataSourceSettings/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/RelativeTimeRangePicker/RelativeTimeRangePicker.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimePickerFooter.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/DateTimePickers/TimeRangePicker/TimeRangeContent.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Checkbox.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Field.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "packages/grafana-ui/src/components/Forms/FieldSet.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"]
+    ],
+    "packages/grafana-ui/src/components/Forms/Form.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "7"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "8"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "9"]
     ],
     "packages/grafana-ui/src/components/Forms/Legacy/Input/Input.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -592,6 +697,15 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
+    ],
+    "packages/grafana-ui/src/components/Icon/Icon.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/Input/Input.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "packages/grafana-ui/src/components/InteractiveTable/InteractiveTable.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "packages/grafana-ui/src/components/JSONFormatter/json_explorer/json_explorer.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"],
@@ -661,6 +775,9 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "13"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "14"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "15"]
+    ],
+    "packages/grafana-ui/src/components/Switch/Switch.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
     "packages/grafana-ui/src/components/Table/Cells/TableCell.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
@@ -738,6 +855,20 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/Tags/Tag.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "packages/grafana-ui/src/components/Text/Typography.internal.story.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
+    ],
+    "packages/grafana-ui/src/components/ThemeDemos/ThemeDemo.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "2"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "3"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "4"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "5"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "6"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "7"]
+    ],
     "packages/grafana-ui/src/components/ValuePicker/ValuePicker.tsx:5381": [
       [0, 0, 0, "Use data-testid for E2E selectors instead of aria-label", "0"]
     ],
@@ -776,6 +907,10 @@ exports[`better eslint`] = {
     "packages/grafana-ui/src/components/uPlot/utils.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"]
+    ],
+    "packages/grafana-ui/src/options/builder/axis.tsx:5381": [
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
+      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
     ],
     "packages/grafana-ui/src/options/builder/hideSeries.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
@@ -894,10 +1029,6 @@ exports[`better eslint`] = {
     "public/app/core/components/Page/EditableTitle.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
-    "public/app/core/components/PasswordField/PasswordField.test.tsx:5381": [
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
-      [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "1"]
-    ],
     "public/app/core/components/RolePickerDrawer/RolePickerDrawer.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -944,6 +1075,11 @@ exports[`better eslint`] = {
     ],
     "public/app/core/navigation/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
+    ],
+    "public/app/core/reducers/appNotification.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"]
     ],
     "public/app/core/services/ResponseQueue.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
@@ -1300,6 +1436,16 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/components/rule-editor/RuleInspector.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
+    "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/AlertRuleForm.tsx:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "6"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "7"]
+    ],
     "public/app/features/alerting/unified/components/rule-editor/alert-rule-form/simplifiedRouting/contactPoint/ContactPointSelector.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -1387,6 +1533,14 @@ exports[`better eslint`] = {
     "public/app/features/alerting/unified/mocks.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/features/alerting/unified/rule-editor/formDefaults.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"]
+    ],
     "public/app/features/alerting/unified/rule-list/FilterViewStatus.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -1446,6 +1600,10 @@ exports[`better eslint`] = {
     ],
     "public/app/features/auth-config/utils/data.ts:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
+    ],
+    "public/app/features/browse-dashboards/api/useRecentlyDeletedStateManager.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
     ],
     "public/app/features/browse-dashboards/components/BrowseActions/MoveModal.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
@@ -2468,7 +2626,13 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/logs/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Do not use any type assertions.", "6"]
     ],
     "public/app/features/manage-dashboards/DashboardImportPage.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -2760,6 +2924,12 @@ exports[`better eslint`] = {
       [0, 0, 0, "Unexpected any. Specify a different type.", "1"],
       [0, 0, 0, "Unexpected any. Specify a different type.", "2"]
     ],
+    "public/app/features/scopes/selector/ScopesSelectorService.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"]
+    ],
     "public/app/features/search/page/components/columns.tsx:5381": [
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
@@ -2775,13 +2945,32 @@ exports[`better eslint`] = {
       [0, 0, 0, "Do not use any type assertions.", "0"]
     ],
     "public/app/features/search/state/SearchStateManager.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "6"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "7"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "8"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "9"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "10"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "11"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "12"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "13"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "14"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "15"],
+      [0, 0, 0, "Do not use any type assertions.", "16"]
     ],
     "public/app/features/search/types.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
     "public/app/features/search/utils.ts:5381": [
-      [0, 0, 0, "Do not use any type assertions.", "0"]
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Do not use any type assertions.", "3"]
     ],
     "public/app/features/serviceaccounts/ServiceAccountCreatePage.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"],
@@ -3720,6 +3909,23 @@ exports[`better eslint`] = {
     "public/app/plugins/datasource/loki/LanguageProvider.ts:5381": [
       [0, 0, 0, "Unexpected any. Specify a different type.", "0"]
     ],
+    "public/app/plugins/datasource/loki/LogContextProvider.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiContextUi.tsx:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "2"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "3"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "4"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "5"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "6"]
+    ],
+    "public/app/plugins/datasource/loki/components/LokiQueryEditor.tsx:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
+    ],
     "public/app/plugins/datasource/loki/components/monaco-query-field/MonacoQueryFieldLazy.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Field components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
     ],
@@ -3746,6 +3952,14 @@ exports[`better eslint`] = {
     ],
     "public/app/plugins/datasource/loki/querybuilder/components/QueryPattern.tsx:5381": [
       [0, 0, 0, "Add noMargin prop to Card components to remove built-in margins. Use layout components like Stack or Grid with the gap prop instead for consistent spacing.", "0"]
+    ],
+    "public/app/plugins/datasource/loki/querybuilder/state.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
+    ],
+    "public/app/plugins/datasource/loki/shardQuerySplitting.ts:5381": [
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "0"],
+      [0, 0, 0, "Direct usage of localStorage is not allowed. Use \`Store\` from @grafana/data instead.", "1"]
     ],
     "public/app/plugins/datasource/loki/types.ts:5381": [
       [0, 0, 0, "Do not re-export imported variable (\`LokiQueryDirection\`)", "0"],
