@@ -1,12 +1,17 @@
+import { config } from '@grafana/runtime';
 import { Dropdown, EmptyState, LinkButton, Menu, MenuItem, Stack, TextLink } from '@grafana/ui';
 import { Trans, t } from 'app/core/internationalization';
 
-import { useGrafanaManagedRecordingRulesSupport } from '../../featureToggles';
 import { useRulesAccess } from '../../utils/accessControlHooks';
 
 const RecordingRulesButtons = () => {
   const { canCreateGrafanaRules, canCreateCloudRules } = useRulesAccess();
-  const grafanaRecordingRulesEnabled = useGrafanaManagedRecordingRulesSupport();
+
+  const grafanaRecordingRulesEnabled =
+    config.unifiedAlerting.recordingRulesEnabled &&
+    config.featureToggles.grafanaManagedRecordingRules &&
+    canCreateGrafanaRules;
+
   const canCreateAll = canCreateGrafanaRules && canCreateCloudRules && grafanaRecordingRulesEnabled;
 
   // User can create Grafana and DS-managed recording rules, show a dropdown
