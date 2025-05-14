@@ -411,10 +411,6 @@ const (
 	// Optimizes eligible queries in order to reduce load on datasources
 	FlagAlertingQueryOptimization = "alertingQueryOptimization"
 
-	// FlagNewFolderPicker
-	// Enables the nested folder picker without having nested folders enabled
-	FlagNewFolderPicker = "newFolderPicker"
-
 	// FlagJitterAlertRulesWithinGroups
 	// Distributes alert rule evaluations more evenly over time, including spreading out rules within the same group. Disables sequential evaluation if enabled.
 	FlagJitterAlertRulesWithinGroups = "jitterAlertRulesWithinGroups"
