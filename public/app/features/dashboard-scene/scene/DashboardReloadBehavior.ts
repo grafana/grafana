@@ -78,7 +78,7 @@ export class DashboardReloadBehavior extends SceneObjectBase<DashboardReloadBeha
 
       getDashboardScenePageStateManager().reloadDashboard({
         version: this.state.version!,
-        scopes: scopes.map((scope) => scope.metadata.name) ?? [],
+        scopes: scopes.map((scope) => scope.metadata.name),
         // We're not using the getUrlState from timeRange since it makes more sense to pass the absolute timestamps as opposed to relative time
         timeRange: {
           from: this._timeRange!.state.value.from.toISOString(),
