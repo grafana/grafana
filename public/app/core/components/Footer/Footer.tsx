@@ -5,6 +5,7 @@ import { GrafanaTheme2, LinkTarget } from '@grafana/data';
 import { config } from '@grafana/runtime';
 import { Icon, IconName, useStyles2 } from '@grafana/ui';
 import { t } from 'app/core/internationalization';
+import { isPmmAdmin } from 'app/percona/shared/helpers/permissions';
 
 export interface FooterLink {
   // @PERCONA - make target optional
@@ -17,42 +18,68 @@ export interface FooterLink {
 
 export let getFooterLinks = (): FooterLink[] => {
   // @PERCONA
-  return [
-    {
-      id: 'pmm-dump',
-      text: 'PMM Dump',
-      icon: 'brain',
-      url: '/graph/pmm-dump',
-    },
-    {
-      id: 'pmm-logs',
-      text: 'PMM Logs',
-      icon: 'download-alt',
-      url: '/logs.zip',
-      target: '_blank',
-    },
-    {
-      target: '_blank',
-      id: 'pmm-docs',
-      text: t('nav.help/documentation', 'Documentation'),
-      icon: 'document-info',
-      url: 'https://per.co.na/pmm_documentation',
-    },
-    {
-      target: '_blank',
-      id: 'support',
-      text: t('nav.help/support', 'Support'),
-      icon: 'question-circle',
-      url: 'https://per.co.na/pmm_support',
-    },
-    {
-      target: '_blank',
-      id: 'community',
-      text: t('nav.help/community', 'Community'),
-      icon: 'comments-alt',
-      url: 'https://per.co.na/pmm_community',
-    },
-  ];
+  if (isPmmAdmin(config.bootData.user)) {
+    return [
+      {
+        id: 'pmm-dump',
+        text: 'PMM Dump',
+        icon: 'brain',
+        url: '/graph/pmm-dump',
+      },
+      {
+        id: 'pmm-logs',
+        text: 'PMM Logs',
+        icon: 'download-alt',
+        url: '/logs.zip',
+        target: '_blank',
+      },
+      {
+        target: '_blank',
+        id: 'pmm-docs',
+        text: t('nav.help/documentation', 'Documentation'),
+        icon: 'document-info',
+        url: 'https://per.co.na/pmm_documentation',
+      },
+      {
+        target: '_blank',
+        id: 'support',
+        text: t('nav.help/support', 'Support'),
+        icon: 'question-circle',
+        url: 'https://per.co.na/pmm_support',
+      },
+      {
+        target: '_blank',
+        id: 'community',
+        text: t('nav.help/community', 'Community'),
+        icon: 'comments-alt',
+        url: 'https://per.co.na/pmm_community',
+      },
+    ];
+  } else {
+    return [
+      {
+        target: '_blank',
+        id: 'pmm-docs',
+        text: t('nav.help/documentation', 'Documentation'),
+        icon: 'document-info',
+        url: 'https://per.co.na/pmm_documentation',
+      },
+      {
+        target: '_blank',
+        id: 'support',
+        text: t('nav.help/support', 'Support'),
+        icon: 'question-circle',
+        url: 'https://per.co.na/pmm_support',
+      },
+      {
+        target: '_blank',
+        id: 'community',
+        text: t('nav.help/community', 'Community'),
+        icon: 'comments-alt',
+        url: 'https://per.co.na/pmm_community',
+      },
+    ];
+  }
 };
 
 export function getVersionMeta(version: string) {

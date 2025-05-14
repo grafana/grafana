@@ -30,6 +30,7 @@ const ExportDataset: FC = () => {
   const styles = useStyles2(getStyles);
   const dispatch = useAppDispatch();
   const { isLoading, services: fetchedServices } = useSelector(getServices);
+  const initialValues = useMemo<Partial<ExportDatasetProps>>(() => ({ load: true }), []);
 
   const serviceNames = useMemo(
     () =>
@@ -108,6 +109,7 @@ const ExportDataset: FC = () => {
       <Page.Contents>
         <Form
           onSubmit={handleSubmit}
+          initialValues={initialValues}
           render={({ handleSubmit, form }) => (
             <form onSubmit={handleSubmit} className={styles.form}>
               <PageToolbar title={Messages.breadCrumbTitle} onGoBack={handleGoBack}>
